@@ -1,0 +1,52 @@
+{
+  "name": "OnyTikTok",
+  "short_name": "OnyTikTok",
+  "description": "OnyTikTok - Instale nosso app, não precisa Google Play e nem App Store",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#ffb200",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png",
+      "sizes": "120x120",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}

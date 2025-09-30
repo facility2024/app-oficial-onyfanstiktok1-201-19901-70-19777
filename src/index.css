@@ -1,0 +1,434 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "leaflet/dist/leaflet.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbars globally for mobile */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Embla Carousel styles */
+.embla {
+  overflow: hidden;
+  height: 100vh;
+}
+
+.embla__container {
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-y;
+  height: 100%;
+}
+
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* iOS Performance Optimizations */
+@supports (-webkit-touch-callout: none) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
+  video {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform;
+  }
+  
+  /* Force hardware acceleration on iOS */
+  .ios-optimized {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
+  }
+}
+
+/* Prevent body scroll on mobile */
+@media (max-width: 768px) {
+  html, body {
+    overflow: hidden;
+    height: 100vh;
+    position: fixed;
+    width: 100%;
+    touch-action: manipulation;
+  }
+  
+  /* iOS specific optimizations */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      position: fixed;
+      width: 100%;
+      height: 100vh;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent iOS Safari zoom on input focus */
+    input, select, textarea {
+      font-size: 16px !important;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+  }
+}
+
+/* Admin Panel Design System - OnlyFans & TikTok Dashboard */
+
+@layer base {
+  :root {
+    /* Background System */
+    --background: 240 10% 98%;
+    --foreground: 240 10% 3.9%;
+    --dark-bg: 240 10% 3.9%;
+    --dark-bg-secondary: 240 8% 6%;
+
+    /* Card System */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --card-hover: 240 4.8% 95.9%;
+
+    /* Popover System */
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    /* Primary Brand Colors - Purple/Pink Gradient Theme */
+    --primary: 270 91% 65%;
+    --primary-foreground: 0 0% 98%;
+    --primary-light: 270 70% 75%;
+    --primary-dark: 270 91% 55%;
+
+    /* Secondary Colors */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    /* Accent Colors - Golden Yellow */
+    --accent: 45 93% 58%;
+    --accent-foreground: 240 10% 3.9%;
+    --accent-light: 45 93% 68%;
+
+    /* Success/Money Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 69% 58%;
+
+    /* Warning Colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    /* Danger Colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Muted Colors */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    /* Border & Input */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 270 91% 65%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(270 91% 65%), hsl(320 85% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(240 100% 70%), hsl(270 91% 65%));
+    --gradient-money: linear-gradient(135deg, hsl(142 76% 36%), hsl(120 100% 25%));
+    --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 53%));
+    --gradient-dark: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 8% 6%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(240 4.8% 95.9%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(240 10% 3.9% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(240 10% 3.9% / 0.1), 0 2px 4px -2px hsl(240 10% 3.9% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(240 10% 3.9% / 0.1), 0 4px 6px -4px hsl(240 10% 3.9% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(240 10% 3.9% / 0.1), 0 8px 10px -6px hsl(240 10% 3.9% / 0.1);
+    --shadow-glow: 0 0 20px hsl(270 91% 65% / 0.3);
+    --shadow-glow-accent: 0 0 20px hsl(45 93% 58% / 0.4);
+
+    /* Animations */
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Spacing */
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Mode - Admin Panel */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --dark-bg: 240 10% 3.9%;
+    --dark-bg-secondary: 240 8% 6%;
+
+    /* Card System Dark */
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --card-hover: 240 3.7% 15.9%;
+
+    /* Popover Dark */
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary Brand Colors - Keep bright in dark mode */
+    --primary: 270 91% 65%;
+    --primary-foreground: 0 0% 98%;
+    --primary-light: 270 70% 75%;
+    --primary-dark: 270 91% 55%;
+
+    /* Secondary Dark */
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Accent Colors - Keep golden */
+    --accent: 45 93% 58%;
+    --accent-foreground: 240 10% 3.9%;
+    --accent-light: 45 93% 68%;
+
+    /* Success/Money Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 69% 58%;
+
+    /* Warning Colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    /* Danger Colors */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Muted Dark */
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    /* Border & Input Dark */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 270 91% 65%;
+
+    /* Gradients Dark */
+    --gradient-primary: linear-gradient(135deg, hsl(270 91% 65%), hsl(320 85% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(240 100% 70%), hsl(270 91% 65%));
+    --gradient-money: linear-gradient(135deg, hsl(142 76% 36%), hsl(120 100% 25%));
+    --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 53%));
+    --gradient-dark: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 8% 6%));
+    --gradient-card: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 3.7% 15.9%));
+
+    /* Sidebar Dark */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 270 91% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 270 91% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Leaflet custom styles */
+  .leaflet-container {
+    font-family: "Inter", sans-serif;
+    border-radius: 0.75rem;
+  }
+  
+  .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .leaflet-popup-tip {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Custom div icon animations */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes pulse-forward {
+    0%, 100% { 
+      transform: scale(1) translateZ(0);
+      opacity: 1;
+    }
+    50% { 
+      transform: scale(1.02) translateZ(2px);
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes slide-in-top {
+    0% { 
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    100% { 
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes progress-decrease {
+    0% { width: 100%; }
+    100% { width: 0%; }
+  }
+
+  .animate-pulse-forward {
+    animation: pulse-forward 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-forward-delayed {
+    animation: pulse-forward 2s ease-in-out infinite 0.3s;
+  }
+
+  .animate-slide-in-top {
+    animation: slide-in-top 0.5s ease-out;
+  }
+
+  .animate-progress-decrease {
+    animation: progress-decrease 4s linear;
+  }
+  
+  .custom-div-icon {
+    border: none !important;
+    background: none !important;
+  }
+
+  /* iOS Performance & Animation Optimizations */
+  @supports (-webkit-touch-callout: none) {
+    .animate-enter {
+      animation: fadeInUp 0.2s ease-out; /* Faster animation for iOS */
+    }
+    
+    /* Reduce motion for better iOS performance */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* iOS safe area handling */
+    .ios-safe {
+      padding-top: max(env(safe-area-inset-top), 0px);
+      padding-bottom: max(env(safe-area-inset-bottom), 0px);
+      padding-left: max(env(safe-area-inset-left), 0px);
+      padding-right: max(env(safe-area-inset-right), 0px);
+    }
+    
+    /* Memory efficient styles for iOS */
+    .ios-memory-efficient {
+      contain: layout style paint;
+      content-visibility: auto;
+    }
+    
+    /* iOS specific button styles */
+    button {
+      -webkit-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+  }
+}
+
+/* Modal z-index fix - Garantir que modais apareçam acima de tudo */
+.modal-overlay,
+[data-radix-dialog-overlay] {
+  z-index: 9999 !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 10000 !important;
+}
+
+/* Override para todos os diálogos e popups */
+.dialog-overlay {
+  z-index: 9999 !important;
+}
+
+.dialog-content {
+  z-index: 10000 !important;
+}
+
+/* Hide Lovable badge and editor UI */
+a[href*="lovable.dev"], 
+iframe[src*="lovable.dev"],
+div[style*="Edit with Lovable"],
+.lovable-badge {
+ display: none !important;
+ opacity: 0 !important;
+ visibility: hidden !important;
+ pointer-events: none !important;
+ position: absolute !important;
+ z-index: -9999 !important;
+
+}

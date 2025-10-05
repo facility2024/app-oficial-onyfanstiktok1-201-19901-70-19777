@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart } from 'lucide-react';
-import ProfileMessageBox from '@/components/tiktok/ProfileMessageBox';
 import { ImageViewer } from '@/components/ui/image-viewer';
 
 interface ProfileScreenProps {
@@ -40,7 +39,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
   const [loading, setLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [viewerName, setViewerName] = useState('Você');
-  const [showMessageBox, setShowMessageBox] = useState(false);
   const [panelUrl, setPanelUrl] = useState<string | null>(null);
   const [showMyContent, setShowMyContent] = useState(false);
   const [myContentImages, setMyContentImages] = useState<string[]>([]);
@@ -375,44 +373,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
     }
   };
 
-const handleSendProfileMessage = async (message: string) => {
-  try {
-    let viewerId = sessionStorage.getItem('user_id');
-    if (!viewerId) {
-      viewerId = crypto.randomUUID();
-      sessionStorage.setItem('user_id', viewerId);
-    }
-    const viewerNameStored = localStorage.getItem('viewer_name') || 'Visitante';
-    
-    // Inserir mensagem com timestamp correto
-    const { data, error } = await supabase.from('model_messages').insert({
-      model_id: user.id,
-      model_username: user.username,
-      user_id: viewerId,
-      viewer_name: viewerNameStored,
-      message: message,
-      created_at: new Date().toISOString()
-    }).select().single();
-    
-    if (error) {
-      console.error('❌ Erro RLS:', error);
-      // Tentar inserção alternativa sem user_id se houver problema de RLS
-      const { error: fallbackError } = await supabase.from('model_messages').insert({
-        model_id: user.id,
-        model_username: user.username,
-        viewer_name: viewerNameStored,
-        message: message
-      });
-      
-      if (fallbackError) throw fallbackError;
-    }
-    
-    console.log('✅ Mensagem enviada com sucesso');
-  } catch (err) {
-    console.error('❌ Erro ao registrar mensagem do perfil:', err);
-    throw err;
-  }
-};
 
 if (!isOpen) return null;
 
@@ -528,14 +488,6 @@ if (!isOpen) return null;
               >
                 {isFollowing ? 'Seguindo' : 'Seguir'}
               </button>
-              <button
-                onClick={() => setShowMessageBox((prev) => !prev)}
-                className="flex-1 bg-white/20 border border-white/30 py-2 px-4 rounded-full font-semibold text-white text-sm"
-                aria-expanded={showMessageBox}
-                aria-controls="profile-message-box"
-              >
-                {showMessageBox ? 'Ocultar' : 'Mensagem'}
-              </button>
             </div>
 
             {panelUrl && (
@@ -552,12 +504,6 @@ if (!isOpen) return null;
                   <Heart className="w-3 h-3" />
                   Meus Conteúdos
                 </button>
-              </div>
-            )}
-
-            {showMessageBox && (
-              <div id="profile-message-box" className="mt-4">
-                <ProfileMessageBox modelName={user.username} inputId="profile-message-input" onSend={handleSendProfileMessage} />
               </div>
             )}
 

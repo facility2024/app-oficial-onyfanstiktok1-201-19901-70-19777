@@ -537,7 +537,7 @@ if (!isOpen) return null;
                           alt={`Conteúdo ${index + 1}`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.currentTarget.src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png';
+                            e.currentTarget.src = '/placeholder.svg';
                           }}
                         />
                         

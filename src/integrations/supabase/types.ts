@@ -197,6 +197,125 @@ export type Database = {
           },
         ]
       }
+      agent_messages: {
+        Row: {
+          agent_id: string
+          content: string
+          created_at: string | null
+          direction: string
+          id: string
+          message_type: string | null
+          metadata: Json | null
+          status: string | null
+          updated_at: string | null
+          user_name: string | null
+          user_phone: string
+        }
+        Insert: {
+          agent_id: string
+          content: string
+          created_at?: string | null
+          direction: string
+          id?: string
+          message_type?: string | null
+          metadata?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_name?: string | null
+          user_phone: string
+        }
+        Update: {
+          agent_id?: string
+          content?: string
+          created_at?: string | null
+          direction?: string
+          id?: string
+          message_type?: string | null
+          metadata?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_name?: string | null
+          user_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          ai_config: Json | null
+          ai_provider: string | null
+          avatar_url: string | null
+          capabilities: Json | null
+          context: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          last_activity: string | null
+          name: string
+          phone: string | null
+          prompt: string | null
+          response_delay_max: number | null
+          response_delay_min: number | null
+          status: string | null
+          total_messages: number | null
+          typing_speed: number | null
+          updated_at: string | null
+          user_id: string | null
+          whatsapp_instance: string | null
+        }
+        Insert: {
+          ai_config?: Json | null
+          ai_provider?: string | null
+          avatar_url?: string | null
+          capabilities?: Json | null
+          context?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          last_activity?: string | null
+          name: string
+          phone?: string | null
+          prompt?: string | null
+          response_delay_max?: number | null
+          response_delay_min?: number | null
+          status?: string | null
+          total_messages?: number | null
+          typing_speed?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_instance?: string | null
+        }
+        Update: {
+          ai_config?: Json | null
+          ai_provider?: string | null
+          avatar_url?: string | null
+          capabilities?: Json | null
+          context?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          last_activity?: string | null
+          name?: string
+          phone?: string | null
+          prompt?: string | null
+          response_delay_max?: number | null
+          response_delay_min?: number | null
+          status?: string | null
+          total_messages?: number | null
+          typing_speed?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_instance?: string | null
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           browser_name: string | null
@@ -329,6 +448,33 @@ export type Database = {
           metric_name?: string
           metric_type?: string
           metric_value?: string
+        }
+        Relationships: []
+      }
+      app_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          maior_idade: boolean
+          nome: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          maior_idade?: boolean
+          nome: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          maior_idade?: boolean
+          nome?: string
+          whatsapp?: string
         }
         Relationships: []
       }
@@ -1821,6 +1967,30 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_video: {
+        Row: {
+          id: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+          video_url: string
+        }
+        Insert: {
+          id?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+          video_url: string
+        }
+        Update: {
+          id?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+          video_url?: string
+        }
+        Relationships: []
+      }
       historico_localizacoes: {
         Row: {
           altitude: number | null
@@ -2283,6 +2453,44 @@ export type Database = {
         }
         Relationships: []
       }
+      magazine_buttons: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          link: string
+          magazine_id: string | null
+          text: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          link: string
+          magazine_id?: string | null
+          text: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          link?: string
+          magazine_id?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "magazine_buttons_magazine_id_fkey"
+            columns: ["magazine_id"]
+            isOneToOne: false
+            referencedRelation: "magazines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       magazine_form_leads: {
         Row: {
           created_at: string
@@ -2316,6 +2524,47 @@ export type Database = {
         }
         Relationships: []
       }
+      magazine_form_submissions: {
+        Row: {
+          created_at: string | null
+          element_id: string | null
+          email: string | null
+          id: string
+          magazine_id: string | null
+          name: string | null
+          page_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          element_id?: string | null
+          email?: string | null
+          id?: string
+          magazine_id?: string | null
+          name?: string | null
+          page_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          element_id?: string | null
+          email?: string | null
+          id?: string
+          magazine_id?: string | null
+          name?: string | null
+          page_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "magazine_form_submissions_magazine_id_fkey"
+            columns: ["magazine_id"]
+            isOneToOne: false
+            referencedRelation: "magazines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       magazine_saved_links: {
         Row: {
           created_at: string
@@ -2323,6 +2572,7 @@ export type Database = {
           magazine_id: string
           public_url: string
           remix_url: string
+          short_code: string
           thumbnail_url: string | null
           title: string
           total_pages: number
@@ -2334,6 +2584,7 @@ export type Database = {
           magazine_id: string
           public_url: string
           remix_url: string
+          short_code: string
           thumbnail_url?: string | null
           title: string
           total_pages?: number
@@ -2345,6 +2596,7 @@ export type Database = {
           magazine_id?: string
           public_url?: string
           remix_url?: string
+          short_code?: string
           thumbnail_url?: string | null
           title?: string
           total_pages?: number
@@ -2354,31 +2606,55 @@ export type Database = {
       }
       magazines: {
         Row: {
-          created_at: string
+          access_password: string | null
+          accessPassword: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number
+          google_analytics_id: string | null
           id: string
+          image_url: string
           is_active: boolean
+          link: string
           pages_data: Json
+          password_protected: boolean
+          passwordProtected: boolean
           title: string
-          total_pages: number
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          id: string
+          access_password?: string | null
+          accessPassword?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          google_analytics_id?: string | null
+          id?: string
+          image_url: string
           is_active?: boolean
+          link: string
           pages_data?: Json
+          password_protected?: boolean
+          passwordProtected?: boolean
           title: string
-          total_pages?: number
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          access_password?: string | null
+          accessPassword?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          google_analytics_id?: string | null
           id?: string
+          image_url?: string
           is_active?: boolean
+          link?: string
           pages_data?: Json
+          password_protected?: boolean
+          passwordProtected?: boolean
           title?: string
-          total_pages?: number
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2618,87 +2894,87 @@ export type Database = {
           access_code: string | null
           avatar_url: string | null
           bio: string | null
-          category: string | null
+          category: string
           created_at: string | null
-          display_order: number | null
-          followers_count: number | null
+          display_order: number
+          followers_count: number
           id: string
-          is_active: boolean | null
-          is_live: boolean | null
-          is_premium: boolean | null
-          is_verified: boolean | null
-          likes_count: number | null
+          is_active: boolean
+          is_live: boolean
+          is_premium: boolean
+          is_verified: boolean
+          likes_count: number
           name: string
           onlyfans_link: string | null
           posting_panel_url: string | null
           profile_link: string | null
           social_links: Json | null
           tags: string[] | null
-          total_comments: number | null
-          total_likes: number | null
-          total_shares: number | null
-          total_views: number | null
+          total_comments: number
+          total_likes: number
+          total_shares: number
+          total_views: number
           updated_at: string | null
           username: string
-          videos_count: number | null
+          videos_count: number
           whatsapp: string | null
         }
         Insert: {
           access_code?: string | null
           avatar_url?: string | null
           bio?: string | null
-          category?: string | null
+          category?: string
           created_at?: string | null
-          display_order?: number | null
-          followers_count?: number | null
+          display_order?: number
+          followers_count?: number
           id?: string
-          is_active?: boolean | null
-          is_live?: boolean | null
-          is_premium?: boolean | null
-          is_verified?: boolean | null
-          likes_count?: number | null
+          is_active?: boolean
+          is_live?: boolean
+          is_premium?: boolean
+          is_verified?: boolean
+          likes_count?: number
           name: string
           onlyfans_link?: string | null
           posting_panel_url?: string | null
           profile_link?: string | null
           social_links?: Json | null
           tags?: string[] | null
-          total_comments?: number | null
-          total_likes?: number | null
-          total_shares?: number | null
-          total_views?: number | null
+          total_comments?: number
+          total_likes?: number
+          total_shares?: number
+          total_views?: number
           updated_at?: string | null
           username: string
-          videos_count?: number | null
+          videos_count?: number
           whatsapp?: string | null
         }
         Update: {
           access_code?: string | null
           avatar_url?: string | null
           bio?: string | null
-          category?: string | null
+          category?: string
           created_at?: string | null
-          display_order?: number | null
-          followers_count?: number | null
+          display_order?: number
+          followers_count?: number
           id?: string
-          is_active?: boolean | null
-          is_live?: boolean | null
-          is_premium?: boolean | null
-          is_verified?: boolean | null
-          likes_count?: number | null
+          is_active?: boolean
+          is_live?: boolean
+          is_premium?: boolean
+          is_verified?: boolean
+          likes_count?: number
           name?: string
           onlyfans_link?: string | null
           posting_panel_url?: string | null
           profile_link?: string | null
           social_links?: Json | null
           tags?: string[] | null
-          total_comments?: number | null
-          total_likes?: number | null
-          total_shares?: number | null
-          total_views?: number | null
+          total_comments?: number
+          total_likes?: number
+          total_shares?: number
+          total_views?: number
           updated_at?: string | null
           username?: string
-          videos_count?: number | null
+          videos_count?: number
           whatsapp?: string | null
         }
         Relationships: []
@@ -4216,6 +4492,39 @@ export type Database = {
           },
         ]
       }
+      registrations: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          location_city: string | null
+          location_country: string | null
+          location_state: string | null
+          name: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          location_state?: string | null
+          name: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          location_state?: string | null
+          name?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           created_at: string | null
@@ -5360,27 +5669,33 @@ export type Database = {
       videos: {
         Row: {
           aspect_ratio: string | null
+          button_color: string
+          button_text: string
           category: string | null
           comments_count: number | null
           created_at: string | null
           description: string | null
-          display_order: number | null
-          duration: number | null
+          display_order: number
+          duration: string
           file_size: number | null
           id: string
           is_active: boolean | null
           is_blocked: boolean | null
+          is_featured: boolean
           is_image_post: boolean | null
           is_live: boolean | null
           is_premium: boolean | null
           likes_count: number | null
           live_video_url: string | null
           model_id: string | null
+          profile_link_url: string | null
           quality: string | null
+          redirect_link: string | null
           shares_count: number | null
+          show_redirect_button: boolean
           tags: string[] | null
-          thumbnail_url: string | null
-          title: string | null
+          thumbnail_url: string
+          title: string
           updated_at: string | null
           upload_source: string | null
           video_url: string
@@ -5389,27 +5704,33 @@ export type Database = {
         }
         Insert: {
           aspect_ratio?: string | null
+          button_color?: string
+          button_text?: string
           category?: string | null
           comments_count?: number | null
           created_at?: string | null
           description?: string | null
-          display_order?: number | null
-          duration?: number | null
+          display_order?: number
+          duration: string
           file_size?: number | null
           id?: string
           is_active?: boolean | null
           is_blocked?: boolean | null
+          is_featured?: boolean
           is_image_post?: boolean | null
           is_live?: boolean | null
           is_premium?: boolean | null
           likes_count?: number | null
           live_video_url?: string | null
           model_id?: string | null
+          profile_link_url?: string | null
           quality?: string | null
+          redirect_link?: string | null
           shares_count?: number | null
+          show_redirect_button?: boolean
           tags?: string[] | null
-          thumbnail_url?: string | null
-          title?: string | null
+          thumbnail_url: string
+          title: string
           updated_at?: string | null
           upload_source?: string | null
           video_url: string
@@ -5418,27 +5739,33 @@ export type Database = {
         }
         Update: {
           aspect_ratio?: string | null
+          button_color?: string
+          button_text?: string
           category?: string | null
           comments_count?: number | null
           created_at?: string | null
           description?: string | null
-          display_order?: number | null
-          duration?: number | null
+          display_order?: number
+          duration?: string
           file_size?: number | null
           id?: string
           is_active?: boolean | null
           is_blocked?: boolean | null
+          is_featured?: boolean
           is_image_post?: boolean | null
           is_live?: boolean | null
           is_premium?: boolean | null
           likes_count?: number | null
           live_video_url?: string | null
           model_id?: string | null
+          profile_link_url?: string | null
           quality?: string | null
+          redirect_link?: string | null
           shares_count?: number | null
+          show_redirect_button?: boolean
           tags?: string[] | null
-          thumbnail_url?: string | null
-          title?: string | null
+          thumbnail_url?: string
+          title?: string
           updated_at?: string | null
           upload_source?: string | null
           video_url?: string
@@ -5954,6 +6281,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_offline_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_comments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -6032,6 +6363,10 @@ export type Database = {
       hash_sensitive_data: {
         Args: { data: string }
         Returns: string
+      }
+      increment_agent_messages: {
+        Args: { agent_id: string }
+        Returns: undefined
       }
       is_admin: {
         Args: Record<PropertyKey, never>

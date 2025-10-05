@@ -136,7 +136,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       const transformedVideos = videosData?.map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,
-        thumbnail_url: item.thumbnail_url || item.video_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+        thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
         video_url: item.video_url,
         type: 'video' as const,
         likes_count: item.likes_count || 0,
@@ -414,7 +414,7 @@ if (!isOpen) return null;
           <div className="p-6 text-white border-b border-white/10">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src={user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                src={user.avatar_url || '/placeholder.svg'}
                 alt="Profile"
                 className="w-20 h-20 rounded-full border-2 border-white/20 object-cover"
               />
@@ -638,7 +638,7 @@ if (!isOpen) return null;
                             alt={content.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png';
+                              e.currentTarget.src = '/placeholder.svg';
                             }}
                           />
                           {/* Image gallery icon */}

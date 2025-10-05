@@ -340,7 +340,6 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             key={video.id}
             ref={ref}
             src={(video as any).video_url}
-            poster={(video as any).thumbnail_url}
             isPlaying={isPlaying}
             isMuted={isMuted}
             className={locked ? 'blur-sm' : ''}

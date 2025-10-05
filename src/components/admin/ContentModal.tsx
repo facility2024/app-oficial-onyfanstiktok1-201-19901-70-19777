@@ -380,7 +380,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
 
         await supabase
           .from('videos')
-          .insert(videoRecords);
+          .insert(videoRecords as any);
       } else if (contentData.videoUrl) {
         await supabase
           .from('videos')
@@ -393,7 +393,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
             visibility: 'premium',
             is_active: true,
             music_name: 'Som Original'
-          }]);
+          }] as any);
       }
 
       console.log('✅ Modelo salvo com sucesso:', data);

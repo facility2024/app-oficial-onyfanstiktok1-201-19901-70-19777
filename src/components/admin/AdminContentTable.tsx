@@ -265,7 +265,7 @@ export const AdminContentTable = () => {
                 model_id: editingContent.id,
                 is_active: true,
                 upload_source: 'single'
-              })
+              } as any)
               .select()
               .single();
             if (singleErr) {
@@ -290,7 +290,7 @@ export const AdminContentTable = () => {
             }));
             const { data: insertedList, error: listErr } = await supabase
               .from('videos')
-              .insert(rows)
+              .insert(rows as any)
               .select();
             if (listErr) {
               console.error('❌ ADMIN DEBUG: Erro ao criar vídeos da lista:', listErr);
@@ -374,7 +374,7 @@ export const AdminContentTable = () => {
               model_id: newModel.id,
               is_active: true,
               upload_source: 'single'
-            })
+            } as any)
             .select()
             .single();
           if (singleErr) {
@@ -395,7 +395,7 @@ export const AdminContentTable = () => {
             }));
             const { data: insertedList, error: listErr } = await supabase
               .from('videos')
-              .insert(rows)
+              .insert(rows as any)
               .select();
             if (listErr) {
               console.error('❌ ADMIN DEBUG: Erro ao criar vídeos da lista:', listErr);

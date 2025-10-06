@@ -325,19 +325,20 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       const newFeed = await generateFeed();
       setCurrentFeed(newFeed);
       
-      // Carregar vídeos completos
+      // Carregar vídeos completos APENAS UMA VEZ
       const videoIds = newFeed.videos.map(v => v.video_id);
       const { data: fullVideos } = await supabase
         .from('videos')
-        .select('*, models(*)')
+        .select('*')
         .in('id', videoIds);
       
       if (fullVideos) {
-        const orderedVideos = videoIds.map(id => 
-          fullVideos.find((v: any) => v.id === id)
-        ).filter(Boolean) as any[];
+        // Ordenar conforme o feed
+        const orderedVideos = videoIds
+          .map(id => fullVideos.find((v: any) => v.id === id))
+          .filter(Boolean);
         
-        setVideos(orderedVideos);
+        setVideos(orderedVideos as any);
       }
     } catch (error) {
       console.error('❌ Erro ao atualizar feed:', error);
@@ -348,24 +349,33 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
 
   // ============= INICIALIZAR =============
   useEffect(() => {
-    refreshFeed();
+    let mounted = true;
     
-    // Monitorar mudanças em tempo real
+    const init = async () => {
+      if (mounted) {
+        await refreshFeed();
+      }
+    };
+    
+    init();
+    
+    // Monitorar mudanças em tempo real (sem auto-refresh para evitar loops)
     const channel = supabase
       .channel('feed-updates')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'videos' },
+        { event: 'INSERT', schema: 'public', table: 'videos' },
         () => {
-          console.log('🔔 Novos vídeos detectados, atualizando feed...');
-          refreshFeed();
+          console.log('🔔 Novos vídeos detectados');
+          // Não atualizar automaticamente para evitar loops
         }
       )
       .subscribe();
     
     return () => {
+      mounted = false;
       supabase.removeChannel(channel);
     };
-  }, [refreshFeed]);
+  }, []); // REMOVIDO refreshFeed das dependências para evitar loop
 
   return {
     videos,

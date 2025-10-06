@@ -22,6 +22,8 @@ import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
+import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 
 
 
@@ -68,6 +70,17 @@ interface Comment {
 }
 
 export const TikTokApp = () => {
+  // 🧠 FEED INTELIGENTE - Sistema completo de recomendação
+  const { 
+    videos: intelligentVideos, 
+    loading: intelligentLoading,
+    currentFeed,
+    refreshFeed: refreshIntelligentFeed,
+    markVideoAsWatched,
+    markModelAsFavorite,
+    getUserMemory
+  } = useIntelligentFeed();
+  
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
@@ -266,11 +279,15 @@ export const TikTokApp = () => {
       if (currentVideo && currentVideo.id) {
         console.log('📹 REGISTRANDO VIEW para vídeo:', currentVideo.id);
         try {
-          const userId = currentVideo.user?.id || currentVideo.user_id || '';
+          const userId = currentVideo.user?.id || currentVideo.model_id || '';
+          const modelId = currentVideo.model_id || userId;
+          
+          // 🧠 REGISTRAR NO FEED INTELIGENTE
           if (userId) {
             await trackView(currentVideo.id, userId);
             ensureInteractedModel(userId);
-            console.log('✅ VIEW registrada com sucesso!');
+            markVideoAsWatched(currentVideo.id, modelId);
+            console.log('✅ VIEW registrada com sucesso no feed inteligente!');
           }
         } catch (error) {
           console.error('❌ Erro ao registrar view:', error);
@@ -284,7 +301,86 @@ export const TikTokApp = () => {
       checkIfFollowing(currentVideo.user.id);
       registerView();
     }
-  }, [currentVideo, trackView]);
+  }, [currentVideo, trackView, markVideoAsWatched]);
+
+  // 🧠 SINCRONIZAR COM FEED INTELIGENTE
+  useEffect(() => {
+    const convertToAppFormat = async () => {
+      if (intelligentVideos && intelligentVideos.length > 0) {
+        console.log('🧠 Feed inteligente atualizado:', intelligentVideos.length, 'vídeos');
+        
+        // Buscar dados completos dos vídeos
+        const videoIds = intelligentVideos.map((v: any) => v.id);
+        const { data: fullVideos } = await supabase
+          .from('videos')
+          .select(`
+            *,
+            models!videos_model_id_fkey (
+              id,
+              username,
+              name,
+              avatar_url,
+              followers_count,
+              is_live,
+              bio,
+              created_at
+            )
+          `)
+          .in('id', videoIds);
+        
+        if (fullVideos) {
+          // Ordenar conforme o feed inteligente
+          const orderedVideos = videoIds.map(id => 
+            fullVideos.find((v: any) => v.id === id)
+          ).filter(Boolean);
+          
+          // Converter para formato do app
+          const appVideos = orderedVideos.map((v: any) => {
+            const model = v.models || {};
+            return {
+              id: v.id,
+              title: v.title || 'Vídeo',
+              description: v.description || '',
+              video_url: v.video_url,
+              thumbnail_url: v.thumbnail_url || '',
+              user_id: v.model_id || '',
+              model_id: v.model_id || '',
+              likes_count: v.likes_count || 0,
+              comments_count: v.comments_count || 0,
+              shares_count: v.shares_count || 0,
+              views_count: v.views_count || 0,
+              music_name: 'Som Original',
+              is_active: v.is_active,
+              visibility: v.visibility || 'public',
+              created_at: v.created_at,
+              updated_at: v.updated_at,
+              user: {
+                id: model.id || v.model_id || '',
+                username: model.username || model.name || 'Usuário',
+                avatar_url: model.avatar_url || '',
+                followers_count: model.followers_count || 0,
+                following_count: 0,
+                is_online: model.is_live || false,
+                created_at: model.created_at || '',
+                bio: model.bio || ''
+              }
+            };
+          });
+          
+          setVideos(appVideos as any);
+        }
+        
+        setLoading(intelligentLoading);
+        
+        // Exibir estatísticas do feed
+        if (currentFeed) {
+          console.log('📊 Mix do feed inteligente:', currentFeed.mix);
+        }
+      }
+    };
+    
+    convertToAppFormat();
+  }, [intelligentVideos, intelligentLoading, currentFeed]);
 
   const createExampleData = (): Video[] => {
     return [];
@@ -1002,11 +1098,19 @@ export const TikTokApp = () => {
       }
 
       // ✨ IMPORTANTE: Registrar no sistema de analytics
-      const userId = currentVideo.user?.id || currentVideo.user_id || '';
+      const userId = currentVideo.user?.id || currentVideo.model_id || '';
+      const modelId = currentVideo.model_id || userId;
+      
       if (userId) {
         await trackLike(currentVideo.id, userId, newLikedState);
         ensureInteractedModel(userId);
         await checkAndTrackAction('like', currentVideo.id, userId);
+        
+        // 🧠 FEED INTELIGENTE: Marcar modelo como favorita quando curtir
+        if (newLikedState && modelId) {
+          markModelAsFavorite(modelId);
+          console.log('⭐ Modelo adicionada aos favoritos do feed inteligente');
+        }
       }
 
       // Update video likes count
@@ -1773,6 +1877,9 @@ export const TikTokApp = () => {
         >
           <Search className="w-6 h-6" />
         </button>
+        
+        {/* 🧠 Indicador do Feed Inteligente */}
+        <IntelligentFeedIndicator currentFeed={currentFeed} />
 
         {/* Bonus Gift - positioned below search */}
         <div className="fixed top-20 left-4 z-30">
@@ -1912,6 +2019,9 @@ export const TikTokApp = () => {
   // Desktop version (TikTok-like desktop layout)
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* 🧠 Indicador do Feed Inteligente - Desktop */}
+      <IntelligentFeedIndicator currentFeed={currentFeed} />
+      
       {/* Desktop Header */}
       <div className="sticky top-0 z-[60] bg-black flex items-center justify-between px-6 py-4 border-b border-gray-800">
         <div className="flex items-center space-x-4">

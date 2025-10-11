@@ -2608,6 +2608,7 @@ export type Database = {
         Row: {
           access_password: string | null
           accessPassword: string | null
+          cover_image_url: string | null
           created_at: string | null
           description: string | null
           display_order: number
@@ -2619,12 +2620,14 @@ export type Database = {
           pages_data: Json
           password_protected: boolean
           passwordProtected: boolean
+          public_url: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
           access_password?: string | null
           accessPassword?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
           display_order?: number
@@ -2636,12 +2639,14 @@ export type Database = {
           pages_data?: Json
           password_protected?: boolean
           passwordProtected?: boolean
+          public_url?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
           access_password?: string | null
           accessPassword?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
           display_order?: number
@@ -2653,6 +2658,7 @@ export type Database = {
           pages_data?: Json
           password_protected?: boolean
           passwordProtected?: boolean
+          public_url?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -5789,6 +5795,33 @@ export type Database = {
           },
         ]
       }
+      videos_posts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          scheduled_at: string | null
+          title: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          scheduled_at?: string | null
+          title: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          scheduled_at?: string | null
+          title?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       webhook_events: {
         Row: {
           created_at: string | null
@@ -6366,6 +6399,10 @@ export type Database = {
       }
       increment_agent_messages: {
         Args: { agent_id: string }
+        Returns: undefined
+      }
+      increment_video_views: {
+        Args: { video_id: string }
         Returns: undefined
       }
       is_admin: {

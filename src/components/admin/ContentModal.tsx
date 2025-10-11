@@ -336,9 +336,32 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
   // Função para salvar modelo na tabela models
   const saveModelToDatabase = async (contentData: any) => {
     try {
+      // Gerar username base
+      let baseUsername = contentData.name.toLowerCase().replace(/\s+/g, '_');
+      let username = baseUsername;
+      let attempts = 0;
+      
+      // Verificar se username já existe e gerar um único se necessário
+      while (attempts < 10) {
+        const { data: existingModel } = await supabase
+          .from('models')
+          .select('username')
+          .eq('username', username)
+          .maybeSingle();
+        
+        if (!existingModel) {
+          // Username está disponível
+          break;
+        }
+        
+        // Username já existe, adicionar timestamp
+        attempts++;
+        username = `${baseUsername}_${Date.now()}_${attempts}`;
+      }
+
       const modelData = {
         name: contentData.displayName,
-        username: contentData.name.toLowerCase().replace(/\s+/g, '_'),
+        username: username,
         avatar_url: contentData.avatarUrl,
         bio: `Modelo VIP criado via painel - ${contentData.displayName}`,
         followers_count: Math.floor(Math.random() * 50000) + 10000, // Seguidores aleatórios entre 10k-60k
@@ -348,6 +371,8 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         category: 'premium',
         posting_panel_url: contentData.videoUrl || (contentData.videoList && contentData.videoList[0]) || null
       };
+
+      console.log('🔄 Criando nova modelo:', { username, name: contentData.displayName });
 
       const { data, error } = await supabase
         .from('models')
@@ -367,8 +392,10 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
 
       // Se tem vídeos, criar registros na tabela videos
       if (contentData.videoList && contentData.videoList.length > 0) {
+        console.log(`📹 Criando ${contentData.videoList.length} vídeos para modelo ${contentData.displayName}`);
+        
         const videoRecords = contentData.videoList.map((videoUrl: string, index: number) => ({
-          title: `Vídeo ${index + 1} - ${contentData.displayName}`,
+          title: contentData.displayName ? `${contentData.displayName} - Vídeo ${index + 1}` : `Vídeo ${index + 1}`,
           description: `Conteúdo premium de ${contentData.displayName}`,
           video_url: videoUrl,
           thumbnail_url: contentData.avatarUrl,
@@ -378,14 +405,22 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
           music_name: 'Som Original'
         }));
 
-        await supabase
+        const { error: videoError } = await supabase
           .from('videos')
           .insert(videoRecords as any);
+        
+        if (videoError) {
+          console.error('❌ Erro ao criar vídeos:', videoError);
+        } else {
+          console.log('✅ Vídeos criados com sucesso');
+        }
       } else if (contentData.videoUrl) {
-        await supabase
+        console.log(`📹 Criando vídeo único para modelo ${contentData.displayName}`);
+        
+        const { error: videoError } = await supabase
           .from('videos')
           .insert([{
-            title: `Vídeo Principal - ${contentData.displayName}`,
+            title: contentData.displayName ? `${contentData.displayName} - Vídeo Principal` : 'Vídeo Principal',
             description: `Conteúdo premium de ${contentData.displayName}`,
             video_url: contentData.videoUrl,
             thumbnail_url: contentData.avatarUrl,
@@ -394,6 +429,12 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
             is_active: true,
             music_name: 'Som Original'
           }] as any);
+        
+        if (videoError) {
+          console.error('❌ Erro ao criar vídeo:', videoError);
+        } else {
+          console.log('✅ Vídeo criado com sucesso');
+        }
       }
 
       console.log('✅ Modelo salvo com sucesso:', data);

@@ -1614,12 +1614,8 @@ export const TikTokApp = () => {
           return;
         }
 
-        console.error('❌ Nenhum conteúdo encontrado para a modelo');
-        toast({
-          title: "Modelo sem conteúdo",
-          description: "Esta modelo ainda não possui vídeos publicados.",
-          variant: "destructive"
-        });
+        // Continuar sem exibir erro se não encontrar conteúdo
+        console.log('ℹ️ Nenhum conteúdo adicional encontrado para a modelo');
         return;
       }
 

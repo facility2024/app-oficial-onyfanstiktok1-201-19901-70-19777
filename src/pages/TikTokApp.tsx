@@ -11,6 +11,7 @@ import { VinylRecord } from '@/components/tiktok/VinylRecord';
 import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTracker';
 import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
+import { AgeVerificationScreen } from '@/components/tiktok/AgeVerificationScreen';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,10 @@ interface Comment {
 }
 
 export const TikTokApp = () => {
+  // Verificação de idade
+  const [isVerified, setIsVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(true);
+
   // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
   // const { 
   //   videos: intelligentVideos, 
@@ -156,6 +161,19 @@ export const TikTokApp = () => {
   console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
   console.log('✅ RENDER: videos.length:', videos.length);
   console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
+
+  // Mostrar tela de verificação se não verificado
+  if (checkingVerification) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!isVerified) {
+    return <AgeVerificationScreen onVerified={() => setIsVerified(true)} />;
+  }
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {
@@ -304,11 +322,21 @@ export const TikTokApp = () => {
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 
-  // ✅ INICIALIZAR FEED QUANDO O APP MONTA
+  // Verificar status de verificação
   useEffect(() => {
+    const verified = localStorage.getItem('tiktok_user_verified');
+    if (verified === 'true') {
+      setIsVerified(true);
+    }
+    setCheckingVerification(false);
+  }, []);
+
+  // ✅ INICIALIZAR FEED QUANDO O APP MONTA (somente se verificado)
+  useEffect(() => {
+    if (!isVerified || checkingVerification) return;
     console.log('🎬 Inicializando app...');
     initializeFeed();
-  }, []); // Executar apenas uma vez na montagem
+  }, [isVerified, checkingVerification]); // Executar quando verificação mudar
 
   const createExampleData = (): Video[] => {
     return [];

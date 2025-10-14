@@ -162,19 +162,6 @@ export const TikTokApp = () => {
   console.log('✅ RENDER: videos.length:', videos.length);
   console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
 
-  // Mostrar tela de verificação se não verificado
-  if (checkingVerification) {
-    return (
-      <div className="h-screen w-full bg-black flex items-center justify-center">
-        <div className="text-white">Carregando...</div>
-      </div>
-    );
-  }
-
-  if (!isVerified) {
-    return <AgeVerificationScreen onVerified={() => setIsVerified(true)} />;
-  }
-
   // Preconnect otimizado para melhor performance
   useEffect(() => {
     if (!videos.length) return;
@@ -1961,7 +1948,24 @@ export const TikTokApp = () => {
     );
   }
 
-  // Desktop version (TikTok-like desktop layout)
+  // =================================================================
+  // 📱 VERIFICAÇÃO DE IDADE - Mostrar tela se não verificado
+  // =================================================================
+  if (checkingVerification) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!isVerified) {
+    return <AgeVerificationScreen onVerified={() => setIsVerified(true)} />;
+  }
+
+  // =================================================================
+  // 📱 DESKTOP VERSION
+  // =================================================================
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Desktop Header */}

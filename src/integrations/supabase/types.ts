@@ -4020,6 +4020,7 @@ export type Database = {
           imagens: string[] | null
           modelo_id: string
           modelo_username: string
+          profile_link: string | null
           status: string
           tipo_conteudo: string
           titulo: string
@@ -4036,6 +4037,7 @@ export type Database = {
           imagens?: string[] | null
           modelo_id: string
           modelo_username: string
+          profile_link?: string | null
           status?: string
           tipo_conteudo?: string
           titulo: string
@@ -4052,6 +4054,7 @@ export type Database = {
           imagens?: string[] | null
           modelo_id?: string
           modelo_username?: string
+          profile_link?: string | null
           status?: string
           tipo_conteudo?: string
           titulo?: string

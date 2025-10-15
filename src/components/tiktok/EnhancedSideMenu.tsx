@@ -17,6 +17,7 @@ interface EnhancedSideMenuProps {
   onBlockVideo?: () => void;
   onOpenPremium?: () => void;
   userId?: string;
+  profileLink?: string;
 }
 
 export const EnhancedSideMenu = ({
@@ -30,7 +31,8 @@ export const EnhancedSideMenu = ({
   onOpenLive,
   onBlockVideo,
   onOpenPremium,
-  userId
+  userId,
+  profileLink
 }: EnhancedSideMenuProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
@@ -179,6 +181,19 @@ export const EnhancedSideMenu = ({
         </div>
         <span className="text-white text-xs mt-1 drop-shadow-md">Premium</span>
       </div>
+
+      {/* Profile Link */}
+      {profileLink && (
+        <div 
+          className="flex flex-col items-center cursor-pointer" 
+          onClick={() => window.open(profileLink, '_blank')}
+        >
+          <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center border-2 border-pink-300 shadow-[0_0_15px_rgba(236,72,153,0.6)] hover:shadow-[0_0_25px_rgba(236,72,153,0.9)] transition-all duration-300">
+            <span className="text-white text-xl drop-shadow-lg">🔗</span>
+          </div>
+          <span className="text-white text-xs mt-1 drop-shadow-md">Link</span>
+        </div>
+      )}
 
       {/* Sound */}
       <div className="flex flex-col items-center cursor-pointer" onClick={onToggleSound}>

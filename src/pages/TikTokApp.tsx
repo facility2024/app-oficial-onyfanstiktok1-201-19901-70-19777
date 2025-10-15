@@ -1553,6 +1553,7 @@ export const TikTokApp = () => {
             views_count: 0,
             is_active: true,
             created_at: post.data_publicacao || post.created_at,
+            profile_link: post.profile_link || null,
             user: {
               id: modelData.id,
               username: modelData.username,
@@ -1561,7 +1562,8 @@ export const TikTokApp = () => {
               following_count: 0,
               is_online: modelData.is_live || false,
               created_at: modelData.created_at || new Date().toISOString(),
-              bio: modelData.bio || ''
+              bio: modelData.bio || '',
+              posting_panel_url: post.profile_link || null
             }
           };
 

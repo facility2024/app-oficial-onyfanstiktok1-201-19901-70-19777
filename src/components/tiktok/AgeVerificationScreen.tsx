@@ -40,7 +40,7 @@ export const AgeVerificationScreen = ({ onVerified }: AgeVerificationScreenProps
           {
             email: email.toLowerCase(),
             nome: 'Usuário TikTok',
-            whatsapp: '',
+            whatsapp: 'não informado',
             maior_idade: isOver18
           }
         ]);
@@ -50,6 +50,7 @@ export const AgeVerificationScreen = ({ onVerified }: AgeVerificationScreenProps
         if (error.code === '23505') {
           console.log('Email já cadastrado, liberando acesso...');
         } else {
+          console.error('Erro detalhado:', error);
           throw error;
         }
       }

@@ -23,9 +23,8 @@ import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-// Feed inteligente desativado temporariamente
-// import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
-// import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
+import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
+import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 
 
 
@@ -76,16 +75,16 @@ export const TikTokApp = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(true);
 
-  // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
-  // const { 
-  //   videos: intelligentVideos, 
-  //   loading: intelligentLoading,
-  //   currentFeed,
-  //   refreshFeed: refreshIntelligentFeed,
-  //   markVideoAsWatched,
-  //   markModelAsFavorite,
-  //   getUserMemory
-  // } = useIntelligentFeed();
+  // 🧠 FEED INTELIGENTE REATIVADO com correções
+  const { 
+    videos: intelligentVideos, 
+    loading: intelligentLoading,
+    currentFeed,
+    refreshFeed: refreshIntelligentFeed,
+    markVideoAsWatched,
+    markModelAsFavorite,
+    getUserMemory
+  } = useIntelligentFeed();
   
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -365,19 +364,6 @@ export const TikTokApp = () => {
       if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
       if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
 
-      // Carregar todos os vídeos disponíveis
-      console.log('📋 Carregando catálogo de vídeos...');
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false });
-
-      if (videosError) {
-        console.error('❌ Erro ao carregar vídeos:', videosError);
-        throw videosError;
-      }
-
       const { data: modelsData, error: modelsError } = await supabase
         .from('models')
         .select('*')
@@ -387,7 +373,7 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao carregar modelos:', modelsError);
       }
 
-      console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
+      console.log(`📊 Posts recentes: ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)}`);
 
       // Utilitários
       const normalizeUrl = (u: string) => {
@@ -409,26 +395,6 @@ export const TikTokApp = () => {
         }
       };
 
-      const isToday = (iso?: string) => {
-        if (!iso) return false;
-        const d = new Date(iso);
-        const now = new Date();
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-      };
-
-      const interactedModelIds: Set<string> = new Set<string>(
-        (() => {
-          try {
-            const raw = localStorage.getItem('interacted_model_ids');
-            if (!raw) return [] as string[];
-            const arr = JSON.parse(raw);
-            return Array.isArray(arr) ? arr : [];
-          } catch {
-            return [] as string[];
-          }
-        })()
-      );
-
       // 🎯 Processar posts agendados recentes como prioridade
       const processedScheduledPosts = (postsAgendados || [])
         .map((post) => {
@@ -449,6 +415,14 @@ export const TikTokApp = () => {
             visibility: 'public' as const,
             source: 'scheduled_post',
             created_at: post.data_publicacao || post.created_at,
+            likes_count: 0,
+            comments_count: 0,
+            shares_count: 0,
+            views_count: 0,
+            is_active: true,
+            description: post.descricao || '',
+            thumbnail_url: '',
+            profile_link: post.profile_link || '',
             user: model ? {
               id: model.id || post.modelo_id || 'unknown',
               username: model.username || model.name || 'Usuário',
@@ -491,6 +465,14 @@ export const TikTokApp = () => {
             visibility: 'public' as const,
             source: 'main_post',
             created_at: post.created_at,
+            likes_count: 0,
+            comments_count: 0,
+            shares_count: 0,
+            views_count: 0,
+            is_active: true,
+            description: post.descricao || '',
+            thumbnail_url: '',
+            profile_link: (post as any).profile_link || '',
             user: model ? {
               id: model.id || post.modelo_id || 'unknown',
               username: model.username || model.name || 'Usuário',
@@ -514,134 +496,34 @@ export const TikTokApp = () => {
         })
         .filter(Boolean);
 
-      // Normalizar e enriquecer vídeos válidos do catálogo
-      const validVideos = (videosData || [])
-        .map((v) => ({ ...v, video_url: normalizeUrl(v.video_url || '') }))
-        .filter((v) => {
-          const isValid = isValidVideoUrl(v.video_url);
-          if (!isValid && v.video_url) {
-            console.warn(`🚫 URL inválida filtrada: ${v.video_url}`);
-          }
-          return isValid;
-        })
-        .map((video) => {
-          const model = modelsData?.find((m: any) => m.id === video.model_id);
-          return {
-            ...video,
-            user_id: video.model_id || '',
-            music_name: video.title || 'Som Original',
-            visibility: (video.visibility as 'public' | 'premium') || 'public',
-            source: 'catalog_video',
-            user: model
-              ? {
-                  id: model.id,
-                  username: model.username || model.name || 'Usuário',
-                  avatar_url: model.avatar_url || '',
-                  followers_count: model.followers_count || 0,
-                  following_count: 0,
-                  is_online: model.is_live || false,
-                  bio: model.bio || '',
-                  created_at: model.created_at || '',
-                }
-              : {
-                  id: video.model_id || '',
-                  username: video.title || 'Usuário',
-                  avatar_url: '',
-                  followers_count: 0,
-                  following_count: 0,
-                  is_online: false,
-                  bio: '',
-                  created_at: '',
-                },
-          } as any;
-        });
+      // 🧠 Usar feed inteligente para o resto dos vídeos
+      console.log('🧠 Mesclando com feed inteligente...');
+      
+      // Aguardar intelligentVideos carregar se ainda não carregou
+      if (intelligentLoading) {
+        console.log('⏳ Aguardando feed inteligente...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
-      console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${validVideos.length} vídeos válidos`);
+      // 🌟 SEQUÊNCIA FINAL: Posts recentes primeiro + feed inteligente
+      const recentPosts = [...processedScheduledPosts, ...processedMainPosts]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
+      const allContent = [...recentPosts, ...intelligentVideos];
       
       if (allContent.length > 0) {
-        // 🌟 PRIORIDADE MÁXIMA: Posts agendados recentes sempre no topo
-        const recentPosts = [...processedScheduledPosts, ...processedMainPosts]
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-        console.log(`🌟 ${recentPosts.length} posts agendados/principais serão destacados no início`);
-
-        // 1) Organizar vídeos do catálogo por modelo e preparar filas internas
-        const videosByModel: Record<string, any[]> = {};
-        validVideos.forEach((v: any) => {
-          const mid = v.user?.id || v.model_id || '';
-          if (!mid) return;
-          if (!videosByModel[mid]) videosByModel[mid] = [];
-          videosByModel[mid].push(v);
-        });
-
-        // Ordenar fila de cada modelo: hoje primeiro, depois mais recentes
-        Object.keys(videosByModel).forEach((mid) => {
-          videosByModel[mid].sort((a, b) => {
-            const aToday = isToday(a.created_at);
-            const bToday = isToday(b.created_at);
-            if (aToday !== bToday) return aToday ? -1 : 1;
-            const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return bTime - aTime;
-          });
-        });
-
-        // 2) Definir ordem dos modelos (prioriza quem tem vídeos de hoje e com interação)
-        const modelIdsWithVideos = Object.keys(videosByModel);
-        const modelScores: Record<string, number> = {};
-        modelIdsWithVideos.forEach((mid) => {
-          const queue = videosByModel[mid] || [];
-          const hasToday = queue.some((v) => isToday(v.created_at));
-          const interacted = interactedModelIds.has(mid);
-          const modelInfo = modelsData?.find((m: any) => m.id === mid);
-          let score = 0;
-          if (hasToday) score += 1000;
-          if (interacted) score += 500;
-          score += (modelInfo?.followers_count || 0) * 0.001;
-          score += Math.random() * 5;
-          modelScores[mid] = score;
-        });
-
-        const orderedModels = modelIdsWithVideos.sort((a, b) => (modelScores[b] || 0) - (modelScores[a] || 0));
-
-        // 3) Round-robin: 1 vídeo por modelo por ciclo, até esgotar filas
-        const catalogVideos: any[] = [];
-        let remaining = true;
-        while (remaining) {
-          remaining = false;
-          for (const mid of orderedModels) {
-            const queue = videosByModel[mid];
-            if (queue && queue.length) {
-              catalogVideos.push(queue.shift()!);
-              remaining = true;
-            }
-          }
-        }
-
-        // 🎯 SEQUÊNCIA FINAL: Posts recentes primeiro + vídeos rotativos + repetir quando acabar
-        const ordered: any[] = [
-          ...recentPosts,  // Posts agendados recentes sempre no topo
-          ...catalogVideos // Vídeos do catálogo em rotação
-        ];
-
-        // 4) Definir estados (carregamento em blocos)
-        const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
-        setAllAvailableVideos(ordered as any);
+        const firstBlock = allContent.slice(0, VIDEOS_PER_BLOCK);
+        setAllAvailableVideos(allContent as any);
         setVideos(firstBlock as any);
         setCurrentVideoIndex(0);
         setCurrentPage(1);
-        setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
-        setModelOrder(orderedModels);
-        setCycleSize(orderedModels.length);
+        setHasMoreVideos(allContent.length > VIDEOS_PER_BLOCK);
 
-        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
+        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${intelligentVideos.length} vídeos inteligentes = ${allContent.length} total. Exibindo primeiros ${firstBlock.length}.`);
       } else {
-        console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
-        const exampleData = createExampleData();
-        setVideos(exampleData as any);
-        setAllAvailableVideos(exampleData as any);
+        console.warn('⚠️ Nenhum conteúdo válido encontrado');
+        setVideos([]);
+        setAllAvailableVideos([]);
         setHasMoreVideos(false);
       }
       
@@ -654,15 +536,18 @@ export const TikTokApp = () => {
       setLoading(false);
       setIsLoadingMore(false);
     }
-  }, []);
+  }, [intelligentVideos, intelligentLoading, isLoadingMore]);
 
   // Simplificar - não precisamos mais desta função separada
 
-  // useEffect para inicializar o feed
+  // useEffect para inicializar o feed quando intelligentVideos carregar
   useEffect(() => {
+    if (!isVerified || checkingVerification) return;
+    if (intelligentLoading) return; // Esperar carregar
+    
     console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
     initializeFeed();
-  }, []); // Executar apenas uma vez na montagem
+  }, [intelligentVideos, intelligentLoading, isVerified, checkingVerification]); // Reagir quando feed inteligente mudar
 
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {

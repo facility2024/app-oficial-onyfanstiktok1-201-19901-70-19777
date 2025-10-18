@@ -11,13 +11,13 @@ import {
 const DEFAULT_CONFIG: FeedConfig = {
   maxVideos: 30,
   mixRatio: {
-    novos: 0.4,      // 40% vídeos novos
-    favoritos: 0.3,  // 30% modelos favoritas
+    novos: 0.5,      // 50% vídeos novos (aumentado para priorizar agendamentos)
+    favoritos: 0.2,  // 20% modelos favoritas
     aleatorios: 0.3  // 30% aleatórios
   },
   scoreWeights: {
-    novidade: 0.4,
-    afinidade: 0.3,
+    novidade: 0.5,   // Aumentado peso de novidade
+    afinidade: 0.2,
     popularidade: 0.2,
     aleatoriedade: 0.1
   },
@@ -38,16 +38,19 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       const stored = localStorage.getItem('intelligent_feed_memory');
       if (stored) {
         const memory = JSON.parse(stored);
-        // Verificar se é uma nova sessão
+        // Verificar se é uma nova sessão (app fechado/reaberto)
         const lastSession = memory.sessao_atual;
         const timeSinceLastUpdate = Date.now() - new Date(memory.ultima_atualizacao).getTime();
-        const isNewSession = timeSinceLastUpdate > 30 * 60 * 1000; // 30 minutos
+        const isNewSession = timeSinceLastUpdate > 5 * 60 * 1000; // 5 minutos (reduzido para detectar reabertura do app)
         
         if (isNewSession) {
-          // Nova sessão - limpar modelos vistas mas manter histórico
+          console.log('🔄 Nova sessão detectada - resetando feed para vídeos frescos');
+          // Nova sessão - resetar completamente para garantir vídeos novos
           return {
-            ...memory,
-            modelos_vistas: [],
+            videos_vistos: [], // Limpar vídeos vistos
+            modelos_vistas: [], // Limpar modelos vistas
+            modelos_favoritas: memory.modelos_favoritas || [], // Manter favoritos
+            ultimo_video_modelo: {},
             sessao_atual: sessionId.current,
             ultima_atualizacao: new Date().toISOString()
           };
@@ -129,10 +132,19 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     const videoDate = new Date(video.data_postagem).getTime();
     const daysSincePost = (now - videoDate) / (1000 * 60 * 60 * 24);
     
+    // 🎯 BOOST EXTRA para vídeos de HOJE (agendados hoje)
+    const isToday = daysSincePost < 1;
+    const todayBoost = isToday ? 50 : 0; // +50 pontos se for de hoje
+    
     // 1. NOVIDADE (0-100)
-    const novidade = daysSincePost <= finalConfig.novidadeDays
+    let novidade = daysSincePost <= finalConfig.novidadeDays
       ? Math.max(0, 100 - (daysSincePost / finalConfig.novidadeDays * 100))
       : 0;
+    
+    // Se for de hoje, dar score máximo de novidade
+    if (isToday) {
+      novidade = 100;
+    }
     
     // 2. AFINIDADE (0-100)
     const isFavorite = memory.modelos_favoritas.includes(video.modelo_id);
@@ -140,7 +152,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     const afinidade = isFavorite ? 100 : (wasViewed ? 50 : 0);
     
     // 3. POPULARIDADE (0-100)
-    const maxLikes = 1000; // Normalizar baseado em máximo esperado
+    const maxLikes = 1000;
     const maxViews = 10000;
     const popularidade = Math.min(100, 
       ((video.likes_count / maxLikes) * 50) + 
@@ -150,16 +162,17 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     // 4. ALEATORIEDADE (0-100)
     const aleatoriedade = Math.random() * 100;
     
-    // SCORE FINAL
+    // SCORE FINAL (com boost de vídeos de hoje)
     const score = 
       (novidade * finalConfig.scoreWeights.novidade) +
       (afinidade * finalConfig.scoreWeights.afinidade) +
       (popularidade * finalConfig.scoreWeights.popularidade) +
-      (aleatoriedade * finalConfig.scoreWeights.aleatoriedade);
+      (aleatoriedade * finalConfig.scoreWeights.aleatoriedade) +
+      todayBoost; // Boost adicional para vídeos de hoje
     
     // CLASSIFICAR MOTIVO
     let reason: 'novo' | 'favorito' | 'aleatorio' = 'aleatorio';
-    if (daysSincePost <= finalConfig.novidadeDays) {
+    if (isToday || daysSincePost <= finalConfig.novidadeDays) {
       reason = 'novo';
     } else if (isFavorite) {
       reason = 'favorito';
@@ -359,20 +372,40 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     
     init();
     
-    // Monitorar mudanças em tempo real (sem auto-refresh para evitar loops)
+    // 🔄 ATUALIZAR FEED quando usuário volta ao app (comportamento TikTok)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && mounted) {
+        console.log('👁️ App voltou ao foco - atualizando feed...');
+        // Esperar um pouco para garantir que o app está estável
+        setTimeout(() => {
+          if (mounted) refreshFeed();
+        }, 500);
+      }
+    };
+    
+    // Listener para quando usuário volta ao app
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Monitorar mudanças em tempo real
     const channel = supabase
       .channel('feed-updates')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'videos' },
         () => {
           console.log('🔔 Novos vídeos detectados');
-          // Não atualizar automaticamente para evitar loops
+          // Atualizar se o app está visível
+          if (document.visibilityState === 'visible' && mounted) {
+            setTimeout(() => {
+              if (mounted) refreshFeed();
+            }, 1000);
+          }
         }
       )
       .subscribe();
     
     return () => {
       mounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
   }, []); // REMOVIDO refreshFeed das dependências para evitar loop

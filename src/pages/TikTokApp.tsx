@@ -397,7 +397,54 @@ export const TikTokApp = () => {
         setCurrentVideoIndex(0);
         console.log(`✅ ${formattedVideos.length} vídeos configurados no feed`);
       } else {
-        console.warn('⚠️ Nenhum vídeo disponível no feed inteligente');
+        console.warn('⚠️ Nenhum vídeo disponível no feed inteligente, aplicando fallback simples');
+        // Fallback: carregar últimos vídeos ativos diretamente (sem alterar a lógica principal)
+        const { data: modelsData } = await supabase
+          .from('models')
+          .select('*')
+          .eq('is_active', true);
+        const { data: fallback, error: fbErr } = await supabase
+          .from('videos')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (!fbErr && fallback && fallback.length > 0) {
+          const formattedVideos: Video[] = fallback.map((v: any) => {
+            const model = modelsData?.find((m: any) => m.id === v.model_id);
+            return {
+              id: v.id,
+              video_url: v.video_url,
+              thumbnail_url: v.thumbnail_url || '',
+              title: v.title || 'Vídeo sem título',
+              description: v.description || '',
+              likes_count: v.likes_count || 0,
+              comments_count: v.comments_count || 0,
+              shares_count: v.shares_count || 0,
+              views_count: v.views_count || 0,
+              model_id: v.model_id || '',
+              user_id: v.model_id || '',
+              created_at: v.created_at,
+              music_name: 'Som Original',
+              visibility: 'public' as const,
+              is_active: true,
+              user: {
+                id: model?.id || v.model_id || 'unknown',
+                username: model?.username || model?.name || 'Usuário',
+                avatar_url: model?.avatar_url || '',
+                followers_count: model?.followers_count || 0,
+                following_count: 0,
+                is_online: model?.is_live || false,
+                bio: model?.bio || '',
+                created_at: model?.created_at || '',
+              },
+            };
+          });
+          setVideos(formattedVideos);
+          setAllAvailableVideos(formattedVideos);
+          setCurrentVideoIndex(0);
+          console.log(`✅ Fallback aplicado: ${formattedVideos.length} vídeos`);
+        }
       }
       
     } catch (error) {
@@ -1532,7 +1579,7 @@ export const TikTokApp = () => {
     );
   }
 
-  if (!currentVideo || videos.length === 0) {
+  if (isVerified && !checkingVerification && (!currentVideo || videos.length === 0)) {
     console.log('🚫 RENDER: Nenhum vídeo disponível');
     console.log('🚫 RENDER: videos.length:', videos.length);
     console.log('🚫 RENDER: currentVideoIndex:', currentVideoIndex);

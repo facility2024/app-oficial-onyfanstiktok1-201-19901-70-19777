@@ -348,11 +348,12 @@ export const TikTokApp = () => {
         
         // Converter VideoFeedItem para Video
         const formattedVideos: Video[] = intelligentVideos.map(video => {
-          const model = modelsData?.find((m: any) => m.id === video.modelo_id);
+          const modelId = (video as any).modelo_id ?? (video as any).model_id;
+          const model = modelsData?.find((m: any) => m.id === modelId);
           
           return {
-            id: video.video_id,
-            video_url: video.url_bunny,
+            id: (video as any).video_id ?? (video as any).id,
+            video_url: (video as any).url_bunny ?? (video as any).video_url,
             thumbnail_url: video.thumbnail_url || '',
             title: video.title || 'Vídeo sem título',
             description: video.description || '',
@@ -360,9 +361,9 @@ export const TikTokApp = () => {
             comments_count: video.comments_count || 0,
             shares_count: 0,
             views_count: video.views_count || 0,
-            model_id: video.modelo_id || '',
-            user_id: video.modelo_id || '',
-            created_at: video.data_postagem,
+            model_id: modelId || '',
+            user_id: modelId || '',
+            created_at: (video as any).data_postagem ?? (video as any).created_at,
             is_live: false,
             live_video_url: null,
             profile_link_url: null,
@@ -379,7 +380,7 @@ export const TikTokApp = () => {
               bio: model.bio || '',
               created_at: model.created_at || '',
             } : {
-              id: video.modelo_id || 'unknown',
+              id: modelId || 'unknown',
               username: 'Usuário',
               avatar_url: '',
               followers_count: 0,
@@ -1520,7 +1521,7 @@ export const TikTokApp = () => {
 
   // Remove old touch gestures - now handled by Embla
 
-  if (loading) {
+  if (loading && isVerified && !checkingVerification) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center">

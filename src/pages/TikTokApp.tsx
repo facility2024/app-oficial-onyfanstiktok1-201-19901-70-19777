@@ -328,103 +328,49 @@ export const TikTokApp = () => {
     return [];
   };
 
-  // 📱 NOVA LÓGICA: Inicializar feed com primeiro bloco de vídeos + posts agendados
+  // 📱 INICIALIZAR FEED: Usar vídeos do feed inteligente
   const initializeFeed = useCallback(async () => {
-    // Prevenir múltiplas inicializações simultâneas
-    if (isLoadingMore) return;
+    if (isLoadingMore || intelligentLoading) return;
     
     try {
       console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
       setLoading(true);
       
-      // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
-      console.log('🌟 Carregando posts agendados recentes...');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const { data: postsAgendados, error: postsError } = await supabase
-        .from('posts_agendados')
-        .select(`
-          *,
-          modelo:models(*)
-        `)
-        .eq('status', 'publicado')
-        .gte('data_publicacao', today.toISOString())
-        .order('data_publicacao', { ascending: false });
-
-      const { data: postsPrincipais, error: principaisError } = await supabase
-        .from('posts_principais')
-        .select(`
-          *,
-          modelo:models(*)
-        `)
-        .gte('created_at', today.toISOString())
-        .order('created_at', { ascending: false });
-
-      if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
-      if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
-
-      const { data: modelsData, error: modelsError } = await supabase
-        .from('models')
-        .select('*')
-        .eq('is_active', true);
-
-      if (modelsError && (modelsError as any).code !== 'PGRST116') {
-        console.warn('⚠️ Erro ao carregar modelos:', modelsError);
-      }
-
-      console.log(`📊 Posts recentes: ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)}`);
-
-      // Utilitários
-      const normalizeUrl = (u: string) => {
-        const raw = (u || '').trim();
-        if (!raw) return '';
-        if (!/^https?:\/\//i.test(raw) && /^[\w.-]+\.[\w.-]+/.test(raw)) {
-          return `https://${raw}`;
-        }
-        return raw;
-      };
-
-      const isValidVideoUrl = (u: string) => {
-        if (!/^https?:\/\//i.test(u)) return false;
-        try {
-          new URL(u);
-          return true;
-        } catch {
-          return false;
-        }
-      };
-
-      // 🎯 Processar posts agendados recentes como prioridade
-      const processedScheduledPosts = (postsAgendados || [])
-        .map((post) => {
-          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-          const contentUrl = normalizeUrl(post.conteudo_url || '');
+      // Usar vídeos do feed inteligente que já tem toda lógica de priorização
+      if (intelligentVideos && intelligentVideos.length > 0) {
+        console.log(`✅ Feed inteligente carregado: ${intelligentVideos.length} vídeos`);
+        
+        // Buscar modelos para enriquecer os dados
+        const { data: modelsData } = await supabase
+          .from('models')
+          .select('*')
+          .eq('is_active', true);
+        
+        // Converter VideoFeedItem para Video
+        const formattedVideos: Video[] = intelligentVideos.map(video => {
+          const model = modelsData?.find((m: any) => m.id === video.modelo_id);
           
-          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-            return null;
-          }
-
           return {
-            id: `scheduled-${post.id}`,
-            video_url: contentUrl,
-            title: post.titulo || 'Conteúdo Agendado',
-            user_id: post.modelo_id || 'unknown',
-            model_id: post.modelo_id || 'unknown',
-            music_name: 'Novo Conteúdo',
-            visibility: 'public' as const,
-            source: 'scheduled_post',
-            created_at: post.data_publicacao || post.created_at,
-            likes_count: 0,
-            comments_count: 0,
+            id: video.video_id,
+            video_url: video.url_bunny,
+            thumbnail_url: video.thumbnail_url || '',
+            title: video.title || 'Vídeo sem título',
+            description: video.description || '',
+            likes_count: video.likes_count || 0,
+            comments_count: video.comments_count || 0,
             shares_count: 0,
-            views_count: 0,
+            views_count: video.views_count || 0,
+            model_id: video.modelo_id || '',
+            user_id: video.modelo_id || '',
+            created_at: video.data_postagem,
+            is_live: false,
+            live_video_url: null,
+            profile_link_url: null,
+            music_name: 'Som Original',
+            visibility: 'public' as const,
             is_active: true,
-            description: post.descricao || '',
-            thumbnail_url: '',
-            profile_link: post.profile_link || '',
             user: model ? {
-              id: model.id || post.modelo_id || 'unknown',
+              id: model.id,
               username: model.username || model.name || 'Usuário',
               avatar_url: model.avatar_url || '',
               followers_count: model.followers_count || 0,
@@ -433,8 +379,8 @@ export const TikTokApp = () => {
               bio: model.bio || '',
               created_at: model.created_at || '',
             } : {
-              id: post.modelo_id || 'unknown',
-              username: post.modelo_username || 'Usuário',
+              id: video.modelo_id || 'unknown',
+              username: 'Usuário',
               avatar_url: '',
               followers_count: 0,
               following_count: 0,
@@ -442,99 +388,23 @@ export const TikTokApp = () => {
               bio: '',
               created_at: '',
             }
-          } as any;
-        })
-        .filter(Boolean);
-
-      const processedMainPosts = (postsPrincipais || [])
-        .map((post) => {
-          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-          const contentUrl = normalizeUrl(post.conteudo_url || '');
-          
-          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-            return null;
-          }
-
-          return {
-            id: `main-${post.id}`,
-            video_url: contentUrl,
-            title: post.titulo || 'Novo Conteúdo',
-            user_id: post.modelo_id || 'unknown',
-            model_id: post.modelo_id || 'unknown',
-            music_name: 'Novo Conteúdo',
-            visibility: 'public' as const,
-            source: 'main_post',
-            created_at: post.created_at,
-            likes_count: 0,
-            comments_count: 0,
-            shares_count: 0,
-            views_count: 0,
-            is_active: true,
-            description: post.descricao || '',
-            thumbnail_url: '',
-            profile_link: (post as any).profile_link || '',
-            user: model ? {
-              id: model.id || post.modelo_id || 'unknown',
-              username: model.username || model.name || 'Usuário',
-              avatar_url: model.avatar_url || '',
-              followers_count: model.followers_count || 0,
-              following_count: 0,
-              is_online: model.is_live || false,
-              bio: model.bio || '',
-              created_at: model.created_at || '',
-            } : {
-              id: post.modelo_id || 'unknown',
-              username: post.modelo_username || 'Usuário',
-              avatar_url: '',
-              followers_count: 0,
-              following_count: 0,
-              is_online: false,
-              bio: '',
-              created_at: '',
-            }
-          } as any;
-        })
-        .filter(Boolean);
-
-      // 🧠 Usar feed inteligente para o resto dos vídeos
-      console.log('🧠 Mesclando com feed inteligente...');
-      
-      // Aguardar intelligentVideos carregar se ainda não carregou
-      if (intelligentLoading) {
-        console.log('⏳ Aguardando feed inteligente...');
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      // 🌟 SEQUÊNCIA FINAL: Posts recentes primeiro + feed inteligente
-      const recentPosts = [...processedScheduledPosts, ...processedMainPosts]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      const allContent = [...recentPosts, ...intelligentVideos];
-      
-      if (allContent.length > 0) {
-        const firstBlock = allContent.slice(0, VIDEOS_PER_BLOCK);
-        setAllAvailableVideos(allContent as any);
-        setVideos(firstBlock as any);
+          };
+        });
+        
+        setVideos(formattedVideos);
+        setAllAvailableVideos(formattedVideos);
         setCurrentVideoIndex(0);
-        setCurrentPage(1);
-        setHasMoreVideos(allContent.length > VIDEOS_PER_BLOCK);
-
-        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${intelligentVideos.length} vídeos inteligentes = ${allContent.length} total. Exibindo primeiros ${firstBlock.length}.`);
+        console.log(`✅ ${formattedVideos.length} vídeos configurados no feed`);
       } else {
-        console.warn('⚠️ Nenhum conteúdo válido encontrado');
-        setVideos([]);
-        setAllAvailableVideos([]);
-        setHasMoreVideos(false);
+        console.warn('⚠️ Nenhum vídeo disponível no feed inteligente');
       }
       
     } catch (error) {
       console.error('❌ Erro ao inicializar feed:', error);
       setVideos([]);
       setAllAvailableVideos([]);
-      setHasMoreVideos(false);
     } finally {
       setLoading(false);
-      setIsLoadingMore(false);
     }
   }, [intelligentVideos, intelligentLoading, isLoadingMore]);
 
@@ -543,11 +413,12 @@ export const TikTokApp = () => {
   // useEffect para inicializar o feed quando intelligentVideos carregar
   useEffect(() => {
     if (!isVerified || checkingVerification) return;
-    if (intelligentLoading) return; // Esperar carregar
+    if (intelligentLoading) return;
+    if (!intelligentVideos || intelligentVideos.length === 0) return;
     
     console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
     initializeFeed();
-  }, [intelligentVideos, intelligentLoading, isVerified, checkingVerification]); // Reagir quando feed inteligente mudar
+  }, [intelligentVideos, intelligentLoading, isVerified, checkingVerification, initializeFeed]);
 
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {

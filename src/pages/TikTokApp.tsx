@@ -419,7 +419,7 @@ export const TikTokApp = () => {
     
     console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
     initializeFeed();
-  }, [intelligentVideos, intelligentLoading, isVerified, checkingVerification, initializeFeed]);
+  }, [intelligentVideos, intelligentLoading, isVerified, checkingVerification]);
 
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {

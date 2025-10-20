@@ -56,34 +56,68 @@ E o melhor: 100% GRATUITO! 🆓🚀">
 
 Receba todas as atualizações das gatas mais quentes 🔥💃 com conteúdos que Instagram e TikTok não mostram... mas o OnyFans mostra pra você! 😏💯
 E o melhor: 100% GRATUITO! 🆓🚀">
-</head>
+    <script>
+      // Vite modulepreload polyfill for older Safari / in-app browsers
+      const relList = document.createElement('link').relList;
+      if (!relList || !relList.supports || !relList.supports('modulepreload')) {
+        for (const link of document.querySelectorAll('link[rel="modulepreload"]')) processPreload(link);
+        new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+              for (const node of mutation.addedNodes) {
+                if (node.tagName === 'LINK' && node.rel === 'modulepreload') processPreload(node);
+              }
+            }
+          }
+        }).observe(document, { childList: true, subtree: true });
+      }
+      function processPreload(link) {
+        if (link.ep) return;
+        link.ep = true;
+        const fetchOpts = {};
+        if (link.integrity) fetchOpts.integrity = link.integrity;
+        if (link.referrerpolicy) fetchOpts.referrerPolicy = link.referrerpolicy;
+        link.crossOrigin = link.crossOrigin || 'anonymous';
+        fetch(link.href, fetchOpts);
+      }
+    </script>
+  </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then((registration) => {
-            console.log('SW registered: ', registration);
-            // Force activate updated SW immediately to avoid stale caches on custom domain
-            if (registration.waiting) {
-              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (!newWorker) return;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
-                }
+      (function() {
+        const ua = navigator.userAgent || '';
+        const isInAppBrowser = /FBAN|FBAV|Instagram|Line|WeChat|MiuiBrowser|TikTok/i.test(ua);
+        const iOSMatch = ua.match(/OS (\d+)_/);
+        const iOSVersion = iOSMatch ? parseInt(iOSMatch[1], 10) : null;
+        const isOldIOS = iOSVersion && iOSVersion < 13;
+
+        if ('serviceWorker' in navigator && !isInAppBrowser && !isOldIOS) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then((registration) => {
+              console.log('SW registered: ', registration);
+              if (registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
               });
+            }).catch((err) => {
+              console.log('SW registration failed: ', err);
             });
-          }).catch((registrationError) => {
-            console.log('SW registration failed: ', registrationError);
           });
-        });
-      }
+        } else {
+          console.log('SW disabled for this environment (in-app browser or old iOS).');
+        }
+      })();
     </script>
   </body>
 </html>

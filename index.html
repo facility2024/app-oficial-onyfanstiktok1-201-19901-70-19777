@@ -18,6 +18,12 @@ E o melhor: 100% GRATUITO! 🆓🚀">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="OnyTikTok">
     <meta name="format-detection" content="telephone=no">
+
+    <!-- Performance: preconnect/dns-prefetch -->
+    <link rel="preconnect" href="https://tnzvhwapfhkhqjgyiomk.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://tnzvhwapfhkhqjgyiomk.supabase.co">
+    <link rel="preconnect" href="https://tiktokonyfans.b-cdn.net" crossorigin>
+    <link rel="dns-prefetch" href="https://tiktokonyfans.b-cdn.net">
     
     <!-- PWA Icons para iOS -->
     <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/EEzRju6ifVPShqHN5N3r17kGRTP2/uploads/1757985604956-Inserir um título (1).png">
@@ -60,13 +66,24 @@ E o melhor: 100% GRATUITO! 🆓🚀">
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
+          navigator.serviceWorker.register('/sw.js').then((registration) => {
+            console.log('SW registered: ', registration);
+            // Force activate updated SW immediately to avoid stale caches on custom domain
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (!newWorker) return;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
             });
+          }).catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
         });
       }
     </script>

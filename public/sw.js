@@ -1,6 +1,6 @@
-const CACHE_NAME = 'onytiktok-v2-mobile';
-const VIDEO_CACHE = 'video-cache-v2';
-const API_CACHE = 'api-cache-v2';
+const CACHE_NAME = 'onytiktok-v4-mobile';
+const VIDEO_CACHE = 'video-cache-v4';
+const API_CACHE = 'api-cache-v4';
 
 // Optimized cache list for faster mobile startup
 const urlsToCache = [
@@ -12,7 +12,7 @@ const urlsToCache = [
 ];
 
 // Separate cache for assets that can be loaded later
-const ASSETS_CACHE = 'assets-cache-v1';
+const ASSETS_CACHE = 'assets-cache-v2';
 const assetsToCache = [
   '/lovable-uploads/d6487096-3582-4e46-830e-bd94cdfd798f.png',
   '/lovable-uploads/e93594ee-908d-46f2-a59d-4000b64079a4.png',
@@ -242,25 +242,31 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Handle all other requests with cache-first strategy
+  // Handle other requests
+  const isScriptOrStyle = request.destination === 'script' || request.destination === 'style' || /\.(js|css)(\?.*)?$/i.test(url.pathname);
+
+  if (isScriptOrStyle) {
+    // Always prefer fresh JS/CSS to avoid serving stale bundles on custom domains
+    event.respondWith((async () => {
+      try {
+        const networkResponse = await fetch(request, { cache: 'no-store' });
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, networkResponse.clone());
+        return networkResponse;
+      } catch (error) {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        return new Response('Recurso indisponível', { status: 503 });
+      }
+    })());
+    return;
+  }
+
+  // Default: cache-first for static assets
   event.respondWith(
     caches.match(request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(request);
-      })
-      .catch(() => {
-        // Return generic offline response for failed requests
-        return new Response(
-          'Recurso não disponível offline',
-          {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain' }
-          }
-        );
-      })
+      .then(response => response || fetch(request))
+      .catch(() => new Response('Recurso não disponível offline', { status: 503, headers: { 'Content-Type': 'text/plain' } }))
   );
 });
 

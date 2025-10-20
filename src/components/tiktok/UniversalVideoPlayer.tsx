@@ -49,9 +49,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const isAndroid = /Android/.test(navigator.userAgent);
     const isMobile = isIOS || isAndroid;
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
-    
-    // Mobile sempre requer interação do usuário
-    const [manualInteractionRequired, setManualInteractionRequired] = useState(isMobile);
 
     // Configuração inicial do vídeo
     const setupVideo = useCallback(() => {
@@ -146,24 +143,23 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       retryCountRef.current = 0;
     }, [src, setupVideo]);
 
-    // Controlar reprodução
+    // Controlar reprodução - Mobile SEMPRE espera clique do usuário
     useEffect(() => {
       if (!internalRef || !('current' in internalRef) || !internalRef.current || !isReady) return;
 
       const video = internalRef.current;
 
       if (isPlaying) {
-        // No mobile, sempre espera interação manual primeiro
-        if (manualInteractionRequired) {
-          setNeedsUserInteraction(true);
-        } else {
-          attemptPlay();
+        // Mobile: sempre mostrar botão até clicar
+        if (isMobile && needsUserInteraction) {
+          return; // Não faz nada até usuário clicar
         }
+        attemptPlay();
       } else {
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, manualInteractionRequired]);
+    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, isMobile, needsUserInteraction]);
 
     // Controlar mute
     useEffect(() => {
@@ -199,15 +195,15 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       pauseOtherVideos();
     }, [pauseOtherVideos]);
 
-    // Click handler para iniciar reprodução
+    // Click handler para iniciar reprodução - SIMPLES
     const handleUserClick = useCallback(async (event: React.MouseEvent) => {
       event.preventDefault();
+      event.stopPropagation();
       
       if (needsUserInteraction) {
         const success = await attemptPlay();
         if (success) {
           setNeedsUserInteraction(false);
-          setManualInteractionRequired(false);
         }
       }
       

@@ -23,7 +23,7 @@ import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
+import { useTikTokFeed } from '@/hooks/useTikTokFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 
 
@@ -75,16 +75,18 @@ export const TikTokApp = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(true);
 
-  // 🧠 FEED INTELIGENTE REATIVADO com correções
+  // 🎬 FEED TIKTOK com lógica completa de rotação
   const { 
-    videos: intelligentVideos, 
-    loading: intelligentLoading,
-    currentFeed,
-    refreshFeed: refreshIntelligentFeed,
+    videos: feedVideos,
+    loading: feedLoading,
+    currentIndex: feedCurrentIndex,
+    currentVideo: feedCurrentVideo,
+    goToNextVideo: feedGoNext,
+    goToPreviousVideo: feedGoPrev,
     markVideoAsWatched,
-    markModelAsFavorite,
-    getUserMemory
-  } = useIntelligentFeed();
+    refreshFeed,
+    isFeatured
+  } = useTikTokFeed();
   
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -205,14 +207,8 @@ export const TikTokApp = () => {
   }, [emblaApi, currentVideoIndex]);
 
   // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
-  useEffect(() => {
-    const shouldLoadMore = currentVideoIndex >= videos.length - 3; // Carrega quando faltam 3 vídeos
-    
-    if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
-      console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...');
-      loadMoreVideos();
-    }
-  }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos]);
+  // Feed gerenciado automaticamente pelo useTikTokFeed - não precisa mais auto-load manual
+  
   
   useEffect(() => {
     
@@ -317,56 +313,42 @@ export const TikTokApp = () => {
     setCheckingVerification(false);
   }, []);
 
-  // ✅ INICIALIZAR FEED QUANDO O APP MONTA (somente se verificado)
-  useEffect(() => {
-    if (!isVerified || checkingVerification) return;
-    console.log('🎬 Inicializando app...');
-    initializeFeed();
-  }, [isVerified, checkingVerification]); // Executar quando verificação mudar
+  // Feed inicializado automaticamente pelo useTikTokFeed
 
   const createExampleData = (): Video[] => {
     return [];
   };
 
-  // 📱 INICIALIZAR FEED: Usar vídeos do feed inteligente
-  const initializeFeed = useCallback(async () => {
-    if (isLoadingMore || intelligentLoading) return;
+  // 📱 SINCRONIZAR FEED TIKTOK COM ESTADO LOCAL
+  useEffect(() => {
+    if (!isVerified || checkingVerification || feedLoading) return;
     
-    try {
-      console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
-      setLoading(true);
+    if (feedVideos.length > 0) {
+      console.log(`✅ Feed TikTok carregado: ${feedVideos.length} vídeos`);
       
-      // Usar vídeos do feed inteligente que já tem toda lógica de priorização
-      if (intelligentVideos && intelligentVideos.length > 0) {
-        console.log(`✅ Feed inteligente carregado: ${intelligentVideos.length} vídeos`);
-        
-        // Buscar modelos para enriquecer os dados
+      // Buscar dados dos modelos
+      const syncWithModels = async () => {
         const { data: modelsData } = await supabase
           .from('models')
           .select('*')
           .eq('is_active', true);
         
-        // Converter VideoFeedItem para Video
-        const formattedVideos: Video[] = intelligentVideos.map(video => {
-          const modelId = (video as any).modelo_id ?? (video as any).model_id;
-          const model = modelsData?.find((m: any) => m.id === modelId);
-          
+        // Converter para formato Video do app
+        const formattedVideos: Video[] = feedVideos.map(v => {
+          const model = modelsData?.find((m: any) => m.id === v.model_id);
           return {
-            id: (video as any).video_id ?? (video as any).id,
-            video_url: (video as any).url_bunny ?? (video as any).video_url,
-            thumbnail_url: video.thumbnail_url || '',
-            title: video.title || 'Vídeo sem título',
-            description: video.description || '',
-            likes_count: video.likes_count || 0,
-            comments_count: video.comments_count || 0,
+            id: v.id,
+            video_url: v.video_url,
+            thumbnail_url: v.thumbnail_url,
+            title: v.title,
+            description: v.description,
+            likes_count: v.likes_count,
+            comments_count: v.comments_count,
             shares_count: 0,
-            views_count: video.views_count || 0,
-            model_id: modelId || '',
-            user_id: modelId || '',
-            created_at: (video as any).data_postagem ?? (video as any).created_at,
-            is_live: false,
-            live_video_url: null,
-            profile_link_url: null,
+            views_count: v.views_count,
+            model_id: v.model_id,
+            user_id: v.model_id,
+            created_at: v.created_at,
             music_name: 'Som Original',
             visibility: 'public' as const,
             is_active: true,
@@ -380,168 +362,27 @@ export const TikTokApp = () => {
               bio: model.bio || '',
               created_at: model.created_at || '',
             } : {
-              id: modelId || 'unknown',
+              id: v.model_id,
               username: 'Usuário',
-              avatar_url: '',
+              avatar_url: v.thumbnail_url,
               followers_count: 0,
               following_count: 0,
               is_online: false,
               bio: '',
-              created_at: '',
-            }
+              created_at: v.created_at,
+            },
           };
         });
-        
+
         setVideos(formattedVideos);
         setAllAvailableVideos(formattedVideos);
-        setCurrentVideoIndex(0);
-        console.log(`✅ ${formattedVideos.length} vídeos configurados no feed`);
-      } else {
-        console.warn('⚠️ Nenhum vídeo disponível no feed inteligente, aplicando fallback simples');
-        // Fallback: carregar últimos vídeos ativos diretamente (sem alterar a lógica principal)
-        const { data: modelsData } = await supabase
-          .from('models')
-          .select('*')
-          .eq('is_active', true);
-        const { data: fallback, error: fbErr } = await supabase
-          .from('videos')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(20);
-        if (!fbErr && fallback && fallback.length > 0) {
-          const formattedVideos: Video[] = fallback.map((v: any) => {
-            const model = modelsData?.find((m: any) => m.id === v.model_id);
-            return {
-              id: v.id,
-              video_url: v.video_url,
-              thumbnail_url: v.thumbnail_url || '',
-              title: v.title || 'Vídeo sem título',
-              description: v.description || '',
-              likes_count: v.likes_count || 0,
-              comments_count: v.comments_count || 0,
-              shares_count: v.shares_count || 0,
-              views_count: v.views_count || 0,
-              model_id: v.model_id || '',
-              user_id: v.model_id || '',
-              created_at: v.created_at,
-              music_name: 'Som Original',
-              visibility: 'public' as const,
-              is_active: true,
-              user: {
-                id: model?.id || v.model_id || 'unknown',
-                username: model?.username || model?.name || 'Usuário',
-                avatar_url: model?.avatar_url || '',
-                followers_count: model?.followers_count || 0,
-                following_count: 0,
-                is_online: model?.is_live || false,
-                bio: model?.bio || '',
-                created_at: model?.created_at || '',
-              },
-            };
-          });
-          setVideos(formattedVideos);
-          setAllAvailableVideos(formattedVideos);
-          setCurrentVideoIndex(0);
-          console.log(`✅ Fallback aplicado: ${formattedVideos.length} vídeos`);
-        }
-      }
+        setCurrentVideoIndex(feedCurrentIndex);
+        setLoading(false);
+      };
       
-    } catch (error) {
-      console.error('❌ Erro ao inicializar feed:', error);
-      setVideos([]);
-      setAllAvailableVideos([]);
-    } finally {
-      setLoading(false);
+      syncWithModels();
     }
-  }, [intelligentVideos, intelligentLoading, isLoadingMore]);
-
-  // Simplificar - não precisamos mais desta função separada
-
-  // useEffect para inicializar o feed quando intelligentVideos carregar
-  useEffect(() => {
-    if (!isVerified || checkingVerification) return;
-    if (intelligentLoading) return;
-    if (!intelligentVideos || intelligentVideos.length === 0) return;
-    
-    console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
-    initializeFeed();
-  }, [intelligentVideos, intelligentLoading, isVerified, checkingVerification]);
-
-  // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
-  useEffect(() => {
-    if (!pendingRefresh || allAvailableVideos.length === 0) return;
-    
-    // Quando chegar no último vídeo, reiniciar com conteúdo atualizado
-    const isLastVideo = currentVideoIndex >= allAvailableVideos.length - 1;
-    if (isLastVideo) {
-      console.log('🔄 Fim do ciclo detectado - recarregando com conteúdo atualizado...');
-      setTimeout(() => {
-        initializeFeed();
-        setPendingRefresh(false);
-      }, 1000); // Pequeno delay para não interromper a visualização
-    }
-  }, [pendingRefresh, currentVideoIndex, allAvailableVideos.length, initializeFeed]);
-  
-  // Auto-reload quando acabar os vídeos (volta para o início com atualizações)
-  useEffect(() => {
-    if (videos.length === 0 || allAvailableVideos.length === 0) return;
-    
-    const isEndOfContent = currentVideoIndex >= allAvailableVideos.length - 2;
-    if (isEndOfContent && !isLoadingMore) {
-      console.log('🎬 Chegando ao fim - preparando próximo ciclo com atualizações...');
-      setPendingRefresh(true);
-    }
-  }, [currentVideoIndex, allAvailableVideos.length, videos.length, isLoadingMore]);
-
-  // Remover função de organização complexa - usar abordagem mais simples
-  
-  // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
-  const loadMoreVideos = useCallback(async () => {
-    if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) return;
-    
-    try {
-      setIsLoadingMore(true);
-      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`);
-
-      // Filtrar vídeos ainda não carregados
-      const unusedVideos = allAvailableVideos.filter(v => 
-        !videos.some(existing => existing.id === v.id)
-      );
-
-      if (unusedVideos.length === 0) {
-        console.log('🔄 Fim do conteúdo - recarregando com atualizações...');
-        setHasMoreVideos(false);
-        // Recarregar feed automaticamente para buscar novos posts agendados
-        setTimeout(() => {
-          console.log('🎬 Reiniciando ciclo com conteúdo atualizado...');
-          initializeFeed();
-        }, 2000);
-        return;
-      }
-
-      // Pegar próximo bloco
-      const nextBlock = unusedVideos.slice(0, VIDEOS_PER_BLOCK);
-      
-      if (nextBlock.length === 0) {
-        setHasMoreVideos(false);
-        return;
-      }
-
-      // Adicionar ao feed
-      setVideos(prev => [...prev, ...nextBlock]);
-      setCurrentPage(prev => prev + 1);
-      setHasMoreVideos(unusedVideos.length > VIDEOS_PER_BLOCK);
-      
-      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total: ${videos.length + nextBlock.length}`);
-
-    } catch (error) {
-      console.error('❌ Erro ao carregar mais vídeos:', error);
-      setHasMoreVideos(false);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
+  }, [isVerified, checkingVerification, feedLoading, feedVideos, feedCurrentIndex]);
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {
     try {
@@ -1591,7 +1432,7 @@ export const TikTokApp = () => {
           <p className="text-xl mb-4">Nenhum vídeo disponível</p>
           <p className="text-gray-400">Aguarde novos conteúdos!</p>
           <Button 
-            onClick={initializeFeed} 
+            onClick={refreshFeed} 
             className="mt-4 bg-primary hover:bg-primary/80"
           >
             Recarregar

@@ -16,12 +16,6 @@ export const MobileOptimizer = () => {
         // Reduzir qualidade de animações para melhor performance
         document.documentElement.style.setProperty('--animation-speed', '0.2s');
         
-        // Preload crítico apenas
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'style';
-        link.href = '/static/css/main.css';
-        document.head.appendChild(link);
         
       // Otimizar viewport para dispositivos mobile
         const viewport = document.querySelector('meta[name="viewport"]');

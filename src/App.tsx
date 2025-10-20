@@ -3,13 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 
-// Lazy load components for better mobile performance
-const PWAInstallPrompt = lazy(() => import("@/components/PWAInstallPrompt").then(m => ({ default: m.PWAInstallPrompt })));
-const OfflineHandler = lazy(() => import("@/components/OfflineHandler").then(m => ({ default: m.OfflineHandler })));
-const Index = lazy(() => import("./pages/Index"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// Direct imports to improve compatibility on older mobile browsers
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
+import { OfflineHandler } from '@/components/OfflineHandler';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({

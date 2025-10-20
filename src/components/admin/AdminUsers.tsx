@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, UserPlus, Activity, MapPin, Crown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, UserPlus, Activity, MapPin, Crown, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
 import { 
@@ -28,6 +30,8 @@ export const AdminUsers = () => {
   const [premiumUsers, setPremiumUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPremiumPage, setCurrentPremiumPage] = useState(1);
+  const [models, setModels] = useState([]);
+  const [currentModelsPage, setCurrentModelsPage] = useState(1);
   const usersPerPage = 20;
 
   const formatNumber = (num) => {
@@ -78,9 +82,8 @@ export const AdminUsers = () => {
         // Buscar dados dos modelos para fallback
         const { data: modelsData } = await supabase
           .from('models')
-          .select('name, username, followers_count, is_verified, category, created_at')
-          .order('followers_count', { ascending: false })
-          .limit(5);
+          .select('id, name, username, followers_count, is_verified, category, created_at')
+          .order('followers_count', { ascending: false });
 
         setUserStats([
           { label: 'Total de Usuários', value: formatNumber(totalUsers || 0), icon: Users, color: 'text-primary' },
@@ -123,7 +126,9 @@ export const AdminUsers = () => {
 
         // Processar dados dos modelos como fallback
         const processedModels = modelsData?.map(model => ({
+          id: model.id,
           name: model.name || model.username || 'Modelo',
+          username: model.username,
           email: 'modelo@app.com',
           whatsapp: 'Não informado',
           location: 'Brasil',
@@ -135,6 +140,8 @@ export const AdminUsers = () => {
           category: model.category,
           created_at: model.created_at
         })) || [];
+
+        setModels(processedModels);
 
         // Usar dados de gamificação como priority, depois fallback para modelos
         setTopUsers(gamificationUsersData?.length > 0 ? processedGamificationUsers : processedModels);
@@ -159,6 +166,48 @@ export const AdminUsers = () => {
     const interval = setInterval(fetchUserData, 60000);
     return () => clearInterval(interval);
   }, [realTimeStats]);
+
+  // Função para excluir modelo e seus vídeos
+  const handleDeleteModel = async (modelId: string, modelName: string) => {
+    const confirmDelete = window.confirm(
+      `⚠️ ATENÇÃO: Você está prestes a excluir a modelo "${modelName}" e TODOS os seus vídeos.\n\nEsta ação é IRREVERSÍVEL!\n\nDeseja continuar?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      toast.loading('Excluindo modelo e vídeos...');
+
+      // 1. Excluir todos os vídeos da modelo
+      // @ts-ignore
+      const videosDelete = await supabase
+        .from('videos')
+        .delete()
+        .eq('user_id', modelId);
+
+      if (videosDelete.error) throw videosDelete.error;
+
+      // 2. Excluir a modelo
+      // @ts-ignore
+      const modelDelete = await supabase
+        .from('models')
+        .delete()
+        .eq('id', modelId);
+
+      if (modelDelete.error) throw modelDelete.error;
+
+      toast.dismiss();
+      toast.success(`Modelo "${modelName}" e seus vídeos foram excluídos com sucesso!`);
+
+      // Atualizar lista de modelos
+      setModels((prev: any) => prev.filter((m: any) => m.id !== modelId));
+
+    } catch (error) {
+      toast.dismiss();
+      console.error('Erro ao excluir modelo:', error);
+      toast.error('Erro ao excluir modelo. Verifique o console para mais detalhes.');
+    }
+  };
 
   // Função para calcular paginação
   const getPaginatedData = (data, page) => {
@@ -358,63 +407,79 @@ export const AdminUsers = () => {
         </CardContent>
       </Card>
 
-      {/* Top Models Table - Dados Reais */}
-      {bonusUsers.length === 0 && (
-        <Card className="bg-gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-primary" />
-              <span>Top Modelos (Dados Reais)</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Modelo</th>
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">Localização</th>
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Seguidores</th>
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+      {/* Tabela de Modelos Cadastrados */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Users className="w-5 h-5 text-primary" />
+            <span>Modelos Cadastrados ({models.length})</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Modelo</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">Username</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Seguidores</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getPaginatedData(models, currentModelsPage).length > 0 ? getPaginatedData(models, currentModelsPage).map((model, index) => (
+                  <tr key={model.id} className="border-b border-border/50 hover:bg-card-hover transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                          {model.name.charAt(0)}
+                        </div>
+                        <div>
+                          <span className="font-medium text-foreground">{model.name}</span>
+                          {model.verified && <span className="ml-1 text-accent">✓</span>}
+                          <div className="text-xs text-muted-foreground">
+                            Modelo cadastrado
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
+                      <span className="font-mono text-sm">@{model.username}</span>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      <span className="font-medium">{model.spent}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge variant={model.status === 'premium' ? 'default' : 'secondary'}>
+                        {model.status === 'premium' ? 'Premium' : 'Standard'}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteModel(model.id, model.name)}
+                        className="flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span className="hidden sm:inline">Excluir</span>
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {topUsers.map((user, index) => (
-                    <tr key={index} className="border-b border-border/50 hover:bg-card-hover transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-                            {user.name.charAt(0)}
-                          </div>
-                          <div>
-                            <span className="font-medium text-foreground">{user.name}</span>
-                            {user.verified && <span className="ml-1 text-accent">✓</span>}
-                            <div className="text-xs text-muted-foreground">
-                              {user.type === 'model' ? 'Criado via painel' : 'Usuário padrão'}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="w-3 h-3" />
-                          <span className="text-sm">{user.location}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-success">{user.spent}</td>
-                      <td className="py-3 px-4">
-                        <Badge variant={user.status === 'premium' ? 'default' : 'secondary'}>
-                          {user.status === 'premium' ? 'Premium' : 'Standard'}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                )) : (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                      Nenhum modelo cadastrado ainda
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {renderPagination(models.length, currentModelsPage, setCurrentModelsPage)}
+        </CardContent>
+      </Card>
 
       {/* User Activity Map */}
       <Card className="bg-gradient-card border-border/50">

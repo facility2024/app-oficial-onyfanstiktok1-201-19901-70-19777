@@ -321,9 +321,10 @@ export const TikTokApp = () => {
 
   // 📱 SINCRONIZAR FEED TIKTOK COM ESTADO LOCAL
   useEffect(() => {
-    if (!isVerified || checkingVerification || feedLoading) return;
+    if (checkingVerification) return;
     
-    if (feedVideos.length > 0) {
+    // Sincronizar mesmo que ainda não verificado (tela de verificação aparece separadamente)
+    if (feedVideos.length > 0 && !feedLoading) {
       console.log(`✅ Feed TikTok carregado: ${feedVideos.length} vídeos`);
       
       // Buscar dados dos modelos
@@ -381,8 +382,12 @@ export const TikTokApp = () => {
       };
       
       syncWithModels();
+    } else if (!feedLoading && feedVideos.length === 0) {
+      // Se feed carregou mas está vazio, tentar recarregar
+      console.warn('⚠️ Feed vazio, tentando recarregar...');
+      setTimeout(() => refreshFeed(), 1000);
     }
-  }, [isVerified, checkingVerification, feedLoading, feedVideos, feedCurrentIndex]);
+  }, [checkingVerification, feedLoading, feedVideos, feedCurrentIndex, refreshFeed]);
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {
     try {

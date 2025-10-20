@@ -23,18 +23,13 @@ export const MobileOptimizer = () => {
         link.href = '/static/css/main.css';
         document.head.appendChild(link);
         
-        // Otimizar viewport para dispositivos mobile
+      // Otimizar viewport para dispositivos mobile
         const viewport = document.querySelector('meta[name="viewport"]');
         if (viewport) {
           viewport.setAttribute('content', 
-            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+            'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover'
           );
         }
-
-        // Desabilitar seleção de texto desnecessária em mobile
-        document.body.style.userSelect = 'none';
-        document.body.style.webkitUserSelect = 'none';
-        document.body.style.touchAction = 'manipulation';
 
         // Otimizar scrolling para iOS
         (document.body.style as any).webkitOverflowScrolling = 'touch';
@@ -66,9 +61,6 @@ export const MobileOptimizer = () => {
     return () => {
       // Cleanup
       if (isMobile) {
-        document.body.style.userSelect = '';
-        document.body.style.webkitUserSelect = '';
-        document.body.style.touchAction = '';
         (document.body.style as any).webkitOverflowScrolling = '';
       }
     };

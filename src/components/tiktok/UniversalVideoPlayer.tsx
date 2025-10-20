@@ -37,9 +37,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const [hasError, setHasError] = useState(false);
     const [needsUserInteraction, setNeedsUserInteraction] = useState(true);
     const [isReady, setIsReady] = useState(false);
+    const [hasStarted, setHasStarted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const retryCountRef = useRef(0);
     const maxRetries = 3;
+    const bufferingTimerRef = useRef<number | null>(null);
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -59,7 +61,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Configurações básicas para todos os dispositivos
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
-      video.preload = 'metadata';
+      video.preload = isMobile ? 'none' : 'metadata';
       video.muted = true;
       video.autoplay = false;
       video.loop = true;
@@ -76,7 +78,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
       video.style.willChange = 'transform';
-    }, [internalRef, isIOS]);
+    }, [internalRef, isIOS, isMobile]);
 
     // Pausar outros vídeos quando este for reproduzido
     const pauseOtherVideos = useCallback(() => {
@@ -98,16 +100,28 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = internalRef.current;
       
       try {
+        // Iniciar indicador de buffering somente durante tentativa de play
+        setIsBuffering(true);
+        if (bufferingTimerRef.current) window.clearTimeout(bufferingTimerRef.current);
+        bufferingTimerRef.current = window.setTimeout(() => {
+          setIsBuffering(false); // Não travar spinner no mobile
+        }, 5000);
+        
         pauseOtherVideos();
+        // Em mobile com preload none, garantir load antes de play
+        if (video.preload === 'none') video.load();
         video.currentTime = 0;
         await video.play();
         setNeedsUserInteraction(false);
         setHasError(false);
-        retryCountRef.current = 0;
+        setHasStarted(true);
+        if (bufferingTimerRef.current) window.clearTimeout(bufferingTimerRef.current);
+        setIsBuffering(false);
         if (onPlay) onPlay();
         return true;
       } catch (error) {
         console.warn('Erro ao reproduzir vídeo:', error);
+        if (bufferingTimerRef.current) window.clearTimeout(bufferingTimerRef.current);
         
         // Tentar novamente com estratégias diferentes
         if (retryCountRef.current < maxRetries) {
@@ -129,6 +143,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         }
         
         setHasError(true);
+        setIsBuffering(false);
         if (onError) onError(error);
         return false;
       }
@@ -140,6 +155,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setIsReady(false);
       setHasError(false);
       setNeedsUserInteraction(true);
+      setHasStarted(false);
       retryCountRef.current = 0;
     }, [src, setupVideo]);
 
@@ -183,17 +199,17 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     }, [onError]);
 
     const handleWaiting = useCallback(() => {
-      setIsBuffering(true);
-    }, []);
+      if (hasStarted) setIsBuffering(true);
+    }, [hasStarted]);
 
     const handleCanPlay = useCallback(() => {
       setIsBuffering(false);
     }, []);
 
     const handleLoadStart = useCallback(() => {
-      setIsBuffering(true);
+      setIsBuffering(!needsUserInteraction);
       pauseOtherVideos();
-    }, [pauseOtherVideos]);
+    }, [pauseOtherVideos, needsUserInteraction]);
 
     // Click handler para iniciar reprodução - SIMPLES
     const handleUserClick = useCallback(async (event: React.MouseEvent) => {
@@ -242,7 +258,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           loop={true}
           muted={isMuted}
           playsInline={true}
-          preload="metadata"
+          preload={isMobile ? 'none' : 'metadata'}
           controls={false}
           onClick={handleUserClick}
           onLoadedData={handleLoadedData}
@@ -250,6 +266,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
           onLoadStart={handleLoadStart}
+          onPlaying={() => setIsBuffering(false)}
           crossOrigin="anonymous"
         />
         
@@ -266,8 +283,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           </div>
         )}
         
-        {/* Indicador de carregamento */}
-        {isBuffering && !hasError && (
+        {isBuffering && !hasError && !needsUserInteraction && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>

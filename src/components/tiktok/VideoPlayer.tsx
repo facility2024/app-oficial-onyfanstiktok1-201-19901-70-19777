@@ -43,7 +43,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isInView, setIsInView] = useState(false);
-    const [isBuffering, setIsBuffering] = useState(true);
+    const [isBuffering, setIsBuffering] = useState(false);
 
     const [offer, setOffer] = useState<Offer | null>(null);
     const [showOffer, setShowOffer] = useState(false);
@@ -340,6 +340,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             key={video.id}
             ref={ref}
             src={(video as any).video_url}
+            poster={(video as any).thumbnail_url || undefined}
             isPlaying={isPlaying}
             isMuted={isMuted}
             className={locked ? 'blur-sm' : ''}
@@ -437,11 +438,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {isInView && isBuffering && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-            <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full" />
-          </div>
-        )}
+        {/* Spinner removido (UniversalVideoPlayer já exibe) */}
 
         {isInView && <VideoProgressBar videoRef={ref} />}
       </div>

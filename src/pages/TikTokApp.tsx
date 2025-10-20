@@ -120,6 +120,21 @@ export const TikTokApp = () => {
   const { isPremium, isContentUnlocked, checkPremiumStatus } = usePremiumStatus();
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+  // Verifica se um vídeo é novo (criado após a última sessão)
+  const isVideoNew = (video: Video): boolean => {
+    try {
+      const lastSession = localStorage.getItem('last_app_session');
+      if (!lastSession) return false;
+      
+      const videoDate = new Date(video.created_at).getTime();
+      const sessionDate = new Date(lastSession).getTime();
+      
+      return videoDate > sessionDate;
+    } catch {
+      return false;
+    }
+  };
+
   // Registra modelos com os quais o usuário interagiu (para recomendações)
   const ensureInteractedModel = (modelId?: string) => {
     try {
@@ -320,7 +335,22 @@ export const TikTokApp = () => {
   // ✅ INICIALIZAR FEED QUANDO O APP MONTA
   useEffect(() => {
     console.log('🎬 Inicializando app...');
+    
+    // Salvar timestamp da sessão atual para marcar vídeos novos
+    const now = new Date().toISOString();
+    const lastSession = localStorage.getItem('last_app_session');
+    if (!lastSession) {
+      // Primeira vez no app - marca timestamp de 24h atrás para mostrar vídeos recentes
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem('last_app_session', oneDayAgo);
+    }
+    
     initializeFeed();
+    
+    // Atualizar timestamp ao fechar/sair
+    return () => {
+      localStorage.setItem('last_app_session', new Date().toISOString());
+    };
   }, []); // Executar apenas uma vez na montagem
 
   const createExampleData = (): Video[] => {
@@ -1900,17 +1930,9 @@ export const TikTokApp = () => {
                   onDoubleClick={toggleLike}
                 />
                 
-                {/* 🆕 Badge de Destaque - Mobile */}
-                {(video as any)?.isHighlighted && index === currentVideoIndex && (
-                  <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                    ✨ NOVO
-                  </div>
-                )}
-
-
                 {/* Bottom Info - only show for current video */}
                 {index === currentVideoIndex && (
-                  <BottomInfo video={video} />
+                  <BottomInfo video={video} isNew={isVideoNew(video)} />
                 )}
               </div>
             ))}
@@ -2088,10 +2110,11 @@ export const TikTokApp = () => {
               </div>
             </div>
 
-              {/* 🆕 Badge de Destaque */}
-              {(currentVideo as any)?.isHighlighted && (
-                <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                  ✨ NOVO
+              {/* 🆕 Badge "Novo" para vídeos recém-adicionados */}
+              {isVideoNew(currentVideo) && (
+                <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
+                  <span className="text-base">✨</span>
+                  <span>NOVO</span>
                 </div>
               )}
 

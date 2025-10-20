@@ -86,6 +86,24 @@ export const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Deep link: inicializa a aba a partir de ?tab=
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const valid = ['home','app','posts','users','gamification','videos','money','settings','documentation'];
+    if (tab && valid.includes(tab)) {
+      setActiveSection(tab);
+    }
+  }, []);
+
+  // Mantém a URL em sincronia com a aba atual
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', activeSection);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [activeSection]);
+
   const handleLogin = (loggedInUser: SupabaseUser) => {
     setUser(loggedInUser);
   };

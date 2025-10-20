@@ -14,13 +14,13 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
   const { trackNavigation } = useAnalytics();
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home, shortLabel: '🏠' },
-    { id: 'app', label: 'App', icon: Play, shortLabel: '🎵' },
     { id: 'posts', label: 'Postagens', icon: BookOpen, shortLabel: '📝' },
     { id: 'users', label: 'Usuários', icon: Users, shortLabel: '👥' },
     { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
+    { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },
+    { id: 'app', label: 'App', icon: Play, shortLabel: '🎵' },
     { id: 'videos', label: 'Vídeos', icon: Play, shortLabel: '🎬' },
     { id: 'money', label: 'Financeiro', icon: DollarSign, shortLabel: '💰' },
-    { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },
     { id: 'documentation', label: 'Documentação', icon: BookOpen, shortLabel: '📘' },
   ];
 

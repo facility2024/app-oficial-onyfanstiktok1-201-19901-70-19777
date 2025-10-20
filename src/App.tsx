@@ -10,6 +10,7 @@ const PWAInstallPrompt = lazy(() => import("@/components/PWAInstallPrompt").then
 const OfflineHandler = lazy(() => import("@/components/OfflineHandler").then(m => ({ default: m.OfflineHandler })));
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminDashboard = lazy(() => import("@/components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -71,12 +72,17 @@ const App = () => (
               <Index />
             </Suspense>
           } />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <NotFound />
-            </Suspense>
-          } />
+{/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+<Route path="/admin" element={
+  <Suspense fallback={<ComponentFallback />}>
+    <AdminDashboard />
+  </Suspense>
+} />
+<Route path="*" element={
+  <Suspense fallback={<ComponentFallback />}>
+    <NotFound />
+  </Suspense>
+} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

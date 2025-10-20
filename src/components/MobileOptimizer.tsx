@@ -33,28 +33,7 @@ export const MobileOptimizer = () => {
 
       optimizeMobile();
 
-      // Recuperação automática se a tela ficar em branco por SW antigo
-      setTimeout(() => {
-        try {
-          const root = document.getElementById('root');
-          const alreadyTried = sessionStorage.getItem('sw_recovery_done');
-          if (root && root.childElementCount === 0 && !alreadyTried) {
-            sessionStorage.setItem('sw_recovery_done', '1');
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations()
-                .then((regs) => {
-                  regs.forEach((r) => r.unregister());
-                  if (window.caches) {
-                    caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).finally(() => location.reload());
-                  } else {
-                    location.reload();
-                  }
-                })
-                .catch(() => location.reload());
-            }
-          }
-        } catch {}
-      }, 2500);
+      // Removido auto-recovery para evitar conflitos com a montagem do React no mobile
 
       // Listener para Service Worker
       if ('serviceWorker' in navigator) {

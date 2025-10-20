@@ -285,7 +285,20 @@ export const TikTokApp = () => {
           if (userId) {
             await trackView(currentVideo.id, userId);
             ensureInteractedModel(userId);
-            // markVideoAsWatched desativado temporariamente
+            
+            // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO
+            if ((currentVideo as any).isHighlighted) {
+              try {
+                const stored = localStorage.getItem('viewed_highlight_posts');
+                const viewedSet = new Set(stored ? JSON.parse(stored) : []);
+                viewedSet.add(currentVideo.id);
+                localStorage.setItem('viewed_highlight_posts', JSON.stringify([...viewedSet]));
+                console.log('✨ Post em destaque marcado como visualizado:', currentVideo.id);
+              } catch (error) {
+                console.warn('⚠️ Erro ao salvar post visualizado:', error);
+              }
+            }
+            
             console.log('✅ VIEW registrada com sucesso!');
           }
         } catch (error) {
@@ -327,6 +340,19 @@ export const TikTokApp = () => {
       console.log('🌟 Carregando posts agendados recentes...');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      // 🆕 SISTEMA DE DESTAQUE: Carregar posts já visualizados
+      const getViewedPosts = (): Set<string> => {
+        try {
+          const stored = localStorage.getItem('viewed_highlight_posts');
+          return new Set(stored ? JSON.parse(stored) : []);
+        } catch {
+          return new Set();
+        }
+      };
+      
+      const viewedPosts = getViewedPosts();
+      console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
       
       const { data: postsAgendados, error: postsError } = await supabase
         .from('posts_agendados')
@@ -416,6 +442,7 @@ export const TikTokApp = () => {
 
       // 🎯 Processar posts agendados recentes como prioridade
       const processedScheduledPosts = (postsAgendados || [])
+        .filter((post) => !viewedPosts.has(`scheduled-${post.id}`)) // 🆕 Filtrar já visualizados
         .map((post) => {
           const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
           const contentUrl = normalizeUrl(post.conteudo_url || '');
@@ -433,6 +460,7 @@ export const TikTokApp = () => {
             music_name: 'Novo Conteúdo',
             visibility: 'public' as const,
             source: 'scheduled_post',
+            isHighlighted: true, // 🆕 Marcar como destaque
             created_at: post.data_publicacao || post.created_at,
             user: model ? {
               id: model.id || post.modelo_id || 'unknown',
@@ -458,6 +486,7 @@ export const TikTokApp = () => {
         .filter(Boolean);
 
       const processedMainPosts = (postsPrincipais || [])
+        .filter((post) => !viewedPosts.has(`main-${post.id}`)) // 🆕 Filtrar já visualizados
         .map((post) => {
           const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
           const contentUrl = normalizeUrl(post.conteudo_url || '');
@@ -475,6 +504,7 @@ export const TikTokApp = () => {
             music_name: 'Novo Conteúdo',
             visibility: 'public' as const,
             source: 'main_post',
+            isHighlighted: true, // 🆕 Marcar como destaque
             created_at: post.created_at,
             user: model ? {
               id: model.id || post.modelo_id || 'unknown',
@@ -1869,6 +1899,13 @@ export const TikTokApp = () => {
                   onPrevious={prevVideo}
                   onDoubleClick={toggleLike}
                 />
+                
+                {/* 🆕 Badge de Destaque - Mobile */}
+                {(video as any)?.isHighlighted && index === currentVideoIndex && (
+                  <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse">
+                    ✨ NOVO
+                  </div>
+                )}
 
 
                 {/* Bottom Info - only show for current video */}
@@ -2051,7 +2088,14 @@ export const TikTokApp = () => {
               </div>
             </div>
 
-            {/* Desktop Side Menu - Posicionado conforme imagem */}
+              {/* 🆕 Badge de Destaque */}
+              {(currentVideo as any)?.isHighlighted && (
+                <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse">
+                  ✨ NOVO
+                </div>
+              )}
+
+              {/* Desktop Side Menu - Posicionado conforme imagem */}
             <div className="absolute top-1/3 -right-16 transform -translate-y-1/2 flex flex-col justify-center space-y-4 z-30">{/* Subido para alinhar com altura do vídeo */}
               <SideMenu
                 video={currentVideo}

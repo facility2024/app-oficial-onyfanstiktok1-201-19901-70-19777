@@ -101,7 +101,7 @@ E o melhor: 100% GRATUITO! 🆓🚀">
         } catch (e) {}
       })();
     </script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx?v=mobilefix3"></script>
     <script>
       (function() {
         const ua = navigator.userAgent || '';
@@ -111,28 +111,24 @@ E o melhor: 100% GRATUITO! 🆓🚀">
         const iOSVersion = iOSMatch ? parseInt(iOSMatch[1], 10) : null;
         const isOldIOS = iOSVersion && iOSVersion < 13;
 
-        // Em dispositivos móveis, desabilita SW e limpa registros/caches para evitar tela branca
+        // Mobile: remove SW and caches immediately, then skip registration
         if ('serviceWorker' in navigator && isMobile) {
-          window.addEventListener('load', () => {
-            const FLAG = 'sw_cleanup_done_v2';
-            Promise.resolve()
-              .then(() => navigator.serviceWorker.getRegistrations?.())
-              .then((regs) => {
-                (regs || []).forEach((r) => r.unregister());
-              })
-              .then(() => {
-                if (window.caches?.keys) {
-                  return caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
-                }
-              })
-              .finally(() => {
-                console.log('Service Worker desabilitado e caches limpos em dispositivos móveis.');
-                if (navigator.serviceWorker?.controller && sessionStorage.getItem(FLAG) !== '1') {
-                  sessionStorage.setItem(FLAG, '1');
-                  setTimeout(() => location.reload(), 200);
-                }
-              });
-          });
+          const FLAG = 'sw_cleanup_done_v3';
+          Promise.resolve()
+            .then(() => navigator.serviceWorker.getRegistrations?.())
+            .then((regs) => { (regs || []).forEach((r) => r.unregister()); })
+            .then(() => {
+              if (window.caches?.keys) {
+                return caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+              }
+            })
+            .finally(() => {
+              console.log('Service Worker desabilitado e caches limpos em dispositivos móveis (imediato).');
+              if (navigator.serviceWorker?.controller && sessionStorage.getItem(FLAG) !== '1') {
+                sessionStorage.setItem(FLAG, '1');
+                setTimeout(() => location.reload(), 150);
+              }
+            });
           return; // Não registra SW em mobile
         }
 

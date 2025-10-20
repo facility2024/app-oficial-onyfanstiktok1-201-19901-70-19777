@@ -31,7 +31,6 @@ interface ScheduledPost {
   status: 'agendado' | 'publicado' | 'cancelado';
   created_at: string;
   enviar_tela_principal?: boolean;
-  profile_link?: string;
   models?: Model;
 }
 
@@ -48,8 +47,7 @@ export const AdminPosts = () => {
     conteudo_url: '',
     tipo_conteudo: 'image' as 'image',
     data_agendamento: '',
-    enviar_tela_principal: false,
-    profile_link: ''
+    enviar_tela_principal: false
   });
 
   useEffect(() => {
@@ -195,7 +193,6 @@ export const AdminPosts = () => {
           data_agendamento: localDateTime.toISOString(),
           status: 'agendado',
           enviar_tela_principal: formData.enviar_tela_principal,
-          profile_link: formData.profile_link || null,
           imagens: [formData.conteudo_url] // Salvar a URL da imagem no array imagens
         })
         .select()
@@ -215,8 +212,7 @@ export const AdminPosts = () => {
         conteudo_url: '',
         tipo_conteudo: 'image',
         data_agendamento: '',
-        enviar_tela_principal: false,
-        profile_link: ''
+        enviar_tela_principal: false
       });
       setModelSearch('');
 
@@ -464,19 +460,6 @@ export const AdminPosts = () => {
               />
               <p className="text-xs text-muted-foreground">
                 Formato recomendado: 1080x1080px (Instagram)
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Link do perfil (WhatsApp, Site, etc.)</label>
-              <Input
-                value={formData.profile_link}
-                onChange={(e) => setFormData(prev => ({ ...prev, profile_link: e.target.value }))}
-                placeholder="https://wa.me/5511999999999 ou https://site.com"
-                type="url"
-              />
-              <p className="text-xs text-muted-foreground">
-                Este link aparecerá como ícone no menu lateral do vídeo
               </p>
             </div>
 

@@ -11,7 +11,6 @@ import { VinylRecord } from '@/components/tiktok/VinylRecord';
 import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTracker';
 import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
-import { AgeVerificationScreen } from '@/components/tiktok/AgeVerificationScreen';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,8 +22,9 @@ import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { useTikTokFeed } from '@/hooks/useTikTokFeed';
-import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
+// Feed inteligente desativado temporariamente
+// import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
+// import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 
 
 
@@ -71,22 +71,16 @@ interface Comment {
 }
 
 export const TikTokApp = () => {
-  // Verificação de idade
-  const [isVerified, setIsVerified] = useState(false);
-  const [checkingVerification, setCheckingVerification] = useState(true);
-
-  // 🎬 FEED TIKTOK com lógica completa de rotação
-  const { 
-    videos: feedVideos,
-    loading: feedLoading,
-    currentIndex: feedCurrentIndex,
-    currentVideo: feedCurrentVideo,
-    goToNextVideo: feedGoNext,
-    goToPreviousVideo: feedGoPrev,
-    markVideoAsWatched,
-    refreshFeed,
-    isFeatured
-  } = useTikTokFeed();
+  // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
+  // const { 
+  //   videos: intelligentVideos, 
+  //   loading: intelligentLoading,
+  //   currentFeed,
+  //   refreshFeed: refreshIntelligentFeed,
+  //   markVideoAsWatched,
+  //   markModelAsFavorite,
+  //   getUserMemory
+  // } = useIntelligentFeed();
   
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -207,8 +201,14 @@ export const TikTokApp = () => {
   }, [emblaApi, currentVideoIndex]);
 
   // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
-  // Feed gerenciado automaticamente pelo useTikTokFeed - não precisa mais auto-load manual
-  
+  useEffect(() => {
+    const shouldLoadMore = currentVideoIndex >= videos.length - 3; // Carrega quando faltam 3 vídeos
+    
+    if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
+      console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...');
+      loadMoreVideos();
+    }
+  }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos]);
   
   useEffect(() => {
     
@@ -304,57 +304,138 @@ export const TikTokApp = () => {
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 
-  // Verificar status de verificação
+  // ✅ INICIALIZAR FEED QUANDO O APP MONTA
   useEffect(() => {
-    const verified = localStorage.getItem('tiktok_user_verified');
-    if (verified === 'true') {
-      setIsVerified(true);
-    }
-    setCheckingVerification(false);
-  }, []);
-
-  // Feed inicializado automaticamente pelo useTikTokFeed
+    console.log('🎬 Inicializando app...');
+    initializeFeed();
+  }, []); // Executar apenas uma vez na montagem
 
   const createExampleData = (): Video[] => {
     return [];
   };
 
-  // 📱 SINCRONIZAR FEED TIKTOK COM ESTADO LOCAL
-  useEffect(() => {
-    if (checkingVerification) return;
+  // 📱 NOVA LÓGICA: Inicializar feed com primeiro bloco de vídeos + posts agendados
+  const initializeFeed = useCallback(async () => {
+    // Prevenir múltiplas inicializações simultâneas
+    if (isLoadingMore) return;
     
-    // Sincronizar mesmo que ainda não verificado (tela de verificação aparece separadamente)
-    if (feedVideos.length > 0 && !feedLoading) {
-      console.log(`✅ Feed TikTok carregado: ${feedVideos.length} vídeos`);
+    try {
+      console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
+      setLoading(true);
       
-      // Buscar dados dos modelos
-      const syncWithModels = async () => {
-        const { data: modelsData } = await supabase
-          .from('models')
-          .select('*')
-          .eq('is_active', true);
-        
-        // Converter para formato Video do app
-        const formattedVideos: Video[] = feedVideos.map(v => {
-          const model = modelsData?.find((m: any) => m.id === v.model_id);
+      // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
+      console.log('🌟 Carregando posts agendados recentes...');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data: postsAgendados, error: postsError } = await supabase
+        .from('posts_agendados')
+        .select(`
+          *,
+          modelo:models(*)
+        `)
+        .eq('status', 'publicado')
+        .gte('data_publicacao', today.toISOString())
+        .order('data_publicacao', { ascending: false });
+
+      const { data: postsPrincipais, error: principaisError } = await supabase
+        .from('posts_principais')
+        .select(`
+          *,
+          modelo:models(*)
+        `)
+        .gte('created_at', today.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
+      if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
+
+      // Carregar todos os vídeos disponíveis
+      console.log('📋 Carregando catálogo de vídeos...');
+      const { data: videosData, error: videosError } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('is_active', true)
+        .order('updated_at', { ascending: false });
+
+      if (videosError) {
+        console.error('❌ Erro ao carregar vídeos:', videosError);
+        throw videosError;
+      }
+
+      const { data: modelsData, error: modelsError } = await supabase
+        .from('models')
+        .select('*')
+        .eq('is_active', true);
+
+      if (modelsError && (modelsError as any).code !== 'PGRST116') {
+        console.warn('⚠️ Erro ao carregar modelos:', modelsError);
+      }
+
+      console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
+
+      // Utilitários
+      const normalizeUrl = (u: string) => {
+        const raw = (u || '').trim();
+        if (!raw) return '';
+        if (!/^https?:\/\//i.test(raw) && /^[\w.-]+\.[\w.-]+/.test(raw)) {
+          return `https://${raw}`;
+        }
+        return raw;
+      };
+
+      const isValidVideoUrl = (u: string) => {
+        if (!/^https?:\/\//i.test(u)) return false;
+        try {
+          new URL(u);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const isToday = (iso?: string) => {
+        if (!iso) return false;
+        const d = new Date(iso);
+        const now = new Date();
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+      };
+
+      const interactedModelIds: Set<string> = new Set<string>(
+        (() => {
+          try {
+            const raw = localStorage.getItem('interacted_model_ids');
+            if (!raw) return [] as string[];
+            const arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : [];
+          } catch {
+            return [] as string[];
+          }
+        })()
+      );
+
+      // 🎯 Processar posts agendados recentes como prioridade
+      const processedScheduledPosts = (postsAgendados || [])
+        .map((post) => {
+          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
+          const contentUrl = normalizeUrl(post.conteudo_url || '');
+          
+          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+            return null;
+          }
+
           return {
-            id: v.id,
-            video_url: v.video_url,
-            thumbnail_url: v.thumbnail_url,
-            title: v.title,
-            description: v.description,
-            likes_count: v.likes_count,
-            comments_count: v.comments_count,
-            shares_count: 0,
-            views_count: v.views_count,
-            model_id: v.model_id,
-            user_id: v.model_id,
-            created_at: v.created_at,
-            music_name: 'Som Original',
+            id: `scheduled-${post.id}`,
+            video_url: contentUrl,
+            title: post.titulo || 'Conteúdo Agendado',
+            user_id: post.modelo_id || 'unknown',
+            model_id: post.modelo_id || 'unknown',
+            music_name: 'Novo Conteúdo',
             visibility: 'public' as const,
-            is_active: true,
+            source: 'scheduled_post',
+            created_at: post.data_publicacao || post.created_at,
             user: model ? {
-              id: model.id,
+              id: model.id || post.modelo_id || 'unknown',
               username: model.username || model.name || 'Usuário',
               avatar_url: model.avatar_url || '',
               followers_count: model.followers_count || 0,
@@ -363,31 +444,285 @@ export const TikTokApp = () => {
               bio: model.bio || '',
               created_at: model.created_at || '',
             } : {
-              id: v.model_id,
-              username: 'Usuário',
-              avatar_url: v.thumbnail_url,
+              id: post.modelo_id || 'unknown',
+              username: post.modelo_username || 'Usuário',
+              avatar_url: '',
               followers_count: 0,
               following_count: 0,
               is_online: false,
               bio: '',
-              created_at: v.created_at,
-            },
-          };
+              created_at: '',
+            }
+          } as any;
+        })
+        .filter(Boolean);
+
+      const processedMainPosts = (postsPrincipais || [])
+        .map((post) => {
+          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
+          const contentUrl = normalizeUrl(post.conteudo_url || '');
+          
+          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+            return null;
+          }
+
+          return {
+            id: `main-${post.id}`,
+            video_url: contentUrl,
+            title: post.titulo || 'Novo Conteúdo',
+            user_id: post.modelo_id || 'unknown',
+            model_id: post.modelo_id || 'unknown',
+            music_name: 'Novo Conteúdo',
+            visibility: 'public' as const,
+            source: 'main_post',
+            created_at: post.created_at,
+            user: model ? {
+              id: model.id || post.modelo_id || 'unknown',
+              username: model.username || model.name || 'Usuário',
+              avatar_url: model.avatar_url || '',
+              followers_count: model.followers_count || 0,
+              following_count: 0,
+              is_online: model.is_live || false,
+              bio: model.bio || '',
+              created_at: model.created_at || '',
+            } : {
+              id: post.modelo_id || 'unknown',
+              username: post.modelo_username || 'Usuário',
+              avatar_url: '',
+              followers_count: 0,
+              following_count: 0,
+              is_online: false,
+              bio: '',
+              created_at: '',
+            }
+          } as any;
+        })
+        .filter(Boolean);
+
+      // Normalizar e enriquecer vídeos válidos do catálogo
+      const validVideos = (videosData || [])
+        .map((v) => ({ ...v, video_url: normalizeUrl(v.video_url || '') }))
+        .filter((v) => {
+          const isValid = isValidVideoUrl(v.video_url);
+          if (!isValid && v.video_url) {
+            console.warn(`🚫 URL inválida filtrada: ${v.video_url}`);
+          }
+          return isValid;
+        })
+        .map((video) => {
+          const model = modelsData?.find((m: any) => m.id === video.model_id);
+          return {
+            ...video,
+            user_id: video.model_id || '',
+            music_name: video.title || 'Som Original',
+            visibility: (video.visibility as 'public' | 'premium') || 'public',
+            source: 'catalog_video',
+            user: model
+              ? {
+                  id: model.id,
+                  username: model.username || model.name || 'Usuário',
+                  avatar_url: model.avatar_url || '',
+                  followers_count: model.followers_count || 0,
+                  following_count: 0,
+                  is_online: model.is_live || false,
+                  bio: model.bio || '',
+                  created_at: model.created_at || '',
+                }
+              : {
+                  id: video.model_id || '',
+                  username: video.title || 'Usuário',
+                  avatar_url: '',
+                  followers_count: 0,
+                  following_count: 0,
+                  is_online: false,
+                  bio: '',
+                  created_at: '',
+                },
+          } as any;
         });
 
-        setVideos(formattedVideos);
-        setAllAvailableVideos(formattedVideos);
-        setCurrentVideoIndex(feedCurrentIndex);
-        setLoading(false);
-      };
+      console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${validVideos.length} vídeos válidos`);
+
+      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
       
-      syncWithModels();
-    } else if (!feedLoading && feedVideos.length === 0) {
-      // Se feed carregou mas está vazio, tentar recarregar
-      console.warn('⚠️ Feed vazio, tentando recarregar...');
-      setTimeout(() => refreshFeed(), 1000);
+      if (allContent.length > 0) {
+        // 🌟 PRIORIDADE MÁXIMA: Posts agendados recentes sempre no topo
+        const recentPosts = [...processedScheduledPosts, ...processedMainPosts]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        console.log(`🌟 ${recentPosts.length} posts agendados/principais serão destacados no início`);
+
+        // 1) Organizar vídeos do catálogo por modelo e preparar filas internas
+        const videosByModel: Record<string, any[]> = {};
+        validVideos.forEach((v: any) => {
+          const mid = v.user?.id || v.model_id || '';
+          if (!mid) return;
+          if (!videosByModel[mid]) videosByModel[mid] = [];
+          videosByModel[mid].push(v);
+        });
+
+        // Ordenar fila de cada modelo: hoje primeiro, depois mais recentes
+        Object.keys(videosByModel).forEach((mid) => {
+          videosByModel[mid].sort((a, b) => {
+            const aToday = isToday(a.created_at);
+            const bToday = isToday(b.created_at);
+            if (aToday !== bToday) return aToday ? -1 : 1;
+            const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return bTime - aTime;
+          });
+        });
+
+        // 2) Definir ordem dos modelos (prioriza quem tem vídeos de hoje e com interação)
+        const modelIdsWithVideos = Object.keys(videosByModel);
+        const modelScores: Record<string, number> = {};
+        modelIdsWithVideos.forEach((mid) => {
+          const queue = videosByModel[mid] || [];
+          const hasToday = queue.some((v) => isToday(v.created_at));
+          const interacted = interactedModelIds.has(mid);
+          const modelInfo = modelsData?.find((m: any) => m.id === mid);
+          let score = 0;
+          if (hasToday) score += 1000;
+          if (interacted) score += 500;
+          score += (modelInfo?.followers_count || 0) * 0.001;
+          score += Math.random() * 5;
+          modelScores[mid] = score;
+        });
+
+        const orderedModels = modelIdsWithVideos.sort((a, b) => (modelScores[b] || 0) - (modelScores[a] || 0));
+
+        // 3) Round-robin: 1 vídeo por modelo por ciclo, até esgotar filas
+        const catalogVideos: any[] = [];
+        let remaining = true;
+        while (remaining) {
+          remaining = false;
+          for (const mid of orderedModels) {
+            const queue = videosByModel[mid];
+            if (queue && queue.length) {
+              catalogVideos.push(queue.shift()!);
+              remaining = true;
+            }
+          }
+        }
+
+        // 🎯 SEQUÊNCIA FINAL: Posts recentes primeiro + vídeos rotativos + repetir quando acabar
+        const ordered: any[] = [
+          ...recentPosts,  // Posts agendados recentes sempre no topo
+          ...catalogVideos // Vídeos do catálogo em rotação
+        ];
+
+        // 4) Definir estados (carregamento em blocos)
+        const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
+        setAllAvailableVideos(ordered as any);
+        setVideos(firstBlock as any);
+        setCurrentVideoIndex(0);
+        setCurrentPage(1);
+        setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
+        setModelOrder(orderedModels);
+        setCycleSize(orderedModels.length);
+
+        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
+      } else {
+        console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
+        const exampleData = createExampleData();
+        setVideos(exampleData as any);
+        setAllAvailableVideos(exampleData as any);
+        setHasMoreVideos(false);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao inicializar feed:', error);
+      setVideos([]);
+      setAllAvailableVideos([]);
+      setHasMoreVideos(false);
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
     }
-  }, [checkingVerification, feedLoading, feedVideos, feedCurrentIndex, refreshFeed]);
+  }, []);
+
+  // Simplificar - não precisamos mais desta função separada
+
+  // useEffect para inicializar o feed
+  useEffect(() => {
+    console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
+    initializeFeed();
+  }, []); // Executar apenas uma vez na montagem
+
+  // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
+  useEffect(() => {
+    if (!pendingRefresh || allAvailableVideos.length === 0) return;
+    
+    // Quando chegar no último vídeo, reiniciar com conteúdo atualizado
+    const isLastVideo = currentVideoIndex >= allAvailableVideos.length - 1;
+    if (isLastVideo) {
+      console.log('🔄 Fim do ciclo detectado - recarregando com conteúdo atualizado...');
+      setTimeout(() => {
+        initializeFeed();
+        setPendingRefresh(false);
+      }, 1000); // Pequeno delay para não interromper a visualização
+    }
+  }, [pendingRefresh, currentVideoIndex, allAvailableVideos.length, initializeFeed]);
+  
+  // Auto-reload quando acabar os vídeos (volta para o início com atualizações)
+  useEffect(() => {
+    if (videos.length === 0 || allAvailableVideos.length === 0) return;
+    
+    const isEndOfContent = currentVideoIndex >= allAvailableVideos.length - 2;
+    if (isEndOfContent && !isLoadingMore) {
+      console.log('🎬 Chegando ao fim - preparando próximo ciclo com atualizações...');
+      setPendingRefresh(true);
+    }
+  }, [currentVideoIndex, allAvailableVideos.length, videos.length, isLoadingMore]);
+
+  // Remover função de organização complexa - usar abordagem mais simples
+  
+  // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
+  const loadMoreVideos = useCallback(async () => {
+    if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) return;
+    
+    try {
+      setIsLoadingMore(true);
+      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`);
+
+      // Filtrar vídeos ainda não carregados
+      const unusedVideos = allAvailableVideos.filter(v => 
+        !videos.some(existing => existing.id === v.id)
+      );
+
+      if (unusedVideos.length === 0) {
+        console.log('🔄 Fim do conteúdo - recarregando com atualizações...');
+        setHasMoreVideos(false);
+        // Recarregar feed automaticamente para buscar novos posts agendados
+        setTimeout(() => {
+          console.log('🎬 Reiniciando ciclo com conteúdo atualizado...');
+          initializeFeed();
+        }, 2000);
+        return;
+      }
+
+      // Pegar próximo bloco
+      const nextBlock = unusedVideos.slice(0, VIDEOS_PER_BLOCK);
+      
+      if (nextBlock.length === 0) {
+        setHasMoreVideos(false);
+        return;
+      }
+
+      // Adicionar ao feed
+      setVideos(prev => [...prev, ...nextBlock]);
+      setCurrentPage(prev => prev + 1);
+      setHasMoreVideos(unusedVideos.length > VIDEOS_PER_BLOCK);
+      
+      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total: ${videos.length + nextBlock.length}`);
+
+    } catch (error) {
+      console.error('❌ Erro ao carregar mais vídeos:', error);
+      setHasMoreVideos(false);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {
     try {
@@ -1203,7 +1538,6 @@ export const TikTokApp = () => {
             views_count: 0,
             is_active: true,
             created_at: post.data_publicacao || post.created_at,
-            profile_link: post.profile_link || null,
             user: {
               id: modelData.id,
               username: modelData.username,
@@ -1212,8 +1546,7 @@ export const TikTokApp = () => {
               following_count: 0,
               is_online: modelData.is_live || false,
               created_at: modelData.created_at || new Date().toISOString(),
-              bio: modelData.bio || '',
-              posting_panel_url: post.profile_link || null
+              bio: modelData.bio || ''
             }
           };
 
@@ -1414,7 +1747,7 @@ export const TikTokApp = () => {
 
   // Remove old touch gestures - now handled by Embla
 
-  if (loading && isVerified && !checkingVerification) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center">
@@ -1425,7 +1758,7 @@ export const TikTokApp = () => {
     );
   }
 
-  if (isVerified && !checkingVerification && (!currentVideo || videos.length === 0)) {
+  if (!currentVideo || videos.length === 0) {
     console.log('🚫 RENDER: Nenhum vídeo disponível');
     console.log('🚫 RENDER: videos.length:', videos.length);
     console.log('🚫 RENDER: currentVideoIndex:', currentVideoIndex);
@@ -1437,7 +1770,7 @@ export const TikTokApp = () => {
           <p className="text-xl mb-4">Nenhum vídeo disponível</p>
           <p className="text-gray-400">Aguarde novos conteúdos!</p>
           <Button 
-            onClick={refreshFeed} 
+            onClick={initializeFeed} 
             className="mt-4 bg-primary hover:bg-primary/80"
           >
             Recarregar
@@ -1600,24 +1933,7 @@ export const TikTokApp = () => {
     );
   }
 
-  // =================================================================
-  // 📱 VERIFICAÇÃO DE IDADE - Mostrar tela se não verificado
-  // =================================================================
-  if (checkingVerification) {
-    return (
-      <div className="h-screen w-full bg-black flex items-center justify-center">
-        <div className="text-white">Carregando...</div>
-      </div>
-    );
-  }
-
-  if (!isVerified) {
-    return <AgeVerificationScreen onVerified={() => setIsVerified(true)} />;
-  }
-
-  // =================================================================
-  // 📱 DESKTOP VERSION
-  // =================================================================
+  // Desktop version (TikTok-like desktop layout)
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Desktop Header */}

@@ -18,10 +18,6 @@ E o melhor: 100% GRATUITO! 🆓🚀">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="OnyTikTok">
     <meta name="format-detection" content="telephone=no">
-
-    <!-- Performance: DNS optimization only -->
-    <link rel="preconnect" href="https://tnzvhwapfhkhqjgyiomk.supabase.co">
-    <link rel="preconnect" href="https://tiktokonyfans.b-cdn.net">
     
     <!-- PWA Icons para iOS -->
     <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/EEzRju6ifVPShqHN5N3r17kGRTP2/uploads/1757985604956-Inserir um título (1).png">
@@ -56,106 +52,23 @@ E o melhor: 100% GRATUITO! 🆓🚀">
 
 Receba todas as atualizações das gatas mais quentes 🔥💃 com conteúdos que Instagram e TikTok não mostram... mas o OnyFans mostra pra você! 😏💯
 E o melhor: 100% GRATUITO! 🆓🚀">
-    <script>
-      // Vite modulepreload polyfill for older Safari / in-app browsers
-      const relList = document.createElement('link').relList;
-      if (!relList || !relList.supports || !relList.supports('modulepreload')) {
-        for (const link of document.querySelectorAll('link[rel="modulepreload"]')) processPreload(link);
-        new MutationObserver((mutations) => {
-          for (const mutation of mutations) {
-            if (mutation.type === 'childList') {
-              for (const node of mutation.addedNodes) {
-                if (node.tagName === 'LINK' && node.rel === 'modulepreload') processPreload(node);
-              }
-            }
-          }
-        }).observe(document, { childList: true, subtree: true });
-      }
-      function processPreload(link) {
-        if (link.ep) return;
-        link.ep = true;
-        const fetchOpts = {};
-        if (link.integrity) fetchOpts.integrity = link.integrity;
-        if (link.referrerpolicy) fetchOpts.referrerPolicy = link.referrerpolicy;
-        link.crossOrigin = link.crossOrigin || 'anonymous';
-        fetch(link.href, fetchOpts);
-      }
-    </script>
-  </head>
+</head>
 
   <body>
     <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
     <script>
-      (function() {
-        try {
-          if (!('crypto' in window)) window.crypto = {};
-          if (typeof window.crypto.randomUUID !== 'function') {
-            window.crypto.randomUUID = function() {
-              return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-              });
-            };
-          }
-        } catch (e) {}
-      })();
-    </script>
-    <script type="module" src="/src/main.tsx?v=mobilefix3"></script>
-    <script>
-      (function() {
-        const ua = navigator.userAgent || '';
-        const isInAppBrowser = /FBAN|FBAV|Instagram|Line|WeChat|MiuiBrowser|TikTok/i.test(ua);
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
-        const iOSMatch = ua.match(/OS (\d+)_/);
-        const iOSVersion = iOSMatch ? parseInt(iOSMatch[1], 10) : null;
-        const isOldIOS = iOSVersion && iOSVersion < 13;
-
-        // Mobile: remove SW and caches immediately, then skip registration
-        if ('serviceWorker' in navigator && isMobile) {
-          const FLAG = 'sw_cleanup_done_v3';
-          Promise.resolve()
-            .then(() => navigator.serviceWorker.getRegistrations?.())
-            .then((regs) => { (regs || []).forEach((r) => r.unregister()); })
-            .then(() => {
-              if (window.caches?.keys) {
-                return caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
-              }
-            })
-            .finally(() => {
-              console.log('Service Worker desabilitado e caches limpos em dispositivos móveis (imediato).');
-              if (navigator.serviceWorker?.controller && sessionStorage.getItem(FLAG) !== '1') {
-                sessionStorage.setItem(FLAG, '1');
-                setTimeout(() => location.reload(), 150);
-              }
-            });
-          return; // Não registra SW em mobile
-        }
-
-        if ('serviceWorker' in navigator && !isInAppBrowser && !isOldIOS) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then((registration) => {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
               console.log('SW registered: ', registration);
-              if (registration.waiting) {
-                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-              registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                if (!newWorker) return;
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
-                  }
-                });
-              });
-            }).catch((err) => {
-              console.log('SW registration failed: ', err);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
             });
-          });
-        } else {
-          console.log('SW disabled for this environment (in-app browser or old iOS).');
-        }
-      })();
+        });
+      }
     </script>
   </body>
 </html>

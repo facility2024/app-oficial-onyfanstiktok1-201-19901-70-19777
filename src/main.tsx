@@ -1,6 +1,9 @@
 import { createRoot } from 'react-dom/client'
+import { lazy, Suspense } from 'react'
 import './index.css'
-import App from './App'
+
+// Lazy load the main app for faster initial load
+const App = lazy(() => import('./App'));
 
 // Mobile optimization splash screen
 const LoadingSplash = () => (
@@ -13,5 +16,7 @@ const LoadingSplash = () => (
 );
 
 createRoot(document.getElementById("root")!).render(
-  <App />
+  <Suspense fallback={<LoadingSplash />}>
+    <App />
+  </Suspense>
 );

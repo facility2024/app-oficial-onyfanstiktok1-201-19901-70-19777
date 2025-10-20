@@ -3381,99 +3381,6 @@ export type Database = {
           },
         ]
       }
-      onlyfans_content: {
-        Row: {
-          ad_text: string | null
-          avatar_url: string | null
-          button_color: string | null
-          button_link: string | null
-          button_text: string | null
-          created_at: string | null
-          display_name: string
-          effect: string | null
-          end_date: string | null
-          id: string
-          link_text: string | null
-          model_id: string | null
-          name: string
-          offer_description: string | null
-          offer_image_url: string | null
-          offer_title: string | null
-          seconds: number | null
-          start_date: string | null
-          times: number | null
-          unique_id: string
-          updated_at: string | null
-          user_id: string | null
-          video_url: string
-        }
-        Insert: {
-          ad_text?: string | null
-          avatar_url?: string | null
-          button_color?: string | null
-          button_link?: string | null
-          button_text?: string | null
-          created_at?: string | null
-          display_name: string
-          effect?: string | null
-          end_date?: string | null
-          id?: string
-          link_text?: string | null
-          model_id?: string | null
-          name: string
-          offer_description?: string | null
-          offer_image_url?: string | null
-          offer_title?: string | null
-          seconds?: number | null
-          start_date?: string | null
-          times?: number | null
-          unique_id: string
-          updated_at?: string | null
-          user_id?: string | null
-          video_url: string
-        }
-        Update: {
-          ad_text?: string | null
-          avatar_url?: string | null
-          button_color?: string | null
-          button_link?: string | null
-          button_text?: string | null
-          created_at?: string | null
-          display_name?: string
-          effect?: string | null
-          end_date?: string | null
-          id?: string
-          link_text?: string | null
-          model_id?: string | null
-          name?: string
-          offer_description?: string | null
-          offer_image_url?: string | null
-          offer_title?: string | null
-          seconds?: number | null
-          start_date?: string | null
-          times?: number | null
-          unique_id?: string
-          updated_at?: string | null
-          user_id?: string | null
-          video_url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "onlyfans_content_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "onlyfans_content_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "popular_models"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       page_configs: {
         Row: {
           avatar_url: string | null
@@ -4020,7 +3927,6 @@ export type Database = {
           imagens: string[] | null
           modelo_id: string
           modelo_username: string
-          profile_link: string | null
           status: string
           tipo_conteudo: string
           titulo: string
@@ -4037,7 +3943,6 @@ export type Database = {
           imagens?: string[] | null
           modelo_id: string
           modelo_username: string
-          profile_link?: string | null
           status?: string
           tipo_conteudo?: string
           titulo: string
@@ -4054,7 +3959,6 @@ export type Database = {
           imagens?: string[] | null
           modelo_id?: string
           modelo_username?: string
-          profile_link?: string | null
           status?: string
           tipo_conteudo?: string
           titulo?: string

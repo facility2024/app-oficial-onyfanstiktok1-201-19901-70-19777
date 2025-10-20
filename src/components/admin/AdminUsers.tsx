@@ -26,7 +26,6 @@ export const AdminUsers = () => {
   const [topUsers, setTopUsers] = useState([]);
   const [bonusUsers, setBonusUsers] = useState([]);
   const [premiumUsers, setPremiumUsers] = useState([]);
-  const [appUsers, setAppUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPremiumPage, setCurrentPremiumPage] = useState(1);
   const usersPerPage = 20;
@@ -75,14 +74,6 @@ export const AdminUsers = () => {
           .from('bonus_users')
           .select('*')
           .order('created_at', { ascending: false });
-
-        // Buscar usuários do TikTok +18
-        const { data: appUsersData } = await supabase
-          .from('app_users')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        setAppUsers(appUsersData || []);
 
         // Buscar dados dos modelos para fallback
         const { data: modelsData } = await supabase
@@ -241,54 +232,6 @@ export const AdminUsers = () => {
           );
         })}
       </div>
-
-      {/* Usuários TikTok +18 */}
-      <Card className="bg-gradient-card border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Users className="w-5 h-5 text-pink-500" />
-            <span>Usuários TikTok +18 ({appUsers?.length || 0})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Email</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Maior de 18</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Data Cadastro</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appUsers && appUsers.length > 0 ? appUsers.slice(0, 10).map((user, index) => (
-                  <tr key={index} className="border-b border-border/50 hover:bg-card-hover transition-colors">
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-foreground">{user.email}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={user.maior_idade ? 'default' : 'destructive'}>
-                        {user.maior_idade ? '✓ Sim' : '✗ Não'}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      <span className="text-sm">
-                        {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                      </span>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={3} className="py-8 text-center text-muted-foreground">
-                      Nenhum usuário TikTok cadastrado ainda
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Conteúdo Premium - Usuários do Formulário VIP */}
       <Card className="bg-gradient-card border-border/50">

@@ -47,7 +47,8 @@ export const AdminPosts = () => {
     conteudo_url: '',
     tipo_conteudo: 'image' as 'image',
     data_agendamento: '',
-    enviar_tela_principal: false
+    enviar_tela_principal: false,
+    posting_panel_url: '' // 🆕 Link do perfil
   });
 
   useEffect(() => {
@@ -180,6 +181,23 @@ export const AdminPosts = () => {
         }
       });
 
+      // 🆕 Aplicar link do perfil à modelo, se fornecido
+      if (formData.posting_panel_url?.trim()) {
+        console.log('🔗 Aplicando link do perfil à modelo:', formData.posting_panel_url);
+        
+        const { error: updateModelError } = await supabase
+          .from('models')
+          .update({ posting_panel_url: formData.posting_panel_url.trim() })
+          .eq('id', formData.modelo_id);
+
+        if (updateModelError) {
+          console.error('⚠️ Erro ao atualizar link da modelo:', updateModelError);
+          toast.warning('Post agendado, mas houve erro ao atualizar o link do perfil');
+        } else {
+          console.log('✅ Link do perfil atualizado na modelo');
+        }
+      }
+
       // Criar o post agendado
       const { data: postData, error: postError } = await supabase
         .from('posts_agendados')
@@ -202,7 +220,11 @@ export const AdminPosts = () => {
 
       console.log('📝 Post criado:', postData);
 
-      toast.success(`Imagem agendada para ${formData.enviar_tela_principal ? 'perfil e tela principal' : 'perfil da modelo'}!`);
+      const successMessage = formData.posting_panel_url?.trim() 
+        ? `Imagem agendada e link aplicado para ${formData.enviar_tela_principal ? 'perfil e tela principal' : 'perfil da modelo'}!`
+        : `Imagem agendada para ${formData.enviar_tela_principal ? 'perfil e tela principal' : 'perfil da modelo'}!`;
+      
+      toast.success(successMessage);
 
       // Limpar formulário
       setFormData({
@@ -212,7 +234,8 @@ export const AdminPosts = () => {
         conteudo_url: '',
         tipo_conteudo: 'image',
         data_agendamento: '',
-        enviar_tela_principal: false
+        enviar_tela_principal: false,
+        posting_panel_url: '' // 🆕 Limpar link
       });
       setModelSearch('');
 
@@ -460,6 +483,20 @@ export const AdminPosts = () => {
               />
               <p className="text-xs text-muted-foreground">
                 Formato recomendado: 1080x1080px (Instagram)
+              </p>
+            </div>
+
+            {/* 🆕 Link do perfil (WhatsApp, Site, etc.) */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Link do perfil (WhatsApp, Site, etc.)</label>
+              <Input
+                value={formData.posting_panel_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, posting_panel_url: e.target.value }))}
+                placeholder="https://wa.me/5511999999999 ou https://site.com"
+                type="url"
+              />
+              <p className="text-xs text-muted-foreground">
+                Link que aparecerá no botão "Link Enviado" no perfil da modelo. Deixe em branco para não alterar.
               </p>
             </div>
 

@@ -49,6 +49,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const isAndroid = /Android/.test(navigator.userAgent);
     const isMobile = isIOS || isAndroid;
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
+    
+    // Mobile sempre requer interação do usuário
+    const [manualInteractionRequired, setManualInteractionRequired] = useState(isMobile);
 
     // Configuração inicial do vídeo
     const setupVideo = useCallback(() => {
@@ -150,14 +153,17 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = internalRef.current;
 
       if (isPlaying) {
-        // Tenta autoplay em todas as plataformas; se o navegador bloquear,
-        // attemptPlay tratará e manterá o overlay de interação
-        attemptPlay();
+        // No mobile, sempre espera interação manual primeiro
+        if (manualInteractionRequired) {
+          setNeedsUserInteraction(true);
+        } else {
+          attemptPlay();
+        }
       } else {
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, isReady, attemptPlay, onPause, internalRef]);
+    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, manualInteractionRequired]);
 
     // Controlar mute
     useEffect(() => {
@@ -201,6 +207,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         const success = await attemptPlay();
         if (success) {
           setNeedsUserInteraction(false);
+          setManualInteractionRequired(false);
         }
       }
       

@@ -87,35 +87,18 @@ E o melhor: 100% GRATUITO! 🆓🚀">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Temporariamente desabilitar Service Worker e remover versões antigas
       (function() {
-        const ua = navigator.userAgent || '';
-        const isInAppBrowser = /FBAN|FBAV|Instagram|Line|WeChat|MiuiBrowser|TikTok/i.test(ua);
-        const iOSMatch = ua.match(/OS (\d+)_/);
-        const iOSVersion = iOSMatch ? parseInt(iOSMatch[1], 10) : null;
-        const isOldIOS = iOSVersion && iOSVersion < 13;
-
-        if ('serviceWorker' in navigator && !isInAppBrowser && !isOldIOS) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then((registration) => {
-              console.log('SW registered: ', registration);
-              if (registration.waiting) {
-                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations()
+            .then((regs) => {
+              regs.forEach((r) => r.unregister());
+              if (window.caches) {
+                caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
               }
-              registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                if (!newWorker) return;
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
-                  }
-                });
-              });
-            }).catch((err) => {
-              console.log('SW registration failed: ', err);
-            });
-          });
-        } else {
-          console.log('SW disabled for this environment (in-app browser or old iOS).');
+              console.log('SW disabled and caches cleared');
+            })
+            .catch(() => {});
         }
       })();
     </script>

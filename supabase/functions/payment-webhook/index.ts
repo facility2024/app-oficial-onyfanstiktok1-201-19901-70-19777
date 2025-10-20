@@ -160,7 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
             payment: paymentInfo,
           },
           status: 'failed',
-          response_body: error.message,
+          response_body: error instanceof Error ? error.message : 'Unknown error',
           processed_at: new Date().toISOString(),
         });
       }

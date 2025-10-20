@@ -57,6 +57,35 @@ serve(async (req) => {
       try {
         console.log(`📤 Publicando post: ${post.titulo} de @${post.modelo_username}`);
         
+        // Se for vídeo, criar na tabela videos
+        if (post.tipo_conteudo === 'video') {
+          console.log(`🎥 Criando vídeo na tabela videos...`);
+          
+          const { error: videoError } = await supabase
+            .from('videos')
+            .insert({
+              user_id: post.modelo_id,
+              title: post.titulo || 'Novo vídeo',
+              description: post.descricao || '',
+              video_url: post.conteudo_url,
+              thumbnail_url: post.imagens?.[0] || 'https://via.placeholder.com/300x400',
+              music_name: 'Som Original',
+              is_active: true,
+              visibility: 'public',
+              likes_count: 0,
+              comments_count: 0,
+              shares_count: 0,
+              views_count: 0
+            });
+
+          if (videoError) {
+            console.error('❌ Erro ao criar vídeo:', videoError);
+            throw videoError;
+          }
+          
+          console.log('✅ Vídeo criado na tabela videos');
+        }
+        
         // Atualizar status para publicado
         const { error: updateError } = await supabase
           .from('posts_agendados')
@@ -124,7 +153,7 @@ serve(async (req) => {
           .insert({
             post_agendado_id: post.id,
             status_execucao: 'erro',
-            erro_mensagem: error.message,
+            erro_mensagem: error instanceof Error ? error.message : 'Erro desconhecido',
             data_execucao: new Date().toISOString()
           });
       }
@@ -155,7 +184,7 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Erro desconhecido',
         success: false,
         processedAt: new Date().toISOString()
       }),

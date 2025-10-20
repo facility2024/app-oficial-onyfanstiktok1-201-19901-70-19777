@@ -34,7 +34,7 @@ import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { TikTokApp } from '@/pages/TikTokApp';
-import { AdminPosts } from './admin/AdminPosts';
+import { AdminVideoScheduler } from './admin/AdminVideoScheduler';
 
 export const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -124,7 +124,7 @@ export const AdminDashboard = () => {
       case 'app':
         return <TikTokApp />;
       case 'posts':
-        return <AdminPosts />;
+        return <AdminVideoScheduler />;
       default:
         return <div>Seção não encontrada</div>;
     }

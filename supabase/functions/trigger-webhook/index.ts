@@ -53,6 +53,10 @@ const handler = async (req: Request): Promise<Response> => {
       targetUrl = integration.configuration.url;
     }
 
+    if (!targetUrl) {
+      throw new Error('Target URL is not configured');
+    }
+
     const payload = {
       event: event_type,
       data,

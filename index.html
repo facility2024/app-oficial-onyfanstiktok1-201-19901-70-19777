@@ -86,21 +86,5 @@ E o melhor: 100% GRATUITO! 🆓🚀">
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Temporariamente desabilitar Service Worker e remover versões antigas
-      (function() {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations()
-            .then((regs) => {
-              regs.forEach((r) => r.unregister());
-              if (window.caches) {
-                caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
-              }
-              console.log('SW disabled and caches cleared');
-            })
-            .catch(() => {});
-        }
-      })();
-    </script>
   </body>
 </html>

@@ -149,13 +149,15 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
       const video = internalRef.current;
 
-      if (isPlaying && !needsUserInteraction) {
+      if (isPlaying) {
+        // Tenta autoplay em todas as plataformas; se o navegador bloquear,
+        // attemptPlay tratará e manterá o overlay de interação
         attemptPlay();
-      } else if (!isPlaying) {
+      } else {
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, needsUserInteraction, isReady, attemptPlay, onPause, internalRef]);
+    }, [isPlaying, isReady, attemptPlay, onPause, internalRef]);
 
     // Controlar mute
     useEffect(() => {

@@ -50,7 +50,6 @@ import {
   Percent,
   MoreHorizontal
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, BarElement);
 
@@ -285,7 +284,7 @@ const Documentation = () => {
               </div>
             </div>
             <Button variant="outline" asChild>
-              <Link to="/">← Voltar ao Painel</Link>
+              <a href="/">← Voltar ao Painel</a>
             </Button>
           </div>
         </div>

@@ -741,11 +741,7 @@ export const TikTokApp = () => {
     document.body.appendChild(heart);
     
     setTimeout(() => {
-      try {
-        if (heart.parentNode) {
-          heart.parentNode.removeChild(heart);
-        }
-      } catch {}
+      document.body.removeChild(heart);
     }, 1200);
   };
 

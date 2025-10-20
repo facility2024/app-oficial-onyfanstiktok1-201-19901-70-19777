@@ -1,7 +1,13 @@
 import { TikTokApp } from './TikTokApp';
+import { MobileOptimizer } from '@/components/MobileOptimizer';
 
 const Index = () => {
-  return <TikTokApp />;
+  return (
+    <>
+      <MobileOptimizer />
+      <TikTokApp />
+    </>
+  );
 };
 
 export default Index;

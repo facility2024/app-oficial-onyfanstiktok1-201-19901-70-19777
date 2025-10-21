@@ -1402,11 +1402,13 @@ export const TikTokApp = () => {
         p_is_active: true
       });
 
-      // Usar função RPC que bypassa RLS
-      const { data, error } = await supabase.rpc('follow_model_anonymous' as any, {
-        p_user_id: userId,
-        p_model_id: currentVideo.user.id,
-        p_is_active: true
+      // Chamar edge function que configura tudo automaticamente
+      const { data, error } = await supabase.functions.invoke('follow-model-complete', {
+        body: {
+          user_id: userId,
+          model_id: currentVideo.user.id,
+          is_active: true
+        }
       });
 
       if (error) {

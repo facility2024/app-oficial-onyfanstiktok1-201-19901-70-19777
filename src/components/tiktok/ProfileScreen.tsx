@@ -288,11 +288,13 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         p_is_active: true
       });
 
-      // Usar função RPC que bypassa RLS
-      const { data, error } = await supabase.rpc('follow_model_anonymous' as any, {
-        p_user_id: userId,
-        p_model_id: user.id,
-        p_is_active: true
+      // Chamar edge function que configura tudo automaticamente
+      const { data, error } = await supabase.functions.invoke('follow-model-complete', {
+        body: {
+          user_id: userId,
+          model_id: user.id,
+          is_active: true
+        }
       });
 
       if (error) {
@@ -428,9 +430,11 @@ if (!isOpen) return null;
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-2 relative z-10">
+            <div className="flex gap-2 relative z-50">
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('🔥 PROFILE BOTÃO SEGUIR CLICADO!', {
                     currentUser: user?.username,
                     isFollowing,
@@ -438,7 +442,12 @@ if (!isOpen) return null;
                   });
                   followModel();
                 }}
-                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 py-2 px-4 rounded-full font-semibold text-white text-sm"
+                style={{ 
+                  pointerEvents: 'all',
+                  position: 'relative',
+                  zIndex: 999
+                }}
+                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 py-3 px-6 rounded-full font-semibold text-white text-sm hover:from-red-600 hover:to-pink-600 transition-all duration-200 cursor-pointer"
                 aria-pressed={isFollowing}
                 aria-label={isFollowing ? `Deixar de seguir ${user.username}` : `Seguir ${user.username}`}
               >

@@ -430,7 +430,7 @@ if (!isOpen) return null;
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 relative z-10">
               <button
                 onClick={() => {
                   console.log('🔥 PROFILE BOTÃO SEGUIR CLICADO!', {

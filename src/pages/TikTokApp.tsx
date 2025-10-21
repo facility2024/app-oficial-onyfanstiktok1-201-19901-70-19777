@@ -1888,7 +1888,9 @@ export const TikTokApp = () => {
             onOpenPremium={() => {
               console.log('Mobile premium clicked via SideMenu');
               if (currentVideo?.user?.posting_panel_url) {
-                window.open(currentVideo.user.posting_panel_url, '_blank');
+                const raw = currentVideo.user.posting_panel_url;
+                const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
+                window.open(url, '_blank');
                 toast({
                   title: "Abrindo página premium",
                   description: `Redirecionando para ${currentVideo.user.username}`
@@ -2155,7 +2157,9 @@ export const TikTokApp = () => {
                 onOpenPremium={() => {
                   console.log('Desktop premium clicked');
                   if (currentVideo?.user?.posting_panel_url) {
-                    window.open(currentVideo.user.posting_panel_url, '_blank');
+                    const raw = currentVideo.user.posting_panel_url;
+                    const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
+                    window.open(url, '_blank');
                     toast({
                       title: "Abrindo página premium",
                       description: `Redirecionando para ${currentVideo.user.username}`

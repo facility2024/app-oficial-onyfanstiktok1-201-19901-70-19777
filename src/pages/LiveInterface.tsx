@@ -36,6 +36,7 @@ interface Video {
     is_online: boolean;
     created_at: string;
     bio?: string;
+    posting_panel_url?: string;
   };
 }
 
@@ -127,7 +128,8 @@ export const LiveInterface = () => {
             following_count: 0,
             is_online: true,
             created_at: model.created_at,
-            bio: model.bio
+            bio: model.bio,
+            posting_panel_url: model.posting_panel_url || ''
           }
         };
         
@@ -306,7 +308,16 @@ export const LiveInterface = () => {
           }}
           onOpenProfile={() => setShowProfile(true)}
           onShare={handleShare}
-          onOpenPremium={() => setShowPremium(true)}
+          onOpenPremium={() => {
+            const link = (video as any)?.user?.posting_panel_url as string | undefined;
+            if (link) {
+              const url = /^(https?:)?\/\//i.test(link) ? link : `https://${link}`;
+              window.open(url, '_blank');
+              toast({ title: 'Abrindo página premium', description: 'Redirecionando...' });
+            } else {
+              toast({ title: 'Link não configurado', description: 'Este modelo ainda não tem link premium', variant: 'destructive' });
+            }
+          }}
         />
       </div>
 

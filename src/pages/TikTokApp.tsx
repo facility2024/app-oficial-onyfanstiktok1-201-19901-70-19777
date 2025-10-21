@@ -169,6 +169,7 @@ export const TikTokApp = () => {
 
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
+  console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
   console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
   console.log('✅ RENDER: videos.length:', videos.length);
   console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
@@ -501,6 +502,7 @@ export const TikTokApp = () => {
               following_count: 0,
               is_online: model.is_live || false,
               bio: model.bio || '',
+              posting_panel_url: model.posting_panel_url || '',
               created_at: model.created_at || '',
             } : {
               id: post.modelo_id || 'unknown',
@@ -545,6 +547,7 @@ export const TikTokApp = () => {
               following_count: 0,
               is_online: model.is_live || false,
               bio: model.bio || '',
+              posting_panel_url: model.posting_panel_url || '',
               created_at: model.created_at || '',
             } : {
               id: post.modelo_id || 'unknown',
@@ -587,6 +590,7 @@ export const TikTokApp = () => {
                   following_count: 0,
                   is_online: model.is_live || false,
                   bio: model.bio || '',
+                  posting_panel_url: model.posting_panel_url || '',
                   created_at: model.created_at || '',
                 }
               : {

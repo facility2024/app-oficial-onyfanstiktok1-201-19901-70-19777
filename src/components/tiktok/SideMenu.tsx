@@ -34,6 +34,14 @@ export const SideMenu = ({
   onOpenPremium,
   onExit
 }: SideMenuProps) => {
+  // 🔍 DEBUG: Verificar se o posting_panel_url está presente
+  console.log('🔍 SideMenu DEBUG:', {
+    videoId: video?.id,
+    username: video?.user?.username,
+    posting_panel_url: video?.user?.posting_panel_url,
+    hasPostingPanelUrl: !!video?.user?.posting_panel_url
+  });
+
   const formatCount = (count?: number) => {
     // Handle undefined or null values
     if (count === undefined || count === null) {

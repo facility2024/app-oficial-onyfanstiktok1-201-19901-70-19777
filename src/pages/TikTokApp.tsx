@@ -1896,7 +1896,7 @@ export const TikTokApp = () => {
             onBlockVideo={undefined}
             onOpenPremium={() => {
               console.log('Mobile premium clicked via SideMenu');
-              // TODO: Implementar nova ação para o botão premium
+              setShowPremium(true);
             }}
             onExit={() => {
               console.log('Saindo do aplicativo...');
@@ -2151,7 +2151,7 @@ export const TikTokApp = () => {
                 onBlockVideo={undefined}
                 onOpenPremium={() => {
                   console.log('Desktop premium clicked');
-                  // TODO: Implementar nova ação para o botão premium
+                  setShowPremium(true);
                 }}
                 onExit={() => {
                   console.log('Saindo do aplicativo...');

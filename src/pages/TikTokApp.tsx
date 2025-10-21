@@ -1389,40 +1389,30 @@ export const TikTokApp = () => {
     });
 
     try {
-      // Garantir usuário autenticado (RLS exige auth)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        toast({
-          title: 'Login necessário',
-          description: 'Faça login para seguir modelos.',
-          variant: 'destructive'
-        });
-        return;
+      // Usar ID de sessão anônima (não requer login)
+      let userId = sessionStorage.getItem('user_id');
+      if (!userId) {
+        userId = crypto.randomUUID();
+        sessionStorage.setItem('user_id', userId);
       }
-      const userId = session.user.id;
 
-      console.log('🔔 SEGUIR: Usando upsert com dados:', {
+      console.log('🔔 SEGUIR: Chamando edge function com dados:', {
         user_id: userId,
         model_id: currentVideo.user.id,
         is_active: true
       });
 
-      // Usar upsert para evitar problemas de RLS e duplicação
-      const { error } = await supabase
-        .from('model_followers')
-        .upsert({
+      // Chamar edge function pública (sem auth)
+      const { data, error } = await supabase.functions.invoke('follow-model', {
+        body: {
           user_id: userId,
           model_id: currentVideo.user.id,
-          user_name: 'Usuário Visitante',
-          user_email: 'usuario@exemplo.com',
           is_active: true
-        }, {
-          onConflict: 'user_id,model_id',
-          ignoreDuplicates: false
-        });
+        }
+      });
 
       if (error) {
-        console.log('❌ SEGUIR: Erro ao fazer upsert:', error);
+        console.log('❌ SEGUIR: Erro na edge function:', error);
         throw error;
       }
 

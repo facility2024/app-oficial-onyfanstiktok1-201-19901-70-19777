@@ -26,6 +26,20 @@ export const useVideoActions = () => {
 
         if (error) throw error;
         
+        // Decrementar likes_count na tabela videos
+        const { data: videoData } = await supabase
+          .from('videos')
+          .select('likes_count')
+          .eq('id', videoId)
+          .single();
+        
+        if (videoData) {
+          await supabase
+            .from('videos')
+            .update({ likes_count: Math.max(0, (videoData.likes_count || 0) - 1) })
+            .eq('id', videoId);
+        }
+        
         await trackVideoAction('like', videoId, modelId, userId, { action: 'unlike' });
         toast.success('Like removido!');
         return false;
@@ -47,6 +61,20 @@ export const useVideoActions = () => {
         if (upsertError && upsertError.code !== '23505') {
           console.error('Upsert failed:', upsertError);
           throw upsertError;
+        }
+        
+        // Incrementar likes_count na tabela videos
+        const { data: videoData } = await supabase
+          .from('videos')
+          .select('likes_count')
+          .eq('id', videoId)
+          .single();
+        
+        if (videoData) {
+          await supabase
+            .from('videos')
+            .update({ likes_count: (videoData.likes_count || 0) + 1 })
+            .eq('id', videoId);
         }
         
         await trackVideoAction('like', videoId, modelId, userId, { action: 'like' });

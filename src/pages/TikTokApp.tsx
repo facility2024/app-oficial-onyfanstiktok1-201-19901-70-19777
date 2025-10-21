@@ -54,6 +54,7 @@ interface Video {
     is_online: boolean;
     created_at: string;
     bio?: string; // Adicionado para dados do modelo
+    posting_panel_url?: string; // Link personalizado premium
   };
 }
 
@@ -1882,7 +1883,19 @@ export const TikTokApp = () => {
             onBlockVideo={undefined}
             onOpenPremium={() => {
               console.log('Mobile premium clicked via SideMenu');
-              setShowPremium(true);
+              if (currentVideo?.user?.posting_panel_url) {
+                window.open(currentVideo.user.posting_panel_url, '_blank');
+                toast({
+                  title: "Abrindo página premium",
+                  description: `Redirecionando para ${currentVideo.user.username}`
+                });
+              } else {
+                toast({
+                  title: "Link não configurado",
+                  description: "Esta modelo ainda não tem link premium configurado",
+                  variant: "destructive"
+                });
+              }
             }}
             onExit={() => {
               console.log('Saindo do aplicativo...');
@@ -2137,7 +2150,19 @@ export const TikTokApp = () => {
                 onBlockVideo={undefined}
                 onOpenPremium={() => {
                   console.log('Desktop premium clicked');
-                  setShowPremium(true);
+                  if (currentVideo?.user?.posting_panel_url) {
+                    window.open(currentVideo.user.posting_panel_url, '_blank');
+                    toast({
+                      title: "Abrindo página premium",
+                      description: `Redirecionando para ${currentVideo.user.username}`
+                    });
+                  } else {
+                    toast({
+                      title: "Link não configurado",
+                      description: "Esta modelo ainda não tem link premium configurado",
+                      variant: "destructive"
+                    });
+                  }
                 }}
                 onExit={() => {
                   console.log('Saindo do aplicativo...');

@@ -274,7 +274,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
     });
 
     try {
-      // Verificar primeiro se já está seguindo
+      // Usar ID consistente do usuário
       let userId = sessionStorage.getItem('user_id');
       if (!userId) {
         userId = crypto.randomUUID();
@@ -284,67 +284,32 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         console.log('🔔 PROFILE SEGUIR: UserId existente:', userId);
       }
 
-      // Verificar se já está seguindo
-      const { data: existingFollow } = await supabase
-        .from('model_followers')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('model_id', user.id)
-        .eq('is_active', true)
-        .single();
-
-      if (existingFollow) {
-        console.log('🔔 PROFILE SEGUIR: Usuário já segue esta modelo');
-        setIsFollowing(true);
-        return;
-      }
-      
-      const userData = {
-        id: userId,
-        name: 'Usuário Visitante',
-        email: 'usuario@exemplo.com'
-      };
-
-      console.log('🔔 PROFILE SEGUIR: Inserindo dados no banco:', {
-        user_id: userData.id,
+      console.log('🔔 PROFILE SEGUIR: Usando upsert com dados:', {
+        user_id: userId,
         model_id: user.id,
-        user_name: userData.name,
-        user_email: userData.email,
-        is_active: true,
-        modelo_nome: user.username
+        is_active: true
       });
 
+      // Usar upsert para evitar problemas de RLS e duplicação
       const { error } = await supabase
         .from('model_followers')
-        .insert({
-          user_id: userData.id,
+        .upsert({
+          user_id: userId,
           model_id: user.id,
-          user_name: userData.name,
-          user_email: userData.email,
+          user_name: 'Usuário Visitante',
+          user_email: 'usuario@exemplo.com',
           is_active: true
+        }, {
+          onConflict: 'user_id,model_id',
+          ignoreDuplicates: false
         });
 
       if (error) {
-        console.log('❌ PROFILE SEGUIR: Erro ao inserir:', error);
-        // Se erro for de duplicate key, significa que já está seguindo
-        if (error.code === '23505') {
-          console.log('🔔 PROFILE SEGUIR: Usuário já segue, atualizando para ativo');
-          // Atualizar para ativo caso já exista mas inativo
-          await supabase
-            .from('model_followers')
-            .update({ is_active: true })
-            .match({ 
-              user_id: userData.id, 
-              model_id: user.id 
-            });
-        } else {
-          throw error;
-        }
-      } else {
-        console.log('✅ PROFILE SEGUIR: Dados inseridos com sucesso!');
+        console.log('❌ PROFILE SEGUIR: Erro ao fazer upsert:', error);
+        throw error;
       }
 
-      // Marcar como seguindo imediatamente na UI
+      console.log('✅ PROFILE SEGUIR: Seguindo modelo com sucesso!');
       setIsFollowing(true);
       
       // Aguardar um pouco e recarregar dados da modelo para ter a contagem correta

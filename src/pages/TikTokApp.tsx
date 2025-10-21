@@ -1398,51 +1398,33 @@ export const TikTokApp = () => {
       } else {
         console.log('🔔 SEGUIR: UserId existente:', userId);
       }
-      
-      const userData = {
-        id: userId,
-        name: 'Usuário Visitante',
-        email: 'usuario@exemplo.com'
-      };
 
-      console.log('🔔 SEGUIR: Inserindo dados no banco:', {
-        user_id: userData.id,
+      console.log('🔔 SEGUIR: Usando upsert com dados:', {
+        user_id: userId,
         model_id: currentVideo.user.id,
-        user_name: userData.name,
-        user_email: userData.email,
-        is_active: true,
-        modelo_nome: currentVideo.user.username
+        is_active: true
       });
 
+      // Usar upsert para evitar problemas de RLS e duplicação
       const { error } = await supabase
         .from('model_followers')
-        .insert({
-          user_id: userData.id,
+        .upsert({
+          user_id: userId,
           model_id: currentVideo.user.id,
-          user_name: userData.name,
-          user_email: userData.email,
+          user_name: 'Usuário Visitante',
+          user_email: 'usuario@exemplo.com',
           is_active: true
+        }, {
+          onConflict: 'user_id,model_id',
+          ignoreDuplicates: false
         });
 
       if (error) {
-        console.log('❌ SEGUIR: Erro ao inserir:', error);
-        // Se erro for de duplicate key, significa que já está seguindo
-        if (error.code === '23505') {
-          console.log('🔔 SEGUIR: Usuário já segue, atualizando para ativo');
-          // Atualizar para ativo caso já exista mas inativo
-          await supabase
-            .from('model_followers')
-            .update({ is_active: true })
-            .match({ 
-              user_id: userData.id, 
-              model_id: currentVideo.user.id 
-            });
-        } else {
-          throw error;
-        }
-      } else {
-        console.log('✅ SEGUIR: Dados inseridos com sucesso!');
+        console.log('❌ SEGUIR: Erro ao fazer upsert:', error);
+        throw error;
       }
+
+      console.log('✅ SEGUIR: Seguindo modelo com sucesso!');
 
       setFollowingModels(prev => ({
         ...prev,

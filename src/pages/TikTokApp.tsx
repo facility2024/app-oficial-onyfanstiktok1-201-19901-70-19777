@@ -1382,11 +1382,7 @@ export const TikTokApp = () => {
     const currentIsFollowing = followingModels[currentVideo.user.id] || false;
     if (currentIsFollowing) return;
 
-    console.log('🔔 SEGUIR: Iniciando processo de seguir modelo', {
-      modelId: currentVideo.user.id,
-      modelName: currentVideo.user.username,
-      currentIsFollowing: currentIsFollowing
-    });
+    console.log('🔔 SEGUIR: Iniciando follow modelo', currentVideo.user.id);
 
     try {
       // Usar ID de sessão anônima (não requer login)
@@ -1396,49 +1392,40 @@ export const TikTokApp = () => {
         sessionStorage.setItem('user_id', userId);
       }
 
-      console.log('🔔 SEGUIR: Simulando follow com localStorage');
+      // Atualizar estado local IMEDIATAMENTE
+      setFollowingModels(prev => ({
+        ...prev,
+        [currentVideo.user.id]: true
+      }));
 
-      // Salvar no localStorage (solução que SEMPRE funciona)
+      // Salvar no Supabase direto com o client
+      const { error } = await supabase
+        .from('model_followers')
+        .upsert({
+          user_id: userId,
+          model_id: currentVideo.user.id,
+          user_name: 'Usuário Anônimo',
+          user_email: 'anonimo@exemplo.com',
+          is_active: true
+        }, {
+          onConflict: 'user_id,model_id'
+        });
+
+      if (error) {
+        console.error('❌ Erro ao seguir modelo:', error);
+        // Reverter estado apenas se for erro crítico
+        if (!error.message.includes('unauthorized') && !error.message.includes('permission')) {
+          setFollowingModels(prev => ({
+            ...prev,
+            [currentVideo.user.id]: false
+          }));
+          return;
+        }
+      }
+
+      // Salvar no localStorage para persistência
       const followKey = `follow_${userId}_${currentVideo.user.id}`;
       localStorage.setItem(followKey, 'true');
-
-      // Atualizar estado local
-      setFollowingModels(prev => ({
-        ...prev,
-        [currentVideo.user.id]: true
-      }));
-
-      // Tentar salvar no Supabase em background (sem bloquear a UI)
-      setTimeout(async () => {
-        try {
-          const { error } = await supabase
-            .from('model_followers')
-            .upsert({
-              user_id: userId,
-              model_id: currentVideo.user.id,
-              user_name: 'Usuário Anônimo',
-              user_email: 'anonimo@exemplo.com',
-              is_active: true
-            }, {
-              onConflict: 'user_id,model_id'
-            });
-
-          if (error) {
-            console.log('⚠️ Erro ao salvar no Supabase (não bloqueia):', error);
-          } else {
-            console.log('✅ Follow salvo no Supabase com sucesso!');
-          }
-        } catch (bgError) {
-          console.log('⚠️ Erro em background:', bgError);
-        }
-      }, 100);
-
-      console.log('✅ SEGUIR: Seguindo modelo com sucesso!');
-
-      setFollowingModels(prev => ({
-        ...prev,
-        [currentVideo.user.id]: true
-      }));
       
       // 📊 REGISTRAR AÇÃO NO PAINEL ADMIN
       await trackFollow(currentVideo.user.id);
@@ -1456,8 +1443,7 @@ export const TikTokApp = () => {
           : video
       ));
 
-      // Mostrar notificação
-      console.log('🔔 SEGUIR: Processo concluído com sucesso!');
+      console.log('✅ SEGUIR: Processo concluído com sucesso!');
       toast({
         title: `Você está seguindo ${currentVideo.user.username}!`,
         description: "Agora você receberá atualizações dos novos conteúdos",

@@ -283,11 +283,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
   const followModel = async () => {
     if (isFollowing) return;
 
-    console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', {
-      modelId: user.id,
-      modelName: user.username,
-      isFollowing: isFollowing
-    });
+    console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', user.id);
 
     try {
       // Usar ID de sessão anônima (não requer login)
@@ -297,46 +293,40 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         sessionStorage.setItem('user_id', userId);
       }
 
-      console.log('🔔 PROFILE SEGUIR: Simulando follow com localStorage');
+      // Atualizar estado local IMEDIATAMENTE
+      setIsFollowing(true);
 
-      // Salvar no localStorage (solução temporária que SEMPRE funciona)
+      // Salvar no Supabase direto com o client
+      const { error } = await supabase
+        .from('model_followers')
+        .upsert({
+          user_id: userId,
+          model_id: user.id,
+          user_name: 'Usuário Anônimo',
+          user_email: 'anonimo@exemplo.com',
+          is_active: true
+        }, {
+          onConflict: 'user_id,model_id'
+        });
+
+      if (error) {
+        console.error('❌ Erro ao seguir modelo:', error);
+        // Reverter estado apenas se for erro crítico
+        if (!error.message.includes('unauthorized') && !error.message.includes('permission')) {
+          setIsFollowing(false);
+          return;
+        }
+      }
+
+      // Salvar no localStorage para persistência
       const followKey = `follow_${userId}_${user.id}`;
       localStorage.setItem(followKey, 'true');
 
-      // Atualizar estado local
-      setIsFollowing(true);
-
-      // Tentar salvar no Supabase em background (sem bloquear a UI)
-      setTimeout(async () => {
-        try {
-          const { error } = await supabase
-            .from('model_followers')
-            .upsert({
-              user_id: userId,
-              model_id: user.id,
-              user_name: 'Usuário Anônimo',
-              user_email: 'anonimo@exemplo.com',
-              is_active: true
-            }, {
-              onConflict: 'user_id,model_id'
-            });
-
-          if (error) {
-            console.log('⚠️ Erro ao salvar no Supabase (não bloqueia):', error);
-          } else {
-            console.log('✅ Follow salvo no Supabase com sucesso!');
-          }
-        } catch (bgError) {
-          console.log('⚠️ Erro em background:', bgError);
-        }
-      }, 100);
-
-      console.log('✅ PROFILE SEGUIR: Seguindo modelo com sucesso (localStorage)!');
+      console.log('✅ PROFILE SEGUIR: Seguindo modelo com sucesso!');
       
     } catch (error) {
-      console.error('❌ PROFILE SEGUIR: Erro geral:', error);
-      // Mesmo com erro, deixar o follow ativo no localStorage
-      setIsFollowing(true);
+      console.error('❌ PROFILE SEGUIR: Erro:', error);
+      setIsFollowing(false);
     }
   };
 

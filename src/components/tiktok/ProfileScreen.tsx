@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
@@ -274,15 +275,18 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
     });
 
     try {
-      // Usar ID consistente do usuário
-      let userId = sessionStorage.getItem('user_id');
-      if (!userId) {
-        userId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', userId);
-        console.log('🔔 PROFILE SEGUIR: Novo userId criado:', userId);
-      } else {
-        console.log('🔔 PROFILE SEGUIR: UserId existente:', userId);
+      // Garantir usuário autenticado (RLS exige auth)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: 'Login necessário',
+          description: 'Faça login para seguir modelos.',
+          variant: 'destructive'
+        });
+        console.log('❌ PROFILE SEGUIR: Usuário não autenticado');
+        return;
       }
+      const userId = session.user.id;
 
       console.log('🔔 PROFILE SEGUIR: Usando upsert com dados:', {
         user_id: userId,

@@ -1389,15 +1389,17 @@ export const TikTokApp = () => {
     });
 
     try {
-      // Usar ID consistente do usuário - pega do sessionStorage ou cria um fixo
-      let userId = sessionStorage.getItem('user_id');
-      if (!userId) {
-        userId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', userId);
-        console.log('🔔 SEGUIR: Novo userId criado:', userId);
-      } else {
-        console.log('🔔 SEGUIR: UserId existente:', userId);
+      // Garantir usuário autenticado (RLS exige auth)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: 'Login necessário',
+          description: 'Faça login para seguir modelos.',
+          variant: 'destructive'
+        });
+        return;
       }
+      const userId = session.user.id;
 
       console.log('🔔 SEGUIR: Usando upsert com dados:', {
         user_id: userId,

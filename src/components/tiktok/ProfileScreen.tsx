@@ -545,11 +545,7 @@ if (!isOpen) return null;
               Postagens ({contents.length})
             </h4>
             
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : contents.length === 0 ? (
+            {contents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-white/60">
                 <div className="text-3xl mb-2">📱</div>
                 <p className="text-sm">Nenhum conteúdo disponível</p>

@@ -1396,29 +1396,25 @@ export const TikTokApp = () => {
         sessionStorage.setItem('user_id', userId);
       }
 
-      console.log('🔔 SEGUIR: Usando upsert direto com dados:', {
-        user_id: userId,
-        model_id: currentVideo.user.id,
-        is_active: true
+      console.log('🔔 SEGUIR: Chamando função RPC com dados:', {
+        p_user_id: userId,
+        p_model_id: currentVideo.user.id,
+        p_is_active: true
       });
 
-      // Usar upsert direto na tabela model_followers
-      const { error } = await supabase
-        .from('model_followers')
-        .upsert({
-          user_id: userId,
-          model_id: currentVideo.user.id,
-          user_name: 'Usuário Anônimo',
-          user_email: 'anonimo@exemplo.com',
-          is_active: true
-        }, {
-          onConflict: 'user_id,model_id'
-        });
+      // Usar função RPC que bypassa RLS
+      const { data, error } = await supabase.rpc('follow_model_anonymous' as any, {
+        p_user_id: userId,
+        p_model_id: currentVideo.user.id,
+        p_is_active: true
+      });
 
       if (error) {
-        console.log('❌ SEGUIR: Erro ao fazer upsert:', error);
+        console.log('❌ SEGUIR: Erro ao chamar RPC:', error);
         throw error;
       }
+
+      console.log('✅ SEGUIR: Seguindo modelo com sucesso!', data);
 
       console.log('✅ SEGUIR: Seguindo modelo com sucesso!');
 

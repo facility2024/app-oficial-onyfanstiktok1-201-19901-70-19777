@@ -1396,23 +1396,27 @@ export const TikTokApp = () => {
         sessionStorage.setItem('user_id', userId);
       }
 
-      console.log('🔔 SEGUIR: Chamando edge function com dados:', {
+      console.log('🔔 SEGUIR: Usando upsert direto com dados:', {
         user_id: userId,
         model_id: currentVideo.user.id,
         is_active: true
       });
 
-      // Chamar edge function pública (sem auth)
-      const { data, error } = await supabase.functions.invoke('follow-model', {
-        body: {
+      // Usar upsert direto na tabela model_followers
+      const { error } = await supabase
+        .from('model_followers')
+        .upsert({
           user_id: userId,
           model_id: currentVideo.user.id,
+          user_name: 'Usuário Anônimo',
+          user_email: 'anonimo@exemplo.com',
           is_active: true
-        }
-      });
+        }, {
+          onConflict: 'user_id,model_id'
+        });
 
       if (error) {
-        console.log('❌ SEGUIR: Erro na edge function:', error);
+        console.log('❌ SEGUIR: Erro ao fazer upsert:', error);
         throw error;
       }
 

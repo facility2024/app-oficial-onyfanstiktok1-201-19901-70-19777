@@ -282,23 +282,27 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         sessionStorage.setItem('user_id', userId);
       }
 
-      console.log('🔔 PROFILE SEGUIR: Chamando edge function com dados:', {
+      console.log('🔔 PROFILE SEGUIR: Usando upsert direto com dados:', {
         user_id: userId,
         model_id: user.id,
         is_active: true
       });
 
-      // Chamar edge function pública (sem auth)
-      const { data, error } = await supabase.functions.invoke('follow-model', {
-        body: {
+      // Usar upsert direto na tabela model_followers
+      const { error } = await supabase
+        .from('model_followers')
+        .upsert({
           user_id: userId,
           model_id: user.id,
+          user_name: 'Usuário Anônimo',
+          user_email: 'anonimo@exemplo.com',
           is_active: true
-        }
-      });
+        }, {
+          onConflict: 'user_id,model_id'
+        });
 
       if (error) {
-        console.log('❌ PROFILE SEGUIR: Erro na edge function:', error);
+        console.log('❌ PROFILE SEGUIR: Erro ao fazer upsert:', error);
         throw error;
       }
 

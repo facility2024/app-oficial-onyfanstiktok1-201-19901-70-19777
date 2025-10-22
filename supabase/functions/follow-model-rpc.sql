@@ -31,14 +31,12 @@ BEGIN
   )
   ON CONFLICT (user_id, model_id)
   DO UPDATE SET
-    is_active = p_is_active,
-    updated_at = now()
+    is_active = p_is_active
   RETURNING json_build_object(
     'user_id', user_id,
     'model_id', model_id,
     'is_active', is_active,
-    'created_at', created_at,
-    'updated_at', updated_at
+    'created_at', created_at
   ) INTO v_result;
 
   RETURN v_result;

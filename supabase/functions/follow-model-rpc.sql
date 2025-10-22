@@ -35,8 +35,7 @@ BEGIN
   RETURNING json_build_object(
     'user_id', user_id,
     'model_id', model_id,
-    'is_active', is_active,
-    'created_at', created_at
+    'is_active', is_active
   ) INTO v_result;
 
   RETURN v_result;

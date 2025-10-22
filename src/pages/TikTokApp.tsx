@@ -1403,17 +1403,12 @@ export const TikTokApp = () => {
         [currentVideo.user.id]: true
       }));
 
-      // Salvar no Supabase direto com o client
-      const { error } = await supabase
-        .from('model_followers')
-        .upsert({
-          user_id: userId,
-          model_id: currentVideo.user.id,
-          user_name: 'Usuário Anônimo',
-          user_email: 'anonimo@exemplo.com',
-          is_active: true
-        }, {
-          onConflict: 'user_id,model_id'
+      // Salvar usando RPC com SECURITY DEFINER para bypass de RLS
+      const { error } = await (supabase as any)
+        .rpc('follow_model_anonymous', {
+          p_user_id: userId,
+          p_model_id: currentVideo.user.id,
+          p_is_active: true
         });
 
       if (error) {

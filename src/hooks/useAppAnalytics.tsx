@@ -109,18 +109,16 @@ export const useAppAnalytics = () => {
           break;
 
         case 'follow':
-          const { error: followError } = await supabase
-            .from('model_followers')
-            .insert({
-              user_id: currentUserId,
-              model_id: modelId || videoId, // Se não há modelId, usar videoId como fallback
-              user_name: 'Usuário Visitante',
-              user_email: `visitante_${String(currentUserId).substring(0, 8)}@temp.com`,
-              is_active: true
+          const targetModelId = modelId || videoId;
+          const { error: followError } = await (supabase as any)
+            .rpc('follow_model_anonymous', {
+              p_user_id: currentUserId,
+              p_model_id: targetModelId,
+              p_is_active: true
             });
           
-          if (followError) console.warn('❌ Erro ao registrar follow:', followError);
-          else console.log('✅ Follow registrado');
+          if (followError) console.warn('❌ Erro ao registrar follow (RPC):', followError);
+          else console.log('✅ Follow registrado via RPC');
           break;
       }
 

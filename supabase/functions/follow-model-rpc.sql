@@ -1,6 +1,8 @@
 -- Função SQL para permitir seguir modelos sem autenticação
 -- Esta função bypassa o RLS (Row Level Security) usando SECURITY DEFINER
 
+DROP FUNCTION IF EXISTS public.follow_model_anonymous(uuid, uuid, boolean);
+
 CREATE OR REPLACE FUNCTION public.follow_model_anonymous(
   p_user_id uuid,
   p_model_id uuid,
@@ -8,30 +10,26 @@ CREATE OR REPLACE FUNCTION public.follow_model_anonymous(
 )
 RETURNS json
 LANGUAGE plpgsql
-SECURITY DEFINER -- Isso permite bypassar RLS
+SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
   v_result json;
 BEGIN
-  -- Fazer upsert na tabela model_followers
+  -- Fazer upsert na tabela model_followers (sem created_at)
   INSERT INTO public.model_followers (
     user_id,
     model_id,
-    user_name,
-    user_email,
     is_active
   )
   VALUES (
     p_user_id,
     p_model_id,
-    'Usuário Anônimo',
-    'anonimo@exemplo.com',
     p_is_active
   )
   ON CONFLICT (user_id, model_id)
   DO UPDATE SET
-    is_active = p_is_active
+    is_active = EXCLUDED.is_active
   RETURNING json_build_object(
     'user_id', user_id,
     'model_id', model_id,
@@ -41,7 +39,7 @@ BEGIN
   RETURN v_result;
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE EXCEPTION 'Erro ao seguir modelo: %', SQLERRM;
+    RAISE EXCEPTION 'Erro ao seguir: %', SQLERRM;
 END;
 $$;
 

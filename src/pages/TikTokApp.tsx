@@ -1408,7 +1408,9 @@ export const TikTokApp = () => {
         .rpc('follow_model_anonymous', {
           p_user_id: userId,
           p_model_id: currentVideo.user.id,
-          p_is_active: true
+          p_is_active: true,
+          p_user_name: 'Usuário Anônimo',
+          p_user_email: 'anonimo@exemplo.com'
         });
 
       if (error) {

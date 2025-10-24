@@ -114,7 +114,9 @@ export const useAppAnalytics = () => {
             .rpc('follow_model_anonymous', {
               p_user_id: currentUserId,
               p_model_id: targetModelId,
-              p_is_active: true
+              p_is_active: true,
+              p_user_name: 'Usuário Anônimo',
+              p_user_email: 'anonimo@exemplo.com'
             });
           
           if (followError) console.warn('❌ Erro ao registrar follow (RPC):', followError);

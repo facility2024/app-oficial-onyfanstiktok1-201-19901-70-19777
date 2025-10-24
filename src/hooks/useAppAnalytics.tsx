@@ -110,17 +110,30 @@ export const useAppAnalytics = () => {
 
         case 'follow':
           const targetModelId = modelId || videoId;
-          const { error: followError } = await (supabase as any)
-            .rpc('follow_model_anonymous', {
-              p_user_id: currentUserId,
-              p_model_id: targetModelId,
-              p_is_active: true,
-              p_user_name: 'Usuário Anônimo',
-              p_user_email: 'anonimo@exemplo.com'
+          // Tenta via Edge Function primeiro
+          const { error: followFnError } = await (supabase as any)
+            .functions.invoke('follow-model', {
+              body: {
+                user_id: currentUserId,
+                model_id: targetModelId,
+                is_active: true
+              }
             });
-          
-          if (followError) console.warn('❌ Erro ao registrar follow (RPC):', followError);
-          else console.log('✅ Follow registrado via RPC');
+
+          // Fallback para RPC legado
+          if (followFnError) {
+            console.warn('⚠️ Edge Function falhou, tentando RPC legado...', followFnError);
+            const { error: followError } = await (supabase as any)
+              .rpc('follow_model_anonymous', {
+                p_user_id: currentUserId,
+                p_model_id: targetModelId,
+                p_is_active: true
+              });
+            if (followError) console.warn('❌ Erro ao registrar follow (RPC):', followError);
+            else console.log('✅ Follow registrado via RPC');
+          } else {
+            console.log('✅ Follow registrado via Edge Function');
+          }
           break;
       }
 

@@ -296,15 +296,29 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       // Atualizar estado local IMEDIATAMENTE
       setIsFollowing(true);
 
-      // Salvar usando RPC com SECURITY DEFINER para bypass de RLS
-      const { error } = await (supabase as any)
-        .rpc('follow_model_anonymous', {
-          p_user_id: userId,
-          p_model_id: user.id,
-          p_is_active: true,
-          p_user_name: 'Usuário Anônimo',
-          p_user_email: 'anonimo@exemplo.com'
+      // Tentar via Edge Function (mais robusto)
+      const { data: followData, error: followFnError } = await (supabase as any)
+        .functions.invoke('follow-model', {
+          body: {
+            user_id: userId,
+            model_id: user.id,
+            is_active: true
+          }
         });
+
+      let error = followFnError;
+
+      // Fallback: RPC legado (caso a Edge Function falhe)
+      if (error) {
+        console.warn('⚠️ Edge Function falhou, tentando RPC legado...', error);
+        const { error: rpcError } = await (supabase as any)
+          .rpc('follow_model_anonymous', {
+            p_user_id: userId,
+            p_model_id: user.id,
+            p_is_active: true
+          });
+        error = rpcError;
+      }
 
       if (error) {
         console.error('❌ Erro ao seguir modelo:', error);

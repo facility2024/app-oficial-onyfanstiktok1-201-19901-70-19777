@@ -173,7 +173,7 @@ export const SideMenu = ({
             <Sparkles className="w-6 h-6 text-white drop-shadow-lg" />
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400/30 to-orange-500/30 animate-ping"></div>
           </div>
-          <span className="text-white text-xs mt-1 drop-shadow-md">PREMIUM PARA VERSE</span>
+          <span className="text-white text-xs mt-1 drop-shadow-md">PREMIUM</span>
         </div>
       )}
 

@@ -296,8 +296,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       // Atualizar estado local IMEDIATAMENTE
       setIsFollowing(true);
 
-      // Tentar via Edge Function (mais robusto)
-      const { data: followData, error: followFnError } = await (supabase as any)
+      // Chamar Edge Function pública para seguir
+      const { error: followError } = await (supabase as any)
         .functions.invoke('follow-model', {
           body: {
             user_id: userId,
@@ -306,19 +306,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
           }
         });
 
-      let error = followFnError;
-
-      // Fallback: RPC legado (caso a Edge Function falhe)
-      if (error) {
-        console.warn('⚠️ Edge Function falhou, tentando RPC legado...', error);
-        const { error: rpcError } = await (supabase as any)
-          .rpc('follow_model_anonymous', {
-            p_user_id: userId,
-            p_model_id: user.id,
-            p_is_active: true
-          });
-        error = rpcError;
-      }
+      const error = followError;
 
       if (error) {
         console.error('❌ Erro ao seguir modelo:', error);

@@ -81,6 +81,13 @@ self.addEventListener('fetch', event => {
   const isCDN = /tiktokonyfans\.b-cdn\.net$/i.test(url.hostname);
   const isAPI = url.pathname.includes('/api/') || url.hostname.includes('supabase');
   const isNavigation = request.mode === 'navigate';
+  const isSupabaseFunctions = url.hostname.includes('supabase.co') && url.pathname.includes('/functions/v1/');
+
+  // Bypass SW handling for Supabase Edge Functions to avoid offline false-positives
+  if (isSupabaseFunctions) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Handle navigation requests (page loads) - DISABLED for iOS
   if (isNavigation) {

@@ -25,36 +25,34 @@ Deno.serve(async (req) => {
       }
     );
 
-    const { user_id, model_id, is_active } = await req.json();
+    const { user_id, model_id, is_active, user_name, user_email } = await req.json();
 
-    console.log('📥 Follow request:', { user_id, model_id, is_active });
+    console.log('📥 Follow request:', { user_id, model_id, is_active, user_name, user_email });
 
     if (!user_id || !model_id) {
       throw new Error('user_id e model_id são obrigatórios');
     }
 
-    // Upsert follow status (funciona com ou sem auth)
-    const { data, error } = await supabase
-      .from('model_followers')
-      .upsert({
-        user_id,
-        model_id,
-        is_active: is_active ?? true,
-        user_name: 'Usuário Anônimo',
-        user_email: 'anonimo@exemplo.com'
-      }, {
-        onConflict: 'user_id,model_id',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single();
+    // Garantir valores padrão seguros
+    const safeName = (typeof user_name === 'string' && user_name.trim()) ? user_name : 'Usuário Anônimo';
+    const safeEmail = (typeof user_email === 'string' && user_email.trim()) ? user_email : 'anonimo@exemplo.com';
+
+    // Usar RPC com SECURITY DEFINER para bypass de RLS
+    const { data, error } = await (supabase as any)
+      .rpc('follow_model_anonymous', {
+        p_user_id: user_id,
+        p_model_id: model_id,
+        p_is_active: is_active ?? true,
+        p_user_name: safeName,
+        p_user_email: safeEmail,
+      });
 
     if (error) {
-      console.error('❌ Erro ao seguir modelo:', error);
+      console.error('❌ Erro ao seguir modelo (RPC):', error);
       throw error;
     }
 
-    console.log('✅ Follow realizado com sucesso:', data);
+    console.log('✅ Follow realizado com sucesso (RPC):', data);
 
     return new Response(
       JSON.stringify({ success: true, data }),

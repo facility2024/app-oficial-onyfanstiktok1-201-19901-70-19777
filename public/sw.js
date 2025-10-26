@@ -1,6 +1,6 @@
-const CACHE_NAME = 'onytiktok-v2-mobile';
-const VIDEO_CACHE = 'video-cache-v2';
-const API_CACHE = 'api-cache-v2';
+const CACHE_NAME = 'onytiktok-v3-mobile';
+const VIDEO_CACHE = 'video-cache-v3';
+const API_CACHE = 'api-cache-v3';
 
 // Optimized cache list for faster mobile startup
 const urlsToCache = [
@@ -12,7 +12,7 @@ const urlsToCache = [
 ];
 
 // Separate cache for assets that can be loaded later
-const ASSETS_CACHE = 'assets-cache-v1';
+const ASSETS_CACHE = 'assets-cache-v2';
 const assetsToCache = [
   '/lovable-uploads/d6487096-3582-4e46-830e-bd94cdfd798f.png',
   '/lovable-uploads/e93594ee-908d-46f2-a59d-4000b64079a4.png',
@@ -83,7 +83,7 @@ self.addEventListener('fetch', event => {
   const isNavigation = request.mode === 'navigate';
   const isSupabaseFunctions = url.hostname.includes('supabase.co') && url.pathname.includes('/functions/v1/');
 
-  // Bypass SW handling for Supabase Edge Functions to avoid offline false-positives
+  // Bypass SW handling for all Supabase function requests to avoid offline false-positives
   if (isSupabaseFunctions) {
     event.respondWith(fetch(request));
     return;

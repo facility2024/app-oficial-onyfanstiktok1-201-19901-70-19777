@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/public-constants';
 
 interface ProfileScreenProps {
   user: User;
@@ -284,6 +285,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
     if (isFollowing) return;
 
     console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', user.id);
+    try { await caches?.delete?.('dummy_noop'); } catch {}
 
     try {
       // Usar ID de sessão anônima (não requer login)
@@ -297,21 +299,39 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       setIsFollowing(true);
 
       // Chamar Edge Function pública para seguir
-      const { error: followError } = await (supabase as any)
-        .functions.invoke('follow-model', {
-          body: {
-            user_id: userId,
-            model_id: user.id,
-            is_active: true
-          }
-        });
-
-      const error = followError;
+      let error: any = null;
+      try {
+        const { error: followError } = await (supabase as any)
+          .functions.invoke('follow-model', {
+            body: {
+              user_id: userId,
+              model_id: user.id,
+              is_active: true
+            }
+          });
+        error = followError;
+      } catch (err: any) {
+        error = err;
+      }
 
       if (error) {
-        console.error('❌ Erro ao seguir modelo:', error);
-        // Reverter estado apenas se for erro crítico
-        if (!error.message.includes('unauthorized') && !error.message.includes('permission')) {
+        console.warn('⚠️ Edge invoke falhou, tentando fallback fetch direto...', error);
+        try {
+          const resp = await fetch(`${SUPABASE_URL}/functions/v1/follow-model`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_ANON_KEY,
+              'authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ user_id: userId, model_id: user.id, is_active: true }),
+          });
+          if (!resp.ok) {
+            const txt = await resp.text();
+            throw new Error(`Fallback fetch failed: ${resp.status} ${txt}`);
+          }
+        } catch (fallbackErr) {
+          console.error('❌ Erro no fallback direto:', fallbackErr);
           setIsFollowing(false);
           return;
         }
@@ -321,11 +341,12 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       const followKey = `follow_${userId}_${user.id}`;
       localStorage.setItem(followKey, 'true');
 
-      console.log('✅ PROFILE SEGUIR: Seguindo modelo com sucesso!');
+          console.log('✅ PROFILE SEGUIR: Seguindo modelo com sucesso!');
       
     } catch (error) {
       console.error('❌ PROFILE SEGUIR: Erro:', error);
       setIsFollowing(false);
+      toast({ title: 'Erro', description: 'Não foi possível seguir agora. Tente novamente.', variant: 'destructive' });
     }
   };
 

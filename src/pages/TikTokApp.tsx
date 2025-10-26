@@ -1388,6 +1388,8 @@ export const TikTokApp = () => {
     if (currentIsFollowing) return;
 
     console.log('🔔 SEGUIR: Iniciando follow modelo', currentVideo.user.id);
+    // Garantir que sempre tentaremos rede (evitar SW cache)
+    try { await caches?.delete?.('dummy_noop'); } catch {}
 
     try {
       // Usar ID de sessão anônima (não requer login)
@@ -1404,22 +1406,46 @@ export const TikTokApp = () => {
       }));
 
       // Chamar Edge Function pública para seguir
-      const { error: followError } = await (supabase as any)
-        .functions.invoke('follow-model', {
-          body: {
-            user_id: userId,
-            model_id: currentVideo.user.id,
-            is_active: true
-          }
-        });
+      let edgeError: any = null;
+      try {
+        const { error: followError } = await (supabase as any)
+          .functions.invoke('follow-model', {
+            body: {
+              user_id: userId,
+              model_id: currentVideo.user.id,
+              is_active: true
+            }
+          });
+        edgeError = followError;
+      } catch (err: any) {
+        edgeError = err;
+      }
 
-      if (followError) {
-        console.error('❌ Erro ao seguir modelo (Edge Function):', followError);
-        setFollowingModels(prev => ({
-          ...prev,
-          [currentVideo.user.id]: false
-        }));
-        return;
+      if (edgeError) {
+        console.warn('⚠️ Edge invoke falhou, tentando fallback fetch direto...', edgeError);
+        try {
+          const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('@/integrations/supabase/public-constants');
+          const resp = await fetch(`${SUPABASE_URL}/functions/v1/follow-model`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_ANON_KEY,
+              'authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ user_id: userId, model_id: currentVideo.user.id, is_active: true }),
+          });
+          if (!resp.ok) {
+            const txt = await resp.text();
+            throw new Error(`Fallback fetch failed: ${resp.status} ${txt}`);
+          }
+        } catch (fallbackErr) {
+          console.error('❌ Erro no fallback direto:', fallbackErr);
+          setFollowingModels(prev => ({
+            ...prev,
+            [currentVideo.user.id]: false
+          }));
+          return;
+        }
       }
 
       // Salvar no localStorage para persistência

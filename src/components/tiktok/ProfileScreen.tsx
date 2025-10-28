@@ -5,7 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/public-constants';
+
 
 interface ProfileScreenProps {
   user: User;
@@ -315,25 +315,43 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       }
 
       if (error) {
-        console.warn('⚠️ Edge invoke falhou, tentando fallback fetch direto...', error);
+        console.warn('⚠️ Edge invoke falhou, tentando RPC segura...', error);
+        let fixed = false;
+        // 1) Tentar RPC com SECURITY DEFINER
         try {
-          const resp = await fetch(`${SUPABASE_URL}/functions/v1/follow-model`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': SUPABASE_ANON_KEY,
-              'authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ user_id: userId, model_id: user.id, is_active: true }),
+          const rpcRes = await (supabase as any).rpc('follow_model_anonymous', {
+            p_user_id: userId,
+            p_model_id: user.id,
+            p_is_active: true,
+            p_user_name: 'Usuário Anônimo',
+            p_user_email: 'anonimo@exemplo.com',
           });
-          if (!resp.ok) {
-            const txt = await resp.text();
-            throw new Error(`Fallback fetch failed: ${resp.status} ${txt}`);
+          if (!(rpcRes as any).error) {
+            fixed = true;
+          } else {
+            console.warn('⚠️ RPC falhou:', (rpcRes as any).error);
           }
-        } catch (fallbackErr) {
-          console.error('❌ Erro no fallback direto:', fallbackErr);
-          setIsFollowing(false);
-          return;
+        } catch (rpcErr) {
+          console.warn('⚠️ Exceção RPC:', rpcErr);
+        }
+
+        // 2) Fallback final: upsert direto (pode ser bloqueado por RLS)
+        if (!fixed) {
+          try {
+            const upsertRes = await supabase
+              .from('model_followers')
+              .upsert(
+                { user_id: userId, model_id: user.id, is_active: true, user_name: 'Usuário Anônimo', user_email: 'anonimo@exemplo.com' },
+                { onConflict: 'user_id,model_id', ignoreDuplicates: false }
+              )
+              .select()
+              .single();
+            if (upsertRes.error) throw upsertRes.error;
+          } catch (fallbackErr) {
+            console.error('❌ Erro no fallback (upsert):', fallbackErr);
+            setIsFollowing(false);
+            return;
+          }
         }
       }
 

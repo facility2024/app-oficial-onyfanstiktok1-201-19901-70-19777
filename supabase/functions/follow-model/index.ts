@@ -41,29 +41,56 @@ Deno.serve(async (req) => {
     const safeName = (typeof user_name === 'string' && user_name.trim()) ? user_name : 'Usuário Anônimo';
     const safeEmail = (typeof user_email === 'string' && user_email.trim()) ? user_email : 'anonimo@exemplo.com';
 
-    // Usar service role key para bypassar RLS diretamente
-    const upsertRes = await supabase
-      .from('model_followers')
-      .upsert({
-        user_id,
-        model_id,
-        is_active: is_active ?? true,
-        user_name: safeName,
-        user_email: safeEmail,
-      }, {
-        onConflict: 'user_id,model_id',
-        ignoreDuplicates: false,
-      })
-      .select()
-      .single();
+    // 1) Tentar RPC com SECURITY DEFINER para bypassar RLS
+    let data: any = null;
+    try {
+      const rpcRes = await (supabase as any).rpc('follow_model_anonymous', {
+        p_user_id: user_id,
+        p_model_id: model_id,
+        p_is_active: is_active ?? true,
+        p_user_name: safeName,
+        p_user_email: safeEmail,
+      });
 
-    if (upsertRes.error) {
-      console.error('❌ Erro ao seguir modelo:', upsertRes.error);
-      throw upsertRes.error;
+      if (rpcRes?.error) {
+        throw rpcRes.error;
+      }
+
+      data = rpcRes?.data ?? null;
+      if (data) {
+        console.log('✅ Follow realizado com sucesso (RPC):', data);
+      }
+    } catch (rpcErr) {
+      console.warn('⚠️ RPC falhou, tentando upsert com chave disponível:', rpcErr);
+
+      // 2) Fallback: usar upsert (requer SERVICE_ROLE para bypass de RLS)
+      const upsertRes = await supabase
+        .from('model_followers')
+        .upsert({
+          user_id,
+          model_id,
+          is_active: is_active ?? true,
+          user_name: safeName,
+          user_email: safeEmail,
+        }, {
+          onConflict: 'user_id,model_id',
+          ignoreDuplicates: false,
+        })
+        .select()
+        .single();
+
+      if (upsertRes.error) {
+        console.error('❌ Erro ao seguir modelo (upsert fallback):', upsertRes.error);
+        throw upsertRes.error;
+      }
+
+      data = upsertRes.data;
+      console.log('✅ Follow realizado com sucesso (fallback upsert):', data);
     }
 
-    const data = upsertRes.data;
-    console.log('✅ Follow realizado com sucesso:', data);
+    if (!data) {
+      throw new Error('Falha ao registrar follow');
+    }
 
     return new Response(
       JSON.stringify({ success: true, data }),

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
@@ -285,7 +285,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
     if (isFollowing) return;
 
     console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', user.id);
-    try { await caches?.delete?.('dummy_noop'); } catch {}
 
     try {
       // Usar ID de sessão anônima (não requer login)
@@ -299,60 +298,19 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
       setIsFollowing(true);
 
       // Chamar Edge Function pública para seguir
-      let error: any = null;
-      try {
-        const { error: followError } = await (supabase as any)
-          .functions.invoke('follow-model', {
-            body: {
-              user_id: userId,
-              model_id: user.id,
-              is_active: true
-            }
-          });
-        error = followError;
-      } catch (err: any) {
-        error = err;
-      }
+      const { error } = await supabase.functions.invoke('follow-model', {
+        body: {
+          user_id: userId,
+          model_id: user.id,
+          is_active: true
+        }
+      });
 
       if (error) {
-        console.warn('⚠️ Edge invoke falhou, tentando RPC segura...', error);
-        let fixed = false;
-        // 1) Tentar RPC com SECURITY DEFINER
-        try {
-          const rpcRes = await (supabase as any).rpc('follow_model_anonymous', {
-            p_user_id: userId,
-            p_model_id: user.id,
-            p_is_active: true,
-            p_user_name: 'Usuário Anônimo',
-            p_user_email: 'anonimo@exemplo.com',
-          });
-          if (!(rpcRes as any).error) {
-            fixed = true;
-          } else {
-            console.warn('⚠️ RPC falhou:', (rpcRes as any).error);
-          }
-        } catch (rpcErr) {
-          console.warn('⚠️ Exceção RPC:', rpcErr);
-        }
-
-        // 2) Fallback final: upsert direto (pode ser bloqueado por RLS)
-        if (!fixed) {
-          try {
-            const upsertRes = await supabase
-              .from('model_followers')
-              .upsert(
-                { user_id: userId, model_id: user.id, is_active: true, user_name: 'Usuário Anônimo', user_email: 'anonimo@exemplo.com' },
-                { onConflict: 'user_id,model_id', ignoreDuplicates: false }
-              )
-              .select()
-              .single();
-            if (upsertRes.error) throw upsertRes.error;
-          } catch (fallbackErr) {
-            console.error('❌ Erro no fallback (upsert):', fallbackErr);
-            setIsFollowing(false);
-            return;
-          }
-        }
+        console.error('❌ Erro ao seguir modelo:', error);
+        setIsFollowing(false);
+        toast.error('Erro ao seguir modelo. Tente novamente.');
+        return;
       }
 
       // Salvar no localStorage para persistência
@@ -364,7 +322,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
     } catch (error) {
       console.error('❌ PROFILE SEGUIR: Erro:', error);
       setIsFollowing(false);
-      toast({ title: 'Erro', description: 'Não foi possível seguir agora. Tente novamente.', variant: 'destructive' });
+      toast.error('Não foi possível seguir agora. Tente novamente.');
     }
   };
 

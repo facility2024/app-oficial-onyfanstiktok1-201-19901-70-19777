@@ -41,49 +41,29 @@ Deno.serve(async (req) => {
     const safeName = (typeof user_name === 'string' && user_name.trim()) ? user_name : 'Usuário Anônimo';
     const safeEmail = (typeof user_email === 'string' && user_email.trim()) ? user_email : 'anonimo@exemplo.com';
 
-    // Usar RPC com SECURITY DEFINER para bypass de RLS, com fallback para upsert direto
-    let data: any;
-    try {
-      const rpcRes = await (supabase as any)
-        .rpc('follow_model_anonymous', {
-          p_user_id: user_id,
-          p_model_id: model_id,
-          p_is_active: is_active ?? true,
-          p_user_name: safeName,
-          p_user_email: safeEmail,
-        });
+    // Usar service role key para bypassar RLS diretamente
+    const upsertRes = await supabase
+      .from('model_followers')
+      .upsert({
+        user_id,
+        model_id,
+        is_active: is_active ?? true,
+        user_name: safeName,
+        user_email: safeEmail,
+      }, {
+        onConflict: 'user_id,model_id',
+        ignoreDuplicates: false,
+      })
+      .select()
+      .single();
 
-      if (rpcRes.error) {
-        throw rpcRes.error;
-      }
-
-      data = rpcRes.data;
-      console.log('✅ Follow realizado com sucesso (RPC):', data);
-    } catch (rpcError) {
-      console.warn('⚠️ RPC falhou, usando fallback upsert:', rpcError);
-      const upsertRes = await supabase
-        .from('model_followers')
-        .upsert({
-          user_id,
-          model_id,
-          is_active: is_active ?? true,
-          user_name: safeName,
-          user_email: safeEmail,
-        }, {
-          onConflict: 'user_id,model_id',
-          ignoreDuplicates: false,
-        })
-        .select()
-        .single();
-
-      if (upsertRes.error) {
-        console.error('❌ Erro no fallback upsert:', upsertRes.error);
-        throw upsertRes.error;
-      }
-
-      data = upsertRes.data;
-      console.log('✅ Follow realizado com sucesso (fallback upsert):', data);
+    if (upsertRes.error) {
+      console.error('❌ Erro ao seguir modelo:', upsertRes.error);
+      throw upsertRes.error;
     }
+
+    const data = upsertRes.data;
+    console.log('✅ Follow realizado com sucesso:', data);
 
     return new Response(
       JSON.stringify({ success: true, data }),

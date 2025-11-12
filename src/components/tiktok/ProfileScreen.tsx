@@ -565,7 +565,7 @@ if (!isOpen) return null;
                     }}
                   >
                     {/* Thumbnail/Content Preview */}
-                    <div className="w-full h-full relative">
+                    <div className="w-full h-full relative bg-gray-900">
                       {content.type === 'video' ? (
                         <>
                           <video
@@ -573,11 +573,7 @@ if (!isOpen) return null;
                             className="w-full h-full object-cover"
                             muted
                             playsInline
-                            preload="metadata"
-                            onLoadedMetadata={(e) => {
-                              const video = e.currentTarget;
-                              video.currentTime = 1;
-                            }}
+                            preload="none"
                           />
                           {/* Video play icon */}
                           <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
@@ -592,6 +588,7 @@ if (!isOpen) return null;
                             src={content.image_url || content.thumbnail_url}
                             alt={content.title}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                             onError={(e) => {
                               e.currentTarget.src = '/placeholder.svg';
                             }}

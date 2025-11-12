@@ -560,12 +560,15 @@ if (!isOpen) return null;
                     <div className="w-full h-full relative bg-gray-900">
                       {content.type === 'video' ? (
                         <>
-                          <video
-                            src={content.video_url}
+                          <img
+                            src={content.thumbnail_url || content.video_url || '/placeholder.svg'}
+                            alt={content.title}
                             className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            preload="none"
+                            loading="eager"
+                            decoding="async"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
                           />
                           {/* Video play icon */}
                           <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">

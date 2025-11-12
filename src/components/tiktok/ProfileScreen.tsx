@@ -565,7 +565,7 @@ if (!isOpen) return null;
                     }}
                   >
                     {/* Thumbnail/Content Preview */}
-                    <div className="w-full h-full relative">
+                    <div className="w-full h-full relative bg-gradient-to-br from-gray-800 to-gray-900">
                       {content.type === 'video' ? (
                         <>
                           <video
@@ -573,11 +573,16 @@ if (!isOpen) return null;
                             className="w-full h-full object-cover"
                             muted
                             playsInline
-                            preload="metadata"
-                            poster={content.thumbnail_url}
-                            onLoadedMetadata={(e) => {
+                            preload="none"
+                            onLoadStart={(e) => {
                               const video = e.currentTarget;
-                              video.currentTime = 1;
+                              video.load();
+                            }}
+                            onLoadedData={(e) => {
+                              const video = e.currentTarget;
+                              if (video.readyState >= 2) {
+                                video.currentTime = 0.1;
+                              }
                             }}
                           />
                           {/* Video play icon */}

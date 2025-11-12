@@ -106,51 +106,38 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
   }, [isOpen]);
 
   const loadModelContent = async () => {
-    setLoading(true);
     try {
-      console.log('Loading content for user:', user.id, user.username);
-      
-      // Carregar dados do modelo (incluindo posting_panel_url)
-      const { data: modelData, error: modelError } = await supabase
-        .from('models')
-        .select('posting_panel_url')
-        .eq('id', user.id)
-        .single();
-
-      if (modelError) {
-        console.warn('Erro ao carregar dados do modelo:', modelError);
-      } else {
-        setPanelUrl(modelData?.posting_panel_url || null);
+      // Tentar carregar do cache primeiro para exibição instantânea
+      const cacheKey = `profile_${user.id}_content`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const { contents: cachedContents, panelUrl: cachedUrl } = JSON.parse(cached);
+        setContents(cachedContents);
+        setPanelUrl(cachedUrl);
       }
       
-      // Carregar vídeos
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select(`
-          id,
-          title,
-          description,
-          video_url,
-          thumbnail_url,
-          likes_count,
-          views_count,
-          created_at,
-          is_active,
-          model_id
-        `)
-        .eq('model_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      setLoading(true);
+      
+      // Carregar dados em paralelo para máxima velocidade
+      const [modelData, videosData] = await Promise.all([
+        supabase
+          .from('models')
+          .select('posting_panel_url')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('videos')
+          .select('id,title,video_url,thumbnail_url,likes_count,views_count,created_at')
+          .eq('model_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+      ]);
 
-      if (videosError) {
-        console.error('Supabase error:', videosError);
-        throw videosError;
-      }
+      const newPanelUrl = modelData?.data?.posting_panel_url || null;
+      setPanelUrl(newPanelUrl);
 
-      console.log('Videos data received:', videosData);
-
-      // Transformar vídeos para o formato de conteúdo
-      const transformedVideos = videosData?.map(item => ({
+      // Transformar vídeos
+      const transformedVideos = videosData?.data?.map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,
         thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
@@ -161,10 +148,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         created_at: item.created_at
       })) || [];
 
-      // Buscar imagens específicas da modelo (usando localStorage como cache temporário)
+      // Buscar imagens da modelo
       const modelImages = getModelImages(user.id);
       
-      // Transformar imagens para o formato de conteúdo
+      // Transformar imagens
       const transformedImages = modelImages.map((image, index) => ({
         id: `image-${user.id}-${index}`,
         title: `Foto ${index + 1}`,
@@ -176,13 +163,18 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         created_at: new Date().toISOString()
       }));
 
-      // Combinar vídeos e imagens
+      // Combinar e ordenar
       const allContent = [...transformedImages, ...transformedVideos].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      console.log('All content (videos + images):', allContent);
       setContents(allContent);
+      
+      // Salvar no cache para próxima abertura instantânea
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        contents: allContent,
+        panelUrl: newPanelUrl
+      }));
     } catch (error) {
       console.error('Error loading model content:', error);
       setContents([]);

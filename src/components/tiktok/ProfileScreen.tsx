@@ -106,38 +106,51 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
   }, [isOpen]);
 
   const loadModelContent = async () => {
+    setLoading(true);
     try {
-      // Tentar carregar do cache primeiro para exibição instantânea
-      const cacheKey = `profile_${user.id}_content`;
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        const { contents: cachedContents, panelUrl: cachedUrl } = JSON.parse(cached);
-        setContents(cachedContents);
-        setPanelUrl(cachedUrl);
+      console.log('Loading content for user:', user.id, user.username);
+      
+      // Carregar dados do modelo (incluindo posting_panel_url)
+      const { data: modelData, error: modelError } = await supabase
+        .from('models')
+        .select('posting_panel_url')
+        .eq('id', user.id)
+        .single();
+
+      if (modelError) {
+        console.warn('Erro ao carregar dados do modelo:', modelError);
+      } else {
+        setPanelUrl(modelData?.posting_panel_url || null);
       }
       
-      setLoading(true);
-      
-      // Carregar dados em paralelo para máxima velocidade
-      const [modelData, videosData] = await Promise.all([
-        supabase
-          .from('models')
-          .select('posting_panel_url')
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('videos')
-          .select('id,title,video_url,thumbnail_url,likes_count,views_count,created_at')
-          .eq('model_id', user.id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-      ]);
+      // Carregar vídeos
+      const { data: videosData, error: videosError } = await supabase
+        .from('videos')
+        .select(`
+          id,
+          title,
+          description,
+          video_url,
+          thumbnail_url,
+          likes_count,
+          views_count,
+          created_at,
+          is_active,
+          model_id
+        `)
+        .eq('model_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-      const newPanelUrl = modelData?.data?.posting_panel_url || null;
-      setPanelUrl(newPanelUrl);
+      if (videosError) {
+        console.error('Supabase error:', videosError);
+        throw videosError;
+      }
 
-      // Transformar vídeos
-      const transformedVideos = videosData?.data?.map(item => ({
+      console.log('Videos data received:', videosData);
+
+      // Transformar vídeos para o formato de conteúdo
+      const transformedVideos = videosData?.map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,
         thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
@@ -148,10 +161,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         created_at: item.created_at
       })) || [];
 
-      // Buscar imagens da modelo
+      // Buscar imagens específicas da modelo (usando localStorage como cache temporário)
       const modelImages = getModelImages(user.id);
       
-      // Transformar imagens
+      // Transformar imagens para o formato de conteúdo
       const transformedImages = modelImages.map((image, index) => ({
         id: `image-${user.id}-${index}`,
         title: `Foto ${index + 1}`,
@@ -163,18 +176,13 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         created_at: new Date().toISOString()
       }));
 
-      // Combinar e ordenar
+      // Combinar vídeos e imagens
       const allContent = [...transformedImages, ...transformedVideos].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
+      console.log('All content (videos + images):', allContent);
       setContents(allContent);
-      
-      // Salvar no cache para próxima abertura instantânea
-      sessionStorage.setItem(cacheKey, JSON.stringify({
-        contents: allContent,
-        panelUrl: newPanelUrl
-      }));
     } catch (error) {
       console.error('Error loading model content:', error);
       setContents([]);
@@ -557,17 +565,19 @@ if (!isOpen) return null;
                     }}
                   >
                     {/* Thumbnail/Content Preview */}
-                    <div className="w-full h-full relative bg-gray-900">
+                    <div className="w-full h-full relative">
                       {content.type === 'video' ? (
                         <>
-                          <img
-                            src={content.thumbnail_url || content.video_url || '/placeholder.svg'}
-                            alt={content.title}
+                          <video
+                            src={content.video_url}
                             className="w-full h-full object-cover"
-                            loading="eager"
-                            decoding="async"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
+                            muted
+                            playsInline
+                            preload="metadata"
+                            poster={content.thumbnail_url}
+                            onLoadedMetadata={(e) => {
+                              const video = e.currentTarget;
+                              video.currentTime = 1;
                             }}
                           />
                           {/* Video play icon */}
@@ -583,7 +593,6 @@ if (!isOpen) return null;
                             src={content.image_url || content.thumbnail_url}
                             alt={content.title}
                             className="w-full h-full object-cover"
-                            loading="lazy"
                             onError={(e) => {
                               e.currentTarget.src = '/placeholder.svg';
                             }}

@@ -2188,10 +2188,10 @@ export const TikTokApp = () => {
       <BonusGift isMobile={false} />
       
       {/* Desktop Main Content */}
-      <div className="flex justify-center items-start pt-6">
-        <div className="flex max-w-7xl w-full">
+      <div className="flex justify-center items-start pt-6 px-4">
+        <div className="flex max-w-7xl w-full gap-4">
           {/* Video Container */}
-          <div className="flex-1 max-w-md mx-auto relative">
+          <div className="flex-1 max-w-md mx-auto relative pr-20 md:pr-24 lg:pr-28">
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
               {/* Um vídeo por modelo em sequência linear */}
               <VideoPlayer
@@ -2218,7 +2218,7 @@ export const TikTokApp = () => {
                 </Button>
               </div>
               
-              <div className="absolute top-1/2 right-6 transform -translate-y-1/2 z-20">
+              <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -2264,7 +2264,7 @@ export const TikTokApp = () => {
               )}
 
               {/* Desktop Side Menu - Ajustado para ficar mais abaixo conforme TikTok */}
-            <div className="absolute bottom-24 right-6 flex flex-col justify-end space-y-4 z-30">
+            <div className="absolute bottom-24 right-2 md:right-4 lg:right-6 flex flex-col justify-end space-y-4 z-30">
               <SideMenu
                 video={currentVideo}
                 isLiked={isLiked}

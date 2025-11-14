@@ -275,6 +275,35 @@ export const TikTokApp = () => {
     window.addEventListener('touchstart', handleFirstTouch, { passive: true } as any);
     return () => window.removeEventListener('touchstart', handleFirstTouch);
   }, [showAgeVerification]);
+
+  // Fallback imediato para mobile: se for mobile e ainda não verificou, abre assim que detectar o tamanho
+  useEffect(() => {
+    try {
+      const verified = !!localStorage.getItem('ageVerification');
+      if (!verified && isMobile) {
+        console.log('📱 VERIFICAÇÃO DE IDADE: Dispositivo móvel detectado — abrindo modal imediatamente');
+        setShowAgeVerification(true);
+        setIsPlaying(false);
+      }
+    } catch {}
+    // rodará sempre que o breakpoint de mobile mudar
+  }, [isMobile]);
+
+  // Comunica globalmente (para o banner PWA) quando o modal +18 abre/fecha
+  useEffect(() => {
+    try {
+      if (showAgeVerification) {
+        localStorage.setItem('age_modal_open', 'true');
+      } else {
+        localStorage.removeItem('age_modal_open');
+      }
+    } catch {}
+    // Dispara evento customizado para outros componentes no mesmo documento
+    try {
+      const evt = new CustomEvent('ageModalOpenChange', { detail: { open: showAgeVerification } });
+      window.dispatchEvent(evt);
+    } catch {}
+  }, [showAgeVerification]);
   useEffect(() => {
     
     // ✅ REMOVER carregamento periódico para evitar notificações constantes

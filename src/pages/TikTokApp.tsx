@@ -19,6 +19,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
 import { PremiumModal } from '@/components/tiktok/PremiumModal';
+import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -93,6 +94,7 @@ export const TikTokApp = () => {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [showAgeVerification, setShowAgeVerification] = useState(false);
   
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);
@@ -227,6 +229,19 @@ export const TikTokApp = () => {
     }
   }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos]);
   
+  // Verificação de idade após 4 segundos
+  useEffect(() => {
+    const verification = localStorage.getItem('ageVerification');
+    if (verification) return; // Já verificado
+
+    const timer = setTimeout(() => {
+      setShowAgeVerification(true);
+      setIsPlaying(false); // Pausa o vídeo
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     
     // ✅ REMOVER carregamento periódico para evitar notificações constantes
@@ -2371,6 +2386,15 @@ export const TikTokApp = () => {
       <PremiumModal
         isOpen={showPremium}
         onClose={() => setShowPremium(false)}
+      />
+      
+      {/* Age Verification Modal */}
+      <AgeVerificationModal
+        open={showAgeVerification}
+        onClose={() => {
+          setShowAgeVerification(false);
+          setIsPlaying(true);
+        }}
       />
       
       {/* Desktop Action Tracker */}

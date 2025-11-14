@@ -865,6 +865,16 @@ export const TikTokApp = () => {
     emblaApi?.scrollTo(0);
   };
 
+  const backToCurrentVideo = () => {
+    console.log('🏠 Voltando para onde parou a visualização');
+    setShowProfile(false);
+    setShowComments(false);
+    setShowSearch(false);
+    setShowLive(false);
+    setShowPremium(false);
+    // Mantém o vídeo atual sem mudar o índice
+  };
+
   const loadComments = async (videoId: string) => {
     try {
       console.log('💬 LOADING COMMENTS for video:', videoId);
@@ -1901,7 +1911,7 @@ export const TikTokApp = () => {
         {/* Barra de Navegação Inferior - Estilo TikTok */}
         <div className="fixed bottom-0 left-0 right-0 h-16 bg-black border-t border-gray-800 flex items-center justify-around px-2 z-[60] pb-safe">
           <button 
-            onClick={goToHome}
+            onClick={backToCurrentVideo}
             className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
             <svg className="w-7 h-7 mb-0.5" fill="currentColor" viewBox="0 0 24 24">

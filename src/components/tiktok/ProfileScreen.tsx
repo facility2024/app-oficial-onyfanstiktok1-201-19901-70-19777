@@ -363,9 +363,8 @@ if (!isOpen) return null;
         {/* Profile Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1600px] px-3 lg:px-6">
-          
-          {/* Profile Header - NO TOPO */}
-          <div className="p-6 text-white border-t border-white/10">
+          {/* Profile Header */}
+          <div className="p-6 text-white border-b border-white/10">
             <div className="flex items-center gap-4 mb-4">
               <img
                 src={user.avatar_url || '/placeholder.svg'}
@@ -425,143 +424,30 @@ if (!isOpen) return null;
               </p>
             )}
 
-            {/* Informações Detalhadas da Modelo */}
-            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-white/50 text-xs mb-1">Local</p>
-                  <p className="text-white font-medium">São Paulo, Brasil</p>
-                </div>
-                <div>
-                  <p className="text-white/50 text-xs mb-1">Idade</p>
-                  <p className="text-white font-medium">23 anos</p>
-                </div>
-                <div>
-                  <p className="text-white/50 text-xs mb-1">Altura</p>
-                  <p className="text-white font-medium">1,68m</p>
-                </div>
-                <div>
-                  <p className="text-white/50 text-xs mb-1">Signo</p>
-                  <p className="text-white font-medium">Escorpião ♏</p>
-                </div>
-              </div>
-              
-              <div className="pt-3 border-t border-white/10">
-                <p className="text-white/50 text-xs mb-2">Sobre mim</p>
-                <p className="text-white/90 text-sm leading-relaxed">
-                  Criadora de conteúdo exclusivo. Aqui você encontra o melhor conteúdo especial para você! 💕✨
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-white/10">
-                <p className="text-white/50 text-xs mb-2">Interesses</p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Fitness 💪</span>
-                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Moda 👗</span>
-                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Viagens ✈️</span>
-                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Fotografia 📸</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Links Sociais */}
-            <div className="mt-4">
-              <h3 className="text-[#00D5FF] text-base font-semibold mb-3">Redes Sociais</h3>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                <a 
-                  href={`https://tiktok.com/@${user.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                  </svg>
-                  TikTok
-                </a>
-                <a 
-                  href={`https://t.me/${user.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.84 8.687c-.139.625-.503.777-1.018.483l-2.813-2.075-1.357 1.305c-.15.15-.276.276-.567.276l.203-2.877 5.24-4.735c.228-.203-.05-.316-.353-.114l-6.476 4.078-2.79-.87c-.608-.19-.62-.608.127-.901l10.89-4.197c.507-.19.951.113.785.9z"/>
-                  </svg>
-                  Telegram
-                </a>
-                <a 
-                  href={`https://facebook.com/${user.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                  Facebook
-                </a>
-                <a 
-                  href={`https://instagram.com/${user.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
-                  </svg>
-                  Instagram
-                </a>
-              </div>
-            </div>
-
-            {/* Status de Assinatura */}
-            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">ASSINATURA</h4>
-                <span className="bg-[#00D5FF] text-black text-xs font-bold px-2 py-1 rounded-full">ATIVO</span>
-              </div>
-              <div className="flex items-center justify-between text-white/50 text-xs">
-                <span>Renove por $15 /mês</span>
-                <span>dez 1, 2025</span>
-              </div>
-            </div>
-
-            {/* Pacotes de Assinatura */}
-            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">PACOTES DE ASSINATURA</h4>
-                <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-
-              <div className="space-y-3">
-                <button className="w-full bg-[#00D5FF] hover:bg-[#00C2E8] text-black font-bold py-3.5 px-5 rounded-full flex items-center justify-between transition-all shadow-lg shadow-[#00D5FF]/20">
-                  <span className="text-sm">3 MESES (15% off)</span>
-                  <span className="text-sm">$38.25 total</span>
-                </button>
-
-                <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
-                  <span className="text-sm">6 MESES (20% off)</span>
-                  <span className="text-sm">$72.00 total</span>
-                </button>
-
-                <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
-                  <span className="text-sm">12 MESES (25% off)</span>
-                  <span className="text-sm">$135.00 total</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Footer Links */}
-            <div className="flex items-center justify-center gap-3 mt-4 text-white/30 text-xs">
-              <a href="#" className="hover:text-white/50 transition-colors">Privacy</a>
-              <span>•</span>
-              <a href="#" className="hover:text-white/50 transition-colors">Cookie Notice</a>
-              <span>•</span>
-              <a href="#" className="hover:text-white/50 transition-colors">Terms of Service</a>
+            {/* Action Buttons */}
+            <div className="flex gap-2 relative z-50">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔥 PROFILE BOTÃO SEGUIR CLICADO!', {
+                    currentUser: user?.username,
+                    isFollowing,
+                    modelId: user?.id
+                  });
+                  followModel();
+                }}
+                style={{ 
+                  pointerEvents: 'all',
+                  position: 'relative',
+                  zIndex: 999
+                }}
+                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 py-3 px-6 rounded-full font-semibold text-white text-sm hover:from-red-600 hover:to-pink-600 transition-all duration-200 cursor-pointer"
+                aria-pressed={isFollowing}
+                aria-label={isFollowing ? `Deixar de seguir ${user.username}` : `Seguir ${user.username}`}
+              >
+                {isFollowing ? 'Seguindo' : 'Seguir'}
+              </button>
             </div>
 
             {panelUrl && (
@@ -606,18 +492,34 @@ if (!isOpen) return null;
                           setImageViewerOpen(true);
                         }}
                       >
-                        <img 
-                          src={imageUrl} 
+                        <img
+                          src={imageUrl}
                           alt={`Conteúdo ${index + 1}`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder.svg';
+                            e.currentTarget.src = '/placeholder.svg';
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity">
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-semibold">Clique para visualizar</p>
+                        
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                        
+                        {/* Heart icon overlay */}
+                        <div className="absolute top-2 right-2 bg-pink-500/80 rounded-full p-1">
+                          <Heart className="w-3 h-3 text-white fill-white" />
+                        </div>
+                        
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+                          <div className="w-12 h-12 bg-pink-500/80 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <Heart className="w-6 h-6 text-white fill-white" />
+                          </div>
+                        </div>
+                        
+                        {/* Number overlay */}
+                        <div className="absolute bottom-1 left-1">
+                          <div className="bg-black/70 rounded-full px-2 py-1">
+                            <span className="text-white text-xs font-medium">{index + 1}</span>
                           </div>
                         </div>
                       </div>
@@ -627,20 +529,9 @@ if (!isOpen) return null;
               </div>
             )}
           </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Image Viewer */}
-      <ImageViewer 
-        images={currentImageArray}
-        currentIndex={currentImageIndex}
-        isOpen={imageViewerOpen}
-        onClose={() => setImageViewerOpen(false)}
-      />
-          
-          {/* Postagens - ABAIXO DO PERFIL */}
-          <div className="mt-6 p-3">
+          {/* Content Grid - Formato TikTok/Instagram */}
+          <div className="p-3">
             <h4 className="text-white font-semibold mb-3 text-base">
               Postagens ({contents.length})
             </h4>
@@ -661,55 +552,222 @@ if (!isOpen) return null;
                     onClick={() => {
                       if (content.type === 'video') {
                         onVideoSelect?.(content.id);
+                        onClose();
                       } else {
+                        // Para imagens, abrir o visualizador
                         const imageContents = contents.filter(c => c.type === 'image');
                         const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
-                        const currentIndex = imageContents.findIndex(c => c.id === content.id);
+                        const currentImageIndex = imageContents.findIndex(c => c.id === content.id);
                         setCurrentImageArray(imageUrls);
-                        setCurrentImageIndex(currentIndex);
+                        setCurrentImageIndex(currentImageIndex);
                         setImageViewerOpen(true);
                       }
                     }}
                   >
-                    <img 
-                      src={content.thumbnail_url} 
-                      alt={content.title}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {content.type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-8 h-8 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm">
-                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                          </svg>
+                    {/* Thumbnail/Content Preview */}
+                    <div className="w-full h-full relative">
+                      {content.type === 'video' ? (
+                        <>
+                          <video
+                            src={content.video_url}
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                            preload="metadata"
+                            poster={content.thumbnail_url}
+                            onLoadedMetadata={(e) => {
+                              const video = e.currentTarget;
+                              video.currentTime = 1;
+                            }}
+                          />
+                          {/* Video play icon */}
+                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
+                            <div className="w-4 h-4 text-white flex items-center justify-center">
+                              <div className="w-0 h-0 border-l-[6px] border-l-white border-y-[4px] border-y-transparent ml-0.5"></div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <img
+                            src={content.image_url || content.thumbnail_url}
+                            alt={content.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
+                          {/* Image gallery icon */}
+                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
+                            <div className="w-4 h-4 text-white flex items-center justify-center">
+                              <div className="w-3 h-3 border border-white rounded-sm opacity-80"></div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                      
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 bg-white/80 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          {content.type === 'video' ? (
+                            <div className="w-0 h-0 border-l-[10px] border-l-black border-y-[7px] border-y-transparent ml-1"></div>
+                          ) : (
+                            <div className="w-6 h-6 border-2 border-black rounded opacity-80"></div>
+                          )}
                         </div>
                       </div>
-                    )}
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                      <div className="flex items-center justify-between text-xs text-white">
-                        <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                          </svg>
-                          {content.views_count?.toLocaleString() || '0'}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                          </svg>
-                          {content.likes_count?.toLocaleString() || '0'}
-                        </span>
+                      
+                      {/* Stats overlay */}
+                      <div className="absolute bottom-1 left-1 right-1">
+                        <div className="flex items-center justify-between text-white text-xs">
+                          <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-1">
+                            <span className="text-red-400">❤️</span>
+                            <span className="text-[10px] font-medium">{content.likes_count > 1000 ? `${(content.likes_count/1000).toFixed(1)}k` : content.likes_count}</span>
+                          </div>
+                          <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-1">
+                            <span className="text-blue-400">👁️</span>
+                            <span className="text-[10px] font-medium">{content.views_count > 1000 ? `${(content.views_count/1000).toFixed(1)}k` : content.views_count}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Title overlay */}
+                      <div className="absolute top-1 left-1 right-8">
+                        <div className="bg-black/50 rounded px-2 py-1">
+                          <p className="text-white text-[10px] font-medium truncate">{content.title}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
 
+            {/* Seção de Mais Informações */}
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <h3 className="text-white text-sm font-semibold mb-4">Mais informações</h3>
+              
+              {/* Links Sociais */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                <a 
+                  href={`https://tiktok.com/@${user.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-900 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                  </svg>
+                  Tiktok
+                </a>
+                
+                <a 
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-[#FFFC00] text-black px-4 py-2 rounded-full text-sm hover:bg-yellow-400 transition-colors font-semibold"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 3.764 3.659.403.03.823.074 1.169.239.27.119.404.314.404.538 0 .449-.63.899-1.664.899-1.139 0-2.848-.778-4.542-2.068-1.798-1.364-3.011-3.015-3.746-4.078l-.003-.015c-.164-.254-.314-.524-.479-.793l-.074-.135c-.12-.214-.269-.42-.419-.643-.3-.42-.645-.93-1.033-1.364-.164-.179-.27-.345-.27-.479 0-.09.044-.149.104-.149.075 0 .225.029.375.074.104.03.269.074.389.074.06 0 .149-.015.209-.074.165-.135.24-.494.24-.793 0-.645-.39-1.139-1.063-1.139-.12 0-.314.03-.479.074-.194.06-.449.135-.674.135-.239 0-.419-.06-.554-.164-.314-.254-.554-.689-.554-1.139 0-.374.136-.778.376-1.123.27-.404.72-.659 1.213-.659.06 0 .12 0 .165.015.27.029.494.135.674.314.164.165.225.375.225.614 0 .179-.045.375-.12.524-.045.075-.09.149-.12.224-.03.044-.045.089-.06.119.015.029.06.074.165.074.27 0 .734-.135 1.198-.404.494-.285 1.139-.734 1.693-1.213.12-.104.269-.194.434-.254.239-.09.494-.135.764-.135zm-2.008 10.238c-.165-.12-.3-.239-.419-.359-.239-.239-.42-.524-.614-.793-.329-.449-.704-.958-1.123-1.378-.225-.224-.449-.434-.674-.629-.3-.254-.614-.479-.943-.674-.18-.104-.375-.194-.569-.254-.375-.119-.778-.179-1.198-.179-1.079 0-2.008.524-2.488 1.408-.15.285-.225.614-.225.958 0 .479.135.943.36 1.363.225.404.554.764.943 1.033.225.149.479.269.749.344.209.06.434.104.674.104.314 0 .629-.06.913-.165.375-.135.704-.344.958-.614.18-.194.329-.419.434-.659.12-.254.18-.539.18-.823 0-.27-.06-.524-.165-.749-.105-.224-.255-.419-.42-.584z"/>
+                  </svg>
+                  Snapchat
+                </a>
+
+                <a 
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-900 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                  X
+                </a>
+
+                <a 
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-[#FF9900] text-white px-4 py-2 rounded-full text-sm hover:bg-orange-600 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M.045 18.02c.072-.116.187-.124.348-.022 3.636 2.11 7.594 3.166 11.87 3.166 2.852 0 5.668-.533 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13.226-.088.39-.046.525.13.12.174.09.336-.12.48-.256.19-.6.41-1.006.654-1.244.743-2.64 1.316-4.185 1.726-1.53.406-3.045.61-4.516.61-2.265 0-4.463-.427-6.59-1.278-2.067-.826-3.93-1.972-5.593-3.44-.1-.088-.148-.173-.148-.256 0-.063.023-.12.068-.18zm3.202-5.456c-.39 0-.71-.18-.96-.538-.25-.36-.375-.79-.375-1.29 0-.516.128-.952.387-1.31.258-.36.578-.538.96-.538.376 0 .7.18.96.538.257.36.387.795.387 1.31s-.13.93-.387 1.29c-.26.36-.584.538-.96.538zm15.506 0c-.376 0-.7-.18-.96-.538-.257-.36-.387-.795-.387-1.29 0-.516.13-.952.387-1.31.26-.36.584-.538.96-.538.39 0 .71.18.96.538.258.36.387.795.387 1.31s-.13.93-.387 1.29c-.25.36-.57.538-.96.538z"/>
+                  </svg>
+                  Amazon
+                </a>
+              </div>
+
+              {/* Seção de Assinatura */}
+              <div className="bg-muted/5 border border-white/10 rounded-xl p-4 mb-4">
+                <h4 className="text-white/60 text-xs uppercase font-semibold mb-3">ASSINATURA</h4>
+                
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[#00D5FF] font-bold text-sm">JÁ SOU ASSINANTE</span>
+                  <span className="text-[#00D5FF] font-bold text-sm">$4.50 por 31 dias</span>
+                </div>
+
+                <div className="flex items-center justify-between text-white/60 text-xs">
+                  <span>Renove por $15 /mês</span>
+                  <span>dez 1, 2025</span>
+                </div>
+              </div>
+
+              {/* Pacotes de Assinatura */}
+              <div className="bg-muted/5 border border-white/10 rounded-xl p-4">
+                <button 
+                  className="w-full flex items-center justify-between text-white/60 text-xs uppercase font-semibold mb-3"
+                  onClick={() => {/* Toggle accordion */}}
+                >
+                  PACOTES DE ASSINATURA
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                <div className="space-y-2">
+                  <button className="w-full bg-[#00D5FF] hover:bg-[#00B8E0] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
+                    <span>3 MESES (15off)</span>
+                    <span>$38.25 total</span>
+                  </button>
+
+                  <button className="w-full bg-[#00D5FF]/80 hover:bg-[#00D5FF] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
+                    <span>6 MESES (20off)</span>
+                    <span>$72.00 total</span>
+                  </button>
+
+                  <button className="w-full bg-[#00D5FF]/60 hover:bg-[#00D5FF] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
+                    <span>12 MESES (25off)</span>
+                    <span>$135.00 total</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer Links */}
+              <div className="flex items-center justify-center gap-3 mt-4 text-white/40 text-xs">
+                <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
+                <span>•</span>
+                <a href="#" className="hover:text-white/60 transition-colors">Cookie Notice</a>
+                <span>•</span>
+                <a href="#" className="hover:text-white/60 transition-colors">Terms of Service</a>
+              </div>
+            </div>
           </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Image Viewer */}
+      <ImageViewer
+        images={currentImageArray}
+        currentIndex={currentImageIndex}
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        onIndexChange={setCurrentImageIndex}
+      />
+    </div>
   );
 };

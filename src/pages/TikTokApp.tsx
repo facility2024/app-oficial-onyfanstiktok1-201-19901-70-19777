@@ -1843,8 +1843,8 @@ export const TikTokApp = () => {
           <BonusGift isMobile={true} />
         </div>
 
-        {/* Side Menu - Mobile positioning - FIXED and on top with HIGHEST z-index */}
-        <div className="fixed top-1/2 right-4 transform -translate-y-1/2 z-[9999] pointer-events-auto">
+        {/* Side Menu - Mobile positioning - Ajustado para ficar mais abaixo conforme TikTok */}
+        <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">
           <SideMenu
             video={currentVideo}
             isLiked={isLiked}
@@ -1893,19 +1893,59 @@ export const TikTokApp = () => {
                   title: "Abrindo página premium",
                   description: `Redirecionando para ${currentVideo.user.username}`
                 });
-              } else {
-                toast({
-                  title: "Link não configurado",
-                  description: "Esta modelo ainda não tem link premium configurado",
-                  variant: "destructive"
-                });
               }
             }}
-            onExit={() => {
-              console.log('Saindo do aplicativo...');
-              window.location.href = '/';
-            }}
           />
+        </div>
+
+        {/* Barra de Navegação Inferior - Estilo TikTok */}
+        <div className="fixed bottom-0 left-0 right-0 h-16 bg-black border-t border-gray-800 flex items-center justify-around px-2 z-[60] pb-safe">
+          <button 
+            onClick={goToHome}
+            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
+          >
+            <svg className="w-7 h-7 mb-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9.135 20.773v-3.057c0-.78.637-1.414 1.423-1.414h2.875c.377 0 .74.15 1.006.414.267.265.417.625.417 1v3.057c-.002.325.126.637.356.867.23.23.544.36.87.36h1.962a3.46 3.46 0 002.443-1 3.41 3.41 0 001.013-2.422V9.867c0-.735-.328-1.431-.895-1.902l-6.671-5.29a3.097 3.097 0 00-3.949.072L3.467 7.965A2.474 2.474 0 002.5 9.867v8.702C2.5 20.464 4.047 22 5.956 22h1.916c.68 0 1.231-.544 1.236-1.218l.027-.009z"/>
+            </svg>
+            <span className="text-xs">Início</span>
+          </button>
+
+          <button 
+            onClick={() => setShowSearch(true)}
+            className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span className="text-xs">Seguindo</span>
+          </button>
+
+          <button 
+            onClick={() => setShowLive(true)}
+            className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2"
+          >
+            <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+
+          <button 
+            onClick={() => setShowComments(true)}
+            className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span className="text-xs">Inbox</span>
+          </button>
+
+          <button 
+            onClick={() => setShowProfile(true)}
+            className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
+          >
+            <User className="w-7 h-7 mb-0.5" />
+            <span className="text-xs">Perfil</span>
+          </button>
         </div>
 
         {/* Vertical Carousel Container */}
@@ -2112,8 +2152,8 @@ export const TikTokApp = () => {
                 </div>
               )}
 
-              {/* Desktop Side Menu - Posicionado conforme imagem */}
-            <div className="absolute top-1/3 -right-16 transform -translate-y-1/2 flex flex-col justify-center space-y-4 z-30">{/* Subido para alinhar com altura do vídeo */}
+              {/* Desktop Side Menu - Ajustado para ficar mais abaixo conforme TikTok */}
+            <div className="absolute bottom-24 right-6 flex flex-col justify-end space-y-4 z-30">
               <SideMenu
                 video={currentVideo}
                 isLiked={isLiked}

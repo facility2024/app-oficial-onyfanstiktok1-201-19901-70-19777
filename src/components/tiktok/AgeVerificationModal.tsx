@@ -79,7 +79,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="sm:max-w-md bg-background border-border max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+      <DialogContent className="sm:max-w-md bg-background border-border max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-xl">
             <div className="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg">
@@ -89,8 +89,8 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4 px-1">
-          <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+        <div className="space-y-3 py-3 px-1 flex-1 overflow-y-auto">
+          <div className="bg-muted/50 p-3 rounded-lg space-y-2">
             <p className="text-sm text-center font-medium">
               Confirmo que sou maior de 18 anos
             </p>
@@ -154,7 +154,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full mt-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Verificando..." : "Confirmar e Continuar"}

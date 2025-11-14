@@ -1920,8 +1920,9 @@ export const TikTokApp = () => {
             onClick={() => setShowSearch(true)}
             className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
           >
-            <svg className="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg className="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="currentColor" />
             </svg>
             <span className="text-xs">Explorar</span>
           </button>

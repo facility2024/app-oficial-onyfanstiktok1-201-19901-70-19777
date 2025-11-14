@@ -14,7 +14,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, Share, User, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -23,6 +23,10 @@ import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import iconHome from '@/assets/icon-home.png';
+import iconNavigation from '@/assets/icon-navigation.png';
+import iconMarketplace from '@/assets/icon-marketplace.png';
+import iconShare from '@/assets/icon-share.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 // import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
@@ -2017,9 +2021,7 @@ export const TikTokApp = () => {
             onClick={backToCurrentVideo}
             className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
-            <svg className="w-7 h-7 mb-0.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9.135 20.773v-3.057c0-.78.637-1.414 1.423-1.414h2.875c.377 0 .74.15 1.006.414.267.265.417.625.417 1v3.057c-.002.325.126.637.356.867.23.23.544.36.87.36h1.962a3.46 3.46 0 002.443-1 3.41 3.41 0 001.013-2.422V9.867c0-.735-.328-1.431-.895-1.902l-6.671-5.29a3.097 3.097 0 00-3.949.072L3.467 7.965A2.474 2.474 0 002.5 9.867v8.702C2.5 20.464 4.047 22 5.956 22h1.916c.68 0 1.231-.544 1.236-1.218l.027-.009z"/>
-            </svg>
+            <img src={iconHome} alt="Início" className="w-7 h-7 mb-0.5" />
             <span className="text-xs">Início</span>
           </button>
 
@@ -2027,10 +2029,7 @@ export const TikTokApp = () => {
             onClick={() => setShowSearch(true)}
             className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
           >
-            <svg className="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <circle cx="12" cy="12" r="10" />
-              <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="currentColor" />
-            </svg>
+            <img src={iconNavigation} alt="Explorar" className="w-7 h-7 mb-0.5" />
             <span className="text-xs">Explorar</span>
           </button>
 
@@ -2047,9 +2046,7 @@ export const TikTokApp = () => {
             onClick={() => setShowComments(true)}
             className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
           >
-            <svg className="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+            <img src={iconMarketplace} alt="Marketplace" className="w-7 h-7 mb-0.5" />
             <span className="text-xs">Marketplace</span>
           </button>
 
@@ -2057,7 +2054,7 @@ export const TikTokApp = () => {
             onClick={() => shareVideo()}
             className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
           >
-            <Share className="w-7 h-7 mb-0.5" />
+            <img src={iconShare} alt="Compartilhar" className="w-7 h-7 mb-0.5" />
             <span className="text-xs">Compartilhar</span>
           </button>
         </div>
@@ -2401,7 +2398,7 @@ export const TikTokApp = () => {
                       onClick={shareVideo}
                       className="text-white hover:text-yellow-400 text-sm transition-colors"
                     >
-                      <Share className="h-4 w-4 mr-2" />
+                      <img src={iconShare} alt="Share" className="h-4 w-4 mr-2" />
                       {currentVideo.shares_count}
                     </Button>
                   </div>

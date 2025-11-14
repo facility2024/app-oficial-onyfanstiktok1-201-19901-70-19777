@@ -28,6 +28,8 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('✅ AGE VERIFICATION: Submetendo formulário...');
+    
     if (!name.trim() || !email.trim()) {
       toast.error("Por favor, preencha todos os campos");
       return;
@@ -42,6 +44,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
     try {
       const ip = await getClientIP();
+      console.log('✅ AGE VERIFICATION: IP obtido:', ip);
       
       // Salva no localStorage
       const verificationData = {
@@ -53,11 +56,12 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
       };
       
       localStorage.setItem('ageVerification', JSON.stringify(verificationData));
+      console.log('✅ AGE VERIFICATION: Dados salvos no localStorage:', verificationData);
       
       toast.success("Verificação concluída com sucesso!");
       onClose();
     } catch (error) {
-      console.error('Erro ao verificar:', error);
+      console.error('❌ AGE VERIFICATION: Erro ao verificar:', error);
       toast.error("Erro ao processar verificação");
     } finally {
       setIsSubmitting(false);

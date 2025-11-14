@@ -14,7 +14,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, TrendingUp, Video, Flame, Sparkles, Users, Star, Settings, LogOut } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -2205,6 +2205,20 @@ export const TikTokApp = () => {
             Voltar
           </Button>
           <h1 className="text-2xl font-bold">TikTok</h1>
+          
+          {/* Bonus no Header */}
+          <button
+            onClick={() => {
+              const bonusGift = document.querySelector('[data-bonus-gift-trigger]') as HTMLElement;
+              if (bonusGift) {
+                bonusGift.click();
+              }
+            }}
+            className="flex flex-col items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 shadow-lg hover:scale-110 transition-all"
+            title="Bonus"
+          >
+            <Gift className="w-6 h-6 text-white" />
+          </button>
         </div>
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
@@ -2225,11 +2239,117 @@ export const TikTokApp = () => {
         </div>
       </div>
 
-      {/* Bonus Gift for Desktop */}
-      <BonusGift isMobile={false} />
+      {/* Bonus Gift Component - Hidden, just for functionality */}
+      <div className="hidden">
+        <BonusGift isMobile={false} />
+      </div>
       
-      {/* Desktop Main Content */}
-      <div className="flex justify-center items-start pt-6 px-4">
+      {/* Desktop Main Content with Sidebar */}
+      <div className="flex">
+        {/* Left Sidebar Menu */}
+        <div className="w-64 bg-black/50 border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto">
+          <div className="py-6">
+            {/* Navegação */}
+            <div className="mb-6">
+              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Navegação
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => goToHome()}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Home className="w-5 h-5 mr-3" />
+                  <span>Início</span>
+                </button>
+                <button
+                  onClick={() => console.log('Em Alta')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <TrendingUp className="w-5 h-5 mr-3" />
+                  <span>Em Alta</span>
+                </button>
+                <button
+                  onClick={() => setShowLive(true)}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Video className="w-5 h-5 mr-3" />
+                  <span>Lives</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Categorias */}
+            <div className="mb-6">
+              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Categorias
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => console.log('Favoritos')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Heart className="w-5 h-5 mr-3" />
+                  <span>Favoritos</span>
+                </button>
+                <button
+                  onClick={() => console.log('Mais Popular')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Flame className="w-5 h-5 mr-3" />
+                  <span>Mais Popular</span>
+                </button>
+                <button
+                  onClick={() => console.log('Premium')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Sparkles className="w-5 h-5 mr-3" />
+                  <span>Premium</span>
+                </button>
+                <button
+                  onClick={() => console.log('Seguindo')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Users className="w-5 h-5 mr-3" />
+                  <span>Seguindo</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Conta */}
+            <div>
+              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Conta
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => console.log('Destaques')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Star className="w-5 h-5 mr-3" />
+                  <span>Destaques</span>
+                </button>
+                <button
+                  onClick={() => console.log('Configurações')}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Settings className="w-5 h-5 mr-3" />
+                  <span>Configurações</span>
+                </button>
+                <button
+                  onClick={() => window.location.href = '/'}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <LogOut className="w-5 h-5 mr-3" />
+                  <span>Sair</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Content Area */}
+        <div className="flex-1 flex justify-center items-start pt-6 px-4">
         <div className="flex max-w-7xl w-full gap-4">
           {/* Video Container */}
           <div className="flex-1 max-w-md mx-auto relative pr-24 md:pr-28 lg:pr-32 xl:pr-36">
@@ -2467,6 +2587,7 @@ export const TikTokApp = () => {
            </div>
          </div>
        </div>
+      </div>
 
       {/* Desktop Profile Screen */}
       <ProfileScreen

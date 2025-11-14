@@ -640,7 +640,7 @@ if (!isOpen) return null;
       />
           
           {/* Postagens - ABAIXO DO PERFIL */}
-          <div className="p-3">
+          <div className="mt-6 p-3">
             <h4 className="text-white font-semibold mb-3 text-base">
               Postagens ({contents.length})
             </h4>

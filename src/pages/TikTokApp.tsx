@@ -2085,7 +2085,7 @@ export const TikTokApp = () => {
             onClick={() => setShowComments(true)}
             className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
           >
-            <img src={iconMarketplace} alt="Marketplace" className="w-7 h-7 mb-0.5" />
+            <img src={iconMarketplace} alt="Marketplace" className="w-7 h-7 mb-0.5 rounded-full" />
             <span className="text-xs">Marketplace</span>
           </button>
 

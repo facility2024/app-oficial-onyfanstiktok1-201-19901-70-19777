@@ -2230,7 +2230,7 @@ export const TikTokApp = () => {
       <div className="flex justify-center items-start pt-6 px-4">
         <div className="flex max-w-7xl w-full gap-4">
           {/* Video Container */}
-          <div className="flex-1 max-w-md mx-auto relative pr-20 md:pr-24 lg:pr-28">
+          <div className="flex-1 max-w-md mx-auto relative pr-24 md:pr-28 lg:pr-32 xl:pr-36">
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
               {/* Um vídeo por modelo em sequência linear */}
               <VideoPlayer
@@ -2302,8 +2302,8 @@ export const TikTokApp = () => {
                 </div>
               )}
 
-              {/* Desktop Side Menu - Centralizado verticalmente */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-4 lg:right-6 flex flex-col justify-center space-y-4 z-30">
+              {/* Desktop Side Menu - Responsivo e sempre visível */}
+            <div className="absolute inset-y-0 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col justify-center space-y-4 z-30 max-h-[calc(100vh-140px)] overflow-y-auto py-6">
               <SideMenu
                 video={currentVideo}
                 isLiked={isLiked}

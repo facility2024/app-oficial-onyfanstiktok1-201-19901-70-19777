@@ -363,9 +363,9 @@ if (!isOpen) return null;
 
         {/* Profile Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px] px-3 lg:px-6">
+          <div className="mx-auto w-full max-w-4xl px-3 lg:px-6">
           {/* Profile Header */}
-          <div className="p-6 text-white border-b border-white/10">
+          <div className="p-6 text-white border-b border-white/10 max-w-2xl mx-auto">
             <div className="flex items-center gap-4 mb-4">
               <img
                 src={user.avatar_url || '/placeholder.svg'}
@@ -506,7 +506,7 @@ if (!isOpen) return null;
           </div>
 
           {/* Content Grid - Formato TikTok/Instagram */}
-          <div className="p-3">
+          <div className="p-3 max-w-4xl mx-auto">
             <h4 className="text-white font-semibold mb-3 text-base">
               Postagens ({contents.length})
             </h4>
@@ -517,7 +517,7 @@ if (!isOpen) return null;
                 <p className="text-sm">Nenhum conteúdo disponível</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-1 md:gap-1 p-1 md:p-2">
+              <div className="grid grid-cols-3 gap-2 max-w-2xl mx-auto">
                 {contents.map((content) => (
                   <div 
                     key={content.id} 
@@ -622,11 +622,11 @@ if (!isOpen) return null;
             )}
 
             {/* Seção de Mais Informações */}
-            <div className="mt-6 border-t border-white/10 pt-6">
+            <div className="mt-6 border-t border-white/10 pt-6 max-w-2xl mx-auto">
               <h3 className="text-white text-sm font-semibold mb-4">Mais informações</h3>
               
               {/* Links Sociais */}
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex flex-wrap gap-2 mb-6 justify-center">
                 <a 
                   href={`https://tiktok.com/@${user.username}`}
                   target="_blank"

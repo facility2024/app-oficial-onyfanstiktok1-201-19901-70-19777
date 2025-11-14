@@ -104,7 +104,7 @@ export const SideMenu = ({
         <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 transition-all duration-200 active:scale-95 ${
           isLiked ? 'bg-red-500/30 scale-110' : 'bg-white/10 hover:bg-white/20'
         }`}>
-          <img src={iconLike} alt="Like" className="w-6 h-6" />
+          <img src={iconLike} alt="Like" className="w-10 h-10" />
         </div>
         <span className="text-white text-xs mt-1">{formatCount(video?.likes_count || 0)}</span>
         {/* Debug overlay to verify positioning */}
@@ -116,7 +116,7 @@ export const SideMenu = ({
         onOpenComments();
       }}>
         <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-          <img src={iconComment} alt="Comment" className="w-6 h-6" />
+          <img src={iconComment} alt="Comment" className="w-10 h-10" />
         </div>
         <span className="text-white text-xs mt-1">
           {(() => {
@@ -158,7 +158,7 @@ export const SideMenu = ({
       {video?.user?.posting_panel_url && (
         <div className="flex flex-col items-center cursor-pointer" onClick={onOpenPremium}>
           <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center border-2 border-yellow-300 animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.8)] hover:shadow-[0_0_30px_rgba(251,191,36,1)] transition-all duration-300" aria-label="Abrir Premium">
-            <img src={iconOffers} alt="Premium" className="w-6 h-6" />
+            <img src={iconOffers} alt="Premium" className="w-10 h-10" />
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400/30 to-orange-500/30 animate-ping"></div>
           </div>
           <span className="text-white text-xs mt-1 drop-shadow-md">PREMIUM</span>

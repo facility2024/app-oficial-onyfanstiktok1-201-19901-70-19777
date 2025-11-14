@@ -2221,35 +2221,39 @@ export const TikTokApp = () => {
           </div>
           
           {/* Bonus no Header */}
-          <button
-            onClick={() => {
-              const bonusGift = document.querySelector('[data-bonus-gift-trigger]') as HTMLElement;
-              if (bonusGift) {
-                bonusGift.click();
-              }
-            }}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 shadow-[0_0_30px_rgba(251,191,36,1),0_0_50px_rgba(251,191,36,0.7)] hover:scale-110 transition-all animate-pulse"
-            title="Bonus"
-            style={{
-              filter: 'drop-shadow(0 0 15px rgba(251,191,36,0.9)) drop-shadow(0 0 25px rgba(251,191,36,0.6))'
-            }}
-          >
-            <Gift className="w-6 h-6 text-white" />
-            <span className="text-[10px] font-bold text-white">Bonus</span>
-          </button>
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={() => {
+                const bonusGift = document.querySelector('[data-bonus-gift-trigger]') as HTMLElement;
+                if (bonusGift) {
+                  bonusGift.click();
+                }
+              }}
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm shadow-[0_0_30px_rgba(251,191,36,1),0_0_50px_rgba(251,191,36,0.7)] hover:scale-110 transition-all animate-pulse"
+              title="Bonus"
+              style={{
+                filter: 'drop-shadow(0 0 15px rgba(251,191,36,0.9)) drop-shadow(0 0 25px rgba(251,191,36,0.6))'
+              }}
+            >
+              <Gift className="w-6 h-6 text-yellow-400" />
+            </button>
+            <span className="text-[10px] font-bold text-gray-900">Bonus</span>
+          </div>
           
           {/* Live no Header */}
-          <button
-            onClick={() => setShowLive(true)}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-full bg-gradient-to-r from-red-500 to-pink-500 border-2 border-red-400 shadow-[0_0_30px_rgba(239,68,68,1),0_0_50px_rgba(239,68,68,0.7)] hover:scale-110 transition-all animate-pulse"
-            title="Live"
-            style={{
-              filter: 'drop-shadow(0 0 15px rgba(239,68,68,0.9)) drop-shadow(0 0 25px rgba(239,68,68,0.6))'
-            }}
-          >
-            <Radio className="w-5 h-5 text-white" />
-            <span className="text-[10px] font-bold text-white">Live</span>
-          </button>
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={() => setShowLive(true)}
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm shadow-[0_0_30px_rgba(239,68,68,1),0_0_50px_rgba(239,68,68,0.7)] hover:scale-110 transition-all animate-pulse"
+              title="Live"
+              style={{
+                filter: 'drop-shadow(0 0 15px rgba(239,68,68,0.9)) drop-shadow(0 0 25px rgba(239,68,68,0.6))'
+              }}
+            >
+              <Radio className="w-5 h-5 text-red-500" />
+            </button>
+            <span className="text-[10px] font-bold text-gray-900">Live</span>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" className="text-gray-900 hover:bg-blue-200">

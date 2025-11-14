@@ -104,7 +104,7 @@ export const VideoProgressBar = ({ videoRef }: VideoProgressBarProps) => {
         onClick={handleProgressClick}
       >
         <div 
-          className="h-full bg-white rounded-full transition-all duration-200 group-hover:bg-red-500"
+          className="h-full bg-white rounded-full transition-all duration-200 group-hover:bg-white"
           style={{ width: `${progress}%` }}
         />
         

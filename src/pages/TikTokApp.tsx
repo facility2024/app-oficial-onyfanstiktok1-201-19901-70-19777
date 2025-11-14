@@ -1938,24 +1938,14 @@ export const TikTokApp = () => {
         
         {/* Top Bar Mobile - Nova barra com ícones */}
         <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm flex items-center justify-between px-4">
-          {/* Menu Hamburger - Esquerda */}
-          <CategoryMenu
-            onNavigateHome={backToCurrentVideo}
-            onOpenSearch={() => setShowSearch(true)}
-            onOpenLive={() => setShowLive(true)}
-            onExit={() => window.location.href = '/'}
-          />
-          
-          {/* Ícones - Direita */}
+          {/* Menu + Bonus - Esquerda */}
           <div className="flex items-center gap-2">
-            {/* Search/Lupa */}
-            <button
-              onClick={() => setShowSearch(true)}
-              className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-              title="Pesquisar"
-            >
-              <Search className="w-5 h-5" />
-            </button>
+            <CategoryMenu
+              onNavigateHome={backToCurrentVideo}
+              onOpenSearch={() => setShowSearch(true)}
+              onOpenLive={() => setShowLive(true)}
+              onExit={() => window.location.href = '/'}
+            />
             
             {/* Bonus */}
             <button
@@ -1969,6 +1959,18 @@ export const TikTokApp = () => {
               title="Bonus"
             >
               <Gift className="w-5 h-5 text-white" />
+            </button>
+          </div>
+          
+          {/* Ícones - Direita */}
+          <div className="flex items-center gap-2">
+            {/* Search/Lupa */}
+            <button
+              onClick={() => setShowSearch(true)}
+              className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              title="Pesquisar"
+            >
+              <Search className="w-5 h-5" />
             </button>
             
             {/* Live */}

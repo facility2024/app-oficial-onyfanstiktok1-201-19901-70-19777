@@ -123,7 +123,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         setPanelUrl(modelData?.posting_panel_url || null);
       }
       
-      // Carregar vídeos
+      // Carregar vídeos (limitado a 5)
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select(`
@@ -140,7 +140,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome }
         `)
         .eq('model_id', user.id)
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5);
 
       if (videosError) {
         console.error('Supabase error:', videosError);

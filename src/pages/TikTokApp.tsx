@@ -96,6 +96,11 @@ export const TikTokApp = () => {
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   
+  // Debug do estado
+  useEffect(() => {
+    console.log('🔍 DEBUG: showAgeVerification mudou para:', showAgeVerification);
+  }, [showAgeVerification]);
+  
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -2418,6 +2423,7 @@ export const TikTokApp = () => {
       <AgeVerificationModal
         open={showAgeVerification}
         onClose={() => {
+          console.log('🔍 AGE VERIFICATION: Fechando modal');
           setShowAgeVerification(false);
           setIsPlaying(true);
         }}

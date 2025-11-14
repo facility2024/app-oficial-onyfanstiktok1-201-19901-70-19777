@@ -14,6 +14,10 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    console.log('🔍 AGE VERIFICATION MODAL: Estado open mudou para:', open);
+  }, [open]);
+
   const getClientIP = async () => {
     try {
       const response = await fetch('https://api.ipify.org?format=json');
@@ -70,7 +74,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-background border-border">
+      <DialogContent className="sm:max-w-md bg-background border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-xl">
             <div className="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg">

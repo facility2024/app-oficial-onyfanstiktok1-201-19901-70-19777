@@ -521,7 +521,7 @@ if (!isOpen) return null;
                 {contents.map((content) => (
                   <div 
                     key={content.id} 
-                    className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
+                    className={`relative bg-black rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
                       content.type === 'image' ? 'aspect-square' : 'aspect-[9/16]'
                     }`}
                     onClick={() => {
@@ -546,8 +546,11 @@ if (!isOpen) return null;
                           <img
                             src={content.thumbnail_url}
                             alt={content.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover bg-black"
                             loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
                           />
                           {/* Video play icon */}
                           <div className="absolute inset-0 flex items-center justify-center">

@@ -543,22 +543,18 @@ if (!isOpen) return null;
                     <div className="w-full h-full relative">
                       {content.type === 'video' ? (
                         <>
-                          <video
-                            src={content.video_url}
+                          <img
+                            src={content.thumbnail_url}
+                            alt={content.title}
                             className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                            poster={content.thumbnail_url}
-                            onLoadedMetadata={(e) => {
-                              const video = e.currentTarget;
-                              video.currentTime = 1;
-                            }}
+                            loading="lazy"
                           />
                           {/* Video play icon */}
-                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
-                            <div className="w-4 h-4 text-white flex items-center justify-center">
-                              <div className="w-0 h-0 border-l-[6px] border-l-white border-y-[4px] border-y-transparent ml-0.5"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-black/60 rounded-full p-3">
+                              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
                             </div>
                           </div>
                         </>

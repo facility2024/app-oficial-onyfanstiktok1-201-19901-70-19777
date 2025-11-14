@@ -258,6 +258,23 @@ export const TikTokApp = () => {
     };
   }, []);
 
+  // Fallback específico para mobile/iOS: abre no primeiro toque se ainda não verificou
+  useEffect(() => {
+    const alreadyVerified = !!localStorage.getItem('ageVerification');
+    if (alreadyVerified) return;
+
+    const handleFirstTouch = () => {
+      if (!showAgeVerification) {
+        console.log('📱 VERIFICAÇÃO DE IDADE: Primeiro toque detectado — forçando abertura do modal');
+        setShowAgeVerification(true);
+        setIsPlaying(false);
+      }
+      window.removeEventListener('touchstart', handleFirstTouch);
+    };
+
+    window.addEventListener('touchstart', handleFirstTouch, { passive: true } as any);
+    return () => window.removeEventListener('touchstart', handleFirstTouch);
+  }, [showAgeVerification]);
   useEffect(() => {
     
     // ✅ REMOVER carregamento periódico para evitar notificações constantes

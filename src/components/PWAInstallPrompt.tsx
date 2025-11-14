@@ -8,18 +8,30 @@ export const PWAInstallPrompt = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isAgeVerified, setIsAgeVerified] = useState(false);
 
   useEffect(() => {
-    // Detectar iOS
-    const checkIfIOS = () => {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // Checa verificação +18 (se não verificado, não mostramos este banner)
+    const checkAge = () => {
+      const verified = !!localStorage.getItem('ageVerification');
+      setIsAgeVerified(verified);
+      if (!verified) {
+        setShowPrompt(false);
+      }
     };
+    checkAge();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'ageVerification') checkAge();
+    };
+    window.addEventListener('storage', onStorage);
+
+    // Detectar iOS
+    const checkIfIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     // Verificar se já está instalado como PWA
-    const checkIfStandalone = () => {
-      return window.matchMedia('(display-mode: standalone)').matches ||
-             (window.navigator as any).standalone === true;
-    };
+    const checkIfStandalone = () =>
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
 
     const isIOSDevice = checkIfIOS();
     const isInstalledPWA = checkIfStandalone();
@@ -30,7 +42,12 @@ export const PWAInstallPrompt = () => {
     // Se já está instalado, não mostrar prompt
     if (isInstalledPWA) {
       setShowPrompt(false);
-      return;
+      return () => window.removeEventListener('storage', onStorage);
+    }
+
+    // Se não está verificado, não mostrar nada
+    if (!localStorage.getItem('ageVerification')) {
+      return () => window.removeEventListener('storage', onStorage);
     }
 
     // Para iOS, mostrar prompt manual após 3 segundos
@@ -38,8 +55,10 @@ export const PWAInstallPrompt = () => {
       const timer = setTimeout(() => {
         setShowPrompt(true);
       }, 3000);
-      
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('storage', onStorage);
+      };
     }
 
     // Para Android/outros browsers
@@ -51,14 +70,17 @@ export const PWAInstallPrompt = () => {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    (deferredPrompt as any).prompt?.();
+    const { outcome } = await (deferredPrompt as any).userChoice;
     
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
@@ -71,7 +93,7 @@ export const PWAInstallPrompt = () => {
     setDeferredPrompt(null);
   };
 
-  if (!showPrompt) return null;
+  if (!showPrompt || !isAgeVerified) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm">

@@ -1930,20 +1930,21 @@ export const TikTokApp = () => {
           <BonusGift isMobile={true} />
         </div>
 
-        {/* Botão de teste - Resetar Verificação de Idade (TEMPORÁRIO - REMOVER EM PRODUÇÃO) */}
-        <button
-          onClick={() => {
-            localStorage.removeItem('ageVerification');
-            console.log('🧪 TESTE: Verificação removida, recarregue a página');
-            toast({
-              title: "Teste de Verificação",
-              description: "Recarregue a página para ver o popup novamente"
-            });
-          }}
-          className="fixed top-4 right-4 z-30 px-3 py-1 bg-red-500/80 backdrop-blur-sm rounded-full text-white text-xs hover:bg-red-600/80 transition-colors"
-        >
-          🧪 Reset +18
-        </button>
+        {import.meta.env.DEV && (
+          <button
+            onClick={() => {
+              localStorage.removeItem('ageVerification');
+              console.log('🧪 TESTE: Verificação removida, recarregue a página');
+              toast({
+                title: "Teste de Verificação",
+                description: "Recarregue a página para ver o popup novamente"
+              });
+            }}
+            className="hidden md:block fixed top-4 right-4 z-30 px-3 py-1 bg-red-500/80 backdrop-blur-sm rounded-full text-white text-xs hover:bg-red-600/80 transition-colors"
+          >
+            🧪 Reset +18
+          </button>
+        )}
 
         {/* Side Menu - Mobile positioning - Ajustado para ficar mais abaixo conforme TikTok */}
         <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">

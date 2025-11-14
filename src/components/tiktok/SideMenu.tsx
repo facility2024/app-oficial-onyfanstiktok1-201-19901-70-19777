@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Radio, Eye, LogOut, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, User, Volume2, VolumeX, Play, Pause, Radio, Eye, LogOut, Sparkles } from 'lucide-react';
 
 interface SideMenuProps {
   video: Video | null;
@@ -11,7 +11,6 @@ interface SideMenuProps {
   onTogglePlay: () => void;
   onOpenComments: () => void;
   onOpenProfile: () => void;
-  onShare: () => void;
   onOpenLive?: () => void;
   onBlockVideo?: () => void;
   onOpenPremium?: () => void;
@@ -28,7 +27,6 @@ export const SideMenu = ({
   onTogglePlay,
   onOpenComments,
   onOpenProfile,
-  onShare,
   onOpenLive,
   onBlockVideo,
   onOpenPremium,
@@ -126,17 +124,6 @@ export const SideMenu = ({
             return formatCount(count);
           })()}
         </span>
-      </div>
-
-      {/* Share */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={() => {
-        console.log('SideMenu share clicked');
-        onShare();
-      }}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-          <span className="text-white text-xl">↗</span>
-        </div>
-        <span className="text-white text-xs mt-1">{formatCount(video?.shares_count || 0)}</span>
       </div>
 
       {/* Live Button - Nova opção */}

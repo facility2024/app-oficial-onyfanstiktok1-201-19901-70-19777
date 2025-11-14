@@ -1938,7 +1938,7 @@ export const TikTokApp = () => {
       <div className="relative w-full h-screen bg-black overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
         {/* Top Bar Mobile - Nova barra com ícones */}
-        <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm flex items-center justify-between px-4">
+        <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-to-b from-[#87CEEB]/60 to-transparent backdrop-blur-sm flex items-center justify-between px-4">
           {/* Menu + Bonus - Esquerda */}
           <div className="flex items-center gap-2">
             <CategoryMenu

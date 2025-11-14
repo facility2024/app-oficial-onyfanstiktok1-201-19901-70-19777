@@ -79,7 +79,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="sm:max-w-md bg-background border-border max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md bg-background border-border max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-xl">
             <div className="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg">
@@ -89,7 +89,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 px-1">
           <div className="bg-muted/50 p-4 rounded-lg space-y-2">
             <p className="text-sm text-center font-medium">
               Confirmo que sou maior de 18 anos
@@ -99,7 +99,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
                 Nome
@@ -128,12 +128,12 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
               />
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
-              <div className="flex items-start gap-3">
-                <svg className="w-8 h-8 text-blue-500 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-900">
+              <div className="flex items-start gap-2">
+                <svg className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm mb-1">Instalar OnlyTikTok</h3>
                   <p className="text-xs text-muted-foreground mb-2">
                     Instale nosso app, não precisa Google Play ou App Store para acesso rápido e experiência completa!
@@ -141,11 +141,11 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
                   <div className="space-y-1 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="text-green-600">✓</span>
-                      <span>Toque no ícone 📱 compartilhar</span>
+                      <span className="break-words">Toque no ícone 📱 compartilhar</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-green-600">✓</span>
-                      <span>Selecione "Adicionar à Tela Inicial"</span>
+                      <span className="break-words">Selecione "Adicionar à Tela Inicial"</span>
                     </div>
                   </div>
                 </div>

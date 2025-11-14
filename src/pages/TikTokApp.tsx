@@ -2302,8 +2302,8 @@ export const TikTokApp = () => {
                 </div>
               )}
 
-              {/* Desktop Side Menu - Ajustado para ficar mais abaixo conforme TikTok */}
-            <div className="absolute bottom-24 right-2 md:right-4 lg:right-6 flex flex-col justify-end space-y-4 z-30">
+              {/* Desktop Side Menu - Centralizado verticalmente */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-4 lg:right-6 flex flex-col justify-center space-y-4 z-30">
               <SideMenu
                 video={currentVideo}
                 isLiked={isLiked}

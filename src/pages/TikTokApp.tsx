@@ -2242,13 +2242,14 @@ export const TikTokApp = () => {
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={() => setShowLive(true)}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm shadow-[0_0_30px_rgba(239,68,68,1),0_0_50px_rgba(239,68,68,0.7)] hover:scale-110 transition-all animate-pulse"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-red-600 to-pink-600 shadow-[0_0_40px_rgba(239,68,68,1),0_0_60px_rgba(239,68,68,0.9),0_0_80px_rgba(239,68,68,0.6)] hover:scale-110 transition-all animate-pulse border-2 border-red-400"
               title="Live"
               style={{
-                filter: 'drop-shadow(0 0 15px rgba(239,68,68,0.9)) drop-shadow(0 0 25px rgba(239,68,68,0.6))'
+                filter: 'drop-shadow(0 0 20px rgba(239,68,68,1)) drop-shadow(0 0 35px rgba(239,68,68,0.8))',
+                boxShadow: '0 0 50px rgba(239,68,68,0.9), inset 0 0 20px rgba(255,255,255,0.3)'
               }}
             >
-              <Radio className="w-5 h-5 text-red-500" />
+              <Radio className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
             </button>
             <span className="text-[10px] font-bold text-gray-900">Live</span>
           </div>

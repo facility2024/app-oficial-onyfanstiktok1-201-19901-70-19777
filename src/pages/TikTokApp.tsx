@@ -2205,17 +2205,20 @@ export const TikTokApp = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col items-center">
-              <img 
-                src={coconudiLogo} 
-                alt="Coconudi" 
-                className="w-12 h-12 rounded-full animate-pulse shadow-[0_0_30px_rgba(251,191,36,1),0_0_50px_rgba(251,191,36,0.7)]" 
-                style={{ 
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm shadow-[0_0_30px_rgba(251,191,36,1),0_0_50px_rgba(251,191,36,0.7)] animate-pulse"
+                style={{
                   filter: 'drop-shadow(0 0 15px rgba(251,191,36,0.9)) drop-shadow(0 0 25px rgba(251,191,36,0.6))',
                   boxShadow: '0 0 40px rgba(251,191,36,0.8)'
                 }}
-              />
+              >
+                <img 
+                  src={coconudiLogo} 
+                  alt="Coconudi" 
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              </div>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Coconudi</h1>
           </div>

@@ -79,8 +79,8 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="sm:max-w-md bg-background border-border max-h-[80vh] overflow-y-auto flex flex-col [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-[#87CEEB] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-[#6FB5D8] [scrollbar-width:thin] [scrollbar-color:#87CEEB_#f1f5f9]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md bg-background border-border flex flex-col max-h-[80vh]">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center justify-center gap-2 text-xl">
             <div className="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg">
               +18
@@ -89,7 +89,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-3 py-3 px-1 flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto space-y-3 py-3 px-1 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#87CEEB] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-[#6FB5D8] [scrollbar-width:auto] [scrollbar-color:#87CEEB_#f1f5f9]">
           <div className="bg-muted/50 p-3 rounded-lg space-y-2">
             <p className="text-sm text-center font-medium">
               Confirmo que sou maior de 18 anos

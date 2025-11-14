@@ -2219,6 +2219,15 @@ export const TikTokApp = () => {
           >
             <Gift className="w-6 h-6 text-white" />
           </button>
+          
+          {/* Live no Header */}
+          <button
+            onClick={() => setShowLive(true)}
+            className="flex flex-col items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-pink-500 border-2 border-red-400 animate-pulse shadow-lg hover:scale-110 transition-all"
+            title="Live"
+          >
+            <Radio className="w-5 h-5 text-white" />
+          </button>
         </div>
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">

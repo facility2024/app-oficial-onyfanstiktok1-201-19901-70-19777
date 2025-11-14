@@ -424,6 +424,151 @@ if (!isOpen) return null;
               </p>
             )}
 
+            {/* Informações Detalhadas da Modelo */}
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Local</p>
+                  <p className="text-white font-medium">São Paulo, Brasil</p>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Idade</p>
+                  <p className="text-white font-medium">23 anos</p>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Altura</p>
+                  <p className="text-white font-medium">1,68m</p>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Signo</p>
+                  <p className="text-white font-medium">Escorpião ♏</p>
+                </div>
+              </div>
+              
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-white/50 text-xs mb-2">Sobre mim</p>
+                <p className="text-white/90 text-sm leading-relaxed">
+                  Criadora de conteúdo exclusivo. Aqui você encontra o melhor conteúdo especial para você! 💕✨
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-white/50 text-xs mb-2">Interesses</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Fitness 💪</span>
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Moda 👗</span>
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Viagens ✈️</span>
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Fotografia 📸</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Links Sociais */}
+            <div className="mt-4">
+              <h3 className="text-[#00D5FF] text-base font-semibold mb-3">Redes Sociais</h3>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                <a 
+                  href={`https://tiktok.com/@${user.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                  </svg>
+                  TikTok
+                </a>
+                
+                <a 
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121L7.531 13.92l-2.967-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
+                  </svg>
+                  Telegram
+                </a>
+                
+                <a 
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
+                  </svg>
+                  Facebook
+                </a>
+
+                <a 
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                  Instagram
+                </a>
+              </div>
+            </div>
+
+            {/* Seção de Assinatura */}
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-5">
+              <h4 className="text-white/50 text-xs uppercase font-semibold mb-4 tracking-wide">ASSINATURA</h4>
+              
+              <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+                <span className="text-[#00D5FF] font-bold text-base">JÁ SOU ASSINANTE</span>
+                <span className="text-[#00D5FF] font-bold text-base">$4.50 por 31 dias</span>
+              </div>
+
+              <div className="flex items-center justify-between text-white/50 text-xs">
+                <span>Renove por $15 /mês</span>
+                <span>dez 1, 2025</span>
+              </div>
+            </div>
+
+            {/* Pacotes de Assinatura */}
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">PACOTES DE ASSINATURA</h4>
+                <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              <div className="space-y-3">
+                <button className="w-full bg-[#00D5FF] hover:bg-[#00C2E8] text-black font-bold py-3.5 px-5 rounded-full flex items-center justify-between transition-all shadow-lg shadow-[#00D5FF]/20">
+                  <span className="text-sm">3 MESES (15% off)</span>
+                  <span className="text-sm">$38.25 total</span>
+                </button>
+
+                <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
+                  <span className="text-sm">6 MESES (20% off)</span>
+                  <span className="text-sm">$72.00 total</span>
+                </button>
+
+                <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
+                  <span className="text-sm">12 MESES (25% off)</span>
+                  <span className="text-sm">$135.00 total</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Links */}
+            <div className="flex items-center justify-center gap-3 mt-4 text-white/30 text-xs">
+              <a href="#" className="hover:text-white/50 transition-colors">Privacy</a>
+              <span>•</span>
+              <a href="#" className="hover:text-white/50 transition-colors">Cookie Notice</a>
+              <span>•</span>
+              <a href="#" className="hover:text-white/50 transition-colors">Terms of Service</a>
+            </div>
+
             {panelUrl && (
               <div className="mt-3">
                 <button
@@ -619,113 +764,6 @@ if (!isOpen) return null;
                 ))}
               </div>
             )}
-
-            {/* Seção de Mais Informações */}
-            <div className="mt-6 border-t border-white/10 pt-6 max-w-2xl">
-              <h3 className="text-[#00D5FF] text-base font-semibold mb-4">Mais informações</h3>
-              
-              {/* Links Sociais */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                <a 
-                  href={`https://tiktok.com/@${user.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                  </svg>
-                  Tiktok
-                </a>
-                
-                <a 
-                  href="#"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 3.764 3.659.403.03.823.074 1.169.239.27.119.404.314.404.538 0 .449-.63.899-1.664.899-1.139 0-2.848-.778-4.542-2.068-1.798-1.364-3.011-3.015-3.746-4.078l-.003-.015c-.164-.254-.314-.524-.479-.793l-.074-.135c-.12-.214-.269-.42-.419-.643-.3-.42-.645-.93-1.033-1.364-.164-.179-.27-.345-.27-.479 0-.09.044-.149.104-.149.075 0 .225.029.375.074.104.03.269.074.389.074.06 0 .149-.015.209-.074.165-.135.24-.494.24-.793 0-.645-.39-1.139-1.063-1.139-.12 0-.314.03-.479.074-.194.06-.449.135-.674.135-.239 0-.419-.06-.554-.164-.314-.254-.554-.689-.554-1.139 0-.374.136-.778.376-1.123.27-.404.72-.659 1.213-.659.06 0 .12 0 .165.015.27.029.494.135.674.314.164.165.225.375.225.614 0 .179-.045.375-.12.524-.045.075-.09.149-.12.224-.03.044-.045.089-.06.119.015.029.06.074.165.074.27 0 .734-.135 1.198-.404.494-.285 1.139-.734 1.693-1.213.12-.104.269-.194.434-.254.239-.09.494-.135.764-.135zm-2.008 10.238c-.165-.12-.3-.239-.419-.359-.239-.239-.42-.524-.614-.793-.329-.449-.704-.958-1.123-1.378-.225-.224-.449-.434-.674-.629-.3-.254-.614-.479-.943-.674-.18-.104-.375-.194-.569-.254-.375-.119-.778-.179-1.198-.179-1.079 0-2.008.524-2.488 1.408-.15.285-.225.614-.225.958 0 .479.135.943.36 1.363.225.404.554.764.943 1.033.225.149.479.269.749.344.209.06.434.104.674.104.314 0 .629-.06.913-.165.375-.135.704-.344.958-.614.18-.194.329-.419.434-.659.12-.254.18-.539.18-.823 0-.27-.06-.524-.165-.749-.105-.224-.255-.419-.42-.584z"/>
-                  </svg>
-                  Snapchat
-                </a>
-
-                <a 
-                  href="#"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                  X
-                </a>
-
-                <a 
-                  href="#"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M.045 18.02c.072-.116.187-.124.348-.022 3.636 2.11 7.594 3.166 11.87 3.166 2.852 0 5.668-.533 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13.226-.088.39-.046.525.13.12.174.09.336-.12.48-.256.19-.6.41-1.006.654-1.244.743-2.64 1.316-4.185 1.726-1.53.406-3.045.61-4.516.61-2.265 0-4.463-.427-6.59-1.278-2.067-.826-3.93-1.972-5.593-3.44-.1-.088-.148-.173-.148-.256 0-.063.023-.12.068-.18zm3.202-5.456c-.39 0-.71-.18-.96-.538-.25-.36-.375-.79-.375-1.29 0-.516.128-.952.387-1.31.258-.36.578-.538.96-.538.376 0 .7.18.96.538.257.36.387.795.387 1.31s-.13.93-.387 1.29c-.26.36-.584.538-.96.538zm15.506 0c-.376 0-.7-.18-.96-.538-.257-.36-.387-.795-.387-1.29 0-.516.13-.952.387-1.31.26-.36.584-.538.96-.538.39 0 .71.18.96.538.258.36.387.795.387 1.31s-.13.93-.387 1.29c-.25.36-.57.538-.96.538z"/>
-                  </svg>
-                  Amazon
-                </a>
-              </div>
-
-              {/* Seção de Assinatura */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
-                <h4 className="text-white/50 text-xs uppercase font-semibold mb-4 tracking-wide">ASSINATURA</h4>
-                
-                <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
-                  <span className="text-[#00D5FF] font-bold text-base">JÁ SOU ASSINANTE</span>
-                  <span className="text-[#00D5FF] font-bold text-base">$4.50 por 31 dias</span>
-                </div>
-
-                <div className="flex items-center justify-between text-white/50 text-xs">
-                  <span>Renove por $15 /mês</span>
-                  <span>dez 1, 2025</span>
-                </div>
-              </div>
-
-              {/* Pacotes de Assinatura */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">PACOTES DE ASSINATURA</h4>
-                  <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-
-                <div className="space-y-3">
-                  <button className="w-full bg-[#00D5FF] hover:bg-[#00C2E8] text-black font-bold py-3.5 px-5 rounded-full flex items-center justify-between transition-all shadow-lg shadow-[#00D5FF]/20">
-                    <span className="text-sm">3 MESES (15off)</span>
-                    <span className="text-sm">$38.25 total</span>
-                  </button>
-
-                  <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
-                    <span className="text-sm">6 MESES (20off)</span>
-                    <span className="text-sm">$72.00 total</span>
-                  </button>
-
-                  <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
-                    <span className="text-sm">12 MESES (25off)</span>
-                    <span className="text-sm">$135.00 total</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Footer Links */}
-              <div className="flex items-center justify-center gap-3 mt-6 text-white/30 text-xs">
-                <a href="#" className="hover:text-white/50 transition-colors">Privacy</a>
-                <span>•</span>
-                <a href="#" className="hover:text-white/50 transition-colors">Cookie Notice</a>
-                <span>•</span>
-                <a href="#" className="hover:text-white/50 transition-colors">Terms of Service</a>
-              </div>
-            </div>
           </div>
           </div>
         </div>

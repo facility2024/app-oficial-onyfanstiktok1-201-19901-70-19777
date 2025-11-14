@@ -280,14 +280,28 @@ export const TikTokApp = () => {
   useEffect(() => {
     try {
       const verified = !!localStorage.getItem('ageVerification');
+      console.log('📱 DEBUG MOBILE:', {
+        verified,
+        isMobile,
+        showAgeVerification,
+        windowWidth: window.innerWidth
+      });
+      
       if (!verified && isMobile) {
         console.log('📱 VERIFICAÇÃO DE IDADE: Dispositivo móvel detectado — abrindo modal imediatamente');
         setShowAgeVerification(true);
         setIsPlaying(false);
+      } else if (!verified && window.innerWidth < 768) {
+        // Fallback adicional: força abertura se a largura da tela é de mobile
+        console.log('📱 VERIFICAÇÃO DE IDADE: Largura mobile detectada — forçando abertura do modal');
+        setShowAgeVerification(true);
+        setIsPlaying(false);
       }
-    } catch {}
+    } catch (err) {
+      console.error('❌ Erro ao verificar mobile:', err);
+    }
     // rodará sempre que o breakpoint de mobile mudar
-  }, [isMobile]);
+  }, [isMobile, showAgeVerification]);
 
   // Comunica globalmente (para o banner PWA) quando o modal +18 abre/fecha
   useEffect(() => {

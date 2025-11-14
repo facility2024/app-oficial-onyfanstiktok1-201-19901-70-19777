@@ -16,6 +16,11 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
 
   useEffect(() => {
     console.log('🔍 AGE VERIFICATION MODAL: Estado open mudou para:', open);
+    console.log('🔍 AGE VERIFICATION MODAL: Dispositivo:', {
+      userAgent: navigator.userAgent,
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
   }, [open]);
 
   const getClientIP = async () => {

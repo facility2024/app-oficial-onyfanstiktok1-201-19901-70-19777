@@ -2210,10 +2210,10 @@ export const TikTokApp = () => {
               <img 
                 src={coconudiLogo} 
                 alt="Coconudi" 
-                className="w-12 h-12 rounded-full animate-pulse shadow-[0_0_30px_rgba(135,206,250,1),0_0_50px_rgba(135,206,250,0.7)]" 
+                className="w-12 h-12 rounded-full animate-pulse shadow-[0_0_30px_rgba(251,191,36,1),0_0_50px_rgba(251,191,36,0.7)]" 
                 style={{ 
-                  filter: 'drop-shadow(0 0 15px rgba(135,206,250,0.9)) drop-shadow(0 0 25px rgba(135,206,250,0.6))',
-                  boxShadow: '0 0 40px rgba(135,206,250,0.8)'
+                  filter: 'drop-shadow(0 0 15px rgba(251,191,36,0.9)) drop-shadow(0 0 25px rgba(251,191,36,0.6))',
+                  boxShadow: '0 0 40px rgba(251,191,36,0.8)'
                 }}
               />
             </div>

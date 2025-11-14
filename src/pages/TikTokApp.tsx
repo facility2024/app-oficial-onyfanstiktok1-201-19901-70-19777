@@ -2206,7 +2206,12 @@ export const TikTokApp = () => {
             Voltar
           </Button>
           <div className="flex items-center gap-2">
-            <img src={coconudiLogo} alt="Coconudi" className="w-10 h-10 rounded-full" />
+            <img 
+              src={coconudiLogo} 
+              alt="Coconudi" 
+              className="w-12 h-12 rounded-full animate-pulse shadow-[0_0_20px_rgba(135,206,250,0.8)]" 
+              style={{ filter: 'drop-shadow(0 0 10px rgba(135,206,250,0.6))' }}
+            />
             <h1 className="text-2xl font-bold">Coconudi</h1>
           </div>
           

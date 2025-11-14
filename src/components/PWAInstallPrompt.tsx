@@ -52,9 +52,11 @@ export const PWAInstallPrompt = () => {
 
     // Para iOS, mostrar prompt manual após 3 segundos
     if (isIOSDevice) {
-      const timer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 3000);
+        const timer = setTimeout(() => {
+          if (!localStorage.getItem('age_modal_open')) {
+            setShowPrompt(true);
+          }
+        }, 3000);
       return () => {
         clearTimeout(timer);
         window.removeEventListener('storage', onStorage);
@@ -65,7 +67,9 @@ export const PWAInstallPrompt = () => {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
+      if (!localStorage.getItem('age_modal_open')) {
+        setShowPrompt(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -74,6 +78,20 @@ export const PWAInstallPrompt = () => {
       window.removeEventListener('beforeinstallprompt', handler);
       window.removeEventListener('storage', onStorage);
     };
+  }, []);
+
+  // Oculta enquanto o modal de verificação +18 estiver aberto
+  useEffect(() => {
+    const onAgeModalChange = (e: any) => {
+      const open = e?.detail?.open;
+      if (open) setShowPrompt(false);
+    };
+    // Checagem inicial
+    try {
+      if (localStorage.getItem('age_modal_open')) setShowPrompt(false);
+    } catch {}
+    window.addEventListener('ageModalOpenChange', onAgeModalChange as EventListener);
+    return () => window.removeEventListener('ageModalOpenChange', onAgeModalChange as EventListener);
   }, []);
 
   const handleInstall = async () => {

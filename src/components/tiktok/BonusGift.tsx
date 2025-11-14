@@ -231,6 +231,7 @@ export const BonusGift = ({ isMobile = false }: BonusGiftProps) => {
       {/* Gift Icon */}
       <div className={`fixed ${isMobile ? 'left-3 top-16' : 'left-6 top-20'} z-30 flex flex-col items-center`}>
         <div 
+          data-bonus-gift-trigger
           className="relative bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 p-3 rounded-full cursor-pointer shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-yellow-500/50"
           onClick={handleGiftClick}
           style={{

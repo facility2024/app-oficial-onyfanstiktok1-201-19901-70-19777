@@ -985,13 +985,14 @@ if (!isOpen) return null;
               </div>
             )}
           </div>
+          </div>
         </div>
       </div>
 
       {/* Image Viewer */}
       <ImageViewer 
         images={currentImageArray}
-        initialIndex={currentImageIndex}
+        currentIndex={currentImageIndex}
         isOpen={imageViewerOpen}
         onClose={() => setImageViewerOpen(false)}
       />

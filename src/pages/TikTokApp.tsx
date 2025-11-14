@@ -14,12 +14,13 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
 import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
+import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -1935,16 +1936,54 @@ export const TikTokApp = () => {
     return (
       <div className="relative w-full h-screen bg-black overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
-        {/* Search Button */}
-        <button
-          onClick={() => setShowSearch(true)}
-          className="fixed top-4 left-4 z-30 w-12 h-12 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-        >
-          <Search className="w-6 h-6" />
-        </button>
+        {/* Top Bar Mobile - Nova barra com ícones */}
+        <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm flex items-center justify-between px-4">
+          {/* Menu Hamburger - Esquerda */}
+          <CategoryMenu
+            onNavigateHome={backToCurrentVideo}
+            onOpenSearch={() => setShowSearch(true)}
+            onOpenLive={() => setShowLive(true)}
+            onExit={() => window.location.href = '/'}
+          />
+          
+          {/* Ícones - Direita */}
+          <div className="flex items-center gap-2">
+            {/* Search/Lupa */}
+            <button
+              onClick={() => setShowSearch(true)}
+              className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              title="Pesquisar"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            
+            {/* Bonus */}
+            <button
+              onClick={() => {
+                const bonusGift = document.querySelector('[data-bonus-gift-trigger]') as HTMLElement;
+                if (bonusGift) {
+                  bonusGift.click();
+                }
+              }}
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all"
+              title="Bonus"
+            >
+              <Gift className="w-5 h-5 text-white" />
+            </button>
+            
+            {/* Live */}
+            <button
+              onClick={() => setShowLive(true)}
+              className="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center border-2 border-red-400 animate-pulse"
+              title="Live"
+            >
+              <Radio className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        </div>
 
-        {/* Bonus Gift - positioned below search */}
-        <div className="fixed top-20 left-4 z-30">
+        {/* Bonus Gift - Mantém o componente original para a funcionalidade */}
+        <div className="hidden">
           <BonusGift isMobile={true} />
         </div>
 

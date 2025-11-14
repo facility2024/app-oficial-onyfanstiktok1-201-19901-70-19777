@@ -621,8 +621,8 @@ if (!isOpen) return null;
             )}
 
             {/* Seção de Mais Informações */}
-            <div className="mt-6 border-t border-white/10 pt-6">
-              <h3 className="text-white text-sm font-semibold mb-4">Mais informações</h3>
+            <div className="mt-6 border-t border-white/10 pt-6 max-w-2xl">
+              <h3 className="text-[#00D5FF] text-base font-semibold mb-4">Mais informações</h3>
               
               {/* Links Sociais */}
               <div className="flex flex-wrap gap-2 mb-6">
@@ -630,7 +630,7 @@ if (!isOpen) return null;
                   href={`https://tiktok.com/@${user.username}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-900 transition-colors"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
@@ -642,7 +642,7 @@ if (!isOpen) return null;
                   href="#"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[#FFFC00] text-black px-4 py-2 rounded-full text-sm hover:bg-yellow-400 transition-colors font-semibold"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 3.764 3.659.403.03.823.074 1.169.239.27.119.404.314.404.538 0 .449-.63.899-1.664.899-1.139 0-2.848-.778-4.542-2.068-1.798-1.364-3.011-3.015-3.746-4.078l-.003-.015c-.164-.254-.314-.524-.479-.793l-.074-.135c-.12-.214-.269-.42-.419-.643-.3-.42-.645-.93-1.033-1.364-.164-.179-.27-.345-.27-.479 0-.09.044-.149.104-.149.075 0 .225.029.375.074.104.03.269.074.389.074.06 0 .149-.015.209-.074.165-.135.24-.494.24-.793 0-.645-.39-1.139-1.063-1.139-.12 0-.314.03-.479.074-.194.06-.449.135-.674.135-.239 0-.419-.06-.554-.164-.314-.254-.554-.689-.554-1.139 0-.374.136-.778.376-1.123.27-.404.72-.659 1.213-.659.06 0 .12 0 .165.015.27.029.494.135.674.314.164.165.225.375.225.614 0 .179-.045.375-.12.524-.045.075-.09.149-.12.224-.03.044-.045.089-.06.119.015.029.06.074.165.074.27 0 .734-.135 1.198-.404.494-.285 1.139-.734 1.693-1.213.12-.104.269-.194.434-.254.239-.09.494-.135.764-.135zm-2.008 10.238c-.165-.12-.3-.239-.419-.359-.239-.239-.42-.524-.614-.793-.329-.449-.704-.958-1.123-1.378-.225-.224-.449-.434-.674-.629-.3-.254-.614-.479-.943-.674-.18-.104-.375-.194-.569-.254-.375-.119-.778-.179-1.198-.179-1.079 0-2.008.524-2.488 1.408-.15.285-.225.614-.225.958 0 .479.135.943.36 1.363.225.404.554.764.943 1.033.225.149.479.269.749.344.209.06.434.104.674.104.314 0 .629-.06.913-.165.375-.135.704-.344.958-.614.18-.194.329-.419.434-.659.12-.254.18-.539.18-.823 0-.27-.06-.524-.165-.749-.105-.224-.255-.419-.42-.584z"/>
@@ -654,7 +654,7 @@ if (!isOpen) return null;
                   href="#"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-900 transition-colors"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -666,7 +666,7 @@ if (!isOpen) return null;
                   href="#"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[#FF9900] text-white px-4 py-2 rounded-full text-sm hover:bg-orange-600 transition-colors"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M.045 18.02c.072-.116.187-.124.348-.022 3.636 2.11 7.594 3.166 11.87 3.166 2.852 0 5.668-.533 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13.226-.088.39-.046.525.13.12.174.09.336-.12.48-.256.19-.6.41-1.006.654-1.244.743-2.64 1.316-4.185 1.726-1.53.406-3.045.61-4.516.61-2.265 0-4.463-.427-6.59-1.278-2.067-.826-3.93-1.972-5.593-3.44-.1-.088-.148-.173-.148-.256 0-.063.023-.12.068-.18zm3.202-5.456c-.39 0-.71-.18-.96-.538-.25-.36-.375-.79-.375-1.29 0-.516.128-.952.387-1.31.258-.36.578-.538.96-.538.376 0 .7.18.96.538.257.36.387.795.387 1.31s-.13.93-.387 1.29c-.26.36-.584.538-.96.538zm15.506 0c-.376 0-.7-.18-.96-.538-.257-.36-.387-.795-.387-1.29 0-.516.13-.952.387-1.31.26-.36.584-.538.96-.538.39 0 .71.18.96.538.258.36.387.795.387 1.31s-.13.93-.387 1.29c-.25.36-.57.538-.96.538z"/>
@@ -676,57 +676,54 @@ if (!isOpen) return null;
               </div>
 
               {/* Seção de Assinatura */}
-              <div className="bg-muted/5 border border-white/10 rounded-xl p-4 mb-4">
-                <h4 className="text-white/60 text-xs uppercase font-semibold mb-3">ASSINATURA</h4>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+                <h4 className="text-white/50 text-xs uppercase font-semibold mb-4 tracking-wide">ASSINATURA</h4>
                 
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[#00D5FF] font-bold text-sm">JÁ SOU ASSINANTE</span>
-                  <span className="text-[#00D5FF] font-bold text-sm">$4.50 por 31 dias</span>
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+                  <span className="text-[#00D5FF] font-bold text-base">JÁ SOU ASSINANTE</span>
+                  <span className="text-[#00D5FF] font-bold text-base">$4.50 por 31 dias</span>
                 </div>
 
-                <div className="flex items-center justify-between text-white/60 text-xs">
+                <div className="flex items-center justify-between text-white/50 text-xs">
                   <span>Renove por $15 /mês</span>
                   <span>dez 1, 2025</span>
                 </div>
               </div>
 
               {/* Pacotes de Assinatura */}
-              <div className="bg-muted/5 border border-white/10 rounded-xl p-4">
-                <button 
-                  className="w-full flex items-center justify-between text-white/60 text-xs uppercase font-semibold mb-3"
-                  onClick={() => {/* Toggle accordion */}}
-                >
-                  PACOTES DE ASSINATURA
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">PACOTES DE ASSINATURA</h4>
+                  <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
-                </button>
+                </div>
 
-                <div className="space-y-2">
-                  <button className="w-full bg-[#00D5FF] hover:bg-[#00B8E0] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
-                    <span>3 MESES (15off)</span>
-                    <span>$38.25 total</span>
+                <div className="space-y-3">
+                  <button className="w-full bg-[#00D5FF] hover:bg-[#00C2E8] text-black font-bold py-3.5 px-5 rounded-full flex items-center justify-between transition-all shadow-lg shadow-[#00D5FF]/20">
+                    <span className="text-sm">3 MESES (15off)</span>
+                    <span className="text-sm">$38.25 total</span>
                   </button>
 
-                  <button className="w-full bg-[#00D5FF]/80 hover:bg-[#00D5FF] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
-                    <span>6 MESES (20off)</span>
-                    <span>$72.00 total</span>
+                  <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
+                    <span className="text-sm">6 MESES (20off)</span>
+                    <span className="text-sm">$72.00 total</span>
                   </button>
 
-                  <button className="w-full bg-[#00D5FF]/60 hover:bg-[#00D5FF] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
-                    <span>12 MESES (25off)</span>
-                    <span>$135.00 total</span>
+                  <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
+                    <span className="text-sm">12 MESES (25off)</span>
+                    <span className="text-sm">$135.00 total</span>
                   </button>
                 </div>
               </div>
 
               {/* Footer Links */}
-              <div className="flex items-center justify-center gap-3 mt-4 text-white/40 text-xs">
-                <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
+              <div className="flex items-center justify-center gap-3 mt-6 text-white/30 text-xs">
+                <a href="#" className="hover:text-white/50 transition-colors">Privacy</a>
                 <span>•</span>
-                <a href="#" className="hover:text-white/60 transition-colors">Cookie Notice</a>
+                <a href="#" className="hover:text-white/50 transition-colors">Cookie Notice</a>
                 <span>•</span>
-                <a href="#" className="hover:text-white/60 transition-colors">Terms of Service</a>
+                <a href="#" className="hover:text-white/50 transition-colors">Terms of Service</a>
               </div>
             </div>
           </div>

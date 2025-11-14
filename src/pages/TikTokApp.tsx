@@ -2204,7 +2204,7 @@ export const TikTokApp = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold">TikTok</h1>
+          <h1 className="text-2xl font-bold">Coconudi</h1>
           
           {/* Bonus no Header */}
           <button

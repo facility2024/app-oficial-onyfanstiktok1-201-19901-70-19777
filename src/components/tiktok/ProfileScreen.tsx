@@ -363,8 +363,80 @@ if (!isOpen) return null;
         {/* Profile Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1600px] px-3 lg:px-6">
-          {/* Profile Header */}
-          <div className="p-6 text-white border-b border-white/10">
+          
+          {/* Videos Grid - NO TOPO */}
+          <div className="p-2 md:p-3">
+            <h4 className="text-white font-semibold mb-3 text-base px-2">
+              Postagens ({contents.length})
+            </h4>
+            
+            {contents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-white/60">
+                <div className="text-3xl mb-2">📱</div>
+                <p className="text-sm">Nenhum conteúdo disponível</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-1 md:gap-1 p-1 md:p-2">
+                {contents.map((content) => (
+                  <div 
+                    key={content.id} 
+                    className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
+                      content.type === 'image' ? 'aspect-square' : 'aspect-[9/16]'
+                    }`}
+                    onClick={() => {
+                      if (content.type === 'video') {
+                        onVideoSelect?.(content.id);
+                      } else {
+                        const imageContents = contents.filter(c => c.type === 'image');
+                        const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
+                        const currentIndex = imageContents.findIndex(c => c.id === content.id);
+                        setCurrentImageArray(imageUrls);
+                        setCurrentImageIndex(currentIndex);
+                        setImageViewerOpen(true);
+                      }
+                    }}
+                  >
+                    <img 
+                      src={content.thumbnail_url} 
+                      alt={content.title}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {content.type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="flex items-center justify-between text-xs text-white">
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                          {content.views_count?.toLocaleString() || '0'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                          </svg>
+                          {content.likes_count?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Profile Header - ABAIXO DOS VÍDEOS */}
+          <div className="p-6 text-white border-t border-white/10">
             <div className="flex items-center gap-4 mb-4">
               <img
                 src={user.avatar_url || '/placeholder.svg'}
@@ -649,133 +721,279 @@ if (!isOpen) return null;
             )}
           </div>
 
-          {/* Content Grid - Formato TikTok/Instagram */}
-          <div className="p-3">
-            <h4 className="text-white font-semibold mb-3 text-base">
-              Postagens ({contents.length})
-            </h4>
-            
-            {contents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-white/60">
-                <div className="text-3xl mb-2">📱</div>
-                <p className="text-sm">Nenhum conteúdo disponível</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-1 md:gap-1 p-1 md:p-2">
-                {contents.map((content) => (
-                  <div 
-                    key={content.id} 
-                    className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
-                      content.type === 'image' ? 'aspect-square' : 'aspect-[9/16]'
-                    }`}
-                    onClick={() => {
-                      if (content.type === 'video') {
-                        onVideoSelect?.(content.id);
-                        onClose();
-                      } else {
-                        // Para imagens, abrir o visualizador
-                        const imageContents = contents.filter(c => c.type === 'image');
-                        const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
-                        const currentImageIndex = imageContents.findIndex(c => c.id === content.id);
-                        setCurrentImageArray(imageUrls);
-                        setCurrentImageIndex(currentImageIndex);
-                        setImageViewerOpen(true);
-                      }
-                    }}
-                  >
-                    {/* Thumbnail/Content Preview */}
-                    <div className="w-full h-full relative">
-                      {content.type === 'video' ? (
-                        <>
-                          <video
-                            src={content.video_url}
-                            className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                            poster={content.thumbnail_url}
-                            onLoadedMetadata={(e) => {
-                              const video = e.currentTarget;
-                              video.currentTime = 1;
-                            }}
-                          />
-                          {/* Video play icon */}
-                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
-                            <div className="w-4 h-4 text-white flex items-center justify-center">
-                              <div className="w-0 h-0 border-l-[6px] border-l-white border-y-[4px] border-y-transparent ml-0.5"></div>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <img
-                            src={content.image_url || content.thumbnail_url}
-                            alt={content.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                            }}
-                          />
-                          {/* Image gallery icon */}
-                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
-                            <div className="w-4 h-4 text-white flex items-center justify-center">
-                              <div className="w-3 h-3 border border-white rounded-sm opacity-80"></div>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                      
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-                      
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
-                        <div className="w-12 h-12 bg-white/80 rounded-full flex items-center justify-center backdrop-blur-sm">
-                          {content.type === 'video' ? (
-                            <div className="w-0 h-0 border-l-[10px] border-l-black border-y-[7px] border-y-transparent ml-1"></div>
-                          ) : (
-                            <div className="w-6 h-6 border-2 border-black rounded opacity-80"></div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Stats overlay */}
-                      <div className="absolute bottom-1 left-1 right-1">
-                        <div className="flex items-center justify-between text-white text-xs">
-                          <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-1">
-                            <span className="text-red-400">❤️</span>
-                            <span className="text-[10px] font-medium">{content.likes_count > 1000 ? `${(content.likes_count/1000).toFixed(1)}k` : content.likes_count}</span>
-                          </div>
-                          <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-1">
-                            <span className="text-blue-400">👁️</span>
-                            <span className="text-[10px] font-medium">{content.views_count > 1000 ? `${(content.views_count/1000).toFixed(1)}k` : content.views_count}</span>
-                          </div>
-                        </div>
-                      </div>
 
-                      {/* Title overlay */}
-                      <div className="absolute top-1 left-1 right-8">
-                        <div className="bg-black/50 rounded px-2 py-1">
-                          <p className="text-white text-[10px] font-medium truncate">{content.title}</p>
-                        </div>
-                      </div>
-                    </div>
+          {/* Profile Header - ABAIXO DOS VÍDEOS */}
+          <div className="p-6 text-white border-t border-white/10">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src={user.avatar_url || '/placeholder.svg'}
+                alt="Profile"
+                className="w-20 h-20 rounded-full border-2 border-white/20 object-cover"
+              />
+              <div className="flex-1">
+                <h3 className="text-xl font-bold mb-1">@{user.username}</h3>
+                <div className="text-sm text-white/70 mb-2">
+                  {(user.followers_count || 0).toLocaleString()} seguidores
+                </div>
+                
+                {/* Link para painel de postagem */}
+                {user.posting_panel_url && (
+                  <div className="mb-2">
+                    <a 
+                      href={user.posting_panel_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-1 rounded-full text-white hover:from-blue-600 hover:to-purple-600 transition-colors"
+                    >
+                      📊 Painel de Postagem
+                    </a>
                   </div>
-                ))}
+                )}
+                
+                {/* Link do painel enviado - exibir quando existe no panelUrl */}
+                {panelUrl && (
+                  <div className="mb-2">
+                    <a 
+                      href={panelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 rounded-full text-white hover:from-purple-600 hover:to-pink-600 transition-colors"
+                    >
+                      🔗 Link Enviado
+                    </a>
+                  </div>
+                )}
+                
+                {isFollowing && (
+                  <div className="text-xs text-green-400 mb-2">
+                    ✓ {viewerName}, você está seguindo @{user.username}
+                  </div>
+                )}
+                {user.is_online && (
+                  <div className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 px-2 py-1 rounded-full text-xs font-medium">
+                    🔴 AO VIVO
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {user.bio && (
+              <p className="text-white/90 text-sm leading-relaxed mb-4">
+                {user.bio}
+              </p>
+            )}
+
+            {/* Informações Detalhadas da Modelo */}
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Local</p>
+                  <p className="text-white font-medium">São Paulo, Brasil</p>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Idade</p>
+                  <p className="text-white font-medium">23 anos</p>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Altura</p>
+                  <p className="text-white font-medium">1,68m</p>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs mb-1">Signo</p>
+                  <p className="text-white font-medium">Escorpião ♏</p>
+                </div>
+              </div>
+              
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-white/50 text-xs mb-2">Sobre mim</p>
+                <p className="text-white/90 text-sm leading-relaxed">
+                  Criadora de conteúdo exclusivo. Aqui você encontra o melhor conteúdo especial para você! 💕✨
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-white/50 text-xs mb-2">Interesses</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Fitness 💪</span>
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Moda 👗</span>
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Viagens ✈️</span>
+                  <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">Fotografia 📸</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Links Sociais */}
+            <div className="mt-4">
+              <h3 className="text-[#00D5FF] text-base font-semibold mb-3">Redes Sociais</h3>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                <a 
+                  href={`https://tiktok.com/@${user.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                  </svg>
+                  TikTok
+                </a>
+                <a 
+                  href={`https://t.me/${user.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.84 8.687c-.139.625-.503.777-1.018.483l-2.813-2.075-1.357 1.305c-.15.15-.276.276-.567.276l.203-2.877 5.24-4.735c.228-.203-.05-.316-.353-.114l-6.476 4.078-2.79-.87c-.608-.19-.62-.608.127-.901l10.89-4.197c.507-.19.951.113.785.9z"/>
+                  </svg>
+                  Telegram
+                </a>
+                <a 
+                  href={`https://facebook.com/${user.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  Facebook
+                </a>
+                <a 
+                  href={`https://instagram.com/${user.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/20 transition-colors border border-white/20"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+                  </svg>
+                  Instagram
+                </a>
+              </div>
+            </div>
+
+            {/* Status de Assinatura */}
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">ASSINATURA</h4>
+                <span className="bg-[#00D5FF] text-black text-xs font-bold px-2 py-1 rounded-full">ATIVO</span>
+              </div>
+              <div className="flex items-center justify-between text-white/50 text-xs">
+                <span>Renove por $15 /mês</span>
+                <span>dez 1, 2025</span>
+              </div>
+            </div>
+
+            {/* Pacotes de Assinatura */}
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-white/50 text-xs uppercase font-semibold tracking-wide">PACOTES DE ASSINATURA</h4>
+                <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              <div className="space-y-3">
+                <button className="w-full bg-[#00D5FF] hover:bg-[#00C2E8] text-black font-bold py-3.5 px-5 rounded-full flex items-center justify-between transition-all shadow-lg shadow-[#00D5FF]/20">
+                  <span className="text-sm">3 MESES (15% off)</span>
+                  <span className="text-sm">$38.25 total</span>
+                </button>
+
+                <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
+                  <span className="text-sm">6 MESES (20% off)</span>
+                  <span className="text-sm">$72.00 total</span>
+                </button>
+
+                <button className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-3.5 px-5 rounded-full flex items-center justify-between transition-all border border-white/20">
+                  <span className="text-sm">12 MESES (25% off)</span>
+                  <span className="text-sm">$135.00 total</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Links */}
+            <div className="flex items-center justify-center gap-3 mt-4 text-white/30 text-xs">
+              <a href="#" className="hover:text-white/50 transition-colors">Privacy</a>
+              <span>•</span>
+              <a href="#" className="hover:text-white/50 transition-colors">Cookie Notice</a>
+              <span>•</span>
+              <a href="#" className="hover:text-white/50 transition-colors">Terms of Service</a>
+            </div>
+
+            {panelUrl && (
+              <div className="mt-3">
+                <button
+                  onClick={() => {
+                    setShowMyContent(!showMyContent);
+                    if (!showMyContent) {
+                      loadMyContentImages();
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 text-xs bg-gradient-to-r from-pink-500 to-red-500 px-3 py-1.5 rounded-full text-white hover:from-pink-600 hover:to-red-600 transition-colors"
+                >
+                  <Heart className="w-3 h-3" />
+                  Meus Conteúdos
+                </button>
               </div>
             )}
-          </div>
+
+            {/* Seção Meus Conteúdos - Só aparece quando ativo */}
+            {showMyContent && (
+              <div className="mt-4 p-3 border-t border-white/10">
+                <h4 className="text-white font-semibold mb-3 text-base flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-pink-500" />
+                  Meus Conteúdos ({myContentImages.length})
+                </h4>
+                
+                {myContentImages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-white/60">
+                    <div className="text-3xl mb-2">💖</div>
+                    <p className="text-sm">Nenhum conteúdo exclusivo disponível</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                    {myContentImages.map((imageUrl, index) => (
+                      <div 
+                        key={index}
+                        className="relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg aspect-square"
+                        onClick={() => {
+                          setCurrentImageArray(myContentImages);
+                          setCurrentImageIndex(index);
+                          setImageViewerOpen(true);
+                        }}
+                      >
+                        <img 
+                          src={imageUrl} 
+                          alt={`Conteúdo ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.svg';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity">
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-white text-xs font-semibold">Clique para visualizar</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Image Viewer */}
-      <ImageViewer
+      <ImageViewer 
         images={currentImageArray}
-        currentIndex={currentImageIndex}
+        initialIndex={currentImageIndex}
         isOpen={imageViewerOpen}
         onClose={() => setImageViewerOpen(false)}
-        onIndexChange={setCurrentImageIndex}
       />
     </div>
   );

@@ -543,19 +543,27 @@ if (!isOpen) return null;
                     <div className="w-full h-full relative">
                       {content.type === 'video' ? (
                         <>
-                          <img
-                            src={content.thumbnail_url}
-                            alt={content.title}
-                            className="w-full h-full object-cover bg-black"
-                            loading="lazy"
+                          <video
+                            src={content.video_url}
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                            autoPlay
+                            preload="metadata"
+                            poster={content.thumbnail_url}
                             onError={(e) => {
-                              e.currentTarget.style.display = 'none';
+                              // Fallback para thumbnail se o vídeo falhar
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `<img src="${content.thumbnail_url}" alt="${content.title}" class="w-full h-full object-cover" />`;
+                              }
                             }}
                           />
-                          {/* Video play icon */}
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-black/60 rounded-full p-3">
-                              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          {/* Ícone de play apenas como indicativo */}
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                            <div className="bg-black/40 rounded-full p-3">
+                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z"/>
                               </svg>
                             </div>

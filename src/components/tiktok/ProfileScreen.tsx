@@ -425,32 +425,6 @@ if (!isOpen) return null;
               </p>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 relative z-50">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🔥 PROFILE BOTÃO SEGUIR CLICADO!', {
-                    currentUser: user?.username,
-                    isFollowing,
-                    modelId: user?.id
-                  });
-                  followModel();
-                }}
-                style={{ 
-                  pointerEvents: 'all',
-                  position: 'relative',
-                  zIndex: 999
-                }}
-                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 py-3 px-6 rounded-full font-semibold text-white text-sm hover:from-red-600 hover:to-pink-600 transition-all duration-200 cursor-pointer"
-                aria-pressed={isFollowing}
-                aria-label={isFollowing ? `Deixar de seguir ${user.username}` : `Seguir ${user.username}`}
-              >
-                {isFollowing ? 'Seguindo' : 'Seguir'}
-              </button>
-            </div>
-
             {panelUrl && (
               <div className="mt-3">
                 <button

@@ -307,7 +307,6 @@ export const LiveInterface = () => {
             setShowComments(true);
           }}
           onOpenProfile={() => setShowProfile(true)}
-          onShare={handleShare}
           onOpenPremium={() => {
             const link = (video as any)?.user?.posting_panel_url as string | undefined;
             if (link) {

@@ -1884,10 +1884,6 @@ export const TikTokApp = () => {
               await trackFollow(currentVideo?.user?.id || '');
               setShowProfile(true);
             }}
-            onShare={() => {
-              console.log('Mobile share clicked via SideMenu');
-              shareVideo();
-            }}
             onOpenLive={() => {
               console.log('Mobile live clicked via SideMenu');
               setShowLive(true);
@@ -1950,11 +1946,11 @@ export const TikTokApp = () => {
           </button>
 
           <button 
-            onClick={() => setShowProfile(true)}
+            onClick={() => shareVideo()}
             className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
           >
-            <User className="w-7 h-7 mb-0.5" />
-            <span className="text-xs">Perfil</span>
+            <Share className="w-7 h-7 mb-0.5" />
+            <span className="text-xs">Compartilhar</span>
           </button>
         </div>
 
@@ -2192,10 +2188,6 @@ export const TikTokApp = () => {
                   await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
                   await trackFollow(currentVideo?.user?.id || '');
                   setShowProfile(true);
-                }}
-                onShare={() => {
-                  console.log('Desktop share clicked');
-                  shareVideo();
                 }}
                 onOpenLive={() => {
                   console.log('Desktop live clicked');

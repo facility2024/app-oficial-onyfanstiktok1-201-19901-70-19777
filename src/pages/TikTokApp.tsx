@@ -28,6 +28,7 @@ import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
+import coconudiLogo from '@/assets/coconudi-logo.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 // import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
@@ -2204,7 +2205,10 @@ export const TikTokApp = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold">Coconudi</h1>
+          <div className="flex items-center gap-2">
+            <img src={coconudiLogo} alt="Coconudi" className="w-10 h-10 rounded-full" />
+            <h1 className="text-2xl font-bold">Coconudi</h1>
+          </div>
           
           {/* Bonus no Header */}
           <button

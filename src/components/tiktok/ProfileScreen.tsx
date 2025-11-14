@@ -364,78 +364,6 @@ if (!isOpen) return null;
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1600px] px-3 lg:px-6">
           
-          {/* Videos Grid - NO TOPO */}
-          <div className="p-2 md:p-3">
-            <h4 className="text-white font-semibold mb-3 text-base px-2">
-              Postagens ({contents.length})
-            </h4>
-            
-            {contents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-white/60">
-                <div className="text-3xl mb-2">📱</div>
-                <p className="text-sm">Nenhum conteúdo disponível</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-1 md:gap-1 p-1 md:p-2">
-                {contents.map((content) => (
-                  <div 
-                    key={content.id} 
-                    className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
-                      content.type === 'image' ? 'aspect-square' : 'aspect-[9/16]'
-                    }`}
-                    onClick={() => {
-                      if (content.type === 'video') {
-                        onVideoSelect?.(content.id);
-                      } else {
-                        const imageContents = contents.filter(c => c.type === 'image');
-                        const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
-                        const currentIndex = imageContents.findIndex(c => c.id === content.id);
-                        setCurrentImageArray(imageUrls);
-                        setCurrentImageIndex(currentIndex);
-                        setImageViewerOpen(true);
-                      }
-                    }}
-                  >
-                    <img 
-                      src={content.thumbnail_url} 
-                      alt={content.title}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {content.type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-8 h-8 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm">
-                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                      <div className="flex items-center justify-between text-xs text-white">
-                        <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                          </svg>
-                          {content.views_count?.toLocaleString() || '0'}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                          </svg>
-                          {content.likes_count?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Profile Header - ABAIXO DOS VÍDEOS */}
           <div className="p-6 text-white border-t border-white/10">
             <div className="flex items-center gap-4 mb-4">
               <img
@@ -996,6 +924,78 @@ if (!isOpen) return null;
         isOpen={imageViewerOpen}
         onClose={() => setImageViewerOpen(false)}
       />
-    </div>
+          
+          {/* Postagens - ABAIXO DO PERFIL */}
+          <div className="p-3">
+            <h4 className="text-white font-semibold mb-3 text-base">
+              Postagens ({contents.length})
+            </h4>
+            
+            {contents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-white/60">
+                <div className="text-3xl mb-2">📱</div>
+                <p className="text-sm">Nenhum conteúdo disponível</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-1 md:gap-1 p-1 md:p-2">
+                {contents.map((content) => (
+                  <div 
+                    key={content.id} 
+                    className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
+                      content.type === 'image' ? 'aspect-square' : 'aspect-[9/16]'
+                    }`}
+                    onClick={() => {
+                      if (content.type === 'video') {
+                        onVideoSelect?.(content.id);
+                      } else {
+                        const imageContents = contents.filter(c => c.type === 'image');
+                        const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
+                        const currentIndex = imageContents.findIndex(c => c.id === content.id);
+                        setCurrentImageArray(imageUrls);
+                        setCurrentImageIndex(currentIndex);
+                        setImageViewerOpen(true);
+                      }
+                    }}
+                  >
+                    <img 
+                      src={content.thumbnail_url} 
+                      alt={content.title}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {content.type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="flex items-center justify-between text-xs text-white">
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                          {content.views_count?.toLocaleString() || '0'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                          </svg>
+                          {content.likes_count?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          </div>
   );
 };

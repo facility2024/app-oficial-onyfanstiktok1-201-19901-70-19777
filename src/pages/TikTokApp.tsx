@@ -2183,7 +2183,7 @@ export const TikTokApp = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Desktop Header */}
-      <div className="sticky top-0 z-[60] bg-black flex items-center justify-between px-6 py-4 border-b border-gray-800">
+      <div className="sticky top-0 z-[60] bg-[#87CEEB] flex items-center justify-between px-6 py-4 border-b border-blue-300">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -2200,7 +2200,7 @@ export const TikTokApp = () => {
                 goToHome();
               }
             }}
-            className="bg-black/50 hover:bg-black/70 text-white border border-white/20"
+            className="bg-gray-900/20 hover:bg-gray-900/30 text-gray-900 border border-gray-900/30"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
@@ -2212,7 +2212,7 @@ export const TikTokApp = () => {
               className="w-12 h-12 rounded-full animate-pulse shadow-[0_0_20px_rgba(135,206,250,0.8)]" 
               style={{ filter: 'drop-shadow(0 0 10px rgba(135,206,250,0.6))' }}
             />
-            <h1 className="text-2xl font-bold">Coconudi</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Coconudi</h1>
           </div>
           
           {/* Bonus no Header */}
@@ -2239,17 +2239,17 @@ export const TikTokApp = () => {
           </button>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+          <Button variant="ghost" size="sm" className="text-gray-900 hover:bg-blue-200">
             Para você
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:bg-gray-800">
+          <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-blue-200">
             Seguindo
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowSearch(true)}
-            className="text-white hover:bg-gray-800"
+            className="text-gray-900 hover:bg-blue-200"
           >
             <Search className="h-4 w-4 mr-2" />
             Pesquisar

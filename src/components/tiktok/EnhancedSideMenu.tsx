@@ -119,29 +119,39 @@ export const EnhancedSideMenu = ({
   return (
     <div className="flex flex-col gap-4 z-30">
       {/* Profile */}
-      <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
-        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm group-hover:bg-white/20 transition-all">
-          <User className="w-6 h-6 text-white" strokeWidth={1.5} />
+      <div className="flex flex-col items-center cursor-pointer" onClick={onOpenProfile}>
+        <div className="relative">
+          <img
+            src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+            alt="Profile"
+            className="w-12 h-12 rounded-full border-2 border-white object-cover"
+          />
+          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-black">
+            +
+          </div>
         </div>
-        <span className="text-white text-xs mt-1 font-light">Perfil</span>
       </div>
 
       {/* Like */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={handleToggleLike}>
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-200 ${
-          isLiked ? 'bg-white/20 scale-105' : 'bg-white/10 group-hover:bg-white/20'
-        } ${loading ? 'opacity-50' : ''}`}>
-          <Heart className={`w-6 h-6 transition-all ${isLiked ? 'fill-white text-white' : 'text-white'}`} strokeWidth={1.5} />
+        <div className={`transition-all duration-200 ${loading ? 'opacity-50' : ''}`}>
+          <Heart 
+            className={`w-9 h-9 transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] ${
+              isLiked ? 'fill-white text-white scale-110' : 'text-white group-hover:scale-105'
+            }`} 
+            strokeWidth={1.5} 
+          />
         </div>
-        <span className="text-white text-xs mt-1 font-light">{formatCount(likesCount)}</span>
+        <span className="text-white text-xs mt-1 font-light drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{formatCount(likesCount)}</span>
       </div>
 
       {/* Comment */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={handleCommentsClick}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
-          <MessageCircle className="w-6 h-6 text-white" strokeWidth={1.5} />
-        </div>
-        <span className="text-white text-xs mt-1 font-light">{formatCount(commentsCount)}</span>
+        <MessageCircle 
+          className="w-9 h-9 text-white transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:scale-105" 
+          strokeWidth={1.5} 
+        />
+        <span className="text-white text-xs mt-1 font-light drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{formatCount(commentsCount)}</span>
       </div>
 
       {/* Share */}
@@ -176,14 +186,11 @@ export const EnhancedSideMenu = ({
 
       {/* Sound */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onToggleSound}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
-          {isMuted ? (
-            <VolumeX className="w-6 h-6 text-white" strokeWidth={1.5} />
-          ) : (
-            <Volume2 className="w-6 h-6 text-white" strokeWidth={1.5} />
-          )}
-        </div>
-        <span className="text-white text-xs mt-1 font-light">{isMuted ? 'Som' : 'Mudo'}</span>
+        {isMuted ? (
+          <VolumeX className="w-9 h-9 text-white transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:scale-105" strokeWidth={1.5} />
+        ) : (
+          <Volume2 className="w-9 h-9 text-white transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:scale-105" strokeWidth={1.5} />
+        )}
       </div>
 
       {/* Play/Pause */}

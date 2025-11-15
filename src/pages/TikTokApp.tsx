@@ -101,7 +101,7 @@ export const TikTokApp = () => {
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false); // Inicia pausado
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   
@@ -283,8 +283,12 @@ export const TikTokApp = () => {
     console.log('🔍 VERIFICAÇÃO DE IDADE: Dados salvos:', verification);
     
     if (verification) {
-      console.log('🔍 VERIFICAÇÃO DE IDADE: Usuário já verificado, não mostrando popup');
-      return; // Já verificado
+      console.log('🔍 VERIFICAÇÃO DE IDADE: Usuário já verificado, iniciando reprodução');
+      // Inicia reprodução automaticamente se já verificado
+      setTimeout(() => {
+        setIsPlaying(true);
+      }, 500);
+      return;
     }
 
     console.log('🔍 VERIFICAÇÃO DE IDADE: Aguardando 4 segundos...');
@@ -857,6 +861,15 @@ export const TikTokApp = () => {
     } finally {
       setLoading(false);
       setIsLoadingMore(false);
+      
+      // Iniciar reprodução automaticamente se usuário já verificou idade
+      const verified = localStorage.getItem('ageVerification');
+      if (verified) {
+        console.log('✅ Usuário já verificado, iniciando reprodução automática');
+        setTimeout(() => {
+          setIsPlaying(true);
+        }, 800);
+      }
     }
   }, []);
 
@@ -2762,9 +2775,13 @@ export const TikTokApp = () => {
       <AgeVerificationModal
         open={showAgeVerification}
         onClose={() => {
-          console.log('🔍 AGE VERIFICATION: Fechando modal');
+          console.log('🔍 AGE VERIFICATION: Fechando modal e iniciando reprodução');
           setShowAgeVerification(false);
-          setIsPlaying(true);
+          // Força reprodução após fechar o modal
+          setTimeout(() => {
+            console.log('▶️ Iniciando reprodução automática após verificação');
+            setIsPlaying(true);
+          }, 300);
         }}
       />
       

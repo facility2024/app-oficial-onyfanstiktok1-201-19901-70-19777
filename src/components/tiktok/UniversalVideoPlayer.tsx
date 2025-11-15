@@ -13,6 +13,7 @@ interface UniversalVideoPlayerProps {
   onClick?: (event: React.MouseEvent) => void;
   className?: string;
   style?: React.CSSProperties;
+  autoPlayOnReady?: boolean; // Nova prop para reprodução automática
 }
 
 /**
@@ -31,7 +32,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     onPause, 
     onClick, 
     className = '',
-    style = {}
+    style = {},
+    autoPlayOnReady = false
   }, ref) => {
     const [isBuffering, setIsBuffering] = useState(false);
     const [hasError, setHasError] = useState(false);
@@ -168,9 +170,10 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setupVideo();
       setIsReady(false);
       setHasError(false);
-      setNeedsUserInteraction(true);
+      // Se autoPlayOnReady é true, não precisa de interação do usuário
+      setNeedsUserInteraction(!autoPlayOnReady);
       retryCountRef.current = 0;
-    }, [src, setupVideo]);
+    }, [src, setupVideo, autoPlayOnReady]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -186,7 +189,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         isReady,
         needsUserInteraction,
         paused: video.paused,
-        readyState: video.readyState
+        readyState: video.readyState,
+        autoPlayOnReady
       });
 
       if (isPlaying) {
@@ -195,7 +199,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           return;
         }
         
-        if (needsUserInteraction) {
+        // Se autoPlayOnReady está ativado, não espera interação
+        if (autoPlayOnReady && needsUserInteraction) {
+          console.log('🎬 AutoPlay ativado, pulando necessidade de interação');
+          setNeedsUserInteraction(false);
+        }
+        
+        if (needsUserInteraction && !autoPlayOnReady) {
           console.log('👆 Aguardando interação do usuário...');
           return;
         }
@@ -209,7 +219,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, needsUserInteraction, isReady, attemptPlay, onPause, internalRef]);
+    }, [isPlaying, needsUserInteraction, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
 
     // Controlar mute
     useEffect(() => {
@@ -220,11 +230,20 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Event handlers
     const handleLoadedData = useCallback(() => {
-      console.log('✅ Vídeo carregado (loadeddata)');
+      console.log('✅ Vídeo carregado (loadeddata)', { autoPlayOnReady, isPlaying });
       setIsBuffering(false);
       setIsReady(true);
+      
+      // Se autoPlayOnReady está ativado e isPlaying é true, inicia automaticamente
+      if (autoPlayOnReady && isPlaying) {
+        console.log('🎬 Auto-reprodução ativada, iniciando vídeo...');
+        setTimeout(() => {
+          attemptPlay();
+        }, 100);
+      }
+      
       if (onLoadedData) onLoadedData();
-    }, [onLoadedData]);
+    }, [onLoadedData, autoPlayOnReady, isPlaying, attemptPlay]);
 
     const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
       const video = e.currentTarget;

@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Menu, Home, Users, TrendingUp, Star, Settings, LogOut, Heart, Flame, Sparkles, Video } from "lucide-react";
 import { useState } from "react";
+import coconutIcon from "@/assets/coconut-icon.png";
 
 interface CategoryItem {
   id: string;
@@ -147,7 +148,10 @@ export const CategoryMenu = ({
       </SheetTrigger>
       <SheetContent side="left" className="w-[280px] bg-black/95 backdrop-blur-xl border-r border-gray-800 text-white p-0">
         <SheetHeader className="px-6 py-4 border-b border-gray-800">
-          <SheetTitle className="text-white text-xl font-bold">Menu</SheetTitle>
+          <SheetTitle className="text-white text-xl font-bold flex items-center gap-2">
+            <img src={coconutIcon} alt="Coconut" className="w-8 h-8" />
+            Menu
+          </SheetTitle>
         </SheetHeader>
         
         <div className="overflow-y-auto h-[calc(100vh-80px)] py-4">

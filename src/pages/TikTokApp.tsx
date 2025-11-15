@@ -2009,7 +2009,7 @@ export const TikTokApp = () => {
         )}
 
         {/* Side Menu - Mobile positioning - Só aparece na tela principal */}
-        {!showProfile && (
+        {!showProfile && !showChat && (
           <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">
             <SideMenu
               video={currentVideo}
@@ -2475,7 +2475,7 @@ export const TikTokApp = () => {
               )}
 
               {/* Desktop Side Menu - Só aparece na tela principal */}
-              {!showProfile && (
+              {!showProfile && !showChat && (
                 <div className="absolute inset-y-0 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col justify-center space-y-4 z-30 max-h-[calc(100vh-140px)] overflow-y-auto py-6">
                   <SideMenu
                     video={currentVideo}

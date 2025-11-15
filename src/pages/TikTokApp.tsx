@@ -6,6 +6,7 @@ import { SideMenu } from '@/components/tiktok/SideMenu';
 import { BottomInfo } from '@/components/tiktok/BottomInfo';
 import { ProfileScreen } from '@/components/tiktok/ProfileScreen';
 import { CommentsScreen } from '@/components/tiktok/CommentsScreen';
+import { ChatScreen } from '@/components/tiktok/ChatScreen';
 import { BonusGift } from '@/components/tiktok/BonusGift';
 import { VinylRecord } from '@/components/tiktok/VinylRecord';
 import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTracker';
@@ -94,6 +95,7 @@ export const TikTokApp = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
@@ -2137,6 +2139,18 @@ export const TikTokApp = () => {
           onVideoSelect={(videoId) => {
             openSelectedVideo(videoId);
           }}
+          onOpenChat={() => {
+            setShowProfile(false);
+            setShowChat(true);
+          }}
+        />
+
+        {/* Chat Screen */}
+        <ChatScreen
+          isOpen={showChat}
+          onClose={() => setShowChat(false)}
+          modelName={currentVideo.user.username}
+          modelAvatar={currentVideo.user.avatar_url}
         />
 
         {/* Comments Screen */}
@@ -2644,6 +2658,18 @@ export const TikTokApp = () => {
         isOpen={showProfile}
         onClose={() => setShowProfile(false)}
         onGoHome={goToHome}
+        onOpenChat={() => {
+          setShowProfile(false);
+          setShowChat(true);
+        }}
+      />
+
+      {/* Desktop Chat Screen */}
+      <ChatScreen
+        isOpen={showChat}
+        onClose={() => setShowChat(false)}
+        modelName={currentVideo.user.username}
+        modelAvatar={currentVideo.user.avatar_url}
       />
 
       {/* Desktop Comments Screen */}

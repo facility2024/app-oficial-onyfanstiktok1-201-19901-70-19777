@@ -59,7 +59,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Configurações básicas para todos os dispositivos
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
-      video.preload = 'metadata';
+      video.preload = 'auto'; // Changed from 'metadata' to 'auto' for faster loading
       video.muted = true;
       video.autoplay = false;
       video.loop = true;

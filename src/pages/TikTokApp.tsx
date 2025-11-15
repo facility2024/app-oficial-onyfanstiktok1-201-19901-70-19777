@@ -98,6 +98,7 @@ export const TikTokApp = () => {
   const [showChat, setShowChat] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
+  const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -241,6 +242,39 @@ export const TikTokApp = () => {
       loadMoreVideos();
     }
   }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos]);
+
+  // Preload adjacent videos for faster navigation
+  useEffect(() => {
+    if (videos.length === 0) return;
+
+    const preloadVideo = (index: number) => {
+      if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
+      
+      const video = videos[index];
+      if (video?.video_url) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'video';
+        link.href = video.video_url;
+        link.type = 'video/mp4';
+        document.head.appendChild(link);
+        
+        setPreloadedVideos(prev => new Set(prev).add(index));
+        
+        // Clean up after 30 seconds
+        setTimeout(() => {
+          if (document.head.contains(link)) {
+            document.head.removeChild(link);
+          }
+        }, 30000);
+      }
+    };
+
+    // Preload next 2 and previous 1 videos
+    preloadVideo(currentVideoIndex + 1);
+    preloadVideo(currentVideoIndex + 2);
+    preloadVideo(currentVideoIndex - 1);
+  }, [currentVideoIndex, videos, preloadedVideos]);
   
   // Verificação de idade após 4 segundos
   useEffect(() => {
@@ -466,6 +500,23 @@ export const TikTokApp = () => {
     try {
       console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
       setLoading(true);
+      
+      // Check cache first for faster initial load
+      const cacheKey = 'initial_feed';
+      const cached = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
+      if (cached && cacheTime) {
+        const age = Date.now() - parseInt(cacheTime);
+        if (age < 60000) { // Cache valid for 1 minute
+          const cachedData = JSON.parse(cached);
+          console.log(`✅ Feed carregado do cache (${cachedData.length} vídeos)`);
+          setVideos(cachedData);
+          setCurrentVideoIndex(0);
+          setLoading(false);
+          return;
+        }
+      }
       
       // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
       console.log('🌟 Carregando posts agendados recentes...');
@@ -786,6 +837,10 @@ export const TikTokApp = () => {
         setCycleSize(orderedModels.length);
 
         console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
+        
+        // Cache the results for faster subsequent loads
+        sessionStorage.setItem('initial_feed', JSON.stringify(firstBlock));
+        sessionStorage.setItem('initial_feed_time', Date.now().toString());
       } else {
         console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
         const exampleData = createExampleData();

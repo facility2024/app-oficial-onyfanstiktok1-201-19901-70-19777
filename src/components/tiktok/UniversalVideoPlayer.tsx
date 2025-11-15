@@ -56,10 +56,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       
       const video = internalRef.current;
       
+      console.log('🎬 Configurando vídeo:', { src, isIOS, isAndroid, isMobile });
+      
       // Configurações básicas para todos os dispositivos
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
-      video.preload = 'auto'; // Changed from 'metadata' to 'auto' for faster loading
       video.muted = true;
       video.autoplay = false;
       video.loop = true;
@@ -76,7 +77,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
       video.style.willChange = 'transform';
-    }, [internalRef, isIOS]);
+      
+      console.log('✅ Vídeo configurado');
+    }, [internalRef, isIOS, isAndroid, isMobile, src]);
 
     // Pausar outros vídeos quando este for reproduzido
     const pauseOtherVideos = useCallback(() => {
@@ -93,28 +96,51 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Tentar reproduzir vídeo
     const attemptPlay = useCallback(async () => {
-      if (!internalRef || !('current' in internalRef) || !internalRef.current) return false;
+      if (!internalRef || !('current' in internalRef) || !internalRef.current) {
+        console.error('❌ attemptPlay: Ref do vídeo não está disponível');
+        return false;
+      }
       
       const video = internalRef.current;
       
+      console.log('▶️ Tentando reproduzir vídeo:', {
+        paused: video.paused,
+        currentTime: video.currentTime,
+        readyState: video.readyState,
+        src: video.src.substring(0, 50) + '...'
+      });
+      
       try {
         pauseOtherVideos();
-        video.currentTime = 0;
+        
+        // Não resetar o tempo se o vídeo já está tocando
+        if (video.paused) {
+          video.currentTime = 0;
+        }
+        
         await video.play();
+        console.log('✅ Vídeo reproduzindo com sucesso');
         setNeedsUserInteraction(false);
         setHasError(false);
         retryCountRef.current = 0;
         if (onPlay) onPlay();
         return true;
-      } catch (error) {
-        console.warn('Erro ao reproduzir vídeo:', error);
+      } catch (error: any) {
+        console.error('❌ Erro ao reproduzir vídeo:', {
+          error: error.message,
+          name: error.name,
+          readyState: video.readyState,
+          networkState: video.networkState
+        });
         
         // Tentar novamente com estratégias diferentes
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current++;
+          console.log(`🔄 Tentativa ${retryCountRef.current} de ${maxRetries}`);
           
           // Estratégia 1: Recarregar vídeo
           if (retryCountRef.current === 1) {
+            console.log('🔄 Estratégia 1: Recarregando vídeo...');
             video.load();
             setTimeout(() => attemptPlay(), 100);
             return false;
@@ -122,12 +148,15 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           
           // Estratégia 2: Forçar mute e tentar novamente
           if (retryCountRef.current === 2) {
+            console.log('🔄 Estratégia 2: Forçando mute...');
             video.muted = true;
             setTimeout(() => attemptPlay(), 100);
             return false;
           }
         }
         
+        console.error('❌ Todas as tentativas de reprodução falharam');
+        setNeedsUserInteraction(true);
         setHasError(true);
         if (onError) onError(error);
         return false;
@@ -145,13 +174,38 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Controlar reprodução
     useEffect(() => {
-      if (!internalRef || !('current' in internalRef) || !internalRef.current || !isReady) return;
+      if (!internalRef || !('current' in internalRef) || !internalRef.current) {
+        console.warn('⚠️ useEffect reprodução: Ref não disponível');
+        return;
+      }
 
       const video = internalRef.current;
 
-      if (isPlaying && !needsUserInteraction) {
-        attemptPlay();
-      } else if (!isPlaying) {
+      console.log('🎮 useEffect reprodução:', {
+        isPlaying,
+        isReady,
+        needsUserInteraction,
+        paused: video.paused,
+        readyState: video.readyState
+      });
+
+      if (isPlaying) {
+        if (!isReady) {
+          console.log('⏳ Vídeo ainda não está pronto, aguardando...');
+          return;
+        }
+        
+        if (needsUserInteraction) {
+          console.log('👆 Aguardando interação do usuário...');
+          return;
+        }
+        
+        if (video.paused) {
+          console.log('▶️ Iniciando reprodução do vídeo...');
+          attemptPlay();
+        }
+      } else if (!isPlaying && !video.paused) {
+        console.log('⏸️ Pausando vídeo...');
         video.pause();
         if (onPause) onPause();
       }
@@ -166,13 +220,22 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Event handlers
     const handleLoadedData = useCallback(() => {
+      console.log('✅ Vídeo carregado (loadeddata)');
       setIsBuffering(false);
       setIsReady(true);
       if (onLoadedData) onLoadedData();
     }, [onLoadedData]);
 
     const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
-      console.error('Erro no vídeo:', e);
+      const video = e.currentTarget;
+      console.error('❌ Erro no vídeo:', {
+        error: video.error,
+        errorCode: video.error?.code,
+        errorMessage: video.error?.message,
+        src: video.src.substring(0, 50) + '...',
+        networkState: video.networkState,
+        readyState: video.readyState
+      });
       setHasError(true);
       setIsBuffering(false);
       if (onError) onError(e);
@@ -194,18 +257,29 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.MouseEvent) => {
       event.preventDefault();
+      event.stopPropagation();
+      
+      console.log('👆 Clique no vídeo detectado:', {
+        needsUserInteraction,
+        isPlaying,
+        isReady
+      });
       
       if (needsUserInteraction) {
+        console.log('🎬 Primeira interação - tentando reproduzir...');
         const success = await attemptPlay();
         if (success) {
+          console.log('✅ Primeira reprodução bem-sucedida');
           setNeedsUserInteraction(false);
+        } else {
+          console.error('❌ Primeira reprodução falhou');
         }
       }
       
       if (onClick) {
         onClick(event);
       }
-    }, [needsUserInteraction, attemptPlay, onClick]);
+    }, [needsUserInteraction, attemptPlay, onClick, isPlaying, isReady]);
 
     // Retry handler
     const handleRetry = useCallback(async () => {
@@ -237,7 +311,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           loop={true}
           muted={isMuted}
           playsInline={true}
-          preload="metadata"
+          preload="auto"
           controls={false}
           onClick={handleUserClick}
           onLoadedData={handleLoadedData}

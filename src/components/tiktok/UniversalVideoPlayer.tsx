@@ -129,11 +129,26 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         return true;
       } catch (error: any) {
         console.error('❌ Erro ao reproduzir vídeo:', {
-          error: error.message,
-          name: error.name,
+          error: error?.message,
+          name: error?.name,
           readyState: video.readyState,
           networkState: video.networkState
         });
+
+        // Se o navegador bloqueou autoplay, não tratamos como erro.
+        const msg = String(error?.message || '').toLowerCase();
+        const isAutoplayBlocked =
+          error?.name === 'NotAllowedError' ||
+          msg.includes('user gesture') ||
+          msg.includes("user didn't interact") ||
+          msg.includes('notallowed');
+
+        if (isAutoplayBlocked) {
+          console.warn('⛔ Autoplay bloqueado pelo navegador — exibindo botão de play');
+          setNeedsUserInteraction(true);
+          setHasError(false); // Não é erro de mídia
+          return false;
+        }
         
         // Tentar novamente com estratégias diferentes
         if (retryCountRef.current < maxRetries) {

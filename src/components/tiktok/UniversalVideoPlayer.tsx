@@ -118,11 +118,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       try {
         pauseOtherVideos();
         
-        // Não resetar o tempo se o vídeo já está tocando
-        if (video.paused) {
-          video.currentTime = 0;
-        }
-        
+        // iOS/Android: não resetar currentTime para evitar bloqueios
         await video.play();
         console.log('✅ Vídeo reproduzindo com sucesso');
         setNeedsUserInteraction(false);
@@ -191,7 +187,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Se autoPlayOnReady é true, não precisa de interação do usuário
       setNeedsUserInteraction(!autoPlayOnReady);
       retryCountRef.current = 0;
-    }, [src, setupVideo, autoPlayOnReady]);
+      // Forçar commit do src no iOS/Android
+      if (internalRef && 'current' in internalRef && internalRef.current) {
+        try { internalRef.current.load(); } catch {}
+      }
+    }, [src, setupVideo, autoPlayOnReady, internalRef]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -380,6 +380,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
            onClick={handleUserClick}
            onTouchStart={needsUserInteraction ? handleUserClick : undefined}
            onPointerDown={needsUserInteraction ? handleUserClick : undefined}
+          onLoadedMetadata={handleLoadedData}
           onLoadedData={handleLoadedData}
           onError={handleError}
           onWaiting={handleWaiting}
@@ -390,12 +391,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         
         {/* Botão de play para primeira interação */}
         {needsUserInteraction && !hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none">
             <button
               onClick={handleUserClick}
               onTouchStart={handleUserClick}
               onPointerDown={handleUserClick}
-              className="w-16 h-16 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/30"
+              className="w-16 h-16 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/30 pointer-events-auto"
               aria-label="Reproduzir vídeo"
             >
               <Play className="w-6 h-6 text-white ml-1" fill="white" />

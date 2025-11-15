@@ -2006,56 +2006,58 @@ export const TikTokApp = () => {
           </button>
         )}
 
-        {/* Side Menu - Mobile positioning - Ajustado para ficar mais abaixo conforme TikTok */}
-        <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">
-          <SideMenu
-            video={currentVideo}
-            isLiked={isLiked}
-            isMuted={isMuted}
-            isPlaying={isPlaying}
-            onToggleLike={() => {
-              console.log('Mobile like clicked via SideMenu');
-              toggleLike();
-            }}
-            onToggleSound={() => {
-              console.log('Mobile sound toggle clicked via SideMenu'); 
-              setIsMuted(!isMuted);
-            }}
-            onTogglePlay={() => {
-              console.log('Mobile play toggle clicked via SideMenu');
-              setIsPlaying(!isPlaying);
-            }}
-            onOpenComments={async () => {
-              console.log('Mobile comments clicked via SideMenu');
-              await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
-              await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
-              setShowComments(true);
-            }}
-            onOpenProfile={async () => {
-              console.log('Mobile profile clicked via SideMenu');
-              await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-              await trackFollow(currentVideo?.user?.id || '');
-              setShowProfile(true);
-            }}
-            onOpenLive={() => {
-              console.log('Mobile live clicked via SideMenu');
-              setShowLive(true);
-            }}
-            onBlockVideo={undefined}
-            onOpenPremium={() => {
-              console.log('Mobile premium clicked via SideMenu');
-              if (currentVideo?.user?.posting_panel_url) {
-                const raw = currentVideo.user.posting_panel_url;
-                const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
-                window.open(url, '_blank');
-                toast({
-                  title: "Abrindo página premium",
-                  description: `Redirecionando para ${currentVideo.user.username}`
-                });
-              }
-            }}
-          />
-        </div>
+        {/* Side Menu - Mobile positioning - Só aparece na tela principal */}
+        {!showProfile && (
+          <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">
+            <SideMenu
+              video={currentVideo}
+              isLiked={isLiked}
+              isMuted={isMuted}
+              isPlaying={isPlaying}
+              onToggleLike={() => {
+                console.log('Mobile like clicked via SideMenu');
+                toggleLike();
+              }}
+              onToggleSound={() => {
+                console.log('Mobile sound toggle clicked via SideMenu'); 
+                setIsMuted(!isMuted);
+              }}
+              onTogglePlay={() => {
+                console.log('Mobile play toggle clicked via SideMenu');
+                setIsPlaying(!isPlaying);
+              }}
+              onOpenComments={async () => {
+                console.log('Mobile comments clicked via SideMenu');
+                await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
+                await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
+                setShowComments(true);
+              }}
+              onOpenProfile={async () => {
+                console.log('Mobile profile clicked via SideMenu');
+                await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
+                await trackFollow(currentVideo?.user?.id || '');
+                setShowProfile(true);
+              }}
+              onOpenLive={() => {
+                console.log('Mobile live clicked via SideMenu');
+                setShowLive(true);
+              }}
+              onBlockVideo={undefined}
+              onOpenPremium={() => {
+                console.log('Mobile premium clicked via SideMenu');
+                if (currentVideo?.user?.posting_panel_url) {
+                  const raw = currentVideo.user.posting_panel_url;
+                  const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
+                  window.open(url, '_blank');
+                  toast({
+                    title: "Abrindo página premium",
+                    description: `Redirecionando para ${currentVideo.user.username}`
+                  });
+                }
+              }}
+            />
+          </div>
+        )}
 
         {/* Barra de Navegação Inferior - Estilo TikTok */}
         <div className="fixed bottom-0 left-0 right-0 h-16 bg-black border-t border-gray-800 flex items-center justify-around px-2 z-[60] pb-safe">
@@ -2458,66 +2460,68 @@ export const TikTokApp = () => {
                 </div>
               )}
 
-              {/* Desktop Side Menu - Responsivo e sempre visível */}
-            <div className="absolute inset-y-0 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col justify-center space-y-4 z-30 max-h-[calc(100vh-140px)] overflow-y-auto py-6">
-              <SideMenu
-                video={currentVideo}
-                isLiked={isLiked}
-                isMuted={isMuted}
-                isPlaying={isPlaying}
-                onToggleLike={() => {
-                  console.log('Desktop like clicked');
-                  toggleLike();
-                }}
-                onToggleSound={() => {
-                  console.log('Desktop sound toggle clicked');
-                  setIsMuted(!isMuted);
-                }}
-                onTogglePlay={() => {
-                  console.log('Desktop play toggle clicked');
-                  setIsPlaying(!isPlaying);
-                }}
-                onOpenComments={async () => {
-                  console.log('Desktop comments clicked');
-                  await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
-                  await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
-                  setShowComments(true);
-                }}
-                onOpenProfile={async () => {
-                  console.log('Desktop profile clicked');
-                  await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-                  await trackFollow(currentVideo?.user?.id || '');
-                  setShowProfile(true);
-                }}
-                onOpenLive={() => {
-                  console.log('Desktop live clicked');
-                  setShowLive(true);
-                }}
-                onBlockVideo={undefined}
-                onOpenPremium={() => {
-                  console.log('Desktop premium clicked');
-                  if (currentVideo?.user?.posting_panel_url) {
-                    const raw = currentVideo.user.posting_panel_url;
-                    const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
-                    window.open(url, '_blank');
-                    toast({
-                      title: "Abrindo página premium",
-                      description: `Redirecionando para ${currentVideo.user.username}`
-                    });
-                  } else {
-                    toast({
-                      title: "Link não configurado",
-                      description: "Esta modelo ainda não tem link premium configurado",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                onExit={() => {
-                  console.log('Saindo do aplicativo...');
-                  window.location.href = '/';
-                }}
-              />
-            </div>
+              {/* Desktop Side Menu - Só aparece na tela principal */}
+              {!showProfile && (
+                <div className="absolute inset-y-0 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col justify-center space-y-4 z-30 max-h-[calc(100vh-140px)] overflow-y-auto py-6">
+                  <SideMenu
+                    video={currentVideo}
+                    isLiked={isLiked}
+                    isMuted={isMuted}
+                    isPlaying={isPlaying}
+                    onToggleLike={() => {
+                      console.log('Desktop like clicked');
+                      toggleLike();
+                    }}
+                    onToggleSound={() => {
+                      console.log('Desktop sound toggle clicked');
+                      setIsMuted(!isMuted);
+                    }}
+                    onTogglePlay={() => {
+                      console.log('Desktop play toggle clicked');
+                      setIsPlaying(!isPlaying);
+                    }}
+                    onOpenComments={async () => {
+                      console.log('Desktop comments clicked');
+                      await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
+                      await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
+                      setShowComments(true);
+                    }}
+                    onOpenProfile={async () => {
+                      console.log('Desktop profile clicked');
+                      await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
+                      await trackFollow(currentVideo?.user?.id || '');
+                      setShowProfile(true);
+                    }}
+                    onOpenLive={() => {
+                      console.log('Desktop live clicked');
+                      setShowLive(true);
+                    }}
+                    onBlockVideo={undefined}
+                    onOpenPremium={() => {
+                      console.log('Desktop premium clicked');
+                      if (currentVideo?.user?.posting_panel_url) {
+                        const raw = currentVideo.user.posting_panel_url;
+                        const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
+                        window.open(url, '_blank');
+                        toast({
+                          title: "Abrindo página premium",
+                          description: `Redirecionando para ${currentVideo.user.username}`
+                        });
+                      } else {
+                        toast({
+                          title: "Link não configurado",
+                          description: "Esta modelo ainda não tem link premium configurado",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    onExit={() => {
+                      console.log('Saindo do aplicativo...');
+                      window.location.href = '/';
+                    }}
+                  />
+                </div>
+              )}
 
             {/* Desktop Video Info Below */}
             <div className="mt-4 px-2">

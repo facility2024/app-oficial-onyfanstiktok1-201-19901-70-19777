@@ -63,6 +63,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Configurações básicas para todos os dispositivos
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
+      video.setAttribute('x5-playsinline', 'true'); // Android WebView/QQ
+      video.setAttribute('x5-video-player-type', 'h5'); // Android WebView
+      video.setAttribute('muted', 'true'); // Garante atributo muted para autoplay
       video.muted = true;
       video.autoplay = false;
       video.loop = true;
@@ -287,7 +290,25 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setIsBuffering(true);
       pauseOtherVideos();
     }, [pauseOtherVideos]);
-
+    
+    // Desbloqueio de autoplay em mobile na primeira interação global
+    useEffect(() => {
+      const unlock = async () => {
+        try {
+          if (isPlaying && isReady) {
+            await attemptPlay();
+          }
+          setNeedsUserInteraction(false);
+        } catch {}
+      };
+      const opts: AddEventListenerOptions = { once: true, passive: true };
+      const events: (keyof DocumentEventMap)[] = ['touchstart', 'pointerdown', 'click'];
+      events.forEach((evt) => document.addEventListener(evt, unlock as EventListener, opts));
+      return () => {
+        events.forEach((evt) => document.removeEventListener(evt, unlock as EventListener));
+      };
+    }, [isPlaying, isReady, attemptPlay]);
+    
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
       event.preventDefault();

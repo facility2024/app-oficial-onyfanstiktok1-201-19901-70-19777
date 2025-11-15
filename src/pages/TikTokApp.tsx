@@ -240,7 +240,7 @@ export const TikTokApp = () => {
     }
   }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos]);
   
-  // Verificação de idade após 4 segundos (1 segundo no iOS)
+  // Verificação de idade após 4 segundos
   useEffect(() => {
     console.log('🔍 VERIFICAÇÃO DE IDADE: Iniciando verificação...');
     const verification = localStorage.getItem('ageVerification');
@@ -251,23 +251,12 @@ export const TikTokApp = () => {
       return; // Já verificado
     }
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const delay = isIOS ? 1000 : 4000; // iOS abre mais rápido para evitar bloqueio
-
-    console.log(`🔍 VERIFICAÇÃO DE IDADE: Aguardando ${delay}ms... (iOS: ${isIOS})`);
+    console.log('🔍 VERIFICAÇÃO DE IDADE: Aguardando 4 segundos...');
     const timer = setTimeout(() => {
       console.log('🔍 VERIFICAÇÃO DE IDADE: Mostrando popup!');
       setShowAgeVerification(true);
       setIsPlaying(false); // Pausa o vídeo
-      
-      // Force trigger no iOS
-      if (isIOS) {
-        console.log('🍎 VERIFICAÇÃO DE IDADE: Forçando abertura no iOS');
-        setTimeout(() => {
-          setShowAgeVerification(true);
-        }, 100);
-      }
-    }, delay);
+    }, 4000);
 
     return () => {
       console.log('🔍 VERIFICAÇÃO DE IDADE: Limpando timer');

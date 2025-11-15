@@ -101,7 +101,7 @@ export const TikTokApp = () => {
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false); // Inicia pausado
+  const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   

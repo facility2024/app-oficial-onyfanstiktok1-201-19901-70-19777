@@ -13,14 +13,42 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Force modal to mount properly on iOS
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     console.log('🔍 AGE VERIFICATION MODAL: Estado open mudou para:', open);
     console.log('🔍 AGE VERIFICATION MODAL: Dispositivo:', {
       userAgent: navigator.userAgent,
       width: window.innerWidth,
-      height: window.innerHeight
+      height: window.innerHeight,
+      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
     });
+
+    // Fix iOS Safari viewport and scroll issues
+    if (open && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      console.log('🍎 AGE VERIFICATION: iOS detectado - aplicando correções');
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else if (!open) {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
   }, [open]);
 
   const getClientIP = async () => {
@@ -77,9 +105,35 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
     }
   };
 
+  // Don't render until mounted to avoid iOS issues
+  if (!mounted) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="sm:max-w-md bg-background border-border flex flex-col max-h-[80vh]">
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => { 
+        if (!isOpen) {
+          onClose();
+          // Reset body styles on close
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+        }
+      }}
+      modal={true}
+    >
+      <DialogContent 
+        className="sm:max-w-md bg-background border-border flex flex-col max-h-[80vh] !fixed !inset-0 !m-auto !max-w-[90vw] sm:!max-w-md"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          maxHeight: '80vh',
+          width: '90vw',
+          maxWidth: '28rem',
+          zIndex: 100001
+        }}
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center justify-center gap-2 text-xl">
             <div className="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg">

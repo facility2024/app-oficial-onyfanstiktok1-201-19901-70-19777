@@ -119,91 +119,83 @@ export const EnhancedSideMenu = ({
   return (
     <div className="flex flex-col gap-4 z-30">
       {/* Profile */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={onOpenProfile}>
-        <div className="relative">
-          <img
-            src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-            alt="Profile"
-            className="w-12 h-12 rounded-full border-2 border-white object-cover"
-          />
-          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-black">
-            +
-          </div>
+      <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm group-hover:bg-white/20 transition-all">
+          <User className="w-6 h-6 text-white" strokeWidth={1.5} />
         </div>
-        <span className="text-white text-xs mt-1">Perfil</span>
+        <span className="text-white text-xs mt-1 font-light">Perfil</span>
       </div>
 
       {/* Like */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={handleToggleLike}>
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 transition-all duration-200 ${
-          isLiked ? 'bg-red-500/30 scale-110' : 'bg-white/10 hover:bg-white/20'
+      <div className="flex flex-col items-center cursor-pointer group" onClick={handleToggleLike}>
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-200 ${
+          isLiked ? 'bg-white/20 scale-105' : 'bg-white/10 group-hover:bg-white/20'
         } ${loading ? 'opacity-50' : ''}`}>
-          <Heart className={`w-6 h-6 ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />
+          <Heart className={`w-6 h-6 transition-all ${isLiked ? 'fill-white text-white' : 'text-white'}`} strokeWidth={1.5} />
         </div>
-        <span className="text-white text-xs mt-1">{formatCount(likesCount)}</span>
+        <span className="text-white text-xs mt-1 font-light">{formatCount(likesCount)}</span>
       </div>
 
       {/* Comment */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={handleCommentsClick}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors">
-          <MessageCircle className="w-6 h-6 text-white" />
+      <div className="flex flex-col items-center cursor-pointer group" onClick={handleCommentsClick}>
+        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
+          <MessageCircle className="w-6 h-6 text-white" strokeWidth={1.5} />
         </div>
-        <span className="text-white text-xs mt-1">{formatCount(commentsCount)}</span>
+        <span className="text-white text-xs mt-1 font-light">{formatCount(commentsCount)}</span>
       </div>
 
       {/* Share */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={handleShare}>
-        <div className={`w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors ${
+      <div className="flex flex-col items-center cursor-pointer group" onClick={handleShare}>
+        <div className={`w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all ${
           loading ? 'opacity-50' : ''
         }`}>
-          <Share className="w-6 h-6 text-white" />
+          <Share className="w-6 h-6 text-white" strokeWidth={1.5} />
         </div>
-        <span className="text-white text-xs mt-1">{formatCount(sharesCount)}</span>
+        <span className="text-white text-xs mt-1 font-light">{formatCount(sharesCount)}</span>
       </div>
 
       {/* Block Video */}
       {onBlockVideo && (
-        <div className="flex flex-col items-center cursor-pointer" onClick={onBlockVideo}>
-          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors">
-            <Eye className="w-5 h-5 text-white" />
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onBlockVideo}>
+          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
+            <Eye className="w-6 h-6 text-white" strokeWidth={1.5} />
           </div>
-          <span className="text-white text-xs mt-1">Bloquear</span>
+          <span className="text-white text-xs mt-1 font-light">Bloquear</span>
         </div>
       )}
 
       {/* Premium - Só aparece se foi configurado pelo admin */}
       {video?.user?.posting_panel_url && (
-        <div className="flex flex-col items-center cursor-pointer" onClick={onOpenPremium}>
-          <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center border-2 border-yellow-300 animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.8)] hover:shadow-[0_0_30px_rgba(251,191,36,1)] transition-all duration-300" aria-label="Abrir Premium">
-            <Sparkles className="w-6 h-6 text-white drop-shadow-lg" />
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400/30 to-orange-500/30 animate-ping"></div>
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenPremium}>
+          <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center group-hover:from-yellow-400/30 group-hover:to-orange-500/30 transition-all duration-300" aria-label="Abrir Premium">
+            <Sparkles className="w-6 h-6 text-white" strokeWidth={1.5} />
           </div>
-          <span className="text-white text-xs mt-1 drop-shadow-md">PREMIUM PARA VERSE</span>
+          <span className="text-white text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
         </div>
       )}
 
       {/* Sound */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={onToggleSound}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors">
+      <div className="flex flex-col items-center cursor-pointer group" onClick={onToggleSound}>
+        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
           {isMuted ? (
-            <VolumeX className="w-6 h-6 text-white" />
+            <VolumeX className="w-6 h-6 text-white" strokeWidth={1.5} />
           ) : (
-            <Volume2 className="w-6 h-6 text-white" />
+            <Volume2 className="w-6 h-6 text-white" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-white text-xs mt-1">{isMuted ? 'Som' : 'Mudo'}</span>
+        <span className="text-white text-xs mt-1 font-light">{isMuted ? 'Som' : 'Mudo'}</span>
       </div>
 
       {/* Play/Pause */}
-      <div className="flex flex-col items-center cursor-pointer" onClick={onTogglePlay}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors">
+      <div className="flex flex-col items-center cursor-pointer group" onClick={onTogglePlay}>
+        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
           {isPlaying ? (
-            <Pause className="w-6 h-6 text-blue-400" />
+            <Pause className="w-6 h-6 text-white" strokeWidth={1.5} />
           ) : (
-            <Play className="w-6 h-6 text-blue-400" />
+            <Play className="w-6 h-6 text-white" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-white text-xs mt-1">{isPlaying ? 'Pausar' : 'Play'}</span>
+        <span className="text-white text-xs mt-1 font-light">{isPlaying ? 'Pausar' : 'Play'}</span>
       </div>
     </div>
   );

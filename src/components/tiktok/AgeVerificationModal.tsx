@@ -29,14 +29,18 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
       isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
     });
 
-    // Fix iOS Safari viewport and scroll issues
-    if (open && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-      console.log('🍎 AGE VERIFICATION: iOS detectado - aplicando correções');
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.height = '100%';
-    } else if (!open) {
+    // Fix iOS Safari viewport and scroll issues + centralização consistente
+    if (open) {
+      document.body.classList.add('modal-open');
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        console.log('🍎 AGE VERIFICATION: iOS detectado - aplicando correções');
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+      }
+    } else {
+      document.body.classList.remove('modal-open');
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
@@ -44,6 +48,7 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
     }
 
     return () => {
+      document.body.classList.remove('modal-open');
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
@@ -127,8 +132,8 @@ export const AgeVerificationModal = ({ open, onClose }: AgeVerificationModalProp
           position: 'fixed',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
-          maxHeight: '80vh',
+          transform: 'translate3d(-50%, -50%, 0)',
+          maxHeight: 'min(80vh, 100dvh - 40px)',
           width: '90vw',
           maxWidth: '28rem',
           zIndex: 100001

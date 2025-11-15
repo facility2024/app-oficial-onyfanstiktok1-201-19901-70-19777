@@ -51,8 +51,11 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   
   useEffect(() => {
     if (isOpen && user.id) {
-      loadModelContent();
-      checkFollowingStatus();
+      // Load in parallel for faster initial render
+      Promise.all([
+        loadModelContent(),
+        checkFollowingStatus()
+      ]);
     }
   }, [isOpen, user.id]);
 
@@ -111,38 +114,75 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     try {
       console.log('Loading content for user:', user.id, user.username);
       
-      // Carregar dados do modelo (incluindo posting_panel_url)
-      const { data: modelData, error: modelError } = await supabase
-        .from('models')
-        .select('posting_panel_url')
-        .eq('id', user.id)
-        .single();
+      // Check cache first for faster loading
+      const cacheKey = `profile_${user.id}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
+      if (cached && cacheTime) {
+        const age = Date.now() - parseInt(cacheTime);
+        if (age < 30000) { // Cache valid for 30 seconds
+          const cachedData = JSON.parse(cached);
+          console.log('✅ Conteúdo carregado do cache');
+          setContents(cachedData.contents);
+          setPanelUrl(cachedData.panelUrl);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Load model data and videos in parallel for faster performance
+      const [modelDataResult, videosDataResult, imagesDataResult] = await Promise.all([
+        supabase
+          .from('models')
+          .select('posting_panel_url')
+          .eq('id', user.id)
+          .single(),
+        
+        supabase
+          .from('videos')
+          .select(`
+            id,
+            title,
+            description,
+            video_url,
+            thumbnail_url,
+            likes_count,
+            views_count,
+            created_at,
+            is_active,
+            model_id
+          `)
+          .eq('model_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        
+        new Promise((resolve) => {
+          const modelImages = getModelImages(user.id);
+          resolve({ data: modelImages.map(img => ({
+            id: img,
+            image_url: img,
+            title: 'Foto',
+            likes_count: 0,
+            views_count: 0,
+            created_at: new Date().toISOString(),
+            is_active: true
+          }))});
+        })
+      ]);
+
+      const modelData = modelDataResult.data;
+      const modelError = modelDataResult.error;
+      const videosData = videosDataResult.data;
+      const videosError = videosDataResult.error;
+      const imagesData = (imagesDataResult as any).data;
 
       if (modelError) {
         console.warn('Erro ao carregar dados do modelo:', modelError);
       } else {
         setPanelUrl(modelData?.posting_panel_url || null);
       }
-      
-      // Carregar vídeos (limitado a 5)
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select(`
-          id,
-          title,
-          description,
-          video_url,
-          thumbnail_url,
-          likes_count,
-          views_count,
-          created_at,
-          is_active,
-          model_id
-        `)
-        .eq('model_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
 
       if (videosError) {
         console.error('Supabase error:', videosError);
@@ -185,6 +225,13 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
 
       console.log('All content (videos + images):', allContent);
       setContents(allContent);
+      
+      // Cache the results for faster subsequent loads
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        contents: allContent,
+        panelUrl: modelData?.posting_panel_url || null
+      }));
+      sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
     } catch (error) {
       console.error('Error loading model content:', error);
       setContents([]);

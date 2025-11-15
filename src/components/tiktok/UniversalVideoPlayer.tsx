@@ -185,8 +185,10 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setupVideo();
       setIsReady(false);
       setHasError(false);
-      // Se autoPlayOnReady é true, não precisa de interação do usuário
-      setNeedsUserInteraction(!autoPlayOnReady);
+      // Quando autoPlayOnReady está ativo, desativa a necessidade de interação imediatamente
+      if (autoPlayOnReady) {
+        setNeedsUserInteraction(false);
+      }
       retryCountRef.current = 0;
     }, [src, setupVideo, autoPlayOnReady]);
 
@@ -214,13 +216,17 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           return;
         }
         
-        // Se autoPlayOnReady está ativado, não espera interação
-        if (autoPlayOnReady && needsUserInteraction) {
-          console.log('🎬 AutoPlay ativado, pulando necessidade de interação');
-          setNeedsUserInteraction(false);
+        // Se autoPlayOnReady está ativado, tenta reproduzir independentemente de needsUserInteraction
+        if (autoPlayOnReady) {
+          console.log('🎬 AutoPlay ativado - iniciando reprodução automaticamente');
+          if (video.paused) {
+            attemptPlay();
+          }
+          return;
         }
         
-        if (needsUserInteraction && !autoPlayOnReady) {
+        // Lógica padrão: espera interação se necessário
+        if (needsUserInteraction) {
           console.log('👆 Aguardando interação do usuário...');
           return;
         }
@@ -249,12 +255,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setIsBuffering(false);
       setIsReady(true);
       
-      // Se autoPlayOnReady está ativado e isPlaying é true, inicia automaticamente
+      // Se autoPlayOnReady está ativado e isPlaying é true, inicia automaticamente e agressivamente
       if (autoPlayOnReady && isPlaying) {
-        console.log('🎬 Auto-reprodução ativada, iniciando vídeo...');
+        console.log('🎬 Auto-reprodução FORÇADA - iniciando vídeo AGORA...');
+        setNeedsUserInteraction(false);
+        // Tenta reproduzir imediatamente
         setTimeout(() => {
           attemptPlay();
-        }, 100);
+        }, 50);
       }
       
       if (onLoadedData) onLoadedData();

@@ -311,8 +311,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
+      const nativeEvt: any = (event as any).nativeEvent;
+      const shouldBlock = needsUserInteraction && nativeEvt?.cancelable;
+      if (shouldBlock) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       
       console.log('👆 Clique no vídeo detectado:', {
         needsUserInteraction,
@@ -320,6 +324,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         isReady
       });
       
+      // 1) Desbloqueio inicial de autoplay
       if (needsUserInteraction) {
         console.log('🎬 Primeira interação - tentando reproduzir...');
         const success = await attemptPlay();
@@ -329,12 +334,16 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         } else {
           console.error('❌ Primeira reprodução falhou');
         }
+      } else {
+        // 2) Se já está pronto e parado, toque deve iniciar reprodução (sem bloquear rolagem)
+        const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+        if (video && isReady && video.paused) {
+          await attemptPlay();
+        }
       }
       
-      if (onClick) {
-        onClick(event as unknown as React.MouseEvent);
-      }
-    }, [needsUserInteraction, attemptPlay, onClick, isPlaying, isReady]);
+      onClick?.(event as unknown as React.MouseEvent);
+    }, [needsUserInteraction, attemptPlay, onClick, isPlaying, isReady, internalRef]);
 
     // Retry handler
     const handleRetry = useCallback(async () => {
@@ -368,9 +377,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           playsInline={true}
           preload="auto"
           controls={false}
-          onClick={handleUserClick}
-          onTouchStart={handleUserClick}
-          onPointerDown={handleUserClick}
+           onClick={handleUserClick}
+           onTouchStart={needsUserInteraction ? handleUserClick : undefined}
+           onPointerDown={needsUserInteraction ? handleUserClick : undefined}
           onLoadedData={handleLoadedData}
           onError={handleError}
           onWaiting={handleWaiting}

@@ -289,7 +289,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     }, [pauseOtherVideos]);
 
     // Click handler para iniciar reprodução
-    const handleUserClick = useCallback(async (event: React.MouseEvent) => {
+    const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
       event.preventDefault();
       event.stopPropagation();
       
@@ -311,7 +311,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
       
       if (onClick) {
-        onClick(event);
+        onClick(event as unknown as React.MouseEvent);
       }
     }, [needsUserInteraction, attemptPlay, onClick, isPlaying, isReady]);
 
@@ -348,6 +348,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           preload="auto"
           controls={false}
           onClick={handleUserClick}
+          onTouchStart={handleUserClick}
+          onPointerDown={handleUserClick}
           onLoadedData={handleLoadedData}
           onError={handleError}
           onWaiting={handleWaiting}
@@ -361,6 +363,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50">
             <button
               onClick={handleUserClick}
+              onTouchStart={handleUserClick}
+              onPointerDown={handleUserClick}
               className="w-16 h-16 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/30"
               aria-label="Reproduzir vídeo"
             >

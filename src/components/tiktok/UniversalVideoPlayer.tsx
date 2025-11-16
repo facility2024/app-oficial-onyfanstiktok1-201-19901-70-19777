@@ -295,14 +295,22 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     useEffect(() => {
       const unlock = async () => {
         try {
+          let success = false;
           if (isPlaying && isReady) {
-            await attemptPlay();
+            success = await attemptPlay();
           }
-          setNeedsUserInteraction(false);
-        } catch {}
+          // Só remover a necessidade de interação se o play realmente iniciar
+          if (success) {
+            setNeedsUserInteraction(false);
+          } else {
+            setNeedsUserInteraction(true);
+          }
+        } catch {
+          setNeedsUserInteraction(true);
+        }
       };
       const opts: AddEventListenerOptions = { once: true, passive: true };
-      const events: (keyof DocumentEventMap)[] = ['touchstart', 'pointerdown', 'click'];
+      const events: (keyof DocumentEventMap)[] = ['touchstart', 'touchend', 'pointerdown', 'click'];
       events.forEach((evt) => document.addEventListener(evt, unlock as EventListener, opts));
       return () => {
         events.forEach((evt) => document.removeEventListener(evt, unlock as EventListener));

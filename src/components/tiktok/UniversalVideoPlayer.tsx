@@ -188,13 +188,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setHasError(false);
       setUserStarted(false);
       // Se autoPlayOnReady é true, não precisa de interação do usuário
-      setNeedsUserInteraction(!autoPlayOnReady);
+      setNeedsUserInteraction(isMobile ? true : !autoPlayOnReady);
       retryCountRef.current = 0;
       // Forçar commit do src no iOS/Android
       if (internalRef && 'current' in internalRef && internalRef.current) {
         try { internalRef.current.load(); } catch {}
       }
-    }, [src, setupVideo, autoPlayOnReady, internalRef]);
+    }, [src, setupVideo, autoPlayOnReady, internalRef, isMobile]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -204,7 +204,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
 
       const video = internalRef.current;
-      const shouldPlay = isPlaying || userStarted; // mantém reprodução após toque do usuário
+      const shouldPlay = isPlaying || userStarted || (autoPlayOnReady && isReady); // garante autoplay no pronto (mobile)
 
       console.log('🎮 useEffect reprodução:', {
         isPlaying,

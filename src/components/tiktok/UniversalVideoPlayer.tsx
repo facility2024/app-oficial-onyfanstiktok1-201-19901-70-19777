@@ -39,6 +39,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const [hasError, setHasError] = useState(false);
     const [needsUserInteraction, setNeedsUserInteraction] = useState(true);
     const [isReady, setIsReady] = useState(false);
+    const [userStarted, setUserStarted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const retryCountRef = useRef(0);
     const maxRetries = 3;
@@ -122,6 +123,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         await video.play();
         console.log('✅ Vídeo reproduzindo com sucesso');
         setNeedsUserInteraction(false);
+        setUserStarted(true);
         setHasError(false);
         retryCountRef.current = 0;
         if (onPlay) onPlay();
@@ -184,6 +186,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setupVideo();
       setIsReady(false);
       setHasError(false);
+      setUserStarted(false);
       // Se autoPlayOnReady é true, não precisa de interação do usuário
       setNeedsUserInteraction(!autoPlayOnReady);
       retryCountRef.current = 0;
@@ -201,9 +204,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
 
       const video = internalRef.current;
+      const shouldPlay = isPlaying || userStarted; // mantém reprodução após toque do usuário
 
       console.log('🎮 useEffect reprodução:', {
         isPlaying,
+        userStarted,
+        shouldPlay,
         isReady,
         needsUserInteraction,
         paused: video.paused,
@@ -211,7 +217,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         autoPlayOnReady
       });
 
-      if (isPlaying) {
+      if (shouldPlay) {
         if (!isReady) {
           console.log('⏳ Vídeo ainda não está pronto, aguardando...');
           return;
@@ -232,12 +238,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           console.log('▶️ Iniciando reprodução do vídeo...');
           attemptPlay();
         }
-      } else if (!isPlaying && !video.paused) {
+      } else if (!shouldPlay && !video.paused) {
         console.log('⏸️ Pausando vídeo...');
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, needsUserInteraction, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
+    }, [isPlaying, userStarted, needsUserInteraction, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
 
     // Controlar mute
     useEffect(() => {
@@ -339,6 +345,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         if (success) {
           console.log('✅ Primeira reprodução bem-sucedida');
           setNeedsUserInteraction(false);
+          setUserStarted(true);
         } else {
           console.error('❌ Primeira reprodução falhou');
         }
@@ -360,6 +367,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = internalRef.current;
       setHasError(false);
       setIsBuffering(true);
+      setUserStarted(false);
       retryCountRef.current = 0;
       
       video.load();

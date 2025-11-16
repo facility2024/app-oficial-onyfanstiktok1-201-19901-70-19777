@@ -204,7 +204,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
 
       const video = internalRef.current;
-      const shouldPlay = isPlaying || userStarted || (autoPlayOnReady && isReady); // garante autoplay no pronto (mobile)
+      const shouldPlay = isPlaying || userStarted || (autoPlayOnReady && isReady);
 
       console.log('🎮 useEffect reprodução:', {
         isPlaying,
@@ -238,7 +238,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           console.log('▶️ Iniciando reprodução do vídeo...');
           attemptPlay();
         }
-      } else if (!shouldPlay && !video.paused) {
+      } else if (!shouldPlay && !video.paused && !userStarted) {
+        // Só pausa se o usuário não iniciou manualmente
         console.log('⏸️ Pausando vídeo...');
         video.pause();
         if (onPause) onPause();

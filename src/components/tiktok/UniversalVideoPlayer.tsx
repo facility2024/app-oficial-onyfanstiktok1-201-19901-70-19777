@@ -186,9 +186,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setupVideo();
       setIsReady(false);
       setHasError(false);
-      // Não resetar userStarted ao trocar de vídeo — mantém desbloqueio de autoplay após 1ª interação
-      // Se autoPlayOnReady é true, não precisa de interação do usuário; em mobile, só se ainda não desbloqueou
-      setNeedsUserInteraction(isMobile ? !userStarted : !autoPlayOnReady);
+      // Em mobile, sempre mostra o botão no primeiro vídeo. Após primeira interação, mantém desbloqueio.
+      if (isMobile) {
+        setNeedsUserInteraction(!userStarted);
+      } else {
+        // Desktop: só precisa de interação se autoPlayOnReady for false
+        setNeedsUserInteraction(!autoPlayOnReady);
+      }
       retryCountRef.current = 0;
       // Forçar commit do src no iOS/Android
       if (internalRef && 'current' in internalRef && internalRef.current) {
@@ -298,31 +302,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       pauseOtherVideos();
     }, [pauseOtherVideos]);
     
-    // Desbloqueio de autoplay em mobile na primeira interação global
-    useEffect(() => {
-      const unlock = async () => {
-        try {
-          let success = false;
-          if (isPlaying && isReady) {
-            success = await attemptPlay();
-          }
-          // Só remover a necessidade de interação se o play realmente iniciar
-          if (success) {
-            setNeedsUserInteraction(false);
-          } else {
-            setNeedsUserInteraction(true);
-          }
-        } catch {
-          setNeedsUserInteraction(true);
-        }
-      };
-      const opts: AddEventListenerOptions = { once: true, passive: true };
-      const events: (keyof DocumentEventMap)[] = ['touchstart', 'touchend', 'pointerdown', 'click'];
-      events.forEach((evt) => document.addEventListener(evt, unlock as EventListener, opts));
-      return () => {
-        events.forEach((evt) => document.removeEventListener(evt, unlock as EventListener));
-      };
-    }, [isPlaying, isReady, attemptPlay]);
+    // Removido: o desbloqueio global estava escondendo o botão de play antes da interação
     
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {

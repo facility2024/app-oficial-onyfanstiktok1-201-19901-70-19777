@@ -136,13 +136,28 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           networkState: video.networkState
         });
 
+        // Tratar AbortError (play interrompido por pause) sem virar erro
+        const rawMsg = String(error?.message || '');
+        const msg = rawMsg.toLowerCase();
+        const isAbort = error?.name === 'AbortError' || msg.includes('interrupted by a call to pause');
+
         // Se o navegador bloqueou autoplay, não tratamos como erro.
-        const msg = String(error?.message || '').toLowerCase();
         const isAutoplayBlocked =
           error?.name === 'NotAllowedError' ||
           msg.includes('user gesture') ||
           msg.includes("user didn't interact") ||
           msg.includes('notallowed');
+
+        if (isAbort) {
+          console.warn('⏸️ play() interrompido por pause() — ignorando e tentando novamente em 200ms');
+          setHasError(false);
+          setIsBuffering(false);
+          // Não contar como retry e não exigir interação; apenas tentar novamente
+          setTimeout(() => {
+            attemptPlay();
+          }, 200);
+          return false;
+        }
 
         if (isAutoplayBlocked) {
           console.warn('⛔ Autoplay bloqueado pelo navegador — exibindo botão de play');

@@ -186,15 +186,15 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setupVideo();
       setIsReady(false);
       setHasError(false);
-      setUserStarted(false);
-      // Se autoPlayOnReady é true, não precisa de interação do usuário
-      setNeedsUserInteraction(isMobile ? true : !autoPlayOnReady);
+      // Não resetar userStarted ao trocar de vídeo — mantém desbloqueio de autoplay após 1ª interação
+      // Se autoPlayOnReady é true, não precisa de interação do usuário; em mobile, só se ainda não desbloqueou
+      setNeedsUserInteraction(isMobile ? !userStarted : !autoPlayOnReady);
       retryCountRef.current = 0;
       // Forçar commit do src no iOS/Android
       if (internalRef && 'current' in internalRef && internalRef.current) {
         try { internalRef.current.load(); } catch {}
       }
-    }, [src, setupVideo, autoPlayOnReady, internalRef, isMobile]);
+    }, [src, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -403,7 +403,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
           onLoadStart={handleLoadStart}
-          crossOrigin="anonymous"
+          
         />
         
         {/* Botão de play para primeira interação */}

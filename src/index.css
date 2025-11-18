@@ -25,6 +25,9 @@
   flex-direction: column;
   touch-action: pan-y;
   height: 100%;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .embla__slide {
@@ -32,6 +35,9 @@
   min-width: 0;
   height: 100vh;
   overflow: hidden;
+  contain: content;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* iOS Performance Optimizations */

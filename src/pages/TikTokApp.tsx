@@ -178,7 +178,7 @@ export const TikTokApp = () => {
     loop: false,
     dragFree: false,
     containScroll: 'trimSnaps',
-    duration: 25,
+    duration: 20,
   });
 
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
@@ -2197,6 +2197,17 @@ export const TikTokApp = () => {
             ))}
           </div>
         </div>
+
+        {/* Hidden preloader for next video (speeds up decode/start) */}
+        {videos[currentVideoIndex + 1]?.video_url && (
+          <video
+            src={videos[currentVideoIndex + 1].video_url}
+            preload="auto"
+            muted
+            playsInline
+            style={{ display: 'none' }}
+          />
+        )}
 
         {/* Profile Screen */}
         <ProfileScreen

@@ -110,10 +110,12 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting) setIsInView(true);
+            const ratio = entry.intersectionRatio || 0;
+            const visible = entry.isIntersecting && ratio >= 0.6;
+            setIsInView(visible);
           });
         },
-        { root: null, rootMargin: '100% 0px 100% 0px', threshold: 0.01 }
+        { root: null, rootMargin: '0px', threshold: [0, 0.6, 1] }
       );
       observer.observe(el);
       return () => observer.disconnect();

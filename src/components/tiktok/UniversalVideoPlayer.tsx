@@ -43,6 +43,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const videoRef = useRef<HTMLVideoElement>(null);
     const retryCountRef = useRef(0);
     const maxRetries = 3;
+    const playLockRef = useRef(false);
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -109,6 +110,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       
       const video = internalRef.current;
       
+      // Evita chamadas concorrentes de play()
+      if (playLockRef.current) {
+        console.log('⏳ Play em andamento, ignorando chamada concorrente');
+        return false;
+      }
+      playLockRef.current = true;
+      
       console.log('▶️ Tentando reproduzir vídeo:', {
         paused: video.paused,
         currentTime: video.currentTime,
@@ -127,6 +135,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         setHasError(false);
         retryCountRef.current = 0;
         if (onPlay) onPlay();
+        playLockRef.current = false;
         return true;
       } catch (error: any) {
         console.error('❌ Erro ao reproduzir vídeo:', {
@@ -152,6 +161,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           console.warn('⏸️ play() interrompido por pause() — ignorando e tentando novamente em 200ms');
           setHasError(false);
           setIsBuffering(false);
+          playLockRef.current = false;
           // Não contar como retry e não exigir interação; apenas tentar novamente
           setTimeout(() => {
             attemptPlay();
@@ -163,6 +173,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           console.warn('⛔ Autoplay bloqueado pelo navegador — exibindo botão de play');
           setNeedsUserInteraction(true);
           setHasError(false); // Não é erro de mídia
+          playLockRef.current = false;
           return false;
         }
         
@@ -172,26 +183,29 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           console.log(`🔄 Tentativa ${retryCountRef.current} de ${maxRetries}`);
           
           // Estratégia 1: Recarregar vídeo
-          if (retryCountRef.current === 1) {
-            console.log('🔄 Estratégia 1: Recarregando vídeo...');
-            video.load();
-            setTimeout(() => attemptPlay(), 100);
-            return false;
-          }
+           if (retryCountRef.current === 1) {
+             console.log('🔄 Estratégia 1: Recarregando vídeo...');
+             video.load();
+             playLockRef.current = false;
+             setTimeout(() => attemptPlay(), 100);
+             return false;
+           }
           
           // Estratégia 2: Forçar mute e tentar novamente
-          if (retryCountRef.current === 2) {
-            console.log('🔄 Estratégia 2: Forçando mute...');
-            video.muted = true;
-            setTimeout(() => attemptPlay(), 100);
-            return false;
-          }
+           if (retryCountRef.current === 2) {
+             console.log('🔄 Estratégia 2: Forçando mute...');
+             video.muted = true;
+             playLockRef.current = false;
+             setTimeout(() => attemptPlay(), 100);
+             return false;
+           }
         }
         
         console.error('❌ Todas as tentativas de reprodução falharam');
         setNeedsUserInteraction(true);
         setHasError(true);
         if (onError) onError(error);
+        playLockRef.current = false;
         return false;
       }
     }, [internalRef, pauseOtherVideos, onPlay, onError, maxRetries]);
@@ -278,13 +292,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setIsBuffering(false);
       setIsReady(true);
       
-      // Se autoPlayOnReady está ativado e isPlaying é true, inicia automaticamente
-      if (autoPlayOnReady && isPlaying) {
-        console.log('🎬 Auto-reprodução ativada, iniciando vídeo...');
-        setTimeout(() => {
-          attemptPlay();
-        }, 100);
-      }
+      // AutoPlay controlado pelo efeito principal para evitar chamadas duplicadas
       
       if (onLoadedData) onLoadedData();
     }, [onLoadedData, autoPlayOnReady, isPlaying, attemptPlay]);
@@ -392,7 +400,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
            onClick={handleUserClick}
            onTouchStart={needsUserInteraction ? handleUserClick : undefined}
            onPointerDown={needsUserInteraction ? handleUserClick : undefined}
-          onLoadedMetadata={handleLoadedData}
           onLoadedData={handleLoadedData}
           onError={handleError}
           onWaiting={handleWaiting}

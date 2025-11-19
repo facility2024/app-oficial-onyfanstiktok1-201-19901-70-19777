@@ -15,7 +15,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, TrendingUp, Video, Flame, Sparkles, Users, Star, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, TrendingUp, Video, Flame, Sparkles, Users, Star, Settings, LogOut, Plus, ShoppingBag, Share2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -2112,15 +2112,15 @@ export const TikTokApp = () => {
             onClick={backToCurrentVideo}
             className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
-            <img src={iconHome} alt="Início" className="w-7 h-7 mb-0.5" />
+            <Home className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Início</span>
           </button>
 
           <button 
             onClick={() => setShowSearch(true)}
-            className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
+            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
-            <img src={iconNavigation} alt="Explorar" className="w-7 h-7 mb-0.5" />
+            <Search className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Explorar</span>
           </button>
 
@@ -2128,24 +2128,22 @@ export const TikTokApp = () => {
             onClick={() => setShowLive(true)}
             className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2"
           >
-            <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
           </button>
 
           <button 
             onClick={() => setShowComments(true)}
-            className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
+            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
-            <img src={iconMarketplace} alt="Marketplace" className="w-7 h-7 mb-0.5 rounded-full" />
+            <ShoppingBag className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Marketplace</span>
           </button>
 
           <button 
             onClick={() => shareVideo()}
-            className="flex flex-col items-center justify-center flex-1 text-gray-400 hover:text-white transition-colors"
+            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
-            <img src={iconShare} alt="Compartilhar" className="w-7 h-7 mb-0.5" />
+            <Share2 className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Compartilhar</span>
           </button>
         </div>

@@ -29,7 +29,7 @@ import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
-import coconudiLogo from '@/assets/coconudi-logo-white.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 // import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
@@ -2302,11 +2302,11 @@ export const TikTokApp = () => {
           </Button>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center justify-center w-[60px] h-[60px] rounded-full overflow-hidden bg-transparent">
+              <div className="flex items-center justify-center w-[80px] h-[80px] rounded-full overflow-hidden bg-transparent">
                 <img 
                   src={coconudiLogo} 
                   alt="Coconudi" 
-                  className="w-[60px] h-[60px] object-contain"
+                  className="w-[80px] h-[80px] object-contain"
                 />
               </div>
             </div>

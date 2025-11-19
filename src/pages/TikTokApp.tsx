@@ -2333,31 +2333,31 @@ export const TikTokApp = () => {
       {/* Desktop Main Content with Sidebar */}
       <div className="flex">
         {/* Left Sidebar Menu */}
-        <div className="w-64 bg-black/50 border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto">
+        <div className="w-64 bg-black border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto">
           <div className="py-6">
             {/* Navegação */}
             <div className="mb-6">
-              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+              <h3 className="px-6 text-white text-xs font-semibold uppercase tracking-wider mb-3">
                 Navegação
               </h3>
               <div className="space-y-1">
                 <button
                   onClick={() => goToHome()}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Home className="w-5 h-5 mr-3" />
                   <span>Início</span>
                 </button>
                 <button
                   onClick={() => console.log('Em Alta')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <TrendingUp className="w-5 h-5 mr-3" />
                   <span>Em Alta</span>
                 </button>
                 <button
                   onClick={() => setShowLive(true)}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Video className="w-5 h-5 mr-3" />
                   <span>Lives</span>
@@ -2367,34 +2367,34 @@ export const TikTokApp = () => {
 
             {/* Categorias */}
             <div className="mb-6">
-              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+              <h3 className="px-6 text-white text-xs font-semibold uppercase tracking-wider mb-3">
                 Categorias
               </h3>
               <div className="space-y-1">
                 <button
                   onClick={() => console.log('Favoritos')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Heart className="w-5 h-5 mr-3" />
                   <span>Favoritos</span>
                 </button>
                 <button
                   onClick={() => console.log('Mais Popular')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Flame className="w-5 h-5 mr-3" />
                   <span>Mais Popular</span>
                 </button>
                 <button
                   onClick={() => console.log('Premium')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Sparkles className="w-5 h-5 mr-3" />
                   <span>Premium</span>
                 </button>
                 <button
                   onClick={() => console.log('Seguindo')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Users className="w-5 h-5 mr-3" />
                   <span>Seguindo</span>
@@ -2404,27 +2404,27 @@ export const TikTokApp = () => {
 
             {/* Conta */}
             <div>
-              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+              <h3 className="px-6 text-white text-xs font-semibold uppercase tracking-wider mb-3">
                 Conta
               </h3>
               <div className="space-y-1">
                 <button
                   onClick={() => console.log('Destaques')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Star className="w-5 h-5 mr-3" />
                   <span>Destaques</span>
                 </button>
                 <button
                   onClick={() => console.log('Configurações')}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <Settings className="w-5 h-5 mr-3" />
                   <span>Configurações</span>
                 </button>
                 <button
                   onClick={() => window.location.href = '/'}
-                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   <span>Sair</span>

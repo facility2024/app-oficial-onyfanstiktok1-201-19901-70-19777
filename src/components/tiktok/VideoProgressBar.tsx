@@ -89,9 +89,9 @@ export const VideoProgressBar = ({ videoRef }: VideoProgressBarProps) => {
   };
 
   return (
-    <div className="absolute bottom-20 left-4 right-20">
+    <div className="absolute bottom-[140px] left-4 right-24 z-20">
       {/* Time display */}
-      <div className="flex justify-between text-xs text-white/70 mb-1">
+      <div className="flex justify-between text-xs text-white/90 mb-1 drop-shadow-lg">
         <span>{formatTime((progress / 100) * duration)}</span>
         <span>{formatTime(duration)}</span>
       </div>
@@ -99,7 +99,7 @@ export const VideoProgressBar = ({ videoRef }: VideoProgressBarProps) => {
       {/* Progress bar */}
       <div 
         ref={progressBarRef}
-        className="h-1 bg-white/30 rounded-full overflow-hidden cursor-pointer group"
+        className="h-1 bg-white/30 rounded-full overflow-hidden cursor-pointer group relative"
         onMouseDown={handleMouseDown}
         onClick={handleProgressClick}
       >

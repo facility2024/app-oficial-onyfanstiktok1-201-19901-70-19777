@@ -21,18 +21,18 @@ export const BottomInfo = ({ video, isNew = false }: BottomInfoProps) => {
         <img
           src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
           alt="User Avatar"
-          className="w-10 h-10 rounded-full border-2 border-white object-cover"
+          className="w-10 h-10 rounded-full border-2 border-gray-300 object-cover"
         />
-        <span className="text-white font-semibold">{video.user?.username || 'Usuário'}</span>
+        <span className="text-gray-800 font-semibold">{video.user?.username || 'Usuário'}</span>
       </div>
 
       {/* Video Description */}
-      <div className="text-white text-sm mb-3 leading-relaxed">
+      <div className="text-gray-700 text-sm mb-3 leading-relaxed">
         {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
       </div>
 
       {/* Music Info */}
-      <div className="flex items-center gap-2 text-white/80 text-xs">
+      <div className="flex items-center gap-2 text-gray-600 text-xs">
         <div className="w-4 h-4 animate-spin">🎵</div>
         <span>{video.music_name || 'Som original - ' + (video.user?.username || 'Usuário')}</span>
       </div>

@@ -66,11 +66,11 @@ export const SideMenu = ({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-sm">
-              <User className="w-6 h-6 text-white" strokeWidth={1.5} />
+              <User className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
             </div>
           )}
         </div>
-        <span className="text-white text-xs mt-1 font-light">Perfil</span>
+        <span className="text-gray-700 text-xs mt-1 font-light">Perfil</span>
       </div>
 
       {/* Like */}
@@ -105,12 +105,12 @@ export const SideMenu = ({
         }`}>
           <Heart 
             className={`w-6 h-6 transition-all ${
-              isLiked ? 'fill-white text-white' : 'text-white'
+              isLiked ? 'fill-gray-700 text-gray-700' : 'text-gray-700'
             }`}
             strokeWidth={1.5}
           />
         </div>
-        <span className="text-white text-xs mt-1 font-light">{formatCount(video?.likes_count || 0)}</span>
+        <span className="text-gray-700 text-xs mt-1 font-light">{formatCount(video?.likes_count || 0)}</span>
       </div>
 
       {/* Comment */}
@@ -118,9 +118,9 @@ export const SideMenu = ({
         onOpenComments();
       }}>
         <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
-          <MessageCircle className="w-6 h-6 text-white" strokeWidth={1.5} />
+          <MessageCircle className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
         </div>
-        <span className="text-white text-xs mt-1 font-light">
+        <span className="text-gray-700 text-xs mt-1 font-light">
           {(() => {
             const count = video?.comments_count || 0;
             console.log('🔍 SideMenu comentários:', { videoId: video?.id, commentsCount: count });
@@ -136,9 +136,9 @@ export const SideMenu = ({
           onBlockVideo();
         }}>
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
-            <Eye className="w-6 h-6 text-white" strokeWidth={1.5} />
+            <Eye className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
           </div>
-          <span className="text-white text-xs mt-1 font-light">Bloquear</span>
+          <span className="text-gray-700 text-xs mt-1 font-light">Bloquear</span>
         </div>
       )}
 
@@ -146,9 +146,9 @@ export const SideMenu = ({
       {video?.user?.posting_panel_url && (
         <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenPremium}>
           <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center group-hover:from-yellow-400/30 group-hover:to-orange-500/30 transition-all duration-300" aria-label="Abrir Premium">
-            <Sparkles className="w-6 h-6 text-white" strokeWidth={1.5} />
+            <Sparkles className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
           </div>
-          <span className="text-white text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
+          <span className="text-gray-700 text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
         </div>
       )}
 
@@ -156,12 +156,12 @@ export const SideMenu = ({
       <div className="flex flex-col items-center cursor-pointer group" onClick={onToggleSound}>
         <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
           {isMuted ? (
-            <VolumeX className="w-6 h-6 text-white" strokeWidth={1.5} />
+            <VolumeX className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
           ) : (
-            <Volume2 className="w-6 h-6 text-white" strokeWidth={1.5} />
+            <Volume2 className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-white text-xs mt-1 font-light">{isMuted ? 'Som' : 'Mudo'}</span>
+        <span className="text-gray-700 text-xs mt-1 font-light">{isMuted ? 'Som' : 'Mudo'}</span>
       </div>
 
 

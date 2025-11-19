@@ -276,78 +276,78 @@ export const TikTokApp = () => {
     preloadVideo(currentVideoIndex - 1);
   }, [currentVideoIndex, videos, preloadedVideos]);
   
-  // Verificação de idade após 4 segundos
-  useEffect(() => {
-    console.log('🔍 VERIFICAÇÃO DE IDADE: Iniciando verificação...');
-    const verification = localStorage.getItem('ageVerification');
-    console.log('🔍 VERIFICAÇÃO DE IDADE: Dados salvos:', verification);
-    
-    if (verification) {
-      console.log('🔍 VERIFICAÇÃO DE IDADE: Usuário já verificado, iniciando reprodução');
-      // Inicia reprodução automaticamente se já verificado
-      setTimeout(() => {
-        setIsPlaying(true);
-      }, 500);
-      return;
-    }
+  // DESABILITADO: Verificação de idade
+  // useEffect(() => {
+  //   console.log('🔍 VERIFICAÇÃO DE IDADE: Iniciando verificação...');
+  //   const verification = localStorage.getItem('ageVerification');
+  //   console.log('🔍 VERIFICAÇÃO DE IDADE: Dados salvos:', verification);
+  //   
+  //   if (verification) {
+  //     console.log('🔍 VERIFICAÇÃO DE IDADE: Usuário já verificado, iniciando reprodução');
+  //     // Inicia reprodução automaticamente se já verificado
+  //     setTimeout(() => {
+  //       setIsPlaying(true);
+  //     }, 500);
+  //     return;
+  //   }
+  //
+  //   console.log('🔍 VERIFICAÇÃO DE IDADE: Aguardando 4 segundos...');
+  //   const timer = setTimeout(() => {
+  //     console.log('🔍 VERIFICAÇÃO DE IDADE: Mostrando popup!');
+  //     setShowAgeVerification(true);
+  //     setIsPlaying(false); // Pausa o vídeo
+  //   }, 4000);
+  //
+  //   return () => {
+  //     console.log('🔍 VERIFICAÇÃO DE IDADE: Limpando timer');
+  //     clearTimeout(timer);
+  //   };
+  // }, []);
 
-    console.log('🔍 VERIFICAÇÃO DE IDADE: Aguardando 4 segundos...');
-    const timer = setTimeout(() => {
-      console.log('🔍 VERIFICAÇÃO DE IDADE: Mostrando popup!');
-      setShowAgeVerification(true);
-      setIsPlaying(false); // Pausa o vídeo
-    }, 4000);
+  // DESABILITADO: Fallback específico para mobile/iOS
+  // useEffect(() => {
+  //   const alreadyVerified = !!localStorage.getItem('ageVerification');
+  //   if (alreadyVerified) return;
+  //
+  //   const handleFirstTouch = () => {
+  //     if (!showAgeVerification) {
+  //       console.log('📱 VERIFICAÇÃO DE IDADE: Primeiro toque detectado — forçando abertura do modal');
+  //       setShowAgeVerification(true);
+  //       setIsPlaying(false);
+  //     }
+  //     window.removeEventListener('touchstart', handleFirstTouch);
+  //   };
+  //
+  //   window.addEventListener('touchstart', handleFirstTouch, { passive: true } as any);
+  //   return () => window.removeEventListener('touchstart', handleFirstTouch);
+  // }, [showAgeVerification]);
 
-    return () => {
-      console.log('🔍 VERIFICAÇÃO DE IDADE: Limpando timer');
-      clearTimeout(timer);
-    };
-  }, []);
-
-  // Fallback específico para mobile/iOS: abre no primeiro toque se ainda não verificou
-  useEffect(() => {
-    const alreadyVerified = !!localStorage.getItem('ageVerification');
-    if (alreadyVerified) return;
-
-    const handleFirstTouch = () => {
-      if (!showAgeVerification) {
-        console.log('📱 VERIFICAÇÃO DE IDADE: Primeiro toque detectado — forçando abertura do modal');
-        setShowAgeVerification(true);
-        setIsPlaying(false);
-      }
-      window.removeEventListener('touchstart', handleFirstTouch);
-    };
-
-    window.addEventListener('touchstart', handleFirstTouch, { passive: true } as any);
-    return () => window.removeEventListener('touchstart', handleFirstTouch);
-  }, [showAgeVerification]);
-
-  // Fallback imediato para mobile: se for mobile e ainda não verificou, abre assim que detectar o tamanho
-  useEffect(() => {
-    try {
-      const verified = !!localStorage.getItem('ageVerification');
-      console.log('📱 DEBUG MOBILE:', {
-        verified,
-        isMobile,
-        showAgeVerification,
-        windowWidth: window.innerWidth
-      });
-      
-      if (!verified && isMobile) {
-        console.log('📱 VERIFICAÇÃO DE IDADE: Dispositivo móvel detectado — abrindo modal imediatamente');
-        setShowAgeVerification(true);
-        setIsPlaying(false);
-      } else if (!verified && window.innerWidth < 768) {
-        // Fallback adicional: força abertura se a largura da tela é de mobile
-        console.log('📱 VERIFICAÇÃO DE IDADE: Largura mobile detectada — forçando abertura do modal');
-        setShowAgeVerification(true);
-        setIsPlaying(false);
-      }
-    } catch (err) {
-      console.error('❌ Erro ao verificar mobile:', err);
-    }
-    // rodará sempre que o breakpoint de mobile mudar
-  }, [isMobile, showAgeVerification]);
+  // DESABILITADO: Fallback imediato para mobile
+  // useEffect(() => {
+  //   try {
+  //     const verified = !!localStorage.getItem('ageVerification');
+  //     console.log('📱 DEBUG MOBILE:', {
+  //       verified,
+  //       isMobile,
+  //       showAgeVerification,
+  //       windowWidth: window.innerWidth
+  //     });
+  //     
+  //     if (!verified && isMobile) {
+  //       console.log('📱 VERIFICAÇÃO DE IDADE: Dispositivo móvel detectado — abrindo modal imediatamente');
+  //       setShowAgeVerification(true);
+  //       setIsPlaying(false);
+  //     } else if (!verified && window.innerWidth < 768) {
+  //       // Fallback adicional: força abertura se a largura da tela é de mobile
+  //       console.log('📱 VERIFICAÇÃO DE IDADE: Largura mobile detectada — forçando abertura do modal');
+  //       setShowAgeVerification(true);
+  //       setIsPlaying(false);
+  //     }
+  //   } catch (err) {
+  //     console.error('❌ Erro ao verificar mobile:', err);
+  //   }
+  //   // rodará sempre que o breakpoint de mobile mudar
+  // }, [isMobile, showAgeVerification]);
 
   // Comunica globalmente (para o banner PWA) quando o modal +18 abre/fecha
   useEffect(() => {
@@ -2343,21 +2343,21 @@ export const TikTokApp = () => {
               <div className="space-y-1">
                 <button
                   onClick={() => goToHome()}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Home className="w-5 h-5 mr-3" />
                   <span>Início</span>
                 </button>
                 <button
                   onClick={() => console.log('Em Alta')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <TrendingUp className="w-5 h-5 mr-3" />
                   <span>Em Alta</span>
                 </button>
                 <button
                   onClick={() => setShowLive(true)}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Video className="w-5 h-5 mr-3" />
                   <span>Lives</span>
@@ -2373,28 +2373,28 @@ export const TikTokApp = () => {
               <div className="space-y-1">
                 <button
                   onClick={() => console.log('Favoritos')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Heart className="w-5 h-5 mr-3" />
                   <span>Favoritos</span>
                 </button>
                 <button
                   onClick={() => console.log('Mais Popular')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Flame className="w-5 h-5 mr-3" />
                   <span>Mais Popular</span>
                 </button>
                 <button
                   onClick={() => console.log('Premium')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Sparkles className="w-5 h-5 mr-3" />
                   <span>Premium</span>
                 </button>
                 <button
                   onClick={() => console.log('Seguindo')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Users className="w-5 h-5 mr-3" />
                   <span>Seguindo</span>
@@ -2410,21 +2410,21 @@ export const TikTokApp = () => {
               <div className="space-y-1">
                 <button
                   onClick={() => console.log('Destaques')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Star className="w-5 h-5 mr-3" />
                   <span>Destaques</span>
                 </button>
                 <button
                   onClick={() => console.log('Configurações')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <Settings className="w-5 h-5 mr-3" />
                   <span>Configurações</span>
                 </button>
                 <button
                   onClick={() => window.location.href = '/'}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-white/10 transition-colors"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   <span>Sair</span>
@@ -2590,8 +2590,8 @@ export const TikTokApp = () => {
                       }}
                     />
                     <div>
-                      <p className="font-semibold text-white">{currentVideo.user.username}</p>
-                      <p className="text-gray-400 text-sm">{currentVideo.user.followers_count} seguidores</p>
+                      <p className="font-semibold text-gray-700">{currentVideo.user.username}</p>
+                      <p className="text-gray-600 text-sm">{currentVideo.user.followers_count} seguidores</p>
                     </div>
                     <Button
                       variant="outline"
@@ -2621,7 +2621,7 @@ export const TikTokApp = () => {
                       variant="ghost"
                       size="sm"
                       onClick={toggleLike}
-                      className={`text-sm transition-all duration-200 ${isLiked ? 'text-red-500 scale-110' : 'text-white hover:text-red-400'}`}
+                      className={`text-sm transition-all duration-200 ${isLiked ? 'text-red-500 scale-110' : 'text-gray-700 hover:text-red-400'}`}
                     >
                       <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
                       {currentVideo.likes_count}
@@ -2635,7 +2635,7 @@ export const TikTokApp = () => {
                         await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
                         setShowComments(true);
                       }}
-                      className="text-white hover:text-blue-400 text-sm transition-colors"
+                      className="text-gray-700 hover:text-blue-400 text-sm transition-colors"
                     >
                       <MessageCircle className="h-4 w-4 mr-2" />
                       {currentVideo.comments_count}
@@ -2645,15 +2645,15 @@ export const TikTokApp = () => {
                       variant="ghost"
                       size="sm"
                       onClick={shareVideo}
-                      className="text-white hover:text-yellow-400 text-sm transition-colors"
+                      className="text-gray-700 hover:text-yellow-400 text-sm transition-colors"
                     >
                       <img src={iconShare} alt="Share" className="h-4 w-4 mr-2" />
                       {currentVideo.shares_count}
                     </Button>
                   </div>
                   
-                   <h3 className="text-lg font-medium text-white mb-1 mt-4">{currentVideo.title}</h3>
-                   <p className="text-gray-300 text-sm leading-relaxed mb-3">{currentVideo.description}</p>
+                   <h3 className="text-lg font-medium text-gray-700 mb-1 mt-4">{currentVideo.title}</h3>
+                   <p className="text-gray-600 text-sm leading-relaxed mb-3">{currentVideo.description}</p>
                    
                    <div className="flex items-center space-x-2">
                      <p className="text-gray-400 text-sm">♪ {currentVideo.music_name}</p>

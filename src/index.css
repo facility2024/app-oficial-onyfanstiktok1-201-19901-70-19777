@@ -112,7 +112,7 @@
     --dark-bg-secondary: 0 0% 10%;
     
     /* Custom colorful gradient */
-    --gradient-top: linear-gradient(to right top, #0cff00, #c9d300, #ff9f00, #ff6c4d, #ff558a, #ff558a, #ff568b, #ff568b, #ff6c50, #ff9c00, #cbce00, #42f802);
+    --gradient-top: linear-gradient(to right top, #3cff33, #d4dc33, #ffb233, #ff8a71, #ff77a1, #ff77a1, #ff78a2, #ff78a2, #ff8a73, #ffb033, #d5d933, #68fa34);
 
     /* Card System */
     --card: 0 0% 100%;

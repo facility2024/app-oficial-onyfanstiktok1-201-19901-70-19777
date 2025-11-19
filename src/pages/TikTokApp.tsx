@@ -29,7 +29,7 @@ import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
-import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import coconudiLogo from '@/assets/coconudi-logo-white.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 // import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
@@ -2295,18 +2295,18 @@ export const TikTokApp = () => {
                 goToHome();
               }
             }}
-            className="bg-gray-900/20 hover:bg-gray-900/30 text-gray-900 border border-gray-900/30"
+            className="bg-transparent hover:bg-white/10 text-white border border-white"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2 text-white" />
             Voltar
           </Button>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center justify-center w-[60px] h-[60px] rounded-full overflow-hidden bg-white/10 backdrop-blur-sm">
+              <div className="flex items-center justify-center w-[60px] h-[60px] rounded-full overflow-hidden bg-transparent">
                 <img 
                   src={coconudiLogo} 
                   alt="Coconudi" 
-                  className="w-[60px] h-[60px] object-cover"
+                  className="w-[60px] h-[60px] object-contain"
                 />
               </div>
             </div>

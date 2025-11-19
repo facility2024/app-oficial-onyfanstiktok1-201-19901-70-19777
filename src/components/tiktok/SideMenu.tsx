@@ -62,7 +62,7 @@ export const SideMenu = ({
             <img 
               src={video.user.avatar_url} 
               alt={video.user.username}
-              className="w-10 h-10 rounded-full object-cover border-2 border-white"
+              className="w-10 h-10 rounded-full object-cover border-2 border-black"
             />
           ) : (
             <User className="w-10 h-10 text-white" strokeWidth={1.5} />

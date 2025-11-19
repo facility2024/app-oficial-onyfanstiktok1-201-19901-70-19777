@@ -7,7 +7,7 @@ interface BottomInfoProps {
 
 export const BottomInfo = ({ video, isNew = false }: BottomInfoProps) => {
   return (
-    <div className="absolute bottom-0 left-0 right-20 p-4 bg-gradient-to-t from-black/70 to-transparent">
+    <div className="absolute bottom-0 left-0 right-20 p-4 bg-gradient-to-t from-white/90 to-transparent">
       {/* Badge "Novo" destacado */}
       {isNew && (
         <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full shadow-lg animate-pulse font-bold text-sm flex items-center gap-1.5">
@@ -21,7 +21,7 @@ export const BottomInfo = ({ video, isNew = false }: BottomInfoProps) => {
         <img
           src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
           alt="User Avatar"
-          className="w-10 h-10 rounded-full border-2 border-gray-300 object-cover"
+          className="w-10 h-10 rounded-full border-2 border-gray-200 object-cover"
         />
         <span className="text-gray-800 font-semibold">{video.user?.username || 'Usuário'}</span>
       </div>

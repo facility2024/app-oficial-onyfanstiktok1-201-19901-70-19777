@@ -111,8 +111,8 @@
     --dark-bg: 0 0% 0%;
     --dark-bg-secondary: 0 0% 10%;
     
-    /* Instagram-like gradient - light green */
-    --gradient-top: linear-gradient(135deg, hsl(140 60% 85%), hsl(160 50% 80%));
+    /* Custom colorful gradient */
+    --gradient-top: linear-gradient(to right top, #0cff00, #c9d300, #ff9f00, #ff6c4d, #ff558a, #ff558a, #ff568b, #ff568b, #ff6c50, #ff9c00, #cbce00, #42f802);
 
     /* Card System */
     --card: 0 0% 100%;

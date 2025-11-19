@@ -2310,43 +2310,7 @@ export const TikTokApp = () => {
                 />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Coconudi</h1>
-          </div>
-          
-          {/* Bonus no Header */}
-          <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={() => {
-                const bonusGift = document.querySelector('[data-bonus-gift-trigger]') as HTMLElement;
-                if (bonusGift) {
-                  bonusGift.click();
-                }
-              }}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm shadow-[0_0_30px_rgba(251,191,36,1),0_0_50px_rgba(251,191,36,0.7)] hover:scale-110 transition-all animate-pulse"
-              title="Bonus"
-              style={{
-                filter: 'drop-shadow(0 0 15px rgba(251,191,36,0.9)) drop-shadow(0 0 25px rgba(251,191,36,0.6))'
-              }}
-            >
-              <Gift className="w-6 h-6 text-yellow-400" />
-            </button>
-            <span className="text-[10px] font-bold text-gray-900">Bonus</span>
-          </div>
-          
-          {/* Live no Header */}
-          <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={() => setShowLive(true)}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-red-600 to-pink-600 shadow-[0_0_40px_rgba(239,68,68,1),0_0_60px_rgba(239,68,68,0.9),0_0_80px_rgba(239,68,68,0.6)] hover:scale-110 transition-all animate-pulse border-2 border-red-400"
-              title="Live"
-              style={{
-                filter: 'drop-shadow(0 0 20px rgba(239,68,68,1)) drop-shadow(0 0 35px rgba(239,68,68,0.8))',
-                boxShadow: '0 0 50px rgba(239,68,68,0.9), inset 0 0 20px rgba(255,255,255,0.3)'
-              }}
-            >
-              <Radio className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-            </button>
-            <span className="text-[10px] font-bold text-gray-900">Live</span>
+            <h1 className="text-2xl font-bold text-white">Coconudi</h1>
           </div>
         </div>
         <div className="flex items-center space-x-4">

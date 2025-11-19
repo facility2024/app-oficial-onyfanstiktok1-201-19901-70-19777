@@ -106,10 +106,13 @@
 @layer base {
   :root {
     /* Background System */
-    --background: 240 10% 98%;
-    --foreground: 240 10% 3.9%;
-    --dark-bg: 240 10% 3.9%;
-    --dark-bg-secondary: 240 8% 6%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --dark-bg: 0 0% 0%;
+    --dark-bg-secondary: 0 0% 10%;
+    
+    /* Instagram-like gradient - light green */
+    --gradient-top: linear-gradient(135deg, hsl(140 60% 85%), hsl(160 50% 80%));
 
     /* Card System */
     --card: 0 0% 100%;
@@ -288,6 +291,10 @@
   
   .bg-gradient-card {
     background: var(--gradient-card);
+  }
+  
+  .bg-gradient-top {
+    background: var(--gradient-top);
   }
   
   .shadow-glow {

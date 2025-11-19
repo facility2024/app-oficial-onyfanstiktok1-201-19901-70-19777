@@ -57,7 +57,7 @@ export const SideMenu = ({
     <div className="flex flex-col gap-4 z-[9999] pointer-events-auto touch-manipulation">
       {/* Profile */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
-        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition-all">
+        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-black group-hover:border-black/80 transition-all">
           {video?.user?.avatar_url ? (
             <img 
               src={video.user.avatar_url} 

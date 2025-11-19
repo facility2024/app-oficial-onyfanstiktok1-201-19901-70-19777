@@ -2350,20 +2350,13 @@ export const TikTokApp = () => {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="text-gray-900 hover:bg-blue-200">
-            Para você
-          </Button>
-          <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-blue-200">
-            Seguindo
-          </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowSearch(true)}
             className="text-gray-900 hover:bg-blue-200"
           >
-            <Search className="h-4 w-4 mr-2" />
-            Pesquisar
+            <Search className="h-4 w-4" />
           </Button>
         </div>
       </div>

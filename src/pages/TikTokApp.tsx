@@ -2005,7 +2005,7 @@ export const TikTokApp = () => {
   // Mobile version with vertical swiper
   if (isMobile) {
     return (
-      <div className="relative w-full h-screen bg-black overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="relative w-full h-screen bg-white overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
         {/* Top Bar Mobile - Nova barra com ícones */}
         <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-top backdrop-blur-sm flex items-center justify-between px-4">
@@ -2276,7 +2276,7 @@ export const TikTokApp = () => {
 
   // Desktop version (TikTok-like desktop layout)
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white text-white">
       {/* Desktop Header */}
       <div className="sticky top-0 z-[60] bg-gradient-top flex items-center justify-between px-6 py-4 border-b border-green-200">
         <div className="flex items-center space-x-4">

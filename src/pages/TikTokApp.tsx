@@ -2009,7 +2009,7 @@ export const TikTokApp = () => {
         
         {/* Top Bar Mobile - Nova barra com ícones */}
         <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-top backdrop-blur-sm flex items-center justify-between px-4">
-          {/* Menu + Bonus - Esquerda */}
+          {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
             <CategoryMenu
               onNavigateHome={backToCurrentVideo}
@@ -2017,20 +2017,6 @@ export const TikTokApp = () => {
               onOpenLive={() => setShowLive(true)}
               onExit={() => window.location.href = '/'}
             />
-            
-            {/* Bonus */}
-            <button
-              onClick={() => {
-                const bonusGift = document.querySelector('[data-bonus-gift-trigger]') as HTMLElement;
-                if (bonusGift) {
-                  bonusGift.click();
-                }
-              }}
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all"
-              title="Bonus"
-            >
-              <Gift className="w-5 h-5 text-white" />
-            </button>
           </div>
           
           {/* Ícones - Direita */}
@@ -2042,15 +2028,6 @@ export const TikTokApp = () => {
               title="Pesquisar"
             >
               <Search className="w-5 h-5" />
-            </button>
-            
-            {/* Live */}
-            <button
-              onClick={() => setShowLive(true)}
-              className="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center border-2 border-red-400 animate-pulse"
-              title="Live"
-            >
-              <Radio className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>

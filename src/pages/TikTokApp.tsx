@@ -2664,15 +2664,6 @@ export const TikTokApp = () => {
               <FeaturedSection />
               <AdCarousel />
               <ModelCarousel 
-                title="Modelos em Destaque" 
-                icon="🔥"
-                direction="rtl"
-                carouselIndex={0}
-                onSelectModel={(modelId) => {
-                  goToModelVideo(modelId);
-                }}
-              />
-              <ModelCarousel 
                 title="Novas Modelos" 
                 icon="✨"
                 direction="ltr"

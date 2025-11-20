@@ -13,6 +13,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("@/components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
 const Auth = lazy(() => import("./pages/Auth"));
 const ProtectedRoute = lazy(() => import("@/components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -98,6 +99,15 @@ const App = () => (
             </Suspense>
           } />
 
+          {/* Perfil do usuário */}
+          <Route path="/profile" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            </Suspense>
+          } />
+          
           {/* Admin continua protegido por seu próprio sistema */}
           <Route path="/admin" element={
             <Suspense fallback={<ComponentFallback />}>

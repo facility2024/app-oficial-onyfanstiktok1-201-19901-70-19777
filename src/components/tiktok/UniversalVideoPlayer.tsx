@@ -25,7 +25,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     src, 
     poster, 
     isPlaying = false, 
-    isMuted = true, 
+    isMuted = false, 
     onLoadedData, 
     onError, 
     onPlay, 
@@ -67,8 +67,16 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.setAttribute('webkit-playsinline', 'true');
       video.setAttribute('x5-playsinline', 'true'); // Android WebView/QQ
       video.setAttribute('x5-video-player-type', 'h5'); // Android WebView
-      video.setAttribute('muted', 'true'); // Garante atributo muted para autoplay
-      video.muted = true;
+      
+      // Apenas definir muted se isMuted for true (para permitir autoplay quando necessário)
+      if (isMuted) {
+        video.setAttribute('muted', 'true');
+        video.muted = true;
+      } else {
+        video.removeAttribute('muted');
+        video.muted = false;
+      }
+      
       video.autoplay = false;
       video.loop = true;
       video.controls = false;
@@ -86,7 +94,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.willChange = 'transform';
       
       console.log('✅ Vídeo configurado');
-    }, [internalRef, isIOS, isAndroid, isMobile, src]);
+    }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted]);
 
     // Pausar outros vídeos quando este for reproduzido
     const pauseOtherVideos = useCallback(() => {

@@ -27,6 +27,7 @@ import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
+import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -2695,11 +2696,26 @@ export const TikTokApp = () => {
              </div>
            </div>
 
-           {/* Right Sidebar - Destaque e Anuncios */}
-           <div className="hidden xl:block w-80 space-y-4">
-             <FeaturedSection />
-             <AdCarousel />
-           </div>
+            {/* Right Sidebar - Destaque e Anuncios */}
+            <div className="hidden xl:block w-80 space-y-4">
+              <FeaturedSection />
+              <AdCarousel />
+              <ModelCarousel 
+                title="Modelos em Destaque" 
+                icon="🔥"
+                onSelectModel={(modelId) => {
+                  // Pode navegar para o perfil da modelo
+                  console.log('Model selected:', modelId);
+                }}
+              />
+              <ModelCarousel 
+                title="Novas Modelos" 
+                icon="✨"
+                onSelectModel={(modelId) => {
+                  console.log('Model selected:', modelId);
+                }}
+              />
+            </div>
 
          </div>
         </div>

@@ -118,6 +118,14 @@ const App = () => (
             </Suspense>
           } />
           
+          <Route path="/creator" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ProtectedRoute>
+                <CreatorApplication />
+              </ProtectedRoute>
+            </Suspense>
+          } />
+          
           {/* Admin continua protegido por seu próprio sistema */}
           <Route path="/admin" element={
             <Suspense fallback={<ComponentFallback />}>

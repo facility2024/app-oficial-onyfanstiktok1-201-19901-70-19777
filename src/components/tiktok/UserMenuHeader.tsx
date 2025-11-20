@@ -109,25 +109,30 @@ export const UserMenuHeader = () => {
       </div>
 
       {/* Botões de Ação */}
-      <div className="flex gap-2">
+      <div className="space-y-2">
         <Button 
           onClick={() => navigate('/profile')}
-          variant="outline"
-          size="sm"
-          className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
+          className="w-full bg-primary hover:bg-primary/90"
         >
           <User className="w-4 h-4 mr-2" />
           Ver Perfil
+        </Button>
+
+        <Button
+          onClick={() => navigate('/creator-application')}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Espaço do Criador
         </Button>
         
         <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
           <AlertDialogTrigger asChild>
             <Button 
-              variant="outline"
-              size="sm"
-              className="bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
+              className="w-full bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair da Conta
             </Button>
           </AlertDialogTrigger>
           

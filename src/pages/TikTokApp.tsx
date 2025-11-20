@@ -2016,6 +2016,7 @@ export const TikTokApp = () => {
           <div className="flex items-center gap-2">
             <CategoryMenu
               onOpenLive={() => setShowLive(true)}
+              onSelectModel={(modelId) => goToModelVideo(modelId)}
               onExit={async () => {
                 try {
                   sessionStorage.setItem('logging_out', 'true');
@@ -2666,6 +2667,8 @@ export const TikTokApp = () => {
                 title="Modelos em Destaque" 
                 icon="🔥"
                 direction="rtl"
+                startIndex={0}
+                limit={157}
                 onSelectModel={(modelId) => {
                   goToModelVideo(modelId);
                 }}
@@ -2674,6 +2677,8 @@ export const TikTokApp = () => {
                 title="Novas Modelos" 
                 icon="✨"
                 direction="ltr"
+                startIndex={157}
+                limit={157}
                 onSelectModel={(modelId) => {
                   goToModelVideo(modelId);
                 }}

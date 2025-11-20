@@ -15,10 +15,19 @@ interface ModelCarouselProps {
   title: string;
   icon: string;
   direction?: 'ltr' | 'rtl';
+  startIndex?: number;
+  limit?: number;
   onSelectModel?: (modelId: string) => void;
 }
 
-export const ModelCarousel = ({ title, icon, direction = 'ltr', onSelectModel }: ModelCarouselProps) => {
+export const ModelCarousel = ({ 
+  title, 
+  icon, 
+  direction = 'ltr', 
+  startIndex = 0, 
+  limit = 20, 
+  onSelectModel 
+}: ModelCarouselProps) => {
   const [models, setModels] = useState<Model[]>([]);
   
   // Configurar autoplay com loop infinito
@@ -46,7 +55,7 @@ export const ModelCarousel = ({ title, icon, direction = 'ltr', onSelectModel }:
         .select('id, name, username, avatar_url, followers_count')
         .eq('is_active', true)
         .order('followers_count', { ascending: false })
-        .limit(20);
+        .range(startIndex, startIndex + limit - 1);
 
       if (data && !error) {
         // Duplicar modelos para efeito infinito mais suave
@@ -56,7 +65,7 @@ export const ModelCarousel = ({ title, icon, direction = 'ltr', onSelectModel }:
     };
 
     fetchModels();
-  }, []);
+  }, [startIndex, limit]);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();

@@ -129,6 +129,12 @@ export const TikTokApp = () => {
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
+  
+  // Debug do showFullscreen
+  useEffect(() => {
+    console.log('📺 Estado showFullscreen mudou para:', showFullscreen);
+  }, [showFullscreen]);
+  
   // Ordem de modelos no ciclo e controle de atualização
   const [modelOrder, setModelOrder] = useState<string[]>([]);
   const [cycleSize, setCycleSize] = useState(0);
@@ -1914,19 +1920,23 @@ export const TikTokApp = () => {
   const handleFullscreen = () => {
     if (!currentVideo) return;
     
+    console.log('📺 handleFullscreen chamado');
+    
     // Capturar tempo atual do vídeo
     const videoElement = document.querySelector('video') as HTMLVideoElement;
     if (videoElement) {
       setFullscreenVideoTime(videoElement.currentTime);
+      console.log('📺 Tempo capturado:', videoElement.currentTime);
     }
     
     setShowFullscreen(true);
-    console.log('📺 Abrindo vídeo em tela cheia');
+    console.log('📺 showFullscreen definido como true');
   };
 
   const handleCloseFullscreen = () => {
+    console.log('📺 handleCloseFullscreen chamado');
     setShowFullscreen(false);
-    console.log('📺 Fechando tela cheia');
+    console.log('📺 showFullscreen definido como false');
   };
 
   // Embla carousel event listeners

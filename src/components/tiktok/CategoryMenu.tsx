@@ -5,6 +5,9 @@ import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
 import { useNavigate } from "react-router-dom";
+import { FeaturedSection } from "./FeaturedSection";
+import { AdCarousel } from "./AdCarousel";
+import { ModelCarousel } from "./ModelCarousel";
 
 interface MenuItemProps {
   id: string;
@@ -16,11 +19,13 @@ interface MenuItemProps {
 interface CategoryMenuProps {
   onOpenLive?: () => void;
   onExit?: () => void;
+  onSelectModel?: (modelId: string) => void;
 }
 
 export const CategoryMenu = ({ 
   onOpenLive,
-  onExit
+  onExit,
+  onSelectModel
 }: CategoryMenuProps) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -129,20 +134,58 @@ export const CategoryMenu = ({
           <UserMenuHeader />
         </div>
         
-        {/* Menu de Navegação */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide py-4">
-          <div className="space-y-1">
-            {menuItems.map((item) => (
-              <Button
-                key={item.id}
-                variant="ghost"
-                className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
-                onClick={item.onClick}
-              >
-                <span className="mr-3">{item.icon}</span>
-                <span>{item.name}</span>
-              </Button>
-            ))}
+        {/* Conteúdo Rolável */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+          {/* Seções de Destaque, Patrocinado e Modelos */}
+          <div className="py-4 space-y-4 px-4">
+            {/* Destaque */}
+            <FeaturedSection />
+            
+            {/* Patrocinado */}
+            <AdCarousel />
+            
+            {/* Modelos em Destaque - Primeira metade */}
+            <ModelCarousel 
+              title="Modelos em Destaque" 
+              icon="🔥"
+              direction="rtl"
+              startIndex={0}
+              limit={157}
+              onSelectModel={(modelId) => {
+                onSelectModel?.(modelId);
+                setOpen(false);
+              }}
+            />
+            
+            {/* Novas Modelos - Segunda metade */}
+            <ModelCarousel 
+              title="Novas Modelos" 
+              icon="✨"
+              direction="ltr"
+              startIndex={157}
+              limit={157}
+              onSelectModel={(modelId) => {
+                onSelectModel?.(modelId);
+                setOpen(false);
+              }}
+            />
+          </div>
+
+          {/* Menu de Navegação */}
+          <div className="py-4">
+            <div className="space-y-1">
+              {menuItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
+                  onClick={item.onClick}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  <span>{item.name}</span>
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </SheetContent>

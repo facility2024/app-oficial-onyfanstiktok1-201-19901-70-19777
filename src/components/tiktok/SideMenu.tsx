@@ -168,7 +168,10 @@ export const SideMenu = ({
       </div>
 
       {/* Explorar - Desktop Only */}
-      <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
+      <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={() => {
+        console.log('🔍 Navegando para /explore');
+        window.location.href = '/explore';
+      }}>
         <div className="w-12 h-12 flex items-center justify-center transition-all">
           <Search className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
         </div>

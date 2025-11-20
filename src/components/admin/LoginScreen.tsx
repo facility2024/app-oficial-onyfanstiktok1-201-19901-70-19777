@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import loginBackground from '@/assets/login-background.png';
 
 interface LoginScreenProps {
   onLogin: (user: User) => void;
@@ -73,7 +74,7 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
     <div 
       className="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative"
       style={{
-        backgroundImage: 'url("/lovable-uploads/e93594ee-908d-46f2-a59d-4000b64079a4.png")'
+        backgroundImage: `url(${loginBackground})`
       }}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />

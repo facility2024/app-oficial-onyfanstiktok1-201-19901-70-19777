@@ -2105,6 +2105,7 @@ export const TikTokApp = () => {
               isLiked={isLiked}
               isMuted={isMuted}
               isPlaying={isPlaying}
+              isFollowing={followingModels[currentVideo?.user?.id] || false}
               onToggleLike={() => {
                 console.log('Mobile like clicked via SideMenu');
                 toggleLike();
@@ -2116,6 +2117,10 @@ export const TikTokApp = () => {
               onTogglePlay={() => {
                 console.log('Mobile play toggle clicked via SideMenu');
                 setIsPlaying(!isPlaying);
+              }}
+              onToggleFollow={() => {
+                console.log('Mobile follow clicked via SideMenu');
+                followModel();
               }}
               onOpenComments={async () => {
                 console.log('Mobile comments clicked via SideMenu');
@@ -2209,6 +2214,7 @@ export const TikTokApp = () => {
                   onNext={nextVideo}
                   onPrevious={prevVideo}
                   onDoubleClick={toggleLike}
+                  onTogglePlay={() => setIsPlaying(!isPlaying)}
                 />
                 
                 {/* Bottom Info - only show for current video */}
@@ -2457,6 +2463,7 @@ export const TikTokApp = () => {
                 onNext={nextVideo}
                 onPrevious={prevVideo}
                 onDoubleClick={toggleLike}
+                onTogglePlay={() => setIsPlaying(!isPlaying)}
               />
 
 
@@ -2526,6 +2533,7 @@ export const TikTokApp = () => {
                     isLiked={isLiked}
                     isMuted={isMuted}
                     isPlaying={isPlaying}
+                    isFollowing={followingModels[currentVideo?.user?.id] || false}
                     onToggleLike={() => {
                       console.log('Desktop like clicked');
                       toggleLike();
@@ -2537,6 +2545,10 @@ export const TikTokApp = () => {
                     onTogglePlay={() => {
                       console.log('Desktop play toggle clicked');
                       setIsPlaying(!isPlaying);
+                    }}
+                    onToggleFollow={() => {
+                      console.log('Desktop follow clicked');
+                      followModel();
                     }}
                     onOpenComments={async () => {
                       console.log('Desktop comments clicked');

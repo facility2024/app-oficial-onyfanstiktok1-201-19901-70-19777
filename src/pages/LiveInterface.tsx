@@ -204,6 +204,84 @@ export const LiveInterface = () => {
     }
   };
 
+  const handleFollow = async () => {
+    if (!video?.user?.id) return;
+    
+    try {
+      let userId = sessionStorage.getItem('user_id');
+      if (!userId) {
+        userId = crypto.randomUUID();
+        sessionStorage.setItem('user_id', userId);
+      }
+
+      // Get current user data
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Check if already following
+      const { data: existing } = await supabase
+        .from('model_followers')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('model_id', video.user.id)
+        .maybeSingle();
+
+      if (existing) {
+        // Toggle follow status
+        const { error } = await supabase
+          .from('model_followers')
+          .update({ is_active: !isFollowing })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        // Create new follow
+        const { error } = await supabase
+          .from('model_followers')
+          .upsert({
+            user_id: userId,
+            model_id: video.user.id,
+            user_name: user?.user_metadata?.full_name || user?.email || 'Usuário',
+            user_email: user?.email || '',
+            is_active: true
+          }, {
+            onConflict: 'user_id,model_id'
+          });
+
+        if (error) throw error;
+      }
+
+      const newFollowState = !isFollowing;
+      setIsFollowing(newFollowState);
+      
+      // Save in localStorage
+      const followKey = `follow_${userId}_${video.user.id}`;
+      localStorage.setItem(followKey, newFollowState ? 'true' : 'false');
+      
+      // Update local count
+      if (video) {
+        setVideo({
+          ...video,
+          user: {
+            ...video.user,
+            followers_count: newFollowState ? video.user.followers_count + 1 : video.user.followers_count - 1
+          }
+        });
+      }
+
+      toast({
+        title: newFollowState ? "Seguindo" : "Deixou de seguir",
+        description: `Você ${newFollowState ? 'está seguindo' : 'deixou de seguir'} ${video.user.username}`
+      });
+    } catch (error) {
+      console.error('Error following model:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível seguir a modelo",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleShare = async () => {
     try {
       await navigator.share({
@@ -217,19 +295,6 @@ export const LiveInterface = () => {
       toast({
         title: "Link copiado!",
         description: "O link da live foi copiado para sua área de transferência"
-      });
-    }
-  };
-
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    if (video) {
-      setVideo({
-        ...video,
-        user: {
-          ...video.user,
-          followers_count: isFollowing ? video.user.followers_count - 1 : video.user.followers_count + 1
-        }
       });
     }
   };
@@ -289,7 +354,8 @@ export const LiveInterface = () => {
         isMuted={isMuted}
         onNext={() => {}}
         onPrevious={() => {}}
-        onDoubleClick={() => {}}
+        onDoubleClick={handleToggleLike}
+        onTogglePlay={handleTogglePlay}
       />
 
       {/* Menu Lateral */}
@@ -299,9 +365,11 @@ export const LiveInterface = () => {
           isLiked={isLiked}
           isMuted={isMuted}
           isPlaying={isPlaying}
+          isFollowing={isFollowing}
           onToggleLike={handleToggleLike}
           onToggleSound={handleToggleSound}
           onTogglePlay={handleTogglePlay}
+          onToggleFollow={handleFollow}
           onOpenComments={() => {
             loadComments();
             setShowComments(true);

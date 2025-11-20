@@ -170,18 +170,18 @@ export const SideMenu = ({
       {/* Explorar - Desktop Only */}
       <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
         <div className="w-12 h-12 flex items-center justify-center transition-all">
-          <Search className="w-8 h-8 text-red-500" strokeWidth={1.5} />
+          <Search className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
         </div>
-        <span className="text-red-500 text-xs mt-1 font-medium">explorar</span>
+        <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">explorar</span>
       </div>
 
       {/* Chat - Desktop Only */}
       {onOpenChat && (
         <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={onOpenChat}>
           <div className="w-12 h-12 flex items-center justify-center transition-all">
-            <MessagesSquare className="w-8 h-8 text-red-500" strokeWidth={1.5} />
+            <MessagesSquare className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
           </div>
-          <span className="text-red-500 text-xs mt-1 font-medium">chat</span>
+          <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">chat</span>
         </div>
       )}
 

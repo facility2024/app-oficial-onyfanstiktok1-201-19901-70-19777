@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ad1 from '@/assets/ads/ad1.png';
+import ad2 from '@/assets/ads/ad2.png';
+import ad3 from '@/assets/ads/ad3.png';
+import ad4 from '@/assets/ads/ad4.png';
+import ad5 from '@/assets/ads/ad5.png';
 
 interface Ad {
   id: number;
@@ -11,26 +16,32 @@ interface Ad {
 const sampleAds: Ad[] = [
   {
     id: 1,
-    image: '/lovable-uploads/599e3afd-51ef-4fd3-b949-800234fa1cfb.png',
-    title: 'Anúncio 1',
+    image: ad1,
+    title: 'ASHA CLUB',
     link: '#'
   },
   {
     id: 2,
-    image: '/lovable-uploads/8cacce58-4e74-4148-a1a0-c8b35b22b5b6.png',
-    title: 'Anúncio 2',
+    image: ad2,
+    title: 'INNER CLUB',
     link: '#'
   },
   {
     id: 3,
-    image: '/lovable-uploads/d6487096-3582-4e46-830e-bd94cdfd798f.png',
-    title: 'Anúncio 3',
+    image: ad3,
+    title: 'Terça - Realize todos seus fetiches',
     link: '#'
   },
   {
     id: 4,
-    image: '/lovable-uploads/e93594ee-908d-46f2-a59d-4000b64079a4.png',
-    title: 'Anúncio 4',
+    image: ad4,
+    title: 'Quinta - Desfile de Lingerie',
+    link: '#'
+  },
+  {
+    id: 5,
+    image: ad5,
+    title: 'O Melhor Night Club de BH',
     link: '#'
   }
 ];
@@ -65,7 +76,7 @@ export const AdCarousel = () => {
     <div className="w-full bg-gradient-to-br from-gray-900 to-black p-4 rounded-lg border border-gray-800">
       <h2 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
         <span className="text-blue-400">📢</span>
-        Anuncios
+        Patrocinado
       </h2>
       
       <div

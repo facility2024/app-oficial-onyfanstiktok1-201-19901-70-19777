@@ -65,9 +65,9 @@ export const VideoOptionsMenu = ({ videoId, videoTitle, onFullscreen }: VideoOpt
         onClick={() => setOpen(true)}
       >
         <div className="w-12 h-12 flex items-center justify-center transition-all">
-          <MoreVertical className="w-8 h-8 text-white" strokeWidth={1.5} />
+          <MoreVertical className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
         </div>
-        <span className="text-white text-xs mt-1 font-light">Mais</span>
+        <span className="text-foreground md:text-gray-800 text-xs mt-1 font-light">Mais</span>
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>

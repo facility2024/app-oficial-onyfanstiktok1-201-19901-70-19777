@@ -34,18 +34,18 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true }: BottomInf
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-white font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
+        <span className="text-white md:text-gray-800 font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
       </div>
 
       {/* Video Description */}
-      <div className="text-white text-sm mb-2 leading-relaxed drop-shadow-lg line-clamp-2">
+      <div className="text-white md:text-gray-800 text-sm mb-2 leading-relaxed drop-shadow-lg line-clamp-2">
         {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
       </div>
 
       {/* Music Info - Clicável */}
       <div 
         onClick={handleMusicClick}
-        className="flex items-center gap-2 text-white text-xs drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
+        className="flex items-center gap-2 text-white md:text-gray-800 text-xs drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
       >
         <VinylRecord isPlaying={isPlaying} hasMusic={true} />
         <div className="flex items-center gap-1 truncate">

@@ -25,6 +25,8 @@ import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
+import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -2688,9 +2690,16 @@ export const TikTokApp = () => {
                </div>
              </div>
            </div>
+
+           {/* Right Sidebar - Destaque e Anuncios */}
+           <div className="hidden xl:block w-80 space-y-4">
+             <FeaturedSection />
+             <AdCarousel />
+           </div>
+
          </div>
+        </div>
        </div>
-      </div>
 
       {/* Desktop Profile Screen */}
       <ProfileScreen

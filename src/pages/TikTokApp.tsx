@@ -2018,6 +2018,7 @@ export const TikTokApp = () => {
               onNavigateHome={backToCurrentVideo}
               onOpenSearch={() => setShowSearch(true)}
               onOpenLive={() => setShowLive(true)}
+              onSelectModel={(modelId) => goToModelVideo(modelId)}
               onExit={async () => {
                 try {
                   sessionStorage.setItem('logging_out', 'true');

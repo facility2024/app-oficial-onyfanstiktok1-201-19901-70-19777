@@ -18,8 +18,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       (_event, session) => {
         setSession(session);
         
-        if (!session) {
-          navigate('/auth');
+        // Não redirecionar se está fazendo logout (evita race condition)
+        if (!session && !sessionStorage.getItem('logging_out')) {
+          navigate('/auth', { replace: true });
         }
       }
     );

@@ -135,6 +135,51 @@ export const useCurrentUser = () => {
     }
   };
 
+  const ensureProfileExists = async (authUser: any) => {
+    try {
+      // Tentar buscar com user_id primeiro
+      let { data: profileData, error: userIdError } = await supabaseSimple
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+
+      // Se não encontrar, tentar com id
+      if (!profileData) {
+        const { data: idData, error: idError } = await supabaseSimple
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        
+        profileData = idData;
+      }
+
+      // Se ainda não existir, criar perfil
+      if (!profileData) {
+        const { data: newProfile, error: insertError } = await supabaseSimple
+          .from('profiles')
+          .insert({
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.email?.split('@')[0] || 'Usuário',
+            role: 'user'
+          })
+          .select()
+          .maybeSingle();
+
+        if (!insertError && newProfile) {
+          profileData = newProfile;
+        }
+      }
+
+      return profileData;
+    } catch (error) {
+      console.error('Erro ao verificar/criar perfil:', error);
+      return null;
+    }
+  };
+
   const refetch = async () => {
     try {
       setLoading(true);
@@ -144,26 +189,18 @@ export const useCurrentUser = () => {
       if (authUser) {
         setUser(authUser);
         
-        const { data, error }: any = await supabaseSimple
-          .from('profiles')
-          .select('*')
-          .eq('user_id', authUser.id)
-          .maybeSingle();
+        const profileData = await ensureProfileExists(authUser);
         
-        if (error && error.code !== 'PGRST116') {
-          console.error('Erro ao buscar perfil:', error);
-        }
-        
-        if (data) {
+        if (profileData) {
           setProfile({
-            id: data.id,
+            id: profileData.id,
             user_id: authUser.id,
-            email: data.email || authUser.email,
-            username: data.name || null,
-            full_name: data.name || null,
-            avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || null,
-            bio: null,
-            created_at: data.created_at
+            email: profileData.email || authUser.email,
+            username: profileData.name || null,
+            full_name: profileData.name || null,
+            avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || profileData.avatar_url || null,
+            bio: profileData.bio || null,
+            created_at: profileData.created_at
           });
         }
       }
@@ -186,26 +223,18 @@ export const useCurrentUser = () => {
         if (authUser && mounted) {
           setUser(authUser);
           
-          const { data, error }: any = await supabaseSimple
-            .from('profiles')
-            .select('*')
-            .eq('user_id', authUser.id)
-            .maybeSingle();
+          const profileData = await ensureProfileExists(authUser);
           
-          if (error && error.code !== 'PGRST116') {
-            console.error('Erro ao buscar perfil:', error);
-          }
-          
-          if (data && mounted) {
+          if (profileData && mounted) {
             setProfile({
-              id: data.id,
+              id: profileData.id,
               user_id: authUser.id,
-              email: data.email || authUser.email,
-              username: data.name || null,
-              full_name: data.name || null,
-              avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || null,
-              bio: null,
-              created_at: data.created_at
+              email: profileData.email || authUser.email,
+              username: profileData.name || null,
+              full_name: profileData.name || null,
+              avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || profileData.avatar_url || null,
+              bio: profileData.bio || null,
+              created_at: profileData.created_at
             });
           }
         }

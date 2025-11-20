@@ -38,15 +38,24 @@ export default function UserProfile() {
   });
 
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        full_name: profile.full_name || '',
-        username: profile.username || '',
-        email: profile.email || '',
-        bio: profile.bio || '',
-      });
+    if (profile || user) {
+      const currentProfile = profile || (user ? {
+        full_name: user.email?.split('@')[0] || '',
+        username: user.email?.split('@')[0] || '',
+        email: user.email || '',
+        bio: '',
+      } : null);
+      
+      if (currentProfile) {
+        setFormData({
+          full_name: currentProfile.full_name || '',
+          username: currentProfile.username || '',
+          email: currentProfile.email || '',
+          bio: currentProfile.bio || '',
+        });
+      }
     }
-  }, [profile]);
+  }, [profile, user]);
 
   useEffect(() => {
     if (user) {
@@ -122,7 +131,36 @@ export default function UserProfile() {
     );
   }
 
-  if (!profile) {
+  if (!user && !loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <Card className="max-w-md bg-background border-border">
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground mb-4">
+              Você precisa estar logado para ver o perfil
+            </p>
+            <Button onClick={() => navigate('/auth')} className="w-full">
+              Fazer Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Se tiver usuário mas não tiver perfil, criar perfil básico temporário
+  const displayProfile = profile || (user ? {
+    id: user.id,
+    user_id: user.id,
+    email: user.email || '',
+    username: user.email?.split('@')[0] || 'Usuário',
+    full_name: user.email?.split('@')[0] || 'Usuário',
+    avatar_url: null,
+    bio: null,
+    created_at: new Date().toISOString()
+  } : null);
+
+  if (!displayProfile) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <Card className="max-w-md bg-background border-border">
@@ -170,8 +208,8 @@ export default function UserProfile() {
               {/* Avatar */}
               <div className="relative">
                 <img 
-                  src={avatarPreview || profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user?.id} 
-                  alt={profile.username || 'User'}
+                  src={avatarPreview || displayProfile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user?.id} 
+                  alt={displayProfile.username || 'User'}
                   className="w-32 h-32 rounded-full object-cover border-4 border-white/20"
                 />
                 
@@ -192,19 +230,19 @@ export default function UserProfile() {
               {!isEditing ? (
                 <div className="text-center space-y-2 w-full">
                   <h2 className="text-2xl font-bold text-white">
-                    {profile.full_name || 'Usuário'}
+                    {displayProfile.full_name || 'Usuário'}
                   </h2>
-                  {profile.username && (
+                  {displayProfile.username && (
                     <p className="text-white/60">
-                      @{profile.username}
+                      @{displayProfile.username}
                     </p>
                   )}
                   <p className="text-white/40 text-sm">
-                    {profile.email}
+                    {displayProfile.email}
                   </p>
-                  {profile.bio && (
+                  {displayProfile.bio && (
                     <p className="text-white/80 text-sm max-w-md mx-auto">
-                      {profile.bio}
+                      {displayProfile.bio}
                     </p>
                   )}
                   
@@ -212,7 +250,7 @@ export default function UserProfile() {
                     <div className="text-center">
                       <p className="text-white/40 text-xs">Membro desde</p>
                       <p className="text-white font-semibold">
-                        {format(new Date(profile.created_at), 'dd/MM/yyyy')}
+                        {format(new Date(displayProfile.created_at), 'dd/MM/yyyy')}
                       </p>
                     </div>
                   </div>

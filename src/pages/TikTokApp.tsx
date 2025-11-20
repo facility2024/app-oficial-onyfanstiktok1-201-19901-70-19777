@@ -104,7 +104,7 @@ export const TikTokApp = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false); // Iniciar COM SOM
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
@@ -744,7 +744,7 @@ export const TikTokApp = () => {
           return {
             ...video,
             user_id: video.model_id || '',
-            music_name: video.title || 'Som Original',
+            music_name: video.title || `Som original - ${model?.username || model?.name || 'Autor'}`,
             visibility: (video.visibility as 'public' | 'premium') || 'public',
             source: 'catalog_video',
             user: model
@@ -997,7 +997,7 @@ export const TikTokApp = () => {
         ...vData,
         video_url: normalizeUrl(vData.video_url || ''),
         user_id: vData.model_id || '',
-        music_name: vData.title || 'Som Original',
+        music_name: vData.title || `Som original - ${model?.username || model?.name || 'Autor'}`,
         user: model ? {
           id: model.id,
           username: model.username || model.name || 'Usuário',
@@ -1759,7 +1759,7 @@ export const TikTokApp = () => {
             description: post.descricao || '',
             user_id: modelId,
             model_id: modelId,
-            music_name: 'Som Original',
+            music_name: post.titulo || `Som original - ${modelData?.username}`,
             visibility: 'public' as const,
             likes_count: 0,
             comments_count: 0,
@@ -1814,7 +1814,7 @@ export const TikTokApp = () => {
             description: post.descricao || '',
             user_id: modelId,
             model_id: modelId,
-            music_name: 'Som Original',
+            music_name: post.titulo || `Som original - ${modelData?.username}`,
             visibility: 'public' as const,
             likes_count: 0,
             comments_count: 0,
@@ -1857,7 +1857,7 @@ export const TikTokApp = () => {
         description: video.description || '',
         user_id: modelId,
         model_id: modelId,
-        music_name: 'Som Original',
+        music_name: video.title || `Som original - ${modelData?.username}`,
         visibility: (video.visibility === 'premium' ? 'premium' : 'public') as 'public' | 'premium',
         likes_count: video.likes_count || 0,
         comments_count: video.comments_count || 0,

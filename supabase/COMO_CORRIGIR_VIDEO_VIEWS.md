@@ -18,9 +18,13 @@ As políticas RLS (Row Level Security) da tabela `video_views` não permitem ins
 2. Selecione seu projeto: `tnzvhwapfhkhqjgyiomk`
 3. Vá em **SQL Editor** (menu lateral esquerdo)
 4. Clique em **New Query**
-5. Cole o conteúdo do arquivo `supabase/fix_video_views_rls.sql`
-6. Clique em **Run** (ou pressione Ctrl+Enter)
-7. Verifique se a mensagem de sucesso aparece: ✅ Políticas de video_views atualizadas com sucesso!
+5. **IMPORTANTE**: Abra o arquivo `supabase/fix_video_views_rls.sql` no seu editor de código
+6. **Copie TODO o conteúdo SQL** do arquivo (todas as linhas, de 1 a 82)
+7. **Cole** no SQL Editor do Supabase Dashboard
+8. Clique em **Run** (ou pressione Ctrl+Enter)
+9. Verifique se a mensagem de sucesso aparece: ✅ Políticas de video_views atualizadas com sucesso!
+
+**⚠️ ATENÇÃO**: NÃO digite "supabase/fix_video_views_rls.sql" no SQL Editor. Você precisa copiar o CONTEÚDO interno do arquivo!
 
 ### Opção 2: Executar via Supabase CLI (Local)
 

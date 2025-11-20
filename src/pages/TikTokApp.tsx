@@ -2146,20 +2146,22 @@ export const TikTokApp = () => {
           </button>
 
           <button 
-            onClick={() => setShowComments(true)}
+            onClick={() => console.log('Marketplace')}
             className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
             <ShoppingBag className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Marketplace</span>
           </button>
 
-              <button 
-                onClick={() => navigate('/profile')}
-                className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
-              >
-                <User className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
-                <span className="text-xs">Perfil</span>
-              </button>
+          <button 
+            onClick={() => setShowChat(true)}
+            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative"
+          >
+            <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+            <span className="text-xs">Chat</span>
+            {/* Indicador de ativo */}
+            <div className="absolute bottom-0 w-1 h-1 bg-white rounded-full"></div>
+          </button>
         </div>
 
         {/* Vertical Carousel Container */}

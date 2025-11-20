@@ -23,9 +23,13 @@ export const VideoOptionsMenu = ({ videoId, videoTitle, onFullscreen }: VideoOpt
   };
 
   const handleFullscreen = () => {
+    console.log('🎬 VideoOptionsMenu - handleFullscreen chamado');
     setOpen(false);
     if (onFullscreen) {
+      console.log('🎬 Chamando onFullscreen callback');
       onFullscreen();
+    } else {
+      console.log('❌ onFullscreen callback não definido');
     }
   };
 

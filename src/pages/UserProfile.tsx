@@ -210,7 +210,7 @@ export default function UserProfile() {
                 <img 
                   src={avatarPreview || displayProfile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user?.id} 
                   alt={displayProfile.username || 'User'}
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white/20"
+                  className="w-32 h-32 md:w-[75px] md:h-[75px] rounded-full object-cover border-4 border-white/20"
                 />
                 
                 {isEditing && (
@@ -229,27 +229,27 @@ export default function UserProfile() {
               {/* Info */}
               {!isEditing ? (
                 <div className="text-center space-y-2 w-full">
-                  <h2 className="text-2xl font-bold text-white">
+                  <h2 className="text-2xl font-bold text-foreground">
                     {displayProfile.full_name || 'Usuário'}
                   </h2>
                   {displayProfile.username && (
-                    <p className="text-white/60">
+                    <p className="text-muted-foreground">
                       @{displayProfile.username}
                     </p>
                   )}
-                  <p className="text-white/40 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {displayProfile.email}
                   </p>
                   {displayProfile.bio && (
-                    <p className="text-white/80 text-sm max-w-md mx-auto">
+                    <p className="text-foreground text-sm max-w-md mx-auto">
                       {displayProfile.bio}
                     </p>
                   )}
                   
                   <div className="flex gap-4 justify-center pt-4">
                     <div className="text-center">
-                      <p className="text-white/40 text-xs">Membro desde</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-muted-foreground text-xs">Membro desde</p>
+                      <p className="text-foreground font-semibold">
                         {format(new Date(displayProfile.created_at), 'dd/MM/yyyy')}
                       </p>
                     </div>

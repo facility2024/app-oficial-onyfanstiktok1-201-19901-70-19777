@@ -31,29 +31,46 @@ export default function FollowingPage() {
 
   const loadFollowedVideos = async () => {
     try {
-      const userId = localStorage.getItem('anonymous_user_id');
-      if (!userId) {
+      // Busca tanto anonymous_user_id quanto o user_id do auth
+      const anonymousUserId = localStorage.getItem('anonymous_user_id');
+      const { data: { user } } = await supabase.auth.getUser();
+      const authUserId = user?.id;
+
+      console.log('🔍 DEBUG SEGUINDO:', {
+        anonymousUserId,
+        authUserId
+      });
+
+      if (!anonymousUserId && !authUserId) {
+        console.log('❌ Nenhum user_id encontrado');
         setLoading(false);
         return;
       }
 
-      // Primeiro busca as modelos seguidas
+      // Busca follows com ambos os IDs
       const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
-        .select('model_id')
-        .eq('user_id', userId)
+        .select('model_id, user_id')
+        .or(`user_id.eq.${anonymousUserId},user_id.eq.${authUserId}`)
         .eq('is_active', true);
 
-      if (followError) throw followError;
+      console.log('🔍 Follows encontrados:', followedModels);
+
+      if (followError) {
+        console.error('❌ Erro ao buscar follows:', followError);
+        throw followError;
+      }
 
       if (!followedModels || followedModels.length === 0) {
+        console.log('❌ Nenhuma modelo seguida');
         setLoading(false);
         return;
       }
 
       const modelIds = followedModels.map(f => f.model_id);
+      console.log('🔍 Model IDs:', modelIds);
 
-      // Depois busca os vídeos dessas modelos
+      // Busca os vídeos dessas modelos
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select(`
@@ -64,7 +81,7 @@ export default function FollowingPage() {
           views_count,
           likes_count,
           model_id,
-          models:model_id (
+          models!videos_model_id_fkey (
             id,
             username,
             avatar_url
@@ -74,11 +91,16 @@ export default function FollowingPage() {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (videosError) throw videosError;
+      console.log('🔍 Vídeos encontrados:', videosData);
+
+      if (videosError) {
+        console.error('❌ Erro ao buscar vídeos:', videosError);
+        throw videosError;
+      }
 
       setVideos(videosData as VideoWithModel[] || []);
     } catch (error) {
-      console.error('Erro ao carregar vídeos das modelos seguidas:', error);
+      console.error('❌ Erro ao carregar vídeos das modelos seguidas:', error);
     } finally {
       setLoading(false);
     }

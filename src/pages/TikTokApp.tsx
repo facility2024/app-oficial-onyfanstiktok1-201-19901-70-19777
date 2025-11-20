@@ -2139,13 +2139,13 @@ export const TikTokApp = () => {
             <span className="text-xs">Marketplace</span>
           </button>
 
-          <button 
-            onClick={() => shareVideo()}
-            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
-          >
-            <Share2 className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
-            <span className="text-xs">Compartilhar</span>
-          </button>
+              <button 
+                onClick={() => navigate('/profile')}
+                className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
+              >
+                <User className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+                <span className="text-xs">Perfil</span>
+              </button>
         </div>
 
         {/* Vertical Carousel Container */}

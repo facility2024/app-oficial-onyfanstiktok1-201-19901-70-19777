@@ -46,7 +46,7 @@ const Auth = () => {
   const isMobile = useIsMobile();
   
   const backgroundImage = isMobile 
-    ? 'https://tiktokonyfans.b-cdn.net/ANIMA%C3%87OES%20ONYFANS/Design%20sem%20nome%20(6).png'
+    ? 'https://tiktokonyfans.b-cdn.net/ANIMA%C3%87%C3%95ES%20ONYFANS/Design%20sem%20nome%20(6).png'
     : loginBackground;
 
   // Redirecionar se já estiver logado

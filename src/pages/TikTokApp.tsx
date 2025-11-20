@@ -2345,10 +2345,10 @@ export const TikTokApp = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/explore')}
+            onClick={() => setShowSearch(true)}
             className="text-gray-900 hover:bg-blue-200"
           >
-            <Compass className="h-4 w-4" />
+            <Search className="h-4 w-4" />
           </Button>
         </div>
       </div>

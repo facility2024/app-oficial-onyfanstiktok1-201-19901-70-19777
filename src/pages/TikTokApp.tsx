@@ -34,6 +34,7 @@ import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import headerBackground from '@/assets/header-background.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 // import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
@@ -2055,7 +2056,14 @@ export const TikTokApp = () => {
       <div className="relative w-full h-screen bg-white overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
         {/* Top Bar Mobile - Nova barra com ícones */}
-        <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-gradient-top opacity-50 backdrop-blur-sm flex items-center justify-between px-4">
+        <div 
+          className="fixed top-0 left-0 right-0 z-40 h-14 opacity-50 backdrop-blur-sm flex items-center justify-between px-4"
+          style={{ 
+            backgroundImage: `url(${headerBackground})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
             <CategoryMenu
@@ -2325,7 +2333,14 @@ export const TikTokApp = () => {
   return (
     <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
-      <div className="sticky top-0 z-[60] bg-gradient-top flex items-center justify-between px-6 py-4 border-b border-green-200">
+      <div 
+        className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-green-200"
+        style={{ 
+          backgroundImage: `url(${headerBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"

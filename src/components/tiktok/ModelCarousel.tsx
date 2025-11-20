@@ -42,15 +42,16 @@ export const ModelCarousel = ({
       direction: direction,
       dragFree: true,
       slidesToScroll: 1,
-      containScroll: false,
-      skipSnaps: false,
+      align: 'start',
     },
     [Autoplay(autoplayOptions)]
   );
 
   useEffect(() => {
     const fetchModels = async () => {
-      // Buscar TODAS as modelos (314)
+      console.log(`🔍 Buscando modelos para ${title} (carousel ${carouselIndex})`);
+      
+      // Buscar TODAS as modelos ativas
       const { data, error } = await supabase
         .from('models')
         .select('id, name, username, avatar_url, followers_count')
@@ -59,27 +60,34 @@ export const ModelCarousel = ({
 
       if (data && !error) {
         const allModels = data as Model[];
-        const totalModels = allModels.length;
-        const halfPoint = Math.ceil(totalModels / 2);
+        console.log(`✅ Total de modelos carregadas: ${allModels.length}`);
         
-        // Dividir modelos entre os dois carousels
+        // Dividir em duas partes iguais
+        const halfPoint = Math.ceil(allModels.length / 2);
+        
         let carouselModels: Model[];
         if (carouselIndex === 0) {
-          // Primeiro carousel - primeira metade
+          // Primeiro carousel - primeira metade (0 até halfPoint-1)
           carouselModels = allModels.slice(0, halfPoint);
+          console.log(`🔥 Carousel 0: Modelos 0 até ${halfPoint-1} = ${carouselModels.length} modelos`);
         } else {
-          // Segundo carousel - segunda metade
+          // Segundo carousel - segunda metade (halfPoint até final)
           carouselModels = allModels.slice(halfPoint);
+          console.log(`✨ Carousel 1: Modelos ${halfPoint} até ${allModels.length-1} = ${carouselModels.length} modelos`);
         }
         
-        // Triplicar para loop infinito sem espaços
-        const infiniteModels = [...carouselModels, ...carouselModels, ...carouselModels];
+        // Duplicar apenas 2x para loop infinito mais suave
+        const infiniteModels = [...carouselModels, ...carouselModels];
         setModels(infiniteModels);
+        
+        console.log(`📊 ${title}: ${carouselModels.length} modelos únicas, ${infiniteModels.length} total com duplicação`);
+      } else {
+        console.error(`❌ Erro ao buscar modelos:`, error);
       }
     };
 
     fetchModels();
-  }, [carouselIndex]);
+  }, [carouselIndex, title]);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -88,6 +96,22 @@ export const ModelCarousel = ({
   const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
+
+  if (models.length === 0) {
+    return (
+      <div className="w-full bg-gradient-to-br from-gray-900 to-black rounded-lg border border-gray-800 overflow-hidden">
+        <div className="flex items-center justify-between p-2 border-b border-gray-800">
+          <h3 className="text-white font-bold text-sm flex items-center gap-2">
+            <span>{icon}</span>
+            {title}
+          </h3>
+        </div>
+        <div className="flex items-center justify-center p-4 text-white text-sm">
+          Carregando modelos...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-gradient-to-br from-gray-900 to-black rounded-lg border border-gray-800 overflow-hidden">

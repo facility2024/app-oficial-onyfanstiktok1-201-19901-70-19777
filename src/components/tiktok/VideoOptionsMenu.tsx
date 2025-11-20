@@ -69,7 +69,7 @@ export const VideoOptionsMenu = ({ videoId, videoTitle, onFullscreen }: VideoOpt
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent 
           side="bottom" 
-          className="bg-black/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl"
+          className="bg-black/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl max-h-[80vh]"
         >
           <SheetHeader className="pb-4">
             <SheetTitle className="text-white text-center">
@@ -77,7 +77,7 @@ export const VideoOptionsMenu = ({ videoId, videoTitle, onFullscreen }: VideoOpt
             </SheetTitle>
           </SheetHeader>
 
-          <div className="space-y-2 pb-6">
+          <div className="space-y-2 pb-8 overflow-y-auto max-h-[60vh]">
             <Button
               variant="ghost"
               className="w-full justify-start py-6 text-white hover:bg-white/10 text-base"

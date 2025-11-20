@@ -2015,7 +2015,20 @@ export const TikTokApp = () => {
               onNavigateHome={backToCurrentVideo}
               onOpenSearch={() => setShowSearch(true)}
               onOpenLive={() => setShowLive(true)}
-              onExit={() => window.location.href = '/'}
+              onExit={async () => {
+                try {
+                  sessionStorage.setItem('logging_out', 'true');
+                  await supabase.auth.signOut();
+                  navigate('/auth', { replace: true });
+                  setTimeout(() => {
+                    sessionStorage.removeItem('logging_out');
+                  }, 500);
+                } catch (error) {
+                  console.error('Erro ao fazer logout:', error);
+                  sessionStorage.removeItem('logging_out');
+                  navigate('/auth', { replace: true });
+                }
+              }}
             />
           </div>
           
@@ -2399,12 +2412,22 @@ export const TikTokApp = () => {
                 </button>
                 <button
                   onClick={async () => {
-                    await supabase.auth.signOut();
-                    navigate('/auth');
-                    toast({
-                      title: 'Logout realizado',
-                      description: 'Você saiu da sua conta com sucesso',
-                    });
+                    try {
+                      sessionStorage.setItem('logging_out', 'true');
+                      await supabase.auth.signOut();
+                      navigate('/auth', { replace: true });
+                      setTimeout(() => {
+                        sessionStorage.removeItem('logging_out');
+                      }, 500);
+                      toast({
+                        title: 'Logout realizado',
+                        description: 'Você saiu da sua conta com sucesso',
+                      });
+                    } catch (error) {
+                      console.error('Erro ao fazer logout:', error);
+                      sessionStorage.removeItem('logging_out');
+                      navigate('/auth', { replace: true });
+                    }
                   }}
                   className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
@@ -2547,9 +2570,19 @@ export const TikTokApp = () => {
                         });
                       }
                     }}
-                    onExit={() => {
-                      console.log('Saindo do aplicativo...');
-                      window.location.href = '/';
+                    onExit={async () => {
+                      try {
+                        sessionStorage.setItem('logging_out', 'true');
+                        await supabase.auth.signOut();
+                        navigate('/auth', { replace: true });
+                        setTimeout(() => {
+                          sessionStorage.removeItem('logging_out');
+                        }, 500);
+                      } catch (error) {
+                        console.error('Erro ao fazer logout:', error);
+                        sessionStorage.removeItem('logging_out');
+                        navigate('/auth', { replace: true });
+                      }
                     }}
                   />
                 </div>

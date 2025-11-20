@@ -28,6 +28,7 @@ import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
+import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -126,6 +127,8 @@ export const TikTokApp = () => {
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [selectedVideoForPreview, setSelectedVideoForPreview] = useState<any>(null);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
+  const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
+  const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
   // Ordem de modelos no ciclo e controle de atualização
   const [modelOrder, setModelOrder] = useState<string[]>([]);
   const [cycleSize, setCycleSize] = useState(0);
@@ -1908,6 +1911,24 @@ export const TikTokApp = () => {
     console.log('🔒 Modal deve estar aberto agora');
   };
 
+  const handleFullscreen = () => {
+    if (!currentVideo) return;
+    
+    // Capturar tempo atual do vídeo
+    const videoElement = document.querySelector('video') as HTMLVideoElement;
+    if (videoElement) {
+      setFullscreenVideoTime(videoElement.currentTime);
+    }
+    
+    setShowFullscreen(true);
+    console.log('📺 Abrindo vídeo em tela cheia');
+  };
+
+  const handleCloseFullscreen = () => {
+    setShowFullscreen(false);
+    console.log('📺 Fechando tela cheia');
+  };
+
   // Embla carousel event listeners
   useEffect(() => {
     if (!emblaApi) return;
@@ -2117,6 +2138,7 @@ export const TikTokApp = () => {
                   });
                 }
               }}
+              onFullscreen={handleFullscreen}
             />
           </div>
         )}
@@ -2536,6 +2558,7 @@ export const TikTokApp = () => {
                         });
                       }
                     }}
+                    onFullscreen={handleFullscreen}
                     onExit={async () => {
                       try {
                         sessionStorage.setItem('logging_out', 'true');
@@ -2766,6 +2789,14 @@ export const TikTokApp = () => {
         isOpen={showVideoPreview}
         onClose={() => setShowVideoPreview(false)}
         content={selectedVideoForPreview}
+      />
+
+      {/* Fullscreen Video Modal */}
+      <FullscreenVideoModal
+        videoUrl={currentVideo?.video_url || ''}
+        isOpen={showFullscreen}
+        onClose={handleCloseFullscreen}
+        currentTime={fullscreenVideoTime}
       />
     </div>
   );

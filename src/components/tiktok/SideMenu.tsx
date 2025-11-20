@@ -16,6 +16,7 @@ interface SideMenuProps {
   onBlockVideo?: () => void;
   onOpenPremium?: () => void;
   onExit?: () => void;
+  onFullscreen?: () => void;
 }
 
 export const SideMenu = ({
@@ -31,7 +32,8 @@ export const SideMenu = ({
   onOpenLive,
   onBlockVideo,
   onOpenPremium,
-  onExit
+  onExit,
+  onFullscreen
 }: SideMenuProps) => {
   // 🔍 DEBUG: Verificar se o posting_panel_url está presente
   console.log('🔍 SideMenu DEBUG:', {
@@ -167,6 +169,7 @@ export const SideMenu = ({
       <VideoOptionsMenu 
         videoId={video?.id || ''} 
         videoTitle={video?.title}
+        onFullscreen={onFullscreen}
       />
 
     </div>

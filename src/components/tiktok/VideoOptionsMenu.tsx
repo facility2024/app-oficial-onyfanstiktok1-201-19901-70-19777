@@ -7,9 +7,10 @@ import { useToast } from '@/hooks/use-toast';
 interface VideoOptionsMenuProps {
   videoId: string;
   videoTitle?: string;
+  onFullscreen?: () => void;
 }
 
-export const VideoOptionsMenu = ({ videoId, videoTitle }: VideoOptionsMenuProps) => {
+export const VideoOptionsMenu = ({ videoId, videoTitle, onFullscreen }: VideoOptionsMenuProps) => {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -22,11 +23,10 @@ export const VideoOptionsMenu = ({ videoId, videoTitle }: VideoOptionsMenuProps)
   };
 
   const handleFullscreen = () => {
-    toast({
-      title: "Tela cheia",
-      description: "Funcionalidade em desenvolvimento",
-    });
     setOpen(false);
+    if (onFullscreen) {
+      onFullscreen();
+    }
   };
 
   const handleInterested = () => {

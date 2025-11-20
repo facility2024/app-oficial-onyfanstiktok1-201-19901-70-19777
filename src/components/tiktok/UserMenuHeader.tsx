@@ -122,8 +122,10 @@ export const UserMenuHeader = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎯 UserMenuHeader: Botão Espaço do Criador clicado');
+            console.log('🎯🎯🎯 UserMenuHeader: Botão Espaço do Criador CLICADO!');
+            console.log('🎯 Navegando para: /creator-application');
             navigate('/creator-application');
+            console.log('🎯 Navigate executado!');
           }}
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >

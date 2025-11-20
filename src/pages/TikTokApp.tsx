@@ -2094,7 +2094,7 @@ export const TikTokApp = () => {
               className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
               title="Pesquisar"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>
@@ -2380,9 +2380,9 @@ export const TikTokApp = () => {
             variant="ghost"
             size="sm"
             onClick={() => setShowSearch(true)}
-            className="text-gray-900 hover:bg-blue-200"
+            className="text-white hover:bg-white/10"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4 text-white" />
           </Button>
         </div>
       </div>

@@ -120,7 +120,7 @@ export const TikTokApp = () => {
   const [hasMoreVideos, setHasMoreVideos] = useState(true);
   const [allAvailableVideos, setAllAvailableVideos] = useState<Video[]>([]);
   const [usedModelIds, setUsedModelIds] = useState<Set<string>>(new Set());
-  const VIDEOS_PER_BLOCK = 10;
+  const VIDEOS_PER_BLOCK = 50; // Aumentado de 10 para 50 para carregar mais vídeos por vez
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
@@ -244,16 +244,6 @@ export const TikTokApp = () => {
       emblaApi.off('select', onSelect);
     };
   }, [emblaApi, currentVideoIndex]);
-
-  // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
-  useEffect(() => {
-    const shouldLoadMore = currentVideoIndex >= videos.length - 3; // Carrega quando faltam 3 vídeos
-    
-    if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
-      console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...');
-      loadMoreVideos();
-    }
-  }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos]);
 
   // Preload adjacent videos for faster navigation
   useEffect(() => {
@@ -923,16 +913,24 @@ export const TikTokApp = () => {
   
   // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
   const loadMoreVideos = useCallback(async () => {
-    if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) return;
+    if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) {
+      console.log('🚫 Não pode carregar mais:', { isLoadingMore, hasMoreVideos, allAvailableCount: allAvailableVideos.length });
+      return;
+    }
     
     try {
       setIsLoadingMore(true);
-      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`);
+      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`, {
+        videosCarregados: videos.length,
+        videosDisponiveis: allAvailableVideos.length
+      });
 
       // Filtrar vídeos ainda não carregados
       const unusedVideos = allAvailableVideos.filter(v => 
         !videos.some(existing => existing.id === v.id)
       );
+
+      console.log(`📊 Vídeos ainda não usados: ${unusedVideos.length}`);
 
       if (unusedVideos.length === 0) {
         console.log('🔄 Fim do conteúdo - recarregando com atualizações...');
@@ -949,6 +947,7 @@ export const TikTokApp = () => {
       const nextBlock = unusedVideos.slice(0, VIDEOS_PER_BLOCK);
       
       if (nextBlock.length === 0) {
+        console.log('⚠️ Bloco vazio - finalizando');
         setHasMoreVideos(false);
         return;
       }
@@ -958,7 +957,7 @@ export const TikTokApp = () => {
       setCurrentPage(prev => prev + 1);
       setHasMoreVideos(unusedVideos.length > VIDEOS_PER_BLOCK);
       
-      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total: ${videos.length + nextBlock.length}`);
+      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total agora: ${videos.length + nextBlock.length}/${allAvailableVideos.length}`);
 
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
@@ -966,7 +965,23 @@ export const TikTokApp = () => {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
+  }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK, initializeFeed]);
+  
+  // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
+  useEffect(() => {
+    const shouldLoadMore = currentVideoIndex >= videos.length - 10; // Carrega quando faltam 10 vídeos
+    
+    if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
+      console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...', {
+        currentVideoIndex,
+        videosLength: videos.length,
+        allAvailableLength: allAvailableVideos.length,
+        hasMoreVideos
+      });
+      loadMoreVideos();
+    }
+  }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos, allAvailableVideos.length, loadMoreVideos]);
+  
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {
     try {

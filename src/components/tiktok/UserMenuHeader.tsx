@@ -1,13 +1,26 @@
+import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import { User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const UserMenuHeader = () => {
   const { user, profile, loading } = useCurrentUser();
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -107,14 +120,42 @@ export const UserMenuHeader = () => {
           Ver Perfil
         </Button>
         
-        <Button 
-          onClick={handleLogout}
-          variant="outline"
-          size="sm"
-          className="bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
-        >
-          <LogOut className="w-4 h-4" />
-        </Button>
+        <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="outline"
+              size="sm"
+              className="bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </AlertDialogTrigger>
+          
+          <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-black border-white/10 text-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white text-xl">
+                Confirmar Saída
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-white/70 text-base">
+                Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar o aplicativo.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+              <AlertDialogCancel 
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white border-0"
+              >
+                Sair da Conta
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

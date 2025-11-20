@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import loginBackground from '@/assets/login-background.png';
 import { Loader2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Schema de validação
 const loginSchema = z.object({
@@ -42,6 +43,11 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
+  const backgroundImage = isMobile 
+    ? 'https://tiktokonyfans.b-cdn.net/ANIMA%C3%87OES%20ONYFANS/Design%20sem%20nome%20(6).png'
+    : loginBackground;
 
   // Redirecionar se já estiver logado
   useEffect(() => {
@@ -217,7 +223,7 @@ const Auth = () => {
     <div 
       className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `url(${loginBackground})`
+        backgroundImage: `url(${backgroundImage})`
       }}
     >
       <div className="relative p-1 rounded-lg" style={{

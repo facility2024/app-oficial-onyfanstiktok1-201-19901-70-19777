@@ -38,7 +38,7 @@ export default function ExplorePage() {
 
       {/* Conteúdo Principal */}
       <div className="flex-1 flex flex-col">
-        {/* Header - Mobile Only */}
+        {/* Header - Mobile */}
         <div className="md:hidden sticky top-0 z-50 bg-gradient-to-b from-black/95 to-black/80 backdrop-blur-md border-b border-white/10">
           <div className="flex items-center justify-between px-4 py-3">
             <Button
@@ -47,10 +47,26 @@ export default function ExplorePage() {
               onClick={() => navigate('/app')}
               className="text-white hover:bg-white/10"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-6 h-6 text-white" />
             </Button>
             <h1 className="text-white text-xl font-bold">Explorar</h1>
             <div className="w-10" /> {/* Spacer para centralizar título */}
+          </div>
+        </div>
+
+        {/* Header - Desktop */}
+        <div className="hidden md:block sticky top-0 z-50 bg-gradient-to-b from-black/95 to-black/80 backdrop-blur-md border-b border-white/10">
+          <div className="flex items-center justify-between px-6 py-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/app')}
+              className="text-white hover:bg-white/10 gap-2"
+            >
+              <Home className="w-5 h-5 text-white" />
+              <span>Voltar ao Início</span>
+            </Button>
+            <h1 className="text-white text-2xl font-bold">Explorar</h1>
+            <div className="w-32" /> {/* Spacer para balancear layout */}
           </div>
         </div>
 

@@ -15,7 +15,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2 } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -2677,19 +2677,25 @@ export const TikTokApp = () => {
                    <h3 className="text-lg font-medium text-gray-700 mb-1 mt-4">{currentVideo.title}</h3>
                    <p className="text-gray-600 text-sm leading-relaxed mb-3">{currentVideo.description}</p>
                    
-                   <div className="flex items-center space-x-2">
-                     <p className="text-gray-400 text-sm">♪ {currentVideo.music_name}</p>
-                     {currentVideo.music_name && currentVideo.music_name !== 'Som Original' && (
-                       <span className="text-gray-500 text-xs">🎵</span>
-                     )}
-                     
-                     {/* Vinyl Record for music */}
-                     {currentVideo.music_name && currentVideo.music_name !== 'Som Original' && (
-                       <VinylRecord 
-                         isPlaying={isPlaying && !isMuted}
-                         hasMusic={true}
-                       />
-                     )}
+                   {/* Music Info - Clicável (Desktop) */}
+                   <div 
+                     onClick={() => {
+                       const authorUrl = currentVideo.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(currentVideo.user?.username || '')}`;
+                       const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
+                       window.open(url, '_blank', 'noopener,noreferrer');
+                     }}
+                     className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity active:scale-95 p-2 rounded-lg hover:bg-gray-100"
+                   >
+                     <VinylRecord isPlaying={isPlaying && !isMuted} hasMusic={true} />
+                     <div className="flex items-center gap-1">
+                       <Music className="w-3 h-3 text-gray-600 animate-pulse" />
+                       <span className="text-gray-600 text-sm font-medium">
+                         {currentVideo.music_name || 'Som original'}
+                       </span>
+                       <span className="text-gray-500 text-xs">
+                         • {currentVideo.user?.username || 'Autor'}
+                       </span>
+                     </div>
                    </div>
                  </div>
                </div>

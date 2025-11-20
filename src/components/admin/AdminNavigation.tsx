@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen } from 'lucide-react';
+import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -16,6 +16,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'home', label: 'Home', icon: Home, shortLabel: '🏠' },
     { id: 'posts', label: 'Postagens', icon: BookOpen, shortLabel: '📝' },
     { id: 'users', label: 'Usuários', icon: Users, shortLabel: '👥' },
+    { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },
     { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
     { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },
     { id: 'app', label: 'App', icon: Play, shortLabel: '🎵' },

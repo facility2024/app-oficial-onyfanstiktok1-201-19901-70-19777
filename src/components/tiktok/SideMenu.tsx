@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles, Search, MessagesSquare } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles, Compass, MessagesSquare } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
 
 interface SideMenuProps {
@@ -173,7 +173,7 @@ export const SideMenu = ({
         window.location.href = '/explore';
       }}>
         <div className="w-12 h-12 flex items-center justify-center transition-all">
-          <Search className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
+          <Compass className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
         </div>
         <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">explorar</span>
       </div>

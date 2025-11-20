@@ -2304,7 +2304,7 @@ export const TikTokApp = () => {
 
   // Desktop version (TikTok-like desktop layout)
   return (
-    <div className="min-h-screen bg-white text-white">
+    <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
       <div className="sticky top-0 z-[60] bg-gradient-top flex items-center justify-between px-6 py-4 border-b border-green-200">
         <div className="flex items-center space-x-4">

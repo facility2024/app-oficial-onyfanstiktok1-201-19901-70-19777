@@ -11,6 +11,8 @@ const OfflineHandler = lazy(() => import("@/components/OfflineHandler").then(m =
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("@/components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const Auth = lazy(() => import("./pages/Auth"));
+const ProtectedRoute = lazy(() => import("@/components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -42,47 +44,72 @@ const App = () => (
       </Suspense>
       <BrowserRouter>
         <Routes>
+          {/* Rota de autenticação como HOME */}
           <Route path="/" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Index />
+              <Auth />
             </Suspense>
           } />
+          
+          <Route path="/auth" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <Auth />
+            </Suspense>
+          } />
+          
+          {/* Rotas protegidas do app */}
           <Route path="/app" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Index />
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
             </Suspense>
           } />
+          
           <Route path="/tiktok" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Index />
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
             </Suspense>
           } />
+          
           <Route path="/home" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Index />
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
             </Suspense>
           } />
+          
           <Route path="/index" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Index />
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
             </Suspense>
           } />
+          
           <Route path="/main" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Index />
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
             </Suspense>
           } />
-{/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-<Route path="/admin" element={
-  <Suspense fallback={<ComponentFallback />}>
-    <AdminDashboard />
-  </Suspense>
-} />
-<Route path="*" element={
-  <Suspense fallback={<ComponentFallback />}>
-    <NotFound />
-  </Suspense>
-} />
+
+          {/* Admin continua protegido por seu próprio sistema */}
+          <Route path="/admin" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <AdminDashboard />
+            </Suspense>
+          } />
+          
+          <Route path="*" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <NotFound />
+            </Suspense>
+          } />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

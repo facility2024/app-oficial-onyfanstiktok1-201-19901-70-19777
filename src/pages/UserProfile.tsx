@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Camera, Save, X } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -332,6 +332,29 @@ export default function UserProfile() {
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Card Torne-se Criador */}
+        <Card className="bg-gradient-to-r from-pink-500/10 to-purple-600/10 border-pink-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Sparkles className="w-5 h-5 text-pink-500" />
+              Torne-se um Criador de Conteúdo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-white/80 text-sm">
+              Compartilhe seu talento e ganhe dinheiro com seus vídeos. 
+              Junte-se à nossa comunidade de criadores!
+            </p>
+            <Button 
+              onClick={() => navigate('/creator-application')}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Cadastrar Agora
+            </Button>
           </CardContent>
         </Card>
 

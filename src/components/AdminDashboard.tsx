@@ -30,6 +30,7 @@ import { AdminVideos } from './admin/AdminVideos';
 import { AdminMoney } from './admin/AdminMoney';
 import { AdminSettings } from './admin/AdminSettings';
 import { AdminDocumentation } from './admin/AdminDocumentation';
+import { AdminRoles } from './admin/AdminRoles';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -90,7 +91,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','gamification','videos','money','settings','documentation'];
+    const valid = ['home','app','posts','users','roles','gamification','videos','money','settings','documentation'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -129,6 +130,8 @@ export const AdminDashboard = () => {
         );
       case 'users':
         return <AdminUsers />;
+      case 'roles':
+        return <AdminRoles currentUserId={user?.id} />;
       case 'gamification':
         return <AdminGamification />;
       case 'videos':

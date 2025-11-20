@@ -10,8 +10,21 @@ export const UserMenuHeader = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
+    try {
+      // Flag para evitar múltiplos redirects
+      sessionStorage.setItem('logging_out', 'true');
+      
+      await supabase.auth.signOut();
+      
+      // Esperar antes de navegar para evitar race condition
+      setTimeout(() => {
+        sessionStorage.removeItem('logging_out');
+        navigate('/auth', { replace: true });
+      }, 100);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      sessionStorage.removeItem('logging_out');
+    }
   };
 
   if (loading) {
@@ -28,7 +41,25 @@ export const UserMenuHeader = () => {
     );
   }
 
-  if (!user || !profile) return null;
+  // Se não tiver usuário, mostrar botão de login
+  if (!user) {
+    return (
+      <div className="p-4 border-b border-white/10">
+        <Button 
+          onClick={() => navigate('/auth')}
+          className="w-full"
+          variant="default"
+        >
+          Fazer Login
+        </Button>
+      </div>
+    );
+  }
+
+  // Se tiver usuário mas não perfil, usar dados básicos do auth
+  const displayName = profile?.full_name || profile?.username || user.email?.split('@')[0] || 'Usuário';
+  const displayUsername = profile?.username || user.email?.split('@')[0] || '';
+  const displayEmail = profile?.email || user.email || '';
 
   return (
     <div className="p-4 border-b border-white/10 bg-gradient-to-r from-pink-500/10 to-purple-600/10">
@@ -36,8 +67,8 @@ export const UserMenuHeader = () => {
       <div className="flex items-center gap-3 mb-3">
         <div className="relative">
           <img 
-            src={profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.id} 
-            alt={profile.username || 'User'}
+            src={profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.id} 
+            alt={displayUsername || 'User'}
             className="w-14 h-14 rounded-full object-cover border-2 border-white/20"
           />
           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black"></div>
@@ -45,16 +76,16 @@ export const UserMenuHeader = () => {
         
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold text-base truncate">
-            {profile.full_name || profile.username || 'Usuário'}
+            {displayName}
           </p>
-          {profile.username && (
+          {displayUsername && (
             <p className="text-white/60 text-sm truncate">
-              @{profile.username}
+              @{displayUsername}
             </p>
           )}
-          {profile.email && (
+          {displayEmail && (
             <p className="text-white/40 text-xs truncate">
-              {profile.email}
+              {displayEmail}
             </p>
           )}
         </div>

@@ -89,7 +89,7 @@ export const VideoProgressBar = ({ videoRef }: VideoProgressBarProps) => {
   };
 
   return (
-    <div className="absolute bottom-[140px] left-4 right-24 z-20">
+    <div className="absolute bottom-16 left-4 right-24 z-20">
       {/* Time display */}
       <div className="flex justify-between text-xs text-white/90 mb-1 drop-shadow-lg">
         <span>{formatTime((progress / 100) * duration)}</span>

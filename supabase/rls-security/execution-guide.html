@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Execução RLS - COCONUDI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5em;
+            margin-right: 20px;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+        }
+
+        .step-title {
+            flex: 1;
+        }
+
+        .step-title h2 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .step-priority {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .priority-critical {
+            background: #dc3545;
+            color: white;
+        }
+
+        .priority-high {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .priority-medium {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .code-block code {
+            color: #e06c75;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            margin: 10px 10px 10px 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .button-success {
+            background: #28a745;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-container:hover {
+            border-color: #667eea;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 25px;
+            height: 25px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .links {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Guia de Execução RLS</h1>
+            <p>Sistema de Segurança COCONUDI</p>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-warning">
+                <strong>⚠️ ATENÇÃO:</strong> Faça backup do banco de dados antes de começar!
+                <br><br>
+                <strong>Tempo estimado:</strong> 45-60 minutos
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress" style="width: 0%">0%</div>
+            </div>
+
+            <!-- ETAPA 1 -->
+            <div class="step" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">
+                        <h2>Acessar Supabase Dashboard</h2>
+                        <span class="step-priority priority-critical">CRÍTICO</span>
+                    </div>
+                </div>
+
+                <p>Acesse o SQL Editor do seu projeto Supabase:</p>
+                
+                <a href="https://supabase.com/dashboard/project/tnzvhwapfhkhqjgyiomk/sql" 
+                   class="button" 
+                   target="_blank">
+                    🚀 Abrir Supabase Dashboard
+                </a>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check1" onchange="updateProgress()">
+                    <label for="check1">✅ Acessei o SQL Editor</label>
+                </div>
+            </div>
+
+            <!-- ETAPA 2 -->
+            <div class="step" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">
+                        <h2>Executar Script 01 - Sistema de Roles</h2>
+                        <span class="step-priority priority-critical">CRÍTICO</span>
+                    </div>
+                </div>
+
+                <ol>
+                    <li>Clique em <strong>"New query"</strong> no SQL Editor</li>
+                    <li>Copie o conteúdo de: <code>supabase/rls-security/01-critical-role-system.sql</code></li>
+                    <li>Cole no editor</li>
+                    <li>Clique em <strong>"Run"</strong> (ou pressione F5)</li>
+                    <li>Aguarde a execução (10-30 segundos)</li>
+                </ol>
+
+                <div class="alert alert-info">
+                    <strong>💡 Dica:</strong> Você pode abrir o arquivo .sql no seu editor de código e copiar todo o conteúdo de uma vez.
+                </div>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check2" onchange="updateProgress()">
+                    <label for="check2">✅ Script 01 executado com sucesso</label>
+                </div>
+
+                <h3 style="margin-top: 20px;">Verificar:</h3>
+                <div class="code-block">
+SELECT * FROM public.user_roles;
+SELECT public.has_role('00000000-0000-0000-0000-000000000000'::uuid, 'admin');
+                </div>
+            </div>
+
+            <!-- ETAPA 3 -->
+            <div class="step" id="step3">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">
+                        <h2>Criar Usuário Admin Inicial</h2>
+                        <span class="step-priority priority-critical">CRÍTICO</span>
+                    </div>
+                </div>
+
+                <p><strong>Passo 3.1:</strong> Descobrir seu User ID</p>
+                <div class="code-block">
+-- Execute no SQL Editor:
+SELECT auth.uid();
+
+-- OU veja todos os usuários:
+SELECT id, email, created_at
+FROM auth.users
+ORDER BY created_at DESC;
+                </div>
+
+                <p><strong>Passo 3.2:</strong> Criar Admin (substitua SEU-USER-ID-AQUI pelo UUID copiado)</p>
+                <div class="code-block">
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('SEU-USER-ID-AQUI', 'admin')
+ON CONFLICT (user_id, role) DO NOTHING;
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>⚠️ IMPORTANTE:</strong> Substitua 'SEU-USER-ID-AQUI' pelo seu UUID real!
+                    <br>Exemplo: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+                </div>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check3" onchange="updateProgress()">
+                    <label for="check3">✅ Usuário admin criado e verificado</label>
+                </div>
+
+                <h3 style="margin-top: 20px;">Verificar:</h3>
+                <div class="code-block">
+SELECT * FROM public.user_roles WHERE role = 'admin';
+SELECT public.has_role(auth.uid(), 'admin'); -- Deve retornar true
+                </div>
+            </div>
+
+            <!-- ETAPA 4 -->
+            <div class="step" id="step4">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="step-title">
+                        <h2>Executar Scripts 02 e 03</h2>
+                        <span class="step-priority priority-critical">CRÍTICO</span>
+                    </div>
+                </div>
+
+                <p><strong>Script 02 - Tabelas Principais:</strong></p>
+                <ul>
+                    <li>Arquivo: <code>supabase/rls-security/02-main-tables-policies.sql</code></li>
+                    <li>Tempo: 10-15 segundos</li>
+                </ul>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check4a" onchange="updateProgress()">
+                    <label for="check4a">✅ Script 02 executado</label>
+                </div>
+
+                <p><strong>Script 03 - Dados Sensíveis:</strong></p>
+                <ul>
+                    <li>Arquivo: <code>supabase/rls-security/03-sensitive-data-protection.sql</code></li>
+                    <li>Tempo: 10-15 segundos</li>
+                </ul>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check4b" onchange="updateProgress()">
+                    <label for="check4b">✅ Script 03 executado</label>
+                </div>
+
+                <h3 style="margin-top: 20px;">Verificar:</h3>
+                <div class="code-block">
+SELECT tablename, COUNT(*) as policy_count
+FROM pg_policies
+WHERE tablename IN ('users', 'profiles', 'videos', 'premium_users', 'pix_payments')
+GROUP BY tablename
+ORDER BY tablename;
+                </div>
+            </div>
+
+            <!-- ETAPA 5 -->
+            <div class="step" id="step5">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <div class="step-title">
+                        <h2>Scripts Opcionais (Pode fazer depois)</h2>
+                        <span class="step-priority priority-high">ALTA/MÉDIA</span>
+                    </div>
+                </div>
+
+                <p><strong>Script 04 - Interações:</strong></p>
+                <ul>
+                    <li>Arquivo: <code>supabase/rls-security/04-interaction-tables-policies.sql</code></li>
+                    <li>Prioridade: ALTA (execute em 24-48h)</li>
+                </ul>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check5a" onchange="updateProgress()">
+                    <label for="check5a">✅ Script 04 executado (opcional)</label>
+                </div>
+
+                <p><strong>Script 05 - Auditoria:</strong></p>
+                <ul>
+                    <li>Arquivo: <code>supabase/rls-security/05-analytics-audit.sql</code></li>
+                    <li>Prioridade: MÉDIA (execute em 1 semana)</li>
+                </ul>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check5b" onchange="updateProgress()">
+                    <label for="check5b">✅ Script 05 executado (opcional)</label>
+                </div>
+            </div>
+
+            <!-- ETAPA 6 -->
+            <div class="step" id="step6">
+                <div class="step-header">
+                    <div class="step-number">6</div>
+                    <div class="step-title">
+                        <h2>Verificação Final e Testes</h2>
+                        <span class="step-priority priority-critical">CRÍTICO</span>
+                    </div>
+                </div>
+
+                <h3>Testes de Segurança:</h3>
+
+                <p><strong>1. Verificar sistema de roles:</strong></p>
+                <div class="code-block">
+SELECT COUNT(*) FROM public.user_roles WHERE role = 'admin';
+-- Deve retornar pelo menos 1
+                </div>
+
+                <p><strong>2. Verificar políticas criadas:</strong></p>
+                <div class="code-block">
+SELECT COUNT(*) FROM pg_policies WHERE schemaname = 'public';
+-- Deve retornar 50+ políticas
+                </div>
+
+                <p><strong>3. Testar acesso admin:</strong></p>
+                <div class="code-block">
+SELECT public.has_role(auth.uid(), 'admin');
+-- Deve retornar true
+                </div>
+
+                <div class="checkbox-container" onclick="toggleCheckbox(this)">
+                    <input type="checkbox" id="check6" onchange="updateProgress()">
+                    <label for="check6">✅ Todos os testes passaram</label>
+                </div>
+            </div>
+
+            <!-- CONCLUSÃO -->
+            <div class="alert alert-success" id="completion" style="display: none;">
+                <h2>🎉 Parabéns! Implementação Concluída!</h2>
+                <p>Seu sistema COCONUDI agora tem:</p>
+                <ul>
+                    <li>✅ Sistema de roles seguro</li>
+                    <li>✅ Proteção de dados pessoais (PII)</li>
+                    <li>✅ Políticas RLS otimizadas</li>
+                    <li>✅ Rate limiting implementado</li>
+                    <li>✅ Auditoria de segurança</li>
+                </ul>
+            </div>
+
+            <div class="links">
+                <h3>📚 Documentação Completa:</h3>
+                <ul>
+                    <li><a href="../RLS_IMPLEMENTATION_GUIDE.md">Guia de Implementação Completo</a></li>
+                    <li><a href="./EXECUTION_GUIDE.md">Guia de Execução Detalhado</a></li>
+                    <li><a href="./README.md">README - Visão Geral</a></li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">🆘 Problemas?</h3>
+                <p>Consulte a seção "Troubleshooting" no <a href="./EXECUTION_GUIDE.md">Guia de Execução</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleCheckbox(container) {
+            const checkbox = container.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const total = checkboxes.length;
+            let checked = 0;
+
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    checked++;
+                    const step = cb.closest('.step');
+                    if (step) step.classList.add('completed');
+                } else {
+                    const step = cb.closest('.step');
+                    if (step) step.classList.remove('completed');
+                }
+            });
+
+            const percentage = Math.round((checked / total) * 100);
+            const progressFill = document.getElementById('progress');
+            progressFill.style.width = percentage + '%';
+            progressFill.textContent = percentage + '%';
+
+            // Mostrar mensagem de conclusão
+            if (percentage === 100) {
+                document.getElementById('completion').style.display = 'block';
+                document.getElementById('completion').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                document.getElementById('completion').style.display = 'none';
+            }
+
+            // Salvar progresso no localStorage
+            const progress = {};
+            checkboxes.forEach((cb, index) => {
+                progress['check' + index] = cb.checked;
+            });
+            localStorage.setItem('rlsProgress', JSON.stringify(progress));
+        }
+
+        // Carregar progresso salvo
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('rlsProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                Object.keys(progress).forEach((key, index) => {
+                    const checkbox = document.querySelectorAll('input[type="checkbox"]')[index];
+                    if (checkbox) {
+                        checkbox.checked = progress[key];
+                    }
+                });
+                updateProgress();
+            }
+        });
+    </script>
+</body>
+</html>

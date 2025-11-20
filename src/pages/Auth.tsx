@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import loginBackground from '@/assets/login-background.png';
 import { Loader2 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 // Schema de validação
 const loginSchema = z.object({
@@ -43,11 +42,6 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  
-  const backgroundImage = isMobile 
-    ? 'https://tiktokonyfans.b-cdn.net/ANIMA%C3%87%C3%95ES%20ONYFANS/Design%20sem%20nome%20(6).png'
-    : loginBackground;
 
   // Redirecionar se já estiver logado
   useEffect(() => {
@@ -219,108 +213,68 @@ const Auth = () => {
     }
   };
 
-  return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: `url(${backgroundImage})`
-      }}
-    >
-      <div className="relative p-1 rounded-lg" style={{
-        background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
-      }}>
-        <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0 overflow-y-auto max-h-[90vh]">
-        <CardHeader className="space-y-2 pb-3">
-          <div className="flex flex-col items-center justify-center space-y-1">
-            <img src={coconudiLogo} alt="COCONUDI" className="h-10 md:h-12 object-contain animate-float" />
-            <h1 className="text-lg md:text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
-          </div>
-          <div className="text-center space-y-1">
-            <CardTitle className="text-lg md:text-xl font-bold text-foreground">
-              {mode === 'login' && 'Bem-vindo de volta'}
-              {mode === 'signup' && 'Criar conta'}
-              {mode === 'forgot-password' && 'Recuperar senha'}
-              {mode === 'reset-password' && 'Redefinir senha'}
-            </CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
-              {mode === 'login' && 'Entre para acessar conteúdo exclusivo'}
-              {mode === 'signup' && 'Cadastre-se para começar'}
-              {mode === 'forgot-password' && 'Enviaremos um link para seu email'}
-              {mode === 'reset-password' && 'Digite sua nova senha'}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="pt-0 px-4 md:px-6">
-          <form onSubmit={
-            mode === 'login' ? handleSignIn : 
-            mode === 'signup' ? handleSignUp : 
-            mode === 'forgot-password' ? handleForgotPassword : 
-            handleResetPassword
-          } className="space-y-3">
-            {mode === 'signup' && (
-              <div className="space-y-1">
-                <Label htmlFor="name" className="text-xs md:text-sm text-foreground">Nome Completo</Label>
-                <Input 
-                  id="name" 
-                  type="text" 
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-background border-border text-foreground"
-                  placeholder="Seu nome"
-                  required
-                  disabled={loading}
-                />
-              </div>
-            )}
-            
+  const renderCard = () => (
+    <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0 overflow-y-auto max-h-[90vh]">
+      <CardHeader className="space-y-2 pb-3">
+        <div className="flex flex-col items-center justify-center space-y-1">
+          <img src={coconudiLogo} alt="COCONUDI" className="h-10 md:h-12 object-contain animate-float" />
+          <h1 className="text-lg md:text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
+        </div>
+        <div className="text-center space-y-1">
+          <CardTitle className="text-lg md:text-xl font-bold text-foreground">
+            {mode === 'login' && 'Bem-vindo de volta'}
+            {mode === 'signup' && 'Criar conta'}
+            {mode === 'forgot-password' && 'Recuperar senha'}
+            {mode === 'reset-password' && 'Redefinir senha'}
+          </CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            {mode === 'login' && 'Entre para acessar conteúdo exclusivo'}
+            {mode === 'signup' && 'Cadastre-se para começar'}
+            {mode === 'forgot-password' && 'Enviaremos um link para seu email'}
+            {mode === 'reset-password' && 'Digite sua nova senha'}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pt-0 px-4 md:px-6">
+        <form onSubmit={
+          mode === 'login' ? handleSignIn : 
+          mode === 'signup' ? handleSignUp : 
+          mode === 'forgot-password' ? handleForgotPassword : 
+          handleResetPassword
+        } className="space-y-3">
+          {mode === 'signup' && (
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-xs md:text-sm text-foreground">Email</Label>
+              <Label htmlFor="name" className="text-xs md:text-sm text-foreground">Nome Completo</Label>
               <Input 
-                id="email" 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="name" 
+                type="text" 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="bg-background border-border text-foreground"
-                placeholder="seu@email.com"
+                placeholder="Seu nome"
                 required
                 disabled={loading}
               />
             </div>
-            
-            {mode === 'login' && (
-              <>
-                <div className="space-y-1">
-                  <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-background border-border text-foreground"
-                    placeholder="••••••••"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('forgot-password');
-                      setPassword('');
-                    }}
-                    className="text-sm text-primary hover:underline transition-colors"
-                    disabled={loading}
-                  >
-                    Esqueci minha senha
-                  </button>
-                </div>
-              </>
-            )}
-
-            {mode === 'signup' && (
+          )}
+          
+          <div className="space-y-1">
+            <Label htmlFor="email" className="text-xs md:text-sm text-foreground">Email</Label>
+            <Input 
+              id="email" 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-background border-border text-foreground"
+              placeholder="seu@email.com"
+              required
+              disabled={loading}
+            />
+          </div>
+          
+          {mode === 'login' && (
+            <>
               <div className="space-y-1">
                 <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
                 <Input 
@@ -334,122 +288,183 @@ const Auth = () => {
                   disabled={loading}
                 />
               </div>
-            )}
+              
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('forgot-password');
+                    setPassword('');
+                  }}
+                  className="text-sm text-primary hover:underline transition-colors"
+                  disabled={loading}
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+            </>
+          )}
 
-            {mode === 'forgot-password' && (
-              <p className="text-xs text-muted-foreground">
-                Enviaremos um link de recuperação para este email.
-              </p>
-            )}
+          {mode === 'signup' && (
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-background border-border text-foreground"
+                placeholder="••••••••"
+                required
+                disabled={loading}
+              />
+            </div>
+          )}
 
-            {mode === 'reset-password' && (
+          {mode === 'forgot-password' && (
+            <p className="text-xs text-muted-foreground">
+              Enviaremos um link de recuperação para este email.
+            </p>
+          )}
+
+          {mode === 'reset-password' && (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="newPassword" className="text-xs md:text-sm text-foreground">Nova Senha</Label>
+                <Input 
+                  id="newPassword" 
+                  type="password" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="bg-background border-border text-foreground"
+                  placeholder="••••••••"
+                  required
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="confirmPassword" className="text-xs md:text-sm text-foreground">Confirmar Senha</Label>
+                <Input 
+                  id="confirmPassword" 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-background border-border text-foreground"
+                  placeholder="••••••••"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </>
+          )}
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            disabled={loading}
+          >
+            {loading ? (
               <>
-                <div className="space-y-1">
-                  <Label htmlFor="newPassword" className="text-xs md:text-sm text-foreground">Nova Senha</Label>
-                  <Input 
-                    id="newPassword" 
-                    type="password" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="bg-background border-border text-foreground"
-                    placeholder="••••••••"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <Label htmlFor="confirmPassword" className="text-xs md:text-sm text-foreground">Confirmar Senha</Label>
-                  <Input 
-                    id="confirmPassword" 
-                    type="password" 
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-background border-border text-foreground"
-                    placeholder="••••••••"
-                    required
-                    disabled={loading}
-                  />
-                </div>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === 'forgot-password' ? 'Enviando...' : 
+                 mode === 'reset-password' ? 'Redefinindo...' : 
+                 'Aguarde...'}
+              </>
+            ) : (
+              <>
+                {mode === 'login' && 'Entrar'}
+                {mode === 'signup' && 'Criar Conta'}
+                {mode === 'forgot-password' && 'Enviar link de recuperação'}
+                {mode === 'reset-password' && 'Redefinir Senha'}
               </>
             )}
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          </Button>
+          
+          {mode === 'forgot-password' && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setMode('login');
+                setEmail('');
+              }}
               disabled={loading}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'forgot-password' ? 'Enviando...' : 
-                   mode === 'reset-password' ? 'Redefinindo...' : 
-                   'Aguarde...'}
-                </>
-              ) : (
-                <>
-                  {mode === 'login' && 'Entrar'}
-                  {mode === 'signup' && 'Criar Conta'}
-                  {mode === 'forgot-password' && 'Enviar link de recuperação'}
-                  {mode === 'reset-password' && 'Redefinir Senha'}
-                </>
-              )}
+              Voltar para login
             </Button>
-            
-            {mode === 'forgot-password' && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => {
-                  setMode('login');
-                  setEmail('');
-                }}
-                disabled={loading}
-              >
-                Voltar para login
-              </Button>
-            )}
-          </form>
+          )}
+        </form>
+        
+        <div className="mt-4 text-center">
+          {(mode === 'login' || mode === 'signup') && (
+            <button
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login');
+                setEmail('');
+                setPassword('');
+                setName('');
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              disabled={loading}
+            >
+              {mode === 'login' 
+                ? 'Não tem conta? Cadastre-se' 
+                : 'Já tem conta? Entrar'}
+            </button>
+          )}
           
-          <div className="mt-4 text-center">
-            {(mode === 'login' || mode === 'signup') && (
-              <button
-                onClick={() => {
-                  setMode(mode === 'login' ? 'signup' : 'login');
-                  setEmail('');
-                  setPassword('');
-                  setName('');
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                disabled={loading}
-              >
-                {mode === 'login' 
-                  ? 'Não tem conta? Cadastre-se' 
-                  : 'Já tem conta? Entrar'}
-              </button>
-            )}
-            
-            {(mode === 'forgot-password' || mode === 'reset-password') && (
-              <button
-                onClick={() => {
-                  setMode('login');
-                  setEmail('');
-                  setPassword('');
-                  setNewPassword('');
-                  setConfirmPassword('');
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                disabled={loading}
-              >
-                ← Voltar para login
-              </button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          {(mode === 'forgot-password' || mode === 'reset-password') && (
+            <button
+              onClick={() => {
+                setMode('login');
+                setEmail('');
+                setPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              disabled={loading}
+            >
+              ← Voltar para login
+            </button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <>
+      {/* Background para Mobile */}
+      <div 
+        className="md:hidden min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/ANIMA%C3%87%C3%95ES%20ONYFANS/Design%20sem%20nome%20(6).png)'
+        }}
+      >
+        <div className="relative p-1 rounded-lg" style={{
+          background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
+        }}>
+          {renderCard()}
+        </div>
       </div>
-    </div>
+      
+      {/* Background para Desktop */}
+      <div 
+        className="hidden md:flex min-h-screen items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${loginBackground})`
+        }}
+      >
+        <div className="relative p-1 rounded-lg" style={{
+          background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
+        }}>
+          {renderCard()}
+        </div>
+      </div>
+    </>
   );
 };
 

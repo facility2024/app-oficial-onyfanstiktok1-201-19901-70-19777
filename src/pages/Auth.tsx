@@ -223,20 +223,20 @@ const Auth = () => {
       <div className="relative p-1 rounded-lg" style={{
         background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
       }}>
-        <Card className="w-full max-w-[380px] bg-card shadow-2xl border-0">
-        <CardHeader className="space-y-4">
-          <div className="flex flex-col items-center justify-center space-y-2">
-            <img src={coconudiLogo} alt="COCONUDI" className="h-16 object-contain animate-float" />
-            <h1 className="text-2xl font-bold text-foreground tracking-wide">CocoNudi</h1>
+        <Card className="w-full max-w-[340px] bg-card shadow-2xl border-0">
+        <CardHeader className="space-y-2 pb-4">
+          <div className="flex flex-col items-center justify-center space-y-1">
+            <img src={coconudiLogo} alt="COCONUDI" className="h-12 object-contain animate-float" />
+            <h1 className="text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
           </div>
-          <div className="text-center space-y-2">
-            <CardTitle className="text-2xl font-bold text-foreground">
+          <div className="text-center space-y-1">
+            <CardTitle className="text-xl font-bold text-foreground">
               {mode === 'login' && 'Bem-vindo de volta'}
               {mode === 'signup' && 'Criar conta'}
               {mode === 'forgot-password' && 'Recuperar senha'}
               {mode === 'reset-password' && 'Redefinir senha'}
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-sm text-muted-foreground">
               {mode === 'login' && 'Entre para acessar conteúdo exclusivo'}
               {mode === 'signup' && 'Cadastre-se para começar'}
               {mode === 'forgot-password' && 'Enviaremos um link para seu email'}
@@ -245,16 +245,16 @@ const Auth = () => {
           </div>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="pt-0">
           <form onSubmit={
             mode === 'login' ? handleSignIn : 
             mode === 'signup' ? handleSignUp : 
             mode === 'forgot-password' ? handleForgotPassword : 
             handleResetPassword
-          } className="space-y-4">
+          } className="space-y-3">
             {mode === 'signup' && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-foreground">Nome Completo</Label>
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-sm text-foreground">Nome Completo</Label>
                 <Input 
                   id="name" 
                   type="text" 
@@ -268,8 +268,8 @@ const Auth = () => {
               </div>
             )}
             
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm text-foreground">Email</Label>
               <Input 
                 id="email" 
                 type="email" 
@@ -284,8 +284,8 @@ const Auth = () => {
             
             {mode === 'login' && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-foreground">Senha</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="password" className="text-sm text-foreground">Senha</Label>
                   <Input 
                     id="password" 
                     type="password" 
@@ -315,8 +315,8 @@ const Auth = () => {
             )}
 
             {mode === 'signup' && (
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground">Senha</Label>
+              <div className="space-y-1">
+                <Label htmlFor="password" className="text-sm text-foreground">Senha</Label>
                 <Input 
                   id="password" 
                   type="password" 
@@ -338,8 +338,8 @@ const Auth = () => {
 
             {mode === 'reset-password' && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword" className="text-foreground">Nova Senha</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="newPassword" className="text-sm text-foreground">Nova Senha</Label>
                   <Input 
                     id="newPassword" 
                     type="password" 
@@ -352,8 +352,8 @@ const Auth = () => {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-foreground">Confirmar Senha</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="confirmPassword" className="text-sm text-foreground">Confirmar Senha</Label>
                   <Input 
                     id="confirmPassword" 
                     type="password" 
@@ -406,7 +406,7 @@ const Auth = () => {
             )}
           </form>
           
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             {(mode === 'login' || mode === 'signup') && (
               <button
                 onClick={() => {

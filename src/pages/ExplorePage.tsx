@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Home, TrendingUp, User, MoreHorizontal, Heart, MessageCircle, Play } from 'lucide-react';
+import { ArrowLeft, Home, TrendingUp, User, MoreHorizontal, Heart, MessageCircle, Play, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 
@@ -114,6 +114,14 @@ export default function ExplorePage() {
           >
             <Home className="w-6 h-6 mb-1" />
             <span className="text-xs">Início</span>
+          </button>
+
+          <button
+            onClick={() => setSelectedTab('explore')}
+            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
+          >
+            <Grid className="w-6 h-6 mb-1" strokeWidth={1.5} />
+            <span className="text-xs">Explorar</span>
           </button>
 
           <button

@@ -144,19 +144,7 @@ export const CategoryMenu = ({
             {/* Patrocinado */}
             <AdCarousel />
             
-            {/* Modelos em Destaque - Primeira metade */}
-            <ModelCarousel 
-              title="Modelos em Destaque" 
-              icon="🔥"
-              direction="rtl"
-              carouselIndex={0}
-              onSelectModel={(modelId) => {
-                onSelectModel?.(modelId);
-                setOpen(false);
-              }}
-            />
-            
-            {/* Novas Modelos - Segunda metade */}
+            {/* Novas Modelos */}
             <ModelCarousel 
               title="Novas Modelos" 
               icon="✨"

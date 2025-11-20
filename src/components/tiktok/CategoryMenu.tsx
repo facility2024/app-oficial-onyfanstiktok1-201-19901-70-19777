@@ -1,147 +1,102 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Home, Users, TrendingUp, Star, Settings, LogOut, Heart, Flame, Sparkles, Video } from "lucide-react";
+import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
-import { FeaturedSection } from "./FeaturedSection";
-import { AdCarousel } from "./AdCarousel";
-import { ModelCarousel } from "./ModelCarousel";
+import { useNavigate } from "react-router-dom";
 
-interface CategoryItem {
+interface MenuItemProps {
   id: string;
   name: string;
   icon: React.ReactNode;
   onClick: () => void;
 }
 
-interface Category {
-  title: string;
-  items: CategoryItem[];
-}
-
 interface CategoryMenuProps {
-  onNavigateHome?: () => void;
-  onOpenSearch?: () => void;
   onOpenLive?: () => void;
   onExit?: () => void;
-  onSelectModel?: (modelId: string) => void;
 }
 
 export const CategoryMenu = ({ 
-  onNavigateHome, 
-  onOpenSearch, 
   onOpenLive,
-  onExit,
-  onSelectModel
+  onExit
 }: CategoryMenuProps) => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const categories: Category[] = [
+  const menuItems: MenuItemProps[] = [
     {
-      title: "Navegação",
-      items: [
-        {
-          id: "home",
-          name: "Início",
-          icon: <Home className="w-5 h-5" />,
-          onClick: () => {
-            onNavigateHome?.();
-            setOpen(false);
-          }
-        },
-        {
-          id: "trending",
-          name: "Em Alta",
-          icon: <TrendingUp className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Em Alta clicado");
-            setOpen(false);
-          }
-        },
-        {
-          id: "live",
-          name: "Lives",
-          icon: <Video className="w-5 h-5" />,
-          onClick: () => {
-            onOpenLive?.();
-            setOpen(false);
-          }
-        }
-      ]
+      id: "live",
+      name: "Live",
+      icon: <Video className="w-5 h-5" />,
+      onClick: () => {
+        onOpenLive?.();
+        setOpen(false);
+      }
     },
     {
-      title: "Categorias",
-      items: [
-        {
-          id: "favorites",
-          name: "Favoritos",
-          icon: <Heart className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Favoritos clicado");
-            setOpen(false);
-          }
-        },
-        {
-          id: "popular",
-          name: "Mais Popular",
-          icon: <Flame className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Mais Popular clicado");
-            setOpen(false);
-          }
-        },
-        {
-          id: "premium",
-          name: "Premium",
-          icon: <Sparkles className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Premium clicado");
-            setOpen(false);
-          }
-        },
-        {
-          id: "following",
-          name: "Seguindo",
-          icon: <Users className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Seguindo clicado");
-            setOpen(false);
-          }
-        }
-      ]
+      id: "following",
+      name: "Seguindo",
+      icon: <Users className="w-5 h-5" />,
+      onClick: () => {
+        console.log("Seguindo clicado");
+        setOpen(false);
+      }
     },
     {
-      title: "Conta",
-      items: [
-        {
-          id: "starred",
-          name: "Destaques",
-          icon: <Star className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Destaques clicado");
-            setOpen(false);
-          }
-        },
-        {
-          id: "settings",
-          name: "Configurações",
-          icon: <Settings className="w-5 h-5" />,
-          onClick: () => {
-            console.log("Configurações clicado");
-            setOpen(false);
-          }
-        },
-        {
-          id: "exit",
-          name: "Sair",
-          icon: <LogOut className="w-5 h-5" />,
-          onClick: () => {
-            onExit?.();
-            setOpen(false);
-          }
-        }
-      ]
+      id: "marketplace",
+      name: "Market-Place",
+      icon: <ShoppingBag className="w-5 h-5" />,
+      onClick: () => {
+        console.log("Market-Place clicado");
+        setOpen(false);
+      }
+    },
+    {
+      id: "local-business",
+      name: "Negócios Locais",
+      icon: <MapPin className="w-5 h-5" />,
+      onClick: () => {
+        console.log("Negócios Locais clicado");
+        setOpen(false);
+      }
+    },
+    {
+      id: "collections",
+      name: "Coleções",
+      icon: <BookmarkPlus className="w-5 h-5" />,
+      onClick: () => {
+        console.log("Coleções clicado");
+        setOpen(false);
+      }
+    },
+    {
+      id: "subscriptions",
+      name: "Assinaturas",
+      icon: <CreditCard className="w-5 h-5" />,
+      onClick: () => {
+        console.log("Assinaturas clicado");
+        setOpen(false);
+      }
+    },
+    {
+      id: "creator",
+      name: "Sou Criador",
+      icon: <Sparkles className="w-5 h-5" />,
+      onClick: () => {
+        navigate('/creator-application');
+        setOpen(false);
+      }
+    },
+    {
+      id: "exit",
+      name: "Sair",
+      icon: <LogOut className="w-5 h-5" />,
+      onClick: () => {
+        onExit?.();
+        setOpen(false);
+      }
     }
   ];
 
@@ -153,7 +108,7 @@ export const CategoryMenu = ({
         </button>
       </SheetTrigger>
       <SheetContent side="left" className="w-80 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0 flex flex-col">
-        {/* Parte Fixa - Header e Perfil */}
+        {/* Header Fixo */}
         <div className="flex-shrink-0">
           <SheetHeader className="p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -174,59 +129,19 @@ export const CategoryMenu = ({
           <UserMenuHeader />
         </div>
         
-        {/* Parte Rolável - Destaque, Patrocinado, Modelos e Navegação */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
-          <div className="py-4 space-y-4 px-4">
-            {/* Destaque */}
-            <FeaturedSection />
-            
-            {/* Patrocinado */}
-            <AdCarousel />
-            
-            {/* Modelos em Destaque */}
-            <ModelCarousel 
-              title="Modelos em Destaque" 
-              icon="🔥"
-              direction="rtl"
-              onSelectModel={(modelId) => {
-                onSelectModel?.(modelId);
-                setOpen(false);
-              }}
-            />
-            
-            {/* Novas Modelos */}
-            <ModelCarousel 
-              title="Novas Modelos" 
-              icon="✨"
-              direction="ltr"
-              onSelectModel={(modelId) => {
-                onSelectModel?.(modelId);
-                setOpen(false);
-              }}
-            />
-          </div>
-
-          {/* Categorias de Navegação */}
-          <div className="py-4">
-            {categories.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="mb-6">
-                <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                  {category.title}
-                </h3>
-                <div className="space-y-1">
-                  {category.items.map((item) => (
-                    <Button
-                      key={item.id}
-                      variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
-                      onClick={item.onClick}
-                    >
-                      <span className="mr-3">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
+        {/* Menu de Navegação */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide py-4">
+          <div className="space-y-1">
+            {menuItems.map((item) => (
+              <Button
+                key={item.id}
+                variant="ghost"
+                className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
+                onClick={item.onClick}
+              >
+                <span className="mr-3">{item.icon}</span>
+                <span>{item.name}</span>
+              </Button>
             ))}
           </div>
         </div>

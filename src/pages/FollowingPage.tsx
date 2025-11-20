@@ -32,11 +32,15 @@ export default function FollowingPage() {
         return;
       }
 
+      // Construir a condição OR apenas com IDs válidos
+      const userIds = [anonymousUserId, authUserId].filter(Boolean);
+      const orCondition = userIds.map(id => `user_id.eq.${id}`).join(',');
+
       // Busca as modelos seguidas
       const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
         .select('model_id')
-        .or(`user_id.eq.${anonymousUserId},user_id.eq.${authUserId}`)
+        .or(orCondition)
         .eq('is_active', true);
 
       if (followError) throw followError;

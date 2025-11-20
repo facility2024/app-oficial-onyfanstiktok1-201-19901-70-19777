@@ -1579,11 +1579,11 @@ export const TikTokApp = () => {
     console.log('🔔 SEGUIR: Iniciando follow modelo', currentVideo.user.id);
 
     try {
-      // Usar ID de sessão anônima (não requer login)
-      let userId = sessionStorage.getItem('user_id');
+      // Usar ID de sessão anônima (mesmo sistema do FollowingPage)
+      let userId = localStorage.getItem('anonymous_user_id');
       if (!userId) {
         userId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', userId);
+        localStorage.setItem('anonymous_user_id', userId);
       }
 
       // Atualizar estado local IMEDIATAMENTE

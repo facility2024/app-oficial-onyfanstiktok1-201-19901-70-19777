@@ -1,0 +1,432 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { CheckCircle, XCircle, Clock, Eye, MessageSquare, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface CreatorApplication {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  whatsapp: string;
+  nickname: string;
+  bio: string;
+  gender: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submitted_at: string;
+  reviewed_at?: string;
+  rejection_reason?: string;
+}
+
+interface AdminCreatorApplicationsProps {
+  currentUserId?: string;
+}
+
+export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
+  const [applications, setApplications] = useState<CreatorApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    fetchApplications();
+    
+    // Real-time subscription
+    const channel = supabase
+      .channel('creator_applications_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'creator_applications'
+        },
+        () => {
+          fetchApplications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchApplications = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('creator_applications')
+        .select('*')
+        .order('submitted_at', { ascending: false });
+
+      if (error) throw error;
+      setApplications(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar aplicações:', error);
+      toast.error('Erro ao carregar aplicações');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (application: CreatorApplication) => {
+    if (!currentUserId) {
+      toast.error('Usuário não identificado');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+
+      // Add creator role
+      const { error: roleError } = await (supabase as any)
+        .from('user_roles')
+        .insert({
+          user_id: application.user_id,
+          role: 'creator',
+          granted_by: currentUserId
+        });
+
+      if (roleError && roleError.code !== '23505') throw roleError;
+
+      // Update application status
+      const { error: updateError } = await (supabase as any)
+        .from('creator_applications')
+        .update({
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: currentUserId
+        })
+        .eq('id', application.id);
+
+      if (updateError) throw updateError;
+
+      // Track event
+      await supabase.from('analytics_events').insert({
+        event_name: 'creator_application_approved',
+        event_category: 'admin',
+        user_id: currentUserId,
+        event_data: {
+          creator_id: application.user_id,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      toast.success('Aplicação aprovada! O usuário agora é um criador.');
+      setSelectedApp(null);
+    } catch (error: any) {
+      console.error('Erro ao aprovar aplicação:', error);
+      toast.error('Erro ao aprovar aplicação');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedApp || !currentUserId) return;
+
+    if (!rejectionReason.trim()) {
+      toast.error('Por favor, informe o motivo da rejeição');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+
+      const { error } = await (supabase as any)
+        .from('creator_applications')
+        .update({
+          status: 'rejected',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: currentUserId,
+          rejection_reason: rejectionReason
+        })
+        .eq('id', selectedApp.id);
+
+      if (error) throw error;
+
+      toast.success('Aplicação rejeitada');
+      setShowRejectModal(false);
+      setSelectedApp(null);
+      setRejectionReason('');
+    } catch (error) {
+      console.error('Erro ao rejeitar aplicação:', error);
+      toast.error('Erro ao rejeitar aplicação');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-500/10 text-green-500"><CheckCircle className="w-3 h-3 mr-1" />Aprovada</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-500/10 text-red-500"><XCircle className="w-3 h-3 mr-1" />Rejeitada</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  const openWhatsApp = (whatsapp: string) => {
+    const number = whatsapp.replace(/\D/g, '');
+    window.open(`https://wa.me/55${number}`, '_blank');
+  };
+
+  const filteredApplications = (status: string) => {
+    return applications.filter(app => app.status === status);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            👥 Aplicações de Criadores
+            <Badge variant="secondary">
+              {filteredApplications('pending').length} pendentes
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="pending">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">
+                Pendentes ({filteredApplications('pending').length})
+              </TabsTrigger>
+              <TabsTrigger value="approved">
+                Aprovadas ({filteredApplications('approved').length})
+              </TabsTrigger>
+              <TabsTrigger value="rejected">
+                Rejeitadas ({filteredApplications('rejected').length})
+              </TabsTrigger>
+            </TabsList>
+
+            {['pending', 'approved', 'rejected'].map(status => (
+              <TabsContent key={status} value={status} className="space-y-4 mt-4">
+                {filteredApplications(status).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhuma aplicação {status === 'pending' ? 'pendente' : status === 'approved' ? 'aprovada' : 'rejeitada'}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredApplications(status).map(app => (
+                      <Card key={app.id} className="bg-card/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-3">
+                                <h3 className="font-semibold">{app.full_name}</h3>
+                                {getStatusBadge(app.status)}
+                              </div>
+                              <div className="text-sm text-muted-foreground space-y-1">
+                                <p>📧 {app.email}</p>
+                                <p>🎭 {app.nickname}</p>
+                                <p>
+                                  📱{' '}
+                                  <button
+                                    onClick={() => openWhatsApp(app.whatsapp)}
+                                    className="text-primary hover:underline inline-flex items-center gap-1"
+                                  >
+                                    {app.whatsapp}
+                                    <ExternalLink className="w-3 h-3" />
+                                  </button>
+                                </p>
+                                <p>📅 {new Date(app.submitted_at).toLocaleDateString('pt-BR')}</p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedApp(app)}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                Ver Detalhes
+                              </Button>
+                              {app.status === 'pending' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleApprove(app)}
+                                    disabled={processing}
+                                    className="bg-green-500 hover:bg-green-600"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Aprovar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                      setSelectedApp(app);
+                                      setShowRejectModal(true);
+                                    }}
+                                    disabled={processing}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Rejeitar
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Details Modal */}
+      <Dialog open={!!selectedApp && !showRejectModal} onOpenChange={() => setSelectedApp(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Aplicação</DialogTitle>
+          </DialogHeader>
+          {selectedApp && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Nome Completo</Label>
+                  <p className="font-medium">{selectedApp.full_name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Apelido</Label>
+                  <p className="font-medium">{selectedApp.nickname}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Email</Label>
+                  <p className="font-medium">{selectedApp.email}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">WhatsApp</Label>
+                  <button
+                    onClick={() => openWhatsApp(selectedApp.whatsapp)}
+                    className="font-medium text-primary hover:underline flex items-center gap-1"
+                  >
+                    {selectedApp.whatsapp}
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Sexo</Label>
+                  <p className="font-medium capitalize">{selectedApp.gender.replace('-', ' ')}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedApp.status)}</div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-muted-foreground">Biografia</Label>
+                <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedApp.bio}</p>
+              </div>
+
+              {selectedApp.rejection_reason && (
+                <div>
+                  <Label className="text-red-500">Motivo da Rejeição</Label>
+                  <p className="mt-1 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm">
+                    {selectedApp.rejection_reason}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                {selectedApp.status === 'pending' && (
+                  <>
+                    <Button
+                      onClick={() => handleApprove(selectedApp)}
+                      disabled={processing}
+                      className="flex-1 bg-green-500 hover:bg-green-600"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Aprovar Aplicação
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowRejectModal(true)}
+                      disabled={processing}
+                      className="flex-1"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Rejeitar Aplicação
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Modal */}
+      <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rejeitar Aplicação</DialogTitle>
+            <DialogDescription>
+              Por favor, informe o motivo da rejeição. O usuário receberá esta mensagem.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection_reason">Motivo *</Label>
+              <Textarea
+                id="rejection_reason"
+                placeholder="Ex: As informações fornecidas não atendem aos requisitos mínimos..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="min-h-[120px] mt-2"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectionReason('');
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleReject}
+                disabled={processing || !rejectionReason.trim()}
+                className="flex-1"
+              >
+                Confirmar Rejeição
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};

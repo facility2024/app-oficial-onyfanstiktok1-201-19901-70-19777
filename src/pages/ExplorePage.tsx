@@ -100,9 +100,7 @@ export default function ExplorePage() {
               setSelectedTab('home');
               navigate('/app');
             }}
-            className={`flex flex-col items-center justify-center py-3 transition-colors ${
-              selectedTab === 'home' ? 'text-white' : 'text-gray-400'
-            }`}
+            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <Home className="w-6 h-6 mb-1" />
             <span className="text-xs">Início</span>
@@ -110,9 +108,7 @@ export default function ExplorePage() {
 
           <button
             onClick={() => setSelectedTab('trending')}
-            className={`flex flex-col items-center justify-center py-3 transition-colors ${
-              selectedTab === 'trending' ? 'text-white' : 'text-gray-400'
-            }`}
+            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <TrendingUp className="w-6 h-6 mb-1" />
             <span className="text-xs">Em alta</span>
@@ -123,9 +119,7 @@ export default function ExplorePage() {
               setSelectedTab('profile');
               navigate('/profile');
             }}
-            className={`flex flex-col items-center justify-center py-3 transition-colors ${
-              selectedTab === 'profile' ? 'text-white' : 'text-gray-400'
-            }`}
+            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <User className="w-6 h-6 mb-1" />
             <span className="text-xs">Meu perfil</span>
@@ -133,9 +127,7 @@ export default function ExplorePage() {
 
           <button
             onClick={() => setSelectedTab('more')}
-            className={`flex flex-col items-center justify-center py-3 transition-colors ${
-              selectedTab === 'more' ? 'text-white' : 'text-gray-400'
-            }`}
+            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <MoreHorizontal className="w-6 h-6 mb-1" />
             <span className="text-xs">Mais</span>

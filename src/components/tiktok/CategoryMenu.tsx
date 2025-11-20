@@ -150,11 +150,13 @@ export const CategoryMenu = ({
       <SheetContent side="left" className="w-80 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0">
         <SheetHeader className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <img 
-              src={coconutIcon} 
-              alt="Coconudi" 
-              className="w-10 h-10 rounded-full"
-            />
+            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+              <img 
+                src={coconutIcon} 
+                alt="Coconudi" 
+                className="w-full h-full object-cover"
+              />
+            </div>
             <SheetTitle className="text-white text-2xl font-bold tracking-tight">
               coconudi
             </SheetTitle>

@@ -2595,17 +2595,21 @@ export const TikTokApp = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <img
-                      src={currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                      alt={currentVideo.user.username}
-                      className="w-10 h-10 rounded-full object-cover cursor-pointer"
+                    <div 
+                      className="w-10 h-10 rounded-full overflow-hidden shrink-0 cursor-pointer border-2 border-gray-300"
                       onClick={() => {
                         if (checkAndTrackAction('profile_view')) {
                           trackFollow(currentVideo.user.id);
                           setShowProfile(true);
                         }
                       }}
-                    />
+                    >
+                      <img
+                        src={currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                        alt={currentVideo.user.username}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <div>
                       <p className="font-semibold text-gray-700">{currentVideo.user.username}</p>
                       <p className="text-gray-600 text-sm">{currentVideo.user.followers_count} seguidores</p>

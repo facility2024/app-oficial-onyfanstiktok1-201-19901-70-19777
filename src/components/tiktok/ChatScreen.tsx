@@ -91,7 +91,7 @@ export const ChatScreen = ({ isOpen, onClose, modelName, modelAvatar }: ChatScre
           </Button>
           
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shrink-0">
               {modelAvatar ? (
                 <img src={modelAvatar} alt={modelName} className="w-full h-full object-cover" />
               ) : (

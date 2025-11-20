@@ -59,11 +59,13 @@ export const SideMenu = ({
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
         <div className="relative w-12 h-12 flex items-center justify-center transition-all">
           {video?.user?.avatar_url ? (
-            <img 
-              src={video.user.avatar_url} 
-              alt={video.user.username}
-              className="w-10 h-10 rounded-full object-cover border-2 border-black"
-            />
+            <div className="w-10 h-10 rounded-full border-2 border-black overflow-hidden shrink-0">
+              <img 
+                src={video.user.avatar_url} 
+                alt={video.user.username}
+                className="w-full h-full object-cover"
+              />
+            </div>
           ) : (
             <User className="w-10 h-10 text-white" strokeWidth={1.5} />
           )}

@@ -27,7 +27,10 @@ export default function FollowingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       const authUserId = user?.id;
 
+      console.log('🔍 IDs de usuário:', { anonymousUserId, authUserId });
+
       if (!anonymousUserId && !authUserId) {
+        console.log('⚠️ Nenhum ID de usuário encontrado');
         setLoading(false);
         return;
       }
@@ -36,6 +39,8 @@ export default function FollowingPage() {
       const userIds = [anonymousUserId, authUserId].filter(Boolean);
       const orCondition = userIds.map(id => `user_id.eq.${id}`).join(',');
 
+      console.log('🔍 Buscando follows com condição:', orCondition);
+
       // Busca as modelos seguidas
       const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
@@ -43,14 +48,22 @@ export default function FollowingPage() {
         .or(orCondition)
         .eq('is_active', true);
 
-      if (followError) throw followError;
+      if (followError) {
+        console.error('❌ Erro na query de model_followers:', followError);
+        throw followError;
+      }
+
+      console.log('✅ Follows encontrados:', followedModels);
 
       if (!followedModels || followedModels.length === 0) {
+        console.log('ℹ️ Nenhuma modelo seguida encontrada');
         setLoading(false);
         return;
       }
 
       const modelIds = followedModels.map(f => f.model_id);
+
+      console.log('🔍 Buscando dados de', modelIds.length, 'modelos seguidas');
 
       // Busca os dados das modelos
       const { data: modelsData, error: modelsError } = await supabase
@@ -58,8 +71,12 @@ export default function FollowingPage() {
         .select('id, username, avatar_url, followers_count')
         .in('id', modelIds);
 
-      if (modelsError) throw modelsError;
+      if (modelsError) {
+        console.error('❌ Erro ao buscar modelos:', modelsError);
+        throw modelsError;
+      }
 
+      console.log('✅ Modelos seguidas carregadas:', modelsData);
       setModels(modelsData as FollowedModel[] || []);
     } catch (error) {
       console.error('❌ Erro ao carregar modelos seguidas:', error);

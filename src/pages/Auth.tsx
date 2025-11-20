@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { z } from 'zod';
 import { toast } from 'sonner';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import loginBackground from '@/assets/login-background.png';
 import { Loader2 } from 'lucide-react';
 
 // Schema de validação
@@ -213,7 +214,12 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background flex items-center justify-center p-4">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: `url(${loginBackground})`
+      }}
+    >
       <Card className="w-full max-w-md bg-card border-border shadow-2xl">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">

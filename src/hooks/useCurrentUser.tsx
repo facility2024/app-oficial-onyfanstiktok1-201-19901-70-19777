@@ -248,6 +248,15 @@ export const useCurrentUser = () => {
     initUser();
 
     const { data: { subscription } } = supabaseSimple.auth.onAuthStateChange((event, session) => {
+      // Não reagir a eventos durante logout
+      if (sessionStorage.getItem('logging_out')) {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
+        }
+        return;
+      }
+
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);

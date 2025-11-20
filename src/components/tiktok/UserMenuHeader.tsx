@@ -11,19 +11,23 @@ export const UserMenuHeader = () => {
 
   const handleLogout = async () => {
     try {
-      // Flag para evitar múltiplos redirects
+      // Flag para evitar reinicialização do usuário
       sessionStorage.setItem('logging_out', 'true');
       
+      // Fazer signOut
       await supabase.auth.signOut();
       
-      // Esperar antes de navegar para evitar race condition
+      // Navegar imediatamente
+      navigate('/auth', { replace: true });
+      
+      // Limpar flag após um tempo
       setTimeout(() => {
         sessionStorage.removeItem('logging_out');
-        navigate('/auth', { replace: true });
-      }, 100);
+      }, 500);
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
       sessionStorage.removeItem('logging_out');
+      navigate('/auth', { replace: true });
     }
   };
 

@@ -229,14 +229,14 @@ const Auth = () => {
       <div className="relative p-1 rounded-lg" style={{
         background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
       }}>
-        <Card className="bg-card shadow-2xl border-0" style={{ width: '467px', height: '396px' }}>
-        <CardHeader className="space-y-2 pb-4">
+        <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0 overflow-y-auto max-h-[90vh]">
+        <CardHeader className="space-y-2 pb-3">
           <div className="flex flex-col items-center justify-center space-y-1">
-            <img src={coconudiLogo} alt="COCONUDI" className="h-12 object-contain animate-float" />
-            <h1 className="text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
+            <img src={coconudiLogo} alt="COCONUDI" className="h-10 md:h-12 object-contain animate-float" />
+            <h1 className="text-lg md:text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
           </div>
           <div className="text-center space-y-1">
-            <CardTitle className="text-xl font-bold text-foreground">
+            <CardTitle className="text-lg md:text-xl font-bold text-foreground">
               {mode === 'login' && 'Bem-vindo de volta'}
               {mode === 'signup' && 'Criar conta'}
               {mode === 'forgot-password' && 'Recuperar senha'}
@@ -251,7 +251,7 @@ const Auth = () => {
           </div>
         </CardHeader>
         
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-4 md:px-6">
           <form onSubmit={
             mode === 'login' ? handleSignIn : 
             mode === 'signup' ? handleSignUp : 
@@ -260,7 +260,7 @@ const Auth = () => {
           } className="space-y-3">
             {mode === 'signup' && (
               <div className="space-y-1">
-                <Label htmlFor="name" className="text-sm text-foreground">Nome Completo</Label>
+                <Label htmlFor="name" className="text-xs md:text-sm text-foreground">Nome Completo</Label>
                 <Input 
                   id="name" 
                   type="text" 
@@ -275,7 +275,7 @@ const Auth = () => {
             )}
             
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-sm text-foreground">Email</Label>
+              <Label htmlFor="email" className="text-xs md:text-sm text-foreground">Email</Label>
               <Input 
                 id="email" 
                 type="email" 
@@ -291,7 +291,7 @@ const Auth = () => {
             {mode === 'login' && (
               <>
                 <div className="space-y-1">
-                  <Label htmlFor="password" className="text-sm text-foreground">Senha</Label>
+                  <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
                   <Input 
                     id="password" 
                     type="password" 
@@ -322,7 +322,7 @@ const Auth = () => {
 
             {mode === 'signup' && (
               <div className="space-y-1">
-                <Label htmlFor="password" className="text-sm text-foreground">Senha</Label>
+                <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
                 <Input 
                   id="password" 
                   type="password" 
@@ -345,7 +345,7 @@ const Auth = () => {
             {mode === 'reset-password' && (
               <>
                 <div className="space-y-1">
-                  <Label htmlFor="newPassword" className="text-sm text-foreground">Nova Senha</Label>
+                  <Label htmlFor="newPassword" className="text-xs md:text-sm text-foreground">Nova Senha</Label>
                   <Input 
                     id="newPassword" 
                     type="password" 
@@ -359,7 +359,7 @@ const Auth = () => {
                 </div>
                 
                 <div className="space-y-1">
-                  <Label htmlFor="confirmPassword" className="text-sm text-foreground">Confirmar Senha</Label>
+                  <Label htmlFor="confirmPassword" className="text-xs md:text-sm text-foreground">Confirmar Senha</Label>
                   <Input 
                     id="confirmPassword" 
                     type="password" 

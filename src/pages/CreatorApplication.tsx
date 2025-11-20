@@ -89,547 +89,487 @@ export default function CreatorApplication() {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   
-  const [formData, setFormData] = useState<ApplicationFormData>({
+  const [formData, setFormData] = useState<Partial<ApplicationFormData>>({
     whatsapp: '',
-    nickname: '',
+    nickname: profile?.username || '',
     bio: '',
-    gender: 'prefiro-nao-informar',
+    gender: undefined,
     accepted_terms: false,
     accepted_image_rights: false,
   });
 
   useEffect(() => {
-    if (user) {
-      checkExistingApplication();
-      loadTerms();
+    if (!user) {
+      navigate('/auth');
+      return;
     }
-  }, [user]);
 
-  const checkExistingApplication = async () => {
+    fetchExistingApplication();
+    fetchPlatformTerms();
+  }, [user, navigate]);
+
+  useEffect(() => {
+    if (profile?.username && !formData.nickname) {
+      setFormData(prev => ({ ...prev, nickname: profile.username }));
+    }
+  }, [profile]);
+
+  const fetchExistingApplication = async () => {
     if (!user) return;
 
-    const { data } = await (supabase as any)
-      .from('creator_applications')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    try {
+      const { data, error } = await (supabase as any)
+        .from('creator_applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    setExistingApplication(data);
+      if (error) throw error;
+      
+      if (data) {
+        setExistingApplication(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar aplicação:', error);
+    }
   };
 
-  const loadTerms = async () => {
-    const { data } = await (supabase as any)
-      .from('platform_terms')
-      .select('content')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  const fetchPlatformTerms = async () => {
+    setTermsContent(`
+      # Termos de Uso da Plataforma
 
-    if (data) {
-      setTermsContent(data.content);
-    }
+      ## 1. Aceitação dos Termos
+      Ao se cadastrar como criador de conteúdo, você concorda com todos os termos e condições estabelecidos neste documento.
+
+      ## 2. Responsabilidades do Criador
+      - Produzir conteúdo original e de qualidade
+      - Respeitar as diretrizes da comunidade
+      - Cumprir os prazos de publicação acordados
+      - Manter a autenticidade e transparência com o público
+
+      ## 3. Direitos de Uso de Imagem
+      Ao aceitar estes termos, você concede à plataforma o direito de utilizar seu conteúdo para fins de promoção e marketing.
+
+      ## 4. Monetização
+      - A plataforma compartilhará receitas conforme acordado
+      - Pagamentos serão processados mensalmente
+      - Valores mínimos para saque serão comunicados
+
+      ## 5. Política de Privacidade
+      Seus dados serão tratados conforme nossa política de privacidade.
+    `);
   };
 
   const validateStep = (step: number): boolean => {
-    switch(step) {
-      case 1:
-        return formData.whatsapp.length >= 10 && 
-               formData.nickname.length >= 2;
-      case 2:
-        return formData.bio.length >= 50 && 
-               formData.bio.length <= 500;
-      case 3:
-        return formData.accepted_terms && 
-               formData.accepted_image_rights;
-      default:
-        return false;
+    const errors: string[] = [];
+
+    if (step === 1) {
+      if (!formData.whatsapp || formData.whatsapp.length < 10) {
+        errors.push('WhatsApp inválido');
+      }
+      if (!formData.nickname || formData.nickname.length < 2) {
+        errors.push('Apelido inválido');
+      }
+      if (!formData.gender) {
+        errors.push('Selecione seu sexo');
+      }
+    } else if (step === 2) {
+      if (!formData.bio || formData.bio.length < 50) {
+        errors.push('Biografia deve ter no mínimo 50 caracteres');
+      }
+      if (formData.bio && formData.bio.length > 500) {
+        errors.push('Biografia deve ter no máximo 500 caracteres');
+      }
+    } else if (step === 3) {
+      if (!formData.accepted_terms) {
+        errors.push('Você deve aceitar os termos de uso');
+      }
+      if (!formData.accepted_image_rights) {
+        errors.push('Você deve aceitar os direitos de uso de imagem');
+      }
     }
+
+    if (errors.length > 0) {
+      toast.error(errors.join('\n'));
+      return false;
+    }
+
+    return true;
   };
 
   const handleNext = () => {
-    if (!validateStep(currentStep)) {
-      if (currentStep === 1) {
-        toast.error('Preencha todos os campos obrigatórios');
-      } else if (currentStep === 2) {
-        toast.error('A biografia deve ter entre 50 e 500 caracteres');
-      }
-      return;
+    if (validateStep(currentStep)) {
+      setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
+      setCurrentStep(prev => Math.min(prev + 1, 3));
     }
-    
-    if (!completedSteps.includes(currentStep)) {
-      setCompletedSteps([...completedSteps, currentStep]);
-    }
-    setCurrentStep(currentStep + 1);
   };
 
   const handleBack = () => {
-    setCurrentStep(currentStep - 1);
+    setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async () => {
-    if (!user) {
-      toast.error('Você precisa estar logado');
-      return;
+  const formatWhatsApp = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     }
+    return numbers.slice(0, 11).replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  };
 
-    if (!validateStep(3)) {
-      toast.error('Você deve aceitar todos os termos');
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateStep(3)) return;
+
+    setLoading(true);
 
     try {
-      applicationSchema.parse(formData);
+      const validatedData = applicationSchema.parse(formData);
 
-      setLoading(true);
-
-      const { error } = await (supabase as any)
+      const { error: insertError } = await (supabase as any)
         .from('creator_applications')
         .insert({
-          user_id: user.id,
-          full_name: profile?.full_name || user.email?.split('@')[0] || '',
-          email: user.email || '',
-          whatsapp: formData.whatsapp,
-          nickname: formData.nickname,
-          bio: formData.bio,
-          gender: formData.gender,
-          accepted_terms: formData.accepted_terms,
-          accepted_image_rights: formData.accepted_image_rights,
+          user_id: user!.id,
+          email: user!.email!,
+          full_name: profile?.full_name || '',
+          whatsapp: validatedData.whatsapp,
+          nickname: validatedData.nickname,
+          bio: validatedData.bio,
+          gender: validatedData.gender,
+          status: 'pending',
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      // Track event
-      await supabase.from('analytics_events').insert({
+      // Analytics tracking
+      await (supabase as any).from('analytics_events').insert({
         event_name: 'creator_application_submitted',
         event_category: 'creator',
-        user_id: user.id,
-        event_data: { timestamp: new Date().toISOString() }
+        user_id: user!.id,
       });
 
       toast.success('Aplicação enviada com sucesso! Você receberá uma resposta em breve.');
-      checkExistingApplication();
+      navigate('/profile');
     } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      } else if (error.code === '23505') {
-        toast.error('Você já possui uma aplicação enviada');
+      console.error('Erro ao enviar aplicação:', error);
+      if (error.name === 'ZodError') {
+        toast.error('Por favor, preencha todos os campos corretamente.');
       } else {
-        console.error('Erro ao enviar aplicação:', error);
-        toast.error('Erro ao enviar aplicação');
+        toast.error('Erro ao enviar aplicação. Tente novamente.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const formatWhatsApp = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 11) {
-      return numbers.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')
-        .replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3')
-        .replace(/^(\d{2})(\d{0,5})/, '($1) $2')
-        .replace(/^(\d{0,2})/, '($1');
-    }
-    return value;
-  };
+  if (!user) {
+    return null;
+  }
 
-  // Renderizar status de aplicação existente
   if (existingApplication) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
-        <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md border-b border-white/10 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="text-white hover:bg-white/10"
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white flex items-center justify-center p-4">
+        <Card className="!bg-gradient-to-br !from-gray-800 !to-gray-900 !border-purple-500/30 max-w-2xl w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              {existingApplication.status === 'pending' && <Clock className="w-6 h-6 text-yellow-500" />}
+              {existingApplication.status === 'approved' && <CheckCircle className="w-6 h-6 text-green-500" />}
+              {existingApplication.status === 'rejected' && <XCircle className="w-6 h-6 text-red-500" />}
+              Status da Aplicação
+            </CardTitle>
+            <CardDescription className="text-white/70">
+              {existingApplication.status === 'pending' && 'Sua aplicação está em análise'}
+              {existingApplication.status === 'approved' && 'Parabéns! Sua aplicação foi aprovada'}
+              {existingApplication.status === 'rejected' && 'Sua aplicação foi rejeitada'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-white">
+            <div>
+              <Label className="text-white/70">WhatsApp</Label>
+              <p className="text-white">{existingApplication.whatsapp}</p>
+            </div>
+            <div>
+              <Label className="text-white/70">Apelido</Label>
+              <p className="text-white">{existingApplication.nickname}</p>
+            </div>
+            <div>
+              <Label className="text-white/70">Biografia</Label>
+              <p className="text-white">{existingApplication.bio}</p>
+            </div>
+            {existingApplication.status === 'rejected' && existingApplication.rejection_reason && (
+              <div>
+                <Label className="text-white/70">Motivo da Rejeição</Label>
+                <p className="text-red-400">{existingApplication.rejection_reason}</p>
+              </div>
+            )}
+            {existingApplication.reviewed_at && (
+              <div>
+                <Label className="text-white/70">
+                  {existingApplication.status === 'approved' ? 'Aprovado em' : 'Revisado em'}
+                </Label>
+                <p className="text-white">{new Date(existingApplication.reviewed_at).toLocaleDateString()}</p>
+              </div>
+            )}
+            <Button 
+              onClick={() => navigate('/profile')} 
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Perfil
             </Button>
-            <h1 className="text-lg font-bold">Espaço do Criador</h1>
-          </div>
-        </div>
-
-        <div className="p-4 max-w-2xl mx-auto">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader>
-              <div className="flex items-center gap-3 mb-2">
-                {existingApplication.status === 'pending' && (
-                  <>
-                    <Clock className="w-8 h-8 text-yellow-500" />
-                    <div>
-                      <CardTitle className="text-white">Aplicação em Análise</CardTitle>
-                      <CardDescription className="text-white/60">
-                        Sua aplicação está sendo analisada pela nossa equipe
-                      </CardDescription>
-                    </div>
-                  </>
-                )}
-                {existingApplication.status === 'approved' && (
-                  <>
-                    <CheckCircle className="w-8 h-8 text-green-500" />
-                    <div>
-                      <CardTitle className="text-white">Aplicação Aprovada! 🎉</CardTitle>
-                      <CardDescription className="text-white/60">
-                        Parabéns! Você agora é um criador de conteúdo
-                      </CardDescription>
-                    </div>
-                  </>
-                )}
-                {existingApplication.status === 'rejected' && (
-                  <>
-                    <XCircle className="w-8 h-8 text-red-500" />
-                    <div>
-                      <CardTitle className="text-white">Aplicação Não Aprovada</CardTitle>
-                      <CardDescription className="text-white/60">
-                        Infelizmente sua aplicação não foi aprovada
-                      </CardDescription>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-white/5 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Nome:</span>
-                  <span className="text-white">{existingApplication.full_name}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Apelido:</span>
-                  <span className="text-white">{existingApplication.nickname}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">WhatsApp:</span>
-                  <span className="text-white">{existingApplication.whatsapp}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Data de Envio:</span>
-                  <span className="text-white">
-                    {new Date(existingApplication.submitted_at).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
-              </div>
-
-              {existingApplication.status === 'rejected' && existingApplication.rejection_reason && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                  <p className="text-sm text-red-300 font-semibold mb-2">Motivo da rejeição:</p>
-                  <p className="text-sm text-red-200">{existingApplication.rejection_reason}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  className="flex-1 border-white/20 text-white hover:bg-white/10"
-                >
-                  Voltar
-                </Button>
-                {existingApplication.status === 'rejected' && (
-                  <Button
-                    onClick={() => setExistingApplication(null)}
-                    className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600"
-                  >
-                    Nova Aplicação
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const renderStepContent = () => {
-    switch(currentStep) {
-      case 1:
-        return (
-          <div className="space-y-4 p-4">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <User className="w-5 h-5" />
-                  Dados Pessoais
-                </CardTitle>
-                <CardDescription className="text-white/60">
-                  Informações básicas sobre você
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-white/70">Nome Completo</Label>
-                  <Input
-                    value={profile?.full_name || user?.email?.split('@')[0] || ''}
-                    readOnly
-                    className="bg-white/5 border-white/10 text-white/50 cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-white/70">Email</Label>
-                  <Input
-                    value={user?.email || ''}
-                    readOnly
-                    className="bg-white/5 border-white/10 text-white/50 cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-white">WhatsApp *</Label>
-                  <Input
-                    placeholder="(11) 99999-9999"
-                    value={formData.whatsapp}
-                    onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsApp(e.target.value) })}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/30"
-                    maxLength={15}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-white">Apelido/Nome Artístico *</Label>
-                  <Input
-                    placeholder="Como quer ser chamado(a)"
-                    value={formData.nickname}
-                    onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/30"
-                    maxLength={30}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-white">Sexo *</Label>
-                  <Select
-                    value={formData.gender}
-                    onValueChange={(value) => setFormData({ ...formData, gender: value as any })}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="masculino">Masculino</SelectItem>
-                      <SelectItem value="feminino">Feminino</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
-                      <SelectItem value="prefiro-nao-informar">Prefiro não informar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-4 p-4">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <FileText className="w-5 h-5" />
-                  Sobre Você
-                </CardTitle>
-                <CardDescription className="text-white/60">
-                  Conte um pouco sobre você e seu conteúdo
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-white">Biografia *</Label>
-                  <Textarea
-                    placeholder="Fale sobre você, seu estilo, o que você faz..."
-                    value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/30 min-h-[200px] resize-none"
-                    maxLength={500}
-                  />
-                  <p className={`text-sm text-right mt-1 transition-colors ${
-                    formData.bio.length < 50 ? 'text-red-400' :
-                    formData.bio.length > 450 ? 'text-yellow-400' :
-                    'text-green-400'
-                  }`}>
-                    {formData.bio.length}/500 caracteres
-                    {formData.bio.length < 50 && ` (mínimo 50)`}
-                  </p>
-                </div>
-
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                  <p className="text-sm text-blue-300 font-semibold mb-2">💡 Dicas para uma boa bio:</p>
-                  <ul className="text-xs text-blue-200 space-y-1">
-                    <li>• Seja autêntico(a) e genuíno(a)</li>
-                    <li>• Descreva seu estilo e tipo de conteúdo</li>
-                    <li>• Mencione seus diferenciais</li>
-                    <li>• Seja profissional mas descontraído(a)</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-4 p-4">
-            <Card className="bg-gradient-to-r from-pink-500/10 to-purple-600/10 border-pink-500/20">
-              <CardHeader>
-                <CardTitle className="text-white text-sm">📋 Resumo da Aplicação</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-white/60">Nome:</span>
-                  <span className="text-white">{profile?.full_name || user?.email?.split('@')[0] || '---'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/60">Apelido:</span>
-                  <span className="text-white">{formData.nickname}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/60">WhatsApp:</span>
-                  <span className="text-white">{formData.whatsapp}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-white/60">Bio:</span>
-                  <span className="text-white text-xs line-clamp-2">{formData.bio}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <FileText className="w-5 h-5" />
-                  Termos e Condições
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={formData.accepted_terms}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, accepted_terms: checked as boolean })
-                    }
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="text-white text-sm">
-                      Aceito os{' '}
-                      <button 
-                        type="button"
-                        onClick={() => setShowTerms(true)}
-                        className="text-pink-400 hover:underline font-semibold"
-                      >
-                        Termos de Uso da Plataforma
-                      </button>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={formData.accepted_image_rights}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, accepted_image_rights: checked as boolean })
-                    }
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="text-white text-sm">
-                      Autorizo o uso de minha imagem conforme a Política de Direitos de Imagem
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                  <p className="text-xs text-yellow-200">
-                    ⚠️ Sua aplicação será analisada pela equipe COCONUDI. 
-                    Você receberá uma notificação quando houver uma decisão.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md border-b border-white/10 px-4 py-3">
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white flex flex-col">
+      {/* Header Fixo */}
+      <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center justify-between p-4 max-w-4xl mx-auto">
           <Button
             variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/profile')}
             className="text-white hover:bg-white/10"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Voltar
           </Button>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-pink-500" />
-            <h1 className="text-lg font-bold">Espaço do Criador</h1>
-          </div>
+          <h1 className="text-lg font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+            Torne-se Criador
+          </h1>
+          <div className="w-20"></div>
+        </div>
+        <ProgressIndicator currentStep={currentStep} completedSteps={completedSteps} />
+      </div>
+
+      {/* Conteúdo Rolável */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 max-w-4xl mx-auto pb-24">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Etapa 1: Dados Pessoais */}
+            {currentStep === 1 && (
+              <Card className="!bg-gradient-to-br !from-gray-800 !to-gray-900 !border-purple-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <User className="w-6 h-6 text-purple-500" />
+                    Dados Pessoais
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Preencha suas informações básicas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="email" className="text-white">E-mail</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="bg-white/5 border-white/10 text-white/50"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="name" className="text-white">Nome Completo</Label>
+                    <Input
+                      id="name"
+                      value={profile?.full_name || ''}
+                      disabled
+                      className="bg-white/5 border-white/10 text-white/50"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="whatsapp" className="text-white">WhatsApp *</Label>
+                    <Input
+                      id="whatsapp"
+                      type="tel"
+                      placeholder="(11) 98765-4321"
+                      value={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: formatWhatsApp(e.target.value) })}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="nickname" className="text-white">Apelido/Nome Artístico *</Label>
+                    <Input
+                      id="nickname"
+                      placeholder="Como você quer ser chamado(a)"
+                      value={formData.nickname}
+                      onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="gender" className="text-white">Sexo *</Label>
+                    <Select
+                      value={formData.gender}
+                      onValueChange={(value) => setFormData({ ...formData, gender: value as any })}
+                    >
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="feminino">Feminino</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                        <SelectItem value="prefiro-nao-informar">Prefiro não informar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Etapa 2: Sobre Você */}
+            {currentStep === 2 && (
+              <Card className="!bg-gradient-to-br !from-gray-800 !to-gray-900 !border-purple-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Sparkles className="w-6 h-6 text-purple-500" />
+                    Sobre Você
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Conte-nos mais sobre você e seu conteúdo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="bio" className="text-white">Biografia *</Label>
+                    <Textarea
+                      id="bio"
+                      placeholder="Fale sobre você, seu estilo de conteúdo e o que te motiva a criar..."
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[150px]"
+                      required
+                    />
+                    <p className="text-sm text-white/50 mt-1">
+                      {formData.bio?.length || 0}/500 caracteres (mínimo 50)
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                    <p className="text-sm text-white/70">
+                      💡 <strong>Dica:</strong> Uma boa biografia inclui:
+                    </p>
+                    <ul className="text-sm text-white/60 mt-2 space-y-1 list-disc list-inside">
+                      <li>Seu estilo de conteúdo</li>
+                      <li>Frequência de postagem</li>
+                      <li>O que torna seu conteúdo único</li>
+                      <li>Suas metas na plataforma</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Etapa 3: Termos */}
+            {currentStep === 3 && (
+              <Card className="!bg-gradient-to-br !from-gray-800 !to-gray-900 !border-purple-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <FileText className="w-6 h-6 text-purple-500" />
+                    Termos e Confirmação
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Revise suas informações e aceite os termos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-white/5 rounded-lg p-4 space-y-2">
+                    <h3 className="font-semibold text-white">Resumo dos Dados</h3>
+                    <div className="text-sm text-white/70 space-y-1">
+                      <p><strong>Email:</strong> {user?.email}</p>
+                      <p><strong>Nome:</strong> {profile?.full_name}</p>
+                      <p><strong>WhatsApp:</strong> {formData.whatsapp}</p>
+                      <p><strong>Apelido:</strong> {formData.nickname}</p>
+                      <p><strong>Sexo:</strong> {formData.gender}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="terms"
+                        checked={formData.accepted_terms}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, accepted_terms: checked as boolean })
+                        }
+                        className="mt-1"
+                      />
+                      <label htmlFor="terms" className="text-sm text-white cursor-pointer">
+                        Li e aceito os{' '}
+                        <button
+                          type="button"
+                          onClick={() => setShowTerms(true)}
+                          className="text-purple-400 hover:text-purple-300 underline"
+                        >
+                          Termos de Uso da Plataforma
+                        </button>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="image_rights"
+                        checked={formData.accepted_image_rights}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, accepted_image_rights: checked as boolean })
+                        }
+                        className="mt-1"
+                      />
+                      <label htmlFor="image_rights" className="text-sm text-white cursor-pointer">
+                        Concordo com o uso de minha imagem e conteúdo para fins de divulgação da plataforma
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </form>
         </div>
       </div>
 
-      {/* Progress Indicator */}
-      <ProgressIndicator currentStep={currentStep} completedSteps={completedSteps} />
-
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto">
-        {renderStepContent()}
-      </div>
-
-      {/* Footer Navigation */}
-      <div className="sticky bottom-0 bg-black/90 backdrop-blur-md border-t border-white/10 p-4">
-        <div className="flex gap-3 max-w-2xl mx-auto">
+      {/* Footer Fixo com Botões */}
+      <div className="sticky bottom-0 bg-black/80 backdrop-blur-md border-t border-white/10 p-4">
+        <div className="max-w-4xl mx-auto flex gap-3">
           {currentStep > 1 && (
             <Button
               type="button"
-              variant="outline"
               onClick={handleBack}
+              variant="outline"
               className="flex-1 border-white/20 text-white hover:bg-white/10"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
               Anterior
             </Button>
           )}
-          
           {currentStep < 3 ? (
             <Button
               type="button"
               onClick={handleNext}
-              className={`flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 ${
-                currentStep === 1 ? 'w-full' : ''
-              }`}
-              disabled={!validateStep(currentStep)}
+              className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
               Próximo
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
             <Button
-              type="button"
               onClick={handleSubmit}
-              className={`flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 ${
-                currentStep === 1 ? 'w-full' : ''
-              }`}
-              disabled={!validateStep(3) || loading}
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
             >
-              {loading ? (
+              {loading ? 'Enviando...' : (
                 <>
-                  <span className="animate-spin mr-2">⏳</span>
-                  Enviando...
-                </>
-              ) : (
-                <>
+                  <Send className="w-4 h-4 mr-2" />
                   Enviar Aplicação
-                  <Send className="w-4 h-4 ml-2" />
                 </>
               )}
             </Button>
@@ -637,30 +577,31 @@ export default function CreatorApplication() {
         </div>
       </div>
 
-      {/* Terms Dialog */}
+      {/* Modal de Termos */}
       <Dialog open={showTerms} onOpenChange={setShowTerms}>
-        <DialogContent className="bg-gray-900 text-white border-white/10 max-w-2xl max-h-[80vh]">
+        <DialogContent className="bg-gray-900 text-white border-purple-500/30 max-w-2xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="text-white">Termos de Uso da Plataforma</DialogTitle>
-            <DialogDescription className="text-white/60">
-              Leia atentamente antes de aceitar
+            <DialogTitle>Termos de Uso da Plataforma</DialogTitle>
+            <DialogDescription className="text-white/70">
+              Leia atentamente nossos termos antes de continuar
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="h-[60vh] pr-4">
-            <div className="prose prose-invert prose-sm max-w-none">
-              <div className="whitespace-pre-wrap text-sm text-white/80">
-                {termsContent || 'Carregando termos...'}
-              </div>
+          <ScrollArea className="h-[500px] pr-4">
+            <div className="prose prose-invert max-w-none">
+              {termsContent.split('\n').map((line, index) => {
+                if (line.startsWith('# ')) {
+                  return <h1 key={index} className="text-2xl font-bold mt-4 mb-2">{line.replace('# ', '')}</h1>;
+                } else if (line.startsWith('## ')) {
+                  return <h2 key={index} className="text-xl font-semibold mt-3 mb-2">{line.replace('## ', '')}</h2>;
+                } else if (line.startsWith('- ')) {
+                  return <li key={index} className="ml-4">{line.replace('- ', '')}</li>;
+                } else if (line.trim()) {
+                  return <p key={index} className="mb-2">{line}</p>;
+                }
+                return null;
+              })}
             </div>
           </ScrollArea>
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setShowTerms(false)}
-              className="bg-gradient-to-r from-pink-500 to-purple-600"
-            >
-              Fechar
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -441,7 +441,10 @@ const Auth = () => {
       <div 
         className="md:hidden min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/ANIMA%C3%87%C3%95ES%20ONYFANS/Design%20sem%20nome%20(6).png)'
+          backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/ANIMAÇÕES%20ONYFANS/Design%20sem%20nome%20(6).png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}
       >
         <div className="relative p-1 rounded-lg" style={{

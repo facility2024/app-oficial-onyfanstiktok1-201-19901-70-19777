@@ -60,9 +60,9 @@ export const SideMenu = ({
     <div className="flex flex-col gap-4 z-[9999] pointer-events-auto touch-manipulation">
       {/* Profile */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
-        <div className="relative w-12 h-12 flex items-center justify-center transition-all">
+        <div className="relative w-12 h-12 md:w-[75px] md:h-[75px] flex items-center justify-center transition-all">
           {video?.user?.avatar_url ? (
-            <div className="w-10 h-10 rounded-full border-2 border-black overflow-hidden shrink-0">
+            <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-black overflow-hidden shrink-0">
               <img 
                 src={video.user.avatar_url} 
                 alt={video.user.username}
@@ -70,10 +70,10 @@ export const SideMenu = ({
               />
             </div>
           ) : (
-            <User className="w-10 h-10 text-white" strokeWidth={1.5} />
+            <User className="w-10 h-10 md:w-[75px] md:h-[75px] text-white" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-white text-xs mt-1 font-light">Perfil</span>
+        <span className="text-foreground text-xs mt-1 font-light">Perfil</span>
       </div>
 
       {/* Like */}

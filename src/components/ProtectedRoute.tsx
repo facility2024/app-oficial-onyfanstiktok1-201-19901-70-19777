@@ -16,10 +16,15 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        // Durante logout, apenas atualizar sessão, não redirecionar
+        if (sessionStorage.getItem('logging_out')) {
+          setSession(session);
+          return;
+        }
+
         setSession(session);
         
-        // Não redirecionar se está fazendo logout (evita race condition)
-        if (!session && !sessionStorage.getItem('logging_out')) {
+        if (!session) {
           navigate('/auth', { replace: true });
         }
       }

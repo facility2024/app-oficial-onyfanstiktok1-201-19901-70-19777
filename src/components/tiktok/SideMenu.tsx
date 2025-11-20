@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles, Compass, MessagesSquare } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles, Compass, MessagesSquare, UserPlus, UserCheck } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
 
 interface SideMenuProps {
@@ -7,11 +7,13 @@ interface SideMenuProps {
   isLiked: boolean;
   isMuted: boolean;
   isPlaying: boolean;
+  isFollowing?: boolean;
   onToggleLike: () => void;
   onToggleSound: () => void;
   onTogglePlay: () => void;
   onOpenComments: () => void;
   onOpenProfile: () => void;
+  onToggleFollow?: () => void;
   onOpenLive?: () => void;
   onBlockVideo?: () => void;
   onOpenPremium?: () => void;
@@ -25,11 +27,13 @@ export const SideMenu = ({
   isLiked,
   isMuted,
   isPlaying,
+  isFollowing = false,
   onToggleLike,
   onToggleSound,
   onTogglePlay,
   onOpenComments,
   onOpenProfile,
+  onToggleFollow,
   onOpenLive,
   onBlockVideo,
   onOpenPremium,
@@ -77,6 +81,35 @@ export const SideMenu = ({
         </div>
         <span className="text-white md:text-gray-800 text-xs mt-1 font-light">Perfil</span>
       </div>
+
+      {/* Follow */}
+      {onToggleFollow && (
+        <div 
+          className="flex flex-col items-center cursor-pointer touch-manipulation select-none group"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFollow();
+          }}
+        >
+          <div className="w-12 h-12 flex items-center justify-center transition-all duration-200 active:scale-95">
+            {isFollowing ? (
+              <UserCheck 
+                className="w-8 h-8 text-green-500"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <UserPlus 
+                className="w-8 h-8 text-white md:text-gray-800"
+                strokeWidth={1.5}
+              />
+            )}
+          </div>
+          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">
+            {isFollowing ? 'Seguindo' : 'Seguir'}
+          </span>
+        </div>
+      )}
 
       {/* Like */}
       <div 

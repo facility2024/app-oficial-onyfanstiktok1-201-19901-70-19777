@@ -12,6 +12,7 @@ interface VideoPlayerProps {
   onNext: () => void;
   onPrevious: () => void;
   onDoubleClick: () => void;
+  onTogglePlay: () => void;
 }
 
 // Oferta vinculada ao vídeo/modelo
@@ -36,7 +37,7 @@ interface Offer {
 }
 
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
-  ({ video, isPlaying, isMuted, onNext, onPrevious, onDoubleClick }, ref) => {
+  ({ video, isPlaying, isMuted, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
     const [doubleTapHeart, setDoubleTapHeart] = useState(false);
     const [lastTap, setLastTap] = useState(0);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -301,11 +302,17 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const handleVideoTap = (event: React.MouseEvent) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
+      
+      // Duplo clique = like
       if (tapLength < 500 && tapLength > 0) {
         setDoubleTapHeart(true);
         onDoubleClick();
         window.setTimeout(() => setDoubleTapHeart(false), 600);
+      } else {
+        // Clique simples = play/pause
+        onTogglePlay();
       }
+      
       setLastTap(currentTime);
     };
 

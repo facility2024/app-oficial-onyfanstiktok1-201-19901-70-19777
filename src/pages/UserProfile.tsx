@@ -202,7 +202,7 @@ export default function UserProfile() {
       {/* Content */}
       <div className="max-w-2xl mx-auto p-4 space-y-6">
         {/* Avatar e Info Principal */}
-        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-white/10">
+        <Card className="!bg-gradient-to-br !from-gray-800 !to-gray-900 border-white/10">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
               {/* Avatar */}
@@ -336,7 +336,7 @@ export default function UserProfile() {
         </Card>
 
         {/* Card Torne-se Criador */}
-        <Card className="bg-gradient-to-r from-pink-500/10 to-purple-600/10 border-pink-500/30">
+        <Card className="!bg-gradient-to-r !from-pink-900/80 !to-purple-900/80 border-pink-500/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <Sparkles className="w-5 h-5 text-pink-500" />
@@ -359,7 +359,7 @@ export default function UserProfile() {
         </Card>
 
         {/* Estatísticas */}
-        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-white/10">
+        <Card className="!bg-gradient-to-br !from-gray-800 !to-gray-900 border-white/10">
           <CardHeader>
             <CardTitle className="text-white">Estatísticas</CardTitle>
           </CardHeader>

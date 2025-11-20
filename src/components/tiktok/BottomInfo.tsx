@@ -18,11 +18,13 @@ export const BottomInfo = ({ video, isNew = false }: BottomInfoProps) => {
       
       {/* User Info */}
       <div className="flex items-center gap-3 mb-2">
-        <img
-          src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-          alt="User Avatar"
-          className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-md"
-        />
+        <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden shrink-0">
+          <img
+            src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+            alt="User Avatar"
+            className="w-full h-full object-cover"
+          />
+        </div>
         <span className="text-white font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
       </div>
 

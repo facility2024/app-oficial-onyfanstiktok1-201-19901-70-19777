@@ -2667,8 +2667,7 @@ export const TikTokApp = () => {
                 title="Modelos em Destaque" 
                 icon="🔥"
                 direction="rtl"
-                startIndex={0}
-                limit={157}
+                carouselIndex={0}
                 onSelectModel={(modelId) => {
                   goToModelVideo(modelId);
                 }}
@@ -2677,8 +2676,7 @@ export const TikTokApp = () => {
                 title="Novas Modelos" 
                 icon="✨"
                 direction="ltr"
-                startIndex={157}
-                limit={157}
+                carouselIndex={1}
                 onSelectModel={(modelId) => {
                   goToModelVideo(modelId);
                 }}

@@ -15,8 +15,7 @@ interface ModelCarouselProps {
   title: string;
   icon: string;
   direction?: 'ltr' | 'rtl';
-  startIndex?: number;
-  limit?: number;
+  carouselIndex?: 0 | 1; // 0 para primeiro carousel, 1 para segundo
   onSelectModel?: (modelId: string) => void;
 }
 
@@ -24,15 +23,14 @@ export const ModelCarousel = ({
   title, 
   icon, 
   direction = 'ltr', 
-  startIndex = 0, 
-  limit = 20, 
+  carouselIndex = 0,
   onSelectModel 
 }: ModelCarouselProps) => {
   const [models, setModels] = useState<Model[]>([]);
   
-  // Configurar autoplay com loop infinito
+  // Configurar autoplay com loop infinito - 4 segundos
   const autoplayOptions = {
-    delay: 3000,
+    delay: 4000,
     stopOnInteraction: false,
     stopOnMouseEnter: true,
     rootNode: (emblaRoot: HTMLElement) => emblaRoot.parentElement,
@@ -43,29 +41,45 @@ export const ModelCarousel = ({
       loop: true,
       direction: direction,
       dragFree: true,
-      containScroll: 'trimSnaps',
+      slidesToScroll: 1,
+      containScroll: false,
+      skipSnaps: false,
     },
     [Autoplay(autoplayOptions)]
   );
 
   useEffect(() => {
     const fetchModels = async () => {
+      // Buscar TODAS as modelos (314)
       const { data, error } = await supabase
         .from('models')
         .select('id, name, username, avatar_url, followers_count')
         .eq('is_active', true)
-        .order('followers_count', { ascending: false })
-        .range(startIndex, startIndex + limit - 1);
+        .order('followers_count', { ascending: false });
 
       if (data && !error) {
-        // Duplicar modelos para efeito infinito mais suave
-        const duplicatedModels = [...data, ...data, ...data];
-        setModels(duplicatedModels as Model[]);
+        const allModels = data as Model[];
+        const totalModels = allModels.length;
+        const halfPoint = Math.ceil(totalModels / 2);
+        
+        // Dividir modelos entre os dois carousels
+        let carouselModels: Model[];
+        if (carouselIndex === 0) {
+          // Primeiro carousel - primeira metade
+          carouselModels = allModels.slice(0, halfPoint);
+        } else {
+          // Segundo carousel - segunda metade
+          carouselModels = allModels.slice(halfPoint);
+        }
+        
+        // Triplicar para loop infinito sem espaços
+        const infiniteModels = [...carouselModels, ...carouselModels, ...carouselModels];
+        setModels(infiniteModels);
       }
     };
 
     fetchModels();
-  }, [startIndex, limit]);
+  }, [carouselIndex]);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();

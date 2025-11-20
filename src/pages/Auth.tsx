@@ -439,12 +439,11 @@ const Auth = () => {
     <>
       {/* Background para Mobile */}
       <div 
-        className="md:hidden min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+        className="md:hidden min-h-screen flex items-center justify-center p-4"
         style={{
-          backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/ANIMAÇÕES%20ONYFANS/Design%20sem%20nome%20(6).png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          background: `url('https://tiktokonyfans.b-cdn.net/ANIMA%C3%87%C3%95ES%20ONYFANS/Design%20sem%20nome%20(6).png') center/cover no-repeat`,
+          minHeight: '100vh',
+          width: '100%'
         }}
       >
         <div className="relative p-1 rounded-lg" style={{

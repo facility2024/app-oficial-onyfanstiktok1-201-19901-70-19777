@@ -4,6 +4,9 @@ import { Menu, Home, Users, TrendingUp, Star, Settings, LogOut, Heart, Flame, Sp
 import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
+import { FeaturedSection } from "./FeaturedSection";
+import { AdCarousel } from "./AdCarousel";
+import { ModelCarousel } from "./ModelCarousel";
 
 interface CategoryItem {
   id: string;
@@ -22,13 +25,15 @@ interface CategoryMenuProps {
   onOpenSearch?: () => void;
   onOpenLive?: () => void;
   onExit?: () => void;
+  onSelectModel?: (modelId: string) => void;
 }
 
 export const CategoryMenu = ({ 
   onNavigateHome, 
   onOpenSearch, 
   onOpenLive,
-  onExit 
+  onExit,
+  onSelectModel
 }: CategoryMenuProps) => {
   const [open, setOpen] = useState(false);
 
@@ -147,46 +152,81 @@ export const CategoryMenu = ({
           <Menu className="w-6 h-6" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0">
-        <SheetHeader className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
-              <img 
-                src={coconutIcon} 
-                alt="Coconudi" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <SheetTitle className="text-white text-2xl font-bold tracking-tight">
-              coconudi
-            </SheetTitle>
-          </div>
-        </SheetHeader>
-        
-        {/* Header do Usuário */}
-        <UserMenuHeader />
-        
-        <div className="overflow-y-auto h-[calc(100vh-80px)] py-4">
-          {categories.map((category, categoryIndex) => (
-            <div key={categoryIndex} className="mb-6">
-              <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                {category.title}
-              </h3>
-              <div className="space-y-1">
-                {category.items.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant="ghost"
-                    className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
-                    onClick={item.onClick}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    <span>{item.name}</span>
-                  </Button>
-                ))}
+      <SheetContent side="left" className="w-80 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0 flex flex-col">
+        {/* Parte Fixa - Header e Perfil */}
+        <div className="flex-shrink-0">
+          <SheetHeader className="p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+                <img 
+                  src={coconutIcon} 
+                  alt="Coconudi" 
+                  className="w-full h-full object-cover"
+                />
               </div>
+              <SheetTitle className="text-white text-2xl font-bold tracking-tight">
+                coconudi
+              </SheetTitle>
             </div>
-          ))}
+          </SheetHeader>
+          
+          {/* Header do Usuário */}
+          <UserMenuHeader />
+        </div>
+        
+        {/* Parte Rolável - Destaque, Patrocinado, Modelos e Navegação */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+          <div className="py-4 space-y-4 px-4">
+            {/* Destaque */}
+            <FeaturedSection />
+            
+            {/* Patrocinado */}
+            <AdCarousel />
+            
+            {/* Modelos em Destaque */}
+            <ModelCarousel 
+              title="Modelos em Destaque" 
+              icon="🔥"
+              onSelectModel={(modelId) => {
+                onSelectModel?.(modelId);
+                setOpen(false);
+              }}
+            />
+            
+            {/* Novas Modelos */}
+            <ModelCarousel 
+              title="Novas Modelos" 
+              icon="✨"
+              onSelectModel={(modelId) => {
+                onSelectModel?.(modelId);
+                setOpen(false);
+              }}
+            />
+          </div>
+
+          {/* Categorias de Navegação */}
+          <div className="py-4">
+            {categories.map((category, categoryIndex) => (
+              <div key={categoryIndex} className="mb-6">
+                <h3 className="px-6 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                  {category.title}
+                </h3>
+                <div className="space-y-1">
+                  {category.items.map((item) => (
+                    <Button
+                      key={item.id}
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
+                      onClick={item.onClick}
+                    >
+                      <span className="mr-3">{item.icon}</span>
+                      <span>{item.name}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

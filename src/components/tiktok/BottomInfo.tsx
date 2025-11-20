@@ -1,11 +1,20 @@
 import { Video } from '@/types/database';
+import { Music } from 'lucide-react';
+import { VinylRecord } from './VinylRecord';
 
 interface BottomInfoProps {
   video: Video;
   isNew?: boolean;
+  isPlaying?: boolean;
 }
 
-export const BottomInfo = ({ video, isNew = false }: BottomInfoProps) => {
+export const BottomInfo = ({ video, isNew = false, isPlaying = true }: BottomInfoProps) => {
+  const handleMusicClick = () => {
+    // Abre o perfil do autor da música (modelo)
+    const authorUrl = video.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(video.user?.username || '')}`;
+    const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
   return (
     <div className="absolute bottom-16 left-0 right-20 pb-2 px-4">
       {/* Badge "Novo" destacado */}
@@ -33,10 +42,21 @@ export const BottomInfo = ({ video, isNew = false }: BottomInfoProps) => {
         {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
       </div>
 
-      {/* Music Info */}
-      <div className="flex items-center gap-2 text-white text-xs drop-shadow-lg">
-        <div className="w-4 h-4 animate-spin">🎵</div>
-        <span className="truncate">{video.music_name || 'Som original - ' + (video.user?.username || 'Usuário')}</span>
+      {/* Music Info - Clicável */}
+      <div 
+        onClick={handleMusicClick}
+        className="flex items-center gap-2 text-white text-xs drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
+      >
+        <VinylRecord isPlaying={isPlaying} hasMusic={true} />
+        <div className="flex items-center gap-1 truncate">
+          <Music className="w-3 h-3 animate-pulse" />
+          <span className="truncate font-medium">
+            {video.music_name || 'Som original'}
+          </span>
+          <span className="truncate opacity-80">
+            • {video.user?.username || 'Autor'}
+          </span>
+        </div>
       </div>
     </div>
   );

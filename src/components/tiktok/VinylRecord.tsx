@@ -1,31 +1,19 @@
-import { useEffect, useState } from 'react';
-
 interface VinylRecordProps {
   isPlaying: boolean;
   hasMusic: boolean;
 }
 
 export const VinylRecord = ({ isPlaying, hasMusic }: VinylRecordProps) => {
-  const [rotation, setRotation] = useState(0);
-
-  useEffect(() => {
-    if (!isPlaying || !hasMusic) return;
-
-    const interval = setInterval(() => {
-      setRotation(prev => (prev + 2) % 360);
-    }, 50); // Rotação suave
-
-    return () => clearInterval(interval);
-  }, [isPlaying, hasMusic]);
-
   if (!hasMusic) return null;
 
   return (
     <div className="relative flex items-center justify-center">
       <div 
-        className="w-12 h-12 rounded-full bg-black shadow-2xl transition-transform duration-50 border-2 border-gray-800"
+        className={`w-12 h-12 rounded-full bg-black shadow-2xl border-2 border-gray-800 ${isPlaying ? 'animate-spin' : ''}`}
         style={{ 
-          transform: `rotate(${rotation}deg)`,
+          animationDuration: isPlaying ? '3s' : '0s',
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite',
           boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.6), 0 0 20px rgba(0,0,0,0.4)'
         }}
       >

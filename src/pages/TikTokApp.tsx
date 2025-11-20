@@ -2205,7 +2205,11 @@ export const TikTokApp = () => {
                 
                 {/* Bottom Info - only show for current video */}
                 {index === currentVideoIndex && (
-                  <BottomInfo video={video} isNew={isVideoNew(video)} />
+                  <BottomInfo 
+                    video={video} 
+                    isNew={isVideoNew(video)} 
+                    isPlaying={isPlaying}
+                  />
                 )}
               </div>
             ))}

@@ -1,28 +1,35 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Heart, Eye, Play } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-interface FollowedModel {
+interface VideoWithModel {
   id: string;
-  username: string;
-  avatar_url: string;
-  followers_count: number;
-  bio?: string;
+  title: string;
+  description: string;
+  thumbnail_url: string;
+  views_count: number;
+  likes_count: number;
+  model_id: string;
+  models: {
+    id: string;
+    username: string;
+    avatar_url: string;
+  };
 }
 
 export default function FollowingPage() {
   const navigate = useNavigate();
-  const [followedModels, setFollowedModels] = useState<FollowedModel[]>([]);
+  const [videos, setVideos] = useState<VideoWithModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadFollowedModels();
+    loadFollowedVideos();
   }, []);
 
-  const loadFollowedModels = async () => {
+  const loadFollowedVideos = async () => {
     try {
       const userId = localStorage.getItem('anonymous_user_id');
       if (!userId) {
@@ -30,36 +37,54 @@ export default function FollowingPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Primeiro busca as modelos seguidas
+      const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
+        .select('model_id')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+      if (followError) throw followError;
+
+      if (!followedModels || followedModels.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const modelIds = followedModels.map(f => f.model_id);
+
+      // Depois busca os vídeos dessas modelos
+      const { data: videosData, error: videosError } = await supabase
+        .from('videos')
         .select(`
+          id,
+          title,
+          description,
+          thumbnail_url,
+          views_count,
+          likes_count,
           model_id,
           models:model_id (
             id,
             username,
-            avatar_url,
-            followers_count,
-            bio
+            avatar_url
           )
         `)
-        .eq('user_id', userId)
-        .eq('is_active', true);
+        .in('model_id', modelIds)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (videosError) throw videosError;
 
-      const models = data
-        ?.map(item => item.models)
-        .filter(Boolean) as FollowedModel[];
-
-      setFollowedModels(models || []);
+      setVideos(videosData as VideoWithModel[] || []);
     } catch (error) {
-      console.error('Erro ao carregar modelos seguidas:', error);
+      console.error('Erro ao carregar vídeos das modelos seguidas:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleModelClick = (modelId: string) => {
+  const handleVideoClick = (modelId: string) => {
     navigate(`/app?profile=${modelId}`);
   };
 
@@ -85,55 +110,68 @@ export default function FollowingPage() {
       {/* Content */}
       <div className="pt-20 px-4 pb-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="!bg-gray-800 animate-pulse h-64" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {[...Array(12)].map((_, i) => (
+              <Card key={i} className="!bg-gray-800 animate-pulse aspect-[9/16]" />
             ))}
           </div>
-        ) : followedModels.length === 0 ? (
+        ) : videos.length === 0 ? (
           <div className="text-center py-20">
             <Heart className="w-16 h-16 mx-auto mb-4 text-gray-600" />
             <h2 className="text-xl font-semibold text-white mb-2">
-              Nenhuma modelo seguida
+              Nenhum vídeo disponível
             </h2>
             <p className="text-gray-400">
-              Comece a seguir modelos para vê-las aqui
+              Comece a seguir modelos para ver seus vídeos aqui
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {followedModels.map((model) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {videos.map((video) => (
               <Card
-                key={model.id}
-                onClick={() => handleModelClick(model.id)}
-                className="!bg-gradient-to-br !from-gray-800 !to-gray-900 border-gray-700 hover:border-primary hover:scale-105 transition-all cursor-pointer overflow-hidden group"
+                key={video.id}
+                onClick={() => handleVideoClick(video.model_id)}
+                className="!bg-gray-900 border-gray-700 hover:border-primary hover:scale-105 transition-all cursor-pointer overflow-hidden group relative aspect-[9/16]"
               >
-                <div className="p-4 flex flex-col items-center gap-3">
-                  <div className="relative">
-                    <Avatar className="w-24 h-24 border-2 border-primary ring-2 ring-primary/20">
-                      <AvatarImage src={model.avatar_url} alt={model.username} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-pink-600 text-white text-2xl">
-                        {model.username?.[0]?.toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1">
-                      <Heart className="w-4 h-4 fill-current" />
-                    </div>
-                  </div>
+                {/* Thumbnail do Vídeo */}
+                <div className="relative w-full h-full">
+                  <img
+                    src={video.thumbnail_url}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
                   
-                  <div className="text-center w-full">
-                    <h3 className="font-semibold text-white truncate group-hover:text-primary transition-colors">
-                      @{model.username}
-                    </h3>
-                    <p className="text-sm text-gray-400 flex items-center justify-center gap-1">
-                      <Heart className="w-3 h-3" />
-                      {model.followers_count || 0} seguidores
-                    </p>
-                    {model.bio && (
-                      <p className="text-xs text-gray-500 mt-2 line-clamp-2">
-                        {model.bio}
-                      </p>
-                    )}
+                  {/* Overlay com Play */}
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-center justify-center">
+                    <Play className="w-12 h-12 text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                  </div>
+
+                  {/* Info do Vídeo */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+                    {/* Avatar e Username */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <Avatar className="w-8 h-8 border-2 border-white">
+                        <AvatarImage src={video.models.avatar_url} alt={video.models.username} />
+                        <AvatarFallback className="bg-primary text-white text-xs">
+                          {video.models.username?.[0]?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-white text-sm font-semibold truncate">
+                        @{video.models.username}
+                      </span>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center gap-3 text-white text-xs">
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-4 h-4" />
+                        <span>{video.views_count || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-4 h-4" />
+                        <span>{video.likes_count || 0}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Card>

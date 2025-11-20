@@ -15,7 +15,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, TrendingUp, Video, Flame, Sparkles, Users, Star, Settings, LogOut, Plus, ShoppingBag, Share2 } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -2015,10 +2015,7 @@ export const TikTokApp = () => {
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
             <CategoryMenu
-              onNavigateHome={backToCurrentVideo}
-              onOpenSearch={() => setShowSearch(true)}
               onOpenLive={() => setShowLive(true)}
-              onSelectModel={(modelId) => goToModelVideo(modelId)}
               onExit={async () => {
                 try {
                   sessionStorage.setItem('logging_out', 'true');
@@ -2327,118 +2324,80 @@ export const TikTokApp = () => {
         {/* Left Sidebar Menu */}
         <div className="w-64 bg-black border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto">
           <div className="py-6">
-            {/* Navegação */}
-            <div className="mb-6">
-              <h3 className="px-6 text-white text-xs font-semibold uppercase tracking-wider mb-3">
-                Navegação
-              </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => goToHome()}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Home className="w-5 h-5 mr-3" />
-                  <span>Início</span>
-                </button>
-                <button
-                  onClick={() => console.log('Em Alta')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <TrendingUp className="w-5 h-5 mr-3" />
-                  <span>Em Alta</span>
-                </button>
-                <button
-                  onClick={() => setShowLive(true)}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Video className="w-5 h-5 mr-3" />
-                  <span>Lives</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Categorias */}
-            <div className="mb-6">
-              <h3 className="px-6 text-white text-xs font-semibold uppercase tracking-wider mb-3">
-                Categorias
-              </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => console.log('Favoritos')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Heart className="w-5 h-5 mr-3" />
-                  <span>Favoritos</span>
-                </button>
-                <button
-                  onClick={() => console.log('Mais Popular')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Flame className="w-5 h-5 mr-3" />
-                  <span>Mais Popular</span>
-                </button>
-                <button
-                  onClick={() => console.log('Premium')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Sparkles className="w-5 h-5 mr-3" />
-                  <span>Premium</span>
-                </button>
-                <button
-                  onClick={() => console.log('Seguindo')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Users className="w-5 h-5 mr-3" />
-                  <span>Seguindo</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Conta */}
-            <div>
-              <h3 className="px-6 text-white text-xs font-semibold uppercase tracking-wider mb-3">
-                Conta
-              </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => console.log('Destaques')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Star className="w-5 h-5 mr-3" />
-                  <span>Destaques</span>
-                </button>
-                <button
-                  onClick={() => console.log('Configurações')}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <Settings className="w-5 h-5 mr-3" />
-                  <span>Configurações</span>
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      sessionStorage.setItem('logging_out', 'true');
-                      await supabase.auth.signOut();
-                      navigate('/auth', { replace: true });
-                      setTimeout(() => {
-                        sessionStorage.removeItem('logging_out');
-                      }, 500);
-                      toast({
-                        title: 'Logout realizado',
-                        description: 'Você saiu da sua conta com sucesso',
-                      });
-                    } catch (error) {
-                      console.error('Erro ao fazer logout:', error);
+            <div className="space-y-1">
+              <button
+                onClick={() => setShowLive(true)}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <Video className="w-5 h-5 mr-3" />
+                <span>Live</span>
+              </button>
+              <button
+                onClick={() => console.log('Seguindo')}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <Users className="w-5 h-5 mr-3" />
+                <span>Seguindo</span>
+              </button>
+              <button
+                onClick={() => console.log('Market-Place')}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <ShoppingBag className="w-5 h-5 mr-3" />
+                <span>Market-Place</span>
+              </button>
+              <button
+                onClick={() => console.log('Negócios Locais')}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <MapPin className="w-5 h-5 mr-3" />
+                <span>Negócios Locais</span>
+              </button>
+              <button
+                onClick={() => console.log('Coleções')}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <BookmarkPlus className="w-5 h-5 mr-3" />
+                <span>Coleções</span>
+              </button>
+              <button
+                onClick={() => console.log('Assinaturas')}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <CreditCard className="w-5 h-5 mr-3" />
+                <span>Assinaturas</span>
+              </button>
+              <button
+                onClick={() => navigate('/creator-application')}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <Sparkles className="w-5 h-5 mr-3" />
+                <span>Sou Criador</span>
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    sessionStorage.setItem('logging_out', 'true');
+                    await supabase.auth.signOut();
+                    navigate('/auth', { replace: true });
+                    setTimeout(() => {
                       sessionStorage.removeItem('logging_out');
-                      navigate('/auth', { replace: true });
-                    }
-                  }}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  <span>Sair</span>
-                </button>
-              </div>
+                    }, 500);
+                    toast({
+                      title: 'Logout realizado',
+                      description: 'Você saiu da sua conta com sucesso',
+                    });
+                  } catch (error) {
+                    console.error('Erro ao fazer logout:', error);
+                    sessionStorage.removeItem('logging_out');
+                    navigate('/auth', { replace: true });
+                  }
+                }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                <span>Sair</span>
+              </button>
             </div>
           </div>
         </div>

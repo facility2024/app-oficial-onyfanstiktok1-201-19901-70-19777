@@ -2704,15 +2704,14 @@ export const TikTokApp = () => {
                 title="Modelos em Destaque" 
                 icon="🔥"
                 onSelectModel={(modelId) => {
-                  // Pode navegar para o perfil da modelo
-                  console.log('Model selected:', modelId);
+                  goToModelVideo(modelId);
                 }}
               />
               <ModelCarousel 
                 title="Novas Modelos" 
                 icon="✨"
                 onSelectModel={(modelId) => {
-                  console.log('Model selected:', modelId);
+                  goToModelVideo(modelId);
                 }}
               />
             </div>

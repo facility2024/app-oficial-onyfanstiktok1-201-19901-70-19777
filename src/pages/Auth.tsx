@@ -220,10 +220,13 @@ const Auth = () => {
         backgroundImage: `url(${loginBackground})`
       }}
     >
-      <Card className="w-full max-w-md bg-card border-border shadow-2xl">
+      <div className="relative p-1 rounded-lg" style={{
+        background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
+      }}>
+        <Card className="w-full max-w-md bg-card shadow-2xl border-0">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <img src={coconudiLogo} alt="COCONUDI" className="h-16 object-contain" />
+            <img src={coconudiLogo} alt="COCONUDI" className="h-16 object-contain animate-float" />
           </div>
           <div className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold text-foreground">
@@ -438,6 +441,7 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

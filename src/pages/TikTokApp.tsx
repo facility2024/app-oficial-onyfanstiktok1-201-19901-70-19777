@@ -15,7 +15,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music, Grid } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -2167,7 +2167,7 @@ export const TikTokApp = () => {
             onClick={() => navigate('/explore')}
             className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
-            <Grid className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+            <Compass className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Explorar</span>
           </button>
 

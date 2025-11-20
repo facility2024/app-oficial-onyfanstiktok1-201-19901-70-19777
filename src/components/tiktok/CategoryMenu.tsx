@@ -187,6 +187,7 @@ export const CategoryMenu = ({
             <ModelCarousel 
               title="Modelos em Destaque" 
               icon="🔥"
+              direction="rtl"
               onSelectModel={(modelId) => {
                 onSelectModel?.(modelId);
                 setOpen(false);
@@ -197,6 +198,7 @@ export const CategoryMenu = ({
             <ModelCarousel 
               title="Novas Modelos" 
               icon="✨"
+              direction="ltr"
               onSelectModel={(modelId) => {
                 onSelectModel?.(modelId);
                 setOpen(false);

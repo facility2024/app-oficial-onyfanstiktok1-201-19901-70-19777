@@ -2704,6 +2704,7 @@ export const TikTokApp = () => {
               <ModelCarousel 
                 title="Modelos em Destaque" 
                 icon="🔥"
+                direction="rtl"
                 onSelectModel={(modelId) => {
                   goToModelVideo(modelId);
                 }}
@@ -2711,6 +2712,7 @@ export const TikTokApp = () => {
               <ModelCarousel 
                 title="Novas Modelos" 
                 icon="✨"
+                direction="ltr"
                 onSelectModel={(modelId) => {
                   goToModelVideo(modelId);
                 }}

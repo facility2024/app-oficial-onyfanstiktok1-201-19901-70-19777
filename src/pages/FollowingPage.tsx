@@ -1,112 +1,70 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Heart, Eye, Play } from 'lucide-react';
+import { ArrowLeft, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-interface VideoWithModel {
+interface FollowedModel {
   id: string;
-  title: string;
-  description: string;
-  thumbnail_url: string;
-  views_count: number;
-  likes_count: number;
-  model_id: string;
-  models: {
-    id: string;
-    username: string;
-    avatar_url: string;
-  };
+  username: string;
+  avatar_url: string;
+  followers_count: number;
 }
 
 export default function FollowingPage() {
   const navigate = useNavigate();
-  const [videos, setVideos] = useState<VideoWithModel[]>([]);
+  const [models, setModels] = useState<FollowedModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadFollowedVideos();
+    loadFollowedModels();
   }, []);
 
-  const loadFollowedVideos = async () => {
+  const loadFollowedModels = async () => {
     try {
-      // Busca tanto anonymous_user_id quanto o user_id do auth
       const anonymousUserId = localStorage.getItem('anonymous_user_id');
       const { data: { user } } = await supabase.auth.getUser();
       const authUserId = user?.id;
 
-      console.log('🔍 DEBUG SEGUINDO:', {
-        anonymousUserId,
-        authUserId
-      });
-
       if (!anonymousUserId && !authUserId) {
-        console.log('❌ Nenhum user_id encontrado');
         setLoading(false);
         return;
       }
 
-      // Busca follows com ambos os IDs
+      // Busca as modelos seguidas
       const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
-        .select('model_id, user_id')
+        .select('model_id')
         .or(`user_id.eq.${anonymousUserId},user_id.eq.${authUserId}`)
         .eq('is_active', true);
 
-      console.log('🔍 Follows encontrados:', followedModels);
-
-      if (followError) {
-        console.error('❌ Erro ao buscar follows:', followError);
-        throw followError;
-      }
+      if (followError) throw followError;
 
       if (!followedModels || followedModels.length === 0) {
-        console.log('❌ Nenhuma modelo seguida');
         setLoading(false);
         return;
       }
 
       const modelIds = followedModels.map(f => f.model_id);
-      console.log('🔍 Model IDs:', modelIds);
 
-      // Busca os vídeos dessas modelos
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select(`
-          id,
-          title,
-          description,
-          thumbnail_url,
-          views_count,
-          likes_count,
-          model_id,
-          models!videos_model_id_fkey (
-            id,
-            username,
-            avatar_url
-          )
-        `)
-        .in('model_id', modelIds)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      // Busca os dados das modelos
+      const { data: modelsData, error: modelsError } = await supabase
+        .from('models')
+        .select('id, username, avatar_url, followers_count')
+        .in('id', modelIds);
 
-      console.log('🔍 Vídeos encontrados:', videosData);
+      if (modelsError) throw modelsError;
 
-      if (videosError) {
-        console.error('❌ Erro ao buscar vídeos:', videosError);
-        throw videosError;
-      }
-
-      setVideos(videosData as VideoWithModel[] || []);
+      setModels(modelsData as FollowedModel[] || []);
     } catch (error) {
-      console.error('❌ Erro ao carregar vídeos das modelos seguidas:', error);
+      console.error('❌ Erro ao carregar modelos seguidas:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVideoClick = (modelId: string) => {
+  const handleModelClick = (modelId: string) => {
     navigate(`/app?profile=${modelId}`);
   };
 
@@ -132,69 +90,52 @@ export default function FollowingPage() {
       {/* Content */}
       <div className="pt-20 px-4 pb-8">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
             {[...Array(12)].map((_, i) => (
               <Card key={i} className="!bg-gray-800 animate-pulse aspect-[9/16]" />
             ))}
           </div>
-        ) : videos.length === 0 ? (
+        ) : models.length === 0 ? (
           <div className="text-center py-20">
             <Heart className="w-16 h-16 mx-auto mb-4 text-gray-600" />
             <h2 className="text-xl font-semibold text-white mb-2">
-              Nenhum vídeo disponível
+              Nenhuma modelo seguida
             </h2>
             <p className="text-gray-400">
-              Comece a seguir modelos para ver seus vídeos aqui
+              Comece a seguir modelos para vê-las aqui
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {videos.map((video) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+            {models.map((model) => (
               <Card
-                key={video.id}
-                onClick={() => handleVideoClick(video.model_id)}
+                key={model.id}
+                onClick={() => handleModelClick(model.id)}
                 className="!bg-gray-900 border-gray-700 hover:border-primary hover:scale-105 transition-all cursor-pointer overflow-hidden group relative aspect-[9/16]"
               >
-                {/* Thumbnail do Vídeo */}
-                <div className="relative w-full h-full">
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
-                    className="w-full h-full object-cover"
-                  />
-                  
-                  {/* Overlay com Play */}
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-center justify-center">
-                    <Play className="w-12 h-12 text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                <div className="relative w-full h-full flex flex-col items-center justify-center p-3">
+                  {/* Avatar */}
+                  <div className="w-16 h-16 mb-3">
+                    <Avatar className="w-full h-full border-2 border-primary">
+                      <AvatarImage src={model.avatar_url} alt={model.username} />
+                      <AvatarFallback className="bg-primary text-white text-lg">
+                        {model.username?.[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
 
-                  {/* Info do Vídeo */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                    {/* Avatar e Username */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Avatar className="w-8 h-8 border-2 border-white">
-                        <AvatarImage src={video.models.avatar_url} alt={video.models.username} />
-                        <AvatarFallback className="bg-primary text-white text-xs">
-                          {video.models.username?.[0]?.toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-white text-sm font-semibold truncate">
-                        @{video.models.username}
-                      </span>
-                    </div>
+                  {/* Username */}
+                  <p className="text-white text-sm font-semibold text-center truncate w-full px-1">
+                    @{model.username}
+                  </p>
 
-                    {/* Stats */}
-                    <div className="flex items-center gap-3 text-white text-xs">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{video.views_count || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Heart className="w-4 h-4" />
-                        <span>{video.likes_count || 0}</span>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Seguidores */}
+                  <p className="text-gray-400 text-xs mt-1">
+                    {model.followers_count || 0} seguidores
+                  </p>
+
+                  {/* Overlay hover */}
+                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all" />
                 </div>
               </Card>
             ))}

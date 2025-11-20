@@ -90,11 +90,14 @@ export const CategoryMenu = ({
       name: "Sou Criador",
       icon: <Sparkles className="w-5 h-5" />,
       onClick: () => {
-        console.log('🎯 CategoryMenu: Botão Sou Criador clicado');
+        console.log('🎯🎯🎯 CategoryMenu: Botão Sou Criador CLICADO!');
+        console.log('🎯 Navegando para: /creator-application');
         setOpen(false);
-        setTimeout(() => {
+        // Garantir que o menu fecha antes de navegar
+        requestAnimationFrame(() => {
           navigate('/creator-application');
-        }, 100);
+          console.log('🎯 Navigate executado!');
+        });
       }
     },
     {

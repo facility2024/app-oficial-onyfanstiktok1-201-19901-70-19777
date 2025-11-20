@@ -135,7 +135,7 @@ export const CategoryMenu = ({
         </div>
         
         {/* Conteúdo Rolável */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-6">
           {/* Seções de Destaque, Patrocinado e Modelos */}
           <div className="py-4 space-y-4 px-4">
             {/* Destaque */}
@@ -172,7 +172,7 @@ export const CategoryMenu = ({
           </div>
 
           {/* Menu de Navegação */}
-          <div className="py-4">
+          <div className="pb-24">
             <div className="space-y-1">
               {menuItems.map((item) => (
                 <Button

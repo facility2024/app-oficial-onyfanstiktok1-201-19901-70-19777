@@ -20,11 +20,25 @@ const signupSchema = loginSchema.extend({
   name: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().trim().email('Email inválido').max(255, 'Email muito longo'),
+});
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(100, 'Senha muito longa'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
+});
+
 const Auth = () => {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password' | 'reset-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -36,6 +50,25 @@ const Auth = () => {
       }
     });
   }, [navigate]);
+
+  // Detectar modo reset na URL
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery' && accessToken) {
+      setMode('reset-password');
+      toast.info('Defina sua nova senha abaixo.');
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const modeParam = urlParams.get('mode');
+    
+    if (modeParam === 'reset-password') {
+      setMode('reset-password');
+    }
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +145,73 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      
+      const validated = forgotPasswordSchema.parse({ email });
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(validated.email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Se este email estiver cadastrado, você receberá um link de recuperação.');
+      
+      setTimeout(() => {
+        setMode('login');
+        setEmail('');
+      }, 3000);
+      
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || 'Erro ao enviar email de recuperação');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      
+      const validated = resetPasswordSchema.parse({ 
+        password: newPassword, 
+        confirmPassword 
+      });
+      
+      const { error } = await supabase.auth.updateUser({
+        password: validated.password
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Senha alterada com sucesso! Você já pode fazer login.');
+      
+      setMode('login');
+      setNewPassword('');
+      setConfirmPassword('');
+      navigate('/auth');
+      
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || 'Erro ao redefinir senha');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-card border-border shadow-2xl">
@@ -121,18 +221,27 @@ const Auth = () => {
           </div>
           <div className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold text-foreground">
-              {mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta'}
+              {mode === 'login' && 'Bem-vindo de volta'}
+              {mode === 'signup' && 'Criar conta'}
+              {mode === 'forgot-password' && 'Recuperar senha'}
+              {mode === 'reset-password' && 'Redefinir senha'}
             </CardTitle>
             <CardDescription className="text-muted-foreground">
-              {mode === 'login' 
-                ? 'Entre para acessar conteúdo exclusivo' 
-                : 'Cadastre-se para começar'}
+              {mode === 'login' && 'Entre para acessar conteúdo exclusivo'}
+              {mode === 'signup' && 'Cadastre-se para começar'}
+              {mode === 'forgot-password' && 'Enviaremos um link para seu email'}
+              {mode === 'reset-password' && 'Digite sua nova senha'}
             </CardDescription>
           </div>
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={mode === 'login' ? handleSignIn : handleSignUp} className="space-y-4">
+          <form onSubmit={
+            mode === 'login' ? handleSignIn : 
+            mode === 'signup' ? handleSignUp : 
+            mode === 'forgot-password' ? handleForgotPassword : 
+            handleResetPassword
+          } className="space-y-4">
             {mode === 'signup' && (
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-foreground">Nome Completo</Label>
@@ -163,19 +272,91 @@ const Auth = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Senha</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-background border-border text-foreground"
-                placeholder="••••••••"
-                required
-                disabled={loading}
-              />
-            </div>
+            {mode === 'login' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-foreground">Senha</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                    placeholder="••••••••"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('forgot-password');
+                      setPassword('');
+                    }}
+                    className="text-sm text-primary hover:underline transition-colors"
+                    disabled={loading}
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
+              </>
+            )}
+
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground">Senha</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-background border-border text-foreground"
+                  placeholder="••••••••"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            )}
+
+            {mode === 'forgot-password' && (
+              <p className="text-xs text-muted-foreground">
+                Enviaremos um link de recuperação para este email.
+              </p>
+            )}
+
+            {mode === 'reset-password' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-foreground">Nova Senha</Label>
+                  <Input 
+                    id="newPassword" 
+                    type="password" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                    placeholder="••••••••"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-foreground">Confirmar Senha</Label>
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                    placeholder="••••••••"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </>
+            )}
             
             <Button 
               type="submit" 
@@ -185,29 +366,69 @@ const Auth = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Aguarde...
+                  {mode === 'forgot-password' ? 'Enviando...' : 
+                   mode === 'reset-password' ? 'Redefinindo...' : 
+                   'Aguarde...'}
                 </>
               ) : (
-                mode === 'login' ? 'Entrar' : 'Criar Conta'
+                <>
+                  {mode === 'login' && 'Entrar'}
+                  {mode === 'signup' && 'Criar Conta'}
+                  {mode === 'forgot-password' && 'Enviar link de recuperação'}
+                  {mode === 'reset-password' && 'Redefinir Senha'}
+                </>
               )}
             </Button>
+            
+            {mode === 'forgot-password' && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setMode('login');
+                  setEmail('');
+                }}
+                disabled={loading}
+              >
+                Voltar para login
+              </Button>
+            )}
           </form>
           
           <div className="mt-6 text-center">
-            <button
-              onClick={() => {
-                setMode(mode === 'login' ? 'signup' : 'login');
-                setEmail('');
-                setPassword('');
-                setName('');
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              disabled={loading}
-            >
-              {mode === 'login' 
-                ? 'Não tem conta? Cadastre-se' 
-                : 'Já tem conta? Entrar'}
-            </button>
+            {(mode === 'login' || mode === 'signup') && (
+              <button
+                onClick={() => {
+                  setMode(mode === 'login' ? 'signup' : 'login');
+                  setEmail('');
+                  setPassword('');
+                  setName('');
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                disabled={loading}
+              >
+                {mode === 'login' 
+                  ? 'Não tem conta? Cadastre-se' 
+                  : 'Já tem conta? Entrar'}
+              </button>
+            )}
+            
+            {(mode === 'forgot-password' || mode === 'reset-password') && (
+              <button
+                onClick={() => {
+                  setMode('login');
+                  setEmail('');
+                  setPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                disabled={loading}
+              >
+                ← Voltar para login
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>

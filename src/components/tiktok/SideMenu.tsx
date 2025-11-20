@@ -1,5 +1,6 @@
 import { Video } from '@/types/database';
 import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles } from 'lucide-react';
+import { VideoOptionsMenu } from './VideoOptionsMenu';
 
 interface SideMenuProps {
   video: Video | null;
@@ -162,6 +163,11 @@ export const SideMenu = ({
         <span className="text-white text-xs mt-1 font-light">{isMuted ? 'Som' : 'Mudo'}</span>
       </div>
 
+      {/* Video Options Menu */}
+      <VideoOptionsMenu 
+        videoId={video?.id || ''} 
+        videoTitle={video?.title}
+      />
 
     </div>
   );

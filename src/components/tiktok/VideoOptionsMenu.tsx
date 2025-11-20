@@ -1,0 +1,132 @@
+import { useState } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Bookmark, Maximize, ThumbsUp, ThumbsDown, Flag, MoreVertical } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface VideoOptionsMenuProps {
+  videoId: string;
+  videoTitle?: string;
+}
+
+export const VideoOptionsMenu = ({ videoId, videoTitle }: VideoOptionsMenuProps) => {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    toast({
+      title: "Vídeo salvo",
+      description: "O vídeo foi salvo nos seus favoritos",
+    });
+    setOpen(false);
+  };
+
+  const handleFullscreen = () => {
+    toast({
+      title: "Tela cheia",
+      description: "Funcionalidade em desenvolvimento",
+    });
+    setOpen(false);
+  };
+
+  const handleInterested = () => {
+    toast({
+      title: "Interesse registrado",
+      description: "Vamos mostrar mais conteúdos como este",
+    });
+    setOpen(false);
+  };
+
+  const handleNotInterested = () => {
+    toast({
+      title: "Registrado",
+      description: "Vamos mostrar menos conteúdos como este",
+    });
+    setOpen(false);
+  };
+
+  const handleReport = () => {
+    toast({
+      title: "Denúncia enviada",
+      description: "Obrigado por nos ajudar a manter a comunidade segura",
+      variant: "default",
+    });
+    setOpen(false);
+  };
+
+  return (
+    <>
+      <div 
+        className="flex flex-col items-center cursor-pointer group" 
+        onClick={() => setOpen(true)}
+      >
+        <div className="w-12 h-12 flex items-center justify-center transition-all">
+          <MoreVertical className="w-8 h-8 text-white" strokeWidth={1.5} />
+        </div>
+        <span className="text-white text-xs mt-1 font-light">Mais</span>
+      </div>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent 
+          side="bottom" 
+          className="bg-black/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl"
+        >
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-white text-center">
+              {videoTitle || 'Opções do Vídeo'}
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="space-y-2 pb-6">
+            <Button
+              variant="ghost"
+              className="w-full justify-start py-6 text-white hover:bg-white/10 text-base"
+              onClick={handleSave}
+            >
+              <Bookmark className="w-5 h-5 mr-3" />
+              Salvar
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start py-6 text-white hover:bg-white/10 text-base"
+              onClick={handleFullscreen}
+            >
+              <Maximize className="w-5 h-5 mr-3" />
+              Ver vídeo em tela cheia
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start py-6 text-white hover:bg-white/10 text-base"
+              onClick={handleInterested}
+            >
+              <ThumbsUp className="w-5 h-5 mr-3" />
+              Tenho interesse
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start py-6 text-white hover:bg-white/10 text-base"
+              onClick={handleNotInterested}
+            >
+              <ThumbsDown className="w-5 h-5 mr-3" />
+              Não tenho interesse
+            </Button>
+
+            <div className="border-t border-white/10 my-2"></div>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start py-6 text-red-400 hover:bg-red-500/10 text-base"
+              onClick={handleReport}
+            >
+              <Flag className="w-5 h-5 mr-3" />
+              Denunciar
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+};

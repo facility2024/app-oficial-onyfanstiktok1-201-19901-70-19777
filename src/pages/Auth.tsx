@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import loginBackground from '@/assets/login-background.png';
+import loginBackgroundMobile from '@/assets/login-background-mobile.png';
 import { Loader2 } from 'lucide-react';
 
 // Schema de validação
@@ -441,7 +442,10 @@ const Auth = () => {
       <div 
         className="md:hidden min-h-screen flex items-center justify-center p-4"
         style={{
-          background: `url('https://tiktokonyfans.b-cdn.net/ANIMA%C3%87%C3%95ES%20ONYFANS/Design%20sem%20nome%20(6).png') center/cover no-repeat`,
+          backgroundImage: `url(${loginBackgroundMobile})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           minHeight: '100vh',
           width: '100%'
         }}

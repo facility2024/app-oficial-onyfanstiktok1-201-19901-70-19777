@@ -2677,6 +2677,34 @@ export const TikTokApp = () => {
                     </Button>
                   </div>
                   
+                  {/* Desktop Explorar e Chat Buttons */}
+                  <div className="flex items-center space-x-4 mt-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (checkAndTrackAction('profile_view')) {
+                          trackFollow(currentVideo.user.id);
+                          setShowProfile(true);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
+                    >
+                      explorar
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowChat(true);
+                      }}
+                      className="text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
+                    >
+                      chat
+                    </Button>
+                  </div>
+                  
                    <h3 className="text-lg font-medium text-gray-700 mb-1 mt-4">{currentVideo.title}</h3>
                    <p className="text-gray-600 text-sm leading-relaxed mb-3">{currentVideo.description}</p>
                    

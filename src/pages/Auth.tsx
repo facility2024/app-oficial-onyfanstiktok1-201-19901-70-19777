@@ -223,10 +223,11 @@ const Auth = () => {
       <div className="relative p-1 rounded-lg" style={{
         background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
       }}>
-        <Card className="w-full max-w-md bg-card shadow-2xl border-0">
+        <Card className="w-full max-w-sm bg-card shadow-2xl border-0">
         <CardHeader className="space-y-4">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center justify-center space-y-2">
             <img src={coconudiLogo} alt="COCONUDI" className="h-16 object-contain animate-float" />
+            <h1 className="text-2xl font-bold text-foreground tracking-wide">CocoNudi</h1>
           </div>
           <div className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold text-foreground">

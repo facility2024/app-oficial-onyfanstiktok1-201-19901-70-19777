@@ -72,10 +72,10 @@ export const SideMenu = ({
               />
             </div>
           ) : (
-            <User className="w-10 h-10 md:w-[75px] md:h-[75px] text-white" strokeWidth={1.5} />
+            <User className="w-10 h-10 md:w-[75px] md:h-[75px] text-white md:text-gray-800" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">Perfil</span>
+        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">Perfil</span>
       </div>
 
       {/* Like */}
@@ -108,12 +108,12 @@ export const SideMenu = ({
         <div className="w-12 h-12 flex items-center justify-center transition-all duration-200 active:scale-95">
           <Heart 
             className={`w-8 h-8 transition-all ${
-              isLiked ? 'fill-red-500 text-red-500' : 'text-gray-800 md:text-gray-800'
+              isLiked ? 'fill-red-500 text-red-500' : 'text-white md:text-gray-800'
             }`}
             strokeWidth={1.5}
           />
         </div>
-        <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">{formatCount(video?.likes_count || 0)}</span>
+        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">{formatCount(video?.likes_count || 0)}</span>
       </div>
 
       {/* Comment */}
@@ -121,9 +121,9 @@ export const SideMenu = ({
         onOpenComments();
       }}>
         <div className="w-12 h-12 flex items-center justify-center transition-all">
-          <MessageCircle className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
+          <MessageCircle className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
         </div>
-        <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">
+        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">
           {(() => {
             const count = video?.comments_count || 0;
             console.log('🔍 SideMenu comentários:', { videoId: video?.id, commentsCount: count });
@@ -139,9 +139,9 @@ export const SideMenu = ({
           onBlockVideo();
         }}>
           <div className="w-12 h-12 flex items-center justify-center transition-all">
-            <Eye className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
+            <Eye className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
           </div>
-          <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">Bloquear</span>
+          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">Bloquear</span>
         </div>
       )}
 
@@ -151,7 +151,7 @@ export const SideMenu = ({
           <div className="relative w-12 h-12 flex items-center justify-center transition-all duration-300" aria-label="Abrir Premium">
             <Sparkles className="w-8 h-8 text-yellow-500 md:text-yellow-600" strokeWidth={1.5} />
           </div>
-          <span className="text-foreground text-xs mt-1 font-light md:text-gray-800 drop-shadow-md">PREMIUM</span>
+          <span className="text-white md:text-gray-800 text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
         </div>
       )}
 
@@ -159,12 +159,12 @@ export const SideMenu = ({
       <div className="flex flex-col items-center cursor-pointer group" onClick={onToggleSound}>
         <div className="w-12 h-12 flex items-center justify-center transition-all">
           {isMuted ? (
-            <VolumeX className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
+            <VolumeX className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
           ) : (
-            <Volume2 className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
+            <Volume2 className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">{isMuted ? 'Som' : 'Mudo'}</span>
+        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">{isMuted ? 'Som' : 'Mudo'}</span>
       </div>
 
       {/* Explorar - Desktop Only */}

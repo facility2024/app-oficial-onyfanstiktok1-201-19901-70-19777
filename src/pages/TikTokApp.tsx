@@ -2576,6 +2576,10 @@ export const TikTokApp = () => {
                       }
                     }}
                     onFullscreen={handleFullscreen}
+                    onOpenChat={() => {
+                      console.log('Desktop chat clicked');
+                      setShowChat(true);
+                    }}
                     onExit={async () => {
                       try {
                         sessionStorage.setItem('logging_out', 'true');
@@ -2674,34 +2678,6 @@ export const TikTokApp = () => {
                     >
                       <img src={iconShare} alt="Share" className="h-4 w-4 mr-2" />
                       {currentVideo.shares_count}
-                    </Button>
-                  </div>
-                  
-                  {/* Desktop Explorar e Chat Buttons */}
-                  <div className="flex items-center space-x-4 mt-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (checkAndTrackAction('profile_view')) {
-                          trackFollow(currentVideo.user.id);
-                          setShowProfile(true);
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
-                    >
-                      explorar
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowChat(true);
-                      }}
-                      className="text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
-                    >
-                      chat
                     </Button>
                   </div>
                   

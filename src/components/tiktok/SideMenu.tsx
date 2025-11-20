@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles, Search, MessagesSquare } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
 
 interface SideMenuProps {
@@ -17,6 +17,7 @@ interface SideMenuProps {
   onOpenPremium?: () => void;
   onExit?: () => void;
   onFullscreen?: () => void;
+  onOpenChat?: () => void;
 }
 
 export const SideMenu = ({
@@ -33,7 +34,8 @@ export const SideMenu = ({
   onBlockVideo,
   onOpenPremium,
   onExit,
-  onFullscreen
+  onFullscreen,
+  onOpenChat
 }: SideMenuProps) => {
   // 🔍 DEBUG: Verificar se o posting_panel_url está presente
   console.log('🔍 SideMenu DEBUG:', {
@@ -164,6 +166,24 @@ export const SideMenu = ({
         </div>
         <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">{isMuted ? 'Som' : 'Mudo'}</span>
       </div>
+
+      {/* Explorar - Desktop Only */}
+      <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
+        <div className="w-12 h-12 flex items-center justify-center transition-all">
+          <Search className="w-8 h-8 text-red-500" strokeWidth={1.5} />
+        </div>
+        <span className="text-red-500 text-xs mt-1 font-medium">explorar</span>
+      </div>
+
+      {/* Chat - Desktop Only */}
+      {onOpenChat && (
+        <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={onOpenChat}>
+          <div className="w-12 h-12 flex items-center justify-center transition-all">
+            <MessagesSquare className="w-8 h-8 text-red-500" strokeWidth={1.5} />
+          </div>
+          <span className="text-red-500 text-xs mt-1 font-medium">chat</span>
+        </div>
+      )}
 
       {/* Video Options Menu */}
       <VideoOptionsMenu 

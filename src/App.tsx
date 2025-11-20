@@ -16,6 +16,7 @@ const ProtectedRoute = lazy(() => import("@/components/ProtectedRoute").then(m =
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const CreatorApplication = lazy(() => import("./pages/CreatorApplication"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
+const FollowingPage = lazy(() => import("./pages/FollowingPage"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -132,6 +133,15 @@ const App = () => (
             <Suspense fallback={<ComponentFallback />}>
               <ProtectedRoute>
                 <ExplorePage />
+              </ProtectedRoute>
+            </Suspense>
+          } />
+          
+          {/* Página de Seguindo */}
+          <Route path="/following" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ProtectedRoute>
+                <FollowingPage />
               </ProtectedRoute>
             </Suspense>
           } />

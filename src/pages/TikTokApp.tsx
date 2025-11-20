@@ -2398,7 +2398,14 @@ export const TikTokApp = () => {
                   <span>Configurações</span>
                 </button>
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate('/auth');
+                    toast({
+                      title: 'Logout realizado',
+                      description: 'Você saiu da sua conta com sucesso',
+                    });
+                  }}
                   className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
                 >
                   <LogOut className="w-5 h-5 mr-3" />

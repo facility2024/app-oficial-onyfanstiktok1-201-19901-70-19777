@@ -1,7 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+
+const SUPABASE_URL = "https://tnzvhwapfhkhqjgyiomk.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuenZod2FwZmhraHFqZ3lpb21rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NjM5MzUsImV4cCI6MjA2OTQzOTkzNX0.mWv0UEbkeczgKUMRaDm94Azo3Olgu3-sOnkZ7kamWuM";
+
+// Cliente simples sem tipos complexos
+const supabaseSimple = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 interface UserProfile {
   id: string;
@@ -14,56 +20,20 @@ interface UserProfile {
   created_at: string;
 }
 
+interface ProfileUpdates {
+  full_name?: string;
+  username?: string;
+  email?: string;
+  bio?: string;
+}
+
 export const useCurrentUser = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  const fetchCurrentUser = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Buscar usuário autenticado
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      
-      if (authUser) {
-        setUser(authUser);
-        
-        // Buscar perfil do usuário
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', authUser.id)
-          .maybeSingle();
-        
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Erro ao buscar perfil:', profileError);
-        }
-        
-        if (profileData) {
-          setProfile({
-            id: profileData.id,
-            user_id: authUser.id,
-            email: profileData.email || authUser.email,
-            username: profileData.name || null,
-            full_name: profileData.name || null,
-            avatar_url: null,
-            bio: null,
-            created_at: profileData.created_at
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao buscar usuário:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const updateProfile = async (updates: any) => {
+  const updateProfile = async (updates: ProfileUpdates) => {
     if (!user) {
       toast.error('Você precisa estar logado');
       return;
@@ -72,7 +42,7 @@ export const useCurrentUser = () => {
     try {
       setUpdating(true);
       
-      const { error } = await supabase
+      const { error }: any = await supabaseSimple
         .from('profiles')
         .update({
           name: updates.full_name || updates.username,
@@ -82,14 +52,16 @@ export const useCurrentUser = () => {
 
       if (error) throw error;
 
-      // Atualizar estado local
       if (profile) {
         setProfile({
-          ...profile,
-          full_name: updates.full_name,
-          username: updates.username,
-          email: updates.email,
-          bio: updates.bio,
+          id: profile.id,
+          user_id: profile.user_id,
+          full_name: updates.full_name ?? profile.full_name,
+          username: updates.username ?? profile.username,
+          email: updates.email ?? profile.email,
+          bio: updates.bio ?? profile.bio,
+          avatar_url: profile.avatar_url,
+          created_at: profile.created_at,
         });
       }
       
@@ -112,45 +84,44 @@ export const useCurrentUser = () => {
     try {
       setUpdating(true);
 
-      // Validar tamanho do arquivo (5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Arquivo muito grande. Máximo 5MB.');
         return;
       }
 
-      // Validar tipo de arquivo
       if (!file.type.startsWith('image/')) {
         toast.error('Apenas imagens são permitidas.');
         return;
       }
 
-      // Nome único para o arquivo
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      // Upload para storage
-      const { error: uploadError } = await supabase.storage
+      const { error }: any = await supabaseSimple.storage
         .from('avatars')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (error) throw error;
 
-      // Obter URL pública do avatar
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseSimple.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Armazenar URL no localStorage como fallback
       localStorage.setItem(`avatar_${user.id}`, publicUrl);
 
-      // Atualizar estado local
       if (profile) {
         setProfile({
-          ...profile,
+          id: profile.id,
+          user_id: profile.user_id,
+          email: profile.email,
+          username: profile.username,
+          full_name: profile.full_name,
+          bio: profile.bio,
           avatar_url: publicUrl,
+          created_at: profile.created_at,
         });
       }
       
@@ -164,6 +135,45 @@ export const useCurrentUser = () => {
     }
   };
 
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      
+      const { data: { user: authUser } } = await supabaseSimple.auth.getUser();
+      
+      if (authUser) {
+        setUser(authUser);
+        
+        const { data, error }: any = await supabaseSimple
+          .from('profiles')
+          .select('*')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Erro ao buscar perfil:', error);
+        }
+        
+        if (data) {
+          setProfile({
+            id: data.id,
+            user_id: authUser.id,
+            email: data.email || authUser.email,
+            username: data.name || null,
+            full_name: data.name || null,
+            avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || null,
+            bio: null,
+            created_at: data.created_at
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar usuário:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -171,29 +181,31 @@ export const useCurrentUser = () => {
       try {
         setLoading(true);
         
-        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError) throw userError;
+        const { data: { user: authUser } } = await supabaseSimple.auth.getUser();
         
         if (authUser && mounted) {
           setUser(authUser);
           
-          const { data: profileData } = await supabase
+          const { data, error }: any = await supabaseSimple
             .from('profiles')
             .select('*')
             .eq('user_id', authUser.id)
             .maybeSingle();
           
-          if (profileData && mounted) {
+          if (error && error.code !== 'PGRST116') {
+            console.error('Erro ao buscar perfil:', error);
+          }
+          
+          if (data && mounted) {
             setProfile({
-              id: profileData.id,
+              id: data.id,
               user_id: authUser.id,
-              email: profileData.email || authUser.email,
-              username: profileData.name || null,
-              full_name: profileData.name || null,
+              email: data.email || authUser.email,
+              username: data.name || null,
+              full_name: data.name || null,
               avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || null,
               bio: null,
-              created_at: profileData.created_at
+              created_at: data.created_at
             });
           }
         }
@@ -206,7 +218,7 @@ export const useCurrentUser = () => {
 
     initUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabaseSimple.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
@@ -230,6 +242,6 @@ export const useCurrentUser = () => {
     updating,
     updateProfile,
     uploadAvatar,
-    refetch: fetchCurrentUser
+    refetch
   };
 };

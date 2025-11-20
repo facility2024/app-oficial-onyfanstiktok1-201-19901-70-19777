@@ -90,8 +90,11 @@ export const CategoryMenu = ({
       name: "Sou Criador",
       icon: <Sparkles className="w-5 h-5" />,
       onClick: () => {
-        navigate('/creator-application');
+        console.log('🎯 CategoryMenu: Botão Sou Criador clicado');
         setOpen(false);
+        setTimeout(() => {
+          navigate('/creator-application');
+        }, 100);
       }
     },
     {
@@ -165,7 +168,11 @@ export const CategoryMenu = ({
                   key={item.id}
                   variant="ghost"
                   className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
-                  onClick={item.onClick}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    item.onClick();
+                  }}
                 >
                   <span className="mr-3">{item.icon}</span>
                   <span>{item.name}</span>

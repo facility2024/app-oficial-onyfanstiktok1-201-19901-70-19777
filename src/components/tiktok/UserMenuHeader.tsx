@@ -119,7 +119,12 @@ export const UserMenuHeader = () => {
         </Button>
 
         <Button
-          onClick={() => navigate('/creator-application')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎯 UserMenuHeader: Botão Espaço do Criador clicado');
+            navigate('/creator-application');
+          }}
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >
           <Sparkles className="w-4 h-4 mr-2" />

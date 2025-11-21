@@ -29,6 +29,7 @@ import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
+import { LoginRequiredModal } from '@/components/tiktok/LoginRequiredModal';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -109,6 +110,33 @@ export const TikTokApp = () => {
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
+  
+  // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
+  const [videosWatched, setVideosWatched] = useState(() => {
+    const saved = localStorage.getItem('videosWatched');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Verifica se usuário está logado
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      // Se usuário logar, fecha o modal e reseta contador
+      if (session?.user) {
+        setShowLoginModal(false);
+        setVideosWatched(0);
+        localStorage.setItem('videosWatched', '0');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   // Debug do estado
   useEffect(() => {
@@ -237,6 +265,19 @@ export const TikTokApp = () => {
       const newIndex = emblaApi.selectedScrollSnap();
       if (newIndex !== currentVideoIndex) {
         setCurrentVideoIndex(newIndex);
+        
+        // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
+        if (!currentUser && newIndex > currentVideoIndex) {
+          const newCount = videosWatched + 1;
+          setVideosWatched(newCount);
+          localStorage.setItem('videosWatched', newCount.toString());
+          
+          // Mostra modal após 5 vídeos
+          if (newCount >= 5) {
+            setShowLoginModal(true);
+            setIsPlaying(false); // Pausa o vídeo
+          }
+        }
       }
     };
 
@@ -244,7 +285,7 @@ export const TikTokApp = () => {
     return () => {
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, currentVideoIndex]);
+  }, [emblaApi, currentVideoIndex, currentUser, videosWatched]);
 
   // Preload adjacent videos for faster navigation
   useEffect(() => {
@@ -2838,6 +2879,12 @@ export const TikTokApp = () => {
             setIsPlaying(true);
           }, 300);
         }}
+      />
+      
+      {/* Login Required Modal - Aparece após 5 vídeos */}
+      <LoginRequiredModal
+        isOpen={showLoginModal}
+        videosWatched={videosWatched}
       />
       
       {/* Desktop Action Tracker */}

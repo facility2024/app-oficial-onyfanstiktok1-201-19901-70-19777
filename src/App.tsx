@@ -37,6 +37,9 @@ const ComponentFallback = () => (
   </div>
 );
 
+// Lazy load SplashScreen
+const SplashScreen = lazy(() => import("./pages/SplashScreen"));
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -48,10 +51,10 @@ const App = () => (
       </Suspense>
       <BrowserRouter>
         <Routes>
-          {/* Rota de autenticação como HOME */}
+          {/* Splash Screen como HOME */}
           <Route path="/" element={
             <Suspense fallback={<ComponentFallback />}>
-              <Auth />
+              <SplashScreen />
             </Suspense>
           } />
           
@@ -61,44 +64,34 @@ const App = () => (
             </Suspense>
           } />
           
-          {/* Rotas protegidas do app */}
+          {/* App SEM proteção - aceita usuários anônimos */}
           <Route path="/app" element={
             <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
+              <Index />
             </Suspense>
           } />
           
           <Route path="/tiktok" element={
             <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
+              <Index />
             </Suspense>
           } />
           
           <Route path="/home" element={
             <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
+              <Index />
             </Suspense>
           } />
           
           <Route path="/index" element={
             <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
+              <Index />
             </Suspense>
           } />
           
           <Route path="/main" element={
             <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
+              <Index />
             </Suspense>
           } />
 

@@ -2059,7 +2059,7 @@ export const TikTokApp = () => {
         <div 
           className="fixed top-0 left-0 right-0 z-40 h-14 opacity-50 backdrop-blur-sm flex items-center justify-between px-4"
           style={{ 
-            background: 'linear-gradient(to bottom, #00e5e5, #00e690, #c8e000, #f5a800)'
+            background: 'linear-gradient(to bottom, #33ebeb, #33eba3, #d4e633, #f7b833)'
           }}
         >
           {/* Menu - Esquerda */}
@@ -2334,7 +2334,7 @@ export const TikTokApp = () => {
       <div 
         className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-green-200"
         style={{ 
-          background: 'linear-gradient(to bottom, #00e5e5, #00e690, #c8e000, #f5a800)'
+          background: 'linear-gradient(to bottom, #33ebeb, #33eba3, #d4e633, #f7b833)'
         }}
       >
         <div className="flex items-center space-x-4">

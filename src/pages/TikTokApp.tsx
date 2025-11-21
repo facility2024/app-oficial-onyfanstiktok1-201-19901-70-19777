@@ -2059,7 +2059,9 @@ export const TikTokApp = () => {
         <div 
           className="fixed top-0 left-0 right-0 z-40 h-14 opacity-50 backdrop-blur-sm flex items-center justify-between px-4"
           style={{ 
-            background: 'linear-gradient(to right, #f5d800, #c8e000, #00e690, #00dccc, #00ceeb)'
+            backgroundImage: `url(${headerBackground})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
           }}
         >
           {/* Menu - Esquerda */}
@@ -2089,10 +2091,10 @@ export const TikTokApp = () => {
             {/* Search/Lupa */}
             <button
               onClick={() => setShowSearch(true)}
-              className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-white/30 transition-colors"
               title="Pesquisar"
             >
-              <Search className="w-5 h-5 text-white" />
+              <Search className="w-5 h-5 text-black" />
             </button>
           </div>
         </div>
@@ -2334,7 +2336,9 @@ export const TikTokApp = () => {
       <div 
         className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-green-200"
         style={{ 
-          background: 'linear-gradient(to right, #f5d800, #c8e000, #00e690, #00dccc, #00ceeb)'
+          backgroundImage: `url(${headerBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       >
         <div className="flex items-center space-x-4">
@@ -2353,9 +2357,9 @@ export const TikTokApp = () => {
                 goToHome();
               }
             }}
-            className="bg-transparent hover:bg-white/10 text-white border border-white"
+            className="bg-transparent hover:bg-white/10 text-black border border-black"
           >
-            <ArrowLeft className="h-4 w-4 mr-2 text-white" />
+            <ArrowLeft className="h-4 w-4 mr-2 text-black" />
             Voltar
           </Button>
           <div className="flex items-center gap-3">
@@ -2368,7 +2372,7 @@ export const TikTokApp = () => {
                 />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-white">Coconudi</h1>
+            <h1 className="text-2xl font-bold text-black">Coconudi</h1>
           </div>
         </div>
         <div className="flex items-center space-x-4">
@@ -2376,9 +2380,9 @@ export const TikTokApp = () => {
             variant="ghost"
             size="sm"
             onClick={() => setShowSearch(true)}
-            className="text-white hover:bg-white/10"
+            className="text-black hover:bg-white/10"
           >
-            <Search className="h-4 w-4 text-white" />
+            <Search className="h-4 w-4 text-black" />
           </Button>
         </div>
       </div>

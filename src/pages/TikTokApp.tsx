@@ -262,6 +262,12 @@ export const TikTokApp = () => {
     if (!emblaApi) return;
 
     const onSelect = () => {
+      // 🔐 BLOQUEIA NAVEGAÇÃO SE MODAL DE LOGIN ESTIVER ABERTO
+      if (showLoginModal) {
+        emblaApi.scrollTo(currentVideoIndex);
+        return;
+      }
+
       const newIndex = emblaApi.selectedScrollSnap();
       if (newIndex !== currentVideoIndex) {
         setCurrentVideoIndex(newIndex);
@@ -285,7 +291,18 @@ export const TikTokApp = () => {
     return () => {
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, currentVideoIndex, currentUser, videosWatched]);
+  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, showLoginModal]);
+
+  // 🔐 Bloqueia interações do Embla quando modal está aberto
+  useEffect(() => {
+    if (!emblaApi) return;
+    
+    if (showLoginModal) {
+      emblaApi.reInit({ watchDrag: false });
+    } else {
+      emblaApi.reInit({ watchDrag: true });
+    }
+  }, [emblaApi, showLoginModal]);
 
   // Preload adjacent videos for faster navigation
   useEffect(() => {

@@ -1789,16 +1789,37 @@ export const TikTokApp = () => {
         emblaApi.scrollTo(0);
       }
     } else {
-      if (currentVideoIndex < videos.length - 1) {
-        const nextIndex = currentVideoIndex + 1;
+      const nextIndex = currentVideoIndex + 1;
+      if (nextIndex < videos.length) {
         console.log(`⬇️ NAVEGAÇÃO: Indo para vídeo ${nextIndex + 1}/${videos.length} (desktop)`);
         setCurrentVideoIndex(nextIndex);
+        
+        // 🔐 INCREMENTA CONTADOR NO DESKTOP TAMBÉM
+        if (!currentUser) {
+          const newCount = videosWatched + 1;
+          console.log('🔐 DESKTOP - INCREMENTANDO CONTADOR:', { 
+            anterior: videosWatched, 
+            novo: newCount,
+            deveRedirecionar: newCount >= 5
+          });
+          
+          setVideosWatched(newCount);
+          localStorage.setItem('videosWatched', newCount.toString());
+          
+          // Redireciona para /auth após 5 vídeos
+          if (newCount >= 5) {
+            console.log('🚨 DESKTOP - REDIRECIONANDO PARA /AUTH!');
+            localStorage.setItem('requiresLogin', 'true');
+            localStorage.setItem('returnTo', '/app');
+            navigate('/auth');
+          }
+        }
       } else if (videos.length > 0) {
         console.log('🔁 FIM DA LISTA (desktop) → Voltando ao topo');
         setCurrentVideoIndex(0);
       }
     }
-  }, [emblaApi, isMobile, currentVideoIndex, videos.length]);
+  }, [emblaApi, isMobile, currentVideoIndex, videos.length, currentUser, videosWatched, navigate]);
 
   const prevVideo = useCallback(() => {
     console.log('⬆️ NAVEGAÇÃO: Vídeo anterior solicitado');

@@ -48,10 +48,23 @@ const Auth = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/app');
+        const returnTo = localStorage.getItem('returnTo') || '/app';
+        localStorage.removeItem('returnTo');
+        localStorage.removeItem('requiresLogin');
+        navigate(returnTo);
       }
     });
   }, [navigate]);
+
+  // Mostrar mensagem se veio do app por limite de vídeos
+  useEffect(() => {
+    const requiresLogin = localStorage.getItem('requiresLogin');
+    if (requiresLogin === 'true') {
+      toast.info('Faça login para continuar assistindo vídeos ilimitados!', {
+        duration: 5000
+      });
+    }
+  }, []);
 
   // Detectar modo reset na URL
   useEffect(() => {
@@ -97,7 +110,10 @@ const Auth = () => {
       // Se confirmação de email está desabilitada, já vai ter sessão
       if (data.session) {
         toast.success('Conta criada com sucesso!');
-        navigate('/app');
+        const returnTo = localStorage.getItem('returnTo') || '/app';
+        localStorage.removeItem('returnTo');
+        localStorage.removeItem('requiresLogin');
+        navigate(returnTo);
       } else {
         toast.success('Conta criada! Verifique seu email para confirmar.');
       }
@@ -132,7 +148,10 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success('Login realizado com sucesso!');
-      navigate('/app');
+      const returnTo = localStorage.getItem('returnTo') || '/app';
+      localStorage.removeItem('returnTo');
+      localStorage.removeItem('requiresLogin');
+      navigate(returnTo);
       
     } catch (error: any) {
       if (error instanceof z.ZodError) {

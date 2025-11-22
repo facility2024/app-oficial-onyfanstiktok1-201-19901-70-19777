@@ -2522,9 +2522,9 @@ export const TikTokApp = () => {
       {/* Desktop Main Content with Sidebar */}
       <div className="flex">
         {/* Left Sidebar Menu */}
-        <div className="w-64 bg-black border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto">
-          <div className="py-6">
-            <div className="space-y-1">
+        <div className="w-64 bg-black border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto relative z-10">
+          <div className="py-6 relative z-20">
+            <div className="space-y-1"  style={{ pointerEvents: 'auto' }}>
               <button
                 onClick={() => setShowLive(true)}
                 className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
@@ -2540,29 +2540,53 @@ export const TikTokApp = () => {
                 <span>Seguindo</span>
               </button>
               <button
-                onClick={() => navigate('/marketplace')}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🛍️ Clicou Market-Place - Navegando...');
+                  window.location.href = '/marketplace';
+                }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
+                style={{ pointerEvents: 'auto' }}
               >
                 <ShoppingBag className="w-5 h-5 mr-3" />
                 <span>Market-Place</span>
               </button>
               <button
-                onClick={() => navigate('/local-business')}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('📍 Clicou Negócios Locais - Navegando...');
+                  window.location.href = '/local-business';
+                }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
+                style={{ pointerEvents: 'auto' }}
               >
                 <MapPin className="w-5 h-5 mr-3" />
                 <span>Negócios Locais</span>
               </button>
               <button
-                onClick={() => navigate('/collections')}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('📚 Clicou Coleções - Navegando...');
+                  window.location.href = '/collections';
+                }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
+                style={{ pointerEvents: 'auto' }}
               >
                 <BookmarkPlus className="w-5 h-5 mr-3" />
                 <span>Coleções</span>
               </button>
               <button
-                onClick={() => navigate('/subscriptions')}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('💳 Clicou Assinaturas - Navegando...');
+                  window.location.href = '/subscriptions';
+                }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
+                style={{ pointerEvents: 'auto' }}
               >
                 <CreditCard className="w-5 h-5 mr-3" />
                 <span>Assinaturas</span>

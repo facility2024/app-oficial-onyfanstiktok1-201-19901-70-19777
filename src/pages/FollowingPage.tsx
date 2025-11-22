@@ -23,63 +23,58 @@ export default function FollowingPage() {
 
   const loadFollowedModels = async () => {
     try {
+      // Primeiro buscar no localStorage
       const anonymousUserId = localStorage.getItem('anonymous_user_id');
-      const { data: { user } } = await supabase.auth.getUser();
-      const authUserId = user?.id;
+      console.log('🔍 SEGUINDO: anonymous_user_id:', anonymousUserId);
 
-      console.log('🔍 IDs de usuário:', { anonymousUserId, authUserId });
-
-      if (!anonymousUserId && !authUserId) {
-        console.log('⚠️ Nenhum ID de usuário encontrado');
+      if (!anonymousUserId) {
+        console.log('⚠️ SEGUINDO: Nenhum anonymous_user_id encontrado');
         setLoading(false);
         return;
       }
 
-      // Construir a condição OR apenas com IDs válidos
-      const userIds = [anonymousUserId, authUserId].filter(Boolean);
-      const orCondition = userIds.map(id => `user_id.eq.${id}`).join(',');
+      // Buscar diretamente no banco de dados usando o anonymous_user_id
+      console.log('💿 SEGUINDO: Buscando no banco com user_id:', anonymousUserId);
 
-      console.log('🔍 Buscando follows com condição:', orCondition);
-
-      // Busca as modelos seguidas
       const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
         .select('model_id')
-        .or(orCondition)
+        .eq('user_id', anonymousUserId)
         .eq('is_active', true);
 
       if (followError) {
-        console.error('❌ Erro na query de model_followers:', followError);
-        throw followError;
+        console.error('❌ SEGUINDO: Erro na query:', followError);
+        setLoading(false);
+        return;
       }
 
-      console.log('✅ Follows encontrados:', followedModels);
+      console.log('✅ SEGUINDO: Follows encontrados:', followedModels);
 
       if (!followedModels || followedModels.length === 0) {
-        console.log('ℹ️ Nenhuma modelo seguida encontrada');
+        console.log('ℹ️ SEGUINDO: Nenhuma modelo seguida');
         setLoading(false);
         return;
       }
 
       const modelIds = followedModels.map(f => f.model_id);
+      console.log('🔍 SEGUINDO: Buscando', modelIds.length, 'modelos');
 
-      console.log('🔍 Buscando dados de', modelIds.length, 'modelos seguidas');
-
-      // Busca os dados das modelos
+      // Buscar dados das modelos
       const { data: modelsData, error: modelsError } = await supabase
         .from('models')
         .select('id, username, avatar_url, followers_count')
         .in('id', modelIds);
 
       if (modelsError) {
-        console.error('❌ Erro ao buscar modelos:', modelsError);
-        throw modelsError;
+        console.error('❌ SEGUINDO: Erro ao buscar modelos:', modelsError);
+        setLoading(false);
+        return;
       }
 
-      console.log('✅ Modelos seguidas carregadas:', modelsData);
+      console.log('✅ SEGUINDO: Modelos carregadas:', modelsData);
       setModels(modelsData as FollowedModel[] || []);
     } catch (error) {
-      console.error('❌ Erro ao carregar modelos seguidas:', error);
+      console.error('❌ SEGUINDO: Erro geral:', error);
     } finally {
       setLoading(false);
     }

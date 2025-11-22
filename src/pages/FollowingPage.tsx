@@ -92,73 +92,103 @@ export default function FollowingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm">
-        <div className="flex items-center gap-4 p-4">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center gap-4 p-4 max-w-7xl mx-auto">
           <button
             onClick={() => navigate('/app')}
             className="flex items-center gap-2 text-white hover:text-primary transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
-            <span className="font-medium">Voltar</span>
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Heart className="w-6 h-6 fill-primary text-primary" />
+            <Heart className="w-5 h-5 fill-primary text-primary" />
             Seguindo
           </h1>
+          <span className="text-sm text-gray-400 ml-auto">
+            {models.length} {models.length === 1 ? 'modelo' : 'modelos'}
+          </span>
         </div>
       </header>
 
       {/* Content */}
-      <div className="pt-20 px-4 pb-8">
+      <div className="pt-24 px-4 pb-8 max-w-7xl mx-auto">
         {loading ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {[...Array(12)].map((_, i) => (
-              <Card key={i} className="!bg-gray-800 animate-pulse aspect-[9/16]" />
+              <div key={i} className="bg-gray-800/50 rounded-2xl animate-pulse aspect-[3/4]" />
             ))}
           </div>
         ) : models.length === 0 ? (
           <div className="text-center py-20">
-            <Heart className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Nenhuma modelo seguida
+            <div className="bg-gray-800/30 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+              <Heart className="w-12 h-12 text-gray-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Nenhuma modelo seguida ainda
             </h2>
-            <p className="text-gray-400">
-              Comece a seguir modelos para vê-las aqui
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              Explore o feed e comece a seguir suas modelos favoritas para vê-las aqui
             </p>
+            <button
+              onClick={() => navigate('/app')}
+              className="px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-colors"
+            >
+              Explorar Modelos
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {models.map((model) => (
-              <Card
+              <div
                 key={model.id}
                 onClick={() => handleModelClick(model.id)}
-                className="!bg-gray-900 border-gray-700 hover:border-primary hover:scale-105 transition-all cursor-pointer overflow-hidden group relative aspect-[9/16]"
+                className="group cursor-pointer"
               >
-                <div className="relative w-full h-full flex flex-col items-center justify-center p-3">
-                  {/* Avatar */}
-                  <div className="w-16 h-16 mb-3">
-                    <Avatar className="w-full h-full border-2 border-primary">
-                      <AvatarImage src={model.avatar_url} alt={model.username} />
-                      <AvatarFallback className="bg-primary text-white text-lg">
+                <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl overflow-hidden aspect-[3/4] border border-gray-700/50 hover:border-primary/50 transition-all hover:scale-[1.02]">
+                  {/* Background blur effect */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
+                  
+                  {/* Avatar grande como background */}
+                  <div className="absolute inset-0 flex items-center justify-center p-8">
+                    <Avatar className="w-full h-full">
+                      <AvatarImage 
+                        src={model.avatar_url} 
+                        alt={model.username}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-gray-800 text-white text-4xl">
                         {model.username?.[0]?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
                   </div>
 
-                  {/* Username */}
-                  <p className="text-white text-sm font-semibold text-center truncate w-full px-1">
-                    @{model.username}
-                  </p>
+                  {/* Info overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-10 h-10 rounded-full border-2 border-white/50 overflow-hidden shrink-0">
+                        <img 
+                          src={model.avatar_url} 
+                          alt={model.username}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-bold text-sm truncate">
+                          @{model.username}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 text-xs text-gray-300">
+                      <Heart className="w-3 h-3 fill-current" />
+                      <span>{model.followers_count || 0} seguidores</span>
+                    </div>
+                  </div>
 
-                  {/* Seguidores */}
-                  <p className="text-gray-400 text-xs mt-1">
-                    {model.followers_count || 0} seguidores
-                  </p>
-
-                  {/* Overlay hover */}
-                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all" />
+                  {/* Hover effect */}
+                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all z-15" />
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         )}

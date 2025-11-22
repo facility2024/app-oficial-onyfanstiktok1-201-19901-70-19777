@@ -86,6 +86,8 @@ interface Comment {
 }
 
 export const TikTokApp = () => {
+  console.log('🎬 TikTokApp: Componente renderizado');
+  
   // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
   // const { 
   //   videos: intelligentVideos, 
@@ -236,6 +238,15 @@ export const TikTokApp = () => {
     containScroll: 'trimSnaps',
     duration: 20,
   });
+  
+  // Debug do emblaApi
+  useEffect(() => {
+    console.log('🎪 EMBLA API:', {
+      exists: !!emblaApi,
+      canScrollNext: emblaApi?.canScrollNext(),
+      selectedSnap: emblaApi?.selectedScrollSnap()
+    });
+  }, [emblaApi]);
 
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
 
@@ -274,9 +285,18 @@ export const TikTokApp = () => {
 
   // Update video when carousel slides
   useEffect(() => {
+    console.log('🎪 SETUP: Configurando listener do emblaApi', {
+      emblaApiExists: !!emblaApi,
+      showLoginModal,
+      videosWatched,
+      currentUser: !!currentUser
+    });
+    
     if (!emblaApi) return;
 
     const onSelect = () => {
+      console.log('🎪 ON SELECT DISPARADO!');
+      
       // 🔐 BLOQUEIA NAVEGAÇÃO SE MODAL DE LOGIN ESTIVER ABERTO
       if (showLoginModal) {
         console.log('🚫 MODAL ABERTO: Bloqueando navegação');
@@ -290,10 +310,12 @@ export const TikTokApp = () => {
         currentVideoIndex,
         currentUser: !!currentUser,
         videosWatched,
-        showLoginModal
+        showLoginModal,
+        isForward: newIndex > currentVideoIndex
       });
       
       if (newIndex !== currentVideoIndex) {
+        console.log('📹 Mudando de vídeo:', currentVideoIndex, '→', newIndex);
         setCurrentVideoIndex(newIndex);
         
         // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
@@ -310,20 +332,28 @@ export const TikTokApp = () => {
           
           // Mostra modal após 5 vídeos
           if (newCount >= 5) {
-            console.log('🚨 ABRINDO MODAL DE LOGIN!');
+            console.log('🚨 ABRINDO MODAL DE LOGIN! showLoginModal será true');
             setShowLoginModal(true);
             setIsPlaying(false); // Pausa o vídeo
           }
         } else {
           console.log('⏭️ NÃO INCREMENTOU:', {
-            motivo: currentUser ? 'usuário logado' : 'navegação para trás'
+            motivo: currentUser ? 'usuário logado' : 'navegação para trás',
+            currentUser: !!currentUser,
+            newIndex,
+            currentVideoIndex
           });
         }
+      } else {
+        console.log('📹 Mesmo vídeo, não mudou');
       }
     };
 
+    console.log('🎪 Registrando listener onSelect');
     emblaApi.on('select', onSelect);
+    
     return () => {
+      console.log('🎪 Removendo listener onSelect');
       emblaApi.off('select', onSelect);
     };
   }, [emblaApi, currentVideoIndex, currentUser, videosWatched, showLoginModal]);

@@ -54,8 +54,9 @@ export const CategoryMenu = ({
       name: "Market-Place",
       icon: <ShoppingBag className="w-5 h-5" />,
       onClick: () => {
-        navigate('/marketplace');
+        console.log('🛍️ Navegando para Marketplace');
         setOpen(false);
+        setTimeout(() => navigate('/marketplace'), 100);
       }
     },
     {
@@ -63,8 +64,9 @@ export const CategoryMenu = ({
       name: "Negócios Locais",
       icon: <MapPin className="w-5 h-5" />,
       onClick: () => {
-        navigate('/local-business');
+        console.log('📍 Navegando para Negócios Locais');
         setOpen(false);
+        setTimeout(() => navigate('/local-business'), 100);
       }
     },
     {
@@ -72,8 +74,9 @@ export const CategoryMenu = ({
       name: "Coleções",
       icon: <BookmarkPlus className="w-5 h-5" />,
       onClick: () => {
-        navigate('/collections');
+        console.log('📚 Navegando para Coleções');
         setOpen(false);
+        setTimeout(() => navigate('/collections'), 100);
       }
     },
     {
@@ -81,8 +84,9 @@ export const CategoryMenu = ({
       name: "Assinaturas",
       icon: <CreditCard className="w-5 h-5" />,
       onClick: () => {
-        navigate('/subscriptions');
+        console.log('💳 Navegando para Assinaturas');
         setOpen(false);
+        setTimeout(() => navigate('/subscriptions'), 100);
       }
     },
     {
@@ -170,8 +174,9 @@ export const CategoryMenu = ({
                 <Button
                   key={item.id}
                   variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none"
+                  className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none cursor-pointer"
                   onClick={(e) => {
+                    console.log(`🎯 Clique no botão: ${item.name}`);
                     e.preventDefault();
                     e.stopPropagation();
                     item.onClick();

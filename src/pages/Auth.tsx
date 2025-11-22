@@ -44,6 +44,28 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Preload de imagens críticas
+  useEffect(() => {
+    const link1 = document.createElement('link');
+    link1.rel = 'preload';
+    link1.as = 'image';
+    link1.href = loginBackground;
+    link1.fetchPriority = 'high';
+    document.head.appendChild(link1);
+
+    const link2 = document.createElement('link');
+    link2.rel = 'preload';
+    link2.as = 'image';
+    link2.href = coconudiLogo;
+    link2.fetchPriority = 'high';
+    document.head.appendChild(link2);
+
+    return () => {
+      if (link1.parentNode) link1.parentNode.removeChild(link1);
+      if (link2.parentNode) link2.parentNode.removeChild(link2);
+    };
+  }, []);
+
   // Redirecionar se já estiver logado
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -234,10 +256,16 @@ const Auth = () => {
   };
 
   const renderCard = () => (
-    <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0 overflow-y-auto max-h-[90vh]">
+    <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0">
       <CardHeader className="space-y-2 pb-3">
         <div className="flex flex-col items-center justify-center space-y-1">
-          <img src={coconudiLogo} alt="COCONUDI" className="h-10 md:h-12 object-contain animate-float" />
+          <img 
+            src={coconudiLogo} 
+            alt="COCONUDI" 
+            className="h-10 md:h-12 object-contain animate-float" 
+            loading="eager"
+            fetchPriority="high"
+          />
           <h1 className="text-lg md:text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
         </div>
         <div className="text-center space-y-1">
@@ -478,12 +506,13 @@ const Auth = () => {
       
       {/* Background para Desktop */}
       <div 
-        className="hidden md:flex min-h-screen items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+        className="hidden md:flex min-h-screen items-center justify-center p-4 bg-cover bg-center bg-no-repeat will-change-contents"
         style={{
-          backgroundImage: `url(${loginBackground})`
+          backgroundImage: `url(${loginBackground})`,
+          imageRendering: 'crisp-edges'
         }}
       >
-        <div className="relative p-1 rounded-lg" style={{
+        <div className="relative p-1 rounded-lg will-change-transform" style={{
           background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
         }}>
           {renderCard()}

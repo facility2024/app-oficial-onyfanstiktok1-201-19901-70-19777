@@ -89,6 +89,12 @@ export const SideMenu = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('🔥🔥🔥 SideMenu: BOTÃO SEGUIR CLICADO!', {
+              isFollowing,
+              videoId: video?.id,
+              modelId: video?.user?.id,
+              username: video?.user?.username
+            });
             onToggleFollow();
           }}
         >

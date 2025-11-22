@@ -45,8 +45,9 @@ export const CategoryMenu = ({
       name: "Seguindo",
       icon: <Users className="w-5 h-5" />,
       onClick: () => {
-        navigate('/following');
+        console.log('👥 SEGUINDO: Botão do menu clicado');
         setOpen(false);
+        window.location.href = '/following';
       }
     },
     {

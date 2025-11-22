@@ -1274,21 +1274,36 @@ export const TikTokApp = () => {
 
   const checkIfFollowing = async (modelId: string) => {
     try {
-      // Use consistent user ID from session
-      const currentUserId = sessionStorage.getItem('user_id') || (() => {
-        const newId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', newId);
-        return newId;
-      })();
+      console.log('🔍 VERIFICANDO STATUS DE SEGUIR:', modelId);
       
-      console.log('🔍 CHECKING IF FOLLOWING:');
-      console.log('🔍 Model ID:', modelId);
-      console.log('🔍 User ID:', currentUserId);
+      // Usar anonymous_user_id do localStorage (mesmo sistema do followModel)
+      let userId = localStorage.getItem('anonymous_user_id');
+      if (!userId) {
+        userId = crypto.randomUUID();
+        localStorage.setItem('anonymous_user_id', userId);
+        console.log('🆔 Criado novo anonymous_user_id:', userId);
+      }
+
+      console.log('🔍 User ID:', userId);
+
+      // 1. Verificar no localStorage primeiro (mais rápido)
+      const followKey = `follow_${userId}_${modelId}`;
+      const localStatus = localStorage.getItem(followKey);
       
+      if (localStatus === 'true') {
+        console.log('✅ IS FOLLOWING (localStorage): true');
+        setFollowingModels(prev => ({
+          ...prev,
+          [modelId]: true
+        }));
+        return;
+      }
+
+      // 2. Verificar no banco de dados
       const { data, error } = await supabase
         .from('model_followers')
         .select('id')
-        .eq('user_id', currentUserId)
+        .eq('user_id', userId)
         .eq('model_id', modelId)
         .eq('is_active', true)
         .maybeSingle();
@@ -1303,7 +1318,13 @@ export const TikTokApp = () => {
       }
       
       const following = data ? true : false;
-      console.log('🔍 IS FOLLOWING:', following);
+      console.log('🔍 IS FOLLOWING (database):', following);
+      
+      // Sincronizar com localStorage
+      if (following) {
+        localStorage.setItem(followKey, 'true');
+      }
+      
       setFollowingModels(prev => ({
         ...prev,
         [modelId]: following
@@ -1697,12 +1718,31 @@ export const TikTokApp = () => {
   };
 
   const followModel = async () => {
-    if (!currentVideo) return;
+    console.log('🔥 SEGUIR: Função followModel CHAMADA!');
+    
+    if (!currentVideo) {
+      console.log('❌ SEGUIR: Nenhum vídeo atual');
+      return;
+    }
     
     const currentIsFollowing = followingModels[currentVideo.user.id] || false;
-    if (currentIsFollowing) return;
+    console.log('🔍 SEGUIR: Status atual:', {
+      modelId: currentVideo.user.id,
+      username: currentVideo.user.username,
+      isFollowing: currentIsFollowing
+    });
+    
+    if (currentIsFollowing) {
+      console.log('⚠️ SEGUIR: Já está seguindo esta modelo');
+      toast({
+        title: "Você já segue esta modelo",
+        description: `Você já está seguindo ${currentVideo.user.username}`,
+        duration: 3000,
+      });
+      return;
+    }
 
-    console.log('🔔 SEGUIR: Iniciando follow modelo', currentVideo.user.id);
+    console.log('✅ SEGUIR: Iniciando processo de seguir modelo', currentVideo.user.id);
 
     try {
       // Usar ID de sessão anônima (mesmo sistema do FollowingPage)
@@ -1710,18 +1750,28 @@ export const TikTokApp = () => {
       if (!userId) {
         userId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', userId);
+        console.log('🆔 SEGUIR: Criado novo anonymous_user_id:', userId);
+      } else {
+        console.log('🆔 SEGUIR: Usando anonymous_user_id existente:', userId);
       }
 
-      // Atualizar estado local IMEDIATAMENTE
-      setFollowingModels(prev => ({
-        ...prev,
-        [currentVideo.user.id]: true
-      }));
+      // Atualizar estado local IMEDIATAMENTE para feedback visual
+      console.log('💾 SEGUIR: Atualizando estado local...');
+      setFollowingModels(prev => {
+        const newState = {
+          ...prev,
+          [currentVideo.user.id]: true
+        };
+        console.log('💾 SEGUIR: Novo estado followingModels:', newState);
+        return newState;
+      });
 
       // Obter dados do usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 SEGUIR: Usuário autenticado:', user?.email || 'anônimo');
 
       // Inserção direta no banco de dados
+      console.log('💿 SEGUIR: Inserindo no banco de dados...');
       const { error: followError } = await supabase
         .from('model_followers')
         .upsert({
@@ -1735,15 +1785,19 @@ export const TikTokApp = () => {
         });
 
       if (followError) {
-        console.warn('⚠️ Erro no banco ao seguir:', followError);
+        console.error('❌ SEGUIR: Erro no banco ao seguir:', followError);
         // Não bloquear o usuário - manter o estado local
+      } else {
+        console.log('✅ SEGUIR: Inserção no banco bem-sucedida');
       }
 
       // Salvar no localStorage para persistência
       const followKey = `follow_${userId}_${currentVideo.user.id}`;
       localStorage.setItem(followKey, 'true');
+      console.log('💾 SEGUIR: Salvo no localStorage:', followKey);
       
       // 📊 REGISTRAR AÇÃO NO PAINEL ADMIN
+      console.log('📊 SEGUIR: Registrando no analytics...');
       await trackFollow(currentVideo.user.id);
       
       // Atualizar contador localmente
@@ -1759,18 +1813,27 @@ export const TikTokApp = () => {
           : video
       ));
 
-      console.log('✅ SEGUIR: Processo concluído com sucesso!');
+      console.log('✅✅✅ SEGUIR: Processo concluído com SUCESSO!');
+      console.log('🎉 SEGUIR: Modelo seguida:', currentVideo.user.username);
+      
       toast({
-        title: `Você está seguindo ${currentVideo.user.username}!`,
+        title: `✅ Você está seguindo ${currentVideo.user.username}!`,
         description: "Agora você receberá atualizações dos novos conteúdos",
         duration: 4000,
       });
 
     } catch (error) {
-      console.error('Error following model:', error);
+      console.error('❌❌❌ SEGUIR: Erro no processo:', error);
+      
+      // Reverter estado local em caso de erro
+      setFollowingModels(prev => ({
+        ...prev,
+        [currentVideo.user.id]: false
+      }));
+      
       toast({
-        title: "Erro",
-        description: "Não foi possível seguir a modelo",
+        title: "❌ Erro ao seguir",
+        description: "Não foi possível seguir a modelo. Tente novamente.",
         variant: "destructive"
       });
     }

@@ -2600,10 +2600,9 @@ export const TikTokApp = () => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('👥 Clicou Seguindo - Navegando...');
-                  window.location.href = '/following';
+                  navigate('/following');
                 }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
-                style={{ pointerEvents: 'auto' }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <Users className="w-5 h-5 mr-3" />
                 <span>Seguindo</span>
@@ -2613,10 +2612,9 @@ export const TikTokApp = () => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🛍️ Clicou Market-Place - Navegando...');
-                  window.location.href = '/marketplace';
+                  navigate('/marketplace');
                 }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
-                style={{ pointerEvents: 'auto' }}
+                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <ShoppingBag className="w-5 h-5 mr-3" />
                 <span>Market-Place</span>

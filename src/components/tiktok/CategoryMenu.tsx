@@ -54,7 +54,7 @@ export const CategoryMenu = ({
       name: "Market-Place",
       icon: <ShoppingBag className="w-5 h-5" />,
       onClick: () => {
-        console.log("Market-Place clicado");
+        navigate('/marketplace');
         setOpen(false);
       }
     },

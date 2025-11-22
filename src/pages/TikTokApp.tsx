@@ -29,7 +29,6 @@ import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
-import { LoginRequiredModal } from '@/components/tiktok/LoginRequiredModal';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -120,17 +119,15 @@ export const TikTokApp = () => {
     console.log('🔐 INICIALIZANDO CONTADOR DE VÍDEOS:', count);
     return count;
   });
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   
   // Debug do estado do modal
   useEffect(() => {
-    console.log('🔐 ESTADO DO MODAL:', {
-      showLoginModal,
+    console.log('🔐 ESTADO:', {
       videosWatched,
       currentUser: !!currentUser
     });
-  }, [showLoginModal, videosWatched, currentUser]);
+  }, [videosWatched, currentUser]);
   
   // Verifica se usuário está logado
   useEffect(() => {
@@ -143,12 +140,12 @@ export const TikTokApp = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('🔐 MUDANÇA DE AUTH:', { event: _event, user: !!session?.user });
       setCurrentUser(session?.user ?? null);
-      // Se usuário logar, fecha o modal e reseta contador
+      // Se usuário logar, reseta contador e volta para o app
       if (session?.user) {
         console.log('🔐 USUÁRIO LOGADO: Resetando contador');
-        setShowLoginModal(false);
         setVideosWatched(0);
         localStorage.setItem('videosWatched', '0');
+        localStorage.removeItem('requiresLogin');
       }
     });
 
@@ -287,7 +284,6 @@ export const TikTokApp = () => {
   useEffect(() => {
     console.log('🎪 SETUP: Configurando listener do emblaApi', {
       emblaApiExists: !!emblaApi,
-      showLoginModal,
       videosWatched,
       currentUser: !!currentUser
     });
@@ -297,20 +293,12 @@ export const TikTokApp = () => {
     const onSelect = () => {
       console.log('🎪 ON SELECT DISPARADO!');
       
-      // 🔐 BLOQUEIA NAVEGAÇÃO SE MODAL DE LOGIN ESTIVER ABERTO
-      if (showLoginModal) {
-        console.log('🚫 MODAL ABERTO: Bloqueando navegação');
-        emblaApi.scrollTo(currentVideoIndex);
-        return;
-      }
-
       const newIndex = emblaApi.selectedScrollSnap();
       console.log('📊 DEBUG LOGIN:', {
         newIndex,
         currentVideoIndex,
         currentUser: !!currentUser,
         videosWatched,
-        showLoginModal,
         isForward: newIndex > currentVideoIndex
       });
       
@@ -324,17 +312,18 @@ export const TikTokApp = () => {
           console.log('🔐 INCREMENTANDO CONTADOR:', { 
             anterior: videosWatched, 
             novo: newCount,
-            deveAbrirModal: newCount >= 5
+            deveRedirecionar: newCount >= 5
           });
           
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
           
-          // Mostra modal após 5 vídeos
+          // Redireciona para /auth após 5 vídeos
           if (newCount >= 5) {
-            console.log('🚨 ABRINDO MODAL DE LOGIN! showLoginModal será true');
-            setShowLoginModal(true);
-            setIsPlaying(false); // Pausa o vídeo
+            console.log('🚨 REDIRECIONANDO PARA /AUTH!');
+            localStorage.setItem('requiresLogin', 'true');
+            localStorage.setItem('returnTo', '/app');
+            navigate('/auth');
           }
         } else {
           console.log('⏭️ NÃO INCREMENTOU:', {
@@ -356,18 +345,16 @@ export const TikTokApp = () => {
       console.log('🎪 Removendo listener onSelect');
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, showLoginModal]);
+  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate]);
 
-  // 🔐 Bloqueia interações do Embla quando modal está aberto
+  // 🔐 Bloqueia interações do Embla quando redirecionado para login
   useEffect(() => {
-    if (!emblaApi) return;
-    
-    if (showLoginModal) {
-      emblaApi.reInit({ watchDrag: false });
-    } else {
-      emblaApi.reInit({ watchDrag: true });
+    const requiresLogin = localStorage.getItem('requiresLogin');
+    if (requiresLogin === 'true' && !currentUser) {
+      console.log('🚫 Login obrigatório - redirecionando para /auth');
+      navigate('/auth');
     }
-  }, [emblaApi, showLoginModal]);
+  }, [currentUser, navigate]);
 
   // Preload adjacent videos for faster navigation
   useEffect(() => {
@@ -2963,14 +2950,8 @@ export const TikTokApp = () => {
         }}
       />
       
-      {/* Login Required Modal - Aparece após 5 vídeos */}
-      <LoginRequiredModal
-        isOpen={showLoginModal}
-        videosWatched={videosWatched}
-      />
-      
       {/* Desktop Action Tracker */}
-      <ActionTracker 
+      <ActionTracker
         onActionAttempt={async (actionType, userName) => {
           return await handleActionAttempt(actionType, userName);
         }}

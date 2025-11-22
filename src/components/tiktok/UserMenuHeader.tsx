@@ -30,8 +30,8 @@ export const UserMenuHeader = () => {
       // Fazer signOut
       await supabase.auth.signOut();
       
-      // Navegar imediatamente
-      navigate('/auth', { replace: true });
+      // Navegar para splash screen
+      navigate('/', { replace: true });
       
       // Limpar flag após um tempo
       setTimeout(() => {
@@ -40,7 +40,7 @@ export const UserMenuHeader = () => {
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
       sessionStorage.removeItem('logging_out');
-      navigate('/auth', { replace: true });
+      navigate('/', { replace: true });
     }
   };
 

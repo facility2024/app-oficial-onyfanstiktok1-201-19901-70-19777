@@ -20,6 +20,7 @@ const FollowingPage = lazy(() => import("./pages/FollowingPage"));
 const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 const LocalBusinessPage = lazy(() => import("./pages/LocalBusinessPage"));
 const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
+const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -160,6 +161,13 @@ const App = () => (
           <Route path="/collections" element={
             <Suspense fallback={<ComponentFallback />}>
               <CollectionsPage />
+            </Suspense>
+          } />
+          
+          {/* Assinaturas */}
+          <Route path="/subscriptions" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <SubscriptionsPage />
             </Suspense>
           } />
           

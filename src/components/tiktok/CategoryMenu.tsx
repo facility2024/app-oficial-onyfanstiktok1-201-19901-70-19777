@@ -81,7 +81,7 @@ export const CategoryMenu = ({
       name: "Assinaturas",
       icon: <CreditCard className="w-5 h-5" />,
       onClick: () => {
-        console.log("Assinaturas clicado");
+        navigate('/subscriptions');
         setOpen(false);
       }
     },

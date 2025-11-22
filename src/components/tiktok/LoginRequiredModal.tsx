@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,13 +93,42 @@ export const LoginRequiredModal = ({ isOpen, videosWatched }: LoginRequiredModal
     }
   };
 
+  // Bloqueia scroll do body quando modal está aberto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isOpen]);
+
   return (
-    <Dialog open={isOpen} modal>
-      <DialogContent 
-        className="max-w-md bg-white/95 backdrop-blur-xl border-2 border-purple-500"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-      >
+    <>
+      {/* Overlay que bloqueia completamente a página */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[9998]"
+          onClick={(e) => e.preventDefault()}
+          onTouchStart={(e) => e.preventDefault()}
+        />
+      )}
+      
+      <Dialog open={isOpen} modal>
+        <DialogContent 
+          className="max-w-md bg-white/95 backdrop-blur-xl border-2 border-purple-500 z-[9999] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
         <div className="flex flex-col items-center gap-6 py-6">
           <img 
             src={coconudiLogo}
@@ -183,7 +212,8 @@ export const LoginRequiredModal = ({ isOpen, videosWatched }: LoginRequiredModal
               : 'Já tem conta? Entre'}
           </button>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

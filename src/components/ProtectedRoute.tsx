@@ -24,8 +24,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
         setSession(session);
         
-        if (!session) {
-          navigate('/auth', { replace: true });
+        // Não redirecionar automaticamente - deixar o fluxo natural
+        if (!session && !sessionStorage.getItem('logging_out')) {
+          // Não fazer nada - usuário vai para onde precisa naturalmente
         }
       }
     );
@@ -36,7 +37,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       setLoading(false);
       
       if (!session) {
-        navigate('/auth');
+        navigate('/', { replace: true }); // Redirecionar para splash screen
       }
     });
 

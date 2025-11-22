@@ -17,6 +17,7 @@ const UserProfile = lazy(() => import("./pages/UserProfile"));
 const CreatorApplication = lazy(() => import("./pages/CreatorApplication"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const FollowingPage = lazy(() => import("./pages/FollowingPage"));
+const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -136,6 +137,13 @@ const App = () => (
               <ProtectedRoute>
                 <FollowingPage />
               </ProtectedRoute>
+            </Suspense>
+          } />
+          
+          {/* Marketplace */}
+          <Route path="/marketplace" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <MarketplacePage />
             </Suspense>
           } />
           

@@ -63,7 +63,7 @@ export const CategoryMenu = ({
       name: "Negócios Locais",
       icon: <MapPin className="w-5 h-5" />,
       onClick: () => {
-        console.log("Negócios Locais clicado");
+        navigate('/local-business');
         setOpen(false);
       }
     },

@@ -72,7 +72,7 @@ export const CategoryMenu = ({
       name: "Coleções",
       icon: <BookmarkPlus className="w-5 h-5" />,
       onClick: () => {
-        console.log("Coleções clicado");
+        navigate('/collections');
         setOpen(false);
       }
     },

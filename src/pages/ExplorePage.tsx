@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, TrendingUp, User, MoreHorizontal, Heart, MessageCircle, Play, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Imagens de exemplo temporárias até a parte de criadores ficar pronta
 const EXAMPLE_IMAGES = [
@@ -23,6 +25,83 @@ const EXAMPLE_IMAGES = [
 export default function ExplorePage() {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('explore');
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUserId(session.user.id);
+      loadFavorites(session.user.id);
+    }
+  };
+
+  const loadFavorites = async (uid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_favorites' as any)
+        .select('video_id')
+        .eq('user_id', uid);
+
+      if (error) throw error;
+
+      const favoriteIds = new Set((data || []).map((f: any) => parseInt(f.video_id)));
+      setFavorites(favoriteIds);
+    } catch (error) {
+      console.error('Erro ao carregar favoritos:', error);
+    }
+  };
+
+  const toggleFavorite = async (imageId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!userId) {
+      toast.error('Você precisa estar logado para favoritar');
+      return;
+    }
+
+    const isFavorited = favorites.has(imageId);
+
+    try {
+      if (isFavorited) {
+        // Remover favorito
+        const { error } = await supabase
+          .from('user_favorites' as any)
+          .delete()
+          .eq('user_id', userId)
+          .eq('video_id', imageId.toString());
+
+        if (error) throw error;
+
+        setFavorites(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(imageId);
+          return newSet;
+        });
+        toast.success('Removido das coleções');
+      } else {
+        // Adicionar favorito
+        const { error } = await supabase
+          .from('user_favorites' as any)
+          .insert({
+            user_id: userId,
+            video_id: imageId.toString()
+          });
+
+        if (error) throw error;
+
+        setFavorites(prev => new Set(prev).add(imageId));
+        toast.success('Adicionado às coleções');
+      }
+    } catch (error) {
+      console.error('Erro ao favoritar:', error);
+      toast.error('Erro ao salvar nas coleções');
+    }
+  };
 
   const handleImageClick = (imageId: number) => {
     console.log('Imagem clicada:', imageId);
@@ -105,6 +184,17 @@ export default function ExplorePage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Botão de Favoritar */}
+                <button
+                  onClick={(e) => toggleFavorite(image.id, e)}
+                  className="absolute top-2 left-2 p-2 bg-black/60 backdrop-blur-sm rounded-full hover:bg-black/80 transition-all z-10"
+                >
+                  <Heart
+                    size={18}
+                    className={favorites.has(image.id) ? 'fill-pink-500 text-pink-500' : 'text-white'}
+                  />
+                </button>
 
                 {/* Ícone de play no mobile */}
                 <div className="md:hidden absolute top-2 right-2">

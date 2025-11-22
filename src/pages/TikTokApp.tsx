@@ -114,21 +114,36 @@ export const TikTokApp = () => {
   // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
   const [videosWatched, setVideosWatched] = useState(() => {
     const saved = localStorage.getItem('videosWatched');
-    return saved ? parseInt(saved, 10) : 0;
+    const count = saved ? parseInt(saved, 10) : 0;
+    console.log('🔐 INICIALIZANDO CONTADOR DE VÍDEOS:', count);
+    return count;
   });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   
+  // Debug do estado do modal
+  useEffect(() => {
+    console.log('🔐 ESTADO DO MODAL:', {
+      showLoginModal,
+      videosWatched,
+      currentUser: !!currentUser
+    });
+  }, [showLoginModal, videosWatched, currentUser]);
+  
   // Verifica se usuário está logado
   useEffect(() => {
+    console.log('🔐 VERIFICANDO SESSÃO DO USUÁRIO...');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 SESSÃO:', !!session?.user);
       setCurrentUser(session?.user ?? null);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔐 MUDANÇA DE AUTH:', { event: _event, user: !!session?.user });
       setCurrentUser(session?.user ?? null);
       // Se usuário logar, fecha o modal e reseta contador
       if (session?.user) {
+        console.log('🔐 USUÁRIO LOGADO: Resetando contador');
         setShowLoginModal(false);
         setVideosWatched(0);
         localStorage.setItem('videosWatched', '0');
@@ -264,25 +279,45 @@ export const TikTokApp = () => {
     const onSelect = () => {
       // 🔐 BLOQUEIA NAVEGAÇÃO SE MODAL DE LOGIN ESTIVER ABERTO
       if (showLoginModal) {
+        console.log('🚫 MODAL ABERTO: Bloqueando navegação');
         emblaApi.scrollTo(currentVideoIndex);
         return;
       }
 
       const newIndex = emblaApi.selectedScrollSnap();
+      console.log('📊 DEBUG LOGIN:', {
+        newIndex,
+        currentVideoIndex,
+        currentUser: !!currentUser,
+        videosWatched,
+        showLoginModal
+      });
+      
       if (newIndex !== currentVideoIndex) {
         setCurrentVideoIndex(newIndex);
         
         // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
         if (!currentUser && newIndex > currentVideoIndex) {
           const newCount = videosWatched + 1;
+          console.log('🔐 INCREMENTANDO CONTADOR:', { 
+            anterior: videosWatched, 
+            novo: newCount,
+            deveAbrirModal: newCount >= 5
+          });
+          
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
           
           // Mostra modal após 5 vídeos
           if (newCount >= 5) {
+            console.log('🚨 ABRINDO MODAL DE LOGIN!');
             setShowLoginModal(true);
             setIsPlaying(false); // Pausa o vídeo
           }
+        } else {
+          console.log('⏭️ NÃO INCREMENTOU:', {
+            motivo: currentUser ? 'usuário logado' : 'navegação para trás'
+          });
         }
       }
     };

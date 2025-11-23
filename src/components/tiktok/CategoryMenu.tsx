@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { FeaturedSection } from "./FeaturedSection";
 import { AdCarousel } from "./AdCarousel";
 import { ModelCarousel } from "./ModelCarousel";
+import { MarketplaceCarousel } from "./MarketplaceCarousel";
 
 interface MenuItemProps {
   id: string;
@@ -166,6 +167,9 @@ export const CategoryMenu = ({
                 setOpen(false);
               }}
             />
+            
+            {/* Top Avaliados - Marketplace */}
+            <MarketplaceCarousel />
           </div>
 
           {/* Menu de Navegação */}

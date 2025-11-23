@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, ShoppingCart, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -279,6 +279,8 @@ const CheckoutModal = ({ product, open, onClose }: CheckoutModalProps) => {
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const productIdFromUrl = searchParams.get('product');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -289,6 +291,17 @@ export default function MarketplacePage() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    // Se há um productId na URL e os produtos foram carregados, abrir o modal
+    if (productIdFromUrl && products.length > 0) {
+      const product = products.find(p => p.id === productIdFromUrl);
+      if (product) {
+        setSelectedProduct(product);
+        setShowDetailModal(true);
+      }
+    }
+  }, [productIdFromUrl, products]);
 
   const fetchProducts = async () => {
     try {

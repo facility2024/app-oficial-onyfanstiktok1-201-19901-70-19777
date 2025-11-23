@@ -23,23 +23,23 @@ export default function FollowingPage() {
 
   const loadFollowedModels = async () => {
     try {
-      // Primeiro buscar no localStorage
-      const anonymousUserId = localStorage.getItem('anonymous_user_id');
-      console.log('🔍 SEGUINDO: anonymous_user_id:', anonymousUserId);
+      // Buscar user_id do sessionStorage (mesmo lugar que ProfileScreen salva)
+      const userId = sessionStorage.getItem('user_id');
+      console.log('🔍 SEGUINDO: user_id:', userId);
 
-      if (!anonymousUserId) {
-        console.log('⚠️ SEGUINDO: Nenhum anonymous_user_id encontrado');
+      if (!userId) {
+        console.log('⚠️ SEGUINDO: Nenhum user_id encontrado no sessionStorage');
         setLoading(false);
         return;
       }
 
-      // Buscar diretamente no banco de dados usando o anonymous_user_id
-      console.log('💿 SEGUINDO: Buscando no banco com user_id:', anonymousUserId);
+      // Buscar diretamente no banco de dados usando o user_id
+      console.log('💿 SEGUINDO: Buscando no banco com user_id:', userId);
 
       const { data: followedModels, error: followError } = await supabase
         .from('model_followers')
         .select('model_id')
-        .eq('user_id', anonymousUserId)
+        .eq('user_id', userId)
         .eq('is_active', true);
 
       if (followError) {

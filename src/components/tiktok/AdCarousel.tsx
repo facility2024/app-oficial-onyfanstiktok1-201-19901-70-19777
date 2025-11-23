@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ad1 from '@/assets/ads/ad1.png';
 import ad2 from '@/assets/ads/ad2.png';
 import ad3 from '@/assets/ads/ad3.png';
@@ -47,6 +48,7 @@ const sampleAds: Ad[] = [
 ];
 
 export const AdCarousel = () => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -80,9 +82,10 @@ export const AdCarousel = () => {
       </h2>
       
       <div
-        className="relative aspect-video rounded-lg overflow-hidden group"
+        className="relative aspect-video rounded-lg overflow-hidden group cursor-pointer"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        onClick={() => navigate('/advertisers')}
       >
         {/* Imagem do anúncio */}
         <a href={sampleAds[currentIndex].link} target="_blank" rel="noopener noreferrer">
@@ -95,14 +98,20 @@ export const AdCarousel = () => {
 
         {/* Botões de navegação */}
         <button
-          onClick={goToPrevious}
+          onClick={(e) => {
+            e.stopPropagation();
+            goToPrevious();
+          }}
           className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
 
         <button
-          onClick={goToNext}
+          onClick={(e) => {
+            e.stopPropagation();
+            goToNext();
+          }}
           className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <ChevronRight className="w-5 h-5" />
@@ -113,7 +122,10 @@ export const AdCarousel = () => {
           {sampleAds.map((_, index) => (
             <button
               key={index}
-              onClick={() => goToSlide(index)}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSlide(index);
+              }}
               className={`w-2 h-2 rounded-full transition-all ${
                 index === currentIndex
                   ? 'bg-white w-6'

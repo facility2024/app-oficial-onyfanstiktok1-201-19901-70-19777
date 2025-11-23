@@ -23,12 +23,14 @@ export default function FollowingPage() {
 
   const loadFollowedModels = async () => {
     try {
-      // Buscar user_id do sessionStorage (mesmo lugar que ProfileScreen salva)
-      const userId = sessionStorage.getItem('user_id');
-      console.log('🔍 SEGUINDO: user_id:', userId);
+      // ✅ Buscar user_id correto: autenticado se logado, anônimo se não
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || sessionStorage.getItem('anonymous_user_id');
+      
+      console.log('🔍 SEGUINDO: user_id:', userId, user ? '(autenticado)' : '(anônimo)');
 
       if (!userId) {
-        console.log('⚠️ SEGUINDO: Nenhum user_id encontrado no sessionStorage');
+        console.log('⚠️ SEGUINDO: Nenhum user_id encontrado');
         setLoading(false);
         return;
       }

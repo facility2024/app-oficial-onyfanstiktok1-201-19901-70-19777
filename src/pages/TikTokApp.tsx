@@ -153,18 +153,6 @@ export const TikTokApp = () => {
     return () => subscription.unsubscribe();
   }, []);
   
-  // ✅ GARANTIR que user_id existe no sessionStorage ao carregar o app
-  useEffect(() => {
-    let userId = sessionStorage.getItem('user_id');
-    if (!userId) {
-      userId = crypto.randomUUID();
-      sessionStorage.setItem('user_id', userId);
-      console.log('✅ APP: Criado novo user_id no sessionStorage:', userId);
-    } else {
-      console.log('✅ APP: user_id já existe no sessionStorage:', userId);
-    }
-  }, []);
-  
   // Debug do estado
   useEffect(() => {
     console.log('🔍 DEBUG: showAgeVerification mudou para:', showAgeVerification);
@@ -1238,10 +1226,11 @@ export const TikTokApp = () => {
 
   const checkIfLiked = async (videoId: string) => {
     try {
-      // Use consistent user ID from session
-      const currentUserId = localStorage.getItem('session_user_id') || (() => {
+      // ✅ Usar ID correto: autenticado se logado, anônimo se não
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
-        localStorage.setItem('session_user_id', newId);
+        sessionStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
       
@@ -1357,12 +1346,15 @@ export const TikTokApp = () => {
 
     console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', currentVideo.id);
 
-    // Use a consistent user ID for the session
-    const currentUserId = localStorage.getItem('session_user_id') || (() => {
+    // ✅ Usar ID correto: autenticado se logado, anônimo se não
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
       const newId = crypto.randomUUID();
-      localStorage.setItem('session_user_id', newId);
+      sessionStorage.setItem('anonymous_user_id', newId);
       return newId;
     })();
+    
+    console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
 
     try {
       // Primeiro, verificar se já existe um like ativo
@@ -1500,12 +1492,15 @@ export const TikTokApp = () => {
     console.log('💬 ADD COMMENT - Iniciando para vídeo:', currentVideo.id);
 
     try {
-      // Use consistent user ID from session (same as likes)
-      const currentUserId = localStorage.getItem('session_user_id') || (() => {
+      // ✅ Usar ID correto: autenticado se logado, anônimo se não
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
-        localStorage.setItem('session_user_id', newId);
+        sessionStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
+      
+      console.log('💬 ADD COMMENT - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
 
       // In a real app, you'd have a current user
       const mockUser = {
@@ -1649,12 +1644,15 @@ export const TikTokApp = () => {
     console.log('📤 SHARE VIDEO - Iniciando para vídeo:', currentVideo.id);
 
     try {
-      // Use consistent user ID
-      const currentUserId = localStorage.getItem('session_user_id') || (() => {
+      // ✅ Usar ID correto: autenticado se logado, anônimo se não
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
-        localStorage.setItem('session_user_id', newId);
+        sessionStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
+      
+      console.log('📤 SHARE VIDEO - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
 
       // Temporarily increment shares_count until shares table types are updated
       const { data: videoData } = await supabase

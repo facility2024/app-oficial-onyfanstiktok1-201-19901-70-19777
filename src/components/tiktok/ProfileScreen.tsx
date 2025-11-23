@@ -336,14 +336,22 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', user.id);
 
     try {
-      // GARANTIR que user_id existe no sessionStorage
+      // ✅ GARANTIR que user_id é do usuário autenticado se estiver logado
+      const { data: { user: authUser } } = await supabase.auth.getUser();
       let userId = sessionStorage.getItem('user_id');
-      if (!userId) {
-        userId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', userId);
-        console.log('✅ PROFILE SEGUIR: Criado novo user_id:', userId);
+      
+      if (authUser?.id) {
+        // Usuário autenticado: usar ID real
+        userId = authUser.id;
+        console.log('✅ PROFILE SEGUIR: Usando user_id autenticado:', userId);
       } else {
-        console.log('✅ PROFILE SEGUIR: Usando user_id existente:', userId);
+        // Usuário anônimo: usar/criar UUID
+        if (!userId) {
+          userId = sessionStorage.getItem('anonymous_user_id') || crypto.randomUUID();
+          sessionStorage.setItem('anonymous_user_id', userId);
+          sessionStorage.setItem('user_id', userId); // Manter compatibilidade
+        }
+        console.log('✅ PROFILE SEGUIR: Usando user_id anônimo:', userId);
       }
 
       // Atualizar estado local IMEDIATAMENTE

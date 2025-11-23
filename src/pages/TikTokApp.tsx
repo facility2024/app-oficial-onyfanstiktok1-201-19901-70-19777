@@ -30,6 +30,7 @@ import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
+import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
@@ -2946,6 +2947,7 @@ export const TikTokApp = () => {
                   goToModelVideo(modelId);
                 }}
               />
+              <MarketplaceCarousel />
             </div>
 
          </div>

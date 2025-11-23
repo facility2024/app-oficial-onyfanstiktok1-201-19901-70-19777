@@ -157,6 +157,12 @@ const App = () => (
             </Suspense>
           } />
           
+          <Route path="/local-businesses" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <LocalBusinessPage />
+            </Suspense>
+          } />
+          
           {/* Coleções */}
           <Route path="/collections" element={
             <Suspense fallback={<ComponentFallback />}>

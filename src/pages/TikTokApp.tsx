@@ -22,6 +22,7 @@ import { LiveModal } from '@/components/tiktok/LiveModal';
 import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
+import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -2599,7 +2600,10 @@ export const TikTokApp = () => {
         {/* Left Sidebar Menu */}
         <div className="w-64 bg-black border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto relative z-10">
           <div className="py-6 relative z-20">
-            <div className="space-y-1"  style={{ pointerEvents: 'auto' }}>
+            {/* Header do Usuário - Desktop */}
+            <UserMenuHeader />
+            
+            <div className="space-y-1 mt-4"  style={{ pointerEvents: 'auto' }}>
               <button
                 onClick={() => setShowLive(true)}
                 className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"

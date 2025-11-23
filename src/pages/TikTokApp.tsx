@@ -31,6 +31,7 @@ import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
+import { LocalBusinessCarousel } from '@/components/tiktok/LocalBusinessCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import iconHome from '@/assets/icon-home.png';
@@ -2951,6 +2952,7 @@ export const TikTokApp = () => {
                     }}
                   />
                   <MarketplaceCarousel />
+                  <LocalBusinessCarousel />
                 </div>
               </ScrollArea>
             </div>

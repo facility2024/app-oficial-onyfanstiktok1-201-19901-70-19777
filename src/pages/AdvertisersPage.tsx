@@ -157,7 +157,7 @@ export default function AdvertisersPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/app')}
             className="text-white hover:bg-white/10 transition-colors duration-150"
           >
             <ArrowLeft className="w-6 h-6" />

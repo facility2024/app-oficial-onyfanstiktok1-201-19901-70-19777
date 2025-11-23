@@ -142,7 +142,7 @@ export default function AdvertisersPage() {
   const [selectedAdvertiser, setSelectedAdvertiser] = useState<Advertiser | null>(null);
 
   const handleContactClick = useMemo(() => (url: string) => {
-    window.open(url, "_blank");
+    window.location.href = url;
   }, []);
 
   const handleSelectAdvertiser = useMemo(() => (advertiser: Advertiser) => {

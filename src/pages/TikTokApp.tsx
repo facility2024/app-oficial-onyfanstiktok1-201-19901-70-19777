@@ -2935,7 +2935,7 @@ export const TikTokApp = () => {
            </div>
 
             {/* Right Sidebar - Destaque e Anuncios */}
-            <div className="hidden xl:block w-80 space-y-4">
+            <div className="hidden xl:block w-72 2xl:w-80 space-y-4 overflow-y-auto max-h-screen pb-20">
               <FeaturedSection />
               <AdCarousel />
               <ModelCarousel 

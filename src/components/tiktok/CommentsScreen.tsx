@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Comment } from '@/types/database';
 import ProfileMessageBox from '@/components/tiktok/ProfileMessageBox';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface CommentsScreenProps {
   comments: Comment[];
@@ -10,7 +11,7 @@ interface CommentsScreenProps {
 }
 
 export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment }: CommentsScreenProps) => {
-  
+  const { user, profile } = useCurrentUser();
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
 
   if (!isOpen) return null;
@@ -117,14 +118,14 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment }: Comm
         {/* User Avatar */}
         <div className="flex-shrink-0">
           <img
-            src="/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png"
-            alt="Meu perfil"
+            src={profile?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+            alt={profile?.username || user?.email || 'Meu perfil'}
             className="w-8 h-8 rounded-full object-cover"
           />
         </div>
         <div className="flex-1">
           <ProfileMessageBox
-            modelName="criador"
+            modelName={profile?.username || user?.email?.split('@')[0] || 'criador'}
             inputId="comment-input"
             onSend={handleSend}
           />

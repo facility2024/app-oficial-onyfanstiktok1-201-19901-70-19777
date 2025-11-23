@@ -58,10 +58,10 @@ export const MarketplaceCarousel = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="w-full bg-black/80 backdrop-blur-sm rounded-xl p-4 mb-4">
+    <div className="w-full bg-black/80 backdrop-blur-sm rounded-xl p-3 md:p-4 mb-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-white font-bold text-lg flex items-center gap-2">
-          <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+        <h3 className="text-white font-bold text-base md:text-lg flex items-center gap-2">
+          <Star className="w-4 h-4 md:w-5 md:h-5 fill-yellow-400 text-yellow-400" />
           Top Avaliados
         </h3>
         <div className="flex gap-2">
@@ -69,27 +69,27 @@ export const MarketplaceCarousel = () => {
             variant="ghost"
             size="icon"
             onClick={scrollPrev}
-            className="h-8 w-8 text-white hover:bg-white/20"
+            className="h-7 w-7 md:h-8 md:w-8 text-white hover:bg-white/20"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={scrollNext}
-            className="h-8 w-8 text-white hover:bg-white/20"
+            className="h-7 w-7 md:h-8 md:w-8 text-white hover:bg-white/20"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
         </div>
       </div>
 
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-3">
+        <div className="flex gap-2 md:gap-3">
           {products.map((product) => (
             <div
               key={product.id}
-              className="flex-[0_0_80%] min-w-0 cursor-pointer group"
+              className="flex-[0_0_75%] sm:flex-[0_0_60%] md:flex-[0_0_45%] lg:flex-[0_0_85%] xl:flex-[0_0_100%] min-w-0 cursor-pointer group"
               onClick={() => handleProductClick(product.id)}
             >
               <div className="relative aspect-square rounded-lg overflow-hidden mb-2">
@@ -103,11 +103,11 @@ export const MarketplaceCarousel = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-2">
-                  <p className="text-white font-semibold text-sm line-clamp-2 mb-1">
+                  <p className="text-white font-semibold text-xs sm:text-sm line-clamp-2 mb-1">
                     {product.name}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-green-400 font-bold text-sm">
+                    <span className="text-green-400 font-bold text-xs sm:text-sm">
                       R$ {product.price.toFixed(2)}
                     </span>
                     <div className="flex items-center gap-1">

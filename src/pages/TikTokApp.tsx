@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { VideoPlayer } from '@/components/tiktok/VideoPlayer';
 import { SideMenu } from '@/components/tiktok/SideMenu';
 import { BottomInfo } from '@/components/tiktok/BottomInfo';
@@ -87,6 +88,9 @@ interface Comment {
 
 export const TikTokApp = () => {
   console.log('🎬 TikTokApp: Componente renderizado');
+  
+  // Hook para obter dados do usuário logado
+  const { user: authUser, profile } = useCurrentUser();
   
   // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
   // const { 
@@ -1187,7 +1191,15 @@ export const TikTokApp = () => {
       
       const { data: commentsData, error } = await supabase
         .from('comments')
-        .select('*')
+        .select(`
+          *,
+          profiles!inner(
+            id,
+            username,
+            avatar_url,
+            name
+          )
+        `)
         .eq('video_id', videoId)
         .order('created_at', { ascending: false });
 
@@ -1212,8 +1224,8 @@ export const TikTokApp = () => {
         likes_count: comment.likes_count || 0,
         created_at: comment.created_at,
         user: {
-          username: comment.username || `User ${comment.user_id?.slice(0, 8)}`,
-          avatar_url: comment.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'
+          username: comment.profiles?.username || comment.profiles?.name || `User ${comment.user_id?.slice(0, 8)}`,
+          avatar_url: comment.profiles?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'
         }
       }));
 
@@ -1502,16 +1514,9 @@ export const TikTokApp = () => {
       
       console.log('💬 ADD COMMENT - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
 
-      // In a real app, you'd have a current user
-      const mockUser = {
-        id: currentUserId,
-        username: 'Visitante',
-        avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'
-      };
-
       console.log('💬 ADD COMMENT - Inserindo:', { text: text.trim(), user_id: currentUserId, video_id: currentVideo.id });
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('comments')
         .insert({
           content: text.trim(),
@@ -1521,90 +1526,36 @@ export const TikTokApp = () => {
           likes_count: 0,
           ip_address: null,
           user_agent: navigator.userAgent
-        })
-        .select('*')
-        .single();
+        });
 
       if (error) {
         console.error('❌ Error inserting comment:', error);
         
-        // 🔧 Se falhar por RLS, criar comentário local e tentar inserção simplificada
+        // 🔧 Se falhar por RLS, tentar inserção simplificada
         if (error.code === '42501' || error.message?.includes('row-level security')) {
           console.log('🔧 Tentando inserção simplificada devido a RLS...');
           
-          const mockComment = {
-            id: crypto.randomUUID(),
-            text: text.trim(),
-            user_id: currentUserId,
-            video_id: currentVideo.id,
-            created_at: new Date().toISOString(),
-            likes_count: 0,
-            user: mockUser
-          };
-          
-          // Adicionar comentário localmente
-          setComments(prev => [mockComment, ...prev]);
-          
-          // Tentar inserção simplificada em background
-          try {
-            await supabase
-              .from('comments')
-              .insert({
-                content: text.trim(),
-                user_id: currentUserId,
-                video_id: currentVideo.id
-              });
-            console.log('✅ Comentário inserido em modo simplificado');
-          } catch (bgError) {
-            console.warn('⚠️ Falha na inserção em background:', bgError);
-          }
+          await supabase
+            .from('comments')
+            .insert({
+              content: text.trim(),
+              user_id: currentUserId,
+              video_id: currentVideo.id
+            });
+          console.log('✅ Comentário inserido em modo simplificado');
         } else {
           throw error;
         }
       } else {
-        console.log('✅ Comment inserted successfully:', data);
-        
-        // Adicionar comentário com dados do servidor
-        const newComment = {
-          id: data.id,
-          text: data.content,
-          user_id: data.user_id,
-          video_id: data.video_id,
-          likes_count: data.likes_count || 0,
-          created_at: data.created_at,
-          user: mockUser
-        };
-        setComments(prev => [newComment, ...prev]);
+        console.log('✅ Comment inserted successfully');
       }
 
-      console.log('✅ Comment inserted successfully:', data);
+      // Recarregar comentários para mostrar o novo com dados atualizados
+      await loadComments(currentVideo.id);
 
       // ✨ IMPORTANTE: Registrar no sistema de analytics
       await trackComment(currentVideo.id, currentVideo.user?.id || '');
       await checkAndTrackAction('comment', currentVideo.id, currentVideo.user_id);
-
-      // Add comment to local state with transformed format - ADD TO BEGINNING
-      const newComment = {
-        id: data.id,
-        text: data.content,
-        user_id: data.user_id,
-        video_id: data.video_id,
-        likes_count: data.likes_count,
-        created_at: data.created_at,
-        user: {
-          username: mockUser.username,
-          avatar_url: mockUser.avatar_url
-        }
-      };
-
-      console.log('💬 ADD COMMENT - Adicionando ao estado local:', newComment);
-
-      // Prepend to comments list so new comment appears first
-      setComments(prev => {
-        const updatedComments = [newComment, ...prev];
-        console.log('💬 Updated comments list:', updatedComments);
-        return updatedComments;
-      });
 
       // Update video comments count
       const newCount = currentVideo.comments_count + 1;

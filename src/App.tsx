@@ -21,6 +21,7 @@ const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 const LocalBusinessPage = lazy(() => import("./pages/LocalBusinessPage"));
 const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
+const AdvertisersPage = lazy(() => import("./pages/AdvertisersPage"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -174,6 +175,13 @@ const App = () => (
           <Route path="/subscriptions" element={
             <Suspense fallback={<ComponentFallback />}>
               <SubscriptionsPage />
+            </Suspense>
+          } />
+          
+          {/* Anunciantes */}
+          <Route path="/advertisers" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <AdvertisersPage />
             </Suspense>
           } />
           

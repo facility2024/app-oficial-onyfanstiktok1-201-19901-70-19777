@@ -32,6 +32,7 @@ import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -2935,19 +2936,23 @@ export const TikTokApp = () => {
            </div>
 
             {/* Right Sidebar - Destaque e Anuncios */}
-            <div className="hidden xl:block w-72 2xl:w-80 space-y-4 overflow-y-auto max-h-screen pb-20">
-              <FeaturedSection />
-              <AdCarousel />
-              <ModelCarousel 
-                title="Novas Modelos" 
-                icon="✨"
-                direction="ltr"
-                carouselIndex={1}
-                onSelectModel={(modelId) => {
-                  goToModelVideo(modelId);
-                }}
-              />
-              <MarketplaceCarousel />
+            <div className="hidden xl:block w-72 2xl:w-80">
+              <ScrollArea className="h-screen pb-20">
+                <div className="space-y-4 pr-2">
+                  <FeaturedSection />
+                  <AdCarousel />
+                  <ModelCarousel 
+                    title="Novas Modelos" 
+                    icon="✨"
+                    direction="ltr"
+                    carouselIndex={1}
+                    onSelectModel={(modelId) => {
+                      goToModelVideo(modelId);
+                    }}
+                  />
+                  <MarketplaceCarousel />
+                </div>
+              </ScrollArea>
             </div>
 
          </div>

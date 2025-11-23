@@ -9,6 +9,7 @@ import { FeaturedSection } from "./FeaturedSection";
 import { AdCarousel } from "./AdCarousel";
 import { ModelCarousel } from "./ModelCarousel";
 import { MarketplaceCarousel } from "./MarketplaceCarousel";
+import { LocalBusinessCarousel } from "./LocalBusinessCarousel";
 
 interface MenuItemProps {
   id: string;
@@ -170,6 +171,9 @@ export const CategoryMenu = ({
             
             {/* Top Avaliados - Marketplace */}
             <MarketplaceCarousel />
+            
+            {/* Top 10 Comércios Locais */}
+            <LocalBusinessCarousel />
           </div>
 
           {/* Menu de Navegação */}

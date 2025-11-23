@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import { ArrowLeft, Phone, Mail, MapPin, Globe, Instagram, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -99,24 +99,66 @@ const advertisers: Advertiser[] = [
   }
 ];
 
+// Componente de Card otimizado com memo
+const AdvertiserCard = memo(({ advertiser, onClick }: { advertiser: Advertiser; onClick: (adv: Advertiser) => void }) => (
+  <Card
+    className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 overflow-hidden hover:border-red-500 transition-all duration-200 cursor-pointer group will-change-transform"
+    onClick={() => onClick(advertiser)}
+  >
+    <div className="relative h-48 overflow-hidden">
+      <img
+        src={advertiser.image}
+        alt={advertiser.name}
+        loading="eager"
+        decoding="async"
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 will-change-transform"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+      <span className="absolute top-3 right-3 px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+        Premium
+      </span>
+    </div>
+    <div className="p-5">
+      <h3 className="text-xl font-bold text-white mb-2">{advertiser.name}</h3>
+      <p className="text-sm text-red-400 mb-3">{advertiser.category}</p>
+      <p className="text-sm text-gray-400 line-clamp-2">{advertiser.description}</p>
+      <Button
+        className="w-full mt-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white transition-colors duration-200"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(advertiser);
+        }}
+      >
+        Ver Contatos
+      </Button>
+    </div>
+  </Card>
+));
+
+AdvertiserCard.displayName = 'AdvertiserCard';
+
 export default function AdvertisersPage() {
   const navigate = useNavigate();
   const [selectedAdvertiser, setSelectedAdvertiser] = useState<Advertiser | null>(null);
 
-  const handleContactClick = (url: string) => {
+  const handleContactClick = useMemo(() => (url: string) => {
     window.open(url, "_blank");
-  };
+  }, []);
+
+  const handleSelectAdvertiser = useMemo(() => (advertiser: Advertiser) => {
+    setSelectedAdvertiser(advertiser);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 will-change-scroll">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-gray-800">
+      <div className="sticky top-0 z-10 bg-black/90 backdrop-blur-md border-b border-gray-800 will-change-transform">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 transition-colors duration-150"
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>
@@ -131,44 +173,18 @@ export default function AdvertisersPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {advertisers.map((advertiser) => (
-            <Card
+            <AdvertiserCard
               key={advertiser.id}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 overflow-hidden hover:border-red-500 transition-all duration-300 cursor-pointer group"
-              onClick={() => setSelectedAdvertiser(advertiser)}
-            >
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={advertiser.image}
-                  alt={advertiser.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <span className="absolute top-3 right-3 px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
-                  Premium
-                </span>
-              </div>
-              <div className="p-5">
-                <h3 className="text-xl font-bold text-white mb-2">{advertiser.name}</h3>
-                <p className="text-sm text-red-400 mb-3">{advertiser.category}</p>
-                <p className="text-sm text-gray-400 line-clamp-2">{advertiser.description}</p>
-                <Button
-                  className="w-full mt-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedAdvertiser(advertiser);
-                  }}
-                >
-                  Ver Contatos
-                </Button>
-              </div>
-            </Card>
+              advertiser={advertiser}
+              onClick={handleSelectAdvertiser}
+            />
           ))}
         </div>
       </div>
 
       {/* Modal de Contatos */}
       <Dialog open={!!selectedAdvertiser} onOpenChange={() => setSelectedAdvertiser(null)}>
-        <DialogContent className="bg-gradient-to-br from-gray-900 to-black border-gray-800 text-white max-w-md">
+        <DialogContent className="bg-gradient-to-br from-gray-900 to-black border-gray-800 text-white max-w-md will-change-transform">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white">
               {selectedAdvertiser?.name}
@@ -183,7 +199,7 @@ export default function AdvertisersPage() {
               {selectedAdvertiser?.contacts.phone && (
                 <button
                   onClick={() => handleContactClick(`tel:${selectedAdvertiser.contacts.phone}`)}
-                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors duration-150"
                 >
                   <Phone className="w-5 h-5 text-red-400" />
                   <div className="text-left">
@@ -196,7 +212,7 @@ export default function AdvertisersPage() {
               {selectedAdvertiser?.contacts.whatsapp && (
                 <button
                   onClick={() => handleContactClick(`https://wa.me/${selectedAdvertiser.contacts.whatsapp}`)}
-                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors duration-150"
                 >
                   <MessageCircle className="w-5 h-5 text-green-400" />
                   <div className="text-left">
@@ -209,7 +225,7 @@ export default function AdvertisersPage() {
               {selectedAdvertiser?.contacts.email && (
                 <button
                   onClick={() => handleContactClick(`mailto:${selectedAdvertiser.contacts.email}`)}
-                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors duration-150"
                 >
                   <Mail className="w-5 h-5 text-blue-400" />
                   <div className="text-left">
@@ -222,7 +238,7 @@ export default function AdvertisersPage() {
               {selectedAdvertiser?.contacts.instagram && (
                 <button
                   onClick={() => handleContactClick(`https://instagram.com/${selectedAdvertiser.contacts.instagram}`)}
-                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors duration-150"
                 >
                   <Instagram className="w-5 h-5 text-pink-400" />
                   <div className="text-left">
@@ -235,7 +251,7 @@ export default function AdvertisersPage() {
               {selectedAdvertiser?.contacts.website && (
                 <button
                   onClick={() => handleContactClick(selectedAdvertiser.contacts.website!)}
-                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-3 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors duration-150"
                 >
                   <Globe className="w-5 h-5 text-purple-400" />
                   <div className="text-left">

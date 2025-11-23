@@ -336,11 +336,14 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', user.id);
 
     try {
-      // Usar ID de sessão anônima (não requer login)
+      // GARANTIR que user_id existe no sessionStorage
       let userId = sessionStorage.getItem('user_id');
       if (!userId) {
         userId = crypto.randomUUID();
         sessionStorage.setItem('user_id', userId);
+        console.log('✅ PROFILE SEGUIR: Criado novo user_id:', userId);
+      } else {
+        console.log('✅ PROFILE SEGUIR: Usando user_id existente:', userId);
       }
 
       // Atualizar estado local IMEDIATAMENTE

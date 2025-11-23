@@ -152,6 +152,18 @@ export const TikTokApp = () => {
     return () => subscription.unsubscribe();
   }, []);
   
+  // ✅ GARANTIR que user_id existe no sessionStorage ao carregar o app
+  useEffect(() => {
+    let userId = sessionStorage.getItem('user_id');
+    if (!userId) {
+      userId = crypto.randomUUID();
+      sessionStorage.setItem('user_id', userId);
+      console.log('✅ APP: Criado novo user_id no sessionStorage:', userId);
+    } else {
+      console.log('✅ APP: user_id já existe no sessionStorage:', userId);
+    }
+  }, []);
+  
   // Debug do estado
   useEffect(() => {
     console.log('🔍 DEBUG: showAgeVerification mudou para:', showAgeVerification);

@@ -47,47 +47,62 @@ const CollectionsPage = () => {
   const fetchFavorites = async (uid: string) => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // 1. Buscar os favoritos do usuário
+      const { data: favoritesData, error: favoritesError } = await supabase
         .from('user_favorites' as any)
-        .select(`
-          id,
-          video_id,
-          created_at,
-          video:videos (
-            id,
-            title,
-            thumbnail_url,
-            user_id
-          )
-        `)
+        .select('id, video_id, created_at')
         .eq('user_id', uid)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (favoritesError) throw favoritesError;
+      if (!favoritesData || favoritesData.length === 0) {
+        setFavorites([]);
+        return;
+      }
 
-      // Buscar informações dos usuários separadamente
-      const videosWithUsers = await Promise.all(
-        ((data as any) || []).map(async (fav: any) => {
-          if (fav.video?.user_id) {
-            const { data: userData } = await supabase
-              .from('profiles')
-              .select('id, name as username, avatar_url')
-              .eq('id', fav.video.user_id)
-              .single();
-            
-            return {
-              ...fav,
-              video: {
-                ...fav.video,
-                user: userData
-              }
-            };
+      // 2. Buscar os vídeos
+      const videoIds = (favoritesData as any[]).map((fav: any) => fav.video_id);
+      const { data: videosData, error: videosError } = await supabase
+        .from('videos')
+        .select('id, title, thumbnail_url, model_id')
+        .in('id', videoIds);
+
+      if (videosError) throw videosError;
+
+      // 3. Buscar as modelos
+      const modelIds = (videosData as any[])?.map((v: any) => v.model_id).filter(Boolean) || [];
+      const { data: modelsData } = await supabase
+        .from('models')
+        .select('id, username, avatar_url')
+        .in('id', modelIds);
+
+      // 4. Combinar os dados
+      const favoritesWithData = (favoritesData as any[]).map((fav: any) => {
+        const video = (videosData as any[])?.find((v: any) => v.id === fav.video_id);
+        if (!video) return null;
+
+        const model = (modelsData as any[])?.find((m: any) => m.id === video.model_id);
+
+        return {
+          id: fav.id,
+          video_id: fav.video_id,
+          created_at: fav.created_at,
+          video: {
+            id: video.id,
+            title: video.title,
+            thumbnail_url: video.thumbnail_url,
+            user_id: video.model_id,
+            user: model ? {
+              id: model.id,
+              username: model.username,
+              avatar_url: model.avatar_url
+            } : undefined
           }
-          return fav;
-        })
-      );
+        };
+      }).filter((f: any) => f !== null);
 
-      setFavorites(videosWithUsers || []);
+      setFavorites(favoritesWithData as FavoriteVideo[]);
 
     } catch (error) {
       console.error('Erro ao buscar favoritos:', error);

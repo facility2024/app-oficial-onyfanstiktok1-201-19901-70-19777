@@ -48,7 +48,7 @@ export const useCurrentUser = () => {
           name: updates.full_name || updates.username,
           email: updates.email,
         })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (error) throw error;
 

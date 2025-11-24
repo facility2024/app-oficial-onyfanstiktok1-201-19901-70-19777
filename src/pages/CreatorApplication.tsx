@@ -80,7 +80,7 @@ const ProgressIndicator = ({ currentStep, completedSteps }: { currentStep: numbe
 };
 
 export default function CreatorApplication() {
-  const { user, profile } = useCurrentUser();
+  const { user, profile, loading: userLoading } = useCurrentUser();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [existingApplication, setExistingApplication] = useState<any>(null);
@@ -99,6 +99,9 @@ export default function CreatorApplication() {
   });
 
   useEffect(() => {
+    // Aguardar o carregamento do usuário antes de verificar
+    if (userLoading) return;
+    
     if (!user) {
       navigate('/auth');
       return;
@@ -106,7 +109,7 @@ export default function CreatorApplication() {
 
     fetchExistingApplication();
     fetchPlatformTerms();
-  }, [user, navigate]);
+  }, [user, userLoading, navigate]);
 
   useEffect(() => {
     if (profile?.username && !formData.nickname) {
@@ -261,6 +264,15 @@ export default function CreatorApplication() {
       setLoading(false);
     }
   };
+
+  // Mostrar loading enquanto carrega o usuário
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;

@@ -57,12 +57,7 @@ const CollectionsPage = () => {
             id,
             title,
             thumbnail_url,
-            user_id,
-            user:users (
-              id,
-              username,
-              avatar_url
-            )
+            user_id
           )
         `)
         .eq('user_id', uid)
@@ -70,7 +65,30 @@ const CollectionsPage = () => {
 
       if (error) throw error;
 
-      setFavorites((data as any) || []);
+      // Buscar informações dos usuários separadamente
+      const videosWithUsers = await Promise.all(
+        ((data as any) || []).map(async (fav: any) => {
+          if (fav.video?.user_id) {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('id, name as username, avatar_url')
+              .eq('id', fav.video.user_id)
+              .single();
+            
+            return {
+              ...fav,
+              video: {
+                ...fav.video,
+                user: userData
+              }
+            };
+          }
+          return fav;
+        })
+      );
+
+      setFavorites(videosWithUsers || []);
+
     } catch (error) {
       console.error('Erro ao buscar favoritos:', error);
       toast.error('Erro ao carregar suas coleções');

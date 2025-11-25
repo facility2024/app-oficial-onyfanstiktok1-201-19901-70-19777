@@ -10,6 +10,7 @@ interface FollowedModel {
   username: string;
   avatar_url: string;
   followers_count: number;
+  is_creator?: boolean;
 }
 
 export default function FollowingPage() {
@@ -52,29 +53,69 @@ export default function FollowingPage() {
 
       console.log('✅ SEGUINDO: Follows encontrados:', followedModels);
 
-      if (!followedModels || followedModels.length === 0) {
-        console.log('ℹ️ SEGUINDO: Nenhuma modelo seguida');
-        setLoading(false);
-        return;
+      let allFollowed: FollowedModel[] = [];
+
+      // Buscar dados das modelos seguidas
+      if (followedModels && followedModels.length > 0) {
+        const modelIds = followedModels.map(f => f.model_id);
+        console.log('🔍 SEGUINDO: Buscando', modelIds.length, 'modelos');
+
+        const { data: modelsData, error: modelsError } = await supabase
+          .from('models')
+          .select('id, username, avatar_url, followers_count')
+          .in('id', modelIds);
+
+        if (modelsError) {
+          console.error('❌ SEGUINDO: Erro ao buscar modelos:', modelsError);
+        } else {
+          console.log('✅ SEGUINDO: Modelos carregadas:', modelsData);
+          allFollowed = modelsData as FollowedModel[] || [];
+        }
       }
 
-      const modelIds = followedModels.map(f => f.model_id);
-      console.log('🔍 SEGUINDO: Buscando', modelIds.length, 'modelos');
+      // Buscar criadores seguidos (tabela user_follows)
+      const { data: followedCreators, error: creatorsFollowError } = await (supabase as any)
+        .from('user_follows')
+        .select('following_id')
+        .eq('follower_id', userId)
+        .eq('is_active', true);
 
-      // Buscar dados das modelos
-      const { data: modelsData, error: modelsError } = await supabase
-        .from('models')
-        .select('id, username, avatar_url, followers_count')
-        .in('id', modelIds);
+      if (creatorsFollowError) {
+        console.error('❌ SEGUINDO: Erro ao buscar criadores seguidos:', creatorsFollowError);
+      } else {
+        console.log('✅ SEGUINDO: Criadores seguidos encontrados:', followedCreators);
 
-      if (modelsError) {
-        console.error('❌ SEGUINDO: Erro ao buscar modelos:', modelsError);
-        setLoading(false);
-        return;
+        // Buscar dados dos criadores
+        if (followedCreators && followedCreators.length > 0) {
+          const creatorIds = followedCreators.map((f: any) => f.following_id);
+          console.log('🔍 SEGUINDO: Buscando', creatorIds.length, 'criadores');
+
+          const { data: creatorsData, error: creatorsError } = await supabase
+            .from('profiles')
+            .select('id, name, email')
+            .in('id', creatorIds);
+
+          if (creatorsError) {
+            console.error('❌ SEGUINDO: Erro ao buscar perfis de criadores:', creatorsError);
+          } else {
+            console.log('✅ SEGUINDO: Criadores carregados:', creatorsData);
+            
+            // Transformar criadores para formato FollowedModel
+            const creatorModels: FollowedModel[] = creatorsData?.map((c: any) => ({
+              id: c.id,
+              username: c.name || c.email?.split('@')[0] || 'Criador',
+              avatar_url: '/placeholder.svg',
+              followers_count: 0,
+              is_creator: true
+            })) || [];
+
+            allFollowed = [...allFollowed, ...creatorModels];
+          }
+        }
       }
 
-      console.log('✅ SEGUINDO: Modelos carregadas:', modelsData);
-      setModels(modelsData as FollowedModel[] || []);
+      console.log('✅ SEGUINDO: Total de pessoas seguidas:', allFollowed.length);
+      setModels(allFollowed);
     } catch (error) {
       console.error('❌ SEGUINDO: Erro geral:', error);
     } finally {
@@ -102,7 +143,7 @@ export default function FollowingPage() {
             Seguindo
           </h1>
           <span className="text-sm text-gray-400 ml-auto">
-            {models.length} {models.length === 1 ? 'modelo' : 'modelos'}
+            {models.length} {models.length === 1 ? 'pessoa' : 'pessoas'}
           </span>
         </div>
       </header>
@@ -121,16 +162,16 @@ export default function FollowingPage() {
               <Heart className="w-12 h-12 text-gray-600" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">
-              Nenhuma modelo seguida ainda
+              Nenhuma pessoa seguida ainda
             </h2>
             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Explore o feed e comece a seguir suas modelos favoritas para vê-las aqui
+              Explore o feed e comece a seguir modelos e criadores para vê-los aqui
             </p>
             <button
               onClick={() => navigate('/app')}
               className="px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-colors"
             >
-              Explorar Modelos
+              Explorar Conteúdo
             </button>
           </div>
         ) : (
@@ -142,6 +183,13 @@ export default function FollowingPage() {
                 className="group cursor-pointer"
               >
                 <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl overflow-hidden aspect-[3/4] border border-gray-700/50 hover:border-primary/50 transition-all hover:scale-[1.02]">
+                  {/* Badge de Criador */}
+                  {model.is_creator && (
+                    <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full z-20 flex items-center gap-1">
+                      ✨ Criador
+                    </div>
+                  )}
+
                   {/* Background blur effect */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
                   

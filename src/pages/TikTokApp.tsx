@@ -1313,9 +1313,9 @@ export const TikTokApp = () => {
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
+      const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
-        sessionStorage.setItem('anonymous_user_id', newId);
+        localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
       
@@ -1433,9 +1433,9 @@ export const TikTokApp = () => {
 
     // ✅ Usar ID correto: autenticado se logado, anônimo se não
     const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
+    const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
       const newId = crypto.randomUUID();
-      sessionStorage.setItem('anonymous_user_id', newId);
+      localStorage.setItem('anonymous_user_id', newId);
       return newId;
     })();
     
@@ -1579,9 +1579,9 @@ export const TikTokApp = () => {
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
+      const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
-        sessionStorage.setItem('anonymous_user_id', newId);
+        localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
       
@@ -1670,9 +1670,9 @@ export const TikTokApp = () => {
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id || sessionStorage.getItem('anonymous_user_id') || (() => {
+      const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
-        sessionStorage.setItem('anonymous_user_id', newId);
+        localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
       

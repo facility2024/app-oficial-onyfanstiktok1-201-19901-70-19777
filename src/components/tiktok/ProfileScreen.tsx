@@ -93,7 +93,9 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       // Sempre resetar estado ao checar
       setIsFollowing(false);
 
-      const userId = sessionStorage.getItem('user_id');
+      // Usar localStorage (fonte unificada de IDs)
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || localStorage.getItem('anonymous_user_id');
       if (!userId) return;
 
       // Primeiro verificar no localStorage (mais rápido)
@@ -366,21 +368,15 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     try {
       // ✅ GARANTIR que user_id é do usuário autenticado se estiver logado
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      let userId = sessionStorage.getItem('user_id');
+      let userId = authUser?.id || localStorage.getItem('anonymous_user_id');
       
-      if (authUser?.id) {
-        // Usuário autenticado: usar ID real
-        userId = authUser.id;
-        console.log('✅ PROFILE SEGUIR: Usando user_id autenticado:', userId);
-      } else {
-        // Usuário anônimo: usar/criar UUID
-        if (!userId) {
-          userId = sessionStorage.getItem('anonymous_user_id') || crypto.randomUUID();
-          sessionStorage.setItem('anonymous_user_id', userId);
-          sessionStorage.setItem('user_id', userId); // Manter compatibilidade
-        }
-        console.log('✅ PROFILE SEGUIR: Usando user_id anônimo:', userId);
+      if (!userId) {
+        // Criar novo ID anônimo se não existir
+        userId = crypto.randomUUID();
+        localStorage.setItem('anonymous_user_id', userId);
       }
+      
+      console.log('✅ PROFILE SEGUIR: Usando user_id:', userId, authUser ? '(autenticado)' : '(anônimo)');
 
       // Atualizar estado local IMEDIATAMENTE
       setIsFollowing(true);

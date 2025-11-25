@@ -31,10 +31,10 @@ export const useCreatorVideos = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      let query = supabase
+      let query = (supabase as any)
         .from('videos')
         .select('*')
-        .eq('model_id', user.id)
+        .eq('creator_id', user.id)  // Filtrar apenas vídeos do criador logado
         .order('created_at', { ascending: false });
 
       // Aplicar filtros

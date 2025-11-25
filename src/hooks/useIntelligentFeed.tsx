@@ -82,10 +82,24 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     try {
       console.log('📦 Carregando vídeos da Bunny.net...');
       
-      // Carregar vídeos do banco
-      const { data: videosData, error: videosError } = await supabase
+      // Carregar vídeos do banco (incluindo dados de modelos e criadores)
+      const { data: videosData, error: videosError } = await (supabase as any)
         .from('videos')
-        .select('*')
+        .select(`
+          *,
+          models:model_id (
+            id,
+            username,
+            name,
+            avatar_url
+          ),
+          profiles:creator_id (
+            id,
+            username,
+            name,
+            avatar_url
+          )
+        `)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -100,8 +114,8 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       // Transformar para formato VideoFeedItem
       const feedItems: VideoFeedItem[] = (videosData || []).map(video => ({
         video_id: video.id,
-        modelo_id: video.model_id || '',
-        url_bunny: video.video_url, // URL da Bunny.net
+        modelo_id: video.model_id || video.creator_id || '',  // Suportar ambos model_id e creator_id
+        url_bunny: video.video_url,
         data_postagem: video.created_at,
         popularidade: calculatePopularity(video),
         thumbnail_url: video.thumbnail_url,

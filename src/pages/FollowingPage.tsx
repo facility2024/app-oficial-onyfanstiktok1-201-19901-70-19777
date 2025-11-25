@@ -45,14 +45,17 @@ export default function FollowingPage() {
       let allEntities: FollowedEntity[] = [];
 
       // 1️⃣ Buscar modelos seguidas
-      const { data: modelFollows } = await supabase
+      const { data: modelFollows, error: modelError } = await supabase
         .from('model_followers')
         .select('model_id')
         .eq('user_id', user.id)
         .eq('is_active', true);
 
+      console.log('🌟 Model follows:', modelFollows, 'Error:', modelError);
+
       if (modelFollows && modelFollows.length > 0) {
         const modelIds = modelFollows.map(f => f.model_id);
+        console.log('🎯 Model IDs:', modelIds);
         
         const { data: modelsData } = await supabase
           .from('models')
@@ -75,14 +78,17 @@ export default function FollowingPage() {
       }
 
       // 2️⃣ Buscar criadores seguidos
-      const { data: creatorFollows } = await (supabase as any)
+      const { data: creatorFollows, error: followError } = await (supabase as any)
         .from('user_follows')
-        .select('creator_id')
+        .select('following_id, followed_at')
         .eq('follower_id', user.id)
         .eq('is_active', true);
 
+      console.log('📊 Creator follows:', creatorFollows, 'Error:', followError);
+
       if (creatorFollows && creatorFollows.length > 0) {
-        const creatorIds = creatorFollows.map((f: any) => f.creator_id);
+        const creatorIds = creatorFollows.map((f: any) => f.following_id);
+        console.log('🎯 Creator IDs:', creatorIds);
         
         const { data: creatorsData } = await supabase
           .from('profiles')

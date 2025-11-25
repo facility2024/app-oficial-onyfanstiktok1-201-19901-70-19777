@@ -82,51 +82,52 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     try {
       console.log('📦 Carregando vídeos da Bunny.net...');
       
-      // Carregar vídeos do banco (incluindo dados de modelos e criadores)
-      const { data: videosData, error: videosError } = await (supabase as any)
+      // Carregar vídeos do banco (TODOS os vídeos ativos, de modelos E criadores)
+      const { data: videosData, error: videosError } = await supabase
         .from('videos')
-        .select(`
-          *,
-          models:model_id (
-            id,
-            username,
-            name,
-            avatar_url
-          ),
-          profiles:creator_id (
-            id,
-            username,
-            name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (videosError) throw videosError;
-
-      // Carregar modelos
-      const { data: modelsData } = await supabase
-        .from('models')
-        .select('*')
-        .eq('is_active', true);
+      if (videosError) {
+        console.error('❌ Erro ao buscar vídeos:', videosError);
+        throw videosError;
+      }
+      
+      console.log(`✅ ${videosData?.length || 0} vídeos encontrados no banco`);
+      console.log('📊 Vídeos por tipo:', {
+        comModelId: videosData?.filter((v: any) => v.model_id).length || 0,
+        comCreatorId: videosData?.filter((v: any) => v.creator_id).length || 0,
+        semDono: videosData?.filter((v: any) => !v.model_id && !v.creator_id).length || 0
+      });
 
       // Transformar para formato VideoFeedItem
-      const feedItems: VideoFeedItem[] = (videosData || []).map(video => ({
-        video_id: video.id,
-        modelo_id: video.model_id || video.creator_id || '',  // Suportar ambos model_id e creator_id
-        url_bunny: video.video_url,
-        data_postagem: video.created_at,
-        popularidade: calculatePopularity(video),
-        thumbnail_url: video.thumbnail_url,
-        title: video.title,
-        description: video.description,
-        likes_count: video.likes_count || 0,
-        views_count: video.views_count || 0,
-        comments_count: video.comments_count || 0
-      }));
+      const feedItems: VideoFeedItem[] = (videosData || []).map((video: any) => {
+        // Priorizar creator_id sobre model_id para identificação
+        const ownerId = video.creator_id || video.model_id || 'unknown';
+        
+        return {
+          video_id: video.id,
+          modelo_id: ownerId,
+          url_bunny: video.video_url,
+          data_postagem: video.created_at,
+          popularidade: calculatePopularity(video),
+          thumbnail_url: video.thumbnail_url,
+          title: video.title,
+          description: video.description,
+          likes_count: video.likes_count || 0,
+          views_count: video.views_count || 0,
+          comments_count: video.comments_count || 0
+        };
+      });
 
-      console.log(`✅ ${feedItems.length} vídeos carregados da Bunny.net`);
+      console.log(`✅ ${feedItems.length} vídeos transformados para o feed`);
+      console.log('🎬 Primeiros 3 vídeos:', feedItems.slice(0, 3).map(v => ({
+        id: v.video_id,
+        owner: v.modelo_id,
+        title: v.title
+      })));
+      
       return feedItems;
     } catch (error) {
       console.error('❌ Erro ao carregar vídeos:', error);

@@ -7,6 +7,8 @@ import { LiveUserIndicator } from './LiveUserIndicator';
 import { Eye, TrendingUp, Activity, MapPin, Users } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
+import { useDailyViews } from '@/hooks/useDailyViews';
+import { useWeeklySales } from '@/hooks/useWeeklySales';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -41,6 +43,8 @@ interface AdminChartsProps {
 export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
   const { currentLocation, stateStats, isLoading, getAllStatesData, captureLocation } = useGeolocation();
   const { stats: realTimeStats } = useRealTimeStats();
+  const { viewsData: dailyViewsData, labels: viewsLabels, isLoading: viewsLoading } = useDailyViews();
+  const { salesData: weeklySalesData, labels: salesLabels, summary: salesSummary, isLoading: salesLoading } = useWeeklySales();
   
   // Obter dados atualizados dos estados
   const statesList = getAllStatesData();
@@ -53,12 +57,13 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
     console.log('🔄 AdminCharts - Top estados:', topStates);
   }, [currentLocation, stateStats, topStates]);
 
+  // ✅ DADOS REAIS: Views dos últimos 7 dias do Supabase
   const viewsData = {
-    labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+    labels: viewsLabels,
     datasets: [
       {
         label: 'Views',
-        data: [12000, 19000, 15000, 25000, 22000, 30000, 28000],
+        data: dailyViewsData,
         borderColor: 'hsl(270 91% 65%)',
         backgroundColor: 'hsl(270 91% 65% / 0.1)',
         tension: 0.4,
@@ -67,12 +72,13 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
     ],
   };
 
+  // ✅ DADOS REAIS: Vendas semanais do mês atual do Supabase
   const financialData = {
-    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+    labels: salesLabels,
     datasets: [
       {
         label: 'Vendas (R$)',
-        data: [12800, 15200, 18900, 22400],
+        data: weeklySalesData,
         backgroundColor: [
           'hsl(142 76% 36%)',
           'hsl(142 69% 58%)',
@@ -82,6 +88,16 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
         borderWidth: 0,
       },
     ],
+  };
+
+  // Função helper para formatar valores monetários
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
   };
 
   // Dados dinâmicos dos gráfico baseados na geolocalização real
@@ -201,31 +217,39 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
               <Bar data={financialData} options={chartOptions} />
             </div>
             
-            {/* Financial Summary */}
+            {/* ✅ DADOS REAIS: Resumo Financeiro do Supabase */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
               <div className="bg-success/10 border border-success/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-success">R$ 12.8K</div>
+                <div className="text-lg sm:text-xl font-bold text-success">
+                  {salesLoading ? '...' : formatCurrency(salesSummary.currentWeek)}
+                </div>
                 <div className="text-xs text-success/80">
                   <span className="hidden sm:inline">Semana Atual</span>
                   <span className="sm:hidden">Atual</span>
                 </div>
               </div>
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-primary">R$ 45.2K</div>
+                <div className="text-lg sm:text-xl font-bold text-primary">
+                  {salesLoading ? '...' : formatCurrency(salesSummary.totalMonth)}
+                </div>
                 <div className="text-xs text-primary/80">
                   <span className="hidden sm:inline">Total Mês</span>
                   <span className="sm:hidden">Mês</span>
                 </div>
               </div>
               <div className="bg-warning/10 border border-warning/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-warning">+28%</div>
+                <div className="text-lg sm:text-xl font-bold text-warning">
+                  {salesLoading ? '...' : `${salesSummary.growth > 0 ? '+' : ''}${salesSummary.growth.toFixed(1)}%`}
+                </div>
                 <div className="text-xs text-warning/80">
                   <span className="hidden sm:inline">Crescimento</span>
                   <span className="sm:hidden">Cresc.</span>
                 </div>
               </div>
               <div className="bg-accent/10 border border-accent/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-accent">R$ 18.4K</div>
+                <div className="text-lg sm:text-xl font-bold text-accent">
+                  {salesLoading ? '...' : formatCurrency(salesSummary.weeklyGoal)}
+                </div>
                 <div className="text-xs text-accent/80">
                   <span className="hidden sm:inline">Meta Semanal</span>
                   <span className="sm:hidden">Meta</span>

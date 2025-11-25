@@ -3,10 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Heart, Eye, Share2, DollarSign, Users, Rocket, UserPlus, MessageCircle, Crown, Play } from 'lucide-react';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
+import { useFinancialData } from '@/hooks/useFinancialData';
 import { supabase } from '@/integrations/supabase/client';
 
 export const AdminStats = () => {
   const { stats: realTimeStats, isLoading } = useRealTimeStats();
+  const { stats: financialStats } = useFinancialData();
   const [userStats, setUserStats] = useState({ totalUsers: 0, newToday: 0 });
   const [creatorStats, setCreatorStats] = useState({
     totalCreators: 0,
@@ -250,12 +252,9 @@ export const AdminStats = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Atualizar stats quando os dados em tempo real mudarem
+  // ✅ ATUALIZAÇÃO: Usar receita mensal REAL do Supabase
   useEffect(() => {
     if (!isLoading && realTimeStats) {
-      // Calcular receita estimada baseada em views e likes
-      const estimatedRevenue = (realTimeStats.viewsToday + realTimeStats.totalLikes) * 0.01;
-      
       setStats(prev => [
         { ...prev[0], value: formatNumber(realTimeStats.totalContent) }, // Total de Conteúdos
         { ...prev[1], value: formatNumber(realTimeStats.totalLikes) },   // Total de Curtidas
@@ -264,7 +263,7 @@ export const AdminStats = () => {
         { ...prev[4], value: formatNumber(realTimeStats.activeViews) },  // Views Ativas (2min)
         { ...prev[5], value: formatNumber(realTimeStats.totalViews) },   // Views Totais
         { ...prev[6], value: formatNumber(realTimeStats.totalShares) },  // Compartilhamentos
-        { ...prev[7], value: `R$ ${formatNumber(estimatedRevenue)}` },   // Receita Mensal (estimada)
+        { ...prev[7], value: `R$ ${formatNumber(financialStats.totalRevenue)}` }, // ✅ RECEITA REAL
         { ...prev[8], value: formatNumber(realTimeStats.totalFollowers) }, // Seguidores
         { ...prev[9], value: formatNumber(userStats.totalUsers) },       // Total de Usuários (REAL)
         { ...prev[10], value: formatNumber(userStats.newToday) },        // Novos Hoje (REAL)
@@ -274,10 +273,11 @@ export const AdminStats = () => {
       ]);
 
       console.log('📊 Stats atualizadas com dados em tempo real:', realTimeStats);
+      console.log('💰 Receita mensal REAL:', financialStats.totalRevenue);
       console.log('👥 Stats de usuários reais:', userStats);
       console.log('✨ Stats de criadores:', creatorStats);
     }
-  }, [realTimeStats, isLoading, userStats, creatorStats]);
+  }, [realTimeStats, isLoading, userStats, creatorStats, financialStats]);
 
   return (
     <div className="space-y-4">

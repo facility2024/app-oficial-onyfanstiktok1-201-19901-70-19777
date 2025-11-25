@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
+import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 
 
 interface ProfileScreenProps {
@@ -48,16 +49,43 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
+  const [isCreator, setIsCreator] = useState(false);
+  const [isFollowingCreator, setIsFollowingCreator] = useState(false);
+  
+  const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
   
   useEffect(() => {
     if (isOpen && user.id) {
       // Load in parallel for faster initial render
       Promise.all([
         loadModelContent(),
-        checkFollowingStatus()
+        checkFollowingStatus(),
+        checkCreatorStatus()
       ]);
     }
   }, [isOpen, user.id]);
+
+  // Verificar se é um criador de conteúdo
+  const checkCreatorStatus = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_roles' as any)
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'creator')
+        .maybeSingle();
+      
+      const isUserCreator = !!data;
+      setIsCreator(isUserCreator);
+      
+      if (isUserCreator) {
+        const following = await checkCreatorFollow(user.id);
+        setIsFollowingCreator(following);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status de criador:', error);
+    }
+  };
 
   // Verificar se o usuário já está seguindo a modelo
   const checkFollowingStatus = async () => {
@@ -486,6 +514,43 @@ if (!isOpen) return null;
                 {user.bio}
               </p>
             )}
+
+            {/* Botões de Ação */}
+            <div className="flex gap-2 mb-4">
+              {isCreator ? (
+                <button
+                  onClick={async () => {
+                    const success = await followCreator({
+                      creatorId: user.id,
+                      creatorName: user.username,
+                      creatorEmail: user.username + '@app.com'
+                    });
+                    if (success !== undefined) {
+                      setIsFollowingCreator(success);
+                    }
+                  }}
+                  className={`flex-1 px-6 py-2.5 rounded-full font-semibold transition-all ${
+                    isFollowingCreator 
+                      ? 'bg-gray-700 text-white' 
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
+                  }`}
+                >
+                  {isFollowingCreator ? '✓ Seguindo Criador' : '✨ Seguir Criador'}
+                </button>
+              ) : (
+                <button
+                  onClick={followModel}
+                  disabled={isFollowing}
+                  className={`flex-1 px-6 py-2.5 rounded-full font-semibold transition-all ${
+                    isFollowing 
+                      ? 'bg-gray-700 text-white cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-pink-500 to-red-500 text-white hover:from-pink-600 hover:to-red-600'
+                  }`}
+                >
+                  {isFollowing ? '✓ Seguindo' : '❤️ Seguir'}
+                </button>
+              )}
+            </div>
 
             {panelUrl && (
               <div className="mt-3">

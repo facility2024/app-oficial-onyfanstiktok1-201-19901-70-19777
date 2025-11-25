@@ -14,12 +14,12 @@ export const getUserId = async (): Promise<string> => {
     return user.id;
   }
   
-  // 2️⃣ Usuário anônimo: usar/criar UUID no sessionStorage
-  let anonymousId = sessionStorage.getItem('anonymous_user_id');
+  // 2️⃣ Usuário anônimo: usar/criar UUID no localStorage (consistência)
+  let anonymousId = localStorage.getItem('anonymous_user_id');
   
   if (!anonymousId) {
     anonymousId = crypto.randomUUID();
-    sessionStorage.setItem('anonymous_user_id', anonymousId);
+    localStorage.setItem('anonymous_user_id', anonymousId);
     console.log('✅ getUserId: Criado ID anônimo:', anonymousId);
   } else {
     console.log('✅ getUserId: Usando ID anônimo existente:', anonymousId);
@@ -45,11 +45,11 @@ export const getUserIdSync = (): string | null => {
     } catch {}
   }
   
-  // Fallback para anônimo
-  let anonymousId = sessionStorage.getItem('anonymous_user_id');
+  // Fallback para anônimo - USAR localStorage (consistência)
+  let anonymousId = localStorage.getItem('anonymous_user_id');
   if (!anonymousId) {
     anonymousId = crypto.randomUUID();
-    sessionStorage.setItem('anonymous_user_id', anonymousId);
+    localStorage.setItem('anonymous_user_id', anonymousId);
   }
   
   return anonymousId;

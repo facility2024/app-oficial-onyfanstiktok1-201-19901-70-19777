@@ -24,6 +24,7 @@ const LocalBusinessPage = lazy(() => import("./pages/LocalBusinessPage"));
 const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 const AdvertisersPage = lazy(() => import("./pages/AdvertisersPage"));
+const FollowingCreatorsPage = lazy(() => import("./pages/FollowingCreatorsPage"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -152,6 +153,13 @@ const App = () => (
               <ProtectedRoute>
                 <FollowingPage />
               </ProtectedRoute>
+            </Suspense>
+          } />
+          
+          {/* Página de Criadores Seguidos */}
+          <Route path="/following-creators" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <FollowingCreatorsPage />
             </Suspense>
           } />
           

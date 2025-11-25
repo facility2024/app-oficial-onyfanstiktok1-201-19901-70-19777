@@ -93,6 +93,16 @@ export const CategoryMenu = ({
       }
     },
     {
+      id: "following-creators",
+      name: "Criadores Seguidos",
+      icon: <Sparkles className="w-5 h-5" />,
+      onClick: () => {
+        console.log('✨ Navegando para Criadores Seguidos');
+        setOpen(false);
+        setTimeout(() => navigate('/following-creators'), 100);
+      }
+    },
+    {
       id: "creator",
       name: "Sou Criador",
       icon: <Sparkles className="w-5 h-5" />,

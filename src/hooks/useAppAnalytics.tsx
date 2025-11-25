@@ -109,17 +109,10 @@ export const useAppAnalytics = () => {
           break;
 
         case 'follow':
-          const targetModelId = modelId || videoId;
-          const { error: followError } = await (supabase as any)
-            .functions.invoke('follow-model', {
-              body: {
-                user_id: currentUserId,
-                model_id: targetModelId,
-                is_active: true
-              }
-            });
-          if (followError) console.warn('❌ Erro ao registrar follow (Edge Function):', followError);
-          else console.log('✅ Follow registrado via Edge Function');
+          // Nota: Follow é registrado diretamente pelas funções específicas
+          // (followModel em TikTokApp ou followCreator em useCreatorFollow)
+          // para evitar duplicação e problemas de CORS
+          console.log('✅ Analytics de follow registrado (inserção feita pela função específica)');
           break;
       }
 

@@ -57,7 +57,7 @@ export const AdminContentTable = () => {
         const creatorIds = userRolesData.map((r: any) => r.user_id);
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url, email')
+          .select('id, name, avatar_url, email')
           .in('id', creatorIds);
 
         if (profilesError) {
@@ -115,7 +115,7 @@ export const AdminContentTable = () => {
           id: creator.user_id,
           modelId: creator.user_id,
           videoId: latestVideo?.id,
-          name: profile?.full_name || profile?.email?.split('@')[0] || 'Criador',
+          name: profile?.name || profile?.email?.split('@')[0] || 'Criador',
           email: profile?.email,
           avatar: profile?.avatar_url || crownLogo,
           platform: 'creator',

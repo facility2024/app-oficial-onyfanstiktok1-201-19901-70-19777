@@ -61,8 +61,9 @@ interface Video {
   is_active: boolean;
   visibility?: 'public' | 'premium';
   created_at: string;
-  updated_at?: string; // Adicionado para nova lógica
-  model_id?: string;   // Adicionado para associação com modelos
+  updated_at?: string;
+  model_id?: string;
+  creator_id?: string; // ID do criador (user autenticado)
   user: {
     id: string;
     username: string;
@@ -71,8 +72,8 @@ interface Video {
     following_count: number;
     is_online: boolean;
     created_at: string;
-    bio?: string; // Adicionado para dados do modelo
-    posting_panel_url?: string; // Link personalizado premium
+    bio?: string;
+    posting_panel_url?: string;
   };
 }
 
@@ -1753,26 +1754,30 @@ export const TikTokApp = () => {
     }
     
     const currentIsFollowing = followingModels[currentVideo.user.id] || false;
+    const isCreator = !!currentVideo.creator_id;
     console.log('🔍 SEGUIR: Status atual:', {
-      modelId: currentVideo.user.id,
+      userId: currentVideo.user.id,
       username: currentVideo.user.username,
-      isFollowing: currentIsFollowing
+      isFollowing: currentIsFollowing,
+      isCreator,
+      creatorId: currentVideo.creator_id,
+      modelId: currentVideo.model_id
     });
     
     if (currentIsFollowing) {
-      console.log('⚠️ SEGUIR: Já está seguindo esta modelo');
+      console.log('⚠️ SEGUIR: Já está seguindo');
       toast({
-        title: "Você já segue esta modelo",
-        description: `Você já está seguindo ${currentVideo.user.username}`,
+        title: `Você já segue ${currentVideo.user.username}`,
+        description: "Você já está seguindo este perfil",
         duration: 3000,
       });
       return;
     }
 
-    console.log('✅ SEGUIR: Iniciando processo de seguir modelo', currentVideo.user.id);
+    console.log(`✅ SEGUIR: Iniciando processo - ${isCreator ? 'CRIADOR' : 'MODELO'}`);
 
     try {
-      // Usar ID de sessão anônima (mesmo sistema do FollowingPage)
+      // Usar ID de sessão anônima
       let userId = localStorage.getItem('anonymous_user_id');
       if (!userId) {
         userId = crypto.randomUUID();
@@ -1782,43 +1787,63 @@ export const TikTokApp = () => {
         console.log('🆔 SEGUIR: Usando anonymous_user_id existente:', userId);
       }
 
-      // Atualizar estado local IMEDIATAMENTE para feedback visual
+      // Atualizar estado local IMEDIATAMENTE
       console.log('💾 SEGUIR: Atualizando estado local...');
-      setFollowingModels(prev => {
-        const newState = {
-          ...prev,
-          [currentVideo.user.id]: true
-        };
-        console.log('💾 SEGUIR: Novo estado followingModels:', newState);
-        return newState;
-      });
+      setFollowingModels(prev => ({
+        ...prev,
+        [currentVideo.user.id]: true
+      }));
 
       // Obter dados do usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('👤 SEGUIR: Usuário autenticado:', user?.email || 'anônimo');
+      const userName = user?.user_metadata?.full_name || user?.email || 'Usuário';
+      const userEmail = user?.email || '';
+      console.log('👤 SEGUIR: Usuário:', userName, userEmail);
 
-      // Inserção direta no banco de dados
-      console.log('💿 SEGUIR: Inserindo no banco de dados...');
-      const { error: followError } = await supabase
-        .from('model_followers')
-        .upsert({
-          user_id: userId,
-          model_id: currentVideo.user.id,
-          user_name: user?.user_metadata?.full_name || user?.email || 'Usuário',
-          user_email: user?.email || '',
-          is_active: true
-        }, {
-          onConflict: 'user_id,model_id'
-        });
+      // DIFERENCIAÇÃO: Criador vs Modelo
+      if (isCreator) {
+        // É um CRIADOR → usar tabela user_follows
+        console.log('🎨 SEGUIR CRIADOR: Inserindo em user_follows...');
+        const { error: followError } = await (supabase as any)
+          .from('user_follows')
+          .upsert({
+            follower_id: userId,
+            following_id: currentVideo.creator_id,
+            follower_name: userName,
+            follower_email: userEmail,
+            is_active: true
+          }, {
+            onConflict: 'follower_id,following_id'
+          });
 
-      if (followError) {
-        console.error('❌ SEGUIR: Erro no banco ao seguir:', followError);
-        // Não bloquear o usuário - manter o estado local
+        if (followError) {
+          console.error('❌ SEGUIR CRIADOR: Erro no banco:', followError);
+        } else {
+          console.log('✅ SEGUIR CRIADOR: Inserido em user_follows');
+        }
       } else {
-        console.log('✅ SEGUIR: Inserção no banco bem-sucedida');
+        // É um MODELO → usar tabela model_followers
+        console.log('👤 SEGUIR MODELO: Inserindo em model_followers...');
+        const { error: followError } = await supabase
+          .from('model_followers')
+          .upsert({
+            user_id: userId,
+            model_id: currentVideo.model_id || currentVideo.user.id,
+            user_name: userName,
+            user_email: userEmail,
+            is_active: true
+          }, {
+            onConflict: 'user_id,model_id'
+          });
+
+        if (followError) {
+          console.error('❌ SEGUIR MODELO: Erro no banco:', followError);
+        } else {
+          console.log('✅ SEGUIR MODELO: Inserido em model_followers');
+        }
       }
 
-      // Salvar no localStorage para persistência
+      // Salvar no localStorage
       const followKey = `follow_${userId}_${currentVideo.user.id}`;
       localStorage.setItem(followKey, 'true');
       console.log('💾 SEGUIR: Salvo no localStorage:', followKey);
@@ -1841,7 +1866,6 @@ export const TikTokApp = () => {
       ));
 
       console.log('✅✅✅ SEGUIR: Processo concluído com SUCESSO!');
-      console.log('🎉 SEGUIR: Modelo seguida:', currentVideo.user.username);
       
       toast({
         title: `✅ Você está seguindo ${currentVideo.user.username}!`,

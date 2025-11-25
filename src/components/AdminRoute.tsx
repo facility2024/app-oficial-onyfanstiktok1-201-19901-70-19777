@@ -24,6 +24,9 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
         }
 
         // Buscar role na tabela user_roles
+        console.log('🔍 Verificando role admin para user_id:', user.id);
+        console.log('📧 Email do usuário:', user.email);
+        
         const { data: roleData, error } = await (supabase as any)
           .from('user_roles')
           .select('role')
@@ -31,11 +34,25 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
           .eq('role', 'admin')
           .maybeSingle();
 
+        console.log('📊 Resultado da verificação admin:', {
+          roleData,
+          error,
+          isAdmin: !!roleData,
+          errorDetails: error ? {
+            message: error.message,
+            code: error.code,
+            details: error.details
+          } : null
+        });
+
         if (error) {
-          console.error('Erro ao verificar role:', error);
+          console.error('❌ Erro ao verificar role:', error);
+          toast.error(`Erro RLS ao verificar admin: ${error.message}`);
           setIsAdmin(false);
         } else {
-          setIsAdmin(!!roleData);
+          const isAdminUser = !!roleData;
+          console.log(isAdminUser ? '✅ Usuário é admin!' : '⚠️ Usuário NÃO é admin');
+          setIsAdmin(isAdminUser);
         }
 
         // Se não for admin, registrar tentativa não autorizada

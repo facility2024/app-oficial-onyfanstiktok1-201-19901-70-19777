@@ -557,9 +557,10 @@ export const TikTokApp = () => {
         console.log('📹 REGISTRANDO VIEW para vídeo:', currentVideo.id);
         try {
           const userId = currentVideo.user?.id || currentVideo.model_id || '';
+          const isCreator = !!currentVideo.creator_id;
           
           if (userId) {
-            await trackView(currentVideo.id, userId);
+            await trackView(currentVideo.id, userId, isCreator);
             ensureInteractedModel(userId);
             
             // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO

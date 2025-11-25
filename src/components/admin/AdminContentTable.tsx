@@ -41,14 +41,23 @@ export const AdminContentTable = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // 2️⃣ Buscar criadores aprovados da tabela user_roles (usando any para evitar erro de tipagem)
+      // 2️⃣ Buscar criadores aprovados da tabela user_roles
+      console.log('🔍 Iniciando busca de criadores...');
+      
       const { data: userRolesData, error: rolesError } = await (supabase as any)
         .from('user_roles')
-        .select('user_id, created_at')
+        .select('user_id, role, created_at')
         .eq('role', 'creator');
 
+      console.log('📊 Resultado da query user_roles:', {
+        data: userRolesData,
+        error: rolesError,
+        count: userRolesData?.length || 0
+      });
+
       if (rolesError) {
-        console.error('Erro ao buscar user_roles:', rolesError);
+        console.error('❌ Erro ao buscar user_roles:', rolesError);
+        toast.error(`Erro RLS: ${rolesError.message}`);
       }
 
       // 3️⃣ Buscar perfis dos criadores

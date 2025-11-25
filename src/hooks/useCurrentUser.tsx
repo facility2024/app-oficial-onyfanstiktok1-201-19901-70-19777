@@ -11,7 +11,6 @@ const supabaseSimple = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 interface UserProfile {
   id: string;
-  user_id: string;
   email: string | null;
   username: string | null;
   full_name: string | null;
@@ -55,7 +54,6 @@ export const useCurrentUser = () => {
       if (profile) {
         setProfile({
           id: profile.id,
-          user_id: profile.user_id,
           full_name: updates.full_name ?? profile.full_name,
           username: updates.username ?? profile.username,
           email: updates.email ?? profile.email,
@@ -115,7 +113,6 @@ export const useCurrentUser = () => {
       if (profile) {
         setProfile({
           id: profile.id,
-          user_id: profile.user_id,
           email: profile.email,
           username: profile.username,
           full_name: profile.full_name,
@@ -137,23 +134,12 @@ export const useCurrentUser = () => {
 
   const ensureProfileExists = async (authUser: any) => {
     try {
-      // Tentar buscar com user_id primeiro
-      let { data: profileData, error: userIdError } = await supabaseSimple
+      // Buscar perfil usando id
+      let { data: profileData } = await supabaseSimple
         .from('profiles')
         .select('*')
-        .eq('user_id', authUser.id)
+        .eq('id', authUser.id)
         .maybeSingle();
-
-      // Se não encontrar, tentar com id
-      if (!profileData) {
-        const { data: idData, error: idError } = await supabaseSimple
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .maybeSingle();
-        
-        profileData = idData;
-      }
 
       // Se ainda não existir, criar perfil
       if (!profileData) {
@@ -194,7 +180,6 @@ export const useCurrentUser = () => {
         if (profileData) {
           setProfile({
             id: profileData.id,
-            user_id: authUser.id,
             email: profileData.email || authUser.email,
             username: profileData.name || null,
             full_name: profileData.name || null,
@@ -228,7 +213,6 @@ export const useCurrentUser = () => {
           if (profileData && mounted) {
             setProfile({
               id: profileData.id,
-              user_id: authUser.id,
               email: profileData.email || authUser.email,
               username: profileData.name || null,
               full_name: profileData.name || null,

@@ -51,15 +51,41 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
       }
 
       if (data.user) {
+        console.log('✅ Usuário autenticado:', {
+          id: data.user.id,
+          email: data.user.email
+        });
+        
         // Verificar se o usuário é admin
+        console.log('🔍 Verificando role admin via RPC...');
         const { data: isAdminData, error: adminError } = await supabase.rpc('is_admin');
         
-        if (adminError || !isAdminData) {
+        console.log('📊 Resultado RPC is_admin:', {
+          isAdminData,
+          adminError,
+          errorDetails: adminError ? {
+            message: adminError.message,
+            code: adminError.code,
+            details: adminError.details,
+            hint: adminError.hint
+          } : null
+        });
+        
+        if (adminError) {
+          console.error('❌ Erro ao chamar is_admin():', adminError);
+          toast.error(`Erro ao verificar permissões: ${adminError.message}`);
+          await supabase.auth.signOut();
+          return;
+        }
+        
+        if (!isAdminData) {
+          console.warn('⚠️ Usuário não é admin, negando acesso');
           await supabase.auth.signOut();
           toast.error('Acesso negado. Apenas administradores podem entrar.');
           return;
         }
 
+        console.log('✅ Usuário é admin, permitindo acesso');
         toast.success('Login realizado com sucesso!');
         onLogin(data.user);
       }

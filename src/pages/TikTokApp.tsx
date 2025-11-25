@@ -1192,17 +1192,10 @@ export const TikTokApp = () => {
     try {
       console.log('💬 LOADING COMMENTS for video:', videoId);
       
+      // ✅ Buscar comentários sem JOIN problemático
       const { data: commentsData, error } = await supabase
         .from('comments')
-        .select(`
-          *,
-          profiles!inner(
-            id,
-            username,
-            avatar_url,
-            name
-          )
-        `)
+        .select('*')
         .eq('video_id', videoId)
         .order('created_at', { ascending: false });
 
@@ -1218,21 +1211,36 @@ export const TikTokApp = () => {
 
       console.log('💬 Comments loaded:', commentsData?.length || 0);
       
+      // ✅ Buscar dados dos usuários separadamente
+      const userIds = [...new Set((commentsData || []).map(c => c.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', userIds);
+
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, p])
+      );
+
       // Transform the data to match the Comment interface
-      const transformedComments = (commentsData || []).map((comment: any) => ({
-        id: comment.id,
-        text: comment.content || comment.text || '',
-        user_id: comment.user_id,
-        video_id: comment.video_id,
-        likes_count: comment.likes_count || 0,
-        created_at: comment.created_at,
-        user: {
-          username: comment.profiles?.username || comment.profiles?.name || `User ${comment.user_id?.slice(0, 8)}`,
-          avatar_url: comment.profiles?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'
-        }
-      }));
+      const transformedComments = (commentsData || []).map((comment: any) => {
+        const profile = profilesMap.get(comment.user_id);
+        return {
+          id: comment.id,
+          text: comment.content || comment.text || '',
+          user_id: comment.user_id,
+          video_id: comment.video_id,
+          likes_count: comment.likes_count || 0,
+          created_at: comment.created_at,
+          user: {
+            username: profile?.name || profile?.email?.split('@')[0] || `User ${comment.user_id?.slice(0, 8)}`,
+            avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'
+          }
+        };
+      });
 
       setComments(transformedComments);
+      console.log('✅ Comments transformados e prontos:', transformedComments.length);
     } catch (error) {
       console.error('❌ Error loading comments:', error);
       setComments([]);

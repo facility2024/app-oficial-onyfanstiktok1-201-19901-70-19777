@@ -1014,8 +1014,10 @@ export const TikTokApp = () => {
         console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
         
         // Cache the results for faster subsequent loads
+        console.log('💾 Salvando cache no sessionStorage...');
         sessionStorage.setItem('initial_feed', JSON.stringify(firstBlock));
         sessionStorage.setItem('initial_feed_time', Date.now().toString());
+        console.log('✅ Cache salvo com sucesso');
       } else {
         console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
         const exampleData = createExampleData();
@@ -1024,12 +1026,14 @@ export const TikTokApp = () => {
         setHasMoreVideos(false);
       }
       
+      console.log('✅ IF/ELSE CONCLUÍDO - indo para FINALLY');
     } catch (error) {
       console.error('❌ Erro ao inicializar feed:', error);
       setVideos([]);
       setAllAvailableVideos([]);
       setHasMoreVideos(false);
     } finally {
+      console.log('🏁 FINALIZANDO CARREGAMENTO DO FEED - setLoading(false)');
       setLoading(false);
       setIsLoadingMore(false);
       
@@ -1041,6 +1045,7 @@ export const TikTokApp = () => {
           setIsPlaying(true);
         }, 800);
       }
+      console.log('🎉 initializeFeed COMPLETO!');
     }
   }, []);
 
@@ -1049,6 +1054,7 @@ export const TikTokApp = () => {
   // useEffect para inicializar o feed
   useEffect(() => {
     console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
+    console.log('🔍 Estado inicial de loading:', loading);
     initializeFeed();
   }, []); // Executar apenas uma vez na montagem
 

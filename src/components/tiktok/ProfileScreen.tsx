@@ -520,10 +520,17 @@ if (!isOpen) return null;
               {isCreator ? (
                 <button
                   onClick={async () => {
+                    // Buscar email real do criador
+                    const { data: creatorProfile } = await supabase
+                      .from('profiles')
+                      .select('email, name')
+                      .eq('id', user.id)
+                      .single();
+                    
                     const success = await followCreator({
                       creatorId: user.id,
                       creatorName: user.username,
-                      creatorEmail: user.username + '@app.com'
+                      creatorEmail: creatorProfile?.email || user.username
                     });
                     if (success !== undefined) {
                       setIsFollowingCreator(success);

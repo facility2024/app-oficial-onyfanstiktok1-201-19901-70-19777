@@ -1225,6 +1225,11 @@ export const TikTokApp = () => {
       // Transform the data to match the Comment interface
       const transformedComments = (commentsData || []).map((comment: any) => {
         const profile = profilesMap.get(comment.user_id);
+        
+        // ✅ Buscar avatar do localStorage ou usar padrão
+        const avatarUrl = localStorage.getItem(`avatar_${comment.user_id}`) || 
+                         '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png';
+        
         return {
           id: comment.id,
           text: comment.content || comment.text || '',
@@ -1234,7 +1239,7 @@ export const TikTokApp = () => {
           created_at: comment.created_at,
           user: {
             username: profile?.name || profile?.email?.split('@')[0] || `User ${comment.user_id?.slice(0, 8)}`,
-            avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'
+            avatar_url: avatarUrl
           }
         };
       });

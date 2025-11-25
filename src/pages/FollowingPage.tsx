@@ -42,15 +42,21 @@ export default function FollowingPage() {
         return;
       }
 
-      // Buscar ambos IDs: autenticado + anônimo
-      const anonymousId = localStorage.getItem('anonymous_user_id');
+      // Buscar TODOS os IDs possíveis: autenticado + localStorage + sessionStorage
+      const anonymousIdLocal = localStorage.getItem('anonymous_user_id');
+      const anonymousIdSession = sessionStorage.getItem('anonymous_user_id');
+      
       const userIds = [user.id];
-      if (anonymousId && anonymousId !== user.id) {
-        userIds.push(anonymousId);
+      if (anonymousIdLocal && anonymousIdLocal !== user.id) {
+        userIds.push(anonymousIdLocal);
+      }
+      if (anonymousIdSession && anonymousIdSession !== user.id && anonymousIdSession !== anonymousIdLocal) {
+        userIds.push(anonymousIdSession);
       }
 
       console.log('🔐 User ID (auth):', user.id);
-      console.log('🆔 Anonymous ID:', anonymousId);
+      console.log('🆔 Anonymous ID (localStorage):', anonymousIdLocal);
+      console.log('🆔 Anonymous ID (sessionStorage):', anonymousIdSession);
       console.log('🔍 Buscando follows com IDs:', userIds);
 
       let allEntities: FollowedEntity[] = [];

@@ -383,7 +383,7 @@ Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) par
 
 ## 📞 Contato e Suporte
 
-- **Website**: [https://coconudi.lovable.app](https://coconudi.lovable.app)
+- **Website**: [https://coconudi.com](https://coconudi.com)
 - **Email**: suporte@coconudi.com
 - **Issues**: [GitHub Issues](https://github.com/yourusername/coconudi/issues)
 - **Discord**: [Comunidade COCONUDI](https://discord.gg/coconudi)

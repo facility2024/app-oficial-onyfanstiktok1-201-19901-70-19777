@@ -24,14 +24,14 @@ export default function FollowingPage() {
 
   const loadFollowedModels = async () => {
     try {
-      // ✅ Buscar user_id correto: autenticado se logado, anônimo se não
+      // ✅ Buscar user_id correto: APENAS autenticado (não anônimo)
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || sessionStorage.getItem('anonymous_user_id');
+      const userId = user?.id;
       
-      console.log('🔍 SEGUINDO: user_id:', userId, user ? '(autenticado)' : '(anônimo)');
+      console.log('🔍 SEGUINDO: user_id:', userId, user ? `(${user.email})` : '(não autenticado)');
 
       if (!userId) {
-        console.log('⚠️ SEGUINDO: Nenhum user_id encontrado');
+        console.log('⚠️ SEGUINDO: Usuário não autenticado');
         setLoading(false);
         return;
       }
@@ -74,16 +74,24 @@ export default function FollowingPage() {
       }
 
       // Buscar criadores seguidos (tabela user_follows)
+      console.log('🔍 SEGUINDO: Buscando criadores seguidos com follower_id:', userId);
+      
       const { data: followedCreators, error: creatorsFollowError } = await (supabase as any)
         .from('user_follows')
         .select('following_id')
         .eq('follower_id', userId)
         .eq('is_active', true);
 
+      console.log('📊 SEGUINDO: Query user_follows result:', { 
+        data: followedCreators, 
+        error: creatorsFollowError,
+        userId 
+      });
+
       if (creatorsFollowError) {
         console.error('❌ SEGUINDO: Erro ao buscar criadores seguidos:', creatorsFollowError);
       } else {
-        console.log('✅ SEGUINDO: Criadores seguidos encontrados:', followedCreators);
+        console.log('✅ SEGUINDO: Criadores seguidos encontrados:', followedCreators?.length || 0);
 
         // Buscar dados dos criadores
         if (followedCreators && followedCreators.length > 0) {

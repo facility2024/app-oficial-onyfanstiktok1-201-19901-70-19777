@@ -705,14 +705,29 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao carregar modelos:', modelsError);
       }
 
-      // Carregar criadores (profiles com role='creator')
-      const { data: creatorsData, error: creatorsError } = await supabase
-        .from('profiles')
-        .select('id, name, email')
+      // Carregar criadores (via user_roles)
+      const { data: creatorRoles, error: rolesError } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id')
         .eq('role', 'creator');
 
-      if (creatorsError) {
-        console.warn('⚠️ Erro ao carregar criadores:', creatorsError);
+      if (rolesError) {
+        console.warn('⚠️ Erro ao carregar roles de criadores:', rolesError);
+      }
+
+      let creatorsData: any[] = [];
+      if (creatorRoles && creatorRoles.length > 0) {
+        const creatorIds = creatorRoles.map((r: any) => r.user_id);
+        const { data: creatorsProfiles, error: creatorsError } = await supabase
+          .from('profiles')
+          .select('id, name, email, avatar_url, bio')
+          .in('id', creatorIds);
+
+        if (creatorsError) {
+          console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
+        }
+        
+        creatorsData = creatorsProfiles || [];
       }
 
       console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);

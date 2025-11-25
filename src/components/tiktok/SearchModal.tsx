@@ -42,15 +42,29 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
 
       if (modelsError) throw modelsError;
 
-      // Buscar criadores (profiles com role='creator')
-      // NOTA: avatar_url e followers_count serão adicionados via SQL migration
-      const { data: creatorsData, error: creatorsError } = await supabase
-        .from('profiles')
-        .select('id, name, email')
+      // Buscar criadores (via user_roles)
+      const { data: creatorRoles, error: rolesError } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id')
         .eq('role', 'creator');
 
-      if (creatorsError) {
-        console.error('Error loading creators:', creatorsError);
+      if (rolesError) {
+        console.error('Error loading creator roles:', rolesError);
+      }
+
+      let creatorsData: any[] = [];
+      if (creatorRoles && creatorRoles.length > 0) {
+        const creatorIds = creatorRoles.map((r: any) => r.user_id);
+        const { data: creatorsProfiles, error: creatorsError } = await supabase
+          .from('profiles')
+          .select('id, name, email, avatar_url, bio')
+          .in('id', creatorIds);
+
+        if (creatorsError) {
+          console.error('Error loading creator profiles:', creatorsError);
+        }
+        
+        creatorsData = creatorsProfiles || [];
       }
 
       // Transformar criadores para formato Model

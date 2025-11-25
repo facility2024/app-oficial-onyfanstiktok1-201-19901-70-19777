@@ -66,7 +66,7 @@ export const AdminContentTable = () => {
         const creatorIds = userRolesData.map((r: any) => r.user_id);
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, name, avatar_url, email')
+          .select('id, name, email')
           .in('id', creatorIds);
 
         if (profilesError) {
@@ -126,7 +126,7 @@ export const AdminContentTable = () => {
           videoId: latestVideo?.id,
           name: profile?.name || profile?.email?.split('@')[0] || 'Criador',
           email: profile?.email,
-          avatar: profile?.avatar_url || crownLogo,
+          avatar: crownLogo, // Temporariamente usar logo padrão até schema estar correto
           platform: 'creator',
           views: formatNumber(latestVideo?.views_count || 0),
           likes: formatNumber(latestVideo?.likes_count || 0),

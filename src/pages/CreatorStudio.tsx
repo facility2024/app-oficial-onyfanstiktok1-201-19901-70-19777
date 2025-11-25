@@ -81,23 +81,18 @@ export default function CreatorStudio() {
       if (!user) throw new Error('Usuário não autenticado');
 
       // Inserir vídeo na tabela videos (usando creator_id)
-      const { error: videoError } = await (supabase as any)
+      const { error: videoError } = await supabase
         .from('videos')
         .insert({
           title: validatedData.title,
           description: validatedData.description,
           video_url: validatedData.video_url,
           thumbnail_url: validatedData.thumbnail_url,
-          creator_id: user.id,  // Vídeo de criador autenticado
-          model_id: null,       // NULL para criadores (não é modelo)
+          creator_id: user.id,  // ID do criador autenticado (oculto)
+          model_id: null,       // NULL para criadores
           visibility: 'public',
           is_active: true,
           duration: '00:00',
-          music_name: '',
-          views_count: 0,
-          likes_count: 0,
-          comments_count: 0,
-          shares_count: 0,
         });
 
       if (videoError) throw videoError;

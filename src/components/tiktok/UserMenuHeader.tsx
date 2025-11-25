@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useCreatorRole } from '@/hooks/useUserRoles';
 import { Button } from '@/components/ui/button';
 import { User, LogOut, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +21,7 @@ import {
 
 export const UserMenuHeader = () => {
   const { user, profile, loading } = useCurrentUser();
+  const { isCreator, loading: roleLoading } = useCreatorRole();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -122,15 +125,25 @@ export const UserMenuHeader = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎯🎯🎯 UserMenuHeader: Botão Espaço do Criador CLICADO!');
-            console.log('🎯 Navegando para: /creator-application');
-            navigate('/creator-application');
-            console.log('🎯 Navigate executado!');
+            
+            if (roleLoading) {
+              toast.info('Verificando permissões...');
+              return;
+            }
+            
+            if (isCreator) {
+              console.log('✅ Usuário é criador aprovado, indo para Creator Studio');
+              navigate('/creator-studio');
+            } else {
+              console.log('ℹ️ Usuário não é criador, indo para formulário de aplicação');
+              navigate('/creator-application');
+            }
           }}
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+          disabled={roleLoading}
         >
           <Sparkles className="w-4 h-4 mr-2" />
-          Espaço do Criador
+          {roleLoading ? 'Verificando...' : (isCreator ? 'Creator Studio' : 'Espaço do Criador')}
         </Button>
         
         <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>

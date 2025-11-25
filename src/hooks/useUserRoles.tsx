@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -193,4 +193,46 @@ export const useUserRoles = () => {
     getUserRoles,
     getRoleStats
   };
+};
+
+export const useCreatorRole = () => {
+  const [isCreator, setIsCreator] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkCreatorRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setIsCreator(false);
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await (supabase as any)
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'creator')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao verificar role de criador:', error);
+          setIsCreator(false);
+        } else {
+          setIsCreator(!!data);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar role de criador:', error);
+        setIsCreator(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkCreatorRole();
+  }, []);
+
+  return { isCreator, loading };
 };

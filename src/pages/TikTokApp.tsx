@@ -705,7 +705,17 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao carregar modelos:', modelsError);
       }
 
-      console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
+      // Carregar criadores (profiles com role='creator')
+      const { data: creatorsData, error: creatorsError } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .eq('role', 'creator');
+
+      if (creatorsError) {
+        console.warn('⚠️ Erro ao carregar criadores:', creatorsError);
+      }
+
+      console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
 
       // Utilitários
       const normalizeUrl = (u: string) => {
@@ -848,28 +858,52 @@ export const TikTokApp = () => {
           }
           return isValid;
         })
-        .map((video) => {
-          const model = modelsData?.find((m: any) => m.id === video.model_id);
+        .map((video: any) => {
+          // Procurar owner: priorizar creator_id, depois model_id
+          const owner: any = video.creator_id
+            ? creatorsData?.find((c: any) => c.id === video.creator_id)
+            : modelsData?.find((m: any) => m.id === video.model_id);
+          
+          // Se é criador, formatar nome
+          let ownerData: any = owner;
+          if (video.creator_id && owner) {
+            const displayName = owner.name && owner.name !== owner.email
+              ? owner.name
+              : (owner.email?.split('@')[0] || 'Criador');
+            
+            ownerData = {
+              id: owner.id,
+              username: displayName,
+              name: displayName,
+              avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+              followers_count: 0,
+              is_live: false,
+              bio: '',
+              posting_panel_url: '',
+              created_at: owner.created_at || ''
+            };
+          }
+          
           return {
             ...video,
-            user_id: video.model_id || '',
-            music_name: video.title || `Som original - ${model?.username || model?.name || 'Autor'}`,
+            user_id: video.creator_id || video.model_id || '',
+            music_name: video.title || `Som original - ${ownerData?.username || ownerData?.name || 'Autor'}`,
             visibility: (video.visibility as 'public' | 'premium') || 'public',
             source: 'catalog_video',
-            user: model
+            user: ownerData
               ? {
-                  id: model.id,
-                  username: model.username || model.name || 'Usuário',
-                  avatar_url: model.avatar_url || '',
-                  followers_count: model.followers_count || 0,
+                  id: ownerData.id,
+                  username: ownerData.username || ownerData.name || 'Usuário',
+                  avatar_url: ownerData.avatar_url || '',
+                  followers_count: ownerData.followers_count || 0,
                   following_count: 0,
-                  is_online: model.is_live || false,
-                  bio: model.bio || '',
-                  posting_panel_url: model.posting_panel_url || '',
-                  created_at: model.created_at || '',
+                  is_online: ownerData.is_live || false,
+                  bio: ownerData.bio || '',
+                  posting_panel_url: ownerData.posting_panel_url || '',
+                  created_at: ownerData.created_at || '',
                 }
               : {
-                  id: video.model_id || '',
+                  id: video.creator_id || video.model_id || '',
                   username: video.title || 'Usuário',
                   avatar_url: '',
                   followers_count: 0,

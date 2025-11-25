@@ -43,9 +43,10 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       if (modelsError) throw modelsError;
 
       // Buscar criadores (profiles com role='creator')
+      // NOTA: avatar_url e followers_count serão adicionados via SQL migration
       const { data: creatorsData, error: creatorsError } = await supabase
         .from('profiles')
-        .select('id, name, email, avatar_url, followers_count')
+        .select('id, name, email')
         .eq('role', 'creator');
 
       if (creatorsError) {
@@ -53,7 +54,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       }
 
       // Transformar criadores para formato Model
-      const creators = (creatorsData || []).map(c => {
+      const creators = (creatorsData || []).map((c: any) => {
         const displayName = c.name && c.name !== c.email
           ? c.name
           : (c.email?.split('@')[0] || 'Criador');
@@ -62,8 +63,8 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
           id: c.id,
           name: displayName,
           username: displayName,
-          avatar_url: c.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-          followers_count: c.followers_count || 0,
+          avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png', // Padrão até SQL executar
+          followers_count: 0, // Padrão até SQL executar
           is_live: false,
           is_verified: true, // Criadores são verificados
           is_creator: true // Flag para identificar visualmente

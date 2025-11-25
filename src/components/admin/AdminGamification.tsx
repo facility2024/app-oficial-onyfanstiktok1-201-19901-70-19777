@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { MissionModal } from './MissionModal';
 import { AdminDailyMissions } from './AdminDailyMissions';
+import { useDailyMissions } from '@/hooks/useDailyMissions';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Star, Target, Gift, Users, TrendingUp, Award, Crown, Eye, Heart, Share2, ShoppingCart, UserPlus, Plus } from 'lucide-react';
 
@@ -61,8 +62,10 @@ export const AdminGamification = () => {
     actionsToday: 0
   });
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [dailyMissions, setDailyMissions] = useState<DailyMission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // ✅ HOOK DE MISSÕES DINÂMICAS
+  const { missions: dailyMissions, isLoading: missionsLoading } = useDailyMissions();
 
   const fetchRealData = async () => {
     try {
@@ -122,9 +125,6 @@ export const AdminGamification = () => {
 
       // Buscar conquistas populares
       await fetchAchievements();
-
-      // Buscar missões diárias
-      await fetchDailyMissions();
 
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -233,65 +233,6 @@ export const AdminGamification = () => {
     }
   };
 
-  const fetchDailyMissions = async () => {
-    try {
-      // Missões padrão de exemplo
-      const defaultMissions: DailyMission[] = [
-        {
-          id: '1',
-          title: 'Curtir 10 vídeos hoje',
-          description: 'Curta 10 vídeos diferentes para ganhar pontos',
-          action_type: 'like',
-          target_count: 10,
-          points_reward: 50,
-          is_active: true,
-          rules: '📋 Regras de Participação\nPara participar da premiação top10:\n\n• Complete as ações diárias especificadas\n\n• Cada ação concluída gera pontos automáticos\n\n• Acumule pontos para subir no ranking\n\n• Prêmios são distribuídos semanalmente\n\n• Mantenha-se ativo para maximizar seus ganhos\n\n• Vítimas que mais pontuam ganham recompensas exclusivas',
-          current_progress: 70,
-          total_today: 7
-        },
-        {
-          id: '2',
-          title: 'Compartilhar 3 conteúdos',
-          description: 'Compartilhe 3 conteúdos para ganhar pontos',
-          action_type: 'share',
-          target_count: 3,
-          points_reward: 75,
-          is_active: true,
-          rules: '📋 Regras de Participação\nPara participar da premiação top10:\n\n• Complete as ações diárias especificadas\n\n• Cada ação concluída gera pontos automáticos\n\n• Acumule pontos para subir no ranking\n\n• Prêmios são distribuídos semanalmente\n\n• Mantenha-se ativo para maximizar seus ganhos\n\n• Vítimas que mais pontuam ganham recompensas exclusivas',
-          current_progress: 33,
-          total_today: 1
-        },
-        {
-          id: '3',
-          title: 'Comentar em 5 posts',
-          description: 'Comente em 5 posts diferentes para ganhar pontos',
-          action_type: 'comment',
-          target_count: 5,
-          points_reward: 40,
-          is_active: true,
-          rules: '📋 Regras de Participação\nPara participar da premiação top10:\n\n• Complete as ações diárias especificadas\n\n• Cada ação concluída gera pontos automáticos\n\n• Acumule pontos para subir no ranking\n\n• Prêmios são distribuídos semanalmente\n\n• Mantenha-se ativo para maximizar seus ganhos\n\n• Vítimas que mais pontuam ganham recompensas exclusivas',
-          current_progress: 80,
-          total_today: 4
-        },
-        {
-          id: '4',
-          title: 'Assistir 20 minutos',
-          description: 'Assista pelo menos 20 minutos de conteúdo',
-          action_type: 'view',
-          target_count: 20,
-          points_reward: 60,
-          is_active: false,
-          rules: '📋 Regras de Participação\nPara participar da premiação top10:\n\n• Complete as ações diárias especificadas\n\n• Cada ação concluída gera pontos automáticos\n\n• Acumule pontos para subir no ranking\n\n• Prêmios são distribuídos semanalmente\n\n• Mantenha-se ativo para maximizar seus ganhos\n\n• Vítimas que mais pontuam ganham recompensas exclusivas',
-          current_progress: 45,
-          total_today: 9
-        }
-      ];
-
-      setDailyMissions(defaultMissions);
-    } catch (error) {
-      console.error('Erro ao buscar missões:', error);
-    }
-  };
 
   useEffect(() => {
     fetchRealData();
@@ -580,19 +521,19 @@ export const AdminGamification = () => {
                           {mission.points_reward} pontos
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {mission.total_today || 0} / {mission.target_count} hoje
+                          {mission.completed_today || 0} / {mission.target_count} hoje
                         </Badge>
                       </div>
                     </div>
                     <div className={`text-xs px-2 py-1 rounded ${mission.is_active ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
-                      {Math.round(mission.current_progress || 0)}%
+                      {Math.round(mission.progress || 0)}%
                     </div>
                   </div>
                   
                   <div className="w-full bg-muted rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full transition-all duration-300 ${mission.is_active ? 'bg-success' : 'bg-muted-foreground'}`}
-                      style={{ width: `${mission.current_progress || 0}%` }}
+                      style={{ width: `${mission.progress || 0}%` }}
                     ></div>
                   </div>
                 </div>

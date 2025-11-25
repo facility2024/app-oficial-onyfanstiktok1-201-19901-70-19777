@@ -1,247 +1,298 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Heart } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Users, Sparkles, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
-interface FollowedModel {
+interface FollowedEntity {
   id: string;
-  username: string;
+  name: string;
+  username?: string;
   avatar_url: string;
   followers_count: number;
-  is_creator?: boolean;
+  entity_type: 'model' | 'creator';
+  followed_at: string;
 }
+
+type FilterType = 'all' | 'models' | 'creators';
 
 export default function FollowingPage() {
   const navigate = useNavigate();
-  const [models, setModels] = useState<FollowedModel[]>([]);
+  const [entities, setEntities] = useState<FollowedEntity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterType>('all');
 
   useEffect(() => {
-    loadFollowedModels();
+    loadFollowedEntities();
   }, []);
 
-  const loadFollowedModels = async () => {
+  const loadFollowedEntities = async () => {
     try {
-      // ✅ Buscar user_id correto: APENAS autenticado (não anônimo)
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
+      setLoading(true);
       
-      console.log('🔍 SEGUINDO: user_id:', userId, user ? `(${user.email})` : '(não autenticado)');
-
-      if (!userId) {
-        console.log('⚠️ SEGUINDO: Usuário não autenticado');
-        setLoading(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Faça login para ver quem você segue");
+        navigate("/auth");
         return;
       }
 
-      // Buscar diretamente no banco de dados usando o user_id
-      console.log('💿 SEGUINDO: Buscando no banco com user_id:', userId);
+      let allEntities: FollowedEntity[] = [];
 
-      const { data: followedModels, error: followError } = await supabase
+      // 1️⃣ Buscar modelos seguidas
+      const { data: modelFollows } = await supabase
         .from('model_followers')
         .select('model_id')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .eq('is_active', true);
 
-      if (followError) {
-        console.error('❌ SEGUINDO: Erro na query:', followError);
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ SEGUINDO: Follows encontrados:', followedModels);
-
-      let allFollowed: FollowedModel[] = [];
-
-      // Buscar dados das modelos seguidas
-      if (followedModels && followedModels.length > 0) {
-        const modelIds = followedModels.map(f => f.model_id);
-        console.log('🔍 SEGUINDO: Buscando', modelIds.length, 'modelos');
-
-        const { data: modelsData, error: modelsError } = await supabase
+      if (modelFollows && modelFollows.length > 0) {
+        const modelIds = modelFollows.map(f => f.model_id);
+        
+        const { data: modelsData } = await supabase
           .from('models')
           .select('id, username, avatar_url, followers_count')
           .in('id', modelIds);
 
-        if (modelsError) {
-          console.error('❌ SEGUINDO: Erro ao buscar modelos:', modelsError);
-        } else {
-          console.log('✅ SEGUINDO: Modelos carregadas:', modelsData);
-          allFollowed = modelsData as FollowedModel[] || [];
+        if (modelsData) {
+          const modelEntities: FollowedEntity[] = modelsData.map(model => ({
+            id: model.id,
+            name: model.username,
+            username: model.username,
+            avatar_url: model.avatar_url || '/placeholder.svg',
+            followers_count: model.followers_count || 0,
+            entity_type: 'model' as const,
+            followed_at: new Date().toISOString()
+          }));
+          
+          allEntities = [...allEntities, ...modelEntities];
         }
       }
 
-      // Buscar criadores seguidos (tabela user_follows)
-      console.log('🔍 SEGUINDO: Buscando criadores seguidos com follower_id:', userId);
-      
-      const { data: followedCreators, error: creatorsFollowError } = await (supabase as any)
+      // 2️⃣ Buscar criadores seguidos
+      const { data: creatorFollows } = await (supabase as any)
         .from('user_follows')
-        .select('following_id')
-        .eq('follower_id', userId)
+        .select('creator_id')
+        .eq('follower_id', user.id)
         .eq('is_active', true);
 
-      console.log('📊 SEGUINDO: Query user_follows result:', { 
-        data: followedCreators, 
-        error: creatorsFollowError,
-        userId 
-      });
+      if (creatorFollows && creatorFollows.length > 0) {
+        const creatorIds = creatorFollows.map((f: any) => f.creator_id);
+        
+        const { data: creatorsData } = await supabase
+          .from('profiles')
+          .select('id, name, email, avatar_url')
+          .in('id', creatorIds);
 
-      if (creatorsFollowError) {
-        console.error('❌ SEGUINDO: Erro ao buscar criadores seguidos:', creatorsFollowError);
-      } else {
-        console.log('✅ SEGUINDO: Criadores seguidos encontrados:', followedCreators?.length || 0);
-
-        // Buscar dados dos criadores
-        if (followedCreators && followedCreators.length > 0) {
-          const creatorIds = followedCreators.map((f: any) => f.following_id);
-          console.log('🔍 SEGUINDO: Buscando', creatorIds.length, 'criadores');
-
-          const { data: creatorsData, error: creatorsError } = await supabase
-            .from('profiles')
-            .select('id, name, email')
-            .in('id', creatorIds);
-
-          if (creatorsError) {
-            console.error('❌ SEGUINDO: Erro ao buscar perfis de criadores:', creatorsError);
-          } else {
-            console.log('✅ SEGUINDO: Criadores carregados:', creatorsData);
-            
-            // Transformar criadores para formato FollowedModel
-            const creatorModels: FollowedModel[] = creatorsData?.map((c: any) => ({
-              id: c.id,
-              username: c.name || c.email?.split('@')[0] || 'Criador',
-              avatar_url: '/placeholder.svg',
-              followers_count: 0,
-              is_creator: true
-            })) || [];
-
-            allFollowed = [...allFollowed, ...creatorModels];
-          }
+        if (creatorsData) {
+          const creatorEntities: FollowedEntity[] = creatorsData.map((creator: any) => ({
+            id: creator.id,
+            name: creator.name || creator.email?.split('@')[0] || 'Criador',
+            username: creator.name || creator.email?.split('@')[0],
+            avatar_url: creator.avatar_url || '/placeholder.svg',
+            followers_count: 0,
+            entity_type: 'creator' as const,
+            followed_at: new Date().toISOString()
+          }));
+          
+          allEntities = [...allEntities, ...creatorEntities];
         }
       }
 
-      console.log('✅ SEGUINDO: Total de pessoas seguidas:', allFollowed.length);
-      setModels(allFollowed);
+      setEntities(allEntities);
     } catch (error) {
-      console.error('❌ SEGUINDO: Erro geral:', error);
+      console.error("Erro ao carregar seguidos:", error);
+      toast.error("Erro ao carregar lista de seguidos");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleModelClick = (modelId: string) => {
-    navigate(`/app?profile=${modelId}`);
+  const handleEntityClick = (entity: FollowedEntity) => {
+    if (entity.entity_type === 'model') {
+      navigate(`/app?profile=${entity.id}`);
+    } else {
+      toast.info("Perfil de criador em breve!");
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const filteredEntities = entities.filter(entity => {
+    if (filter === 'all') return true;
+    if (filter === 'models') return entity.entity_type === 'model';
+    if (filter === 'creators') return entity.entity_type === 'creator';
+    return true;
+  });
+
+  const counts = {
+    all: entities.length,
+    models: entities.filter(e => e.entity_type === 'model').length,
+    creators: entities.filter(e => e.entity_type === 'creator').length
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center gap-4 p-4 max-w-7xl mx-auto">
-          <button
-            onClick={() => navigate('/app')}
-            className="flex items-center gap-2 text-white hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Heart className="w-5 h-5 fill-primary text-primary" />
-            Seguindo
-          </h1>
-          <span className="text-sm text-gray-400 ml-auto">
-            {models.length} {models.length === 1 ? 'pessoa' : 'pessoas'}
-          </span>
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                className="hover:bg-accent"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Seguindo
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {counts.all} {counts.all === 1 ? 'pessoa' : 'pessoas'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant={filter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('all')}
+              className="flex-1"
+            >
+              Todos ({counts.all})
+            </Button>
+            <Button
+              variant={filter === 'models' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('models')}
+              className="flex-1"
+            >
+              Modelos ({counts.models})
+            </Button>
+            <Button
+              variant={filter === 'creators' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('creators')}
+              className="flex-1"
+            >
+              Criadores ({counts.creators})
+            </Button>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Content */}
-      <div className="pt-24 px-4 pb-8 max-w-7xl mx-auto">
+      <div className="max-w-2xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-gray-800/50 rounded-2xl animate-pulse aspect-[3/4]" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map(i => (
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-16 w-16 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        ) : models.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="bg-gray-800/30 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-              <Heart className="w-12 h-12 text-gray-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-3">
-              Nenhuma pessoa seguida ainda
-            </h2>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Explore o feed e comece a seguir modelos e criadores para vê-los aqui
-            </p>
-            <button
-              onClick={() => navigate('/app')}
-              className="px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Explorar Conteúdo
-            </button>
-          </div>
+        ) : filteredEntities.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Users className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {filter === 'all' 
+                  ? 'Nenhuma pessoa seguida ainda'
+                  : filter === 'models'
+                  ? 'Nenhuma modelo seguida ainda'
+                  : 'Nenhum criador seguido ainda'}
+              </h3>
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                Explore conteúdos e comece a seguir seus favoritos
+              </p>
+              <Button onClick={() => navigate('/app')}>
+                Explorar Agora
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {models.map((model) => (
-              <div
-                key={model.id}
-                onClick={() => handleModelClick(model.id)}
-                className="group cursor-pointer"
+          <div className="space-y-3">
+            {filteredEntities.map(entity => (
+              <Card
+                key={entity.id}
+                className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
+                onClick={() => handleEntityClick(entity)}
               >
-                <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl overflow-hidden aspect-[3/4] border border-gray-700/50 hover:border-primary/50 transition-all hover:scale-[1.02]">
-                  {/* Badge de Criador */}
-                  {model.is_creator && (
-                    <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full z-20 flex items-center gap-1">
-                      ✨ Criador
-                    </div>
-                  )}
-
-                  {/* Background blur effect */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-                  
-                  {/* Avatar grande como background */}
-                  <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <Avatar className="w-full h-full">
-                      <AvatarImage 
-                        src={model.avatar_url} 
-                        alt={model.username}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="bg-gray-800 text-white text-4xl">
-                        {model.username?.[0]?.toUpperCase() || '?'}
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    {/* Avatar */}
+                    <Avatar className="h-16 w-16 border-2 border-primary/20">
+                      <AvatarImage src={entity.avatar_url} alt={entity.name} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-lg font-bold">
+                        {getInitials(entity.name)}
                       </AvatarFallback>
                     </Avatar>
-                  </div>
 
-                  {/* Info overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-10 h-10 rounded-full border-2 border-white/50 overflow-hidden shrink-0">
-                        <img 
-                          src={model.avatar_url} 
-                          alt={model.username}
-                          className="w-full h-full object-cover"
-                        />
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">
+                          {entity.name}
+                        </h3>
+                        {entity.entity_type === 'creator' ? (
+                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Criador
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-400 border-amber-500/20">
+                            <Star className="h-3 w-3 mr-1" />
+                            Modelo
+                          </Badge>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold text-sm truncate">
-                          @{model.username}
+                      {entity.username && (
+                        <p className="text-sm text-muted-foreground truncate">
+                          @{entity.username}
                         </p>
-                      </div>
+                      )}
+                      {entity.followers_count > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {entity.followers_count.toLocaleString('pt-BR')} seguidores
+                        </p>
+                      )}
                     </div>
-                    
-                    <div className="flex items-center gap-1 text-xs text-gray-300">
-                      <Heart className="w-3 h-3 fill-current" />
-                      <span>{model.followers_count || 0} seguidores</span>
-                    </div>
-                  </div>
 
-                  {/* Hover effect */}
-                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all z-15" />
-                </div>
-              </div>
+                    {/* Action */}
+                    <Button variant="outline" size="sm">
+                      Ver Perfil
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

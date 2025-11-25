@@ -1245,7 +1245,7 @@ export const TikTokApp = () => {
     // Mantém o vídeo atual sem mudar o índice
   };
 
-  const loadComments = async (videoId: string) => {
+  const loadComments = useCallback(async (videoId: string) => {
     try {
       console.log('💬 LOADING COMMENTS for video:', videoId);
       
@@ -1307,7 +1307,7 @@ export const TikTokApp = () => {
       console.error('❌ Error loading comments:', error);
       setComments([]);
     }
-  };
+  }, []);
 
   const checkIfLiked = async (videoId: string) => {
     try {
@@ -2543,6 +2543,8 @@ export const TikTokApp = () => {
           isOpen={showComments}
           onClose={() => setShowComments(false)}
           onAddComment={addComment}
+          videoId={currentVideo?.id}
+          onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)}
         />
         
         {/* Search Modal */}
@@ -3091,6 +3093,8 @@ export const TikTokApp = () => {
         isOpen={showComments}
         onClose={() => setShowComments(false)}
         onAddComment={addComment}
+        videoId={currentVideo?.id}
+        onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)}
       />
 
       {/* Desktop Search Modal */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Video } from '@/types/database';
 import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Sparkles } from 'lucide-react';
 import { useVideoActions } from '@/hooks/useVideoActions';
+import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -37,6 +38,20 @@ export const EnhancedSideMenu = ({
   const [commentsCount, setCommentsCount] = useState(video.comments_count);
   const [sharesCount, setSharesCount] = useState(video.shares_count);
   const { toggleLike, shareVideo, viewVideo, loading } = useVideoActions();
+
+  // Real-time sync for likes and comments
+  const { isConnected: isRealtimeConnected } = useVideoInteractionsRealtime(
+    video.id,
+    (delta) => setLikesCount(prev => Math.max(0, prev + delta)),
+    () => setCommentsCount(prev => prev + 1)
+  );
+
+  // Sync counters with video prop changes
+  useEffect(() => {
+    setLikesCount(video.likes_count);
+    setCommentsCount(video.comments_count);
+    setSharesCount(video.shares_count);
+  }, [video.id, video.likes_count, video.comments_count, video.shares_count]);
 
   // Check if user has liked this video
   useEffect(() => {

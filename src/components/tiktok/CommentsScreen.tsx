@@ -1,18 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Comment } from '@/types/database';
 import ProfileMessageBox from '@/components/tiktok/ProfileMessageBox';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
+import { Wifi } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface CommentsScreenProps {
   comments: Comment[];
   isOpen: boolean;
   onClose: () => void;
   onAddComment: (text: string) => void;
+  videoId?: string;
+  onReloadComments?: () => void;
 }
 
-export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment }: CommentsScreenProps) => {
+export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoId, onReloadComments }: CommentsScreenProps) => {
   const { user, profile } = useCurrentUser();
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+
+  // Real-time sync for new comments
+  const { newComments, clearNewComments, isConnected } = useVideoInteractionsRealtime(
+    videoId || null,
+    null,
+    (newComment) => {
+      console.log('📩 Novo comentário real-time:', newComment);
+      if (onReloadComments) {
+        onReloadComments();
+      }
+    }
+  );
+
+  // Clear new comments buffer when they're loaded
+  useEffect(() => {
+    if (newComments.length > 0 && onReloadComments) {
+      clearNewComments();
+    }
+  }, [newComments, clearNewComments, onReloadComments]);
 
   if (!isOpen) return null;
 
@@ -51,9 +75,16 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment }: Comm
         <div className="w-12 h-1 bg-white/40 rounded-full mx-auto mt-3 mb-4"></div>
         
         <div className="flex justify-between items-center px-6 pb-4 border-b border-white/10">
-          <div>
-            <h3 className="text-white font-semibold">Comentários</h3>
-            <span className="text-white/60 text-sm">{comments.length} comentários</span>
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="text-white font-semibold">Comentários</h3>
+              <span className="text-white/60 text-sm">{comments.length} comentários</span>
+            </div>
+            {isConnected && (
+              <Badge variant="outline" className="text-green-400 border-green-400/30 bg-green-400/10">
+                <Wifi className="h-3 w-3 mr-1" /> Ao vivo
+              </Badge>
+            )}
           </div>
           <button
             onClick={onClose}

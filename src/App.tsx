@@ -11,6 +11,7 @@ const OfflineHandler = lazy(() => import("@/components/OfflineHandler").then(m =
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("@/components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const AdminRoute = lazy(() => import("@/components/AdminRoute").then(m => ({ default: m.AdminRoute })));
 const Auth = lazy(() => import("./pages/Auth"));
 const ProtectedRoute = lazy(() => import("@/components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
@@ -195,10 +196,12 @@ const App = () => (
             </Suspense>
           } />
           
-          {/* Admin continua protegido por seu próprio sistema */}
+          {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={
             <Suspense fallback={<ComponentFallback />}>
-              <AdminDashboard />
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
             </Suspense>
           } />
           

@@ -69,6 +69,47 @@ export const AdminDashboard = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // 🔒 VALIDAÇÃO DUPLA DE SEGURANÇA: Verificar se usuário é admin
+  useEffect(() => {
+    const validateAdminRole = async () => {
+      if (!user) return;
+
+      try {
+        const { data: roleData, error } = await (supabase as any)
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (error || !roleData) {
+          console.warn('⚠️ Tentativa de acesso não autorizado ao painel admin');
+          
+          // Registrar tentativa não autorizada
+          await (supabase as any).from('analytics_events').insert({
+            event_name: 'unauthorized_admin_dashboard_access',
+            event_category: 'security',
+            user_id: user.id,
+            event_data: {
+              timestamp: new Date().toISOString(),
+              component: 'AdminDashboard',
+              user_email: user.email
+            }
+          });
+
+          // Fazer logout e redirecionar
+          toast.error('Acesso não autorizado. Você será desconectado.');
+          await supabase.auth.signOut();
+          window.location.href = '/auth';
+        }
+      } catch (error) {
+        console.error('Erro na validação de admin:', error);
+      }
+    };
+
+    validateAdminRole();
+  }, [user]);
+
   // Simular notificações em tempo real
   useEffect(() => {
     const interval = setInterval(() => {

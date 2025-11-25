@@ -15,6 +15,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ProtectedRoute = lazy(() => import("@/components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const CreatorApplication = lazy(() => import("./pages/CreatorApplication"));
+const CreatorStudio = lazy(() => import("./pages/CreatorStudio"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const FollowingPage = lazy(() => import("./pages/FollowingPage"));
 const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
@@ -122,6 +123,15 @@ const App = () => (
             <Suspense fallback={<ComponentFallback />}>
               <ProtectedRoute>
                 <CreatorApplication />
+              </ProtectedRoute>
+            </Suspense>
+          } />
+          
+          {/* Estúdio de Criador */}
+          <Route path="/creator-studio" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ProtectedRoute>
+                <CreatorStudio />
               </ProtectedRoute>
             </Suspense>
           } />

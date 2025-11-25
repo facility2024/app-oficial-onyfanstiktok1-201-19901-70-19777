@@ -18,53 +18,71 @@ export const useCreatorFollow = () => {
       const userId = getUserIdSync();
 
       if (!userId) {
-        toast.error('Erro ao identificar usuário');
+        toast.error('Faça login para seguir criadores');
         return false;
       }
 
+      console.log('🔄 Seguindo criador:', { userId, creatorId, creatorName, creatorEmail });
+
       // Verificar se já está seguindo
-      const { data: existing } = await supabase
-        .from('user_follows' as any)
+      const { data: existing } = await (supabase as any)
+        .from('user_follows')
         .select('*')
         .eq('follower_id', userId)
         .eq('following_id', creatorId)
         .maybeSingle();
 
+      console.log('📊 Follow existente:', existing);
+
       if (existing) {
         // Toggle: deixar de seguir ou reativar
-        const newStatus = !(existing as any).is_active;
+        const newStatus = !existing.is_active;
         
-        const { error } = await supabase
-          .from('user_follows' as any)
+        const { error } = await (supabase as any)
+          .from('user_follows')
           .update({ is_active: newStatus })
-          .eq('id', (existing as any).id);
+          .eq('id', existing.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Erro ao atualizar follow:', error);
+          throw error;
+        }
 
+        console.log('✅ Follow atualizado:', newStatus);
         toast.success(newStatus ? `Agora você segue ${creatorName}` : `Você deixou de seguir ${creatorName}`);
         return newStatus;
       } else {
         // Novo follow
         const { data: { user } } = await supabase.auth.getUser();
         
-        const { error } = await supabase
-          .from('user_follows' as any)
-          .insert({
-            follower_id: userId,
-            following_id: creatorId,
-            follower_name: user?.user_metadata?.name || 'Usuário Anônimo',
-            follower_email: user?.email || 'anonimo@exemplo.com',
-            is_active: true
-          });
+        const insertData = {
+          follower_id: userId,
+          following_id: creatorId,
+          follower_name: user?.user_metadata?.full_name || user?.email || 'Usuário',
+          follower_email: user?.email || creatorEmail,
+          is_active: true
+        };
 
-        if (error) throw error;
+        console.log('📝 Inserindo novo follow:', insertData);
+        
+        const { data, error } = await (supabase as any)
+          .from('user_follows')
+          .insert(insertData)
+          .select()
+          .single();
 
+        if (error) {
+          console.error('❌ Erro ao inserir follow:', error);
+          throw error;
+        }
+
+        console.log('✅ Follow criado:', data);
         toast.success(`Agora você segue ${creatorName}!`);
         return true;
       }
     } catch (error) {
-      console.error('Erro ao seguir criador:', error);
-      toast.error('Erro ao seguir criador');
+      console.error('❌ Erro geral ao seguir criador:', error);
+      toast.error('Erro ao seguir criador. Tente novamente.');
       return false;
     } finally {
       setLoading(false);

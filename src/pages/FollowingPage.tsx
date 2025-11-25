@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, Users, Sparkles, Star, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useFollowsRealtime } from "@/hooks/useFollowsRealtime";
 
 interface FollowedEntity {
   id: string;
@@ -26,10 +27,7 @@ export default function FollowingPage() {
   const [entities, setEntities] = useState<FollowedEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
-
-  useEffect(() => {
-    loadFollowedEntities();
-  }, []);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const loadFollowedEntities = async () => {
     try {
@@ -41,6 +39,9 @@ export default function FollowingPage() {
         navigate("/auth");
         return;
       }
+
+      // Atualizar userId para real-time
+      setUserId(user.id);
 
       // Buscar TODOS os IDs possíveis: autenticado + localStorage + sessionStorage
       const anonymousIdLocal = localStorage.getItem('anonymous_user_id');
@@ -136,6 +137,21 @@ export default function FollowingPage() {
     }
   };
 
+  // Real-time sync
+  const { followChanges, isConnected } = useFollowsRealtime(userId, loadFollowedEntities);
+
+  useEffect(() => {
+    loadFollowedEntities();
+  }, []);
+
+  // Recarregar quando houver mudanças real-time
+  useEffect(() => {
+    if (followChanges.length > 0) {
+      console.log('🔄 Recarregando follows devido a mudanças real-time');
+      loadFollowedEntities();
+    }
+  }, [followChanges]);
+
   const handleEntityClick = (entity: FollowedEntity) => {
     if (entity.entity_type === 'model') {
       navigate(`/app?profile=${entity.id}`);
@@ -181,7 +197,7 @@ export default function FollowingPage() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-xl font-bold flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Seguindo
@@ -190,6 +206,14 @@ export default function FollowingPage() {
                   {counts.all} {counts.all === 1 ? 'pessoa' : 'pessoas'}
                 </p>
               </div>
+              
+              {/* Indicador de sincronização real-time */}
+              {isConnected && (
+                <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                  <Wifi className="h-3 w-3 mr-1" />
+                  Ao vivo
+                </Badge>
+              )}
             </div>
           </div>
 

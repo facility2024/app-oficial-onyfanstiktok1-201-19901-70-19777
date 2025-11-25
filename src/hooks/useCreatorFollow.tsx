@@ -9,7 +9,7 @@ interface FollowCreatorParams {
   creatorEmail: string;
 }
 
-export const useCreatorFollow = () => {
+export const useCreatorFollow = (onFollowChange?: (creatorId: string, isFollowing: boolean) => void) => {
   const [loading, setLoading] = useState(false);
 
   const followCreator = useCallback(async ({ creatorId, creatorName, creatorEmail }: FollowCreatorParams) => {
@@ -50,6 +50,10 @@ export const useCreatorFollow = () => {
 
         console.log('✅ Follow atualizado:', newStatus);
         toast.success(newStatus ? `Agora você segue ${creatorName}` : `Você deixou de seguir ${creatorName}`);
+        
+        // Notificar mudança
+        onFollowChange?.(creatorId, newStatus);
+        
         return newStatus;
       } else {
         // Novo follow
@@ -78,6 +82,10 @@ export const useCreatorFollow = () => {
 
         console.log('✅ Follow criado:', data);
         toast.success(`Agora você segue ${creatorName}!`);
+        
+        // Notificar mudança
+        onFollowChange?.(creatorId, true);
+        
         return true;
       }
     } catch (error) {

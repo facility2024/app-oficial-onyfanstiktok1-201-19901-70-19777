@@ -133,6 +133,41 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     }
   };
 
+  // Real-time sync do follow status
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const currentUserId = localStorage.getItem('anonymous_user_id');
+    if (!currentUserId) return;
+
+    console.log('🔌 Conectando real-time para follow status:', user.id);
+
+    const channel = supabase
+      .channel(`follow-status-${user.id}-${currentUserId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'model_followers',
+        filter: `model_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('🔔 Real-time: Follow status change', payload);
+        
+        const newData = payload.new as any;
+        // Verificar se é o nosso follow
+        if (newData?.user_id === currentUserId) {
+          setIsFollowing(newData?.is_active ?? false);
+        }
+      })
+      .subscribe((status) => {
+        console.log('📡 Follow status channel:', status);
+      });
+
+    return () => {
+      console.log('🔌 Desconectando follow status real-time');
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   // Load viewer name from localStorage (fallback to "Você")
   useEffect(() => {
     const name = localStorage.getItem('viewer_name');

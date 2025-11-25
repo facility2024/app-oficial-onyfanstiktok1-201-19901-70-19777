@@ -159,6 +159,22 @@ export const useCurrentUser = () => {
         }
       }
 
+      // Transformar profileData em formato consistente
+      if (profileData) {
+        // Se name é igual ao email, usar apenas a parte antes do @
+        const displayName = profileData.name && profileData.name !== profileData.email
+          ? profileData.name
+          : (authUser.email?.split('@')[0] || 'Usuário');
+        
+        const displayUsername = profileData.username || authUser.email?.split('@')[0] || '';
+
+        return {
+          ...profileData,
+          displayName,
+          displayUsername
+        };
+      }
+
       return profileData;
     } catch (error) {
       console.error('Erro ao verificar/criar perfil:', error);
@@ -181,8 +197,8 @@ export const useCurrentUser = () => {
           setProfile({
             id: profileData.id,
             email: profileData.email || authUser.email,
-            username: profileData.name || null,
-            full_name: profileData.name || null,
+            username: (profileData as any).displayUsername || null,
+            full_name: (profileData as any).displayName || null,
             avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || profileData.avatar_url || null,
             bio: profileData.bio || null,
             created_at: profileData.created_at
@@ -214,8 +230,8 @@ export const useCurrentUser = () => {
             setProfile({
               id: profileData.id,
               email: profileData.email || authUser.email,
-              username: profileData.name || null,
-              full_name: profileData.name || null,
+              username: (profileData as any).displayUsername || null,
+              full_name: (profileData as any).displayName || null,
               avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || profileData.avatar_url || null,
               bio: profileData.bio || null,
               created_at: profileData.created_at

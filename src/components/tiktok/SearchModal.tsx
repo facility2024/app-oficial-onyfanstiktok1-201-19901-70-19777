@@ -10,6 +10,7 @@ interface Model {
   followers_count: number;
   is_live: boolean;
   is_verified: boolean;
+  is_creator?: boolean; // Flag para identificar criadores
 }
 
 interface SearchModalProps {
@@ -32,14 +33,45 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
   const loadModels = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Buscar modelos
+      const { data: modelsData, error: modelsError } = await supabase
         .from('models')
         .select('*')
         .eq('is_active', true)
         .order('followers_count', { ascending: false });
 
-      if (error) throw error;
-      setModels(data || []);
+      if (modelsError) throw modelsError;
+
+      // Buscar criadores (profiles com role='creator')
+      const { data: creatorsData, error: creatorsError } = await supabase
+        .from('profiles')
+        .select('id, name, email, avatar_url, followers_count')
+        .eq('role', 'creator');
+
+      if (creatorsError) {
+        console.error('Error loading creators:', creatorsError);
+      }
+
+      // Transformar criadores para formato Model
+      const creators = (creatorsData || []).map(c => {
+        const displayName = c.name && c.name !== c.email
+          ? c.name
+          : (c.email?.split('@')[0] || 'Criador');
+        
+        return {
+          id: c.id,
+          name: displayName,
+          username: displayName,
+          avatar_url: c.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          followers_count: c.followers_count || 0,
+          is_live: false,
+          is_verified: true, // Criadores são verificados
+          is_creator: true // Flag para identificar visualmente
+        };
+      });
+
+      // Combinar modelos + criadores
+      setModels([...(modelsData || []), ...creators]);
     } catch (error) {
       console.error('Error loading models:', error);
     } finally {
@@ -119,7 +151,12 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-white font-semibold">{model.name}</h3>
-                      {model.is_verified && (
+                      {model.is_creator && (
+                        <div className="bg-purple-500 px-2 py-0.5 rounded-full text-xs font-semibold text-white">
+                          ✨ Criador
+                        </div>
+                      )}
+                      {model.is_verified && !model.is_creator && (
                         <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-xs">✓</span>
                         </div>

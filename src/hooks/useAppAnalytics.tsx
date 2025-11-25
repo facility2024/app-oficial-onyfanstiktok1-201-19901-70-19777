@@ -23,23 +23,33 @@ export const useAppAnalytics = () => {
 
       // 1. Registrar no analytics_events para o painel admin (apenas se for ação válida)
       try {
+        const analyticsData: any = {
+          event_name: `video_${action}`,
+          event_category: 'video_interaction',
+          user_id: currentUserId,
+          video_id: videoId || null,
+          event_data: {
+            action,
+            timestamp: new Date().toISOString(),
+            device_type: /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+            ...additionalData
+          },
+          page_url: window.location.href,
+          user_agent: navigator.userAgent
+        };
+
+        // Diferenciar model_id vs creator_id
+        if (modelId) {
+          // Se for um modelo estático, usar model_id
+          analyticsData.model_id = modelId;
+        } else if (additionalData?.creator_id) {
+          // Se for um criador, usar creator_id
+          analyticsData.creator_id = additionalData.creator_id;
+        }
+
         const { error: analyticsError } = await supabase
           .from('analytics_events')
-          .insert({
-            event_name: `video_${action}`,
-            event_category: 'video_interaction',
-            user_id: currentUserId,
-            video_id: videoId || null, // Permitir null se não existir
-            model_id: modelId || null,
-            event_data: {
-              action,
-              timestamp: new Date().toISOString(),
-              device_type: /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-              ...additionalData
-            },
-            page_url: window.location.href,
-            user_agent: navigator.userAgent
-          });
+          .insert(analyticsData);
 
         if (analyticsError) {
           console.warn('❌ Erro no analytics_events:', analyticsError);
@@ -136,8 +146,10 @@ export const useAppAnalytics = () => {
     return registerAction('share', videoId, modelId);
   }, [registerAction]);
 
-  const trackView = useCallback(async (videoId: string, modelId: string) => {
-    return registerAction('view', videoId, modelId);
+  const trackView = useCallback(async (videoId: string, modelId: string, isCreator?: boolean) => {
+    return registerAction('view', videoId, modelId, { 
+      creator_id: isCreator ? modelId : undefined 
+    });
   }, [registerAction]);
 
   const trackFollow = useCallback(async (modelId: string) => {

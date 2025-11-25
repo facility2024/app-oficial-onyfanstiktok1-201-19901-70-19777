@@ -208,14 +208,14 @@ export const LiveInterface = () => {
     if (!video?.user?.id) return;
     
     try {
-      let userId = sessionStorage.getItem('user_id');
-      if (!userId) {
-        userId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', userId);
-      }
-
       // Get current user data
       const { data: { user } } = await supabase.auth.getUser();
+      let userId = user?.id || localStorage.getItem('anonymous_user_id');
+      
+      if (!userId) {
+        userId = crypto.randomUUID();
+        localStorage.setItem('anonymous_user_id', userId);
+      }
 
       // Check if already following
       const { data: existing } = await supabase

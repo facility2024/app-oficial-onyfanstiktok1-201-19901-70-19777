@@ -12,11 +12,13 @@ export const useAdminAnalytics = () => {
     additionalData: any = {}
   ) => {
     try {
-      // Obter ou criar user ID
-      let userId = sessionStorage.getItem('user_id');
+      // Obter ou criar user ID usando localStorage (fonte unificada)
+      const { data: { user } } = await supabase.auth.getUser();
+      let userId = user?.id || localStorage.getItem('anonymous_user_id');
+      
       if (!userId) {
         userId = crypto.randomUUID();
-        sessionStorage.setItem('user_id', userId);
+        localStorage.setItem('anonymous_user_id', userId);
       }
 
       // Preparar dados para analytics

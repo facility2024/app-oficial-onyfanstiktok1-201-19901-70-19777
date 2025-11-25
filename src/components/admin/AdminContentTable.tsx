@@ -21,6 +21,8 @@ export const AdminContentTable = () => {
   const [selectedContent, setSelectedContent] = useState(null);
   const [editingContent, setEditingContent] = useState(null);
   const [contents, setContents] = useState([]);
+  const [contentFilter, setContentFilter] = useState<'all' | 'creators' | 'models'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const formatNumber = (num) => {
     if (num >= 1000000) {
@@ -540,6 +542,23 @@ export const AdminContentTable = () => {
     setIsOffersModalOpen(true);
   };
 
+  // Filtrar conteúdos baseado no filtro e busca
+  const filteredContents = contents.filter(content => {
+    // Aplicar filtro de tipo
+    if (contentFilter === 'creators' && !content.isCreator) return false;
+    if (contentFilter === 'models' && content.isCreator) return false;
+    
+    // Aplicar busca por nome ou email
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      const matchName = content.name?.toLowerCase().includes(search);
+      const matchEmail = content.email?.toLowerCase().includes(search);
+      return matchName || matchEmail;
+    }
+    
+    return true;
+  });
+
   console.log('🔥 AdminContentTable está sendo renderizado!');
   
   return (
@@ -572,6 +591,43 @@ export const AdminContentTable = () => {
       </CardHeader>
       
       <CardContent>
+        {/* Barra de Filtros */}
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant={contentFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setContentFilter('all')}
+              size="sm"
+            >
+              🎬 Todos ({contents.length})
+            </Button>
+            <Button 
+              variant={contentFilter === 'creators' ? 'default' : 'outline'}
+              onClick={() => setContentFilter('creators')}
+              className={contentFilter === 'creators' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+              size="sm"
+            >
+              ✨ Apenas Criadores ({contents.filter(c => c.isCreator).length})
+            </Button>
+            <Button 
+              variant={contentFilter === 'models' ? 'default' : 'outline'}
+              onClick={() => setContentFilter('models')}
+              size="sm"
+            >
+              👑 Apenas Modelos ({contents.filter(c => !c.isCreator).length})
+            </Button>
+          </div>
+          
+          {/* Input de Busca */}
+          <input
+            type="text"
+            placeholder="🔍 Buscar por nome ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-sm px-4 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-muted/50">
@@ -601,7 +657,21 @@ export const AdminContentTable = () => {
               </tr>
             </thead>
             <tbody className="bg-card divide-y divide-border">
-              {contents.map((content) => (
+              {filteredContents.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                    {searchTerm 
+                      ? `Nenhum resultado encontrado para "${searchTerm}"`
+                      : contentFilter === 'creators'
+                        ? 'Nenhum criador encontrado'
+                        : contentFilter === 'models'
+                          ? 'Nenhum modelo encontrado'
+                          : 'Nenhum conteúdo encontrado'
+                    }
+                  </td>
+                </tr>
+              ) : (
+                filteredContents.map((content) => (
                 <tr key={content.id} className="hover:bg-card-hover transition-colors">
                   <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -745,7 +815,8 @@ export const AdminContentTable = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

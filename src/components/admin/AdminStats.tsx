@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, Heart, Eye, Share2, DollarSign, Users, Rocket, UserPlus, MessageCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, Heart, Eye, Share2, DollarSign, Users, Rocket, UserPlus, MessageCircle, Crown, Play } from 'lucide-react';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
 import { supabase } from '@/integrations/supabase/client';
 
 export const AdminStats = () => {
   const { stats: realTimeStats, isLoading } = useRealTimeStats();
   const [userStats, setUserStats] = useState({ totalUsers: 0, newToday: 0 });
+  const [creatorStats, setCreatorStats] = useState({
+    totalCreators: 0,
+    totalCreatorVideos: 0,
+    totalCreatorViews: 0,
+    totalCreatorLikes: 0,
+    avgEngagement: 0
+  });
   
   const [stats, setStats] = useState([
     {
@@ -97,6 +105,33 @@ export const AdminStats = () => {
       color: 'text-success',
       bgColor: 'bg-success/10',
       shortTitle: 'Novos'
+    },
+    {
+      title: 'Total de Criadores',
+      value: '0',
+      icon: Crown,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/10',
+      shortTitle: 'Criadores',
+      category: 'creators'
+    },
+    {
+      title: 'Vídeos de Criadores',
+      value: '0',
+      icon: Play,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-600/10',
+      shortTitle: 'Vídeos',
+      category: 'creators'
+    },
+    {
+      title: 'Engajamento Médio',
+      value: '0',
+      icon: TrendingUp,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
+      shortTitle: 'Engaj.',
+      category: 'creators'
     }
   ]);
 
@@ -150,6 +185,71 @@ export const AdminStats = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Buscar estatísticas de criadores
+  useEffect(() => {
+    const fetchCreatorStats = async () => {
+      try {
+        // Total de criadores aprovados (usando any para evitar erro de tipagem)
+        const { data: creatorsData, error: creatorsError } = await (supabase as any)
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'creator');
+
+        if (creatorsError) {
+          console.error('Erro ao buscar criadores:', creatorsError);
+          return;
+        }
+
+        // Vídeos publicados por criadores
+        const creatorIds = creatorsData?.map((c: any) => c.user_id) || [];
+        
+        if (creatorIds.length > 0) {
+          const { data: creatorsVideos, error: videosError } = await supabase
+            .from('videos')
+            .select('id, likes_count, views_count, shares_count')
+            .in('model_id', creatorIds);
+
+          if (videosError) {
+            console.error('Erro ao buscar vídeos de criadores:', videosError);
+            return;
+          }
+
+          // Calcular estatísticas
+          const totalCreators = creatorsData?.length || 0;
+          const totalCreatorVideos = creatorsVideos?.length || 0;
+          const totalCreatorViews = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0;
+          const totalCreatorLikes = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.likes_count || 0), 0) || 0;
+          const avgEngagement = totalCreatorVideos > 0 
+            ? Math.round((totalCreatorLikes + totalCreatorViews) / totalCreatorVideos)
+            : 0;
+
+          setCreatorStats({
+            totalCreators,
+            totalCreatorVideos,
+            totalCreatorViews,
+            totalCreatorLikes,
+            avgEngagement
+          });
+
+          console.log('✨ Stats de criadores atualizadas:', {
+            totalCreators,
+            totalCreatorVideos,
+            totalCreatorViews,
+            totalCreatorLikes,
+            avgEngagement
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar estatísticas de criadores:', error);
+      }
+    };
+
+    fetchCreatorStats();
+    // Atualizar a cada 30 segundos
+    const interval = setInterval(fetchCreatorStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Atualizar stats quando os dados em tempo real mudarem
   useEffect(() => {
     if (!isLoading && realTimeStats) {
@@ -167,17 +267,66 @@ export const AdminStats = () => {
         { ...prev[7], value: `R$ ${formatNumber(estimatedRevenue)}` },   // Receita Mensal (estimada)
         { ...prev[8], value: formatNumber(realTimeStats.totalFollowers) }, // Seguidores
         { ...prev[9], value: formatNumber(userStats.totalUsers) },       // Total de Usuários (REAL)
-        { ...prev[10], value: formatNumber(userStats.newToday) }          // Novos Hoje (REAL)
+        { ...prev[10], value: formatNumber(userStats.newToday) },        // Novos Hoje (REAL)
+        { ...prev[11], value: formatNumber(creatorStats.totalCreators) }, // Total de Criadores
+        { ...prev[12], value: formatNumber(creatorStats.totalCreatorVideos) }, // Vídeos de Criadores
+        { ...prev[13], value: formatNumber(creatorStats.avgEngagement) }  // Engajamento Médio
       ]);
 
       console.log('📊 Stats atualizadas com dados em tempo real:', realTimeStats);
       console.log('👥 Stats de usuários reais:', userStats);
+      console.log('✨ Stats de criadores:', creatorStats);
     }
-  }, [realTimeStats, isLoading, userStats]);
+  }, [realTimeStats, isLoading, userStats, creatorStats]);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
-      {stats.map((stat, index) => {
+    <div className="space-y-4">
+      {/* Estatísticas Gerais */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+        {stats.filter(stat => !stat.category).map((stat, index) => {
+          const Icon = stat.icon;
+          
+          return (
+            <Card key={index} className="hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-card border-border/50">
+              <CardContent className="p-2 sm:p-3 lg:p-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start space-y-1 sm:space-y-0 sm:space-x-2">
+                  <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg ${stat.bgColor} animate-bounce`}>
+                    {stat.icon === 'gif' ? (
+                      <img 
+                        src={stat.gifSrc} 
+                        alt={stat.title}
+                        className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 object-contain animate-pulse"
+                      />
+                    ) : stat.icon === 'comment' ? (
+                      <MessageCircle className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${stat.color} animate-pulse`} />
+                    ) : (
+                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${stat.color} animate-pulse`} />
+                    )}
+                  </div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5 leading-tight">
+                      <span className="hidden lg:inline">{stat.title}</span>
+                      <span className="hidden sm:inline lg:hidden">{stat.shortTitle}</span>
+                      <span className="sm:hidden">{stat.shortTitle}</span>
+                    </p>
+                    <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-bold text-foreground leading-tight">
+                      {stat.value}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Seção de Estatísticas de Criadores */}
+      <div className="space-y-2">
+        <Badge className="bg-purple-500 text-white hover:bg-purple-600">
+          ✨ ESTATÍSTICAS DE CRIADORES
+        </Badge>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+          {stats.filter(stat => stat.category === 'creators').map((stat, index) => {
         const Icon = stat.icon;
         
         return (
@@ -210,8 +359,10 @@ export const AdminStats = () => {
               </div>
             </CardContent>
           </Card>
-        );
-      })}
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

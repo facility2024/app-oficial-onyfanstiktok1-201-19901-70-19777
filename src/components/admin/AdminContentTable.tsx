@@ -33,29 +33,63 @@ export const AdminContentTable = () => {
 
   const fetchContents = async () => {
     try {
-      // Buscar todos os modelos da tabela models  
+      // 1️⃣ Buscar todos os modelos da tabela models  
       const { data: modelsData } = await supabase
         .from('models')
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Buscar vídeos da tabela videos
+      // 2️⃣ Buscar criadores aprovados da tabela user_roles (usando any para evitar erro de tipagem)
+      const { data: userRolesData, error: rolesError } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id, created_at')
+        .eq('role', 'creator');
+
+      if (rolesError) {
+        console.error('Erro ao buscar user_roles:', rolesError);
+      }
+
+      // 3️⃣ Buscar perfis dos criadores
+      let creatorsData: any[] = [];
+      if (userRolesData && userRolesData.length > 0) {
+        const creatorIds = userRolesData.map((r: any) => r.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, email')
+          .in('id', creatorIds);
+
+        if (profilesError) {
+          console.error('Erro ao buscar profiles:', profilesError);
+        } else {
+          // Combinar user_roles com profiles
+          creatorsData = userRolesData.map((role: any) => {
+            const profile = profilesData?.find((p: any) => p.id === role.user_id);
+            return {
+              user_id: role.user_id,
+              created_at: role.created_at,
+              profile
+            };
+          });
+        }
+      }
+
+      // 4️⃣ Buscar vídeos da tabela videos
       const { data: videosData } = await supabase
         .from('videos')
         .select('*');
 
-      // Criar conteúdo combinando modelos com seus vídeos (ou sem vídeos)
-      const contents = modelsData?.map(model => {
-        // Encontrar vídeos do modelo
+      // 5️⃣ Processar modelos existentes
+      const modelContents = modelsData?.map(model => {
         const modelVideos = (videosData?.filter((v: any) => v.model_id === model.id) || [])
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const latestVideo = modelVideos[0];
         
         return {
-          id: model.id, // Usar ID do modelo como principal
+          id: model.id,
           modelId: model.id,
           videoId: latestVideo?.id,
           name: model.name || model.username || 'Usuário Anônimo',
+          email: null,
           avatar: model.avatar_url || crownLogo,
           platform: model.is_verified || (model.followers_count || 0) > 10000 ? 'premium' : 'standard',
           views: formatNumber(latestVideo?.views_count || 0),
@@ -63,16 +97,45 @@ export const AdminContentTable = () => {
           schedule: new Date(model.created_at).toLocaleDateString('pt-BR'),
           status: model.is_active ? 'active' : 'inactive',
           videosCount: modelVideos.length,
-          visibility: latestVideo?.visibility || 'public'
+          visibility: latestVideo?.visibility || 'public',
+          isCreator: false
         };
       }) || [];
 
-      setContents(contents);
+      // 6️⃣ Processar criadores cadastrados
+      const creatorContents = creatorsData?.map((creator: any) => {
+        const profile = creator.profile;
+        const creatorVideos = (videosData?.filter((v: any) => v.model_id === creator.user_id) || [])
+          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const latestVideo = creatorVideos[0];
+        
+        return {
+          id: creator.user_id,
+          modelId: creator.user_id,
+          videoId: latestVideo?.id,
+          name: profile?.full_name || profile?.email?.split('@')[0] || 'Criador',
+          email: profile?.email,
+          avatar: profile?.avatar_url || crownLogo,
+          platform: 'creator',
+          views: formatNumber(latestVideo?.views_count || 0),
+          likes: formatNumber(latestVideo?.likes_count || 0),
+          schedule: new Date(creator.created_at).toLocaleDateString('pt-BR'),
+          status: 'active',
+          videosCount: creatorVideos.length,
+          visibility: latestVideo?.visibility || 'public',
+          isCreator: true
+        };
+      }) || [];
+
+      // 7️⃣ Combinar criadores e modelos (criadores primeiro para destaque)
+      const combinedContents = [...creatorContents, ...modelContents];
+      setContents(combinedContents);
 
       console.log('📋 AdminContentTable - Dados carregados:', {
         models: modelsData?.length || 0,
+        creators: creatorsData?.length || 0,
         videos: videosData?.length || 0,
-        contents: contents.length
+        contents: combinedContents.length
       });
 
     } catch (error) {
@@ -95,7 +158,7 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('🎬 AdminContentTable - Novo vídeo adicionado:', payload.new);
-          fetchContents(); // Recarregar lista quando um novo vídeo for inserido
+          fetchContents();
         }
       )
       .on(
@@ -107,7 +170,7 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('📝 AdminContentTable - Vídeo atualizado:', payload.new);
-          fetchContents(); // Recarregar lista quando um vídeo for atualizado
+          fetchContents();
         }
       )
       .on(
@@ -119,7 +182,7 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('👤 AdminContentTable - Novo modelo adicionado:', payload.new);
-          fetchContents(); // Recarregar lista quando um novo modelo for inserido
+          fetchContents();
         }
       )
       .on(
@@ -131,7 +194,20 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('👤 AdminContentTable - Modelo atualizado:', payload.new);
-          fetchContents(); // Recarregar lista quando um modelo for atualizado
+          fetchContents();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_roles',
+          filter: 'role=eq.creator'
+        },
+        (payload) => {
+          console.log('✨ AdminContentTable - Novo criador aprovado:', payload.new);
+          fetchContents();
         }
       )
       .subscribe();
@@ -543,7 +619,11 @@ export const AdminContentTable = () => {
                           <span className="sm:hidden">{((content.name || 'Usuário').split(' ')[0] || 'Usr').slice(0, 3)}</span>
                         </div>
                         <div className="text-xs text-muted-foreground leading-tight">
-                          <span className="hidden lg:inline">ID: {content.id || 'N/A'}</span>
+                          {content.isCreator && content.email ? (
+                            <span className="hidden lg:inline">📧 {content.email}</span>
+                          ) : (
+                            <span className="hidden lg:inline">ID: {content.id || 'N/A'}</span>
+                          )}
                           <span className="hidden md:inline lg:hidden">{(content.id || 'N/A').slice(0, 15)}...</span>
                           <span className="hidden sm:inline md:hidden">{content.views || '0'} views</span>
                           <span className="sm:hidden">{content.views || '0'}</span>
@@ -554,13 +634,19 @@ export const AdminContentTable = () => {
                   
                   <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap hidden sm:table-cell">
                     <div className="flex items-center justify-center">
-                      <Badge variant={content.platform === 'premium' ? 'default' : 'secondary'} className="text-xs">
-                        {content.platform === 'premium' ? (
-                          <Crown className="w-3 h-3 mr-1" />
-                        ) : null}
-                        <span className="hidden lg:inline">{content.platform === 'premium' ? 'Premium' : 'Standard'}</span>
-                        <span className="lg:hidden">{content.platform === 'premium' ? 'P' : 'S'}</span>
-                      </Badge>
+                      {content.isCreator ? (
+                        <Badge variant="default" className="text-xs bg-purple-500 hover:bg-purple-600">
+                          ✨ <span className="hidden lg:inline ml-1">Criador</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant={content.platform === 'premium' ? 'default' : 'secondary'} className="text-xs">
+                          {content.platform === 'premium' ? (
+                            <Crown className="w-3 h-3 mr-1" />
+                          ) : null}
+                          <span className="hidden lg:inline">{content.platform === 'premium' ? 'Premium' : 'Standard'}</span>
+                          <span className="lg:hidden">{content.platform === 'premium' ? 'P' : 'S'}</span>
+                        </Badge>
+                      )}
                     </div>
                   </td>
                   

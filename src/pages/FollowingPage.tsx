@@ -42,13 +42,24 @@ export default function FollowingPage() {
         return;
       }
 
+      // Buscar ambos IDs: autenticado + anônimo
+      const anonymousId = localStorage.getItem('anonymous_user_id');
+      const userIds = [user.id];
+      if (anonymousId && anonymousId !== user.id) {
+        userIds.push(anonymousId);
+      }
+
+      console.log('🔐 User ID (auth):', user.id);
+      console.log('🆔 Anonymous ID:', anonymousId);
+      console.log('🔍 Buscando follows com IDs:', userIds);
+
       let allEntities: FollowedEntity[] = [];
 
-      // 1️⃣ Buscar modelos seguidas
+      // 1️⃣ Buscar modelos seguidas (com ambos IDs)
       const { data: modelFollows, error: modelError } = await supabase
         .from('model_followers')
         .select('model_id')
-        .eq('user_id', user.id)
+        .in('user_id', userIds)
         .eq('is_active', true);
 
       console.log('🌟 Model follows:', modelFollows, 'Error:', modelError);
@@ -77,11 +88,11 @@ export default function FollowingPage() {
         }
       }
 
-      // 2️⃣ Buscar criadores seguidos
+      // 2️⃣ Buscar criadores seguidos (com ambos IDs)
       const { data: creatorFollows, error: followError } = await (supabase as any)
         .from('user_follows')
         .select('following_id, followed_at')
-        .eq('follower_id', user.id)
+        .in('follower_id', userIds)
         .eq('is_active', true);
 
       console.log('📊 Creator follows:', creatorFollows, 'Error:', followError);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useCreatorRole } from '@/hooks/useUserRoles';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,7 @@ const ProgressIndicator = ({ currentStep, completedSteps }: { currentStep: numbe
 
 export default function CreatorApplication() {
   const { user, profile, loading: userLoading } = useCurrentUser();
+  const { isCreator, loading: roleLoading } = useCreatorRole();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [existingApplication, setExistingApplication] = useState<any>(null);
@@ -97,6 +99,17 @@ export default function CreatorApplication() {
     accepted_terms: false,
     accepted_image_rights: false,
   });
+
+  // Redirecionar criadores aprovados automaticamente
+  useEffect(() => {
+    if (!roleLoading && isCreator) {
+      console.log('✅ Criador aprovado detectado, redirecionando para Creator Studio');
+      toast.success('Você já é um criador aprovado! Redirecionando...');
+      setTimeout(() => {
+        navigate('/creator-studio');
+      }, 1500);
+    }
+  }, [isCreator, roleLoading, navigate]);
 
   useEffect(() => {
     // Aguardar o carregamento do usuário antes de verificar
@@ -329,6 +342,16 @@ export default function CreatorApplication() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao Perfil
             </Button>
+            
+            {existingApplication.status === 'approved' && (
+              <Button 
+                onClick={() => navigate('/creator-studio')} 
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Ir para Creator Studio
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

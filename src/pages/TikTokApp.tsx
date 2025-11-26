@@ -49,7 +49,7 @@ import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
-import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import coconudiLogo from '@/assets/coconudi-logo-header.png';
 import headerBackground from '@/assets/header-background.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
@@ -2795,7 +2795,6 @@ export const TikTokApp = () => {
                 />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-black">Coconudi</h1>
           </div>
         </div>
               <div className="flex items-center space-x-4">

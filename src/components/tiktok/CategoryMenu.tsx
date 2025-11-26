@@ -55,8 +55,9 @@ export const CategoryMenu = ({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      toast.success('Você saiu da conta com sucesso!');
+      setShowLogoutAlert(false);
       setOpen(false);
+      toast.success('Você saiu da conta com sucesso!');
       navigate('/auth');
     } catch (error) {
       console.error('Erro ao sair:', error);
@@ -162,13 +163,8 @@ export const CategoryMenu = ({
     name: "Sair",
     icon: <LogOut className="w-5 h-5" />,
     onClick: () => {
-      console.log('🚪 Botão Sair clicado - fechando Sheet e abrindo AlertDialog');
-      // Fechar o Sheet primeiro para evitar conflitos de portal
-      setOpen(false);
-      // Delay para garantir que o Sheet fechou antes de abrir o AlertDialog
-      setTimeout(() => {
-        setShowLogoutAlert(true);
-      }, 150);
+      console.log('🚪 Botão Sair clicado - abrindo AlertDialog');
+      setShowLogoutAlert(true);
     }
   });
 

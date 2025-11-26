@@ -196,17 +196,26 @@ export const useUserRoles = () => {
 };
 
 export const useCreatorRole = () => {
-  const [isCreator, setIsCreator] = useState(false);
+  const [isCreator, setIsCreator] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkCreatorRole = async () => {
       try {
+        setLoading(true);
+        
         const { data: { user } } = await supabase.auth.getUser();
         
+        console.log('🔐 useCreatorRole - Verificando usuário:', user?.id, user?.email);
+        
         if (!user) {
-          setIsCreator(false);
-          setLoading(false);
+          console.log('❌ useCreatorRole - Nenhum usuário logado');
+          if (isMounted) {
+            setIsCreator(false);
+            setLoading(false);
+          }
           return;
         }
 
@@ -217,22 +226,50 @@ export const useCreatorRole = () => {
           .eq('role', 'creator')
           .maybeSingle();
 
-        if (error) {
-          console.error('Erro ao verificar role de criador:', error);
-          setIsCreator(false);
-        } else {
-          setIsCreator(!!data);
+        console.log('🔐 useCreatorRole - Resultado da query:', { data, error, userId: user.id });
+
+        if (isMounted) {
+          if (error) {
+            console.error('❌ useCreatorRole - Erro:', error);
+            setIsCreator(false);
+          } else {
+            const hasCreatorRole = !!data;
+            console.log('✅ useCreatorRole - É criador?', hasCreatorRole);
+            setIsCreator(hasCreatorRole);
+          }
         }
       } catch (error) {
-        console.error('Erro ao verificar role de criador:', error);
-        setIsCreator(false);
+        console.error('❌ useCreatorRole - Exceção:', error);
+        if (isMounted) {
+          setIsCreator(false);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     checkCreatorRole();
+
+    // Listener para mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 useCreatorRole - Auth state changed:', event);
+      if (event === 'SIGNED_OUT') {
+        if (isMounted) {
+          setIsCreator(false);
+          setLoading(false);
+        }
+      } else if (event === 'SIGNED_IN') {
+        checkCreatorRole();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  return { isCreator, loading };
+  return { isCreator: isCreator ?? false, loading };
 };

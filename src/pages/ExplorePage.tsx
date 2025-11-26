@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Eye, ChevronLeft, Home, Compass, TrendingUp, User, MoreHorizontal, Play } from "lucide-react";
+import { Heart, MessageCircle, Eye, ChevronLeft, Home, Compass, TrendingUp, User, MoreHorizontal, Play, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CategoryMenu } from "@/components/tiktok/CategoryMenu";
 import { FullscreenVideoModal } from "@/components/tiktok/FullscreenVideoModal";
 import { toast } from "sonner";
+import coconudiLogo from '@/assets/coconudi-logo-white.png';
 
 interface ExploreVideo {
   id: string;
@@ -32,6 +33,7 @@ const ExplorePage = () => {
   const [filter, setFilter] = useState<"all" | "creators" | "models">("all");
   const [fullscreenVideo, setFullscreenVideo] = useState<{ url: string; time: number } | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     checkUser();
@@ -151,6 +153,17 @@ const ExplorePage = () => {
     }
   };
 
+  // Filtrar vídeos por busca
+  const filteredVideos = videos.filter(video => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      video.title?.toLowerCase().includes(query) ||
+      video.owner_name?.toLowerCase().includes(query) ||
+      video.owner_username?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-black text-white flex">
       {/* Menu Lateral - Apenas Desktop */}
@@ -162,30 +175,82 @@ const ExplorePage = () => {
       <div className="flex-1 flex flex-col">
         {/* Header Mobile */}
         <div className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-3 gap-2">
+            {/* Botão Voltar */}
             <button 
               onClick={() => navigate('/app')}
-              className="text-white hover:text-white/80 transition-colors"
+              className="text-white hover:text-white/80 transition-colors flex-shrink-0"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-xl font-bold text-white">Explorar</h1>
-            <div className="w-6" />
+            
+            {/* Campo de Busca */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/20 text-white placeholder-white/60 rounded-full pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <X className="w-4 h-4 text-white/60 hover:text-white" />
+                </button>
+              )}
+            </div>
+            
+            {/* Logo */}
+            <img 
+              src={coconudiLogo} 
+              alt="CocoNudi" 
+              className="h-8 w-auto flex-shrink-0"
+            />
           </div>
         </div>
 
         {/* Header Desktop */}
         <div className="hidden md:block sticky top-0 z-40 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center justify-between p-6">
+          <div className="flex items-center justify-between p-4 gap-4">
+            {/* Botão Voltar */}
             <button 
               onClick={() => navigate('/app')}
-              className="text-white hover:text-white/80 transition-colors flex items-center gap-2"
+              className="text-white hover:text-white/80 transition-colors flex items-center gap-2 flex-shrink-0"
             >
               <Home className="w-5 h-5" />
-              <span>Voltar ao Início</span>
+              <span>Voltar</span>
             </button>
-            <h1 className="text-2xl font-bold text-white">Explorar Conteúdo</h1>
-            <div className="w-6" />
+            
+            {/* Campo de Busca Expandido */}
+            <div className="flex-1 max-w-xl relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+              <input
+                type="text"
+                placeholder="Buscar vídeos, modelos, criadores..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/20 text-white placeholder-white/60 rounded-full pl-12 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/30"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                >
+                  <X className="w-5 h-5 text-white/60 hover:text-white" />
+                </button>
+              )}
+            </div>
+            
+            {/* Logo */}
+            <img 
+              src={coconudiLogo} 
+              alt="CocoNudi" 
+              className="h-10 w-auto flex-shrink-0"
+            />
           </div>
         </div>
 
@@ -200,7 +265,7 @@ const ExplorePage = () => {
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
             >
-              Todos ({videos.length})
+              Todos ({filteredVideos.length})
             </button>
             <button
               onClick={() => setFilter("creators")}
@@ -231,13 +296,15 @@ const ExplorePage = () => {
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full"></div>
             </div>
-          ) : videos.length === 0 ? (
+          ) : filteredVideos.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-gray-400">Nenhum vídeo encontrado</p>
+              <p className="text-gray-400">
+                {searchQuery ? "Nenhum resultado encontrado" : "Nenhum vídeo encontrado"}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 p-1">
-              {videos.map((video) => (
+              {filteredVideos.map((video) => (
                 <div 
                   key={video.id}
                   className="relative group overflow-hidden bg-gray-900 aspect-[3/4]"

@@ -22,6 +22,17 @@ import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
 import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
+import { useCreatorRole } from '@/hooks/useUserRoles';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -96,6 +107,9 @@ export const TikTokApp = () => {
   // Hook para obter dados do usuário logado
   const { user: authUser, profile } = useCurrentUser();
   
+  // Hook para verificar se é criador
+  const { isCreator, loading: creatorLoading } = useCreatorRole();
+  
   // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
   // const { 
   //   videos: intelligentVideos, 
@@ -127,6 +141,7 @@ export const TikTokApp = () => {
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   
   // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
   const [videosWatched, setVideosWatched] = useState(() => {
@@ -2742,34 +2757,22 @@ export const TikTokApp = () => {
                 <CreditCard className="w-5 h-5 mr-3" />
                 <span>Assinaturas</span>
               </button>
+              {isCreator === true && creatorLoading === false && (
+                <button
+                  onClick={() => {
+                    console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
+                    navigate('/creator-studio');
+                  }}
+                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
+                >
+                  <Sparkles className="w-5 h-5 mr-3" />
+                  <span>Creator Studio</span>
+                </button>
+              )}
               <button
                 onClick={() => {
-                  console.log('🎯 Botão Sou Criador clicado - Navegando para /creator-application');
-                  navigate('/creator-application');
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-              >
-                <Sparkles className="w-5 h-5 mr-3" />
-                <span>Sou Criador</span>
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    sessionStorage.setItem('logging_out', 'true');
-                    await supabase.auth.signOut();
-                    navigate('/auth', { replace: true });
-                    setTimeout(() => {
-                      sessionStorage.removeItem('logging_out');
-                    }, 500);
-                    toast({
-                      title: 'Logout realizado',
-                      description: 'Você saiu da sua conta com sucesso',
-                    });
-                  } catch (error) {
-                    console.error('Erro ao fazer logout:', error);
-                    sessionStorage.removeItem('logging_out');
-                    navigate('/auth', { replace: true });
-                  }
+                  console.log('🚪 Botão Sair clicado (Desktop) - abrindo AlertDialog');
+                  setShowLogoutAlert(true);
                 }}
                 className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
               >
@@ -3178,6 +3181,46 @@ export const TikTokApp = () => {
         onClose={handleCloseFullscreen}
         currentTime={fullscreenVideoTime}
       />
+      
+      {/* Logout Alert Dialog (Desktop) */}
+      <AlertDialog open={showLogoutAlert} onOpenChange={setShowLogoutAlert}>
+        <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-black border border-white/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white text-xl">Sair da conta</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              Tem certeza que deseja sair? Você precisará fazer login novamente para acessar sua conta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-700 text-white hover:bg-gray-600 border-gray-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                try {
+                  sessionStorage.setItem('logging_out', 'true');
+                  const { error } = await supabase.auth.signOut();
+                  if (error) throw error;
+                  
+                  setShowLogoutAlert(false);
+                  toast({
+                    title: 'Logout realizado',
+                    description: 'Você saiu da sua conta com sucesso',
+                  });
+                  navigate('/auth', { replace: true });
+                } catch (error) {
+                  console.error('Erro ao fazer logout:', error);
+                  sessionStorage.removeItem('logging_out');
+                  navigate('/auth', { replace: true });
+                }
+              }}
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+            >
+              Sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

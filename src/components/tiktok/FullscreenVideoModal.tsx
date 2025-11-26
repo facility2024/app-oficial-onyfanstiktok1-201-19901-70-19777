@@ -15,32 +15,33 @@ export const FullscreenVideoModal = ({
   currentTime = 0 
 }: FullscreenVideoModalProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Reset loading state quando modal abre
   useEffect(() => {
-    console.log('📺 FullscreenVideoModal - isOpen:', isOpen, 'videoUrl:', videoUrl);
-    
-    if (isOpen && videoRef.current && videoUrl) {
-      setIsReady(true);
-      videoRef.current.currentTime = currentTime;
-      
-      // Tentar reproduzir com delay para garantir carregamento
-      setTimeout(() => {
-        videoRef.current?.play().catch(error => {
-          console.error('📺 Erro ao reproduzir vídeo:', error);
-        });
-      }, 100);
-    } else if (!isOpen) {
-      setIsReady(false);
+    if (isOpen) {
+      setIsLoading(true);
     }
-  }, [isOpen, currentTime, videoUrl]);
+  }, [isOpen]);
+
+  // Configurar vídeo quando estiver pronto
+  const handleVideoLoaded = () => {
+    console.log('📺 Vídeo carregado');
+    setIsLoading(false);
+    
+    if (videoRef.current) {
+      videoRef.current.currentTime = currentTime;
+      videoRef.current.play().catch(error => {
+        console.error('📺 Erro ao reproduzir vídeo:', error);
+      });
+    }
+  };
 
   if (!isOpen) {
-    console.log('📺 Modal não está aberto, não renderizando');
     return null;
   }
 
-  console.log('📺 Renderizando modal de tela cheia');
+  console.log('📺 Renderizando modal de tela cheia, videoUrl:', videoUrl);
 
   return (
     <div 
@@ -69,9 +70,20 @@ export const FullscreenVideoModal = ({
         <X className="w-7 h-7 text-white" strokeWidth={2.5} />
       </button>
 
-      {/* Vídeo em Tela Cheia */}
+      {/* Container do Vídeo */}
       <div className="w-full h-full flex items-center justify-center bg-black">
-        {isReady && videoUrl ? (
+        {/* Spinner de Loading (sobreposto ao vídeo) */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="text-white text-center">
+              <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p>Carregando vídeo...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Vídeo - sempre renderizado se tiver URL */}
+        {videoUrl ? (
           <video
             ref={videoRef}
             src={videoUrl}
@@ -79,17 +91,18 @@ export const FullscreenVideoModal = ({
             autoPlay
             loop
             playsInline
+            muted={false}
             controls={false}
+            onLoadedData={handleVideoLoaded}
+            onCanPlay={handleVideoLoaded}
             onClick={(e) => {
               e.stopPropagation();
-              console.log('📺 Vídeo clicado - fechando');
               onClose();
             }}
           />
         ) : (
           <div className="text-white text-center">
-            <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p>Carregando vídeo...</p>
+            <p>Nenhum vídeo disponível</p>
           </div>
         )}
       </div>

@@ -1395,15 +1395,15 @@ export const TikTokApp = () => {
     try {
       console.log('🔍 VERIFICANDO STATUS DE SEGUIR:', modelId);
       
-      // Usar anonymous_user_id do localStorage (mesmo sistema do followModel)
-      let userId = localStorage.getItem('anonymous_user_id');
-      if (!userId) {
-        userId = crypto.randomUUID();
-        localStorage.setItem('anonymous_user_id', userId);
-        console.log('🆔 Criado novo anonymous_user_id:', userId);
-      }
-
-      console.log('🔍 User ID:', userId);
+      // ✅ USAR ID DO USUÁRIO AUTENTICADO se estiver logado
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
+        const newId = crypto.randomUUID();
+        localStorage.setItem('anonymous_user_id', newId);
+        return newId;
+      })();
+      
+      console.log('🔍 User ID:', userId, user ? '(autenticado)' : '(anônimo)');
 
       // 1. Verificar no localStorage primeiro (mais rápido)
       const followKey = `follow_${userId}_${modelId}`;
@@ -1816,15 +1816,15 @@ export const TikTokApp = () => {
     console.log(`✅ SEGUIR: Iniciando processo - ${isCreator ? 'CRIADOR' : 'MODELO'}`);
 
     try {
-      // Usar ID de sessão anônima
-      let userId = localStorage.getItem('anonymous_user_id');
-      if (!userId) {
-        userId = crypto.randomUUID();
-        localStorage.setItem('anonymous_user_id', userId);
-        console.log('🆔 SEGUIR: Criado novo anonymous_user_id:', userId);
-      } else {
-        console.log('🆔 SEGUIR: Usando anonymous_user_id existente:', userId);
-      }
+      // ✅ USAR ID DO USUÁRIO AUTENTICADO se estiver logado
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const userId = authUser?.id || localStorage.getItem('anonymous_user_id') || (() => {
+        const newId = crypto.randomUUID();
+        localStorage.setItem('anonymous_user_id', newId);
+        return newId;
+      })();
+      
+      console.log('🆔 SEGUIR: User ID:', userId, authUser ? '(autenticado)' : '(anônimo)');
 
       // Atualizar estado local IMEDIATAMENTE
       console.log('💾 SEGUIR: Atualizando estado local...');
@@ -1833,10 +1833,9 @@ export const TikTokApp = () => {
         [currentVideo.user.id]: true
       }));
 
-      // Obter dados do usuário autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      const userName = user?.user_metadata?.full_name || user?.email || 'Usuário';
-      const userEmail = user?.email || '';
+      // Obter dados do usuário autenticado para nome/email
+      const userName = authUser?.user_metadata?.full_name || authUser?.email || 'Usuário';
+      const userEmail = authUser?.email || '';
       console.log('👤 SEGUIR: Usuário:', userName, userEmail);
 
       // DIFERENCIAÇÃO: Criador vs Modelo

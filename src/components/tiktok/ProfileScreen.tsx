@@ -534,14 +534,14 @@ if (!isOpen) return null;
             </div>
 
             {/* Descrição em Card */}
-            {user.bio && (
               <div className="px-4 pb-4">
                 <div className="bg-white/10 border border-white/20 rounded-lg p-4 backdrop-blur-sm">
                   <h4 className="text-center text-white/60 text-xs uppercase mb-2 font-semibold">Descrição</h4>
-                  <p className="text-white text-sm text-center leading-relaxed">{user.bio}</p>
+                  <p className="text-white text-sm text-center leading-relaxed">
+                    {user.bio || "Sem descrição disponível"}
+                  </p>
                 </div>
               </div>
-            )}
 
             {/* Seção de Promoção com 3 Pacotes */}
             <div className="px-4 pb-6">

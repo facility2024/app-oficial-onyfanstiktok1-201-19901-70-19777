@@ -6,6 +6,7 @@ interface UniversalVideoPlayerProps {
   poster?: string;
   isPlaying?: boolean;
   isMuted?: boolean;
+  volume?: number;
   onLoadedData?: () => void;
   onError?: (error: any) => void;
   onPlay?: () => void;
@@ -25,7 +26,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     src, 
     poster, 
     isPlaying = false, 
-    isMuted = false, 
+    isMuted = false,
+    volume = 0.8,
     onLoadedData, 
     onError, 
     onPlay, 
@@ -287,12 +289,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
     }, [isPlaying, userStarted, needsUserInteraction, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
 
-    // Controlar mute
+    // Controlar mute e volume
     useEffect(() => {
       if (internalRef && 'current' in internalRef && internalRef.current) {
         internalRef.current.muted = isMuted;
+        internalRef.current.volume = volume;
       }
-    }, [isMuted, internalRef]);
+    }, [isMuted, volume, internalRef]);
 
     // Event handlers
     const handleLoadedData = useCallback(() => {

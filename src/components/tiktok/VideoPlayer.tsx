@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   video: Video;
   isPlaying: boolean;
   isMuted: boolean;
+  volume?: number;
   onNext: () => void;
   onPrevious: () => void;
   onDoubleClick: () => void;
@@ -37,7 +38,7 @@ interface Offer {
 }
 
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
-  ({ video, isPlaying, isMuted, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
+  ({ video, isPlaying, isMuted, volume = 0.8, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
     const [doubleTapHeart, setDoubleTapHeart] = useState(false);
     const [lastTap, setLastTap] = useState(0);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -351,6 +352,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             src={(video as any).video_url}
             isPlaying={isPlaying}
             isMuted={isMuted}
+            volume={volume}
             autoPlayOnReady={true}
             className={locked ? 'blur-sm' : ''}
             onClick={handleVideoTap}

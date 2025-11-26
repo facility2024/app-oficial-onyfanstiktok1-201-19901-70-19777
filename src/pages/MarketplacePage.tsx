@@ -337,7 +337,7 @@ export default function MarketplacePage() {
         <h2 className="text-white font-bold text-xl mb-4">CATEGORIAS - Gênero</h2>
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {categories.map(category => <Button key={category} variant={selectedCategory === category ? "default" : "outline"} onClick={() => setSelectedCategory(category)} className={`whitespace-nowrap ${selectedCategory === category ? "bg-gradient-to-r from-green-500 to-yellow-500 text-white border-none" : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"}`}>
-              {category === "all" ? "Todos" : category}
+              {category === "all" ? "Todos" : category.charAt(0).toUpperCase() + category.slice(1)}
             </Button>)}
         </div>
       </div>

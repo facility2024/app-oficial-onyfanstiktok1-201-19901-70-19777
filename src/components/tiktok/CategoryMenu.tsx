@@ -61,7 +61,8 @@ export const CategoryMenu = ({
     }
   };
 
-  const menuItems: MenuItemProps[] = [
+  // Construir menuItems dinamicamente
+  const baseMenuItems: MenuItemProps[] = [
     {
       id: "live",
       name: "Live",
@@ -130,8 +131,12 @@ export const CategoryMenu = ({
         setOpen(false);
         setTimeout(() => navigate('/following-creators'), 100);
       }
-    },
-    {
+    }
+  ];
+
+  // Adicionar "Sou Criador" apenas se isCreator === true
+  if (isCreator && !creatorLoading) {
+    baseMenuItems.push({
       id: "creator",
       name: "Sou Criador",
       icon: <Sparkles className="w-5 h-5" />,
@@ -142,20 +147,25 @@ export const CategoryMenu = ({
           navigate('/creator-studio');
         });
       }
-    },
-    {
-      id: "exit",
-      name: "Sair",
-      icon: <LogOut className="w-5 h-5" />,
-      onClick: () => {
-        setShowLogoutAlert(true);
-      }
+    });
+  }
+
+  // Adicionar "Sair" no final
+  baseMenuItems.push({
+    id: "exit",
+    name: "Sair",
+    icon: <LogOut className="w-5 h-5" />,
+    onClick: () => {
+      setShowLogoutAlert(true);
     }
-  ];
+  });
+
+  const menuItems = baseMenuItems;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+    <>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
         <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors">
           <Menu className="w-6 h-6" />
         </button>
@@ -214,15 +224,7 @@ export const CategoryMenu = ({
           {/* Menu de Navegação */}
           <div className="pb-24">
             <div className="space-y-1">
-              {menuItems
-                .filter((item) => {
-                  // Mostrar "Sou Criador" apenas para criadores aprovados
-                  if (item.id === "creator") {
-                    return isCreator && !creatorLoading;
-                  }
-                  return true;
-                })
-                .map((item) => (
+              {menuItems.map((item) => (
                   <Button
                     key={item.id}
                     variant="ghost"
@@ -242,8 +244,9 @@ export const CategoryMenu = ({
           </div>
         </div>
       </SheetContent>
+    </Sheet>
 
-      {/* AlertDialog de Logout - Tema Escuro Moderno */}
+    {/* AlertDialog de Logout - Tema Escuro Moderno */}
       <AlertDialog open={showLogoutAlert} onOpenChange={setShowLogoutAlert}>
         <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-black border border-white/10 max-w-sm">
           <AlertDialogHeader>
@@ -268,6 +271,6 @@ export const CategoryMenu = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Sheet>
+    </>
   );
 };

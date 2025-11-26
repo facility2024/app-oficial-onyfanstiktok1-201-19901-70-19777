@@ -46,6 +46,8 @@ export const useCurrentUser = () => {
         .update({
           name: updates.full_name || updates.username,
           email: updates.email,
+          bio: updates.bio,
+          username: updates.username,
         })
         .eq('id', user.id);
 

@@ -765,6 +765,14 @@ export const TikTokApp = () => {
       }
 
       console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
+      
+      // Debug: Verificar vídeos de criadores no banco
+      const videosWithCreatorId = videosData?.filter((v: any) => v.creator_id) || [];
+      console.log(`🎨 Vídeos com creator_id no banco: ${videosWithCreatorId.length}`);
+      if (videosWithCreatorId.length > 0) {
+        console.log('🎨 IDs de criadores com vídeos:', [...new Set(videosWithCreatorId.map((v: any) => v.creator_id))]);
+        console.log('🎨 Criadores disponíveis:', creatorsData?.map((c: any) => ({ id: c.id, name: c.name, email: c.email })));
+      }
 
       // Utilitários
       const normalizeUrl = (u: string) => {
@@ -965,6 +973,12 @@ export const TikTokApp = () => {
         });
 
       console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${validVideos.length} vídeos válidos`);
+      
+      // Debug: Verificar quantos vídeos são de criadores
+      const creatorVideos = validVideos.filter((v: any) => v.creator_id);
+      const modelVideos = validVideos.filter((v: any) => v.model_id && !v.creator_id);
+      console.log(`📊 Vídeos por tipo: ${creatorVideos.length} de criadores, ${modelVideos.length} de modelos`);
+      console.log('🎨 Criadores com vídeos:', [...new Set(creatorVideos.map((v: any) => v.user?.username))]);
 
       const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
       
@@ -978,7 +992,7 @@ export const TikTokApp = () => {
         // 1) Organizar vídeos do catálogo por modelo e preparar filas internas
         const videosByModel: Record<string, any[]> = {};
         validVideos.forEach((v: any) => {
-          const mid = v.user?.id || v.model_id || '';
+          const mid = v.creator_id || v.model_id || v.user?.id || '';
           if (!mid) return;
           if (!videosByModel[mid]) videosByModel[mid] = [];
           videosByModel[mid].push(v);
@@ -996,14 +1010,15 @@ export const TikTokApp = () => {
           });
         });
 
-        // 2) Definir ordem dos modelos (prioriza quem tem vídeos de hoje e com interação)
+        // 2) Definir ordem dos modelos e criadores (prioriza quem tem vídeos de hoje e com interação)
         const modelIdsWithVideos = Object.keys(videosByModel);
         const modelScores: Record<string, number> = {};
         modelIdsWithVideos.forEach((mid) => {
           const queue = videosByModel[mid] || [];
           const hasToday = queue.some((v) => isToday(v.created_at));
           const interacted = interactedModelIds.has(mid);
-          const modelInfo = modelsData?.find((m: any) => m.id === mid);
+          // Buscar em modelos OU criadores
+          const modelInfo = modelsData?.find((m: any) => m.id === mid) || creatorsData?.find((c: any) => c.id === mid);
           let score = 0;
           if (hasToday) score += 1000;
           if (interacted) score += 500;

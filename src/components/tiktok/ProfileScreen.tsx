@@ -196,7 +196,18 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         }
       }
       
-      // Load model data and videos in parallel for faster performance
+      // 1️⃣ Verificar se o usuário é criador
+      const { data: creatorRole } = await (supabase as any)
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'creator')
+        .maybeSingle();
+
+      const isUserCreator = !!creatorRole;
+      console.log(`🎬 Usuário ${user.username} é criador:`, isUserCreator);
+      
+      // 2️⃣ Load model data and videos in parallel for faster performance
       const [modelDataResult, videosDataResult, imagesDataResult] = await Promise.all([
         supabase
           .from('models')
@@ -204,24 +215,36 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
           .eq('id', user.id)
           .single(),
         
-        supabase
-          .from('videos')
-          .select(`
-            id,
-            title,
-            description,
-            video_url,
-            thumbnail_url,
-            likes_count,
-            views_count,
-            created_at,
-            is_active,
-            model_id
-          `)
-          .eq('model_id', user.id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(5),
+        // 3️⃣ Buscar vídeos com base no tipo de usuário (criador ou modelo)
+        (async () => {
+          let videosQuery = (supabase as any)
+            .from('videos')
+            .select(`
+              id,
+              title,
+              description,
+              video_url,
+              thumbnail_url,
+              likes_count,
+              views_count,
+              created_at,
+              is_active,
+              model_id,
+              creator_id
+            `)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          // Aplicar filtro correto baseado no tipo
+          if (isUserCreator) {
+            videosQuery = videosQuery.eq('creator_id', user.id);
+          } else {
+            videosQuery = videosQuery.eq('model_id', user.id);
+          }
+
+          return await videosQuery;
+        })(),
         
         new Promise((resolve) => {
           const modelImages = getModelImages(user.id);

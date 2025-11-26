@@ -41,7 +41,7 @@ export const useCurrentUser = () => {
     try {
       setUpdating(true);
       
-      const { error }: any = await supabaseSimple
+      const { data, error }: any = await supabaseSimple
         .from('profiles')
         .update({
           name: updates.full_name || updates.username,
@@ -49,7 +49,13 @@ export const useCurrentUser = () => {
           bio: updates.bio,
           username: updates.username,
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
+
+      // Verificar se realmente atualizou
+      if (!error && (!data || data.length === 0)) {
+        throw new Error('Nenhum perfil foi atualizado. Verifique as permissões RLS no Supabase.');
+      }
 
       if (error) throw error;
 

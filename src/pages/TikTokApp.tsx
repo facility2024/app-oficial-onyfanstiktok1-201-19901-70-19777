@@ -120,6 +120,10 @@ export const TikTokApp = () => {
     const saved = localStorage.getItem('app_isMuted');
     return saved === 'true';
   });
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('app_volume');
+    return saved ? parseFloat(saved) : 0.8; // Default 80%
+  });
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
@@ -173,6 +177,11 @@ export const TikTokApp = () => {
   useEffect(() => {
     localStorage.setItem('app_isMuted', isMuted.toString());
   }, [isMuted]);
+  
+  // 🔊 PERSISTIR ESTADO DE VOLUME
+  useEffect(() => {
+    localStorage.setItem('app_volume', volume.toString());
+  }, [volume]);
   
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);
@@ -2386,6 +2395,7 @@ export const TikTokApp = () => {
               isLiked={isLiked}
               isMuted={isMuted}
               isPlaying={isPlaying}
+              volume={volume}
               isFollowing={followingModels[currentVideo?.user?.id] || false}
               onToggleLike={() => {
                 console.log('Mobile like clicked via SideMenu');
@@ -2395,6 +2405,7 @@ export const TikTokApp = () => {
                 console.log('Mobile sound toggle clicked via SideMenu'); 
                 setIsMuted(!isMuted);
               }}
+              onVolumeChange={setVolume}
               onTogglePlay={() => {
                 console.log('Mobile play toggle clicked via SideMenu');
                 setIsPlaying(!isPlaying);
@@ -2492,6 +2503,7 @@ export const TikTokApp = () => {
                   video={video}
                   isPlaying={isPlaying && index === currentVideoIndex}
                   isMuted={isMuted}
+                  volume={volume}
                   onNext={nextVideo}
                   onPrevious={prevVideo}
                   onDoubleClick={toggleLike}
@@ -2780,6 +2792,7 @@ export const TikTokApp = () => {
                 video={currentVideo}
                 isPlaying={isPlaying}
                 isMuted={isMuted}
+                volume={volume}
                 onNext={nextVideo}
                 onPrevious={prevVideo}
                 onDoubleClick={toggleLike}
@@ -2853,6 +2866,7 @@ export const TikTokApp = () => {
                     isLiked={isLiked}
                     isMuted={isMuted}
                     isPlaying={isPlaying}
+                    volume={volume}
                     isFollowing={followingModels[currentVideo?.user?.id] || false}
                     onToggleLike={() => {
                       console.log('Desktop like clicked');
@@ -2862,6 +2876,7 @@ export const TikTokApp = () => {
                       console.log('Desktop sound toggle clicked');
                       setIsMuted(!isMuted);
                     }}
+                    onVolumeChange={setVolume}
                     onTogglePlay={() => {
                       console.log('Desktop play toggle clicked');
                       setIsPlaying(!isPlaying);

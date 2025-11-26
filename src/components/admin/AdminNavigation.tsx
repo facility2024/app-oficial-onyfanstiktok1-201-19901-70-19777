@@ -19,6 +19,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },
     { id: 'creators', label: 'Criadores', icon: Sparkles, shortLabel: '✨' },
     { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
+    { id: 'marketplace', label: 'Marketplace', icon: Settings, shortLabel: '🛒' },
     { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },
     { id: 'app', label: 'App', icon: Play, shortLabel: '🎵' },
     { id: 'videos', label: 'Vídeos', icon: Play, shortLabel: '🎬' },

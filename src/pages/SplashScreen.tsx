@@ -41,7 +41,7 @@ export const SplashScreen = () => {
       <div className="absolute inset-0 bg-black/50" />
       
       {/* Logo com animação de abertura */}
-      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full gap-6">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
         <div
           className={`transition-all duration-1000 ease-out ${
             isLoaded 
@@ -54,19 +54,6 @@ export const SplashScreen = () => {
             alt="CocoNudi"
             className="w-64 h-64 object-contain drop-shadow-2xl"
           />
-        </div>
-        
-        {/* Nome CocoNudi com mesmo efeito */}
-        <div
-          className={`transition-all duration-1000 ease-out ${
-            isLoaded 
-              ? 'scale-100 opacity-100 rotate-0' 
-              : 'scale-50 opacity-0 rotate-180'
-          }`}
-        >
-          <h1 className="text-6xl font-bold text-white drop-shadow-2xl tracking-wider">
-            CocoNudi
-          </h1>
         </div>
       </div>
     </div>

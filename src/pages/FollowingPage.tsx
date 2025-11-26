@@ -183,9 +183,11 @@ export default function FollowingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <div className="sticky top-0 z-50 backdrop-blur-lg border-b border-white/10" style={{
+        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+      }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -193,16 +195,16 @@ export default function FollowingPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(-1)}
-                className="hover:bg-accent"
+                className="hover:bg-white/20 text-white"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex-1">
-                <h1 className="text-xl font-bold flex items-center gap-2">
+                <h1 className="text-xl font-bold flex items-center gap-2 text-white">
                   <Users className="h-5 w-5" />
                   Seguindo
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-white/80">
                   {counts.all} {counts.all === 1 ? 'pessoa' : 'pessoas'}
                 </p>
               </div>
@@ -252,7 +254,7 @@ export default function FollowingPage() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map(i => (
-              <Card key={i} className="overflow-hidden">
+              <Card key={i} className="overflow-hidden bg-gray-900/50 border-white/10">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <Skeleton className="h-16 w-16 rounded-full" />
@@ -267,17 +269,17 @@ export default function FollowingPage() {
             ))}
           </div>
         ) : filteredEntities.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed bg-gray-900/50 border-white/10">
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-16 w-16 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+              <Users className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">
                 {filter === 'all' 
                   ? 'Nenhuma pessoa seguida ainda'
                   : filter === 'models'
                   ? 'Nenhuma modelo seguida ainda'
                   : 'Nenhum criador seguido ainda'}
               </h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
+              <p className="text-sm text-gray-400 text-center mb-4">
                 Explore conteúdos e comece a seguir seus favoritos
               </p>
               <Button onClick={() => navigate('/app')}>
@@ -290,7 +292,7 @@ export default function FollowingPage() {
             {filteredEntities.map(entity => (
               <Card
                 key={entity.id}
-                className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
+                className="overflow-hidden bg-gray-900/50 border-white/10 hover:bg-gray-800/50 transition-colors cursor-pointer"
                 onClick={() => handleEntityClick(entity)}
               >
                 <CardContent className="p-4">
@@ -306,7 +308,7 @@ export default function FollowingPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold truncate">
+                        <h3 className="font-semibold truncate text-white">
                           {entity.name}
                         </h3>
                         {entity.entity_type === 'creator' ? (
@@ -322,12 +324,12 @@ export default function FollowingPage() {
                         )}
                       </div>
                       {entity.username && (
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-sm text-gray-400 truncate">
                           @{entity.username}
                         </p>
                       )}
                       {entity.followers_count > 0 && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                           {entity.followers_count.toLocaleString('pt-BR')} seguidores
                         </p>
                       )}

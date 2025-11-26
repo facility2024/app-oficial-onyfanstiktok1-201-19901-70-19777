@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Bookmark, Maximize, ThumbsUp, ThumbsDown, Flag, MoreVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VideoOptionsMenuProps {
   videoId: string;
@@ -14,11 +15,50 @@ export const VideoOptionsMenu = ({ videoId, videoTitle, onFullscreen }: VideoOpt
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleSave = () => {
-    toast({
-      title: "Vídeo salvo",
-      description: "O vídeo foi salvo nos seus favoritos",
-    });
+  const handleSave = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        toast({
+          title: "Faça login",
+          description: "Você precisa estar logado para salvar vídeos",
+          variant: "destructive"
+        });
+        setOpen(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_favorites' as any)
+        .insert({
+          user_id: session.user.id,
+          video_id: videoId
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast({
+            title: "Já salvo",
+            description: "Este vídeo já está nas suas coleções",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Vídeo salvo!",
+          description: "Adicionado às suas coleções",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao salvar vídeo:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Tente novamente",
+        variant: "destructive"
+      });
+    }
     setOpen(false);
   };
 

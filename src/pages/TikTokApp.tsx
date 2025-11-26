@@ -1550,7 +1550,8 @@ export const TikTokApp = () => {
           .insert({
             user_id: currentUserId,
             video_id: currentVideo.id,
-            model_id: currentVideo.user?.id || currentVideo.user_id || null,
+            // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
+            model_id: currentVideo.creator_id ? null : (currentVideo.model_id || null),
             is_active: true,
             ip_address: null,
             user_agent: navigator.userAgent

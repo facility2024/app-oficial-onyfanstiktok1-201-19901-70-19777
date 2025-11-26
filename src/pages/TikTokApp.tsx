@@ -2050,23 +2050,104 @@ export const TikTokApp = () => {
   }, [emblaApi, isMobile, currentVideoIndex, videos.length]);
 
   const goToModelVideo = async (modelId: string) => {
-    console.log('🔍 Buscando vídeo da modelo:', modelId);
+    console.log('🔍 Buscando vídeo do perfil:', modelId);
     
     // Primeiro tentar encontrar nos vídeos já carregados
     const modelVideoIndex = videos.findIndex(video => 
-      video.user.id === modelId || video.model_id === modelId
+      video.user.id === modelId || video.model_id === modelId || video.creator_id === modelId
     );
     if (modelVideoIndex !== -1) {
-      console.log('✅ Modelo encontrada nos vídeos carregados, indo para índice:', modelVideoIndex);
+      console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
       emblaApi?.scrollTo(modelVideoIndex);
       setShowProfile(true);
       return;
     }
     
-    // Se não encontrou, carregar vídeos da modelo do banco
+    // Verificar se é um criador primeiro
     try {
-      console.log('🔄 Carregando vídeos da modelo do banco...');
+      console.log('🔍 Verificando se é criador...');
+      const { data: creatorCheck } = await supabase
+        .from('user_roles' as any)
+        .select('user_id')
+        .eq('user_id', modelId)
+        .eq('role', 'creator')
+        .maybeSingle();
+
+      const isCreator = !!creatorCheck;
+      console.log('🎯 É criador?', isCreator);
+
+      if (isCreator) {
+        // Buscar perfil do criador
+        console.log('🔄 Carregando perfil do criador...');
+        const { data: creatorProfile, error: profileError } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('id', modelId)
+          .single();
+
+        if (profileError || !creatorProfile) {
+          console.error('❌ Perfil do criador não encontrado:', profileError);
+          return;
+        }
+
+        // Buscar vídeos do criador
+        console.log('🔄 Carregando vídeos do criador...');
+        const { data: videoData, error: videoError } = await (supabase as any)
+          .from('videos')
+          .select('*')
+          .eq('creator_id', modelId)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (!videoData || videoData.length === 0) {
+          console.log('ℹ️ Nenhum vídeo ativo encontrado para o criador');
+          return;
+        }
+
+        // Transformar o primeiro vídeo encontrado
+        console.log('✅ Vídeo do criador encontrado');
+        const video = videoData[0];
+        const profile = creatorProfile as any;
+        const enrichedVideo = {
+          ...video,
+          title: video.title || `Vídeo ${video.id.slice(0, 8)}`,
+          description: video.description || '',
+          user_id: modelId,
+          creator_id: modelId,
+          music_name: video.title || `Som original - ${profile.name || profile.username || 'Criador'}`,
+          visibility: (video.visibility === 'premium' ? 'premium' : 'public') as 'public' | 'premium',
+          likes_count: video.likes_count || 0,
+          comments_count: video.comments_count || 0,
+          shares_count: video.shares_count || 0,
+          views_count: video.views_count || 0,
+          is_active: true,
+          created_at: video.created_at,
+          user: {
+            id: profile.id,
+            username: profile.username || profile.name || 'Criador',
+            avatar_url: profile.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            created_at: profile.created_at || new Date().toISOString(),
+            bio: profile.bio || ''
+          }
+        };
+
+        // Adicionar o vídeo no início da lista
+        const newVideos = [enrichedVideo, ...videos];
+        setVideos(newVideos as Video[]);
+        setCurrentVideoIndex(0);
+        emblaApi?.scrollTo(0);
+        setShowProfile(true);
+        
+        console.log('✅ Vídeo do criador carregado e perfil aberto');
+        return;
+      }
+
+      // Se não é criador, buscar como modelo
+      console.log('🔄 Carregando como modelo...');
       const { data: modelData, error: modelError } = await supabase
         .from('models')
         .select('*')

@@ -2694,16 +2694,15 @@ export const TikTokApp = () => {
             <h1 className="text-2xl font-bold text-black">Coconudi</h1>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowSearch(true)}
-            className="text-black hover:bg-white/10"
-          >
-            <Search className="h-4 w-4 text-black" />
-          </Button>
-        </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-black/30 transition-colors"
+                  title="Pesquisar"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+              </div>
       </div>
 
       {/* Bonus Gift Component - Hidden, just for functionality */}

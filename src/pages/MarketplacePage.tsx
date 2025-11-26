@@ -350,10 +350,11 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header com Gradiente Colorido */}
-      <div 
-        className="sticky top-0 z-10 backdrop-blur-sm border-b border-white/10"
+    <div className="fixed inset-0 bg-black overflow-y-auto overflow-x-hidden">
+      <div className="min-h-full pb-20">
+        {/* Header com Gradiente Colorido */}
+        <div 
+          className="sticky top-0 z-20 backdrop-blur-sm border-b border-white/10"
         style={{
           background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.95) 0%, rgba(124, 252, 0, 0.95) 25%, rgba(255, 193, 7, 0.95) 50%, rgba(255, 152, 0, 0.95) 75%, rgba(255, 87, 34, 0.95) 100%)'
         }}
@@ -518,6 +519,7 @@ export default function MarketplacePage() {
         open={showCheckoutModal}
         onClose={() => setShowCheckoutModal(false)}
       />
+      </div>
     </div>
   );
 }

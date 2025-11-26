@@ -207,7 +207,7 @@ export default function UserProfile() {
           </div>
 
           {/* Avatar */}
-          <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0">
+          <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
             <div className="relative">
               <div className="w-32 h-32 rounded-full ring-4 ring-background bg-card overflow-hidden shadow-xl">
                 <img 
@@ -233,11 +233,11 @@ export default function UserProfile() {
         </div>
 
         {/* Profile Info Section */}
-        <div className="px-4 md:px-8 pt-20 md:pt-6 pb-6">
+        <div className="px-4 md:px-8 pt-20 pb-6">
           {!isEditing ? (
             <>
               {/* Name and Username */}
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+              <div className="flex flex-col items-center text-center gap-4 mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h1 className="text-2xl md:text-3xl font-bold text-foreground">

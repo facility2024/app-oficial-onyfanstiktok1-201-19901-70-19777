@@ -135,9 +135,11 @@ const CollectionsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gradient-to-br from-primary/90 to-secondary/90 text-white p-4 shadow-lg">
+      <div className="sticky top-0 z-10 text-white p-4 shadow-lg" style={{
+        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+      }}>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -163,12 +165,12 @@ const CollectionsPage = () => {
             ))}
           </div>
         ) : favorites.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Heart size={64} className="mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">
+          <Card className="p-12 text-center bg-gray-900/50 border-white/10">
+            <Heart size={64} className="mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-semibold text-white mb-2">
               Nenhuma coleção ainda
             </h2>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-gray-400 mb-6">
               Favorite vídeos na página Explorar para salvá-los aqui
             </p>
             <Button onClick={() => navigate('/explore')}>
@@ -236,7 +238,7 @@ const CollectionsPage = () => {
 
         {/* Footer info */}
         {favorites.length > 0 && (
-          <div className="mt-8 text-center text-muted-foreground text-sm">
+          <div className="mt-8 text-center text-gray-400 text-sm">
             {favorites.length} {favorites.length === 1 ? 'vídeo salvo' : 'vídeos salvos'}
           </div>
         )}

@@ -118,15 +118,9 @@ export const TikTokApp = () => {
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('app_isMuted');
-    return saved === 'true'; // Retorna true se estava mutado, false caso contrário
+    return saved === 'true';
   });
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
-  
-  // 🔇 PERSISTIR ESTADO DE MUTE
-  useEffect(() => {
-    localStorage.setItem('app_isMuted', isMuted.toString());
-    console.log('🔇 Mute salvo:', isMuted);
-  }, [isMuted]);
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   
@@ -174,6 +168,11 @@ export const TikTokApp = () => {
   useEffect(() => {
     console.log('🔍 DEBUG: showAgeVerification mudou para:', showAgeVerification);
   }, [showAgeVerification]);
+  
+  // 🔇 PERSISTIR ESTADO DE MUTE
+  useEffect(() => {
+    localStorage.setItem('app_isMuted', isMuted.toString());
+  }, [isMuted]);
   
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);

@@ -22,6 +22,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
+import coconudiLogo from '@/assets/coconudi-logo-white.png';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100),
@@ -250,7 +251,22 @@ export default function UserProfile() {
         <div className="relative">
           {/* Cover Image */}
           <div className="h-48 md:h-64 bg-gradient-to-br from-primary/40 via-secondary/40 to-accent/40 animate-gradient relative overflow-hidden">
+            {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
+            
+            {/* Logo Banner */}
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <img 
+                src={coconudiLogo}
+                alt="CocoNudi"
+                className="h-16 md:h-20 lg:h-24 object-contain opacity-80 drop-shadow-lg"
+              />
+            </motion.div>
           </div>
 
           {/* Avatar */}

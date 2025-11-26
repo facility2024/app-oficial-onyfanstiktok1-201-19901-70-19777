@@ -14,7 +14,7 @@ import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTrack
 import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -225,6 +225,8 @@ export const TikTokApp = () => {
   const [pendingRefresh, setPendingRefresh] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const targetVideoId = searchParams.get('video');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { checkAndTrackAction } = useActionTracker();
@@ -1125,6 +1127,25 @@ export const TikTokApp = () => {
     console.log('🔍 Estado inicial de loading:', loading);
     initializeFeed();
   }, []); // Executar apenas uma vez na montagem
+
+  // 🎯 Posicionar no vídeo específico quando vindo de coleções ou links diretos
+  useEffect(() => {
+    if (!targetVideoId || videos.length === 0) return;
+    
+    const videoIndex = videos.findIndex(v => v.id === targetVideoId);
+    console.log('🎯 Procurando vídeo:', targetVideoId, 'Encontrado no índice:', videoIndex);
+    
+    if (videoIndex >= 0) {
+      console.log('✅ Posicionando no vídeo:', videoIndex);
+      setCurrentVideoIndex(videoIndex);
+      // Scroll do carousel para o vídeo específico
+      if (emblaApi) {
+        emblaApi.scrollTo(videoIndex);
+      }
+      // Limpar parâmetro da URL após posicionar
+      setSearchParams({});
+    }
+  }, [targetVideoId, videos, emblaApi, setSearchParams]);
 
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {

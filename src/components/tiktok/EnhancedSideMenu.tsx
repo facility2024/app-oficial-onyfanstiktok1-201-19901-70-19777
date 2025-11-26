@@ -5,6 +5,9 @@ import { useVideoActions } from '@/hooks/useVideoActions';
 import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { FloatingHearts } from './FloatingHearts';
+import { CounterPulse } from './CounterPulse';
+import { RealtimeIndicator } from './RealtimeIndicator';
 
 interface EnhancedSideMenuProps {
   video: Video;
@@ -37,13 +40,27 @@ export const EnhancedSideMenu = ({
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [commentsCount, setCommentsCount] = useState(video.comments_count);
   const [sharesCount, setSharesCount] = useState(video.shares_count);
+  const [heartTrigger, setHeartTrigger] = useState(0);
+  const [isPulsing, setIsPulsing] = useState(false);
+  const [commentPulsing, setCommentPulsing] = useState(false);
   const { toggleLike, shareVideo, viewVideo, loading } = useVideoActions();
 
   // Real-time sync for likes and comments
   const { isConnected: isRealtimeConnected } = useVideoInteractionsRealtime(
     video.id,
-    (delta) => setLikesCount(prev => Math.max(0, prev + delta)),
-    () => setCommentsCount(prev => prev + 1)
+    (delta) => {
+      setLikesCount(prev => Math.max(0, prev + delta));
+      if (delta > 0) {
+        setHeartTrigger(prev => prev + 1);
+        setIsPulsing(true);
+        setTimeout(() => setIsPulsing(false), 500);
+      }
+    },
+    () => {
+      setCommentsCount(prev => prev + 1);
+      setCommentPulsing(true);
+      setTimeout(() => setCommentPulsing(false), 500);
+    }
   );
 
   // Sync counters with video prop changes
@@ -132,7 +149,12 @@ export const EnhancedSideMenu = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 z-30">
+    <div className="flex flex-col gap-4 z-30 relative">
+      <FloatingHearts trigger={heartTrigger} />
+      
+      {/* Real-time Indicator */}
+      <RealtimeIndicator isConnected={isRealtimeConnected} className="absolute -top-8 left-0" />
+      
       {/* Profile */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
         <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition-all">
@@ -152,22 +174,24 @@ export const EnhancedSideMenu = ({
       </div>
 
       {/* Like */}
-      <div className="flex flex-col items-center cursor-pointer group" onClick={handleToggleLike}>
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-200 ${
-          isLiked ? 'bg-white/20 scale-105' : 'bg-white/10 group-hover:bg-white/20'
-        } ${loading ? 'opacity-50' : ''}`}>
-          <Heart className={`w-6 h-6 transition-all ${isLiked ? 'fill-white text-white' : 'text-white'}`} strokeWidth={1.5} />
-        </div>
-        <span className="text-white text-xs mt-1 font-light">{formatCount(likesCount)}</span>
-      </div>
+      <CounterPulse
+        count={likesCount}
+        icon={<Heart className={`w-6 h-6 transition-all ${isLiked ? 'fill-white text-white' : 'text-white'}`} strokeWidth={1.5} />}
+        label={formatCount(likesCount)}
+        isPulsing={isPulsing}
+        isActive={isLiked}
+        onClick={handleToggleLike}
+        className={loading ? 'opacity-50' : ''}
+      />
 
       {/* Comment */}
-      <div className="flex flex-col items-center cursor-pointer group" onClick={handleCommentsClick}>
-        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
-          <MessageCircle className="w-6 h-6 text-white" strokeWidth={1.5} />
-        </div>
-        <span className="text-white text-xs mt-1 font-light">{formatCount(commentsCount)}</span>
-      </div>
+      <CounterPulse
+        count={commentsCount}
+        icon={<MessageCircle className="w-6 h-6 text-white" strokeWidth={1.5} />}
+        label={formatCount(commentsCount)}
+        isPulsing={commentPulsing}
+        onClick={handleCommentsClick}
+      />
 
       {/* Share */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={handleShare}>

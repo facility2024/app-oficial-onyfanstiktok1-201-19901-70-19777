@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
 import { Wifi } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CommentsScreenProps {
   comments: Comment[];
@@ -104,42 +105,56 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
           </div>
         ) : (
           <div className="space-y-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3">
-                <img
-                  src={comment.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                  alt="User"
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-medium text-sm">
-                      {comment.user?.username || 'Usuário'}
-                    </span>
-                    <span className="text-white/50 text-xs">
-                      {formatTimeAgo(comment.created_at)}
-                    </span>
+            <AnimatePresence mode="popLayout">
+              {comments.map((comment, index) => (
+                <motion.div 
+                  key={comment.id}
+                  initial={{ opacity: 0, x: -50, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 50 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 25,
+                    delay: index * 0.05 
+                  }}
+                  className="flex gap-3"
+                >
+                  <img
+                    src={comment.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                    alt="User"
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white font-medium text-sm">
+                        {comment.user?.username || 'Usuário'}
+                      </span>
+                      <span className="text-white/50 text-xs">
+                        {formatTimeAgo(comment.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-white text-sm leading-relaxed mb-2">
+                      {comment.text}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => toggleCommentLike(comment.id)}
+                        className={`flex items-center gap-1 text-xs ${
+                          likedComments.has(comment.id) ? 'text-red-500' : 'text-white/50'
+                        } hover:text-red-400 transition-colors`}
+                      >
+                        <span>{likedComments.has(comment.id) ? '❤️' : '♡'}</span>
+                        <span>{comment.likes_count}</span>
+                      </button>
+                      <button className="text-white/50 hover:text-white text-xs transition-colors">
+                        Responder
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-white text-sm leading-relaxed mb-2">
-                    {comment.text}
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => toggleCommentLike(comment.id)}
-                      className={`flex items-center gap-1 text-xs ${
-                        likedComments.has(comment.id) ? 'text-red-500' : 'text-white/50'
-                      } hover:text-red-400 transition-colors`}
-                    >
-                      <span>{likedComments.has(comment.id) ? '❤️' : '♡'}</span>
-                      <span>{comment.likes_count}</span>
-                    </button>
-                    <button className="text-white/50 hover:text-white text-xs transition-colors">
-                      Responder
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

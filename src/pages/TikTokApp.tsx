@@ -1663,7 +1663,8 @@ export const TikTokApp = () => {
           content: text.trim(),
           user_id: currentUserId,
           video_id: currentVideo.id,
-          model_id: currentVideo.user.id,
+          // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
+          model_id: currentVideo.creator_id ? null : (currentVideo.model_id || null),
           likes_count: 0,
           ip_address: null,
           user_agent: navigator.userAgent

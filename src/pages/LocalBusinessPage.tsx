@@ -61,18 +61,18 @@ const LocalBusinessPage = () => {
   const renderStars = (rating?: number) => {
     if (!rating) return null;
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className={`h-4 w-4 ${
+            className={`h-3 w-3 ${
               star <= rating
                 ? 'fill-yellow-400 text-yellow-400'
                 : 'fill-gray-700 text-gray-700'
             }`}
           />
         ))}
-        <span className="text-sm text-gray-400 ml-1">({rating.toFixed(1)})</span>
+        <span className="text-xs text-gray-400 ml-1">({rating.toFixed(1)})</span>
       </div>
     );
   };
@@ -123,17 +123,17 @@ const LocalBusinessPage = () => {
       {/* Main Content - 2 colunas: cards à esquerda, banner à direita */}
       <div className="max-w-7xl mx-auto p-4 lg:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna Esquerda - Cards de Negócios (2/3 da largura) */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* Coluna Esquerda - Cards de Negócios em Grid (2/3 da largura) */}
+          <div className="lg:col-span-2">
             {loading ? (
               // Loading skeleton
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[1, 2, 3, 4].map((i) => (
                   <Card key={i} className="bg-gray-900/50 border-white/10 animate-pulse">
-                    <CardContent className="p-4">
-                      <div className="h-40 bg-gray-800 rounded-lg mb-3" />
-                      <div className="h-6 bg-gray-800 rounded w-3/4 mb-2" />
-                      <div className="h-4 bg-gray-800 rounded w-1/2" />
+                    <CardContent className="p-3">
+                      <div className="h-24 bg-gray-800 rounded-lg mb-2" />
+                      <div className="h-4 bg-gray-800 rounded w-3/4 mb-1" />
+                      <div className="h-3 bg-gray-800 rounded w-1/2" />
                     </CardContent>
                   </Card>
                 ))}
@@ -147,100 +147,102 @@ const LocalBusinessPage = () => {
                 </CardContent>
               </Card>
             ) : (
-              filteredBusinesses.map((business) => (
-                <Card key={business.id} className="bg-gray-900/50 border border-white/10 hover:border-white/20 transition-all overflow-hidden">
-                  <CardContent className="p-0">
-                    {/* Badge PATROCINADO */}
-                    {business.is_sponsored && (
-                      <div className="px-4 pt-3">
-                        <Badge className="bg-green-500 text-white text-xs font-semibold">
-                          PATROCINADO
-                        </Badge>
-                      </div>
-                    )}
-
-                    {/* Imagem Horizontal (16:9) */}
-                    {business.image_url && (
-                      <div className="relative w-full aspect-video overflow-hidden mt-2 mx-4" style={{ width: 'calc(100% - 2rem)' }}>
-                        <img
-                          src={business.image_url}
-                          alt={business.name}
-                          className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Conteúdo */}
-                    <div className="p-4 space-y-3">
-                      {/* Nome */}
-                      <h3 className="text-xl font-semibold text-white">
-                        {business.name}
-                      </h3>
-
-                      {/* Categoria */}
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <MapPin className="h-4 w-4" />
-                        <span>{business.category}</span>
-                      </div>
-
-                      {/* Avaliação */}
-                      {renderStars(business.rating)}
-
-                      {/* Descrição */}
-                      {business.description && (
-                        <p className="text-gray-300 text-sm line-clamp-2">
-                          {business.description}
-                        </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {filteredBusinesses.map((business) => (
+                  <Card key={business.id} className="bg-gray-900/50 border border-white/10 hover:border-white/20 transition-all overflow-hidden">
+                    <CardContent className="p-0">
+                      {/* Badge PATROCINADO */}
+                      {business.is_sponsored && (
+                        <div className="px-3 pt-2">
+                          <Badge className="bg-green-500 text-white text-xs font-semibold">
+                            PATROCINADO
+                          </Badge>
+                        </div>
                       )}
 
-                      {/* Endereço */}
-                      <p className="text-gray-400 text-sm flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        <span>{business.address}</span>
-                      </p>
+                      {/* Imagem Compacta */}
+                      {business.image_url && (
+                        <div className="relative w-full h-28 overflow-hidden mt-2 mx-3" style={{ width: 'calc(100% - 1.5rem)' }}>
+                          <img
+                            src={business.image_url}
+                            alt={business.name}
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
+                        </div>
+                      )}
 
-                      {/* Info adicional */}
-                      <div className="flex flex-wrap gap-3 text-sm">
-                        {business.phone && (
-                          <a
-                            href={`tel:${business.phone}`}
-                            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
-                          >
-                            <Phone className="h-4 w-4" />
-                            <span>{business.phone}</span>
-                          </a>
+                      {/* Conteúdo */}
+                      <div className="p-3 space-y-2">
+                        {/* Nome */}
+                        <h3 className="text-base font-semibold text-white line-clamp-1">
+                          {business.name}
+                        </h3>
+
+                        {/* Categoria */}
+                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                          <MapPin className="h-3 w-3" />
+                          <span>{business.category}</span>
+                        </div>
+
+                        {/* Avaliação */}
+                        {renderStars(business.rating)}
+
+                        {/* Descrição */}
+                        {business.description && (
+                          <p className="text-gray-300 text-xs line-clamp-1">
+                            {business.description}
+                          </p>
                         )}
-                        {business.website && (
-                          <a
-                            href={business.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
-                          >
-                            <Globe className="h-4 w-4" />
-                            <span>Site</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
+
+                        {/* Endereço */}
+                        <p className="text-gray-400 text-xs flex items-start gap-1">
+                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-1">{business.address}</span>
+                        </p>
+
+                        {/* Info adicional */}
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          {business.phone && (
+                            <a
+                              href={`tel:${business.phone}`}
+                              className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+                            >
+                              <Phone className="h-3 w-3" />
+                              <span>{business.phone}</span>
+                            </a>
+                          )}
+                          {business.website && (
+                            <a
+                              href={business.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+                            >
+                              <Globe className="h-3 w-3" />
+                              <span>Site</span>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* CTA Button compacto com gradiente */}
+                        <Button
+                          onClick={() => handleGetDirections(business)}
+                          size="sm"
+                          className="w-full text-white font-semibold text-xs"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
+                          }}
+                        >
+                          Como Chegar
+                        </Button>
                       </div>
-
-                      {/* CTA Button com gradiente */}
-                      <Button
-                        onClick={() => handleGetDirections(business)}
-                        className="w-full text-white font-semibold"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
-                        }}
-                      >
-                        Como Chegar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </div>
 

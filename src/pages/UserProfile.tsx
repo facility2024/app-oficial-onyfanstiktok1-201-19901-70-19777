@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { motion } from 'framer-motion';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100),
@@ -207,7 +208,16 @@ export default function UserProfile() {
           </div>
 
           {/* Avatar */}
-          <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
+          <motion.div 
+            className="absolute -bottom-16 left-1/2 -translate-x-1/2"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ 
+              duration: 0.5, 
+              delay: 0.2,
+              ease: [0.16, 1, 0.3, 1]
+            }}
+          >
             <div className="relative">
               <div className="w-32 h-32 rounded-full ring-4 ring-background bg-card overflow-hidden shadow-xl">
                 <img 
@@ -229,7 +239,7 @@ export default function UserProfile() {
                 </label>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Profile Info Section */}

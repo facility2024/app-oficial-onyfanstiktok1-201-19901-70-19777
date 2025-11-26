@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
@@ -19,51 +19,18 @@ export const useVideoInteractionsRealtime = (
   const [isConnected, setIsConnected] = useState(false);
   const [interactionChanges, setInteractionChanges] = useState<InteractionChange[]>([]);
   const [newComments, setNewComments] = useState<any[]>([]);
-
-  const handleLikeChange = useCallback((payload: RealtimePostgresChangesPayload<any>) => {
-    const newData = payload.new as any;
-    const oldData = payload.old as any;
-    
-    console.log('❤️ Real-time like change:', { eventType: payload.eventType, newData, oldData });
-    
-    if (payload.eventType === 'INSERT' && newData?.is_active) {
-      onLikeChange?.(1);
-      setInteractionChanges(prev => [...prev, {
-        type: 'like',
-        videoId: newData.video_id,
-        userId: newData.user_id,
-        isActive: true,
-        timestamp: Date.now()
-      }]);
-    } else if (payload.eventType === 'DELETE' || (payload.eventType === 'UPDATE' && !newData?.is_active && oldData?.is_active)) {
-      onLikeChange?.(-1);
-      setInteractionChanges(prev => [...prev, {
-        type: 'like',
-        videoId: oldData?.video_id || newData?.video_id,
-        userId: oldData?.user_id || newData?.user_id,
-        isActive: false,
-        timestamp: Date.now()
-      }]);
-    }
+  
+  // Refs para manter callbacks estáveis
+  const onLikeChangeRef = useRef(onLikeChange);
+  const onCommentChangeRef = useRef(onCommentChange);
+  
+  // Atualizar refs quando callbacks mudam (sem disparar useEffect)
+  useEffect(() => {
+    onLikeChangeRef.current = onLikeChange;
   }, [onLikeChange]);
-
-  const handleCommentChange = useCallback((payload: RealtimePostgresChangesPayload<any>) => {
-    if (payload.eventType === 'INSERT') {
-      const newComment = payload.new as any;
-      console.log('💬 Real-time new comment:', newComment);
-      
-      setNewComments(prev => [...prev, newComment]);
-      onCommentChange?.(newComment);
-      
-      setInteractionChanges(prev => [...prev, {
-        type: 'comment',
-        videoId: newComment.video_id,
-        userId: newComment.user_id,
-        isActive: true,
-        data: newComment,
-        timestamp: Date.now()
-      }]);
-    }
+  
+  useEffect(() => {
+    onCommentChangeRef.current = onCommentChange;
   }, [onCommentChange]);
 
   useEffect(() => {
@@ -81,7 +48,32 @@ export const useVideoInteractionsRealtime = (
         schema: 'public',
         table: 'likes',
         filter: `video_id=eq.${videoId}`
-      }, handleLikeChange)
+      }, (payload: RealtimePostgresChangesPayload<any>) => {
+        const newData = payload.new as any;
+        const oldData = payload.old as any;
+        
+        console.log('❤️ Real-time like change:', { eventType: payload.eventType, newData, oldData });
+        
+        if (payload.eventType === 'INSERT' && newData?.is_active !== false) {
+          onLikeChangeRef.current?.(1);
+          setInteractionChanges(prev => [...prev, {
+            type: 'like',
+            videoId: newData.video_id,
+            userId: newData.user_id,
+            isActive: true,
+            timestamp: Date.now()
+          }]);
+        } else if (payload.eventType === 'DELETE' || (payload.eventType === 'UPDATE' && !newData?.is_active && oldData?.is_active)) {
+          onLikeChangeRef.current?.(-1);
+          setInteractionChanges(prev => [...prev, {
+            type: 'like',
+            videoId: oldData?.video_id || newData?.video_id,
+            userId: oldData?.user_id || newData?.user_id,
+            isActive: false,
+            timestamp: Date.now()
+          }]);
+        }
+      })
       .subscribe((status) => {
         console.log('❤️ Likes channel status:', status);
         setIsConnected(status === 'SUBSCRIBED');
@@ -94,7 +86,22 @@ export const useVideoInteractionsRealtime = (
         schema: 'public',
         table: 'comments',
         filter: `video_id=eq.${videoId}`
-      }, handleCommentChange)
+      }, (payload: RealtimePostgresChangesPayload<any>) => {
+        const newComment = payload.new as any;
+        console.log('💬 Real-time new comment:', newComment);
+        
+        setNewComments(prev => [...prev, newComment]);
+        onCommentChangeRef.current?.(newComment);
+        
+        setInteractionChanges(prev => [...prev, {
+          type: 'comment',
+          videoId: newComment.video_id,
+          userId: newComment.user_id,
+          isActive: true,
+          data: newComment,
+          timestamp: Date.now()
+        }]);
+      })
       .subscribe((status) => {
         console.log('💬 Comments channel status:', status);
       });
@@ -104,7 +111,7 @@ export const useVideoInteractionsRealtime = (
       supabase.removeChannel(likesChannel);
       supabase.removeChannel(commentsChannel);
     };
-  }, [videoId, handleLikeChange, handleCommentChange]);
+  }, [videoId]);
 
   return { 
     isConnected, 

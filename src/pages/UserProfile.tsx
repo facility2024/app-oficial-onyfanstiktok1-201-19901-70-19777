@@ -250,7 +250,12 @@ export default function UserProfile() {
         {/* Cover Image + Avatar Section */}
         <div className="relative">
           {/* Cover Image */}
-          <div className="h-48 md:h-64 bg-gradient-to-br from-primary/40 via-secondary/40 to-accent/40 animate-gradient relative overflow-hidden">
+          <div 
+            className="h-48 md:h-64 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+            }}
+          >
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
             

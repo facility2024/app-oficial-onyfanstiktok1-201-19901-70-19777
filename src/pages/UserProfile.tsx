@@ -174,17 +174,17 @@ export default function UserProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (!user && !loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md bg-card border border-border rounded-lg p-6">
-          <p className="text-center text-muted-foreground mb-4">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="max-w-md bg-gray-900/50 border border-white/10 rounded-lg p-6">
+          <p className="text-center text-gray-400 mb-4">
             Você precisa estar logado para ver o perfil
           </p>
           <Button onClick={() => navigate('/auth')} className="w-full">
@@ -208,9 +208,9 @@ export default function UserProfile() {
 
   if (!displayProfile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md bg-card border border-border rounded-lg p-6">
-          <p className="text-center text-muted-foreground">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="max-w-md bg-gray-900/50 border border-white/10 rounded-lg p-6">
+          <p className="text-center text-gray-400">
             Perfil não encontrado
           </p>
           <Button onClick={() => navigate('/app')} className="w-full mt-4">
@@ -222,14 +222,17 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b border-border">
+      <div className="sticky top-0 z-10 border-b border-white/10" style={{
+        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+      }}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/app')}
+            className="text-gray-800 hover:bg-white/20"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Voltar
@@ -239,6 +242,7 @@ export default function UserProfile() {
             variant="ghost" 
             size="sm"
             onClick={() => setIsEditing(!isEditing)}
+            className="text-gray-800 hover:bg-white/20"
           >
             <Settings className="w-5 h-5" />
           </Button>
@@ -257,7 +261,7 @@ export default function UserProfile() {
             }}
           >
             {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             
             {/* Logo Banner */}
             <motion.div 
@@ -286,7 +290,7 @@ export default function UserProfile() {
             }}
           >
             <div className="relative">
-              <div className="w-32 h-32 rounded-full ring-4 ring-background bg-card overflow-hidden shadow-xl">
+              <div className="w-32 h-32 rounded-full ring-4 ring-black bg-gray-900 overflow-hidden shadow-xl">
                 <img 
                   src={avatarPreview || displayProfile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user?.id} 
                   alt={displayProfile.username || 'User'}
@@ -295,8 +299,10 @@ export default function UserProfile() {
               </div>
               
               {isEditing && (
-                <label className="absolute bottom-0 right-0 bg-primary p-2 rounded-full cursor-pointer hover:opacity-80 transition shadow-lg">
-                  <Camera className="w-5 h-5 text-primary-foreground" />
+                <label className="absolute bottom-0 right-0 p-2 rounded-full cursor-pointer hover:opacity-80 transition shadow-lg" style={{
+                  background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
+                }}>
+                  <Camera className="w-5 h-5 text-gray-800" />
                   <input 
                     type="file" 
                     accept="image/*"
@@ -317,18 +323,18 @@ export default function UserProfile() {
               <div className="flex flex-col items-center text-center gap-4 mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white">
                       {displayProfile.full_name || 'Usuário'}
                     </h1>
                     {isCreator && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
                         <Sparkles className="w-3 h-3" />
                         Criador
                       </div>
                     )}
                   </div>
                   {displayProfile.username && (
-                    <p className="text-muted-foreground">
+                    <p className="text-gray-400">
                       @{displayProfile.username}
                     </p>
                   )}
@@ -339,12 +345,14 @@ export default function UserProfile() {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(true)}
+                    className="bg-white/5 border-white/10 text-white hover:bg-white/10"
                   >
                     Editar Perfil
                   </Button>
                   <Button 
                     variant="outline"
                     size="sm"
+                    className="bg-white/5 border-white/10 text-white hover:bg-white/10"
                   >
                     <Share2 className="w-4 h-4" />
                   </Button>
@@ -352,52 +360,52 @@ export default function UserProfile() {
               </div>
 
               {/* Stats */}
-              <div className="flex gap-6 mb-6 pb-6 border-b border-border">
+              <div className="flex gap-6 mb-6 pb-6 border-b border-white/10">
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-foreground font-bold text-xl mb-1">
-                    <Heart className="w-5 h-5 text-primary" />
+                  <div className="flex items-center justify-center gap-1 text-white font-bold text-xl mb-1">
+                    <Heart className="w-5 h-5 text-pink-500" />
                     {stats.likes}
                   </div>
-                  <p className="text-muted-foreground text-sm">Curtidas</p>
+                  <p className="text-gray-400 text-sm">Curtidas</p>
                 </div>
                 
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-foreground font-bold text-xl mb-1">
-                    <MessageCircle className="w-5 h-5 text-secondary" />
+                  <div className="flex items-center justify-center gap-1 text-white font-bold text-xl mb-1">
+                    <MessageCircle className="w-5 h-5 text-blue-400" />
                     {stats.comments}
                   </div>
-                  <p className="text-muted-foreground text-sm">Comentários</p>
+                  <p className="text-gray-400 text-sm">Comentários</p>
                 </div>
                 
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-foreground font-bold text-xl mb-1">
-                    <Users className="w-5 h-5 text-accent" />
+                  <div className="flex items-center justify-center gap-1 text-white font-bold text-xl mb-1">
+                    <Users className="w-5 h-5 text-green-400" />
                     {stats.following}
                   </div>
-                  <p className="text-muted-foreground text-sm">Seguindo</p>
+                  <p className="text-gray-400 text-sm">Seguindo</p>
                 </div>
               </div>
 
               {/* Bio */}
               {displayProfile.bio && (
                 <div className="mb-6">
-                  <p className="text-foreground">
+                  <p className="text-gray-300">
                     {displayProfile.bio}
                   </p>
                 </div>
               )}
 
               {/* Member Since */}
-              <div className="text-sm text-muted-foreground mb-6">
+              <div className="text-sm text-gray-400 mb-6">
                 📅 Membro desde {format(new Date(displayProfile.created_at), 'dd/MM/yyyy')}
               </div>
 
               {/* Limpar Dados Anônimos */}
-              <div className="bg-card border border-border rounded-lg p-4 mb-4">
+              <div className="bg-gray-900/50 border border-white/10 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-foreground">Dados Anônimos</h3>
-                    <p className="text-xs text-muted-foreground">
+                    <h3 className="text-sm font-medium text-white">Dados Anônimos</h3>
+                    <p className="text-xs text-gray-400">
                       Limpar follows e interações de sessões anteriores
                     </p>
                   </div>
@@ -405,7 +413,7 @@ export default function UserProfile() {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowClearDataAlert(true)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-red-400 hover:text-red-300 border-white/10 hover:bg-white/5"
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Limpar
@@ -417,8 +425,11 @@ export default function UserProfile() {
               {isCreator && (
                 <Button 
                   onClick={() => navigate('/creator-studio')}
-                  className="w-full mb-4"
+                  className="w-full mb-4 text-white font-semibold"
                   size="lg"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
+                  }}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Acessar Creator Studio
@@ -427,13 +438,13 @@ export default function UserProfile() {
 
               {/* Become a Creator Link (if NOT creator) */}
               {!isCreator && !creatorLoading && (
-                <div className="bg-card border border-border rounded-lg p-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
+                <div className="bg-gray-900/50 border border-white/10 rounded-lg p-4 text-center">
+                  <p className="text-sm text-gray-400 mb-2">
                     Quer compartilhar seu talento com o mundo?
                   </p>
                   <button
                     onClick={() => navigate('/creator-application')}
-                    className="text-primary hover:underline text-sm font-medium flex items-center gap-1 justify-center mx-auto"
+                    className="text-green-400 hover:text-green-300 hover:underline text-sm font-medium flex items-center gap-1 justify-center mx-auto"
                   >
                     Torne-se um criador
                     <Sparkles className="w-3 h-3" />
@@ -445,39 +456,43 @@ export default function UserProfile() {
             /* Edit Mode */
             <div className="space-y-4 max-w-lg">
               <div>
-                <Label>Nome Completo</Label>
+                <Label className="text-white">Nome Completo</Label>
                 <Input 
                   value={formData.full_name}
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                  className="bg-gray-900/50 border-white/10 text-white"
                 />
               </div>
 
               <div>
-                <Label>Username</Label>
+                <Label className="text-white">Username</Label>
                 <Input 
                   value={formData.username}
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  className="bg-gray-900/50 border-white/10 text-white"
                 />
               </div>
 
               <div>
-                <Label>Email</Label>
+                <Label className="text-white">Email</Label>
                 <Input 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   type="email"
+                  className="bg-gray-900/50 border-white/10 text-white"
                 />
               </div>
 
               <div>
-                <Label>Bio</Label>
+                <Label className="text-white">Bio</Label>
                 <Textarea 
                   value={formData.bio}
                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
                   rows={3}
                   maxLength={500}
+                  className="bg-gray-900/50 border-white/10 text-white"
                 />
-                <p className="text-muted-foreground text-xs mt-1">
+                <p className="text-gray-400 text-xs mt-1">
                   {formData.bio.length}/500 caracteres
                 </p>
               </div>
@@ -486,7 +501,10 @@ export default function UserProfile() {
                 <Button 
                   onClick={handleSave}
                   disabled={updating}
-                  className="flex-1"
+                  className="flex-1 text-white font-semibold"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
+                  }}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {updating ? 'Salvando...' : 'Salvar'}
@@ -499,7 +517,7 @@ export default function UserProfile() {
                     setAvatarPreview(null);
                   }}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Cancelar

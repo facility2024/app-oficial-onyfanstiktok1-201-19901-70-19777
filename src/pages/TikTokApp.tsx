@@ -661,7 +661,8 @@ export const TikTokApp = () => {
       setLoading(true);
       
       // Check cache first for faster initial load
-      const cacheKey = 'initial_feed';
+      const CACHE_VERSION = 'v2'; // Incrementar quando houver mudanças na estrutura
+      const cacheKey = `initial_feed_${CACHE_VERSION}`;
       const cached = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
       

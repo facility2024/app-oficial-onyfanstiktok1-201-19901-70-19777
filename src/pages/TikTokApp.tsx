@@ -2627,7 +2627,7 @@ export const TikTokApp = () => {
           </button>
 
           <button 
-            onClick={() => console.log('Marketplace')}
+            onClick={() => navigate('/marketplace')}
             className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
           >
             <ShoppingBag className="w-7 h-7 mb-0.5" strokeWidth={1.5} />

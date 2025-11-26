@@ -46,6 +46,9 @@ export const CategoryMenu = ({
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const navigate = useNavigate();
   const { isCreator, loading: creatorLoading } = useCreatorRole();
+  
+  // Debug log para verificar o estado do creator
+  console.log('🔐 CategoryMenu useCreatorRole:', { isCreator, creatorLoading });
 
   const handleLogout = async () => {
     try {
@@ -134,8 +137,9 @@ export const CategoryMenu = ({
     }
   ];
 
-  // Adicionar "Sou Criador" apenas se isCreator === true
-  if (isCreator && !creatorLoading) {
+  // Adicionar "Sou Criador" apenas se isCreator === true E não está carregando
+  if (isCreator === true && creatorLoading === false) {
+    console.log('✅ Adicionando botão Sou Criador - usuário É criador');
     baseMenuItems.push({
       id: "creator",
       name: "Sou Criador",
@@ -148,6 +152,8 @@ export const CategoryMenu = ({
         });
       }
     });
+  } else {
+    console.log('❌ NÃO adicionando botão Sou Criador', { isCreator, creatorLoading });
   }
 
   // Adicionar "Sair" no final
@@ -156,7 +162,13 @@ export const CategoryMenu = ({
     name: "Sair",
     icon: <LogOut className="w-5 h-5" />,
     onClick: () => {
-      setShowLogoutAlert(true);
+      console.log('🚪 Botão Sair clicado - fechando Sheet e abrindo AlertDialog');
+      // Fechar o Sheet primeiro para evitar conflitos de portal
+      setOpen(false);
+      // Delay para garantir que o Sheet fechou antes de abrir o AlertDialog
+      setTimeout(() => {
+        setShowLogoutAlert(true);
+      }, 150);
     }
   });
 
@@ -230,9 +242,12 @@ export const CategoryMenu = ({
                     variant="ghost"
                     className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none cursor-pointer"
                     onClick={(e) => {
-                      console.log(`🎯 Clique no botão: ${item.name}`);
+                      console.log(`🎯 Clique no botão: ${item.name} (id: ${item.id})`);
                       e.preventDefault();
-                      e.stopPropagation();
+                      // Não usar stopPropagation para o botão Sair para não interferir com o AlertDialog
+                      if (item.id !== 'exit') {
+                        e.stopPropagation();
+                      }
                       item.onClick();
                     }}
                   >

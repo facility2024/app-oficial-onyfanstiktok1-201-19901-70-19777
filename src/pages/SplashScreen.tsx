@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import coconudiLogo from '@/assets/coconudi-splash-logo.png';
 
 export const SplashScreen = () => {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ export const SplashScreen = () => {
           <img 
             src={coconudiLogo}
             alt="CocoNudi"
-            className="w-48 h-48 object-contain drop-shadow-2xl"
+            className="w-64 h-64 object-contain drop-shadow-2xl"
           />
         </div>
         

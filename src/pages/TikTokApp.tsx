@@ -730,6 +730,25 @@ export const TikTokApp = () => {
         throw videosError;
       }
 
+      // 🔍 DEBUG DETALHADO - Verificar dados dos vídeos
+      console.log('🔍 Query videos result:', {
+        total: videosData?.length || 0,
+        withCreatorId: (videosData as any[])?.filter((v: any) => v.creator_id)?.length || 0,
+        withModelId: (videosData as any[])?.filter((v: any) => v.model_id)?.length || 0,
+        sample: videosData?.[0] ? {
+          id: videosData[0].id,
+          title: videosData[0].title,
+          creator_id: (videosData[0] as any).creator_id,
+          model_id: (videosData[0] as any).model_id,
+          is_active: videosData[0].is_active
+        } : 'nenhum vídeo',
+        creatorVideos: (videosData as any[])?.filter((v: any) => v.creator_id)?.map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          creator_id: v.creator_id
+        })) || []
+      });
+
       const { data: modelsData, error: modelsError } = await supabase
         .from('models')
         .select('*')

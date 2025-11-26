@@ -130,8 +130,8 @@ const CollectionsPage = () => {
   };
 
   const handleVideoClick = (video: FavoriteVideo['video']) => {
-    // Navegar para o perfil da modelo
-    navigate(`/profile/${video.user_id}`);
+    // Navegar para o feed no vídeo específico
+    navigate(`/app?video=${video.id}`);
   };
 
   return (

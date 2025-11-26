@@ -23,7 +23,6 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
   const [models, setModels] = useState<Model[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [filterType, setFilterType] = useState<'all' | 'creators' | 'models'>('all');
 
   useEffect(() => {
     if (isOpen) {
@@ -96,11 +95,6 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
   };
 
   const filteredModels = models.filter(model => {
-    // Aplicar filtro de tipo
-    if (filterType === 'creators' && !model.is_creator) return false;
-    if (filterType === 'models' && model.is_creator) return false;
-    
-    // Aplicar filtro de busca
     if (!searchQuery.trim()) return true;
     
     const query = searchQuery.toLowerCase().trim();
@@ -109,10 +103,6 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
     
     return name.includes(query) || username.includes(query);
   });
-
-  // Contar criadores e modelos
-  const creatorsCount = models.filter(m => m.is_creator).length;
-  const modelsCount = models.filter(m => !m.is_creator).length;
 
   if (!isOpen) return null;
 
@@ -141,42 +131,6 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white/10 text-white placeholder-white/50 rounded-full pl-10 pr-4 py-3 border border-white/20 focus:border-white/40 focus:outline-none"
             />
-          </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="px-4 pb-3">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilterType('all')}
-              className={`flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                filterType === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-white/10 text-white/70 hover:bg-white/20'
-              }`}
-            >
-              Todos ({models.length})
-            </button>
-            <button
-              onClick={() => setFilterType('creators')}
-              className={`flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                filterType === 'creators'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/10 text-white/70 hover:bg-white/20'
-              }`}
-            >
-              ✨ Criadores ({creatorsCount})
-            </button>
-            <button
-              onClick={() => setFilterType('models')}
-              className={`flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                filterType === 'models'
-                  ? 'bg-pink-500 text-white'
-                  : 'bg-white/10 text-white/70 hover:bg-white/20'
-              }`}
-            >
-              Modelos ({modelsCount})
-            </button>
           </div>
         </div>
 

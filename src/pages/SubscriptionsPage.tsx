@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format, differenceInDays, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import coconudiLogo from '@/assets/coconudi-logo-white.png';
 
 interface ModelSubscription {
   id: string;
@@ -141,23 +142,37 @@ const SubscriptionsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gradient-to-br from-primary/90 to-secondary/90 text-white shadow-lg">
+      <div 
+        className="sticky top-0 z-10 text-white shadow-lg"
+        style={{
+          background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+        }}
+      >
         <div className="p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="text-white hover:bg-white/20"
-            >
-              <ArrowLeft size={24} />
-            </Button>
-            <div className="flex items-center gap-2">
-              <Crown size={24} className="fill-yellow-400 text-yellow-400" />
-              <h1 className="text-2xl font-bold">Minhas Assinaturas</h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                className="text-white hover:bg-white/20"
+              >
+                <ArrowLeft size={24} />
+              </Button>
+              <div className="flex items-center gap-2">
+                <Crown size={24} className="fill-yellow-400 text-yellow-400" />
+                <h1 className="text-2xl font-bold">Minhas Assinaturas</h1>
+              </div>
             </div>
+            
+            {/* Logo CocoNudi */}
+            <img 
+              src={coconudiLogo} 
+              alt="CocoNudi" 
+              className="h-8 md:h-10 opacity-90 drop-shadow-lg"
+            />
           </div>
 
           {/* Stats Cards */}
@@ -190,25 +205,25 @@ const SubscriptionsPage = () => {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="p-4">
+              <Card key={i} className="p-4 bg-gray-900/50 border-white/10">
                 <div className="flex gap-4 animate-pulse">
-                  <div className="w-16 h-16 rounded-full bg-muted" />
+                  <div className="w-16 h-16 rounded-full bg-gray-800" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-muted rounded w-32" />
-                    <div className="h-3 bg-muted rounded w-24" />
-                    <div className="h-3 bg-muted rounded w-40" />
+                    <div className="h-4 bg-gray-800 rounded w-32" />
+                    <div className="h-3 bg-gray-800 rounded w-24" />
+                    <div className="h-3 bg-gray-800 rounded w-40" />
                   </div>
                 </div>
               </Card>
             ))}
           </div>
         ) : subscriptions.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Crown size={64} className="mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">
+          <Card className="p-12 text-center bg-gray-900/50 border-white/10">
+            <Crown size={64} className="mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-semibold text-white mb-2">
               Nenhuma assinatura ainda
             </h2>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-gray-400 mb-6">
               Assine suas modelos favoritas para ter acesso a conteúdo exclusivo
             </p>
             <Button onClick={() => navigate('/app')}>
@@ -225,7 +240,7 @@ const SubscriptionsPage = () => {
               return (
                 <Card
                   key={subscription.id}
-                  className={`p-4 transition-all hover:shadow-lg ${
+                  className={`p-4 bg-gray-900/50 border border-white/10 transition-all hover:shadow-lg hover:border-white/20 ${
                     !subscription.is_active ? 'opacity-60' : ''
                   }`}
                 >
@@ -235,7 +250,7 @@ const SubscriptionsPage = () => {
                       className="relative cursor-pointer shrink-0"
                       onClick={() => navigate(`/profile/${subscription.model_id}`)}
                     >
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary">
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/30">
                         <img
                           src={subscription.model.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
                           alt={subscription.model.username}
@@ -243,8 +258,8 @@ const SubscriptionsPage = () => {
                         />
                       </div>
                       {subscription.is_active && (
-                        <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
-                          <Crown size={12} className="fill-yellow-400 text-yellow-400" />
+                        <div className="absolute -top-1 -right-1 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full p-1">
+                          <Crown size={12} className="fill-white text-white" />
                         </div>
                       )}
                     </div>
@@ -256,11 +271,11 @@ const SubscriptionsPage = () => {
                           className="cursor-pointer"
                           onClick={() => navigate(`/profile/${subscription.model_id}`)}
                         >
-                          <h3 className="font-bold text-foreground text-lg truncate">
+                          <h3 className="font-bold text-white text-lg truncate">
                             @{subscription.model.username}
                           </h3>
                           {subscription.model.bio && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
+                            <p className="text-sm text-gray-400 line-clamp-1">
                               {subscription.model.bio}
                             </p>
                           )}
@@ -291,7 +306,7 @@ const SubscriptionsPage = () => {
                           </Badge>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
                           <Calendar size={14} />
                           <span>
                             Assinado em {format(new Date(subscription.subscribed_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -300,8 +315,8 @@ const SubscriptionsPage = () => {
 
                         {subscription.is_active && (
                           <div className="flex items-center gap-2 text-sm">
-                            <RefreshCw size={14} className={isExpiringSoon ? 'text-orange-500' : 'text-muted-foreground'} />
-                            <span className={isExpiringSoon ? 'text-orange-500 font-medium' : 'text-muted-foreground'}>
+                            <RefreshCw size={14} className={isExpiringSoon ? 'text-orange-500' : 'text-gray-400'} />
+                            <span className={isExpiringSoon ? 'text-orange-500 font-medium' : 'text-gray-400'}>
                               {isExpired ? (
                                 'Renovação vencida'
                               ) : daysUntilRenewal === 0 ? (

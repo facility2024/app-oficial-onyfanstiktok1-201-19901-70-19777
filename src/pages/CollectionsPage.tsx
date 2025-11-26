@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Heart } from 'lucide-react';
+import { ArrowLeft, Trash2, Heart, ArrowUpDown, Clock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface FavoriteVideo {
   id: string;
@@ -24,11 +25,14 @@ interface FavoriteVideo {
   };
 }
 
+type SortOption = 'newest' | 'oldest' | 'by_model';
+
 const CollectionsPage = () => {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoriteVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   useEffect(() => {
     checkUser();
@@ -136,13 +140,36 @@ const CollectionsPage = () => {
     navigate(`/app?video=${video.id}`);
   };
 
+  const getSortedFavorites = () => {
+    const sorted = [...favorites];
+    
+    switch (sortBy) {
+      case 'newest':
+        return sorted.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      case 'oldest':
+        return sorted.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      case 'by_model':
+        return sorted.sort((a, b) => {
+          const nameA = a.video.user?.username || '';
+          const nameB = b.video.user?.username || '';
+          return nameA.localeCompare(nameB);
+        });
+      default:
+        return sorted;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="sticky top-0 z-10 text-white p-4 shadow-lg" style={{
         background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
       }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <Button
             variant="ghost"
             size="icon"
@@ -156,6 +183,42 @@ const CollectionsPage = () => {
             <h1 className="text-2xl font-bold">Minhas Coleções</h1>
           </div>
         </div>
+
+        {/* Filtros de ordenação */}
+        {favorites.length > 0 && (
+          <div className="flex items-center justify-between">
+            <span className="text-white text-sm font-medium">
+              {favorites.length} {favorites.length === 1 ? 'vídeo' : 'vídeos'}
+            </span>
+            
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="w-[180px] bg-white/20 border-white/30 text-white backdrop-blur-sm hover:bg-white/30">
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-white/20">
+                <SelectItem value="newest" className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Mais recentes
+                  </div>
+                </SelectItem>
+                <SelectItem value="oldest" className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Mais antigos
+                  </div>
+                </SelectItem>
+                <SelectItem value="by_model" className="text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Por modelo
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -181,7 +244,7 @@ const CollectionsPage = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {favorites.map((favorite) => (
+            {getSortedFavorites().map((favorite) => (
               <div
                 key={favorite.id}
                 className="group relative aspect-[9/16] rounded-lg overflow-hidden bg-black cursor-pointer"

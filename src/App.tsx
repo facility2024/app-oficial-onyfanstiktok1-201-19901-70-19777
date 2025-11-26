@@ -21,6 +21,7 @@ const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const FollowingPage = lazy(() => import("./pages/FollowingPage"));
 const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 const LocalBusinessPage = lazy(() => import("./pages/LocalBusinessPage"));
+const BusinessFavoritesPage = lazy(() => import("./pages/BusinessFavoritesPage"));
 const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 const AdvertisersPage = lazy(() => import("./pages/AdvertisersPage"));
@@ -180,6 +181,13 @@ const App = () => (
           <Route path="/local-businesses" element={
             <Suspense fallback={<ComponentFallback />}>
               <LocalBusinessPage />
+            </Suspense>
+          } />
+          
+          {/* Favoritos de Negócios Locais */}
+          <Route path="/business-favorites" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <BusinessFavoritesPage />
             </Suspense>
           } />
           

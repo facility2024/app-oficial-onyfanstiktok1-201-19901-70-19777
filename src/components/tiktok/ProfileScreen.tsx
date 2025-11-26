@@ -821,35 +821,6 @@ if (!isOpen) return null;
                 </button>
               </div>
 
-              {/* Informações Adicionais */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <button 
-                  className="w-full flex items-center justify-between text-white/60 text-xs uppercase font-semibold mb-3"
-                  onClick={() => {/* Toggle accordion */}}
-                >
-                  PACOTES DE ASSINATURA
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                <div className="space-y-2">
-                  <button className="w-full bg-[#00D5FF] hover:bg-[#00B8E0] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
-                    <span>3 MESES (15off)</span>
-                    <span>$38.25 total</span>
-                  </button>
-
-                  <button className="w-full bg-[#00D5FF]/80 hover:bg-[#00D5FF] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
-                    <span>6 MESES (20off)</span>
-                    <span>$72.00 total</span>
-                  </button>
-
-                  <button className="w-full bg-[#00D5FF]/60 hover:bg-[#00D5FF] text-black font-bold py-3 px-4 rounded-full flex items-center justify-between transition-colors">
-                    <span>12 MESES (25off)</span>
-                    <span>$135.00 total</span>
-                  </button>
-                </div>
-              </div>
 
               {/* Footer Links */}
               <div className="flex items-center justify-center gap-3 mt-4 text-white/40 text-xs">

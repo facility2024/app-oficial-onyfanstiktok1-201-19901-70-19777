@@ -92,7 +92,7 @@ export const useVideoActions = () => {
 
   const addComment = useCallback(async (
     videoId: string,
-    modelId: string,
+    modelId: string | null,
     userId: string,
     content: string
   ) => {
@@ -103,6 +103,7 @@ export const useVideoActions = () => {
         .from('comments')
         .insert([{
           video_id: videoId,
+          // ✅ Para vídeos de criadores, model_id será null (evita FK violation)
           model_id: modelId,
           user_id: userId,
           content: content,
@@ -129,7 +130,7 @@ export const useVideoActions = () => {
             
           if (simpleError) throw simpleError;
           
-          await trackVideoAction('comment', videoId, modelId, userId, { 
+          await trackVideoAction('comment', videoId, modelId || '', userId, { 
             comment_length: content.length,
             rls_fallback: true
           });
@@ -141,7 +142,7 @@ export const useVideoActions = () => {
         }
       }
 
-      await trackVideoAction('comment', videoId, modelId, userId, { 
+      await trackVideoAction('comment', videoId, modelId || '', userId, { 
         comment_length: content.length 
       });
       

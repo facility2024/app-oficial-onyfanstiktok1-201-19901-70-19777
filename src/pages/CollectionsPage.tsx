@@ -14,6 +14,7 @@ interface FavoriteVideo {
     id: string;
     title: string;
     thumbnail_url: string;
+    video_url: string;
     user_id: string;
     user?: {
       id: string;
@@ -65,7 +66,7 @@ const CollectionsPage = () => {
       const videoIds = (favoritesData as any[]).map((fav: any) => fav.video_id);
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
-        .select('id, title, thumbnail_url, model_id')
+        .select('id, title, thumbnail_url, video_url, model_id')
         .in('id', videoIds);
 
       if (videosError) throw videosError;
@@ -92,6 +93,7 @@ const CollectionsPage = () => {
             id: video.id,
             title: video.title,
             thumbnail_url: video.thumbnail_url,
+            video_url: video.video_url,
             user_id: video.model_id,
             user: model ? {
               id: model.id,
@@ -184,13 +186,27 @@ const CollectionsPage = () => {
                 key={favorite.id}
                 className="group relative aspect-[9/16] rounded-lg overflow-hidden bg-black cursor-pointer"
               >
-                {/* Thumbnail */}
-                <img
-                  src={favorite.video.thumbnail_url}
-                  alt={favorite.video.title}
+                {/* Video Player */}
+                <video
+                  src={favorite.video.video_url}
                   className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                  muted
+                  loop
+                  playsInline
+                  autoPlay
+                  preload="metadata"
+                  poster={favorite.video.thumbnail_url}
                   onClick={() => handleVideoClick(favorite.video)}
                 />
+                
+                {/* Play Icon Overlay */}
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="bg-black/40 rounded-full p-3">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
 
                 {/* Overlay com informações */}
                 <div

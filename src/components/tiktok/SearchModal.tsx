@@ -107,7 +107,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm">
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">

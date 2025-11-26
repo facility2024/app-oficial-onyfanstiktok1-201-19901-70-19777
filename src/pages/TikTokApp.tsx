@@ -954,10 +954,10 @@ export const TikTokApp = () => {
               id: owner.id,
               username: displayName,
               name: displayName,
-              avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+              avatar_url: owner.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
               followers_count: 0,
               is_live: false,
-              bio: '',
+              bio: owner.bio || '',
               posting_panel_url: '',
               created_at: owner.created_at || ''
             };

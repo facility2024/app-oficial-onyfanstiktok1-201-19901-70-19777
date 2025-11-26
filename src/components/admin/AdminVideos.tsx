@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Upload, Eye, Heart, Share2, Clock, Calendar, Filter } from 'lucide-react';
+import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export const AdminVideos = () => {
   const [filter, setFilter] = useState('all');
+  const [videoType, setVideoType] = useState<'all' | 'models' | 'creators'>('all');
+  const [isTogglingAll, setIsTogglingAll] = useState(false);
   const [videoStats, setVideoStats] = useState([
     { label: 'Total de Vídeos', value: '0', icon: Play, color: 'text-primary' },
     { label: 'Views Hoje', value: '0', icon: Eye, color: 'text-success' },
@@ -24,66 +27,109 @@ export const AdminVideos = () => {
     return num.toString();
   };
 
+  const fetchVideoData = async () => {
+    try {
+      // Buscar estatísticas dos vídeos
+      const { count: totalVideos } = await supabase
+        .from('videos')
+        .select('*', { count: 'exact', head: true });
+
+      const { data: videoData } = await supabase
+        .from('videos')
+        .select('views_count, likes_count, shares_count');
+
+      const totalLikes = videoData?.reduce((sum, video) => sum + (video.likes_count || 0), 0) || 0;
+      const totalShares = videoData?.reduce((sum, video) => sum + (video.shares_count || 0), 0) || 0;
+
+      // Views Hoje a partir da tabela video_views (dia LOCAL)
+      const now = new Date();
+      const startOfDay = new Date(now); startOfDay.setHours(0,0,0,0);
+      const endOfDay = new Date(now); endOfDay.setHours(23,59,59,999);
+      const { count: viewsToday } = await supabase
+        .from('video_views')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString());
+
+      setVideoStats([
+        { label: 'Total de Vídeos', value: formatNumber(totalVideos || 0), icon: Play, color: 'text-primary' },
+        { label: 'Views Hoje', value: formatNumber(viewsToday || 0), icon: Eye, color: 'text-success' },
+        { label: 'Curtidas', value: formatNumber(totalLikes), icon: Heart, color: 'text-destructive' },
+        { label: 'Compartilhamentos', value: formatNumber(totalShares), icon: Share2, color: 'text-warning' },
+      ]);
+
+      // Buscar vídeos com dados do usuário e perfil do criador
+      const { data: videosData } = await supabase
+        .from('videos')
+        .select(`
+          *,
+          users (username, avatar_url),
+          profiles!videos_creator_id_fkey (name, email)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      setVideos(videosData?.map((video: any) => ({
+        id: video.id,
+        title: video.title || 'Vídeo sem título',
+        thumbnail: video.thumbnail_url || '/api/placeholder/160/90',
+        duration: '0:00',
+        views: formatNumber(video.views_count || 0),
+        likes: formatNumber(video.likes_count || 0),
+        shares: formatNumber(video.shares_count || 0),
+        uploadDate: video.created_at,
+        status: video.is_active ? 'published' : 'draft',
+        category: 'geral',
+        model_id: video.model_id,
+        creator_id: video.creator_id,
+        creator_email: video.profiles?.email,
+        is_active: video.is_active
+      })) || []);
+
+    } catch (error) {
+      console.error('Erro ao buscar dados dos vídeos:', error);
+    }
+  };
+
+  const toggleAllModelVideos = async (activate: boolean) => {
+    setIsTogglingAll(true);
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_active: activate })
+        .not('model_id', 'is', null)
+        .is('creator_id', null);
+      
+      if (error) throw error;
+      
+      toast.success(`Vídeos de modelos ${activate ? 'ativados' : 'desativados'} com sucesso!`);
+      await fetchVideoData();
+    } catch (error) {
+      console.error('Erro ao atualizar vídeos:', error);
+      toast.error('Erro ao atualizar vídeos de modelos');
+    } finally {
+      setIsTogglingAll(false);
+    }
+  };
+
+  const toggleVideoStatus = async (videoId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_active: !currentStatus })
+        .eq('id', videoId);
+      
+      if (error) throw error;
+      
+      toast.success(`Vídeo ${!currentStatus ? 'ativado' : 'desativado'}!`);
+      await fetchVideoData();
+    } catch (error) {
+      console.error('Erro ao atualizar vídeo:', error);
+      toast.error('Erro ao atualizar status do vídeo');
+    }
+  };
+
   useEffect(() => {
-    const fetchVideoData = async () => {
-      try {
-        // Buscar estatísticas dos vídeos
-        const { count: totalVideos } = await supabase
-          .from('videos')
-          .select('*', { count: 'exact', head: true });
-
-        const { data: videoData } = await supabase
-          .from('videos')
-          .select('views_count, likes_count, shares_count');
-
-        const totalLikes = videoData?.reduce((sum, video) => sum + (video.likes_count || 0), 0) || 0;
-        const totalShares = videoData?.reduce((sum, video) => sum + (video.shares_count || 0), 0) || 0;
-
-        // Views Hoje a partir da tabela video_views (dia LOCAL)
-        const now = new Date();
-        const startOfDay = new Date(now); startOfDay.setHours(0,0,0,0);
-        const endOfDay = new Date(now); endOfDay.setHours(23,59,59,999);
-        const { count: viewsToday } = await supabase
-          .from('video_views')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString());
-
-        setVideoStats([
-          { label: 'Total de Vídeos', value: formatNumber(totalVideos || 0), icon: Play, color: 'text-primary' },
-          { label: 'Views Hoje', value: formatNumber(viewsToday || 0), icon: Eye, color: 'text-success' },
-          { label: 'Curtidas', value: formatNumber(totalLikes), icon: Heart, color: 'text-destructive' },
-          { label: 'Compartilhamentos', value: formatNumber(totalShares), icon: Share2, color: 'text-warning' },
-        ]);
-
-        // Buscar vídeos com dados do usuário
-        const { data: videosData } = await supabase
-          .from('videos')
-          .select(`
-            *,
-            users (username, avatar_url)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        setVideos(videosData?.map(video => ({
-          id: video.id,
-          title: video.title || 'Vídeo sem título',
-          thumbnail: video.thumbnail_url || '/api/placeholder/160/90',
-          duration: '0:00', // Duração não está no schema atual
-          views: formatNumber(video.views_count || 0),
-          likes: formatNumber(video.likes_count || 0),
-          shares: formatNumber(video.shares_count || 0),
-          uploadDate: video.created_at,
-          status: video.is_active ? 'published' : 'draft',
-          category: 'geral'
-        })) || []);
-
-      } catch (error) {
-        console.error('Erro ao buscar dados dos vídeos:', error);
-      }
-    };
-
     fetchVideoData();
     const interval = setInterval(fetchVideoData, 30000);
 
@@ -114,8 +160,14 @@ export const AdminVideos = () => {
   }, []);
 
   const filteredVideos = videos.filter(video => {
-    if (filter === 'all') return true;
-    return video.status === filter;
+    // Filtro por status
+    if (filter !== 'all' && video.status !== filter) return false;
+    
+    // Filtro por tipo (modelo/criador)
+    if (videoType === 'models' && !video.model_id) return false;
+    if (videoType === 'creators' && !video.creator_id) return false;
+    
+    return true;
   });
 
   const getStatusColor = (status: string) => {
@@ -162,30 +214,69 @@ export const AdminVideos = () => {
 
       {/* Video Management */}
       <Card className="bg-gradient-card border-border/50">
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="flex items-center space-x-2">
-            <Play className="w-5 h-5 text-primary" />
-            <span>📹 Gerenciar Vídeos</span>
-          </CardTitle>
-          
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-muted-foreground" />
+        <CardHeader className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="flex items-center space-x-2">
+              <Play className="w-5 h-5 text-primary" />
+              <span>📹 Gerenciar Vídeos</span>
+            </CardTitle>
+            
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <select 
+                  value={filter} 
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="px-3 py-1.5 border border-border rounded-md text-sm bg-background"
+                >
+                  <option value="all">Todos Status</option>
+                  <option value="published">Publicados</option>
+                  <option value="draft">Rascunhos</option>
+                </select>
+              </div>
+              
               <select 
-                value={filter} 
-                onChange={(e) => setFilter(e.target.value)}
+                value={videoType} 
+                onChange={(e) => setVideoType(e.target.value as 'all' | 'models' | 'creators')}
                 className="px-3 py-1.5 border border-border rounded-md text-sm bg-background"
               >
-                <option value="all">Todos</option>
-                <option value="published">Publicados</option>
-                <option value="draft">Rascunhos</option>
+                <option value="all">Todos Tipos</option>
+                <option value="models">Modelos</option>
+                <option value="creators">Criadores</option>
               </select>
+              
+              <Button className="bg-gradient-primary hover:shadow-glow text-primary-foreground">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Vídeo
+              </Button>
             </div>
-            
-            <Button className="bg-gradient-primary hover:shadow-glow text-primary-foreground">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Vídeo
+          </div>
+
+          {/* Controles em massa para modelos */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={() => toggleAllModelVideos(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={isTogglingAll}
+              size="sm"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Ativar Todos Modelos
             </Button>
+            <Button 
+              onClick={() => toggleAllModelVideos(false)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isTogglingAll}
+              size="sm"
+            >
+              <EyeOff className="w-4 h-4 mr-2" />
+              Desativar Todos Modelos
+            </Button>
+            {isTogglingAll && (
+              <span className="text-sm text-muted-foreground flex items-center">
+                Processando...
+              </span>
+            )}
           </div>
         </CardHeader>
         
@@ -206,7 +297,27 @@ export const AdminVideos = () => {
                 </div>
                 
                 <div className="p-4">
-                  <h3 className="font-medium text-foreground mb-2 line-clamp-2">{video.title}</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-foreground line-clamp-1 flex-1">{video.title}</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 w-7 p-0 ml-2"
+                      onClick={() => toggleVideoStatus(video.id, video.is_active)}
+                    >
+                      {video.is_active ? (
+                        <Eye className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <EyeOff className="w-4 h-4 text-red-500" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {video.creator_email && (
+                    <Badge className="mb-2 bg-purple-600 text-white text-xs">
+                      ✨ Criador: {video.creator_email}
+                    </Badge>
+                  )}
                   
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground mb-3">
                     <div className="flex items-center space-x-1">
@@ -230,9 +341,6 @@ export const AdminVideos = () => {
                     </div>
                     
                     <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                        <Eye className="w-3 h-3" />
-                      </Button>
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                         <Share2 className="w-3 h-3" />
                       </Button>

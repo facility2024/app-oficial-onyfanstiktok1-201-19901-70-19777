@@ -10,6 +10,19 @@ import { AdCarousel } from "./AdCarousel";
 import { ModelCarousel } from "./ModelCarousel";
 import { MarketplaceCarousel } from "./MarketplaceCarousel";
 import { LocalBusinessCarousel } from "./LocalBusinessCarousel";
+import { useCreatorRole } from '@/hooks/useUserRoles';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface MenuItemProps {
   id: string;
@@ -30,7 +43,23 @@ export const CategoryMenu = ({
   onSelectModel
 }: CategoryMenuProps) => {
   const [open, setOpen] = useState(false);
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const navigate = useNavigate();
+  const { isCreator, loading: creatorLoading } = useCreatorRole();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success('Você saiu da conta com sucesso!');
+      setOpen(false);
+      navigate('/auth');
+    } catch (error) {
+      console.error('Erro ao sair:', error);
+      toast.error('Erro ao sair da conta');
+    }
+  };
 
   const menuItems: MenuItemProps[] = [
     {
@@ -107,13 +136,10 @@ export const CategoryMenu = ({
       name: "Sou Criador",
       icon: <Sparkles className="w-5 h-5" />,
       onClick: () => {
-        console.log('🎯🎯🎯 CategoryMenu: Botão Sou Criador CLICADO!');
-        console.log('🎯 Navegando para: /creator-application');
+        console.log('🎯 CategoryMenu: Botão Sou Criador CLICADO!');
         setOpen(false);
-        // Garantir que o menu fecha antes de navegar
         requestAnimationFrame(() => {
-          navigate('/creator-application');
-          console.log('🎯 Navigate executado!');
+          navigate('/creator-studio');
         });
       }
     },
@@ -122,8 +148,7 @@ export const CategoryMenu = ({
       name: "Sair",
       icon: <LogOut className="w-5 h-5" />,
       onClick: () => {
-        onExit?.();
-        setOpen(false);
+        setShowLogoutAlert(true);
       }
     }
   ];
@@ -189,26 +214,60 @@ export const CategoryMenu = ({
           {/* Menu de Navegação */}
           <div className="pb-24">
             <div className="space-y-1">
-              {menuItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none cursor-pointer"
-                  onClick={(e) => {
-                    console.log(`🎯 Clique no botão: ${item.name}`);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    item.onClick();
-                  }}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  <span>{item.name}</span>
-                </Button>
-              ))}
+              {menuItems
+                .filter((item) => {
+                  // Mostrar "Sou Criador" apenas para criadores aprovados
+                  if (item.id === "creator") {
+                    return isCreator && !creatorLoading;
+                  }
+                  return true;
+                })
+                .map((item) => (
+                  <Button
+                    key={item.id}
+                    variant="ghost"
+                    className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none cursor-pointer"
+                    onClick={(e) => {
+                      console.log(`🎯 Clique no botão: ${item.name}`);
+                      e.preventDefault();
+                      e.stopPropagation();
+                      item.onClick();
+                    }}
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    <span>{item.name}</span>
+                  </Button>
+                ))}
             </div>
           </div>
         </div>
       </SheetContent>
+
+      {/* AlertDialog de Logout - Tema Escuro Moderno */}
+      <AlertDialog open={showLogoutAlert} onOpenChange={setShowLogoutAlert}>
+        <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-black border border-white/10 max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white text-xl flex items-center gap-2">
+              <LogOut className="w-5 h-5 text-red-400" />
+              Sair da conta
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja sair? Você precisará fazer login novamente para acessar sua conta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleLogout}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0"
+            >
+              Sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 };

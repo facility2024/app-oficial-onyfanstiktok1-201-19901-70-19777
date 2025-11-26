@@ -116,8 +116,17 @@ export const TikTokApp = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
-  const [isMuted, setIsMuted] = useState(false); // Iniciar COM SOM
+  const [isMuted, setIsMuted] = useState(() => {
+    const saved = localStorage.getItem('app_isMuted');
+    return saved === 'true'; // Retorna true se estava mutado, false caso contrário
+  });
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
+  
+  // 🔇 PERSISTIR ESTADO DE MUTE
+  useEffect(() => {
+    localStorage.setItem('app_isMuted', isMuted.toString());
+    console.log('🔇 Mute salvo:', isMuted);
+  }, [isMuted]);
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   

@@ -209,7 +209,7 @@ export default function UserProfile() {
 
           {/* Avatar */}
           <motion.div 
-            className="absolute -bottom-16 left-1/2 -translate-x-1/2"
+            className="absolute -bottom-16 inset-x-0 flex justify-center"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ 

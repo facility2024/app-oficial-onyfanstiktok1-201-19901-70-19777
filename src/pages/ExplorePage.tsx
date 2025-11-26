@@ -1,217 +1,341 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Home, TrendingUp, User, MoreHorizontal, Heart, MessageCircle, Play, Compass } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Heart, MessageCircle, Eye, ChevronLeft, Home, Compass, TrendingUp, User, MoreHorizontal, Play } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { CategoryMenu } from "@/components/tiktok/CategoryMenu";
+import { FullscreenVideoModal } from "@/components/tiktok/FullscreenVideoModal";
+import { toast } from "sonner";
 
-// Imagens de exemplo temporárias até a parte de criadores ficar pronta
-const EXAMPLE_IMAGES = [
-  { id: 1, url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400', likes: '2.3k', comments: '45', views: '12k' },
-  { id: 2, url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400', likes: '1.8k', comments: '32', views: '8.5k' },
-  { id: 3, url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400', likes: '3.1k', comments: '67', views: '15k' },
-  { id: 4, url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400', likes: '2.7k', comments: '54', views: '11k' },
-  { id: 5, url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400', likes: '1.9k', comments: '38', views: '9.2k' },
-  { id: 6, url: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400', likes: '2.5k', comments: '48', views: '13k' },
-  { id: 7, url: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=400', likes: '3.4k', comments: '72', views: '18k' },
-  { id: 8, url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400', likes: '2.1k', comments: '41', views: '10k' },
-  { id: 9, url: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400', likes: '2.9k', comments: '59', views: '14k' },
-  { id: 10, url: 'https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=400', likes: '1.6k', comments: '29', views: '7.8k' },
-  { id: 11, url: 'https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=400', likes: '3.7k', comments: '81', views: '19k' },
-  { id: 12, url: 'https://images.unsplash.com/photo-1496440737103-cd596325d314?w=400', likes: '2.2k', comments: '44', views: '11.5k' },
-];
+interface ExploreVideo {
+  id: string;
+  video_url: string;
+  thumbnail_url: string;
+  title: string;
+  likes_count: number;
+  views_count: number;
+  comments_count: number;
+  shares_count: number;
+  model_id?: string;
+  creator_id?: string;
+  owner_name: string;
+  owner_avatar: string;
+  owner_username?: string;
+  created_at: string;
+  is_creator: boolean;
+}
 
-export default function ExplorePage() {
+const ExplorePage = () => {
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState('explore');
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [selectedTab, setSelectedTab] = useState("explore");
+  const [videos, setVideos] = useState<ExploreVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "creators" | "models">("all");
+  const [fullscreenVideo, setFullscreenVideo] = useState<{ url: string; time: number } | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     checkUser();
-  }, []);
+    loadVideos();
+  }, [filter]);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       setUserId(session.user.id);
-      loadFavorites(session.user.id);
     }
   };
 
-  const loadFavorites = async (uid: string) => {
+  const loadVideos = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('user_favorites' as any)
-        .select('video_id')
-        .eq('user_id', uid);
+      let query = supabase
+        .from('videos')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (filter === "creators") {
+        query = query.not('creator_id', 'is', null) as any;
+      } else if (filter === "models") {
+        query = query.not('model_id', 'is', null) as any;
+      }
+
+      const { data: videosData, error } = await query;
 
       if (error) throw error;
 
-      const favoriteIds = new Set((data || []).map((f: any) => parseInt(f.video_id)));
-      setFavorites(favoriteIds);
-    } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
-    }
-  };
-
-  const toggleFavorite = async (imageId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!userId) {
-      toast.error('Você precisa estar logado para favoritar');
-      return;
-    }
-
-    const isFavorited = favorites.has(imageId);
-
-    try {
-      if (isFavorited) {
-        // Remover favorito
-        const { error } = await supabase
-          .from('user_favorites' as any)
-          .delete()
-          .eq('user_id', userId)
-          .eq('video_id', imageId.toString());
-
-        if (error) throw error;
-
-        setFavorites(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(imageId);
-          return newSet;
-        });
-        toast.success('Removido das coleções');
-      } else {
-        // Adicionar favorito
-        const { error } = await supabase
-          .from('user_favorites' as any)
-          .insert({
-            user_id: userId,
-            video_id: imageId.toString()
-          });
-
-        if (error) throw error;
-
-        setFavorites(prev => new Set(prev).add(imageId));
-        toast.success('Adicionado às coleções');
+      if (!videosData) {
+        setVideos([]);
+        setLoading(false);
+        return;
       }
+
+      // Buscar dados dos owners (models ou creators)
+      const enrichedVideos: ExploreVideo[] = await Promise.all(
+        videosData.map(async (video: any) => {
+          let ownerName = "Desconhecido";
+          let ownerAvatar = "/placeholder.svg";
+          let ownerUsername = "";
+          let isCreator = false;
+
+          if (video.creator_id) {
+            // Buscar dados do criador
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name, email')
+              .eq('id', video.creator_id)
+              .maybeSingle();
+
+            if (profile) {
+              ownerName = profile.name || profile.email?.split('@')[0] || "Criador";
+              ownerAvatar = "/placeholder.svg";
+              ownerUsername = profile.name || "";
+              isCreator = true;
+            }
+          } else if (video.model_id) {
+            // Buscar dados do modelo
+            const { data: model } = await supabase
+              .from('models')
+              .select('name, username')
+              .eq('id', video.model_id)
+              .maybeSingle();
+
+            if (model) {
+              ownerName = model.name || model.username || "Modelo";
+              ownerAvatar = "/placeholder.svg";
+              ownerUsername = model.username || model.name || "";
+              isCreator = false;
+            }
+          }
+
+          return {
+            id: video.id,
+            video_url: video.video_url,
+            thumbnail_url: video.thumbnail_url || "/placeholder.svg",
+            title: video.title || video.description || "",
+            likes_count: video.likes_count || 0,
+            views_count: video.views_count || 0,
+            comments_count: video.comments_count || 0,
+            shares_count: video.shares_count || 0,
+            model_id: video.model_id,
+            creator_id: video.creator_id,
+            owner_name: ownerName,
+            owner_avatar: ownerAvatar,
+            owner_username: ownerUsername,
+            created_at: video.created_at,
+            is_creator: isCreator,
+          };
+        })
+      );
+
+      setVideos(enrichedVideos);
     } catch (error) {
-      console.error('Erro ao favoritar:', error);
-      toast.error('Erro ao salvar nas coleções');
+      console.error("Erro ao carregar vídeos:", error);
+      toast.error("Erro ao carregar vídeos");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleImageClick = (imageId: number) => {
-    console.log('Imagem clicada:', imageId);
-    // Aqui você pode abrir um modal ou navegar para detalhes
+  const handleVideoClick = (video: ExploreVideo) => {
+    setFullscreenVideo({ url: video.video_url, time: 0 });
+  };
+
+  const handleProfileClick = (video: ExploreVideo) => {
+    if (video.is_creator && video.creator_id) {
+      navigate(`/profile/${video.creator_id}`);
+    } else {
+      // Navegar para o feed com o modelo selecionado
+      navigate('/app', { state: { selectedModelId: video.model_id } });
+    }
   };
 
   return (
-    <div className="min-h-screen bg-black flex">
-      {/* Menu Lateral Esquerdo - Desktop Only */}
+    <div className="min-h-screen bg-black text-white flex">
+      {/* Menu Lateral - Apenas Desktop */}
       <div className="hidden md:block">
         <CategoryMenu />
       </div>
 
       {/* Conteúdo Principal */}
       <div className="flex-1 flex flex-col">
-        {/* Header - Mobile */}
-        <div className="md:hidden sticky top-0 z-50 bg-gradient-to-b from-black/95 to-black/80 backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <Button
-              variant="ghost"
-              size="icon"
+        {/* Header Mobile */}
+        <div className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-md border-b border-white/10">
+          <div className="flex items-center justify-between p-4">
+            <button 
               onClick={() => navigate('/app')}
-              className="text-white hover:bg-white/10"
+              className="text-white hover:text-white/80 transition-colors"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
-            </Button>
-            <h1 className="text-white text-xl font-bold">Explorar</h1>
-            <div className="w-10" /> {/* Spacer para centralizar título */}
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl font-bold text-white">Explorar</h1>
+            <div className="w-6" />
           </div>
         </div>
 
-        {/* Header - Desktop */}
-        <div className="hidden md:block sticky top-0 z-50 bg-gradient-to-b from-black/95 to-black/80 backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center justify-between px-6 py-4">
-            <Button
-              variant="ghost"
+        {/* Header Desktop */}
+        <div className="hidden md:block sticky top-0 z-40 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-md border-b border-white/10">
+          <div className="flex items-center justify-between p-6">
+            <button 
               onClick={() => navigate('/app')}
-              className="text-white hover:bg-white/10 gap-2"
+              className="text-white hover:text-white/80 transition-colors flex items-center gap-2"
             >
-              <Home className="w-5 h-5 text-white" />
+              <Home className="w-5 h-5" />
               <span>Voltar ao Início</span>
-            </Button>
-            <h1 className="text-white text-2xl font-bold">Explorar</h1>
-            <div className="w-32" /> {/* Spacer para balancear layout */}
+            </button>
+            <h1 className="text-2xl font-bold text-white">Explorar Conteúdo</h1>
+            <div className="w-6" />
           </div>
         </div>
 
+        {/* Filtros */}
+        <div className="sticky top-[57px] md:top-[73px] z-30 bg-black/80 backdrop-blur-md border-b border-white/10 p-4">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                filter === "all"
+                  ? "bg-gradient-to-r from-green-400 to-yellow-400 text-black font-semibold"
+                  : "bg-gray-800 text-white hover:bg-gray-700"
+              }`}
+            >
+              Todos ({videos.length})
+            </button>
+            <button
+              onClick={() => setFilter("creators")}
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                filter === "creators"
+                  ? "bg-gradient-to-r from-green-400 to-yellow-400 text-black font-semibold"
+                  : "bg-gray-800 text-white hover:bg-gray-700"
+              }`}
+            >
+              ✨ Criadores
+            </button>
+            <button
+              onClick={() => setFilter("models")}
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                filter === "models"
+                  ? "bg-gradient-to-r from-green-400 to-yellow-400 text-black font-semibold"
+                  : "bg-gray-800 text-white hover:bg-gray-700"
+              }`}
+            >
+              Modelos
+            </button>
+          </div>
+        </div>
 
-        {/* Grid de Imagens */}
-        <div className="flex-1 overflow-y-auto pb-20">
-          <div className="grid grid-cols-3 gap-1 p-1">
-            {EXAMPLE_IMAGES.map((image) => (
-              <div
-                key={image.id}
-                className="relative aspect-[3/4] cursor-pointer group overflow-hidden"
-                onClick={() => handleImageClick(image.id)}
-              >
-                <img
-                  src={image.url}
-                  alt={`Explore ${image.id}`}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                
-                {/* Overlay com estatísticas */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs space-y-1">
-                    <div className="flex items-center gap-2">
+        {/* Grid de Vídeos */}
+        <div className="flex-1 overflow-y-auto pb-20 md:pb-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full"></div>
+            </div>
+          ) : videos.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-gray-400">Nenhum vídeo encontrado</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 p-1">
+              {videos.map((video) => (
+                <div 
+                  key={video.id}
+                  className="relative group overflow-hidden bg-gray-900 aspect-[3/4]"
+                >
+                  {/* Vídeo com Preview */}
+                  <video
+                    src={video.video_url}
+                    poster={video.thumbnail_url}
+                    className="w-full h-full object-cover cursor-pointer"
+                    muted
+                    loop
+                    playsInline
+                    onMouseEnter={(e) => e.currentTarget.play()}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.pause();
+                      e.currentTarget.currentTime = 0;
+                    }}
+                    onClick={() => handleVideoClick(video)}
+                  />
+
+                  {/* Play Icon Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity">
+                    <div className="bg-black/30 rounded-full p-3 backdrop-blur-sm">
+                      <Play className="w-6 h-6 text-white fill-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Overlay com estatísticas - Desktop hover */}
+                  <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Info do criador/modelo */}
+                    <div 
+                      className="absolute top-2 left-2 flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleProfileClick(video);
+                      }}
+                    >
+                      <img 
+                        src={video.owner_avatar} 
+                        alt={video.owner_name}
+                        className="w-7 h-7 rounded-full border-2 border-white"
+                      />
+                      <div className="text-white">
+                        <p className="text-xs font-semibold leading-tight">{video.owner_name}</p>
+                        {video.is_creator && (
+                          <span className="text-[10px] text-purple-300">✨ Criador</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Estatísticas */}
+                    <div className="absolute bottom-0 left-0 right-0 p-2 space-y-1">
+                      {video.title && (
+                        <p className="text-white text-xs font-medium line-clamp-2">
+                          {video.title}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-white text-xs">
+                        <div className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          <span>{video.views_count >= 1000 ? `${(video.views_count / 1000).toFixed(1)}k` : video.views_count}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          <span>{video.likes_count >= 1000 ? `${(video.likes_count / 1000).toFixed(1)}k` : video.likes_count}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" />
+                          <span>{video.comments_count}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats - Mobile (sempre visível) */}
+                  <div className="md:hidden absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                    <div className="flex items-center gap-2 text-white text-xs">
                       <div className="flex items-center gap-1">
-                        <Play className="w-3 h-3" />
-                        <span>{image.views}</span>
+                        <Eye className="w-3 h-3" />
+                        <span>{video.views_count >= 1000 ? `${(video.views_count / 1000).toFixed(1)}k` : video.views_count}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Heart className="w-3 h-3" />
-                        <span>{image.likes}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        <span>{image.comments}</span>
+                        <span>{video.likes_count >= 1000 ? `${(video.likes_count / 1000).toFixed(1)}k` : video.likes_count}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Botão de Favoritar */}
-                <button
-                  onClick={(e) => toggleFavorite(image.id, e)}
-                  className="absolute top-2 left-2 p-2 bg-black/60 backdrop-blur-sm rounded-full hover:bg-black/80 transition-all z-10"
-                >
-                  <Heart
-                    size={18}
-                    className={favorites.has(image.id) ? 'fill-pink-500 text-pink-500' : 'text-white'}
-                  />
-                </button>
-
-                {/* Ícone de play no mobile */}
-                <div className="md:hidden absolute top-2 right-2">
-                  <div className="bg-black/60 rounded-full p-1">
-                    <Play className="w-4 h-4 text-white" fill="white" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Bottom Navigation - Mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10">
-        <div className="grid grid-cols-4 gap-0">
-          <button
+      {/* Bottom Navigation - Apenas Mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-white/10 z-50">
+        <div className="grid grid-cols-5 gap-0">
+          <button 
             onClick={() => {
               setSelectedTab('home');
               navigate('/app');
@@ -221,24 +345,21 @@ export default function ExplorePage() {
             <Home className="w-6 h-6 mb-1" />
             <span className="text-xs">Início</span>
           </button>
-
-          <button
+          <button 
             onClick={() => setSelectedTab('explore')}
             className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
-            <Compass className="w-6 h-6 mb-1" strokeWidth={1.5} />
+            <Compass className="w-6 h-6 mb-1" />
             <span className="text-xs">Explorar</span>
           </button>
-
-          <button
+          <button 
             onClick={() => setSelectedTab('trending')}
             className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <TrendingUp className="w-6 h-6 mb-1" />
             <span className="text-xs">Em alta</span>
           </button>
-
-          <button
+          <button 
             onClick={() => {
               setSelectedTab('profile');
               navigate('/profile');
@@ -246,10 +367,9 @@ export default function ExplorePage() {
             className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <User className="w-6 h-6 mb-1" />
-            <span className="text-xs">Meu perfil</span>
+            <span className="text-xs">Perfil</span>
           </button>
-
-          <button
+          <button 
             onClick={() => setSelectedTab('more')}
             className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
@@ -259,6 +379,17 @@ export default function ExplorePage() {
         </div>
       </div>
 
+      {/* Modal de Vídeo em Tela Cheia */}
+      {fullscreenVideo && (
+        <FullscreenVideoModal
+          videoUrl={fullscreenVideo.url}
+          currentTime={fullscreenVideo.time}
+          isOpen={!!fullscreenVideo}
+          onClose={() => setFullscreenVideo(null)}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default ExplorePage;

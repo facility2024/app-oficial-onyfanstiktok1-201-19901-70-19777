@@ -41,7 +41,6 @@ const LocalBusinessPage = () => {
         .from('local_businesses' as any)
         .select('*')
         .eq('is_active', true)
-        .order('is_sponsored', { ascending: false })
         .order('rating', { ascending: false });
 
       if (error) throw error;

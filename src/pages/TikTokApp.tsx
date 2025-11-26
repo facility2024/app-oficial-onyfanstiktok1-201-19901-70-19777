@@ -3221,15 +3221,7 @@ export const TikTokApp = () => {
 
       {/* Desktop Profile Screen */}
       <ProfileScreen
-        user={{
-          id: currentVideo.user.id,
-          username: currentVideo.user.username,
-          avatar_url: currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-          followers_count: currentVideo.user.followers_count || 0,
-          following_count: currentVideo.user.following_count || 0,
-          is_online: currentVideo.user.is_online || false,
-          created_at: currentVideo.user.created_at || new Date().toISOString()
-        }}
+        user={currentVideo.user}
         onVideoSelect={(videoId) => {
           openSelectedVideo(videoId);
         }}

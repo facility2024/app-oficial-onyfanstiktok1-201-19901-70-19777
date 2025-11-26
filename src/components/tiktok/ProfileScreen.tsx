@@ -488,93 +488,89 @@ if (!isOpen) return null;
       <div className={`absolute right-0 top-0 h-full w-full bg-black transform transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       } flex flex-col`}>
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black/90 backdrop-blur-sm sticky top-0 z-10">
+        {/* Header com Gradiente */}
+        <div className="flex justify-between items-center p-4 border-b border-white/10 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-sm sticky top-0 z-10">
           <button
             onClick={onGoHome || onClose}
             className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-white text-lg font-semibold">{user.username}</h2>
+          <h2 className="text-white text-lg font-semibold drop-shadow-md">@{user.username}</h2>
           <button
             onClick={onClose}
-            className="text-white/70 text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
+            className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Profile Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-4xl px-3 lg:px-6">
-          {/* Profile Header */}
-          <div className="p-6 text-white border-b border-white/10 max-w-2xl mx-auto">
-            <div className="flex items-center gap-4 mb-4">
-              <img
-                src={user.avatar_url || '/placeholder.svg'}
-                alt="Profile"
-                className="w-20 h-20 rounded-full border-2 border-white/20 object-cover"
-              />
-              <div className="flex-1">
-                <h3 className="text-xl font-bold mb-1">@{user.username}</h3>
-                <div className="text-sm text-white/70 mb-2">
-                  {(user.followers_count || 0).toLocaleString()} seguidores
-                </div>
-                
-                {/* Link para painel de postagem */}
-                {user.posting_panel_url && (
-                  <div className="mb-2">
-                    <a 
-                      href={user.posting_panel_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-1 rounded-full text-white hover:from-blue-600 hover:to-purple-600 transition-colors"
-                    >
-                      📊 Painel de Postagem
-                    </a>
-                  </div>
-                )}
-                
-                {/* Link do painel enviado - exibir quando existe no panelUrl */}
-                {panelUrl && (
-                  <div className="mb-2">
-                    <a 
-                      href={panelUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 rounded-full text-white hover:from-purple-600 hover:to-pink-600 transition-colors"
-                    >
-                      🔗 Link Enviado
-                    </a>
-                  </div>
-                )}
-                
-                {isFollowing && (
-                  <div className="text-xs text-green-400 mb-2">
-                    ✓ {viewerName}, você está seguindo @{user.username}
-                  </div>
-                )}
-                {user.is_online && (
-                  <div className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 px-2 py-1 rounded-full text-xs font-medium">
-                    🔴 AO VIVO
-                  </div>
-                )}
+        <div className="flex-1 overflow-y-auto bg-black">
+          <div className="mx-auto w-full max-w-2xl">
+            
+            {/* Avatar Centralizado */}
+            <div className="flex flex-col items-center pt-8 pb-4">
+              <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
+                <img
+                  src={user.avatar_url || '/placeholder.svg'}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
 
-            {user.bio && (
-              <p className="text-white/90 text-sm leading-relaxed mb-4">
-                {user.bio}
+            {/* Nome e Seguidores Centralizados */}
+            <div className="text-center pb-4 px-4">
+              <h3 className="text-white text-xl font-bold mb-1">@{user.username}</h3>
+              <p className="text-white/60 text-sm">
+                {(user.followers_count || 0).toLocaleString()} seguidores
               </p>
+              {user.is_online && (
+                <div className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 px-3 py-1 rounded-full text-xs font-medium mt-2">
+                  🔴 AO VIVO
+                </div>
+              )}
+            </div>
+
+            {/* Descrição em Card */}
+            {user.bio && (
+              <div className="px-4 pb-4">
+                <div className="bg-white/10 border border-white/20 rounded-lg p-4 backdrop-blur-sm">
+                  <h4 className="text-center text-white/60 text-xs uppercase mb-2 font-semibold">Descrição</h4>
+                  <p className="text-white text-sm text-center leading-relaxed">{user.bio}</p>
+                </div>
+              </div>
             )}
 
-            {/* Botões de Ação */}
-            <div className="flex gap-2 mb-4">
+            {/* Seção de Promoção com 3 Pacotes */}
+            <div className="px-4 pb-6">
+              {/* Badge de Promoção */}
+              <div className="flex justify-center mb-4">
+                <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-5 py-1.5 rounded-full shadow-lg">
+                  ⭐ PROMOÇÃO ⭐
+                </span>
+              </div>
+              
+              {/* 3 Cards de Assinatura */}
+              <div className="space-y-3">
+                <button className="w-full bg-white/10 border border-white/30 hover:bg-white/20 text-white font-semibold py-3.5 rounded-lg transition-all hover:scale-[1.02] active:scale-95 shadow-lg backdrop-blur-sm">
+                  ASSINAR R$ 14,90
+                </button>
+                <button className="w-full bg-white/10 border border-white/30 hover:bg-white/20 text-white font-semibold py-3.5 rounded-lg transition-all hover:scale-[1.02] active:scale-95 shadow-lg backdrop-blur-sm">
+                  ASSINAR R$ 18,90
+                </button>
+                <button className="w-full bg-white/10 border border-white/30 hover:bg-white/20 text-white font-semibold py-3.5 rounded-lg transition-all hover:scale-[1.02] active:scale-95 shadow-lg backdrop-blur-sm">
+                  ASSINAR R$ 24,90
+                </button>
+              </div>
+            </div>
+
+            {/* Botão de Seguir */}
+            <div className="px-4 pb-4">
               {isCreator ? (
                 <button
                   onClick={async () => {
-                    // Buscar email real do criador
                     const { data: creatorProfile } = await supabase
                       .from('profiles')
                       .select('email, name')
@@ -590,7 +586,7 @@ if (!isOpen) return null;
                       setIsFollowingCreator(success);
                     }
                   }}
-                  className={`flex-1 px-6 py-2.5 rounded-full font-semibold transition-all ${
+                  className={`w-full px-6 py-3 rounded-full font-semibold transition-all ${
                     isFollowingCreator 
                       ? 'bg-gray-700 text-white' 
                       : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
@@ -602,7 +598,7 @@ if (!isOpen) return null;
                 <button
                   onClick={followModel}
                   disabled={isFollowing}
-                  className={`flex-1 px-6 py-2.5 rounded-full font-semibold transition-all ${
+                  className={`w-full px-6 py-3 rounded-full font-semibold transition-all ${
                     isFollowing 
                       ? 'bg-gray-700 text-white cursor-not-allowed' 
                       : 'bg-gradient-to-r from-pink-500 to-red-500 text-white hover:from-pink-600 hover:to-red-600'
@@ -613,8 +609,35 @@ if (!isOpen) return null;
               )}
             </div>
 
+            {/* Links do Painel */}
+            {(user.posting_panel_url || panelUrl) && (
+              <div className="px-4 pb-4 flex flex-wrap gap-2 justify-center">
+                {user.posting_panel_url && (
+                  <a 
+                    href={user.posting_panel_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-1.5 rounded-full text-white hover:from-blue-600 hover:to-purple-600 transition-colors shadow-lg"
+                  >
+                    📊 Painel de Postagem
+                  </a>
+                )}
+                {panelUrl && (
+                  <a 
+                    href={panelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1.5 rounded-full text-white hover:from-purple-600 hover:to-pink-600 transition-colors shadow-lg"
+                  >
+                    🔗 Link Enviado
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Seção Meus Conteúdos */}
             {panelUrl && (
-              <div className="mt-3">
+              <div className="px-4 pb-4">
                 <button
                   onClick={() => {
                     setShowMyContent(!showMyContent);
@@ -622,113 +645,89 @@ if (!isOpen) return null;
                       loadMyContentImages();
                     }
                   }}
-                  className="inline-flex items-center gap-2 text-xs bg-gradient-to-r from-pink-500 to-red-500 px-3 py-1.5 rounded-full text-white hover:from-pink-600 hover:to-red-600 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 text-xs bg-gradient-to-r from-pink-500 to-red-500 px-3 py-2 rounded-full text-white hover:from-pink-600 hover:to-red-600 transition-colors shadow-lg"
                 >
                   <Heart className="w-3 h-3" />
                   Meus Conteúdos
                 </button>
-              </div>
-            )}
 
-            {/* Seção Meus Conteúdos - Só aparece quando ativo */}
-            {showMyContent && (
-              <div className="mt-4 p-3 border-t border-white/10">
-                <h4 className="text-white font-semibold mb-3 text-base flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-pink-500" />
-                  Meus Conteúdos ({myContentImages.length})
-                </h4>
-                
-                {myContentImages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-white/60">
-                    <div className="text-3xl mb-2">💖</div>
-                    <p className="text-sm">Nenhum conteúdo exclusivo disponível</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                    {myContentImages.map((imageUrl, index) => (
-                      <div 
-                        key={index}
-                        className="relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg aspect-square"
-                        onClick={() => {
-                          setCurrentImageArray(myContentImages);
-                          setCurrentImageIndex(index);
-                          setImageViewerOpen(true);
-                        }}
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={`Conteúdo ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                        
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-                        
-                        {/* Heart icon overlay */}
-                        <div className="absolute top-2 right-2 bg-pink-500/80 rounded-full p-1">
-                          <Heart className="w-3 h-3 text-white fill-white" />
-                        </div>
-                        
-                        {/* Hover overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
-                          <div className="w-12 h-12 bg-pink-500/80 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <Heart className="w-6 h-6 text-white fill-white" />
-                          </div>
-                        </div>
-                        
-                        {/* Number overlay */}
-                        <div className="absolute bottom-1 left-1">
-                          <div className="bg-black/70 rounded-full px-2 py-1">
-                            <span className="text-white text-xs font-medium">{index + 1}</span>
-                          </div>
-                        </div>
+                {showMyContent && (
+                  <div className="mt-4 p-3 border-t border-white/10">
+                    <h4 className="text-white font-semibold mb-3 text-base flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-pink-500" />
+                      Meus Conteúdos ({myContentImages.length})
+                    </h4>
+                    
+                    {myContentImages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-white/60">
+                        <div className="text-3xl mb-2">💖</div>
+                        <p className="text-sm">Nenhum conteúdo exclusivo disponível</p>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="grid grid-cols-3 gap-1">
+                        {myContentImages.map((imageUrl, index) => (
+                          <div 
+                            key={index}
+                            className="relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg aspect-square border border-white/20"
+                            onClick={() => {
+                              setCurrentImageArray(myContentImages);
+                              setCurrentImageIndex(index);
+                              setImageViewerOpen(true);
+                            }}
+                          >
+                            <img
+                              src={imageUrl}
+                              alt={`Conteúdo ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                            <div className="absolute top-2 right-2 bg-pink-500/80 rounded-full p-1">
+                              <Heart className="w-3 h-3 text-white fill-white" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
-          </div>
 
-          {/* Content Grid - Formato TikTok/Instagram */}
-          <div className="p-3 max-w-4xl mx-auto">
-            <h4 className="text-white font-semibold mb-3 text-base">
-              Postagens ({contents.length})
-            </h4>
-            
-            {contents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-white/60">
-                <div className="text-3xl mb-2">📱</div>
-                <p className="text-sm">Nenhum conteúdo disponível</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2 max-w-2xl mx-auto">
-                {contents.map((content) => (
-                  <div 
-                    key={content.id} 
-                    className={`relative bg-black rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg ${
-                      content.type === 'image' ? 'aspect-square' : 'aspect-[9/16]'
-                    }`}
-                    onClick={() => {
-                      if (content.type === 'video') {
-                        onVideoSelect?.(content.id);
-                        onClose();
-                      } else {
-                        // Para imagens, abrir o visualizador
-                        const imageContents = contents.filter(c => c.type === 'image');
-                        const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
-                        const currentImageIndex = imageContents.findIndex(c => c.id === content.id);
-                        setCurrentImageArray(imageUrls);
-                        setCurrentImageIndex(currentImageIndex);
-                        setImageViewerOpen(true);
-                      }
-                    }}
-                  >
-                    {/* Thumbnail/Content Preview */}
-                    <div className="w-full h-full relative">
+            {/* Grid de Conteúdo com Labels FOTO/VIDEO ORGÂNICO */}
+            <div className="px-4 pb-6">
+              <h4 className="text-white font-semibold mb-3 text-base">
+                Postagens ({contents.length})
+              </h4>
+              
+              {contents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-white/60">
+                  <div className="text-3xl mb-2">📱</div>
+                  <p className="text-sm">Nenhum conteúdo disponível</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-1">
+                  {contents.map((content) => (
+                    <div 
+                      key={content.id} 
+                      className="relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20"
+                      onClick={() => {
+                        if (content.type === 'video') {
+                          onVideoSelect?.(content.id);
+                          onClose();
+                        } else {
+                          const imageContents = contents.filter(c => c.type === 'image');
+                          const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
+                          const currentImageIndex = imageContents.findIndex(c => c.id === content.id);
+                          setCurrentImageArray(imageUrls);
+                          setCurrentImageIndex(currentImageIndex);
+                          setImageViewerOpen(true);
+                        }
+                      }}
+                    >
+                      {/* Preview do Conteúdo */}
                       {content.type === 'video' ? (
                         <>
                           <video
@@ -741,87 +740,71 @@ if (!isOpen) return null;
                             preload="metadata"
                             poster={content.thumbnail_url}
                             onError={(e) => {
-                              // Fallback para thumbnail se o vídeo falhar
                               const parent = e.currentTarget.parentElement;
                               if (parent) {
                                 parent.innerHTML = `<img src="${content.thumbnail_url}" alt="${content.title}" class="w-full h-full object-cover" />`;
                               }
                             }}
                           />
-                          {/* Ícone de play apenas como indicativo */}
                           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                            <div className="bg-black/40 rounded-full p-3">
-                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <div className="bg-black/40 rounded-full p-2">
+                              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z"/>
                               </svg>
                             </div>
                           </div>
                         </>
                       ) : (
-                        <>
-                          <img
-                            src={content.image_url || content.thumbnail_url}
-                            alt={content.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                            }}
-                          />
-                          {/* Image gallery icon */}
-                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
-                            <div className="w-4 h-4 text-white flex items-center justify-center">
-                              <div className="w-3 h-3 border border-white rounded-sm opacity-80"></div>
-                            </div>
-                          </div>
-                        </>
+                        <img
+                          src={content.image_url || content.thumbnail_url}
+                          alt={content.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
                       )}
                       
                       {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                       
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
-                        <div className="w-12 h-12 bg-white/80 rounded-full flex items-center justify-center backdrop-blur-sm">
-                          {content.type === 'video' ? (
-                            <div className="w-0 h-0 border-l-[10px] border-l-black border-y-[7px] border-y-transparent ml-1"></div>
-                          ) : (
-                            <div className="w-6 h-6 border-2 border-black rounded opacity-80"></div>
-                          )}
+                      {/* Label FOTO/VIDEO ORGÂNICO */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
+                        <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1">
+                          <span className="text-white text-[10px] font-bold uppercase block">
+                            {content.type === 'video' ? 'VIDEO' : 'FOTO'}
+                          </span>
+                          <span className="text-white/80 text-[8px] font-medium uppercase block">
+                            ORGÂNICO
+                          </span>
                         </div>
                       </div>
                       
                       {/* Stats overlay */}
-                      <div className="absolute bottom-1 left-1 right-1">
-                        <div className="flex items-center justify-between text-white text-xs">
-                          <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-1">
-                            <span className="text-red-400">❤️</span>
-                            <span className="text-[10px] font-medium">{content.likes_count > 1000 ? `${(content.likes_count/1000).toFixed(1)}k` : content.likes_count}</span>
-                          </div>
-                          <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-1">
-                            <span className="text-blue-400">👁️</span>
-                            <span className="text-[10px] font-medium">{content.views_count > 1000 ? `${(content.views_count/1000).toFixed(1)}k` : content.views_count}</span>
-                          </div>
+                      <div className="absolute top-2 left-2 right-2 flex justify-between">
+                        <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-0.5">
+                          <span className="text-red-400">❤️</span>
+                          <span className="text-white text-[9px] font-medium">
+                            {content.likes_count > 1000 ? `${(content.likes_count/1000).toFixed(1)}k` : content.likes_count}
+                          </span>
                         </div>
-                      </div>
-
-                      {/* Title overlay */}
-                      <div className="absolute top-1 left-1 right-8">
-                        <div className="bg-black/50 rounded px-2 py-1">
-                          <p className="text-white text-[10px] font-medium truncate">{content.title}</p>
+                        <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-0.5">
+                          <span className="text-blue-400">👁️</span>
+                          <span className="text-white text-[9px] font-medium">
+                            {content.views_count > 1000 ? `${(content.views_count/1000).toFixed(1)}k` : content.views_count}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Seção de Mais Informações */}
-            <div className="mt-6 border-t border-white/10 pt-6 max-w-2xl mx-auto">
-              <h3 className="text-white text-sm font-semibold mb-4">Mais informações</h3>
-              
+            <div className="px-4 pb-6 border-t border-white/10 pt-6">
               {/* Chat Button */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-4">
                 <button 
                   onClick={() => {
                     console.log('Chat button clicked');
@@ -829,32 +812,17 @@ if (!isOpen) return null;
                       onOpenChat();
                     }
                   }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full text-sm hover:from-green-600 hover:to-emerald-700 transition-all animate-pulse font-semibold shadow-lg"
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full text-sm hover:from-green-600 hover:to-emerald-700 transition-all font-semibold shadow-lg"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                   </svg>
-                  Conversar
+                  💬 Conversar
                 </button>
               </div>
 
-              {/* Seção de Assinatura */}
-              <div className="bg-muted/5 border border-white/10 rounded-xl p-4 mb-4">
-                <h4 className="text-white/60 text-xs uppercase font-semibold mb-3">ASSINATURA</h4>
-                
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[#00D5FF] font-bold text-sm">JÁ SOU ASSINANTE</span>
-                  <span className="text-[#00D5FF] font-bold text-sm">$4.50 por 31 dias</span>
-                </div>
-
-                <div className="flex items-center justify-between text-white/60 text-xs">
-                  <span>Renove por $15 /mês</span>
-                  <span>dez 1, 2025</span>
-                </div>
-              </div>
-
-              {/* Pacotes de Assinatura */}
-              <div className="bg-muted/5 border border-white/10 rounded-xl p-4">
+              {/* Informações Adicionais */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                 <button 
                   className="w-full flex items-center justify-between text-white/60 text-xs uppercase font-semibold mb-3"
                   onClick={() => {/* Toggle accordion */}}
@@ -892,7 +860,6 @@ if (!isOpen) return null;
                 <a href="#" className="hover:text-white/60 transition-colors">Terms of Service</a>
               </div>
             </div>
-          </div>
           </div>
         </div>
       </div>

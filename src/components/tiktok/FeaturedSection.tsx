@@ -22,7 +22,8 @@ export const FeaturedSection = () => {
           id,
           thumbnail_url,
           title,
-          user:users!videos_user_id_fkey(username, avatar_url)
+          model_id,
+          model:models(id, name, username, avatar_url)
         `)
         .eq('is_active', true)
         .order('views_count', { ascending: false })
@@ -55,8 +56,8 @@ export const FeaturedSection = () => {
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1">
               <img
-                src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                alt={video.user?.username}
+                src={(video as any).model?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                alt={(video as any).model?.name}
                 className="w-5 h-5 rounded-full border border-white"
               />
             </div>

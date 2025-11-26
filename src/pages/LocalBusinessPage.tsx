@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Phone, Globe, Star, MapPin, ExternalLink } from 'lucide-react';
+import { Search, Phone, Globe, Star, MapPin, ExternalLink, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ interface LocalBusiness {
 }
 
 const LocalBusinessPage = () => {
+  const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<LocalBusiness[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -88,6 +90,16 @@ const LocalBusinessPage = () => {
         background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
+          {/* Botão Voltar */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/app')}
+            className="text-gray-800 hover:bg-white/20 flex-shrink-0"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+
           {/* Logo CocoNudi */}
           <img 
             src={coconudiLogo} 

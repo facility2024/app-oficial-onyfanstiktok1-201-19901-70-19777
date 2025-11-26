@@ -33,6 +33,7 @@ import { AdminDocumentation } from './admin/AdminDocumentation';
 import { AdminRoles } from './admin/AdminRoles';
 import { AdminCreatorApplications } from './admin/AdminCreatorApplications';
 import { AdminMarketplace } from './admin/AdminMarketplace';
+import { AdminLocalBusinesses } from './admin/AdminLocalBusinesses';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -181,6 +182,8 @@ export const AdminDashboard = () => {
         return <AdminGamification />;
       case 'marketplace':
         return <AdminMarketplace />;
+      case 'local-businesses':
+        return <AdminLocalBusinesses />;
       case 'videos':
         return <AdminVideos />;
       case 'money':

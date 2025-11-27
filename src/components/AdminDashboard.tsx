@@ -229,7 +229,7 @@ export const AdminDashboard = () => {
           🎵 Testar App TikTok
         </Button>
       </div>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+      <div className="min-h-screen bg-black">
         <AdminHeader 
           notifications={notifications}
           setNotifications={setNotifications}

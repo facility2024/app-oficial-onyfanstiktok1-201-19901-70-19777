@@ -29,7 +29,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
   ];
 
   return (
-    <nav className="bg-gradient-secondary shadow-lg border-b-4 border-primary/20 fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-gradient-secondary/95">
+    <nav className="bg-black/80 shadow-lg border-b border-white/10 fixed top-0 left-0 right-0 z-50 backdrop-blur-md">
       <div className="container">
         <div className="flex overflow-x-auto scrollbar-hide">
           <div className="flex space-x-1 sm:space-x-2 lg:space-x-4 py-2 sm:py-3 lg:py-4 min-w-max px-2 sm:px-4">

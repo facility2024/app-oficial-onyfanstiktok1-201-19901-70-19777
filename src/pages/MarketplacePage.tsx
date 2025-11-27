@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, ShoppingCart, ArrowLeft, Sparkles } from "lucide-react";
+import { Star, ShoppingCart, ArrowLeft, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import logoWhite from "@/assets/coconudi-logo-white.png";
+import useEmblaCarousel from "embla-carousel-react";
 interface Product {
   id: string;
   name: string;
@@ -234,6 +235,11 @@ export default function MarketplacePage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: false, 
+    align: "start",
+    slidesToScroll: 3
+  });
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -334,11 +340,45 @@ export default function MarketplacePage() {
 
       {/* CATEGORIAS - Gênero */}
       <div className="container mx-auto px-4 py-6 border-t border-white/10">
-        <h2 className="text-white font-bold text-xl mb-4">CATEGORIAS - Gênero</h2>
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-          {categories.map(category => <Button key={category} variant={selectedCategory === category ? "default" : "outline"} onClick={() => setSelectedCategory(category)} className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${selectedCategory === category ? "bg-gradient-to-r from-green-500 to-yellow-500 text-white border-none" : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"}`}>
-              {category === "all" ? "Todos" : category.charAt(0).toUpperCase() + category.slice(1)}
-            </Button>)}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-bold text-xl">CATEGORIAS - Gênero</h2>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => emblaApi?.scrollPrev()}
+              className="text-white hover:bg-white/10 h-8 w-8"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => emblaApi?.scrollNext()}
+              className="text-white hover:bg-white/10 h-8 w-8"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="overflow-hidden -mx-4" ref={emblaRef}>
+          <div className="flex gap-3 px-4">
+            {categories.map(category => (
+              <Button 
+                key={category} 
+                variant={selectedCategory === category ? "default" : "outline"} 
+                onClick={() => setSelectedCategory(category)} 
+                className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${
+                  selectedCategory === category 
+                    ? "bg-gradient-to-r from-green-500 to-yellow-500 text-white border-none" 
+                    : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
+                }`}
+              >
+                {category === "all" ? "Todos" : category.charAt(0).toUpperCase() + category.slice(1)}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 

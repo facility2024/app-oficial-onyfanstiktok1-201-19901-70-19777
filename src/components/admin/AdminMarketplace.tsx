@@ -115,17 +115,45 @@ export const AdminMarketplace = () => {
   // Fetch categories
   const fetchCategories = async () => {
     try {
+      console.log('🏷️ Buscando categorias do Supabase...');
+      
       const { data, error } = await (supabase as any)
         .from('marketplace_categories')
         .select('*')
         .order('order_index', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro na query de categorias:', error);
+        throw error;
+      }
+
+      console.log('✅ Categorias recebidas:', data?.length || 0, data);
+      
+      if (!data || data.length === 0) {
+        console.warn('⚠️ Nenhuma categoria encontrada no banco de dados');
+        toast.warning('Nenhuma categoria cadastrada. Crie categorias na seção "Gerenciar Categorias" acima.');
+      }
 
       setCategories(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
-      toast.error('Erro ao carregar categorias');
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar categorias:', error);
+      
+      // Erro específico: tabela não existe
+      if (error?.code === '42P01') {
+        console.error('❌ Tabela marketplace_categories não existe!');
+        toast.error('Tabela de categorias não existe. Execute o SQL de criação no Supabase.');
+      } 
+      // Erro de permissão RLS
+      else if (error?.code === '42501' || error?.message?.includes('permission denied')) {
+        console.error('❌ Permissão negada para acessar categorias');
+        toast.error('Erro de permissão. Verifique as políticas RLS da tabela marketplace_categories.');
+      }
+      // Erro genérico
+      else {
+        toast.error(`Erro ao carregar categorias: ${error?.message || 'Erro desconhecido'}`);
+      }
+      
+      setCategories([]);
     }
   };
 
@@ -778,17 +806,30 @@ export const AdminMarketplace = () => {
               <Label htmlFor="category" className="text-white">Categoria</Label>
               <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
                 <SelectTrigger className="bg-gray-950 border-gray-700 text-white">
-                  <SelectValue placeholder="Selecione uma categoria" />
+                  <SelectValue placeholder={
+                    categories.length === 0 
+                      ? "⚠️ Nenhuma categoria cadastrada" 
+                      : "Selecione uma categoria"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.filter(c => c.is_active).map(cat => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.icon} {cat.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__custom__">
-                    ✏️ Outra (digite abaixo)
-                  </SelectItem>
+                  {categories.length === 0 ? (
+                    <div className="p-4 text-center text-gray-400">
+                      <p className="text-sm">Nenhuma categoria encontrada</p>
+                      <p className="text-xs mt-1">Crie categorias na seção acima</p>
+                    </div>
+                  ) : (
+                    <>
+                      {categories.filter(c => c.is_active).map(cat => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.icon} {cat.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__custom__">
+                        ✏️ Outra (digite abaixo)
+                      </SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
               

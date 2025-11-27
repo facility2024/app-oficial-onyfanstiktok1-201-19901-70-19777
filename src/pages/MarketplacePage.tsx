@@ -335,8 +335,8 @@ export default function MarketplacePage() {
       {/* CATEGORIAS - Gênero */}
       <div className="container mx-auto px-4 py-6 border-t border-white/10">
         <h2 className="text-white font-bold text-xl mb-4">CATEGORIAS - Gênero</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {categories.map(category => <Button key={category} variant={selectedCategory === category ? "default" : "outline"} onClick={() => setSelectedCategory(category)} className={`whitespace-nowrap ${selectedCategory === category ? "bg-gradient-to-r from-green-500 to-yellow-500 text-white border-none" : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"}`}>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+          {categories.map(category => <Button key={category} variant={selectedCategory === category ? "default" : "outline"} onClick={() => setSelectedCategory(category)} className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${selectedCategory === category ? "bg-gradient-to-r from-green-500 to-yellow-500 text-white border-none" : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"}`}>
               {category === "all" ? "Todos" : category.charAt(0).toUpperCase() + category.slice(1)}
             </Button>)}
         </div>

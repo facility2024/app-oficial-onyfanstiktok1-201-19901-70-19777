@@ -58,6 +58,7 @@ export const AdminMarketplace = () => {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoriesSection, setShowCategoriesSection] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
@@ -114,12 +115,14 @@ export const AdminMarketplace = () => {
 
   // Fetch categories
   const fetchCategories = async () => {
+    setCategoriesLoading(true);
     try {
       console.log('🏷️ Buscando categorias do Supabase...');
       
       const { data, error } = await (supabase as any)
         .from('marketplace_categories')
         .select('*')
+        .eq('is_active', true)
         .order('order_index', { ascending: true });
 
       if (error) {
@@ -131,7 +134,6 @@ export const AdminMarketplace = () => {
       
       if (!data || data.length === 0) {
         console.warn('⚠️ Nenhuma categoria encontrada no banco de dados');
-        toast.warning('Nenhuma categoria cadastrada. Crie categorias na seção "Gerenciar Categorias" acima.');
       }
 
       setCategories(data || []);
@@ -154,6 +156,8 @@ export const AdminMarketplace = () => {
       }
       
       setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -421,8 +425,9 @@ export const AdminMarketplace = () => {
   };
 
   // Open create modal
-  const openCreateModal = () => {
+  const openCreateModal = async () => {
     resetForm();
+    await fetchCategories();
     setShowProductModal(true);
   };
 
@@ -803,29 +808,42 @@ export const AdminMarketplace = () => {
             </div>
 
             <div>
-              <Label htmlFor="category" className="text-white">Categoria</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+              <Label htmlFor="category" className="text-white">Categoria *</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData({...formData, category: value})}
+                disabled={categoriesLoading}
+              >
                 <SelectTrigger className="bg-gray-950 border-gray-700 text-white">
                   <SelectValue placeholder={
-                    categories.length === 0 
-                      ? "⚠️ Nenhuma categoria cadastrada" 
-                      : "Selecione uma categoria"
+                    categoriesLoading 
+                      ? "🔄 Carregando categorias..." 
+                      : categories.length === 0 
+                        ? "⚠️ Nenhuma categoria cadastrada" 
+                        : "Selecione uma categoria"
                   } />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700 text-white">
-                  {categories.length === 0 ? (
-                    <div className="p-4 text-center text-gray-400">
-                      <p className="text-sm">Nenhuma categoria encontrada</p>
-                      <p className="text-xs mt-1">Crie categorias na seção acima</p>
-                    </div>
+                <SelectContent className="bg-gray-900 border-gray-700 text-white z-50 max-h-60 overflow-y-auto">
+                  {categoriesLoading ? (
+                    <SelectItem value="__loading__" disabled>
+                      🔄 Carregando...
+                    </SelectItem>
+                  ) : categories.length === 0 ? (
+                    <SelectItem value="__empty__" disabled>
+                      ⚠️ Nenhuma categoria. Crie uma primeiro.
+                    </SelectItem>
                   ) : (
                     <>
-                      {categories.filter(c => c.is_active).map(cat => (
-                        <SelectItem key={cat.id} value={cat.name}>
-                          {cat.icon} {cat.name}
+                      {categories.map(cat => (
+                        <SelectItem 
+                          key={cat.id} 
+                          value={cat.name}
+                          className="hover:bg-gray-800 cursor-pointer"
+                        >
+                          {cat.icon || '📦'} {cat.name}
                         </SelectItem>
                       ))}
-                      <SelectItem value="__custom__">
+                      <SelectItem value="__custom__" className="hover:bg-gray-800 cursor-pointer">
                         ✏️ Outra (digite abaixo)
                       </SelectItem>
                     </>

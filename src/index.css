@@ -432,6 +432,15 @@
   z-index: 10000 !important;
 }
 
+/* Fix for Select dropdown to appear above Dialogs */
+[data-radix-select-content] {
+  z-index: 10001 !important;
+}
+
+[data-radix-select-viewport] {
+  z-index: 10001 !important;
+}
+
 /* Override para todos os diálogos e popups */
 .dialog-overlay {
   z-index: 9999 !important;

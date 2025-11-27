@@ -620,7 +620,7 @@ export const AdminMarketplace = () => {
               <SelectTrigger className="w-full md:w-[200px] bg-gray-950 border-gray-700 text-white">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-900 border-gray-700 text-white">
                 <SelectItem value="all">Todas Categorias</SelectItem>
                 {categories.map(cat => (
                   <SelectItem key={cat.id} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
@@ -632,7 +632,7 @@ export const AdminMarketplace = () => {
               <SelectTrigger className="w-full md:w-[200px] bg-gray-950 border-gray-700 text-white">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-900 border-gray-700 text-white">
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="active">Ativos</SelectItem>
                 <SelectItem value="inactive">Inativos</SelectItem>
@@ -812,7 +812,7 @@ export const AdminMarketplace = () => {
                       : "Selecione uma categoria"
                   } />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {categories.length === 0 ? (
                     <div className="p-4 text-center text-gray-400">
                       <p className="text-sm">Nenhuma categoria encontrada</p>

@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Eye, EyeOff, ShoppingCart, Package, DollarSign, Star, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, ShoppingCart, Package, DollarSign, Star, Search, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { z } from 'zod';
 
 interface Product {
@@ -27,6 +27,16 @@ interface Product {
   created_at: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  is_active: boolean;
+  order_index: number;
+  created_at: string;
+}
+
 const productSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres').max(100),
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres'),
@@ -40,13 +50,18 @@ const productSchema = z.object({
 export const AdminMarketplace = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showProductModal, setShowProductModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoriesSection, setShowCategoriesSection] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
   
   // Estatísticas
   const [stats, setStats] = useState({
@@ -64,6 +79,15 @@ export const AdminMarketplace = () => {
     image_url: '',
     category: '',
     stock: 0,
+    is_active: true
+  });
+
+  // Category form state
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    description: '',
+    icon: '',
+    order_index: 0,
     is_active: true
   });
 
@@ -85,6 +109,23 @@ export const AdminMarketplace = () => {
       toast.error('Erro ao carregar produtos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('marketplace_categories')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+      toast.error('Erro ao carregar categorias');
     }
   };
 
@@ -130,8 +171,9 @@ export const AdminMarketplace = () => {
   // Real-time subscription
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
 
-    const channel = supabase
+    const productsChannel = supabase
       .channel('marketplace-products-changes')
       .on(
         'postgres_changes' as any,
@@ -147,13 +189,27 @@ export const AdminMarketplace = () => {
       )
       .subscribe();
 
+    const categoriesChannel = supabase
+      .channel('marketplace-categories-changes')
+      .on(
+        'postgres_changes' as any,
+        {
+          event: '*',
+          schema: 'public',
+          table: 'marketplace_categories'
+        },
+        () => {
+          console.log('🔄 Categorias atualizadas em tempo real');
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(categoriesChannel);
     };
   }, []);
-
-  // Get unique categories
-  const categories = Array.from(new Set(products.map(p => p.category)));
 
   // Handle form submit
   const handleSubmit = async () => {
@@ -192,24 +248,88 @@ export const AdminMarketplace = () => {
     }
   };
 
-  // Handle delete
+  // Handle delete product
   const handleDelete = async () => {
     if (!deleteProduct) return;
 
     try {
-      const { error } = await (supabase as any)
+      console.log('🗑️ Tentando deletar produto:', deleteProduct.id);
+      
+      const { data, error } = await (supabase as any)
         .from('marketplace_products')
         .delete()
-        .eq('id', deleteProduct.id);
+        .eq('id', deleteProduct.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro Supabase ao deletar:', error);
+        throw error;
+      }
 
+      console.log('✅ Produto deletado:', data);
       toast.success('Produto excluído com sucesso!');
       setDeleteProduct(null);
       fetchProducts();
-    } catch (error) {
-      console.error('Erro ao excluir produto:', error);
-      toast.error('Erro ao excluir produto');
+    } catch (error: any) {
+      console.error('❌ Erro ao excluir produto:', error);
+      toast.error(`Erro ao excluir: ${error?.message || 'Erro desconhecido'}`);
+    }
+  };
+
+  // Handle category submit
+  const handleCategorySubmit = async () => {
+    try {
+      if (!categoryFormData.name.trim()) {
+        toast.error('Nome da categoria é obrigatório');
+        return;
+      }
+
+      if (editingCategory) {
+        // Update
+        const { error } = await (supabase as any)
+          .from('marketplace_categories')
+          .update(categoryFormData)
+          .eq('id', editingCategory.id);
+
+        if (error) throw error;
+        toast.success('Categoria atualizada com sucesso!');
+      } else {
+        // Create
+        const { error } = await (supabase as any)
+          .from('marketplace_categories')
+          .insert(categoryFormData);
+
+        if (error) throw error;
+        toast.success('Categoria criada com sucesso!');
+      }
+
+      setShowCategoryModal(false);
+      resetCategoryForm();
+      fetchCategories();
+    } catch (error: any) {
+      console.error('Erro ao salvar categoria:', error);
+      toast.error(`Erro ao salvar: ${error?.message || 'Erro desconhecido'}`);
+    }
+  };
+
+  // Handle delete category
+  const handleDeleteCategory = async () => {
+    if (!deleteCategory) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from('marketplace_categories')
+        .delete()
+        .eq('id', deleteCategory.id);
+
+      if (error) throw error;
+
+      toast.success('Categoria excluída com sucesso!');
+      setDeleteCategory(null);
+      fetchCategories();
+    } catch (error: any) {
+      console.error('Erro ao excluir categoria:', error);
+      toast.error(`Erro ao excluir: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -245,6 +365,18 @@ export const AdminMarketplace = () => {
     setEditingProduct(null);
   };
 
+  // Reset category form
+  const resetCategoryForm = () => {
+    setCategoryFormData({
+      name: '',
+      description: '',
+      icon: '',
+      order_index: categories.length,
+      is_active: true
+    });
+    setEditingCategory(null);
+  };
+
   // Open edit modal
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
@@ -266,6 +398,30 @@ export const AdminMarketplace = () => {
     setShowProductModal(true);
   };
 
+  // Open edit category modal
+  const openEditCategoryModal = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryFormData({
+      name: category.name,
+      description: category.description || '',
+      icon: category.icon || '',
+      order_index: category.order_index,
+      is_active: category.is_active
+    });
+    setShowCategoryModal(true);
+  };
+
+  // Open create category modal
+  const openCreateCategoryModal = () => {
+    resetCategoryForm();
+    setShowCategoryModal(true);
+  };
+
+  // Get product count by category
+  const getProductCountByCategory = (categoryName: string) => {
+    return products.filter(p => p.category === categoryName).length;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -276,6 +432,97 @@ export const AdminMarketplace = () => {
 
   return (
     <div className="space-y-6">
+      {/* GERENCIAR CATEGORIAS */}
+      <Card className="!bg-gradient-to-br !from-purple-900 !to-purple-800 border-purple-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Tag className="w-5 h-5" />
+              Gerenciar Categorias
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={openCreateCategoryModal}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Categoria
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowCategoriesSection(!showCategoriesSection)}
+                className="text-white hover:bg-purple-700"
+              >
+                {showCategoriesSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        
+        {showCategoriesSection && (
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {categories.map((category) => (
+                <Card key={category.id} className="!bg-purple-950/50 border-purple-700">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {category.icon && <span className="text-2xl">{category.icon}</span>}
+                        <div>
+                          <h4 className="font-semibold text-white">{category.name}</h4>
+                          {category.description && (
+                            <p className="text-xs text-gray-400">{category.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge className={category.is_active ? 'bg-green-600' : 'bg-red-600'}>
+                        {category.is_active ? 'Ativa' : 'Inativa'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-gray-400 mb-3">
+                      {getProductCountByCategory(category.name)} produtos
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEditCategoryModal(category)}
+                        className="flex-1 text-xs"
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteCategory(category)}
+                        className="flex-1 text-xs"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Excluir
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {categories.length === 0 && (
+              <div className="text-center py-8">
+                <Tag className="w-12 h-12 mx-auto mb-3 text-purple-400" />
+                <p className="text-white mb-2">Nenhuma categoria cadastrada</p>
+                <Button onClick={openCreateCategoryModal} size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Primeira Categoria
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="!bg-gradient-to-br !from-blue-900 !to-blue-800 border-blue-700">
@@ -348,7 +595,7 @@ export const AdminMarketplace = () => {
               <SelectContent>
                 <SelectItem value="all">Todas Categorias</SelectItem>
                 {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectItem key={cat.id} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -529,13 +776,29 @@ export const AdminMarketplace = () => {
 
             <div>
               <Label htmlFor="category" className="text-white">Categoria</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
-                placeholder="Ex: Roupas, Acessórios, etc."
-                className="bg-gray-950 border-gray-700 text-white"
-              />
+              <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <SelectTrigger className="bg-gray-950 border-gray-700 text-white">
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.filter(c => c.is_active).map(cat => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.icon} {cat.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__custom__">
+                    ✏️ Outra (digite abaixo)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {formData.category === '__custom__' && (
+                <Input
+                  placeholder="Digite o nome da categoria..."
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="mt-2 bg-gray-950 border-gray-700 text-white"
+                />
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -563,7 +826,87 @@ export const AdminMarketplace = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      {/* Category Modal */}
+      <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+        <DialogContent className="max-w-lg bg-gradient-to-br from-purple-900 to-purple-800 border-purple-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="cat_name" className="text-white">Nome da Categoria</Label>
+              <Input
+                id="cat_name"
+                value={categoryFormData.name}
+                onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
+                placeholder="Ex: Roupas, Eletrônicos..."
+                className="bg-purple-950 border-purple-700 text-white"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cat_description" className="text-white">Descrição (opcional)</Label>
+              <Input
+                id="cat_description"
+                value={categoryFormData.description}
+                onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
+                placeholder="Breve descrição da categoria"
+                className="bg-purple-950 border-purple-700 text-white"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cat_icon" className="text-white">Ícone Emoji (opcional)</Label>
+              <Input
+                id="cat_icon"
+                value={categoryFormData.icon}
+                onChange={(e) => setCategoryFormData({...categoryFormData, icon: e.target.value})}
+                placeholder="Ex: 👗 📱 💄"
+                className="bg-purple-950 border-purple-700 text-white"
+                maxLength={2}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cat_order" className="text-white">Ordem de Exibição</Label>
+              <Input
+                id="cat_order"
+                type="number"
+                value={categoryFormData.order_index}
+                onChange={(e) => setCategoryFormData({...categoryFormData, order_index: parseInt(e.target.value) || 0})}
+                className="bg-purple-950 border-purple-700 text-white"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="cat_active"
+                checked={categoryFormData.is_active}
+                onChange={(e) => setCategoryFormData({...categoryFormData, is_active: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="cat_active" className="text-white cursor-pointer">
+                Categoria ativa
+              </Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCategoryModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCategorySubmit} className="bg-purple-600 hover:bg-purple-700">
+              {editingCategory ? 'Atualizar' : 'Criar'} Categoria
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Product Confirmation */}
       <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
         <AlertDialogContent className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700">
           <AlertDialogHeader>
@@ -579,6 +922,30 @@ export const AdminMarketplace = () => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Category Confirmation */}
+      <AlertDialog open={!!deleteCategory} onOpenChange={() => setDeleteCategory(null)}>
+        <AlertDialogContent className="bg-gradient-to-br from-purple-900 to-purple-800 border-purple-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Confirmar Exclusão de Categoria</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Tem certeza que deseja excluir a categoria "{deleteCategory?.name}"? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-purple-700 text-white hover:bg-purple-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCategory}
               className="bg-red-600 text-white hover:bg-red-700"
             >
               Excluir

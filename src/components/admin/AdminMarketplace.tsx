@@ -809,47 +809,29 @@ export const AdminMarketplace = () => {
 
             <div>
               <Label htmlFor="category" className="text-white">Categoria *</Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => setFormData({...formData, category: value})}
-                disabled={categoriesLoading}
-              >
-                <SelectTrigger className="bg-gray-950 border-gray-700 text-white">
-                  <SelectValue placeholder={
-                    categoriesLoading 
-                      ? "🔄 Carregando categorias..." 
-                      : categories.length === 0 
-                        ? "⚠️ Nenhuma categoria cadastrada" 
-                        : "Selecione uma categoria"
-                  } />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700 text-white z-50 max-h-60 overflow-y-auto">
-                  {categoriesLoading ? (
-                    <SelectItem value="__loading__" disabled>
-                      🔄 Carregando...
-                    </SelectItem>
-                  ) : categories.length === 0 ? (
-                    <SelectItem value="__empty__" disabled>
-                      ⚠️ Nenhuma categoria. Crie uma primeiro.
-                    </SelectItem>
-                  ) : (
-                    <>
-                      {categories.map(cat => (
-                        <SelectItem 
-                          key={cat.id} 
-                          value={cat.name}
-                          className="hover:bg-gray-800 cursor-pointer"
-                        >
-                          {cat.icon || '📦'} {cat.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="__custom__" className="hover:bg-gray-800 cursor-pointer">
-                        ✏️ Outra (digite abaixo)
-                      </SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
+              {categoriesLoading ? (
+                <div className="flex items-center gap-2 h-10 px-3 bg-gray-950 border border-gray-700 rounded-md text-gray-400">
+                  <span className="animate-spin">🔄</span> Carregando categorias...
+                </div>
+              ) : (
+                <select
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full h-10 px-3 bg-gray-950 border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-ring focus:outline-none native-select"
+                  required
+                >
+                  <option value="" disabled>
+                    {categories.length === 0 ? '⚠️ Nenhuma categoria cadastrada' : 'Selecione uma categoria'}
+                  </option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.icon || '📦'} {cat.name}
+                    </option>
+                  ))}
+                  <option value="__custom__">✏️ Outra (digite abaixo)</option>
+                </select>
+              )}
               
               {formData.category === '__custom__' && (
                 <Input

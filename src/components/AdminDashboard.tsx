@@ -243,7 +243,7 @@ export const AdminDashboard = () => {
           userId={user?.id}
         />
         
-        <main className="max-w-full mx-auto py-2 sm:py-4 lg:py-6 px-2 sm:px-4 lg:px-6 pt-20">
+        <main className="max-w-[1200px] mx-auto py-2 sm:py-4 lg:py-6 px-2 sm:px-4 lg:px-6 pt-20">
           {renderContent()}
         </main>
       </div>

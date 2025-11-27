@@ -23,16 +23,7 @@ import { LiveModal } from '@/components/tiktok/LiveModal';
 import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { useCreatorRole } from '@/hooks/useUserRoles';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -54,8 +45,6 @@ import headerBackground from '@/assets/header-background.png';
 // Feed inteligente desativado temporariamente
 // import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 // import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
-
-
 
 interface Video {
   id: string;
@@ -87,7 +76,6 @@ interface Video {
     posting_panel_url?: string;
   };
 }
-
 interface Comment {
   id: string;
   text: string;
@@ -100,16 +88,21 @@ interface Comment {
     avatar_url: string;
   };
 }
-
 export const TikTokApp = () => {
   console.log('🎬 TikTokApp: Componente renderizado');
-  
+
   // Hook para obter dados do usuário logado
-  const { user: authUser, profile } = useCurrentUser();
-  
+  const {
+    user: authUser,
+    profile
+  } = useCurrentUser();
+
   // Hook para verificar se é criador
-  const { isCreator, loading: creatorLoading } = useCreatorRole();
-  
+  const {
+    isCreator,
+    loading: creatorLoading
+  } = useCreatorRole();
+
   // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
   // const { 
   //   videos: intelligentVideos, 
@@ -120,7 +113,7 @@ export const TikTokApp = () => {
   //   markModelAsFavorite,
   //   getUserMemory
   // } = useIntelligentFeed();
-  
+
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
@@ -142,7 +135,7 @@ export const TikTokApp = () => {
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
-  
+
   // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
   const [videosWatched, setVideosWatched] = useState(() => {
     const saved = localStorage.getItem('videosWatched');
@@ -151,7 +144,7 @@ export const TikTokApp = () => {
     return count;
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
-  
+
   // Debug do estado do modal
   useEffect(() => {
     console.log('🔐 ESTADO:', {
@@ -159,17 +152,27 @@ export const TikTokApp = () => {
       currentUser: !!currentUser
     });
   }, [videosWatched, currentUser]);
-  
+
   // Verifica se usuário está logado
   useEffect(() => {
     console.log('🔐 VERIFICANDO SESSÃO DO USUÁRIO...');
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       console.log('🔐 SESSÃO:', !!session?.user);
       setCurrentUser(session?.user ?? null);
     });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('🔐 MUDANÇA DE AUTH:', { event: _event, user: !!session?.user });
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔐 MUDANÇA DE AUTH:', {
+        event: _event,
+        user: !!session?.user
+      });
       setCurrentUser(session?.user ?? null);
       // Se usuário logar, reseta contador e volta para o app
       if (session?.user) {
@@ -179,25 +182,24 @@ export const TikTokApp = () => {
         localStorage.removeItem('requiresLogin');
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
-  
+
   // Debug do estado
   useEffect(() => {
     console.log('🔍 DEBUG: showAgeVerification mudou para:', showAgeVerification);
   }, [showAgeVerification]);
-  
+
   // 🔇 PERSISTIR ESTADO DE MUTE
   useEffect(() => {
     localStorage.setItem('app_isMuted', isMuted.toString());
   }, [isMuted]);
-  
+
   // 🔊 PERSISTIR ESTADO DE VOLUME
   useEffect(() => {
     localStorage.setItem('app_volume', volume.toString());
   }, [volume]);
-  
+
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -213,12 +215,12 @@ export const TikTokApp = () => {
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
-  
+
   // Debug do showFullscreen
   useEffect(() => {
     console.log('📺 Estado showFullscreen mudou para:', showFullscreen);
   }, [showFullscreen]);
-  
+
   // Ordem de modelos no ciclo e controle de atualização
   const [modelOrder, setModelOrder] = useState<string[]>([]);
   const [cycleSize, setCycleSize] = useState(0);
@@ -227,12 +229,32 @@ export const TikTokApp = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const targetVideoId = searchParams.get('video');
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const isMobile = useIsMobile();
-  const { checkAndTrackAction } = useActionTracker();
-  const { trackLike, trackComment, trackShare, trackView, trackFollow } = useAppAnalytics();
-  console.log('🎯 DEBUG: Importações do useAppAnalytics:', { trackLike, trackComment, trackShare, trackView, trackFollow });
-  const { isPremium, isContentUnlocked, checkPremiumStatus } = usePremiumStatus();
+  const {
+    checkAndTrackAction
+  } = useActionTracker();
+  const {
+    trackLike,
+    trackComment,
+    trackShare,
+    trackView,
+    trackFollow
+  } = useAppAnalytics();
+  console.log('🎯 DEBUG: Importações do useAppAnalytics:', {
+    trackLike,
+    trackComment,
+    trackShare,
+    trackView,
+    trackFollow
+  });
+  const {
+    isPremium,
+    isContentUnlocked,
+    checkPremiumStatus
+  } = usePremiumStatus();
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   // Verifica se um vídeo é novo (criado após a última sessão)
@@ -240,10 +262,8 @@ export const TikTokApp = () => {
     try {
       const lastSession = localStorage.getItem('last_app_session');
       if (!lastSession) return false;
-      
       const videoDate = new Date(video.created_at).getTime();
       const sessionDate = new Date(lastSession).getTime();
-      
       return videoDate > sessionDate;
     } catch {
       return false;
@@ -269,16 +289,16 @@ export const TikTokApp = () => {
     const currentVideo = videos[currentVideoIndex];
     return await checkAndTrackAction(actionType, currentVideo?.id, currentVideo?.user_id);
   };
-  
+
   // Carousel otimizado para todas as plataformas
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+  const [emblaRef, emblaApi] = useEmblaCarousel({
     axis: 'y',
     loop: false,
     dragFree: false,
     containScroll: 'trimSnaps',
-    duration: 20,
+    duration: 20
   });
-  
+
   // Debug do emblaApi
   useEffect(() => {
     console.log('🎪 EMBLA API:', {
@@ -287,9 +307,7 @@ export const TikTokApp = () => {
       selectedSnap: emblaApi?.selectedScrollSnap()
     });
   }, [emblaApi]);
-
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
-
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
   console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
@@ -301,7 +319,6 @@ export const TikTokApp = () => {
   useEffect(() => {
     if (!videos.length) return;
     const links: HTMLLinkElement[] = [];
-    
     try {
       const url = new URL(videos[0].video_url);
       const preconnect = document.createElement('link');
@@ -311,7 +328,6 @@ export const TikTokApp = () => {
       document.head.appendChild(preconnect);
       links.push(preconnect);
     } catch {}
-    
     return () => {
       links.forEach(link => {
         try {
@@ -330,12 +346,9 @@ export const TikTokApp = () => {
       videosWatched,
       currentUser: !!currentUser
     });
-    
     if (!emblaApi) return;
-
     const onSelect = () => {
       console.log('🎪 ON SELECT DISPARADO!');
-      
       const newIndex = emblaApi.selectedScrollSnap();
       console.log('📊 DEBUG LOGIN:', {
         newIndex,
@@ -344,23 +357,21 @@ export const TikTokApp = () => {
         videosWatched,
         isForward: newIndex > currentVideoIndex
       });
-      
       if (newIndex !== currentVideoIndex) {
         console.log('📹 Mudando de vídeo:', currentVideoIndex, '→', newIndex);
         setCurrentVideoIndex(newIndex);
-        
+
         // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
         if (!currentUser && newIndex > currentVideoIndex) {
           const newCount = videosWatched + 1;
-          console.log('🔐 INCREMENTANDO CONTADOR:', { 
-            anterior: videosWatched, 
+          console.log('🔐 INCREMENTANDO CONTADOR:', {
+            anterior: videosWatched,
             novo: newCount,
             deveRedirecionar: newCount >= 5
           });
-          
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
-          
+
           // Redireciona para /auth após 5 vídeos
           if (newCount >= 5) {
             console.log('🚨 REDIRECIONANDO PARA /AUTH!');
@@ -380,10 +391,8 @@ export const TikTokApp = () => {
         console.log('📹 Mesmo vídeo, não mudou');
       }
     };
-
     console.log('🎪 Registrando listener onSelect');
     emblaApi.on('select', onSelect);
-    
     return () => {
       console.log('🎪 Removendo listener onSelect');
       emblaApi.off('select', onSelect);
@@ -402,10 +411,8 @@ export const TikTokApp = () => {
   // Preload adjacent videos for faster navigation
   useEffect(() => {
     if (videos.length === 0) return;
-
     const preloadVideo = (index: number) => {
       if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
-      
       const video = videos[index];
       if (video?.video_url) {
         const link = document.createElement('link');
@@ -414,9 +421,8 @@ export const TikTokApp = () => {
         link.href = video.video_url;
         link.type = 'video/mp4';
         document.head.appendChild(link);
-        
         setPreloadedVideos(prev => new Set(prev).add(index));
-        
+
         // Clean up after 30 seconds
         setTimeout(() => {
           if (document.head.contains(link)) {
@@ -431,7 +437,7 @@ export const TikTokApp = () => {
     preloadVideo(currentVideoIndex + 2);
     preloadVideo(currentVideoIndex - 1);
   }, [currentVideoIndex, videos, preloadedVideos]);
-  
+
   // DESABILITADO: Verificação de idade
   // useEffect(() => {
   //   console.log('🔍 VERIFICAÇÃO DE IDADE: Iniciando verificação...');
@@ -516,64 +522,64 @@ export const TikTokApp = () => {
     } catch {}
     // Dispara evento customizado para outros componentes no mesmo documento
     try {
-      const evt = new CustomEvent('ageModalOpenChange', { detail: { open: showAgeVerification } });
+      const evt = new CustomEvent('ageModalOpenChange', {
+        detail: {
+          open: showAgeVerification
+        }
+      });
       window.dispatchEvent(evt);
     } catch {}
   }, [showAgeVerification]);
   useEffect(() => {
-    
     // ✅ REMOVER carregamento periódico para evitar notificações constantes
-    
+
     // 🔄 COMUNICAÇÃO OTIMIZADA EM TEMPO REAL COM PAINEL ADMIN
     console.log('🚀 Configurando comunicação bidirecional admin-app...');
-    
     let lastToastTime = 0;
     const TOAST_COOLDOWN = 5000; // 5 segundos entre toasts
-    
+
     const showToast = (title: string, description: string) => {
       const now = Date.now();
       if (now - lastToastTime > TOAST_COOLDOWN) {
-        toast({ title, description });
+        toast({
+          title,
+          description
+        });
         lastToastTime = now;
       }
     };
-    
+
     // Canal consolidado para todas as mudanças importantes
-    const adminChannel = supabase
-      .channel('admin-app-sync')
-      .on(
-         'postgres_changes',
-        { event: '*', schema: 'public', table: 'videos' },
-        (payload) => {
-          console.log('🎬 ADMIN → APP: Mudança em vídeos:', payload.eventType);
-          if (payload.eventType === 'INSERT') {
-            showToast("📱 Novo Conteúdo!", "Vídeo adicionado pelo admin");
-            // Sinalizar atualização pendente para aplicar no fim do ciclo
-            setPendingRefresh(true);
-          }
-        }
-      )
-      .on(
-         'postgres_changes',
-        { event: '*', schema: 'public', table: 'models' },
-        (payload) => {
-          console.log('👤 ADMIN → APP: Mudança em modelos:', payload.eventType);
-          if (payload.eventType === 'INSERT') {
-            showToast("👤 Novo Modelo!", "Perfil adicionado pelo admin");
-            // Sinalizar atualização pendente para aplicar no fim do ciclo
-            setPendingRefresh(true);
-          }
-        }
-      )
-      .on(
-         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'posts_principais' },
-        (payload) => {
-          console.log('🏠 ADMIN → APP: Novo post na tela principal');
-          showToast("🏠 Novo Post!", "Conteúdo adicionado na tela principal");
-        }
-      )
-      .subscribe();
+    const adminChannel = supabase.channel('admin-app-sync').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'videos'
+    }, payload => {
+      console.log('🎬 ADMIN → APP: Mudança em vídeos:', payload.eventType);
+      if (payload.eventType === 'INSERT') {
+        showToast("📱 Novo Conteúdo!", "Vídeo adicionado pelo admin");
+        // Sinalizar atualização pendente para aplicar no fim do ciclo
+        setPendingRefresh(true);
+      }
+    }).on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'models'
+    }, payload => {
+      console.log('👤 ADMIN → APP: Mudança em modelos:', payload.eventType);
+      if (payload.eventType === 'INSERT') {
+        showToast("👤 Novo Modelo!", "Perfil adicionado pelo admin");
+        // Sinalizar atualização pendente para aplicar no fim do ciclo
+        setPendingRefresh(true);
+      }
+    }).on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'posts_principais'
+    }, payload => {
+      console.log('🏠 ADMIN → APP: Novo post na tela principal');
+      showToast("🏠 Novo Post!", "Conteúdo adicionado na tela principal");
+    }).subscribe();
 
     // Cleanup ao desmontar
     return () => {
@@ -585,18 +591,16 @@ export const TikTokApp = () => {
   useEffect(() => {
     console.log('🔍 DEBUG: useEffect disparado com currentVideo:', currentVideo?.id);
     console.log('🔍 DEBUG: trackView disponível:', typeof trackView);
-    
     const registerView = async () => {
       if (currentVideo && currentVideo.id) {
         console.log('📹 REGISTRANDO VIEW para vídeo:', currentVideo.id);
         try {
           const userId = currentVideo.user?.id || currentVideo.model_id || '';
           const isCreator = !!currentVideo.creator_id;
-          
           if (userId) {
             await trackView(currentVideo.id, userId, isCreator);
             ensureInteractedModel(userId);
-            
+
             // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO
             if ((currentVideo as any).isHighlighted) {
               try {
@@ -609,7 +613,6 @@ export const TikTokApp = () => {
                 console.warn('⚠️ Erro ao salvar post visualizado:', error);
               }
             }
-            
             console.log('✅ VIEW registrada com sucesso!');
           }
         } catch (error) {
@@ -617,7 +620,6 @@ export const TikTokApp = () => {
         }
       }
     };
-    
     if (currentVideo) {
       loadComments(currentVideo.id);
       checkIfLiked(currentVideo.id);
@@ -631,7 +633,7 @@ export const TikTokApp = () => {
   // ✅ INICIALIZAR FEED QUANDO O APP MONTA
   useEffect(() => {
     console.log('🎬 Inicializando app...');
-    
+
     // Salvar timestamp da sessão atual para marcar vídeos novos
     const now = new Date().toISOString();
     const lastSession = localStorage.getItem('last_app_session');
@@ -640,9 +642,8 @@ export const TikTokApp = () => {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       localStorage.setItem('last_app_session', oneDayAgo);
     }
-    
     initializeFeed();
-    
+
     // Atualizar timestamp ao fechar/sair
     return () => {
       localStorage.setItem('last_app_session', new Date().toISOString());
@@ -657,20 +658,19 @@ export const TikTokApp = () => {
   const initializeFeed = useCallback(async () => {
     // Prevenir múltiplas inicializações simultâneas
     if (isLoadingMore) return;
-    
     try {
       console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
       setLoading(true);
-      
+
       // Check cache first for faster initial load
       const CACHE_VERSION = 'v2'; // Incrementar quando houver mudanças na estrutura
       const cacheKey = `initial_feed_${CACHE_VERSION}`;
       const cached = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
-      
       if (cached && cacheTime) {
         const age = Date.now() - parseInt(cacheTime);
-        if (age < 60000) { // Cache valid for 1 minute
+        if (age < 60000) {
+          // Cache valid for 1 minute
           const cachedData = JSON.parse(cached);
           console.log(`✅ Feed carregado do cache (${cachedData.length} vídeos)`);
           setVideos(cachedData);
@@ -679,12 +679,12 @@ export const TikTokApp = () => {
           return;
         }
       }
-      
+
       // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
       console.log('🌟 Carregando posts agendados recentes...');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       // 🆕 SISTEMA DE DESTAQUE: Carregar posts já visualizados
       const getViewedPosts = (): Set<string> => {
         try {
@@ -694,40 +694,37 @@ export const TikTokApp = () => {
           return new Set();
         }
       };
-      
       const viewedPosts = getViewedPosts();
       console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
-      
-      const { data: postsAgendados, error: postsError } = await supabase
-        .from('posts_agendados')
-        .select(`
+      const {
+        data: postsAgendados,
+        error: postsError
+      } = await supabase.from('posts_agendados').select(`
           *,
           modelo:models(*)
-        `)
-        .eq('status', 'publicado')
-        .gte('data_publicacao', today.toISOString())
-        .order('data_publicacao', { ascending: false });
-
-      const { data: postsPrincipais, error: principaisError } = await supabase
-        .from('posts_principais')
-        .select(`
+        `).eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', {
+        ascending: false
+      });
+      const {
+        data: postsPrincipais,
+        error: principaisError
+      } = await supabase.from('posts_principais').select(`
           *,
           modelo:models(*)
-        `)
-        .gte('created_at', today.toISOString())
-        .order('created_at', { ascending: false });
-
+        `).gte('created_at', today.toISOString()).order('created_at', {
+        ascending: false
+      });
       if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
       if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
 
       // Carregar todos os vídeos disponíveis
       console.log('📋 Carregando catálogo de vídeos...');
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false });
-
+      const {
+        data: videosData,
+        error: videosError
+      } = await supabase.from('videos').select('*').eq('is_active', true).order('updated_at', {
+        ascending: false
+      });
       if (videosError) {
         console.error('❌ Erro ao carregar vídeos:', videosError);
         throw videosError;
@@ -751,49 +748,46 @@ export const TikTokApp = () => {
           creator_id: v.creator_id
         })) || []
       });
-
-      const { data: modelsData, error: modelsError } = await supabase
-        .from('models')
-        .select('*')
-        .eq('is_active', true);
-
+      const {
+        data: modelsData,
+        error: modelsError
+      } = await supabase.from('models').select('*').eq('is_active', true);
       if (modelsError && (modelsError as any).code !== 'PGRST116') {
         console.warn('⚠️ Erro ao carregar modelos:', modelsError);
       }
 
       // Carregar criadores (via user_roles)
-      const { data: creatorRoles, error: rolesError } = await (supabase as any)
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'creator');
-
+      const {
+        data: creatorRoles,
+        error: rolesError
+      } = await (supabase as any).from('user_roles').select('user_id').eq('role', 'creator');
       if (rolesError) {
         console.warn('⚠️ Erro ao carregar roles de criadores:', rolesError);
       }
-
       let creatorsData: any[] = [];
       if (creatorRoles && creatorRoles.length > 0) {
         const creatorIds = creatorRoles.map((r: any) => r.user_id);
-        const { data: creatorsProfiles, error: creatorsError } = await supabase
-          .from('profiles')
-          .select('id, name, email, avatar_url, bio')
-          .in('id', creatorIds);
-
+        const {
+          data: creatorsProfiles,
+          error: creatorsError
+        } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
         if (creatorsError) {
           console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
         }
-        
         creatorsData = creatorsProfiles || [];
       }
-
       console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
-      
+
       // Debug: Verificar vídeos de criadores no banco
       const videosWithCreatorId = videosData?.filter((v: any) => v.creator_id) || [];
       console.log(`🎨 Vídeos com creator_id no banco: ${videosWithCreatorId.length}`);
       if (videosWithCreatorId.length > 0) {
         console.log('🎨 IDs de criadores com vídeos:', [...new Set(videosWithCreatorId.map((v: any) => v.creator_id))]);
-        console.log('🎨 Criadores disponíveis:', creatorsData?.map((c: any) => ({ id: c.id, name: c.name, email: c.email })));
+        console.log('🎨 Criadores disponíveis:', creatorsData?.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          email: c.email
+        })));
       }
 
       // Utilitários
@@ -805,7 +799,6 @@ export const TikTokApp = () => {
         }
         return raw;
       };
-
       const isValidVideoUrl = (u: string) => {
         if (!/^https?:\/\//i.test(u)) return false;
         try {
@@ -815,200 +808,176 @@ export const TikTokApp = () => {
           return false;
         }
       };
-
       const isToday = (iso?: string) => {
         if (!iso) return false;
         const d = new Date(iso);
         const now = new Date();
         return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
       };
-
-      const interactedModelIds: Set<string> = new Set<string>(
-        (() => {
-          try {
-            const raw = localStorage.getItem('interacted_model_ids');
-            if (!raw) return [] as string[];
-            const arr = JSON.parse(raw);
-            return Array.isArray(arr) ? arr : [];
-          } catch {
-            return [] as string[];
-          }
-        })()
-      );
+      const interactedModelIds: Set<string> = new Set<string>((() => {
+        try {
+          const raw = localStorage.getItem('interacted_model_ids');
+          if (!raw) return [] as string[];
+          const arr = JSON.parse(raw);
+          return Array.isArray(arr) ? arr : [];
+        } catch {
+          return [] as string[];
+        }
+      })());
 
       // 🎯 Processar posts agendados recentes como prioridade
-      const processedScheduledPosts = (postsAgendados || [])
-        .filter((post) => !viewedPosts.has(`scheduled-${post.id}`)) // 🆕 Filtrar já visualizados
-        .map((post) => {
-          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-          const contentUrl = normalizeUrl(post.conteudo_url || '');
-          
-          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-            return null;
+      const processedScheduledPosts = (postsAgendados || []).filter(post => !viewedPosts.has(`scheduled-${post.id}`)) // 🆕 Filtrar já visualizados
+      .map(post => {
+        const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
+        const contentUrl = normalizeUrl(post.conteudo_url || '');
+        if (!contentUrl || !isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          return null;
+        }
+        return {
+          id: `scheduled-${post.id}`,
+          video_url: contentUrl,
+          title: post.titulo || 'Conteúdo Agendado',
+          user_id: post.modelo_id || 'unknown',
+          model_id: post.modelo_id || 'unknown',
+          music_name: 'Novo Conteúdo',
+          visibility: 'public' as const,
+          source: 'scheduled_post',
+          isHighlighted: true,
+          // 🆕 Marcar como destaque
+          created_at: post.data_publicacao || post.created_at,
+          user: model ? {
+            id: model.id || post.modelo_id || 'unknown',
+            username: model.username || model.name || 'Usuário',
+            avatar_url: model.avatar_url || '',
+            followers_count: model.followers_count || 0,
+            following_count: 0,
+            is_online: model.is_live || false,
+            bio: model.bio || '',
+            posting_panel_url: model.posting_panel_url || '',
+            created_at: model.created_at || ''
+          } : {
+            id: post.modelo_id || 'unknown',
+            username: post.modelo_username || 'Usuário',
+            avatar_url: '',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            bio: '',
+            created_at: ''
           }
-
-          return {
-            id: `scheduled-${post.id}`,
-            video_url: contentUrl,
-            title: post.titulo || 'Conteúdo Agendado',
-            user_id: post.modelo_id || 'unknown',
-            model_id: post.modelo_id || 'unknown',
-            music_name: 'Novo Conteúdo',
-            visibility: 'public' as const,
-            source: 'scheduled_post',
-            isHighlighted: true, // 🆕 Marcar como destaque
-            created_at: post.data_publicacao || post.created_at,
-            user: model ? {
-              id: model.id || post.modelo_id || 'unknown',
-              username: model.username || model.name || 'Usuário',
-              avatar_url: model.avatar_url || '',
-              followers_count: model.followers_count || 0,
-              following_count: 0,
-              is_online: model.is_live || false,
-              bio: model.bio || '',
-              posting_panel_url: model.posting_panel_url || '',
-              created_at: model.created_at || '',
-            } : {
-              id: post.modelo_id || 'unknown',
-              username: post.modelo_username || 'Usuário',
-              avatar_url: '',
-              followers_count: 0,
-              following_count: 0,
-              is_online: false,
-              bio: '',
-              created_at: '',
-            }
-          } as any;
-        })
-        .filter(Boolean);
-
-      const processedMainPosts = (postsPrincipais || [])
-        .filter((post) => !viewedPosts.has(`main-${post.id}`)) // 🆕 Filtrar já visualizados
-        .map((post) => {
-          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-          const contentUrl = normalizeUrl(post.conteudo_url || '');
-          
-          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-            return null;
+        } as any;
+      }).filter(Boolean);
+      const processedMainPosts = (postsPrincipais || []).filter(post => !viewedPosts.has(`main-${post.id}`)) // 🆕 Filtrar já visualizados
+      .map(post => {
+        const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
+        const contentUrl = normalizeUrl(post.conteudo_url || '');
+        if (!contentUrl || !isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          return null;
+        }
+        return {
+          id: `main-${post.id}`,
+          video_url: contentUrl,
+          title: post.titulo || 'Novo Conteúdo',
+          user_id: post.modelo_id || 'unknown',
+          model_id: post.modelo_id || 'unknown',
+          music_name: 'Novo Conteúdo',
+          visibility: 'public' as const,
+          source: 'main_post',
+          isHighlighted: true,
+          // 🆕 Marcar como destaque
+          created_at: post.created_at,
+          user: model ? {
+            id: model.id || post.modelo_id || 'unknown',
+            username: model.username || model.name || 'Usuário',
+            avatar_url: model.avatar_url || '',
+            followers_count: model.followers_count || 0,
+            following_count: 0,
+            is_online: model.is_live || false,
+            bio: model.bio || '',
+            posting_panel_url: model.posting_panel_url || '',
+            created_at: model.created_at || ''
+          } : {
+            id: post.modelo_id || 'unknown',
+            username: post.modelo_username || 'Usuário',
+            avatar_url: '',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            bio: '',
+            created_at: ''
           }
-
-          return {
-            id: `main-${post.id}`,
-            video_url: contentUrl,
-            title: post.titulo || 'Novo Conteúdo',
-            user_id: post.modelo_id || 'unknown',
-            model_id: post.modelo_id || 'unknown',
-            music_name: 'Novo Conteúdo',
-            visibility: 'public' as const,
-            source: 'main_post',
-            isHighlighted: true, // 🆕 Marcar como destaque
-            created_at: post.created_at,
-            user: model ? {
-              id: model.id || post.modelo_id || 'unknown',
-              username: model.username || model.name || 'Usuário',
-              avatar_url: model.avatar_url || '',
-              followers_count: model.followers_count || 0,
-              following_count: 0,
-              is_online: model.is_live || false,
-              bio: model.bio || '',
-              posting_panel_url: model.posting_panel_url || '',
-              created_at: model.created_at || '',
-            } : {
-              id: post.modelo_id || 'unknown',
-              username: post.modelo_username || 'Usuário',
-              avatar_url: '',
-              followers_count: 0,
-              following_count: 0,
-              is_online: false,
-              bio: '',
-              created_at: '',
-            }
-          } as any;
-        })
-        .filter(Boolean);
+        } as any;
+      }).filter(Boolean);
 
       // Normalizar e enriquecer vídeos válidos do catálogo
-      const validVideos = (videosData || [])
-        .map((v) => ({ ...v, video_url: normalizeUrl(v.video_url || '') }))
-        .filter((v) => {
-          const isValid = isValidVideoUrl(v.video_url);
-          if (!isValid && v.video_url) {
-            console.warn(`🚫 URL inválida filtrada: ${v.video_url}`);
-          }
-          return isValid;
-        })
-        .map((video: any) => {
-          // Procurar owner: priorizar creator_id, depois model_id
-          const owner: any = video.creator_id
-            ? creatorsData?.find((c: any) => c.id === video.creator_id)
-            : modelsData?.find((m: any) => m.id === video.model_id);
-          
-          // Se é criador, formatar nome
-          let ownerData: any = owner;
-          if (video.creator_id && owner) {
-            const displayName = owner.name && owner.name !== owner.email
-              ? owner.name
-              : (owner.email?.split('@')[0] || 'Criador');
-            
-            ownerData = {
-              id: owner.id,
-              username: displayName,
-              name: displayName,
-              avatar_url: owner.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-              followers_count: 0,
-              is_live: false,
-              bio: owner.bio || '',
-              posting_panel_url: '',
-              created_at: owner.created_at || ''
-            };
-          }
-          
-          return {
-            ...video,
-            user_id: video.creator_id || video.model_id || '',
-            music_name: video.title || `Som original - ${ownerData?.username || ownerData?.name || 'Autor'}`,
-            visibility: (video.visibility as 'public' | 'premium') || 'public',
-            source: 'catalog_video',
-            user: ownerData
-              ? {
-                  id: ownerData.id,
-                  username: ownerData.username || ownerData.name || 'Usuário',
-                  avatar_url: ownerData.avatar_url || '',
-                  followers_count: ownerData.followers_count || 0,
-                  following_count: 0,
-                  is_online: ownerData.is_live || false,
-                  bio: ownerData.bio || '',
-                  posting_panel_url: ownerData.posting_panel_url || '',
-                  created_at: ownerData.created_at || '',
-                }
-              : {
-                  id: video.creator_id || video.model_id || '',
-                  username: video.title || 'Usuário',
-                  avatar_url: '',
-                  followers_count: 0,
-                  following_count: 0,
-                  is_online: false,
-                  bio: '',
-                  created_at: '',
-                },
-          } as any;
-        });
+      const validVideos = (videosData || []).map(v => ({
+        ...v,
+        video_url: normalizeUrl(v.video_url || '')
+      })).filter(v => {
+        const isValid = isValidVideoUrl(v.video_url);
+        if (!isValid && v.video_url) {
+          console.warn(`🚫 URL inválida filtrada: ${v.video_url}`);
+        }
+        return isValid;
+      }).map((video: any) => {
+        // Procurar owner: priorizar creator_id, depois model_id
+        const owner: any = video.creator_id ? creatorsData?.find((c: any) => c.id === video.creator_id) : modelsData?.find((m: any) => m.id === video.model_id);
 
+        // Se é criador, formatar nome
+        let ownerData: any = owner;
+        if (video.creator_id && owner) {
+          const displayName = owner.name && owner.name !== owner.email ? owner.name : owner.email?.split('@')[0] || 'Criador';
+          ownerData = {
+            id: owner.id,
+            username: displayName,
+            name: displayName,
+            avatar_url: owner.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            followers_count: 0,
+            is_live: false,
+            bio: owner.bio || '',
+            posting_panel_url: '',
+            created_at: owner.created_at || ''
+          };
+        }
+        return {
+          ...video,
+          user_id: video.creator_id || video.model_id || '',
+          music_name: video.title || `Som original - ${ownerData?.username || ownerData?.name || 'Autor'}`,
+          visibility: video.visibility as 'public' | 'premium' || 'public',
+          source: 'catalog_video',
+          user: ownerData ? {
+            id: ownerData.id,
+            username: ownerData.username || ownerData.name || 'Usuário',
+            avatar_url: ownerData.avatar_url || '',
+            followers_count: ownerData.followers_count || 0,
+            following_count: 0,
+            is_online: ownerData.is_live || false,
+            bio: ownerData.bio || '',
+            posting_panel_url: ownerData.posting_panel_url || '',
+            created_at: ownerData.created_at || ''
+          } : {
+            id: video.creator_id || video.model_id || '',
+            username: video.title || 'Usuário',
+            avatar_url: '',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            bio: '',
+            created_at: ''
+          }
+        } as any;
+      });
       console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${validVideos.length} vídeos válidos`);
-      
+
       // Debug: Verificar quantos vídeos são de criadores
       const creatorVideos = validVideos.filter((v: any) => v.creator_id);
       const modelVideos = validVideos.filter((v: any) => v.model_id && !v.creator_id);
       console.log(`📊 Vídeos por tipo: ${creatorVideos.length} de criadores, ${modelVideos.length} de modelos`);
       console.log('🎨 Criadores com vídeos:', [...new Set(creatorVideos.map((v: any) => v.user?.username))]);
-
       const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
-      
       if (allContent.length > 0) {
         // 🌟 PRIORIDADE MÁXIMA: Posts agendados recentes sempre no topo
-        const recentPosts = [...processedScheduledPosts, ...processedMainPosts]
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
+        const recentPosts = [...processedScheduledPosts, ...processedMainPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         console.log(`🌟 ${recentPosts.length} posts agendados/principais serão destacados no início`);
 
         // 1) Organizar vídeos do catálogo por modelo e preparar filas internas
@@ -1021,7 +990,7 @@ export const TikTokApp = () => {
         });
 
         // Ordenar fila de cada modelo: hoje primeiro, depois mais recentes
-        Object.keys(videosByModel).forEach((mid) => {
+        Object.keys(videosByModel).forEach(mid => {
           videosByModel[mid].sort((a, b) => {
             const aToday = isToday(a.created_at);
             const bToday = isToday(b.created_at);
@@ -1035,9 +1004,9 @@ export const TikTokApp = () => {
         // 2) Definir ordem dos modelos e criadores (prioriza quem tem vídeos de hoje e com interação)
         const modelIdsWithVideos = Object.keys(videosByModel);
         const modelScores: Record<string, number> = {};
-        modelIdsWithVideos.forEach((mid) => {
+        modelIdsWithVideos.forEach(mid => {
           const queue = videosByModel[mid] || [];
-          const hasToday = queue.some((v) => isToday(v.created_at));
+          const hasToday = queue.some(v => isToday(v.created_at));
           const interacted = interactedModelIds.has(mid);
           // Buscar em modelos OU criadores
           const modelInfo = modelsData?.find((m: any) => m.id === mid) || creatorsData?.find((c: any) => c.id === mid);
@@ -1048,7 +1017,6 @@ export const TikTokApp = () => {
           score += Math.random() * 5;
           modelScores[mid] = score;
         });
-
         const orderedModels = modelIdsWithVideos.sort((a, b) => (modelScores[b] || 0) - (modelScores[a] || 0));
 
         // 3) Round-robin: 1 vídeo por modelo por ciclo, até esgotar filas
@@ -1066,9 +1034,9 @@ export const TikTokApp = () => {
         }
 
         // 🎯 SEQUÊNCIA FINAL: Posts recentes primeiro + vídeos rotativos + repetir quando acabar
-        const ordered: any[] = [
-          ...recentPosts,  // Posts agendados recentes sempre no topo
-          ...catalogVideos // Vídeos do catálogo em rotação
+        const ordered: any[] = [...recentPosts,
+        // Posts agendados recentes sempre no topo
+        ...catalogVideos // Vídeos do catálogo em rotação
         ];
 
         // 4) Definir estados (carregamento em blocos)
@@ -1080,9 +1048,8 @@ export const TikTokApp = () => {
         setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
         setModelOrder(orderedModels);
         setCycleSize(orderedModels.length);
-
         console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
-        
+
         // Cache the results for faster subsequent loads
         console.log('💾 Salvando cache no sessionStorage...');
         sessionStorage.setItem('initial_feed', JSON.stringify(firstBlock));
@@ -1095,7 +1062,6 @@ export const TikTokApp = () => {
         setAllAvailableVideos(exampleData as any);
         setHasMoreVideos(false);
       }
-      
       console.log('✅ IF/ELSE CONCLUÍDO - indo para FINALLY');
     } catch (error) {
       console.error('❌ Erro ao inicializar feed:', error);
@@ -1106,7 +1072,7 @@ export const TikTokApp = () => {
       console.log('🏁 FINALIZANDO CARREGAMENTO DO FEED - setLoading(false)');
       setLoading(false);
       setIsLoadingMore(false);
-      
+
       // Iniciar reprodução automaticamente se usuário já verificou idade
       const verified = localStorage.getItem('ageVerification');
       if (verified) {
@@ -1131,10 +1097,8 @@ export const TikTokApp = () => {
   // 🎯 Posicionar no vídeo específico quando vindo de coleções ou links diretos
   useEffect(() => {
     if (!targetVideoId || videos.length === 0) return;
-    
     const videoIndex = videos.findIndex(v => v.id === targetVideoId);
     console.log('🎯 Procurando vídeo:', targetVideoId, 'Encontrado no índice:', videoIndex);
-    
     if (videoIndex >= 0) {
       console.log('✅ Posicionando no vídeo:', videoIndex);
       setCurrentVideoIndex(videoIndex);
@@ -1150,7 +1114,7 @@ export const TikTokApp = () => {
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {
     if (!pendingRefresh || allAvailableVideos.length === 0) return;
-    
+
     // Quando chegar no último vídeo, reiniciar com conteúdo atualizado
     const isLastVideo = currentVideoIndex >= allAvailableVideos.length - 1;
     if (isLastVideo) {
@@ -1161,11 +1125,10 @@ export const TikTokApp = () => {
       }, 1000); // Pequeno delay para não interromper a visualização
     }
   }, [pendingRefresh, currentVideoIndex, allAvailableVideos.length, initializeFeed]);
-  
+
   // Auto-reload quando acabar os vídeos (volta para o início com atualizações)
   useEffect(() => {
     if (videos.length === 0 || allAvailableVideos.length === 0) return;
-    
     const isEndOfContent = currentVideoIndex >= allAvailableVideos.length - 2;
     if (isEndOfContent && !isLoadingMore) {
       console.log('🎬 Chegando ao fim - preparando próximo ciclo com atualizações...');
@@ -1174,14 +1137,17 @@ export const TikTokApp = () => {
   }, [currentVideoIndex, allAvailableVideos.length, videos.length, isLoadingMore]);
 
   // Remover função de organização complexa - usar abordagem mais simples
-  
+
   // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
   const loadMoreVideos = useCallback(async () => {
     if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) {
-      console.log('🚫 Não pode carregar mais:', { isLoadingMore, hasMoreVideos, allAvailableCount: allAvailableVideos.length });
+      console.log('🚫 Não pode carregar mais:', {
+        isLoadingMore,
+        hasMoreVideos,
+        allAvailableCount: allAvailableVideos.length
+      });
       return;
     }
-    
     try {
       setIsLoadingMore(true);
       console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`, {
@@ -1190,12 +1156,8 @@ export const TikTokApp = () => {
       });
 
       // Filtrar vídeos ainda não carregados
-      const unusedVideos = allAvailableVideos.filter(v => 
-        !videos.some(existing => existing.id === v.id)
-      );
-
+      const unusedVideos = allAvailableVideos.filter(v => !videos.some(existing => existing.id === v.id));
       console.log(`📊 Vídeos ainda não usados: ${unusedVideos.length}`);
-
       if (unusedVideos.length === 0) {
         console.log('🔄 Fim do conteúdo - recarregando com atualizações...');
         setHasMoreVideos(false);
@@ -1209,7 +1171,6 @@ export const TikTokApp = () => {
 
       // Pegar próximo bloco
       const nextBlock = unusedVideos.slice(0, VIDEOS_PER_BLOCK);
-      
       if (nextBlock.length === 0) {
         console.log('⚠️ Bloco vazio - finalizando');
         setHasMoreVideos(false);
@@ -1220,9 +1181,7 @@ export const TikTokApp = () => {
       setVideos(prev => [...prev, ...nextBlock]);
       setCurrentPage(prev => prev + 1);
       setHasMoreVideos(unusedVideos.length > VIDEOS_PER_BLOCK);
-      
       console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total agora: ${videos.length + nextBlock.length}/${allAvailableVideos.length}`);
-
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
       setHasMoreVideos(false);
@@ -1230,11 +1189,11 @@ export const TikTokApp = () => {
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK, initializeFeed]);
-  
+
   // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
   useEffect(() => {
     const shouldLoadMore = currentVideoIndex >= videos.length - 10; // Carrega quando faltam 10 vídeos
-    
+
     if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
       console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...', {
         currentVideoIndex,
@@ -1245,24 +1204,20 @@ export const TikTokApp = () => {
       loadMoreVideos();
     }
   }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos, allAvailableVideos.length, loadMoreVideos]);
-  
+
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {
     try {
-      const { data: vData, error: vErr } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('id', videoId)
-        .single();
+      const {
+        data: vData,
+        error: vErr
+      } = await supabase.from('videos').select('*').eq('id', videoId).single();
       if (vErr || !vData) return;
-
-      const { data: model, error: mErr } = await supabase
-        .from('models')
-        .select('*')
-        .eq('id', vData.model_id)
-        .single();
+      const {
+        data: model,
+        error: mErr
+      } = await supabase.from('models').select('*').eq('id', vData.model_id).single();
       if (mErr) console.warn('Model not found for video:', videoId);
-
       const normalizeUrl = (u: string) => {
         const raw = (u || '').trim();
         if (!raw) return '';
@@ -1271,7 +1226,6 @@ export const TikTokApp = () => {
         }
         return raw;
       };
-
       const enrichedVideo: any = {
         ...vData,
         video_url: normalizeUrl(vData.video_url || ''),
@@ -1295,7 +1249,6 @@ export const TikTokApp = () => {
           created_at: ''
         }
       };
-
       const modelId = enrichedVideo.user?.id;
       const idx = videos.findIndex(v => (v as any).user?.id === modelId);
       if (idx >= 0) {
@@ -1315,14 +1268,12 @@ export const TikTokApp = () => {
       console.error('Erro ao abrir vídeo selecionado:', e);
     }
   };
-
   const goToHome = () => {
     console.log('🏠 Voltando para a tela inicial');
     setShowProfile(false);
     setCurrentVideoIndex(0);
     emblaApi?.scrollTo(0);
   };
-
   const backToCurrentVideo = () => {
     console.log('🏠 Voltando para onde parou a visualização');
     setShowProfile(false);
@@ -1332,18 +1283,17 @@ export const TikTokApp = () => {
     setShowPremium(false);
     // Mantém o vídeo atual sem mudar o índice
   };
-
   const loadComments = useCallback(async (videoId: string) => {
     try {
       console.log('💬 LOADING COMMENTS for video:', videoId);
-      
-      // ✅ Buscar comentários sem JOIN problemático
-      const { data: commentsData, error } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('video_id', videoId)
-        .order('created_at', { ascending: false });
 
+      // ✅ Buscar comentários sem JOIN problemático
+      const {
+        data: commentsData,
+        error
+      } = await supabase.from('comments').select('*').eq('video_id', videoId).order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('❌ Error loading comments:', error);
         if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
@@ -1353,28 +1303,21 @@ export const TikTokApp = () => {
         }
         throw error;
       }
-
       console.log('💬 Comments loaded:', commentsData?.length || 0);
-      
+
       // ✅ Buscar dados dos usuários separadamente
       const userIds = [...new Set((commentsData || []).map(c => c.user_id))];
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, name, email')
-        .in('id', userIds);
-
-      const profilesMap = new Map(
-        (profilesData || []).map(p => [p.id, p])
-      );
+      const {
+        data: profilesData
+      } = await supabase.from('profiles').select('id, name, email').in('id', userIds);
+      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
 
       // Transform the data to match the Comment interface
       const transformedComments = (commentsData || []).map((comment: any) => {
         const profile = profilesMap.get(comment.user_id);
-        
+
         // ✅ Buscar avatar do localStorage ou usar padrão
-        const avatarUrl = localStorage.getItem(`avatar_${comment.user_id}`) || 
-                         '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png';
-        
+        const avatarUrl = localStorage.getItem(`avatar_${comment.user_id}`) || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png';
         return {
           id: comment.id,
           text: comment.content || comment.text || '',
@@ -1388,7 +1331,6 @@ export const TikTokApp = () => {
           }
         };
       });
-
       setComments(transformedComments);
       console.log('✅ Comments transformados e prontos:', transformedComments.length);
     } catch (error) {
@@ -1396,30 +1338,28 @@ export const TikTokApp = () => {
       setComments([]);
     }
   }, []);
-
   const checkIfLiked = async (videoId: string) => {
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      
       console.log('🔍 CHECKING IF LIKED:');
       console.log('🔍 Video ID:', videoId);
       console.log('🔍 User ID:', currentUserId);
-      
+
       // Check if user has an active like for this video in database
-      const { data, error } = await supabase
-        .from('likes')
-        .select('id, is_active')
-        .eq('user_id', currentUserId)
-        .eq('video_id', videoId)
-        .eq('is_active', true)
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', videoId).eq('is_active', true).maybeSingle();
       if (error) {
         console.error('❌ Error checking like status:', error);
         if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
@@ -1431,7 +1371,6 @@ export const TikTokApp = () => {
         setIsLiked(false);
         return;
       }
-      
       const liked = data ? true : false;
       console.log('🔍 IS LIKED:', liked);
       setIsLiked(liked);
@@ -1446,25 +1385,26 @@ export const TikTokApp = () => {
       setIsLiked(liked === 'true');
     }
   };
-
   const checkIfFollowing = async (modelId: string) => {
     try {
       console.log('🔍 VERIFICANDO STATUS DE SEGUIR:', modelId);
-      
+
       // ✅ USAR ID DO USUÁRIO AUTENTICADO se estiver logado
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       const userId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      
       console.log('🔍 User ID:', userId, user ? '(autenticado)' : '(anônimo)');
 
       // 1. Verificar no localStorage primeiro (mais rápido)
       const followKey = `follow_${userId}_${modelId}`;
       const localStatus = localStorage.getItem(followKey);
-      
       if (localStatus === 'true') {
         console.log('✅ IS FOLLOWING (localStorage): true');
         setFollowingModels(prev => ({
@@ -1475,14 +1415,10 @@ export const TikTokApp = () => {
       }
 
       // 2. Verificar no banco de dados
-      const { data, error } = await supabase
-        .from('model_followers')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('model_id', modelId)
-        .eq('is_active', true)
-        .maybeSingle();
-
+      const {
+        data,
+        error
+      } = await supabase.from('model_followers').select('id').eq('user_id', userId).eq('model_id', modelId).eq('is_active', true).maybeSingle();
       if (error) {
         console.error('❌ Error checking if following:', error);
         setFollowingModels(prev => ({
@@ -1491,15 +1427,13 @@ export const TikTokApp = () => {
         }));
         return;
       }
-      
       const following = data ? true : false;
       console.log('🔍 IS FOLLOWING (database):', following);
-      
+
       // Sincronizar com localStorage
       if (following) {
         localStorage.setItem(followKey, 'true');
       }
-      
       setFollowingModels(prev => ({
         ...prev,
         [modelId]: following
@@ -1512,90 +1446,78 @@ export const TikTokApp = () => {
       }));
     }
   };
-
-
   const toggleLike = async () => {
     if (!currentVideo) return;
-
     console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', currentVideo.id);
 
     // ✅ Usar ID correto: autenticado se logado, anônimo se não
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
     const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
       const newId = crypto.randomUUID();
       localStorage.setItem('anonymous_user_id', newId);
       return newId;
     })();
-    
     console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
-
     try {
       // Primeiro, verificar se já existe um like ativo
-      const { data: existingLike, error: checkError } = await supabase
-        .from('likes')
-        .select('id, is_active')
-        .eq('user_id', currentUserId)
-        .eq('video_id', currentVideo.id)
-        .maybeSingle();
-
+      const {
+        data: existingLike,
+        error: checkError
+      } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', currentVideo.id).maybeSingle();
       if (checkError && checkError.code !== 'PGRST116') {
         console.error('❌ Erro ao verificar like existente:', checkError);
         throw checkError;
       }
-
       console.log('🔍 VERIFICAÇÃO: Like existente:', existingLike);
-
       let newLikedState = false;
       let likeAction = '';
-
       if (existingLike) {
         // Se existe, toggle do estado is_active
         newLikedState = !existingLike.is_active;
         likeAction = newLikedState ? 'REATIVAR' : 'DESATIVAR';
-        
-        const { error: updateError } = await supabase
-          .from('likes')
-          .update({ is_active: newLikedState })
-          .eq('id', existingLike.id);
-
+        const {
+          error: updateError
+        } = await supabase.from('likes').update({
+          is_active: newLikedState
+        }).eq('id', existingLike.id);
         if (updateError) throw updateError;
-        
         console.log(`✅ LIKE ${likeAction} - ID: ${existingLike.id}`);
       } else {
         // Se não existe, criar novo like
         newLikedState = true;
         likeAction = 'CRIAR';
-        
-        const { error: insertError } = await supabase
-          .from('likes')
-          .insert({
-            user_id: currentUserId,
-            video_id: currentVideo.id,
-            // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
-            model_id: currentVideo.creator_id ? null : (currentVideo.model_id || null),
-            is_active: true,
-            ip_address: null,
-            user_agent: navigator.userAgent
-          });
-        
+        const {
+          error: insertError
+        } = await supabase.from('likes').insert({
+          user_id: currentUserId,
+          video_id: currentVideo.id,
+          // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
+          model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
+          is_active: true,
+          ip_address: null,
+          user_agent: navigator.userAgent
+        });
         if (insertError) {
           console.error('❌ Error inserting like:', insertError);
           // Se erro for de coluna não existir, tentar inserção mais simples
           if (insertError.message?.includes('column') || insertError.code === '42703') {
             console.log('🔧 Tentando inserção simplificada...');
-            const { error: simpleError } = await supabase
-              .from('likes')
-              .insert({
-                user_id: currentUserId,
-                video_id: currentVideo.id,
-                is_active: true
-              });
+            const {
+              error: simpleError
+            } = await supabase.from('likes').insert({
+              user_id: currentUserId,
+              video_id: currentVideo.id,
+              is_active: true
+            });
             if (simpleError) throw simpleError;
           } else {
             throw insertError;
           }
         }
-
         console.log('✅ LIKE CRIADO com sucesso');
       }
 
@@ -1608,45 +1530,38 @@ export const TikTokApp = () => {
       // ✨ IMPORTANTE: Registrar no sistema de analytics
       const userId = currentVideo.user?.id || currentVideo.model_id || '';
       const modelId = currentVideo.model_id || userId;
-      
       if (userId) {
         await trackLike(currentVideo.id, userId, newLikedState);
         ensureInteractedModel(userId);
         await checkAndTrackAction('like', currentVideo.id, userId);
-        
+
         // markModelAsFavorite desativado temporariamente
       }
 
       // Update video likes count
       const newCount = Math.max(0, currentVideo.likes_count + (newLikedState ? 1 : -1));
-      
-      const { error } = await supabase
-        .from('videos')
-        .update({ likes_count: newCount })
-        .eq('id', currentVideo.id);
-
+      const {
+        error
+      } = await supabase.from('videos').update({
+        likes_count: newCount
+      }).eq('id', currentVideo.id);
       if (error) throw error;
 
       // Update local state
-      setVideos(prev => prev.map(video => 
-        video.id === currentVideo.id 
-          ? { ...video, likes_count: newCount }
-          : video
-      ));
-
+      setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
+        ...video,
+        likes_count: newCount
+      } : video));
       if (newLikedState) {
         // Add like explosion animation
         createLikeExplosion();
       }
-
       console.log('✅ TOGGLE LIKE - Ação completa! Novo count:', newCount);
-
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);
       // Silenciar erro de like para o usuário
     }
   };
-
   const createLikeExplosion = () => {
     const heart = document.createElement('div');
     heart.innerHTML = '❤️';
@@ -1654,57 +1569,54 @@ export const TikTokApp = () => {
     heart.style.left = Math.random() * window.innerWidth + 'px';
     heart.style.top = Math.random() * window.innerHeight + 'px';
     document.body.appendChild(heart);
-    
     setTimeout(() => {
       document.body.removeChild(heart);
     }, 1200);
   };
-
   const addComment = async (text: string) => {
     if (!currentVideo || !text.trim()) return;
-
     console.log('💬 ADD COMMENT - Iniciando para vídeo:', currentVideo.id);
-
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      
       console.log('💬 ADD COMMENT - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
-
-      console.log('💬 ADD COMMENT - Inserindo:', { text: text.trim(), user_id: currentUserId, video_id: currentVideo.id });
-
-      const { error } = await supabase
-        .from('comments')
-        .insert({
-          content: text.trim(),
-          user_id: currentUserId,
-          video_id: currentVideo.id,
-          // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
-          model_id: currentVideo.creator_id ? null : (currentVideo.model_id || null),
-          likes_count: 0,
-          ip_address: null,
-          user_agent: navigator.userAgent
-        });
-
+      console.log('💬 ADD COMMENT - Inserindo:', {
+        text: text.trim(),
+        user_id: currentUserId,
+        video_id: currentVideo.id
+      });
+      const {
+        error
+      } = await supabase.from('comments').insert({
+        content: text.trim(),
+        user_id: currentUserId,
+        video_id: currentVideo.id,
+        // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
+        model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
+        likes_count: 0,
+        ip_address: null,
+        user_agent: navigator.userAgent
+      });
       if (error) {
         console.error('❌ Error inserting comment:', error);
-        
+
         // 🔧 Se falhar por RLS, tentar inserção simplificada
         if (error.code === '42501' || error.message?.includes('row-level security')) {
           console.log('🔧 Tentando inserção simplificada devido a RLS...');
-          
-          await supabase
-            .from('comments')
-            .insert({
-              content: text.trim(),
-              user_id: currentUserId,
-              video_id: currentVideo.id
-            });
+          await supabase.from('comments').insert({
+            content: text.trim(),
+            user_id: currentUserId,
+            video_id: currentVideo.id
+          });
           console.log('✅ Comentário inserido em modo simplificado');
         } else {
           throw error;
@@ -1722,22 +1634,17 @@ export const TikTokApp = () => {
 
       // Update video comments count
       const newCount = currentVideo.comments_count + 1;
-      await supabase
-        .from('videos')
-        .update({ comments_count: newCount })
-        .eq('id', currentVideo.id);
-
-      setVideos(prev => prev.map(video => 
-        video.id === currentVideo.id 
-          ? { ...video, comments_count: newCount }
-          : video
-      ));
-
+      await supabase.from('videos').update({
+        comments_count: newCount
+      }).eq('id', currentVideo.id);
+      setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
+        ...video,
+        comments_count: newCount
+      } : video));
       console.log('✅ ADD COMMENT - Ação completa! Novo count:', newCount);
 
       // ✨ Forçar reload dos comentários para garantir sincronização  
       await loadComments(currentVideo.id);
-
       toast({
         title: "Comentário adicionado!",
         description: "Seu comentário foi publicado"
@@ -1751,36 +1658,33 @@ export const TikTokApp = () => {
       });
     }
   };
-
   const shareVideo = async () => {
     if (!currentVideo) return;
-
     console.log('📤 SHARE VIDEO - Iniciando para vídeo:', currentVideo.id);
-
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      
       console.log('📤 SHARE VIDEO - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
 
       // Temporarily increment shares_count until shares table types are updated
-      const { data: videoData } = await supabase
-        .from('videos')
-        .select('shares_count')
-        .eq('id', currentVideo.id)
-        .single();
-      
+      const {
+        data: videoData
+      } = await supabase.from('videos').select('shares_count').eq('id', currentVideo.id).single();
       const currentShares = videoData?.shares_count || 0;
-      const { error: shareError } = await supabase
-        .from('videos')
-        .update({ shares_count: currentShares + 1 })
-        .eq('id', currentVideo.id);
-
+      const {
+        error: shareError
+      } = await supabase.from('videos').update({
+        shares_count: currentShares + 1
+      }).eq('id', currentVideo.id);
       if (shareError) {
         console.warn('❌ Error registering share (continuing anyway):', shareError);
         // Continue with share functionality even if DB insert fails
@@ -1819,19 +1723,14 @@ export const TikTokApp = () => {
 
       // Update share count
       const newCount = currentVideo.shares_count + 1;
-      await supabase
-        .from('videos')
-        .update({ shares_count: newCount })
-        .eq('id', currentVideo.id);
-
-      setVideos(prev => prev.map(video => 
-        video.id === currentVideo.id 
-          ? { ...video, shares_count: newCount }
-          : video
-      ));
-
+      await supabase.from('videos').update({
+        shares_count: newCount
+      }).eq('id', currentVideo.id);
+      setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
+        ...video,
+        shares_count: newCount
+      } : video));
       console.log('✅ SHARE VIDEO - Ação completa! Novo count:', newCount);
-
     } catch (error) {
       console.error('❌ SHARE VIDEO - Erro:', error);
       toast({
@@ -1841,15 +1740,12 @@ export const TikTokApp = () => {
       });
     }
   };
-
   const followModel = async () => {
     console.log('🔥 SEGUIR: Função followModel CHAMADA!');
-    
     if (!currentVideo) {
       console.log('❌ SEGUIR: Nenhum vídeo atual');
       return;
     }
-    
     const currentIsFollowing = followingModels[currentVideo.user.id] || false;
     const isCreator = !!currentVideo.creator_id;
     console.log('🔍 SEGUIR: Status atual:', {
@@ -1860,28 +1756,28 @@ export const TikTokApp = () => {
       creatorId: currentVideo.creator_id,
       modelId: currentVideo.model_id
     });
-    
     if (currentIsFollowing) {
       console.log('⚠️ SEGUIR: Já está seguindo');
       toast({
         title: `Você já segue ${currentVideo.user.username}`,
         description: "Você já está seguindo este perfil",
-        duration: 3000,
+        duration: 3000
       });
       return;
     }
-
     console.log(`✅ SEGUIR: Iniciando processo - ${isCreator ? 'CRIADOR' : 'MODELO'}`);
-
     try {
       // ✅ USAR ID DO USUÁRIO AUTENTICADO se estiver logado
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user: authUser
+        }
+      } = await supabase.auth.getUser();
       const userId = authUser?.id || localStorage.getItem('anonymous_user_id') || (() => {
         const newId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      
       console.log('🆔 SEGUIR: User ID:', userId, authUser ? '(autenticado)' : '(anônimo)');
 
       // Atualizar estado local IMEDIATAMENTE
@@ -1900,18 +1796,17 @@ export const TikTokApp = () => {
       if (isCreator) {
         // É um CRIADOR → usar tabela user_follows
         console.log('🎨 SEGUIR CRIADOR: Inserindo em user_follows...');
-        const { error: followError } = await (supabase as any)
-          .from('user_follows')
-          .upsert({
-            follower_id: userId,
-            following_id: currentVideo.creator_id,
-            follower_name: userName,
-            follower_email: userEmail,
-            is_active: true
-          }, {
-            onConflict: 'follower_id,following_id'
-          });
-
+        const {
+          error: followError
+        } = await (supabase as any).from('user_follows').upsert({
+          follower_id: userId,
+          following_id: currentVideo.creator_id,
+          follower_name: userName,
+          follower_email: userEmail,
+          is_active: true
+        }, {
+          onConflict: 'follower_id,following_id'
+        });
         if (followError) {
           console.error('❌ SEGUIR CRIADOR: Erro no banco:', followError);
         } else {
@@ -1920,18 +1815,17 @@ export const TikTokApp = () => {
       } else {
         // É um MODELO → usar tabela model_followers
         console.log('👤 SEGUIR MODELO: Inserindo em model_followers...');
-        const { error: followError } = await supabase
-          .from('model_followers')
-          .upsert({
-            user_id: userId,
-            model_id: currentVideo.model_id || currentVideo.user.id,
-            user_name: userName,
-            user_email: userEmail,
-            is_active: true
-          }, {
-            onConflict: 'user_id,model_id'
-          });
-
+        const {
+          error: followError
+        } = await supabase.from('model_followers').upsert({
+          user_id: userId,
+          model_id: currentVideo.model_id || currentVideo.user.id,
+          user_name: userName,
+          user_email: userEmail,
+          is_active: true
+        }, {
+          onConflict: 'user_id,model_id'
+        });
         if (followError) {
           console.error('❌ SEGUIR MODELO: Erro no banco:', followError);
         } else {
@@ -1943,41 +1837,33 @@ export const TikTokApp = () => {
       const followKey = `follow_${userId}_${currentVideo.user.id}`;
       localStorage.setItem(followKey, 'true');
       console.log('💾 SEGUIR: Salvo no localStorage:', followKey);
-      
+
       // 📊 REGISTRAR AÇÃO NO PAINEL ADMIN
       console.log('📊 SEGUIR: Registrando no analytics...');
       await trackFollow(currentVideo.user.id);
-      
-      // Atualizar contador localmente
-      setVideos(prev => prev.map(video => 
-        video.user.id === currentVideo.user.id
-          ? { 
-              ...video, 
-              user: { 
-                ...video.user, 
-                followers_count: video.user.followers_count + 1 
-              }
-            }
-          : video
-      ));
 
+      // Atualizar contador localmente
+      setVideos(prev => prev.map(video => video.user.id === currentVideo.user.id ? {
+        ...video,
+        user: {
+          ...video.user,
+          followers_count: video.user.followers_count + 1
+        }
+      } : video));
       console.log('✅✅✅ SEGUIR: Processo concluído com SUCESSO!');
-      
       toast({
         title: `✅ Você está seguindo ${currentVideo.user.username}!`,
         description: "Agora você receberá atualizações dos novos conteúdos",
-        duration: 4000,
+        duration: 4000
       });
-
     } catch (error) {
       console.error('❌❌❌ SEGUIR: Erro no processo:', error);
-      
+
       // Reverter estado local em caso de erro
       setFollowingModels(prev => ({
         ...prev,
         [currentVideo.user.id]: false
       }));
-      
       toast({
         title: "❌ Erro ao seguir",
         description: "Não foi possível seguir a modelo. Tente novamente.",
@@ -1985,11 +1871,9 @@ export const TikTokApp = () => {
       });
     }
   };
-
   const nextVideo = useCallback(() => {
     console.log('⬇️ NAVEGAÇÃO: Próximo vídeo solicitado');
     console.log(`⬇️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
-    
     if (emblaApi && isMobile) {
       console.log('⬇️ NAVEGAÇÃO: Usando Embla (mobile)');
       if (emblaApi.canScrollNext()) {
@@ -2003,19 +1887,18 @@ export const TikTokApp = () => {
       if (nextIndex < videos.length) {
         console.log(`⬇️ NAVEGAÇÃO: Indo para vídeo ${nextIndex + 1}/${videos.length} (desktop)`);
         setCurrentVideoIndex(nextIndex);
-        
+
         // 🔐 INCREMENTA CONTADOR NO DESKTOP TAMBÉM
         if (!currentUser) {
           const newCount = videosWatched + 1;
-          console.log('🔐 DESKTOP - INCREMENTANDO CONTADOR:', { 
-            anterior: videosWatched, 
+          console.log('🔐 DESKTOP - INCREMENTANDO CONTADOR:', {
+            anterior: videosWatched,
             novo: newCount,
             deveRedirecionar: newCount >= 5
           });
-          
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
-          
+
           // Redireciona para /auth após 5 vídeos
           if (newCount >= 5) {
             console.log('🚨 DESKTOP - REDIRECIONANDO PARA /AUTH!');
@@ -2030,11 +1913,9 @@ export const TikTokApp = () => {
       }
     }
   }, [emblaApi, isMobile, currentVideoIndex, videos.length, currentUser, videosWatched, navigate]);
-
   const prevVideo = useCallback(() => {
     console.log('⬆️ NAVEGAÇÃO: Vídeo anterior solicitado');
     console.log(`⬆️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
-    
     if (emblaApi && isMobile) {
       console.log('⬆️ NAVEGAÇÃO: Usando Embla (mobile)');
       if (emblaApi.canScrollPrev()) {
@@ -2048,14 +1929,11 @@ export const TikTokApp = () => {
       }
     }
   }, [emblaApi, isMobile, currentVideoIndex, videos.length]);
-
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
-    
+
     // Primeiro tentar encontrar nos vídeos já carregados
-    const modelVideoIndex = videos.findIndex(video => 
-      video.user.id === modelId || video.model_id === modelId || video.creator_id === modelId
-    );
+    const modelVideoIndex = videos.findIndex(video => video.user.id === modelId || video.model_id === modelId || video.creator_id === modelId);
     if (modelVideoIndex !== -1) {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
@@ -2063,29 +1941,22 @@ export const TikTokApp = () => {
       setShowProfile(true);
       return;
     }
-    
+
     // Verificar se é um criador primeiro
     try {
       console.log('🔍 Verificando se é criador...');
-      const { data: creatorCheck } = await supabase
-        .from('user_roles' as any)
-        .select('user_id')
-        .eq('user_id', modelId)
-        .eq('role', 'creator')
-        .maybeSingle();
-
+      const {
+        data: creatorCheck
+      } = await supabase.from('user_roles' as any).select('user_id').eq('user_id', modelId).eq('role', 'creator').maybeSingle();
       const isCreator = !!creatorCheck;
       console.log('🎯 É criador?', isCreator);
-
       if (isCreator) {
         // Buscar perfil do criador
         console.log('🔄 Carregando perfil do criador...');
-        const { data: creatorProfile, error: profileError } = await (supabase as any)
-          .from('profiles')
-          .select('*')
-          .eq('id', modelId)
-          .single();
-
+        const {
+          data: creatorProfile,
+          error: profileError
+        } = await (supabase as any).from('profiles').select('*').eq('id', modelId).single();
         if (profileError || !creatorProfile) {
           console.error('❌ Perfil do criador não encontrado:', profileError);
           return;
@@ -2093,13 +1964,10 @@ export const TikTokApp = () => {
 
         // Buscar vídeos do criador
         console.log('🔄 Carregando vídeos do criador...');
-        const { data: videoData, error: videoError } = await (supabase as any)
-          .from('videos')
-          .select('*')
-          .eq('creator_id', modelId)
-          .eq('is_active', true)
-          .limit(1);
-
+        const {
+          data: videoData,
+          error: videoError
+        } = await (supabase as any).from('videos').select('*').eq('creator_id', modelId).eq('is_active', true).limit(1);
         if (!videoData || videoData.length === 0) {
           console.log('ℹ️ Nenhum vídeo ativo encontrado para o criador');
           return;
@@ -2141,42 +2009,34 @@ export const TikTokApp = () => {
         setCurrentVideoIndex(0);
         emblaApi?.scrollTo(0);
         setShowProfile(true);
-        
         console.log('✅ Vídeo do criador carregado e perfil aberto');
         return;
       }
 
       // Se não é criador, buscar como modelo
       console.log('🔄 Carregando como modelo...');
-      const { data: modelData, error: modelError } = await supabase
-        .from('models')
-        .select('*')
-        .eq('id', modelId)
-        .single();
-
+      const {
+        data: modelData,
+        error: modelError
+      } = await supabase.from('models').select('*').eq('id', modelId).single();
       if (modelError || !modelData) {
         console.error('❌ Modelo não encontrada:', modelError);
         return;
       }
 
       // Buscar vídeo na tabela videos
-      const { data: videoData, error: videoError } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('model_id', modelId)
-        .eq('is_active', true)
-        .limit(1);
+      const {
+        data: videoData,
+        error: videoError
+      } = await supabase.from('videos').select('*').eq('model_id', modelId).eq('is_active', true).limit(1);
 
       // Se não encontrou em videos, buscar em posts_agendados
       if (!videoData || videoData.length === 0) {
         console.log('🔍 Buscando em posts agendados...');
-        const { data: scheduledPosts, error: scheduledError } = await supabase
-          .from('posts_agendados')
-          .select('*')
-          .eq('modelo_id', modelId)
-          .eq('status', 'publicado')
-          .limit(1);
-
+        const {
+          data: scheduledPosts,
+          error: scheduledError
+        } = await supabase.from('posts_agendados').select('*').eq('modelo_id', modelId).eq('status', 'publicado').limit(1);
         if (scheduledPosts && scheduledPosts.length > 0) {
           const post = scheduledPosts[0];
           const normalizeUrl = (u: string) => {
@@ -2187,7 +2047,6 @@ export const TikTokApp = () => {
             }
             return raw;
           };
-
           const enrichedVideo = {
             id: `scheduled-${post.id}`,
             video_url: normalizeUrl(post.conteudo_url || ''),
@@ -2214,7 +2073,6 @@ export const TikTokApp = () => {
               bio: modelData.bio || ''
             }
           };
-
           const newVideos = [enrichedVideo, ...videos];
           setVideos(newVideos as Video[]);
           setCurrentVideoIndex(0);
@@ -2226,12 +2084,10 @@ export const TikTokApp = () => {
 
         // Se não encontrou em posts agendados, buscar em posts_principais
         console.log('🔍 Buscando em posts principais...');
-        const { data: mainPosts, error: mainError } = await supabase
-          .from('posts_principais')
-          .select('*')
-          .eq('modelo_id', modelId)
-          .limit(1);
-
+        const {
+          data: mainPosts,
+          error: mainError
+        } = await supabase.from('posts_principais').select('*').eq('modelo_id', modelId).limit(1);
         if (mainPosts && mainPosts.length > 0) {
           const post = mainPosts[0];
           const normalizeUrl = (u: string) => {
@@ -2242,7 +2098,6 @@ export const TikTokApp = () => {
             }
             return raw;
           };
-
           const enrichedVideo = {
             id: `main-${post.id}`,
             video_url: normalizeUrl(post.conteudo_url || ''),
@@ -2269,7 +2124,6 @@ export const TikTokApp = () => {
               bio: modelData.bio || ''
             }
           };
-
           const newVideos = [enrichedVideo, ...videos];
           setVideos(newVideos as Video[]);
           setCurrentVideoIndex(0);
@@ -2319,56 +2173,47 @@ export const TikTokApp = () => {
       setCurrentVideoIndex(0);
       emblaApi?.scrollTo(0);
       setShowProfile(true);
-      
       console.log('✅ Vídeo da modelo carregado e perfil aberto');
     } catch (error) {
       console.error('❌ Erro ao carregar vídeo da modelo:', error);
     }
   };
-
   const handleBlockVideo = () => {
     if (!currentVideo) {
       console.log('❌ Nenhum vídeo atual para bloquear');
       return;
     }
-    
     console.log('🔒 Bloqueando vídeo:', currentVideo.title);
     console.log('🔒 User:', currentVideo.user.username);
-    
+
     // Prepare content data for preview modal
     const contentData = {
       id: currentVideo.id,
       displayName: currentVideo.user.username,
       avatarUrl: currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-      platform: 'premium', // Define como premium para mostrar o modal
+      platform: 'premium',
+      // Define como premium para mostrar o modal
       views: currentVideo.views_count,
       likes: currentVideo.likes_count
     };
-    
     console.log('🔒 Content data:', contentData);
-    
     setSelectedVideoForPreview(contentData);
     setShowVideoPreview(true);
-    
     console.log('🔒 Modal deve estar aberto agora');
   };
-
   const handleFullscreen = () => {
     if (!currentVideo) return;
-    
     console.log('📺 handleFullscreen chamado');
-    
+
     // Capturar tempo atual do vídeo
     const videoElement = document.querySelector('video') as HTMLVideoElement;
     if (videoElement) {
       setFullscreenVideoTime(videoElement.currentTime);
       console.log('📺 Tempo capturado:', videoElement.currentTime);
     }
-    
     setShowFullscreen(true);
     console.log('📺 showFullscreen definido como true');
   };
-
   const handleCloseFullscreen = () => {
     console.log('📺 handleCloseFullscreen chamado');
     setShowFullscreen(false);
@@ -2378,11 +2223,9 @@ export const TikTokApp = () => {
   // Embla carousel event listeners
   useEffect(() => {
     if (!emblaApi) return;
-
     const onSelect = () => {
       setCurrentVideoIndex(emblaApi.selectedScrollSnap());
     };
-
     emblaApi.on('select', onSelect);
     onSelect(); // Set initial index
 
@@ -2423,9 +2266,10 @@ export const TikTokApp = () => {
         }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('wheel', handleWheel, {
+      passive: false
+    });
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('wheel', handleWheel);
@@ -2435,38 +2279,28 @@ export const TikTokApp = () => {
   // Remove old touch gestures - now handled by Embla
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+    return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
           <p>Carregando vídeos...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!currentVideo || videos.length === 0) {
     console.log('🚫 RENDER: Nenhum vídeo disponível');
     console.log('🚫 RENDER: videos.length:', videos.length);
     console.log('🚫 RENDER: currentVideoIndex:', currentVideoIndex);
     console.log('🚫 RENDER: currentVideo:', currentVideo);
-    
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+    return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center">
           <p className="text-xl mb-4">Nenhum vídeo disponível</p>
           <p className="text-gray-400">Aguarde novos conteúdos!</p>
-          <Button 
-            onClick={initializeFeed} 
-            className="mt-4 bg-primary hover:bg-primary/80"
-          >
+          <Button onClick={initializeFeed} className="mt-4 bg-primary hover:bg-primary/80">
             Recarregar
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.title);
   console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
@@ -2474,46 +2308,38 @@ export const TikTokApp = () => {
 
   // Mobile version with vertical swiper
   if (isMobile) {
-    return (
-      <div className="relative w-full h-screen bg-white overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    return <div className="relative w-full h-screen bg-white overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
         {/* Top Bar Mobile - Nova barra com ícones */}
-        <div 
-          className="fixed top-0 left-0 right-0 z-40 h-14 backdrop-blur-sm flex items-center justify-between px-4"
-          style={{ 
-            background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
-          }}
-        >
+        <div className="fixed top-0 left-0 right-0 z-40 h-14 backdrop-blur-sm flex items-center justify-between px-4" style={{
+        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+      }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
-            <CategoryMenu
-              onOpenLive={() => setShowLive(true)}
-              onSelectModel={(modelId) => goToModelVideo(modelId)}
-              onExit={async () => {
-                try {
-                  sessionStorage.setItem('logging_out', 'true');
-                  await supabase.auth.signOut();
-                  navigate('/auth', { replace: true });
-                  setTimeout(() => {
-                    sessionStorage.removeItem('logging_out');
-                  }, 500);
-                } catch (error) {
-                  console.error('Erro ao fazer logout:', error);
-                  sessionStorage.removeItem('logging_out');
-                  navigate('/auth', { replace: true });
-                }
-              }}
-            />
+            <CategoryMenu onOpenLive={() => setShowLive(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
+            try {
+              sessionStorage.setItem('logging_out', 'true');
+              await supabase.auth.signOut();
+              navigate('/auth', {
+                replace: true
+              });
+              setTimeout(() => {
+                sessionStorage.removeItem('logging_out');
+              }, 500);
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              sessionStorage.removeItem('logging_out');
+              navigate('/auth', {
+                replace: true
+              });
+            }
+          }} />
           </div>
           
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">
             {/* Search/Lupa */}
-            <button
-              onClick={() => setShowSearch(true)}
-              className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-white/30 transition-colors"
-              title="Pesquisar"
-            >
+            <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-white/30 transition-colors" title="Pesquisar">
               <Search className="w-5 h-5 text-black" />
             </button>
           </div>
@@ -2524,120 +2350,80 @@ export const TikTokApp = () => {
           <BonusGift isMobile={true} />
         </div>
 
-        {import.meta.env.DEV && (
-          <button
-            onClick={() => {
-              localStorage.removeItem('ageVerification');
-              console.log('🧪 TESTE: Verificação removida, recarregue a página');
-              toast({
-                title: "Teste de Verificação",
-                description: "Recarregue a página para ver o popup novamente"
-              });
-            }}
-            className="hidden md:block fixed top-4 right-4 z-30 px-3 py-1 bg-red-500/80 backdrop-blur-sm rounded-full text-white text-xs hover:bg-red-600/80 transition-colors"
-          >
+        {import.meta.env.DEV && <button onClick={() => {
+        localStorage.removeItem('ageVerification');
+        console.log('🧪 TESTE: Verificação removida, recarregue a página');
+        toast({
+          title: "Teste de Verificação",
+          description: "Recarregue a página para ver o popup novamente"
+        });
+      }} className="hidden md:block fixed top-4 right-4 z-30 px-3 py-1 bg-red-500/80 backdrop-blur-sm rounded-full text-white text-xs hover:bg-red-600/80 transition-colors">
             🧪 Reset +18
-          </button>
-        )}
+          </button>}
 
         {/* Side Menu - Mobile positioning - Só aparece na tela principal */}
-        {!showProfile && !showChat && (
-          <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">
-            <SideMenu
-              video={currentVideo}
-              isLiked={isLiked}
-              isMuted={isMuted}
-              isPlaying={isPlaying}
-              volume={volume}
-              isFollowing={followingModels[currentVideo?.user?.id] || false}
-              onToggleLike={() => {
-                console.log('Mobile like clicked via SideMenu');
-                toggleLike();
-              }}
-              onToggleSound={() => {
-                console.log('Mobile sound toggle clicked via SideMenu'); 
-                setIsMuted(!isMuted);
-              }}
-              onVolumeChange={setVolume}
-              onTogglePlay={() => {
-                console.log('Mobile play toggle clicked via SideMenu');
-                setIsPlaying(!isPlaying);
-              }}
-              onToggleFollow={() => {
-                console.log('Mobile follow clicked via SideMenu');
-                followModel();
-              }}
-              onOpenComments={async () => {
-                console.log('Mobile comments clicked via SideMenu');
-                await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
-                await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
-                setShowComments(true);
-              }}
-              onOpenProfile={async () => {
-                console.log('Mobile profile clicked via SideMenu');
-                await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-                await trackFollow(currentVideo?.user?.id || '');
-                setShowProfile(true);
-              }}
-              onOpenLive={() => {
-                console.log('Mobile live clicked via SideMenu');
-                setShowLive(true);
-              }}
-              onBlockVideo={undefined}
-              onOpenPremium={() => {
-                console.log('Mobile premium clicked via SideMenu');
-                if (currentVideo?.user?.posting_panel_url) {
-                  const raw = currentVideo.user.posting_panel_url;
-                  const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
-                  window.open(url, '_blank');
-                  toast({
-                    title: "Abrindo página premium",
-                    description: `Redirecionando para ${currentVideo.user.username}`
-                  });
-                }
-              }}
-              onFullscreen={handleFullscreen}
-            />
-          </div>
-        )}
+        {!showProfile && !showChat && <div className="fixed bottom-32 right-3 z-[9999] pointer-events-auto">
+            <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
+          console.log('Mobile like clicked via SideMenu');
+          toggleLike();
+        }} onToggleSound={() => {
+          console.log('Mobile sound toggle clicked via SideMenu');
+          setIsMuted(!isMuted);
+        }} onVolumeChange={setVolume} onTogglePlay={() => {
+          console.log('Mobile play toggle clicked via SideMenu');
+          setIsPlaying(!isPlaying);
+        }} onToggleFollow={() => {
+          console.log('Mobile follow clicked via SideMenu');
+          followModel();
+        }} onOpenComments={async () => {
+          console.log('Mobile comments clicked via SideMenu');
+          await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
+          await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
+          setShowComments(true);
+        }} onOpenProfile={async () => {
+          console.log('Mobile profile clicked via SideMenu');
+          await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
+          await trackFollow(currentVideo?.user?.id || '');
+          setShowProfile(true);
+        }} onOpenLive={() => {
+          console.log('Mobile live clicked via SideMenu');
+          setShowLive(true);
+        }} onBlockVideo={undefined} onOpenPremium={() => {
+          console.log('Mobile premium clicked via SideMenu');
+          if (currentVideo?.user?.posting_panel_url) {
+            const raw = currentVideo.user.posting_panel_url;
+            const url = /^(https?:)?\/\//i.test(raw || '') ? raw as string : `https://${raw}`;
+            window.open(url, '_blank');
+            toast({
+              title: "Abrindo página premium",
+              description: `Redirecionando para ${currentVideo.user.username}`
+            });
+          }
+        }} onFullscreen={handleFullscreen} />
+          </div>}
 
         {/* Barra de Navegação Inferior - Estilo TikTok */}
         <div className="fixed bottom-0 left-0 right-0 h-16 bg-black border-t border-gray-800 flex items-center justify-around px-2 z-[60] pb-safe">
-          <button 
-            onClick={backToCurrentVideo}
-            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
-          >
+          <button onClick={backToCurrentVideo} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <Home className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Início</span>
           </button>
 
-          <button 
-            onClick={() => navigate('/explore')}
-            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
-          >
+          <button onClick={() => navigate('/explore')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <Compass className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Explorar</span>
           </button>
 
-          <button 
-            onClick={() => setShowLive(true)}
-            className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2"
-          >
+          <button onClick={() => setShowLive(true)} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
             <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
           </button>
 
-          <button 
-            onClick={() => navigate('/marketplace')}
-            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors"
-          >
+          <button onClick={() => navigate('/marketplace')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <ShoppingBag className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Marketplace</span>
           </button>
 
-          <button 
-            onClick={() => setShowChat(true)}
-            className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative"
-          >
+          <button onClick={() => setShowChat(true)} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
             <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Chat</span>
             {/* Indicador de ativo */}
@@ -2648,161 +2434,86 @@ export const TikTokApp = () => {
         {/* Vertical Carousel Container */}
         <div className="embla h-screen" ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
-            {videos.map((video, index) => (
-              <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
+            {videos.map((video, index) => <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
                 {/* Um vídeo por modelo em sequência linear */}
-                <VideoPlayer
-                  ref={index === currentVideoIndex ? videoRef : null}
-                  video={video}
-                  isPlaying={isPlaying && index === currentVideoIndex}
-                  isMuted={isMuted}
-                  volume={volume}
-                  onNext={nextVideo}
-                  onPrevious={prevVideo}
-                  onDoubleClick={toggleLike}
-                  onTogglePlay={() => setIsPlaying(!isPlaying)}
-                />
+                <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
                 
                 {/* Bottom Info - only show for current video */}
-                {index === currentVideoIndex && (
-                  <BottomInfo 
-                    video={video} 
-                    isNew={isVideoNew(video)} 
-                    isPlaying={isPlaying}
-                  />
-                )}
-              </div>
-            ))}
+                {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} />}
+              </div>)}
           </div>
         </div>
 
         {/* Hidden preloader for next video (speeds up decode/start) */}
-        {videos[currentVideoIndex + 1]?.video_url && (
-          <video
-            src={videos[currentVideoIndex + 1].video_url}
-            preload="auto"
-            muted
-            playsInline
-            style={{ display: 'none' }}
-          />
-        )}
+        {videos[currentVideoIndex + 1]?.video_url && <video src={videos[currentVideoIndex + 1].video_url} preload="auto" muted playsInline style={{
+        display: 'none'
+      }} />}
 
         {/* Profile Screen */}
-        <ProfileScreen
-          user={currentVideo.user}
-          isOpen={showProfile}
-          onClose={() => setShowProfile(false)}
-          onGoHome={goToHome}
-          onVideoSelect={(videoId) => {
-            openSelectedVideo(videoId);
-          }}
-          onOpenChat={() => {
-            setShowProfile(false);
-            setShowChat(true);
-          }}
-        />
+        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={() => setShowProfile(false)} onGoHome={goToHome} onVideoSelect={videoId => {
+        openSelectedVideo(videoId);
+      }} onOpenChat={() => {
+        setShowProfile(false);
+        setShowChat(true);
+      }} />
 
         {/* Chat Screen */}
-        <ChatScreen
-          isOpen={showChat}
-          onClose={() => setShowChat(false)}
-          modelName={currentVideo.user.username}
-          modelAvatar={currentVideo.user.avatar_url}
-        />
+        <ChatScreen isOpen={showChat} onClose={() => setShowChat(false)} modelName={currentVideo.user.username} modelAvatar={currentVideo.user.avatar_url} />
 
         {/* Comments Screen */}
-        <CommentsScreen
-          comments={comments}
-          isOpen={showComments}
-          onClose={() => setShowComments(false)}
-          onAddComment={addComment}
-          videoId={currentVideo?.id}
-          onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)}
-        />
+        <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />
         
         {/* Search Modal */}
-        <SearchModal
-          isOpen={showSearch}
-          onClose={() => setShowSearch(false)}
-          onSelectModel={(modelId) => {
-            goToModelVideo(modelId);
-            setShowSearch(false);
-          }}
-        />
+        <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={modelId => {
+        goToModelVideo(modelId);
+        setShowSearch(false);
+      }} />
 
         {/* Live Modal */}
-        <LiveModal
-          isOpen={showLive}
-          onClose={() => setShowLive(false)}
-          onSelectModel={goToModelVideo}
-        />
+        <LiveModal isOpen={showLive} onClose={() => setShowLive(false)} onSelectModel={goToModelVideo} />
 
         {/* Action Tracker */}
-        <ActionTracker 
-          onActionAttempt={async (actionType, userName) => {
-            return await handleActionAttempt(actionType, userName);
-          }}
-        />
+        <ActionTracker onActionAttempt={async (actionType, userName) => {
+        return await handleActionAttempt(actionType, userName);
+      }} />
 
         {/* Video Preview Modal (Premium Content) */}
-        <VideoPreviewModal
-          isOpen={showVideoPreview}
-          onClose={() => setShowVideoPreview(false)}
-          content={selectedVideoForPreview}
-        />
-      </div>
-    );
+        <VideoPreviewModal isOpen={showVideoPreview} onClose={() => setShowVideoPreview(false)} content={selectedVideoForPreview} />
+      </div>;
   }
 
   // Desktop version (TikTok-like desktop layout)
-  return (
-    <div className="min-h-screen bg-white text-foreground">
+  return <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
-      <div 
-        className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-sm"
-        style={{ 
-          background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
-        }}
-      >
+      <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-sm" style={{
+      background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+    }}>
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (showProfile || showSearch || showLive || showPremium) {
-                // Se estiver em alguma modal/tela, fecha ela
-                setShowProfile(false);
-                setShowSearch(false);
-                setShowLive(false);
-                setShowPremium(false);
-              } else {
-                // Se estiver na tela principal, volta ao primeiro vídeo
-                goToHome();
-              }
-            }}
-            className="bg-transparent hover:bg-white/10 text-black border border-black"
-          >
+          <Button variant="ghost" size="sm" onClick={() => {
+          if (showProfile || showSearch || showLive || showPremium) {
+            // Se estiver em alguma modal/tela, fecha ela
+            setShowProfile(false);
+            setShowSearch(false);
+            setShowLive(false);
+            setShowPremium(false);
+          } else {
+            // Se estiver na tela principal, volta ao primeiro vídeo
+            goToHome();
+          }
+        }} className="bg-transparent hover:bg-white/10 text-black border border-black">
             <ArrowLeft className="h-4 w-4 mr-2 text-black" />
             Voltar
           </Button>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center justify-center w-[80px] h-[80px] rounded-full overflow-hidden bg-transparent">
-                <img 
-                  src={coconudiLogo} 
-                  alt="Coconudi" 
-                  className="w-[80px] h-[80px] object-contain"
-                />
+                <img src={coconudiLogo} alt="Coconudi" className="w-[80px] h-[80px] object-contain" />
               </div>
             </div>
           </div>
         </div>
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setShowSearch(true)}
-                  className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-black/30 transition-colors"
-                  title="Pesquisar"
-                >
+                <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-black/30 transition-colors" title="Pesquisar">
                   <Search className="w-5 h-5" />
                 </button>
               </div>
@@ -2821,97 +2532,75 @@ export const TikTokApp = () => {
             {/* Header do Usuário - Desktop */}
             <UserMenuHeader />
             
-            <div className="space-y-1 mt-4"  style={{ pointerEvents: 'auto' }}>
-              <button
-                onClick={() => setShowLive(true)}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-              >
+            <div className="space-y-1 mt-4" style={{
+            pointerEvents: 'auto'
+          }}>
+              <button onClick={() => setShowLive(true)} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                 <Video className="w-5 h-5 mr-3" />
                 <span>Live</span>
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('👥 SEGUINDO: Botão clicado, navegando para /following');
-                  window.location.href = '/following';
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
-                type="button"
-              >
+              <button onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('👥 SEGUINDO: Botão clicado, navegando para /following');
+              window.location.href = '/following';
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer" type="button">
                 <Users className="w-5 h-5 mr-3" />
                 <span>Seguindo</span>
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🛍️ Clicou Market-Place - Navegando...');
-                  navigate('/marketplace');
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer"
-              >
+              <button onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🛍️ Clicou Market-Place - Navegando...');
+              navigate('/marketplace');
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer">
                 <ShoppingBag className="w-5 h-5 mr-3" />
-                <span>Market-Place</span>
+                <span>Marketplace</span>
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('📍 Clicou Negócios Locais - Navegando...');
-                  window.location.href = '/local-business';
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
-                style={{ pointerEvents: 'auto' }}
-              >
+              <button onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('📍 Clicou Negócios Locais - Navegando...');
+              window.location.href = '/local-business';
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50" style={{
+              pointerEvents: 'auto'
+            }}>
                 <MapPin className="w-5 h-5 mr-3" />
                 <span>Negócios Locais</span>
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('📚 Clicou Coleções - Navegando...');
-                  window.location.href = '/collections';
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
-                style={{ pointerEvents: 'auto' }}
-              >
+              <button onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('📚 Clicou Coleções - Navegando...');
+              window.location.href = '/collections';
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50" style={{
+              pointerEvents: 'auto'
+            }}>
                 <BookmarkPlus className="w-5 h-5 mr-3" />
                 <span>Coleções</span>
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('💳 Clicou Assinaturas - Navegando...');
-                  window.location.href = '/subscriptions';
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50"
-                style={{ pointerEvents: 'auto' }}
-              >
+              <button onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('💳 Clicou Assinaturas - Navegando...');
+              window.location.href = '/subscriptions';
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50" style={{
+              pointerEvents: 'auto'
+            }}>
                 <CreditCard className="w-5 h-5 mr-3" />
                 <span>Assinaturas</span>
               </button>
-              {isCreator === true && creatorLoading === false && (
-                <button
-                  onClick={() => {
-                    console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
-                    navigate('/creator-studio');
-                  }}
-                  className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-                >
+              {isCreator === true && creatorLoading === false && <button onClick={() => {
+              console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
+              navigate('/creator-studio');
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                   <Sparkles className="w-5 h-5 mr-3" />
                   <span>Creator Studio</span>
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  console.log('🚪 Botão Sair clicado (Desktop) - abrindo AlertDialog');
-                  setShowLogoutAlert(true);
-                }}
-                className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors"
-              >
+                </button>}
+              <button onClick={() => {
+              console.log('🚪 Botão Sair clicado (Desktop) - abrindo AlertDialog');
+              setShowLogoutAlert(true);
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                 <LogOut className="w-5 h-5 mr-3" />
                 <span>Sair</span>
               </button>
@@ -2926,40 +2615,18 @@ export const TikTokApp = () => {
           <div className="flex-1 max-w-md mx-auto relative pr-24 md:pr-28 lg:pr-32 xl:pr-36">
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
               {/* Um vídeo por modelo em sequência linear */}
-              <VideoPlayer
-                ref={videoRef}
-                video={currentVideo}
-                isPlaying={isPlaying}
-                isMuted={isMuted}
-                volume={volume}
-                onNext={nextVideo}
-                onPrevious={prevVideo}
-                onDoubleClick={toggleLike}
-                onTogglePlay={() => setIsPlaying(!isPlaying)}
-              />
+              <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
 
 
               {/* Desktop Navigation Arrows - movidos mais para dentro */}
               <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={prevVideo}
-                  disabled={currentVideoIndex === 0}
-                  className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50"
-                >
+                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
                   <ChevronUp className="h-4 w-4" />
                 </Button>
               </div>
               
               <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={nextVideo}
-                  disabled={currentVideoIndex === videos.length - 1}
-                  className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50"
-                >
+                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </div>
@@ -2968,20 +2635,10 @@ export const TikTokApp = () => {
               <div className="absolute bottom-4 left-4 right-4 z-20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setIsPlaying(!isPlaying)} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm">
                       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setIsMuted(!isMuted)} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm">
                       {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -2990,176 +2647,125 @@ export const TikTokApp = () => {
             </div>
 
               {/* 🆕 Badge "Novo" para vídeos recém-adicionados */}
-              {isVideoNew(currentVideo) && (
-                <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
+              {isVideoNew(currentVideo) && <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
                   <span className="text-base">✨</span>
                   <span>NOVO</span>
-                </div>
-              )}
+                </div>}
 
               {/* Desktop Side Menu - Só aparece na tela principal */}
-              {!showProfile && !showChat && (
-                <div className="absolute inset-y-0 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col justify-center space-y-4 z-30 max-h-[calc(100vh-140px)] overflow-visible py-6">
-                  <SideMenu
-                    video={currentVideo}
-                    isLiked={isLiked}
-                    isMuted={isMuted}
-                    isPlaying={isPlaying}
-                    volume={volume}
-                    isFollowing={followingModels[currentVideo?.user?.id] || false}
-                    onToggleLike={() => {
-                      console.log('Desktop like clicked');
-                      toggleLike();
-                    }}
-                    onToggleSound={() => {
-                      console.log('Desktop sound toggle clicked');
-                      setIsMuted(!isMuted);
-                    }}
-                    onVolumeChange={setVolume}
-                    onTogglePlay={() => {
-                      console.log('Desktop play toggle clicked');
-                      setIsPlaying(!isPlaying);
-                    }}
-                    onToggleFollow={() => {
-                      console.log('Desktop follow clicked');
-                      followModel();
-                    }}
-                    onOpenComments={async () => {
-                      console.log('Desktop comments clicked');
-                      await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
-                      await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
-                      setShowComments(true);
-                    }}
-                    onOpenProfile={async () => {
-                      console.log('Desktop profile clicked');
-                      await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-                      await trackFollow(currentVideo?.user?.id || '');
-                      setShowProfile(true);
-                    }}
-                    onOpenLive={() => {
-                      console.log('Desktop live clicked');
-                      setShowLive(true);
-                    }}
-                    onBlockVideo={undefined}
-                    onOpenPremium={() => {
-                      console.log('Desktop premium clicked');
-                      if (currentVideo?.user?.posting_panel_url) {
-                        const raw = currentVideo.user.posting_panel_url;
-                        const url = /^(https?:)?\/\//i.test(raw || '') ? (raw as string) : `https://${raw}`;
-                        window.open(url, '_blank');
-                        toast({
-                          title: "Abrindo página premium",
-                          description: `Redirecionando para ${currentVideo.user.username}`
-                        });
-                      } else {
-                        toast({
-                          title: "Link não configurado",
-                          description: "Esta modelo ainda não tem link premium configurado",
-                          variant: "destructive"
-                        });
-                      }
-                    }}
-                    onFullscreen={handleFullscreen}
-                    onOpenChat={() => {
-                      console.log('Desktop chat clicked');
-                      setShowChat(true);
-                    }}
-                    onExit={async () => {
-                      try {
-                        sessionStorage.setItem('logging_out', 'true');
-                        await supabase.auth.signOut();
-                        navigate('/auth', { replace: true });
-                        setTimeout(() => {
-                          sessionStorage.removeItem('logging_out');
-                        }, 500);
-                      } catch (error) {
-                        console.error('Erro ao fazer logout:', error);
-                        sessionStorage.removeItem('logging_out');
-                        navigate('/auth', { replace: true });
-                      }
-                    }}
-                  />
-                </div>
-              )}
+              {!showProfile && !showChat && <div className="absolute inset-y-0 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col justify-center space-y-4 z-30 max-h-[calc(100vh-140px)] overflow-visible py-6">
+                  <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
+                console.log('Desktop like clicked');
+                toggleLike();
+              }} onToggleSound={() => {
+                console.log('Desktop sound toggle clicked');
+                setIsMuted(!isMuted);
+              }} onVolumeChange={setVolume} onTogglePlay={() => {
+                console.log('Desktop play toggle clicked');
+                setIsPlaying(!isPlaying);
+              }} onToggleFollow={() => {
+                console.log('Desktop follow clicked');
+                followModel();
+              }} onOpenComments={async () => {
+                console.log('Desktop comments clicked');
+                await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
+                await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
+                setShowComments(true);
+              }} onOpenProfile={async () => {
+                console.log('Desktop profile clicked');
+                await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
+                await trackFollow(currentVideo?.user?.id || '');
+                setShowProfile(true);
+              }} onOpenLive={() => {
+                console.log('Desktop live clicked');
+                setShowLive(true);
+              }} onBlockVideo={undefined} onOpenPremium={() => {
+                console.log('Desktop premium clicked');
+                if (currentVideo?.user?.posting_panel_url) {
+                  const raw = currentVideo.user.posting_panel_url;
+                  const url = /^(https?:)?\/\//i.test(raw || '') ? raw as string : `https://${raw}`;
+                  window.open(url, '_blank');
+                  toast({
+                    title: "Abrindo página premium",
+                    description: `Redirecionando para ${currentVideo.user.username}`
+                  });
+                } else {
+                  toast({
+                    title: "Link não configurado",
+                    description: "Esta modelo ainda não tem link premium configurado",
+                    variant: "destructive"
+                  });
+                }
+              }} onFullscreen={handleFullscreen} onOpenChat={() => {
+                console.log('Desktop chat clicked');
+                setShowChat(true);
+              }} onExit={async () => {
+                try {
+                  sessionStorage.setItem('logging_out', 'true');
+                  await supabase.auth.signOut();
+                  navigate('/auth', {
+                    replace: true
+                  });
+                  setTimeout(() => {
+                    sessionStorage.removeItem('logging_out');
+                  }, 500);
+                } catch (error) {
+                  console.error('Erro ao fazer logout:', error);
+                  sessionStorage.removeItem('logging_out');
+                  navigate('/auth', {
+                    replace: true
+                  });
+                }
+              }} />
+                </div>}
 
             {/* Desktop Video Info Below */}
             <div className="mt-4 px-2">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <div 
-                      className="w-10 h-10 rounded-full overflow-hidden shrink-0 cursor-pointer border-2 border-gray-300"
-                      onClick={() => {
-                        if (checkAndTrackAction('profile_view')) {
-                          trackFollow(currentVideo.user.id);
-                          setShowProfile(true);
-                        }
-                      }}
-                    >
-                      <img
-                        src={currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                        alt={currentVideo.user.username}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 cursor-pointer border-2 border-gray-300" onClick={() => {
+                      if (checkAndTrackAction('profile_view')) {
+                        trackFollow(currentVideo.user.id);
+                        setShowProfile(true);
+                      }
+                    }}>
+                      <img src={currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'} alt={currentVideo.user.username} className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-700">{currentVideo.user.username}</p>
                       <p className="text-gray-600 text-sm">{currentVideo.user.followers_count} seguidores</p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                       onClick={() => {
-                         const currentIsFollowing = followingModels[currentVideo?.user?.id] || false;
-                         console.log('🔥 BOTÃO SEGUIR CLICADO!', {
-                           currentVideo: currentVideo?.user?.username,
-                           currentIsFollowing,
-                           modelId: currentVideo?.user?.id
-                         });
-                         followModel();
-                       }}
-                       disabled={followingModels[currentVideo?.user?.id] || false}
-                       className={(followingModels[currentVideo?.user?.id] || false)
-                         ? "border-green-500 text-green-500 bg-green-500/10" 
-                         : "border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                       }
-                     >
-                        {(followingModels[currentVideo?.user?.id] || false) ? 'Seguindo' : 'Seguir'}
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const currentIsFollowing = followingModels[currentVideo?.user?.id] || false;
+                      console.log('🔥 BOTÃO SEGUIR CLICADO!', {
+                        currentVideo: currentVideo?.user?.username,
+                        currentIsFollowing,
+                        modelId: currentVideo?.user?.id
+                      });
+                      followModel();
+                    }} disabled={followingModels[currentVideo?.user?.id] || false} className={followingModels[currentVideo?.user?.id] || false ? "border-green-500 text-green-500 bg-green-500/10" : "border-red-500 text-red-500 hover:bg-red-500 hover:text-white"}>
+                        {followingModels[currentVideo?.user?.id] || false ? 'Seguindo' : 'Seguir'}
                      </Button>
                   </div>
                   
                   {/* Desktop Action Buttons - Funcionais */}
                   <div className="flex items-center space-x-4 mt-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleLike}
-                      className={`text-sm transition-all duration-200 ${isLiked ? 'text-red-500 scale-110' : 'text-gray-700 hover:text-red-400'}`}
-                    >
+                    <Button variant="ghost" size="sm" onClick={toggleLike} className={`text-sm transition-all duration-200 ${isLiked ? 'text-red-500 scale-110' : 'text-gray-700 hover:text-red-400'}`}>
                       <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
                       {currentVideo.likes_count}
                     </Button>
                     
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
-                        await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
-                        setShowComments(true);
-                      }}
-                      className="text-gray-700 hover:text-blue-400 text-sm transition-colors"
-                    >
+                    <Button variant="ghost" size="sm" onClick={async () => {
+                      await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
+                      await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
+                      setShowComments(true);
+                    }} className="text-gray-700 hover:text-blue-400 text-sm transition-colors">
                       <MessageCircle className="h-4 w-4 mr-2" />
                       {currentVideo.comments_count}
                     </Button>
                     
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={shareVideo}
-                      className="text-gray-700 hover:text-yellow-400 text-sm transition-colors"
-                    >
+                    <Button variant="ghost" size="sm" onClick={shareVideo} className="text-gray-700 hover:text-yellow-400 text-sm transition-colors">
                       <img src={iconShare} alt="Share" className="h-4 w-4 mr-2" />
                       {currentVideo.shares_count}
                     </Button>
@@ -3169,14 +2775,11 @@ export const TikTokApp = () => {
                    <p className="text-gray-600 text-sm leading-relaxed mb-3">{currentVideo.description}</p>
                    
                    {/* Music Info - Clicável (Desktop) */}
-                   <div 
-                     onClick={() => {
-                       const authorUrl = currentVideo.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(currentVideo.user?.username || '')}`;
-                       const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
-                       window.open(url, '_blank', 'noopener,noreferrer');
-                     }}
-                     className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity active:scale-95 p-2 rounded-lg hover:bg-gray-100"
-                   >
+                   <div onClick={() => {
+                    const authorUrl = currentVideo.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(currentVideo.user?.username || '')}`;
+                    const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity active:scale-95 p-2 rounded-lg hover:bg-gray-100">
                      <VinylRecord isPlaying={isPlaying && !isMuted} hasMusic={true} />
                      <div className="flex items-center gap-1">
                        <Music className="w-3 h-3 text-gray-600 animate-pulse" />
@@ -3199,15 +2802,9 @@ export const TikTokApp = () => {
                 <div className="space-y-4 pr-2">
                   <FeaturedSection />
                   <AdCarousel />
-                  <ModelCarousel 
-                    title="Novas Modelos" 
-                    icon="✨"
-                    direction="ltr"
-                    carouselIndex={1}
-                    onSelectModel={(modelId) => {
-                      goToModelVideo(modelId);
-                    }}
-                  />
+                  <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
+                  goToModelVideo(modelId);
+                }} />
                   <MarketplaceCarousel />
                   <LocalBusinessCarousel />
                 </div>
@@ -3219,96 +2816,52 @@ export const TikTokApp = () => {
        </div>
 
       {/* Desktop Profile Screen */}
-      <ProfileScreen
-        user={currentVideo.user}
-        onVideoSelect={(videoId) => {
-          openSelectedVideo(videoId);
-        }}
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-        onGoHome={goToHome}
-        onOpenChat={() => {
-          setShowProfile(false);
-          setShowChat(true);
-        }}
-      />
+      <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
+      openSelectedVideo(videoId);
+    }} isOpen={showProfile} onClose={() => setShowProfile(false)} onGoHome={goToHome} onOpenChat={() => {
+      setShowProfile(false);
+      setShowChat(true);
+    }} />
 
       {/* Desktop Chat Screen */}
-      <ChatScreen
-        isOpen={showChat}
-        onClose={() => setShowChat(false)}
-        modelName={currentVideo.user.username}
-        modelAvatar={currentVideo.user.avatar_url}
-      />
+      <ChatScreen isOpen={showChat} onClose={() => setShowChat(false)} modelName={currentVideo.user.username} modelAvatar={currentVideo.user.avatar_url} />
 
       {/* Desktop Comments Screen */}
-      <CommentsScreen
-        comments={comments}
-        isOpen={showComments}
-        onClose={() => setShowComments(false)}
-        onAddComment={addComment}
-        videoId={currentVideo?.id}
-        onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)}
-      />
+      <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />
 
       {/* Desktop Search Modal */}
-      <SearchModal
-        isOpen={showSearch}
-        onClose={() => setShowSearch(false)}
-        onSelectModel={(modelId) => {
-          goToModelVideo(modelId);
-          setShowSearch(false);
-        }}
-      />
+      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={modelId => {
+      goToModelVideo(modelId);
+      setShowSearch(false);
+    }} />
 
       {/* Desktop Live Modal */}
-      <LiveModal
-        isOpen={showLive}
-        onClose={() => setShowLive(false)}
-        onSelectModel={goToModelVideo}
-      />
+      <LiveModal isOpen={showLive} onClose={() => setShowLive(false)} onSelectModel={goToModelVideo} />
 
       {/* Premium Modal */}
-      <PremiumModal
-        isOpen={showPremium}
-        onClose={() => setShowPremium(false)}
-      />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
       
       {/* Age Verification Modal */}
-      <AgeVerificationModal
-        open={showAgeVerification}
-        onClose={() => {
-          console.log('🔍 AGE VERIFICATION: Fechando modal e iniciando reprodução');
-          setShowAgeVerification(false);
-          // Força reprodução após fechar o modal
-          setTimeout(() => {
-            console.log('▶️ Iniciando reprodução automática após verificação');
-            setIsPlaying(true);
-          }, 300);
-        }}
-      />
+      <AgeVerificationModal open={showAgeVerification} onClose={() => {
+      console.log('🔍 AGE VERIFICATION: Fechando modal e iniciando reprodução');
+      setShowAgeVerification(false);
+      // Força reprodução após fechar o modal
+      setTimeout(() => {
+        console.log('▶️ Iniciando reprodução automática após verificação');
+        setIsPlaying(true);
+      }, 300);
+    }} />
       
       {/* Desktop Action Tracker */}
-      <ActionTracker
-        onActionAttempt={async (actionType, userName) => {
-          return await handleActionAttempt(actionType, userName);
-        }}
-      />
+      <ActionTracker onActionAttempt={async (actionType, userName) => {
+      return await handleActionAttempt(actionType, userName);
+    }} />
 
       {/* Video Preview Modal (Premium Content) */}
-      <VideoPreviewModal
-        isOpen={showVideoPreview}
-        onClose={() => setShowVideoPreview(false)}
-        content={selectedVideoForPreview}
-      />
+      <VideoPreviewModal isOpen={showVideoPreview} onClose={() => setShowVideoPreview(false)} content={selectedVideoForPreview} />
 
       {/* Fullscreen Video Modal */}
-      <FullscreenVideoModal
-        videoUrl={currentVideo?.video_url || ''}
-        isOpen={showFullscreen}
-        onClose={handleCloseFullscreen}
-        currentTime={fullscreenVideoTime}
-      />
+      <FullscreenVideoModal videoUrl={currentVideo?.video_url || ''} isOpen={showFullscreen} onClose={handleCloseFullscreen} currentTime={fullscreenVideoTime} />
       
       {/* Logout Alert Dialog (Desktop) */}
       <AlertDialog open={showLogoutAlert} onOpenChange={setShowLogoutAlert}>
@@ -3323,32 +2876,33 @@ export const TikTokApp = () => {
             <AlertDialogCancel className="bg-gray-700 text-white hover:bg-gray-600 border-gray-600">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={async () => {
-                try {
-                  sessionStorage.setItem('logging_out', 'true');
-                  const { error } = await supabase.auth.signOut();
-                  if (error) throw error;
-                  
-                  setShowLogoutAlert(false);
-                  toast({
-                    title: 'Logout realizado',
-                    description: 'Você saiu da sua conta com sucesso',
-                  });
-                  navigate('/auth', { replace: true });
-                } catch (error) {
-                  console.error('Erro ao fazer logout:', error);
-                  sessionStorage.removeItem('logging_out');
-                  navigate('/auth', { replace: true });
-                }
-              }}
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
-            >
+            <AlertDialogAction onClick={async () => {
+            try {
+              sessionStorage.setItem('logging_out', 'true');
+              const {
+                error
+              } = await supabase.auth.signOut();
+              if (error) throw error;
+              setShowLogoutAlert(false);
+              toast({
+                title: 'Logout realizado',
+                description: 'Você saiu da sua conta com sucesso'
+              });
+              navigate('/auth', {
+                replace: true
+              });
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              sessionStorage.removeItem('logging_out');
+              navigate('/auth', {
+                replace: true
+              });
+            }
+          }} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800">
               Sair
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };

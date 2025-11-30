@@ -814,18 +814,21 @@ export const AdminContentTable = () => {
                         <Crown className="h-3 w-3" />
                       </Button>
                       
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedContent(content);
-                          setIsChatPanelModalOpen(true);
-                        }}
-                        className="p-1 h-6 w-6 sm:h-8 sm:w-8 text-purple-400 hover:text-purple-400 hover:bg-purple-400/10"
-                        title="Configurar Chat IA"
-                      >
-                        <Bot className="h-3 w-3" />
-                      </Button>
+                      {/* Botão de Chat IA - apenas para modelos, não criadores */}
+                      {!content.isCreator && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedContent(content);
+                            setIsChatPanelModalOpen(true);
+                          }}
+                          className="p-1 h-6 w-6 sm:h-8 sm:w-8 text-purple-400 hover:text-purple-400 hover:bg-purple-400/10"
+                          title="Configurar Chat IA"
+                        >
+                          <Bot className="h-3 w-3" />
+                        </Button>
+                      )}
                       
                       <Button
                         variant="ghost"

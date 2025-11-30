@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Trash2 } from 'lucide-react';
@@ -179,18 +178,15 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
             {/* AI Provider & API Key */}
             <div className="space-y-3">
               <Label className="text-white">Provedor de IA</Label>
-              <Select
+              <select
                 value={panel.ai_provider || ''}
-                onValueChange={(value: 'gemini' | 'openai') => setPanel({ ...panel, ai_provider: value })}
+                onChange={(e) => setPanel({ ...panel, ai_provider: e.target.value as 'gemini' | 'openai' | null })}
+                className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                  <SelectValue placeholder="Selecione o provedor" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700">
-                  <SelectItem value="gemini">Gemini (Google)</SelectItem>
-                  <SelectItem value="openai">OpenAI (GPT)</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="">Selecione o provedor</option>
+                <option value="gemini">Gemini (Google)</option>
+                <option value="openai">OpenAI (GPT)</option>
+              </select>
 
               <div className="flex gap-2">
                 <Input

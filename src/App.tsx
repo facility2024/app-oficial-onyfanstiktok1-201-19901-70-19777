@@ -26,6 +26,8 @@ const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 const AdvertisersPage = lazy(() => import("./pages/AdvertisersPage"));
 const FollowingCreatorsPage = lazy(() => import("./pages/FollowingCreatorsPage"));
+const ModelChat = lazy(() => import("./pages/ModelChat"));
+const ChatListPage = lazy(() => import("./pages/ChatListPage"));
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -195,6 +197,26 @@ const App = () => (
           <Route path="/collections" element={
             <Suspense fallback={<ComponentFallback />}>
               <CollectionsPage />
+            </Suspense>
+          } />
+          
+          {/* Chat com Modelo */}
+          <Route path="/chat/:modelId" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ModelChat />
+            </Suspense>
+          } />
+          
+          {/* Lista de Chats - Rota alternativa para Chat IA */}
+          <Route path="/ChatIA" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ChatListPage />
+            </Suspense>
+          } />
+          
+          <Route path="/chats" element={
+            <Suspense fallback={<ComponentFallback />}>
+              <ChatListPage />
             </Suspense>
           } />
           

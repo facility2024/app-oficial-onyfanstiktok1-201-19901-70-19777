@@ -9,6 +9,7 @@ interface Model {
   name: string;
   avatar_url: string;
   followers_count: number;
+  is_live?: boolean;
 }
 
 interface ModelCarouselProps {
@@ -59,7 +60,26 @@ export const ModelCarousel = ({
         .order('followers_count', { ascending: false });
 
       if (data && !error) {
-        const allModels = data as Model[];
+        // 🔥 Buscar painéis de chat para verificar status online
+        const { data: chatPanelsData, error: chatPanelsError } = await supabase
+          .from('model_chat_panels' as any)
+          .select('model_id, is_online');
+
+        if (chatPanelsError) {
+          console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
+        }
+
+        const chatPanelsMap: Record<string, boolean> = {};
+        (chatPanelsData as any[])?.forEach((panel: any) => {
+          chatPanelsMap[panel.model_id] = panel.is_online;
+        });
+
+        // Atualizar modelos com status online
+        const allModels = (data as Model[]).map((m: Model) => ({
+          ...m,
+          is_live: chatPanelsMap[m.id] || false
+        }));
+
         console.log(`✅ Total de modelos carregadas: ${allModels.length}`);
         
         // Dividir em duas partes iguais

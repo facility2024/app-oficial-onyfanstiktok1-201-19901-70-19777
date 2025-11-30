@@ -42,6 +42,26 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
 
       if (modelsError) throw modelsError;
 
+      // 🔥 Buscar painéis de chat para verificar status online
+      const { data: chatPanelsData, error: chatPanelsError } = await supabase
+        .from('model_chat_panels' as any)
+        .select('model_id, is_online');
+
+      if (chatPanelsError) {
+        console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
+      }
+
+      const chatPanelsMap: Record<string, boolean> = {};
+      (chatPanelsData as any[])?.forEach((panel: any) => {
+        chatPanelsMap[panel.model_id] = panel.is_online;
+      });
+
+      // Atualizar modelos com status online do chat panel
+      const modelsWithChatStatus = (modelsData || []).map((m: any) => ({
+        ...m,
+        is_live: chatPanelsMap[m.id] || false
+      }));
+
       // Buscar criadores (via user_roles)
       const { data: creatorRoles, error: rolesError } = await (supabase as any)
         .from('user_roles')
@@ -86,7 +106,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       });
 
       // Combinar modelos + criadores
-      setModels([...(modelsData || []), ...creators]);
+      setModels([...modelsWithChatStatus, ...creators]);
     } catch (error) {
       console.error('Error loading models:', error);
     } finally {

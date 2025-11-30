@@ -756,6 +756,19 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao carregar modelos:', modelsError);
       }
 
+      // 🔥 Carregar painéis de chat para verificar status online
+      const {
+        data: chatPanelsData,
+        error: chatPanelsError
+      } = await supabase.from('model_chat_panels' as any).select('model_id, is_online');
+      if (chatPanelsError) {
+        console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
+      }
+      const chatPanelsMap: Record<string, boolean> = {};
+      (chatPanelsData as any[])?.forEach((panel: any) => {
+        chatPanelsMap[panel.model_id] = panel.is_online;
+      });
+
       // Carregar criadores (via user_roles)
       const {
         data: creatorRoles,
@@ -851,7 +864,7 @@ export const TikTokApp = () => {
             avatar_url: model.avatar_url || '',
             followers_count: model.followers_count || 0,
             following_count: 0,
-            is_online: model.is_live || false,
+            is_online: chatPanelsMap[model.id] || false,
             bio: model.bio || '',
             posting_panel_url: model.posting_panel_url || '',
             created_at: model.created_at || ''
@@ -892,7 +905,7 @@ export const TikTokApp = () => {
             avatar_url: model.avatar_url || '',
             followers_count: model.followers_count || 0,
             following_count: 0,
-            is_online: model.is_live || false,
+            is_online: chatPanelsMap[model.id] || false,
             bio: model.bio || '',
             posting_panel_url: model.posting_panel_url || '',
             created_at: model.created_at || ''
@@ -937,6 +950,12 @@ export const TikTokApp = () => {
             bio: owner.bio || '',
             posting_panel_url: '',
             created_at: owner.created_at || ''
+          };
+        } else if (owner) {
+          // Para modelos, verificar status online do chat panel
+          ownerData = {
+            ...owner,
+            is_live: chatPanelsMap[owner.id] || false
           };
         }
         return {

@@ -15,6 +15,8 @@ serve(async (req) => {
   try {
     const { modelId, message, conversationHistory = [] } = await req.json();
 
+    console.log('🤖 MODEL-CHAT: Recebida requisição para modelo:', modelId);
+
     if (!modelId || !message) {
       return new Response(
         JSON.stringify({ error: 'modelId e message são obrigatórios' }),
@@ -27,7 +29,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Buscando configuração do chat panel para modelo:', modelId);
+    console.log('🔍 Buscando configuração do chat panel para modelo:', modelId);
 
     // Buscar configuração do chat panel
     const { data: chatPanel, error: panelError } = await supabase
@@ -37,12 +39,21 @@ serve(async (req) => {
       .single();
 
     if (panelError) {
-      console.error('Erro ao buscar chat panel:', panelError);
+      console.error('❌ Erro ao buscar chat panel:', panelError);
       return new Response(
         JSON.stringify({ error: 'Chat panel não encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('✅ Chat panel encontrado:', {
+      model_id: chatPanel.model_id,
+      is_active: chatPanel.is_active,
+      is_online: chatPanel.is_online,
+      ai_provider: chatPanel.ai_provider,
+      has_api_key: !!chatPanel.api_key_encrypted,
+      prompt_preview: chatPanel.prompt?.substring(0, 50)
+    });
 
     if (!chatPanel.is_active) {
       return new Response(
@@ -58,7 +69,8 @@ serve(async (req) => {
       );
     }
 
-    console.log('Provider:', chatPanel.ai_provider);
+    console.log('🤖 Provider:', chatPanel.ai_provider);
+    console.log('📝 Prompt do sistema:', chatPanel.prompt || 'Você é um assistente prestativo.');
 
     let aiResponse = '';
 
@@ -84,13 +96,15 @@ serve(async (req) => {
       );
     }
 
+    console.log('✅ Resposta da IA gerada com sucesso');
+
     return new Response(
       JSON.stringify({ response: aiResponse }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Erro na edge function model-chat:', error);
+    console.error('❌ Erro na edge function model-chat:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro ao processar mensagem';
     return new Response(
       JSON.stringify({ error: errorMessage }),

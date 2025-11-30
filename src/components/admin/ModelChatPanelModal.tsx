@@ -327,25 +327,43 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
               {/* Conditional Fields */}
               {panel.can_send_audio && (
                 <div className="space-y-2 mt-4">
-                  <Label className="text-white text-sm">URL do Áudio MP3</Label>
+                  <Label className="text-white text-sm">Upload do Áudio MP3</Label>
                   <Input
-                    placeholder="https://exemplo.com/audio.mp3"
-                    value={panel.audio_url || ''}
-                    onChange={(e) => setPanel({ ...panel, audio_url: e.target.value })}
+                    type="file"
+                    accept="audio/mpeg,audio/mp3"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // TODO: Implementar upload para Supabase Storage
+                        console.log('Audio file selected:', file.name);
+                      }
+                    }}
                     className="bg-gray-900 border-gray-700 text-white"
                   />
+                  {panel.audio_url && (
+                    <p className="text-xs text-gray-400">Arquivo atual: {panel.audio_url}</p>
+                  )}
                 </div>
               )}
 
               {panel.can_send_images && (
                 <div className="space-y-2 mt-4">
-                  <Label className="text-white text-sm">URL da Imagem</Label>
+                  <Label className="text-white text-sm">Upload da Imagem</Label>
                   <Input
-                    placeholder="https://exemplo.com/imagem.jpg"
-                    value={panel.image_url || ''}
-                    onChange={(e) => setPanel({ ...panel, image_url: e.target.value })}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // TODO: Implementar upload para Supabase Storage
+                        console.log('Image file selected:', file.name);
+                      }
+                    }}
                     className="bg-gray-900 border-gray-700 text-white"
                   />
+                  {panel.image_url && (
+                    <p className="text-xs text-gray-400">Arquivo atual: {panel.image_url}</p>
+                  )}
                 </div>
               )}
 

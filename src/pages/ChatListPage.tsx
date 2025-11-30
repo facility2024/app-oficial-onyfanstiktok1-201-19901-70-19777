@@ -58,8 +58,19 @@ export default function ChatListPage() {
         .select('model_id, is_active, is_online')
         .eq('is_active', true);
 
-      if (panelsError && panelsError.code !== 'PGRST116') {
-        throw panelsError;
+      // Se a tabela não existe ou não há dados, retornar array vazio
+      if (panelsError) {
+        console.log('Erro ao buscar painéis (tabela pode não existir ainda):', panelsError);
+        setModels([]);
+        setFilteredModels([]);
+        setLoading(false);
+        
+        toast({
+          title: 'Configuração Pendente',
+          description: 'A tabela de chat ainda não foi criada. Execute o SQL supabase/create_model_chat_panels.sql no Supabase.',
+          variant: 'destructive',
+        });
+        return;
       }
 
       // Mapear modelos com status de chat

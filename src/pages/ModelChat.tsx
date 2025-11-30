@@ -183,16 +183,38 @@ export default function ModelChat() {
     setSending(true);
 
     try {
-      // Simular delay inicial antes de começar a digitar
+      // Delay inicial antes de começar a digitar
       await new Promise((resolve) =>
         setTimeout(resolve, chatPanel.message_delay_seconds * 1000)
       );
 
-      // TODO: Aqui você vai integrar com a Edge Function que chama a API da IA
-      const responseText = `Olá! Sou a ${model?.name}. Esta é uma resposta simulada com digitação humana. Em breve, estarei conectada à IA configurada no painel admin para conversar de verdade com você! 💬`;
-      
-      // Simular digitação
-      const typedText = await simulateTyping(responseText);
+      // Chamar Edge Function com histórico de conversa
+      const conversationHistory = messages
+        .filter(msg => msg.id !== 'greeting')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+      const { data, error } = await supabase.functions.invoke('model-chat', {
+        body: {
+          modelId,
+          message: inputMessage,
+          conversationHistory
+        }
+      });
+
+      if (error) {
+        console.error('Erro ao chamar edge function:', error);
+        throw new Error(error.message || 'Erro ao processar mensagem');
+      }
+
+      if (!data?.response) {
+        throw new Error('Resposta vazia da IA');
+      }
+
+      // Simular digitação da resposta real da IA
+      const typedText = await simulateTyping(data.response);
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -206,7 +228,7 @@ export default function ModelChat() {
       console.error('Erro ao enviar mensagem:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível enviar a mensagem',
+        description: error instanceof Error ? error.message : 'Não foi possível enviar a mensagem',
         variant: 'destructive',
       });
       setIsTyping(false);

@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut } from "lucide-react";
+import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Bot } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
@@ -134,6 +134,16 @@ export const CategoryMenu = ({
         console.log('✨ Navegando para Criadores Seguidos');
         setOpen(false);
         setTimeout(() => navigate('/following-creators'), 100);
+      }
+    },
+    {
+      id: "chat-ai",
+      name: "Chat IA",
+      icon: <Bot className="w-5 h-5" />,
+      onClick: () => {
+        console.log('🤖 Navegando para Chat IA');
+        setOpen(false);
+        setTimeout(() => navigate('/ChatIA'), 100);
       }
     }
   ];

@@ -25,6 +25,8 @@ interface ChatPanel {
   prompt: string | null;
   greeting_message: string | null;
   greeting_image_url: string | null;
+  greeting_link?: string | null;
+  greeting_description?: string | null;
   message_delay_seconds: number;
   can_read_images: boolean;
   can_send_audio: boolean;
@@ -401,6 +403,54 @@ export default function AdminModelChatPanels() {
                   Saudação Inicial
                 </h3>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>URL da Imagem de Saudação</Label>
+                    <Input
+                      placeholder="https://exemplo.com/imagem-saudacao.jpg"
+                      value={selectedPanel?.greeting_image_url || ''}
+                      onChange={(e) => {
+                        const newPanels = { ...panels };
+                        if (newPanels[selectedModel!]) {
+                          newPanels[selectedModel!].greeting_image_url = e.target.value;
+                        }
+                        setPanels(newPanels);
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Link Clicável (opcional)</Label>
+                    <Input
+                      placeholder="https://exemplo.com/perfil"
+                      value={selectedPanel?.greeting_link || ''}
+                      onChange={(e) => {
+                        const newPanels = { ...panels };
+                        if (newPanels[selectedModel!]) {
+                          (newPanels[selectedModel!] as any).greeting_link = e.target.value;
+                        }
+                        setPanels(newPanels);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Descrição da Saudação</Label>
+                  <Textarea
+                    placeholder="Uma breve descrição sobre a modelo..."
+                    value={(selectedPanel as any)?.greeting_description || ''}
+                    onChange={(e) => {
+                      const newPanels = { ...panels };
+                      if (newPanels[selectedModel!]) {
+                        (newPanels[selectedModel!] as any).greeting_description = e.target.value;
+                      }
+                      setPanels(newPanels);
+                    }}
+                    rows={2}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label>Mensagem de Saudação</Label>
                   <Textarea
@@ -417,26 +467,13 @@ export default function AdminModelChatPanels() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>URL da Imagem de Saudação</Label>
-                  <Input
-                    placeholder="https://exemplo.com/imagem-saudacao.jpg"
-                    value={selectedPanel?.greeting_image_url || ''}
-                    onChange={(e) => {
-                      const newPanels = { ...panels };
-                      if (newPanels[selectedModel!]) {
-                        newPanels[selectedModel!].greeting_image_url = e.target.value;
-                      }
-                      setPanels(newPanels);
-                    }}
-                  />
-                </div>
-
                 <Button
                   size="sm"
                   onClick={() => createOrUpdatePanel(selectedModel!, {
                     greeting_message: panels[selectedModel!]?.greeting_message,
-                    greeting_image_url: panels[selectedModel!]?.greeting_image_url
+                    greeting_image_url: panels[selectedModel!]?.greeting_image_url,
+                    greeting_link: (panels[selectedModel!] as any)?.greeting_link,
+                    greeting_description: (panels[selectedModel!] as any)?.greeting_description,
                   })}
                 >
                   <Save className="w-4 h-4 mr-2" />

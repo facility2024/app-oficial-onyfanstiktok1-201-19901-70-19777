@@ -25,6 +25,8 @@ interface ChatPanel {
   prompt: string | null;
   greeting_message: string | null;
   greeting_image_url: string | null;
+  greeting_link?: string | null;
+  greeting_description?: string | null;
   message_delay_seconds: number;
   can_read_images: boolean;
   can_send_audio: boolean;
@@ -50,6 +52,8 @@ export default function ModelChat() {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingText, setTypingText] = useState('');
 
   useEffect(() => {
     fetchModelAndPanel();
@@ -145,8 +149,27 @@ export default function ModelChat() {
     }
   };
 
+  const simulateTyping = async (text: string) => {
+    setIsTyping(true);
+    setTypingText('');
+    
+    const words = text.split(' ');
+    let currentText = '';
+    
+    for (let i = 0; i < words.length; i++) {
+      currentText += (i > 0 ? ' ' : '') + words[i];
+      setTypingText(currentText);
+      
+      // Pausa aleatória entre palavras (50-200ms)
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 150 + 50));
+    }
+    
+    setIsTyping(false);
+    return currentText;
+  };
+
   const sendMessage = async () => {
-    if (!inputMessage.trim() || sending || !chatPanel) return;
+    if (!inputMessage.trim() || sending || isTyping || !chatPanel) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -160,17 +183,21 @@ export default function ModelChat() {
     setSending(true);
 
     try {
-      // Simular delay de resposta
+      // Simular delay inicial antes de começar a digitar
       await new Promise((resolve) =>
         setTimeout(resolve, chatPanel.message_delay_seconds * 1000)
       );
 
       // TODO: Aqui você vai integrar com a Edge Function que chama a API da IA
-      // Por enquanto, enviar uma resposta simulada
+      const responseText = `Olá! Sou a ${model?.name}. Esta é uma resposta simulada com digitação humana. Em breve, estarei conectada à IA configurada no painel admin para conversar de verdade com você! 💬`;
+      
+      // Simular digitação
+      const typedText = await simulateTyping(responseText);
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Olá! Sou a ${model?.name}. Esta é uma resposta simulada. Em breve, estarei conectada à IA configurada no painel admin para conversar de verdade com você! 💬`,
+        content: typedText,
         timestamp: new Date(),
       };
 
@@ -182,6 +209,7 @@ export default function ModelChat() {
         description: 'Não foi possível enviar a mensagem',
         variant: 'destructive',
       });
+      setIsTyping(false);
     } finally {
       setSending(false);
     }
@@ -249,11 +277,28 @@ export default function ModelChat() {
                 }`}
               >
                 {message.image_url && (
-                  <img
-                    src={message.image_url}
-                    alt="Greeting"
-                    className="w-full rounded-lg mb-2"
-                  />
+                  <div className="mb-3">
+                    <img
+                      src={message.image_url}
+                      alt="Greeting"
+                      className="w-full rounded-lg"
+                    />
+                    {chatPanel?.greeting_description && message.id === 'greeting' && (
+                      <p className="text-sm text-gray-400 mt-2 italic">
+                        {chatPanel.greeting_description}
+                      </p>
+                    )}
+                    {chatPanel?.greeting_link && message.id === 'greeting' && (
+                      <a
+                        href={chatPanel.greeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline mt-2 inline-block"
+                      >
+                        🔗 Ver mais
+                      </a>
+                    )}
+                  </div>
                 )}
                 <p className="whitespace-pre-wrap">{message.content}</p>
                 <p className="text-xs opacity-70 mt-2">
@@ -262,7 +307,14 @@ export default function ModelChat() {
               </div>
             </div>
           ))}
-          {sending && (
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-gray-800 rounded-2xl p-4 max-w-[80%]">
+                <p className="whitespace-pre-wrap">{typingText}<span className="animate-pulse">|</span></p>
+              </div>
+            </div>
+          )}
+          {sending && !isTyping && (
             <div className="flex justify-start">
               <div className="bg-gray-800 rounded-2xl p-4">
                 <div className="flex gap-2">
@@ -322,16 +374,16 @@ export default function ModelChat() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={`Conversar com ${model.name}...`}
+              placeholder={isTyping ? `${model.name} está digitando...` : `Conversar com ${model.name}...`}
               className="flex-1 bg-gray-800 border-gray-700"
-              disabled={sending}
+              disabled={sending || isTyping}
             />
             <Button
               onClick={sendMessage}
-              disabled={!inputMessage.trim() || sending}
+              disabled={!inputMessage.trim() || sending || isTyping}
               className="bg-primary hover:bg-primary/90"
             >
-              {sending ? (
+              {sending || isTyping ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Send className="w-5 h-5" />

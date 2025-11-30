@@ -52,11 +52,12 @@ export default function ChatListPage() {
 
       if (modelsError) throw modelsError;
 
-      // Buscar painéis de chat ativos
+      // Buscar painéis de chat ativos E online
       const { data: panelsData, error: panelsError } = await supabase
         .from('model_chat_panels' as any)
         .select('model_id, is_active, is_online')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('is_online', true);
 
       // Se a tabela não existe ou não há dados, retornar array vazio
       if (panelsError) {

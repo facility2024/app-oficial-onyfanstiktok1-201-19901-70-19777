@@ -72,6 +72,7 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
 
   useEffect(() => {
     if (isOpen && modelId) {
+      setPanel(prev => ({ ...prev, model_id: modelId }));
       fetchPanel();
     }
   }, [isOpen, modelId]);
@@ -110,10 +111,13 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
         if (error) throw error;
         toast.success('Painel atualizado com sucesso!');
       } else {
-        // Insert
+        // Insert - garantir que model_id está definido
         const { error } = await (supabase as any)
           .from('model_chat_panels')
-          .insert([panel]);
+          .insert([{
+            ...panel,
+            model_id: modelId // Garantir que o model_id seja enviado
+          }]);
 
         if (error) throw error;
         toast.success('Painel criado com sucesso!');

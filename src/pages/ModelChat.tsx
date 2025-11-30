@@ -55,6 +55,57 @@ export default function ModelChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [typingText, setTypingText] = useState('');
 
+  // 🔒 ISOLAMENTO: Carregar mensagens do localStorage específico deste modelo
+  useEffect(() => {
+    if (!modelId) return;
+    
+    console.log('💬 Carregando histórico do chat para modelo:', modelId);
+    
+    // Carregar histórico salvo deste modelo específico
+    try {
+      const savedMessages = localStorage.getItem(`chat_messages_${modelId}`);
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        // Converter timestamps de string para Date
+        const messagesWithDates = parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(messagesWithDates);
+        console.log('✅ Histórico carregado:', messagesWithDates.length, 'mensagens');
+      } else {
+        console.log('📭 Nenhum histórico encontrado para este modelo');
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar histórico:', error);
+      setMessages([]);
+    }
+  }, [modelId]);
+
+  // 🔒 ISOLAMENTO: Salvar mensagens no localStorage específico deste modelo
+  useEffect(() => {
+    if (!modelId || messages.length === 0) return;
+    
+    console.log('💾 Salvando histórico do chat para modelo:', modelId);
+    try {
+      localStorage.setItem(`chat_messages_${modelId}`, JSON.stringify(messages));
+    } catch (error) {
+      console.error('❌ Erro ao salvar histórico:', error);
+    }
+  }, [messages, modelId]);
+
+  // 🧹 LIMPEZA: Limpar estado ao desmontar ou trocar de modelo
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Limpando estado do chat ao sair');
+      setMessages([]);
+      setInputMessage('');
+      setIsTyping(false);
+      setTypingText('');
+    };
+  }, [modelId]);
+
   useEffect(() => {
     fetchModelAndPanel();
   }, [modelId]);
@@ -255,6 +306,19 @@ export default function ModelChat() {
     }
   };
 
+  // 🗑️ LIMPAR histórico do chat atual
+  const clearChatHistory = () => {
+    if (!modelId) return;
+    
+    console.log('🗑️ Limpando histórico do chat para modelo:', modelId);
+    localStorage.removeItem(`chat_messages_${modelId}`);
+    setMessages([]);
+    toast({
+      title: 'Histórico limpo',
+      description: 'As mensagens foram apagadas',
+    });
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -268,13 +332,29 @@ export default function ModelChat() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black text-white flex flex-col overflow-hidden"
+      onWheel={(e) => {
+        // 🚫 BLOQUEAR scroll do mouse para evitar navegação acidental
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onTouchMove={(e) => {
+        // 🚫 BLOQUEAR gestos de navegação no mobile
+        if (e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }}
+    >
       {/* Header */}
       <div className="bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(255,217,61,0.95)] p-4 flex items-center gap-3 shadow-lg">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/app')}
+          onClick={() => {
+            console.log('⬅️ Voltando para o app');
+            navigate('/app');
+          }}
           className="text-black hover:bg-black/10"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -290,10 +370,19 @@ export default function ModelChat() {
             {chatPanel.is_online ? '🟢 Online' : '🔴 Offline'}
           </p>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearChatHistory}
+          className="text-black hover:bg-black/10"
+          title="Limpar histórico"
+        >
+          🗑️
+        </Button>
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
         <div className="space-y-4 max-w-4xl mx-auto">
           {messages.map((message) => (
             <div
@@ -365,7 +454,7 @@ export default function ModelChat() {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input */}
       <div className="p-4 bg-gray-900/50 border-t border-white/10">

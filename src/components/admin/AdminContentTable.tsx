@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Eye, EyeOff, Crown, Trash2, Globe, Play, Lock, Unlock } from 'lucide-react';
+import { Plus, Edit, Eye, EyeOff, Crown, Trash2, Globe, Play, Lock, Unlock, Bot } from 'lucide-react';
 import { ContentModal } from './ContentModal';
 import { LiveManagementModal } from './LiveManagementModal';
 import { VideoPreviewModal } from './VideoPreviewModal';
 import { IntegrationsModal } from './IntegrationsModal';
 import { OffersModal } from './OffersModal';
+import { ModelChatPanelModal } from './ModelChatPanelModal';
 import crownLogo from '@/assets/crown-logo.png';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ export const AdminContentTable = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState(false);
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
+  const [isChatPanelModalOpen, setIsChatPanelModalOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState(null);
   const [editingContent, setEditingContent] = useState(null);
   const [contents, setContents] = useState([]);
@@ -815,6 +817,19 @@ export const AdminContentTable = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => {
+                          setSelectedContent(content);
+                          setIsChatPanelModalOpen(true);
+                        }}
+                        className="p-1 h-6 w-6 sm:h-8 sm:w-8 text-purple-400 hover:text-purple-400 hover:bg-purple-400/10"
+                        title="Configurar Chat IA"
+                      >
+                        <Bot className="h-3 w-3" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => deleteContent(content.id)}
                         className="p-1 h-6 w-6 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10 hidden sm:inline-flex"
                         title="Excluir"
@@ -864,6 +879,17 @@ export const AdminContentTable = () => {
         onClose={() => setIsOffersModalOpen(false)} 
         selectedContent={selectedContent}
       />
-  </>
-  );
+
+      <ModelChatPanelModal
+        isOpen={isChatPanelModalOpen}
+        onClose={() => {
+          setIsChatPanelModalOpen(false);
+          setSelectedContent(null);
+        }}
+        modelId={selectedContent?.modelId || selectedContent?.id}
+        modelName={selectedContent?.name || 'Modelo'}
+        modelAvatar={selectedContent?.avatar || crownLogo}
+      />
+   </>
+   );
 };

@@ -19,9 +19,10 @@ export const FeaturedSection = () => {
     const fetchFeaturedVideos = async () => {
       try {
         setLoading(true);
+        console.log('🎬 Buscando vídeos em destaque...');
         
         // Buscar vídeos ativos ordenados por visualizações
-        const { data: videos } = await supabase
+        const { data: videos, error: videosError } = await supabase
           .from('videos')
           .select('id, video_url, thumbnail_url, title, views_count, model_id')
           .eq('is_active', true)
@@ -29,16 +30,28 @@ export const FeaturedSection = () => {
           .order('views_count', { ascending: false })
           .limit(6);
 
+        if (videosError) {
+          console.error('❌ Erro ao buscar vídeos:', videosError);
+          return;
+        }
+
+        console.log(`✅ ${videos?.length || 0} vídeos encontrados`);
+
         const processedVideos: FeaturedVideo[] = [];
 
         // Processar vídeos
-        if (videos) {
+        if (videos && videos.length > 0) {
           for (const video of videos) {
-            const { data: model } = await supabase
+            const { data: model, error: modelError } = await supabase
               .from('models')
               .select('name, avatar_url')
               .eq('id', video.model_id)
-              .single();
+              .maybeSingle();
+
+            if (modelError) {
+              console.error('❌ Erro ao buscar modelo:', modelError);
+              continue;
+            }
 
             if (model) {
               processedVideos.push({
@@ -50,13 +63,15 @@ export const FeaturedSection = () => {
                 owner_avatar: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
                 views_count: video.views_count || 0
               });
+              console.log(`✅ Vídeo processado: ${model.name} - ${video.title}`);
             }
           }
         }
 
+        console.log(`🎯 Total de vídeos processados: ${processedVideos.length}`);
         setFeaturedVideos(processedVideos);
       } catch (error) {
-        console.error('Erro ao carregar vídeos em destaque:', error);
+        console.error('❌ Erro ao carregar vídeos em destaque:', error);
       } finally {
         setLoading(false);
       }

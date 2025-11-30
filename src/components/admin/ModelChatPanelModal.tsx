@@ -34,6 +34,10 @@ interface ChatPanel {
   can_send_audio: boolean;
   can_send_images: boolean;
   can_send_links: boolean;
+  audio_url?: string;
+  image_url?: string;
+  whatsapp_number?: string;
+  custom_link?: string;
 }
 
 export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
@@ -59,7 +63,11 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
     can_read_images: false,
     can_send_audio: false,
     can_send_images: false,
-    can_send_links: true
+    can_send_links: true,
+    audio_url: '',
+    image_url: '',
+    whatsapp_number: '',
+    custom_link: ''
   });
 
   useEffect(() => {
@@ -315,6 +323,51 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
                   />
                 </div>
               </div>
+
+              {/* Conditional Fields */}
+              {panel.can_send_audio && (
+                <div className="space-y-2 mt-4">
+                  <Label className="text-white text-sm">URL do Áudio MP3</Label>
+                  <Input
+                    placeholder="https://exemplo.com/audio.mp3"
+                    value={panel.audio_url || ''}
+                    onChange={(e) => setPanel({ ...panel, audio_url: e.target.value })}
+                    className="bg-gray-900 border-gray-700 text-white"
+                  />
+                </div>
+              )}
+
+              {panel.can_send_images && (
+                <div className="space-y-2 mt-4">
+                  <Label className="text-white text-sm">URL da Imagem</Label>
+                  <Input
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    value={panel.image_url || ''}
+                    onChange={(e) => setPanel({ ...panel, image_url: e.target.value })}
+                    className="bg-gray-900 border-gray-700 text-white"
+                  />
+                </div>
+              )}
+
+              {panel.can_send_links && (
+                <div className="space-y-2 mt-4">
+                  <Label className="text-white text-sm">WhatsApp (opcional)</Label>
+                  <Input
+                    placeholder="+55 11 99999-9999"
+                    value={panel.whatsapp_number || ''}
+                    onChange={(e) => setPanel({ ...panel, whatsapp_number: e.target.value })}
+                    className="bg-gray-900 border-gray-700 text-white"
+                  />
+                  
+                  <Label className="text-white text-sm mt-3">Link Customizado</Label>
+                  <Input
+                    placeholder="https://exemplo.com/link"
+                    value={panel.custom_link || ''}
+                    onChange={(e) => setPanel({ ...panel, custom_link: e.target.value })}
+                    className="bg-gray-900 border-gray-700 text-white"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}

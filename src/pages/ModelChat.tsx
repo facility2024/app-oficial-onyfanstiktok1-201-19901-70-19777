@@ -124,18 +124,18 @@ export default function ModelChat() {
 
       setChatPanel(panel);
 
-      // Adicionar mensagem de saudação
-      if (panel.greeting_message) {
-        setMessages([
-          {
-            id: 'greeting',
-            role: 'assistant',
-            content: panel.greeting_message,
-            timestamp: new Date(),
-            image_url: panel.greeting_image_url || undefined,
-          },
-        ]);
-      }
+      // 🧪 TESTE: Remover mensagem de saudação inicial para debug
+      // if (panel.greeting_message) {
+      //   setMessages([
+      //     {
+      //       id: 'greeting',
+      //       role: 'assistant',
+      //       content: panel.greeting_message,
+      //       timestamp: new Date(),
+      //       image_url: panel.greeting_image_url || undefined,
+      //     },
+      //   ]);
+      // }
     } catch (error) {
       console.error('Erro ao carregar chat:', error);
       toast({
@@ -196,6 +196,12 @@ export default function ModelChat() {
           content: msg.content
         }));
 
+      console.log('🚀 Chamando edge function model-chat:', {
+        modelId,
+        message: inputMessage,
+        historyLength: conversationHistory.length
+      });
+
       const { data, error } = await supabase.functions.invoke('model-chat', {
         body: {
           modelId,
@@ -204,14 +210,19 @@ export default function ModelChat() {
         }
       });
 
+      console.log('📥 Resposta da edge function:', { data, error });
+
       if (error) {
-        console.error('Erro ao chamar edge function:', error);
+        console.error('❌ Erro ao chamar edge function:', error);
         throw new Error(error.message || 'Erro ao processar mensagem');
       }
 
       if (!data?.response) {
+        console.error('❌ Resposta vazia da IA');
         throw new Error('Resposta vazia da IA');
       }
+
+      console.log('✅ Resposta da IA:', data.response.substring(0, 100) + '...');
 
       // Simular digitação da resposta real da IA
       const typedText = await simulateTyping(data.response);

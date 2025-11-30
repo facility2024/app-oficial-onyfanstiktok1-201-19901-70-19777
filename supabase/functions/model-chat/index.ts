@@ -114,7 +114,10 @@ serve(async (req) => {
 });
 
 async function callGemini(apiKey: string, userMessage: string, systemPrompt: string, history: any[]) {
-  console.log('Chamando Gemini API...');
+  console.log('🤖 GEMINI: Iniciando chamada...');
+  console.log('📝 GEMINI: System Prompt:', systemPrompt);
+  console.log('💬 GEMINI: User Message:', userMessage);
+  console.log('📜 GEMINI: History length:', history.length);
 
   const contents = [];
   
@@ -132,40 +135,48 @@ async function callGemini(apiKey: string, userMessage: string, systemPrompt: str
     parts: [{ text: userMessage }]
   });
 
+  const requestBody = {
+    contents,
+    systemInstruction: {
+      parts: [{ text: systemPrompt }]
+    },
+    generationConfig: {
+      temperature: 0.9,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 1024,
+    }
+  };
+
+  console.log('📤 GEMINI: Request body:', JSON.stringify(requestBody, null, 2));
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        generationConfig: {
-          temperature: 0.9,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        }
-      })
+      body: JSON.stringify(requestBody)
     }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Erro Gemini API:', errorText);
+    console.error('❌ GEMINI: API error:', errorText);
     throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  console.log('Resposta Gemini recebida');
+  console.log('✅ GEMINI: Response received');
+  console.log('📥 GEMINI: Response data:', JSON.stringify(data, null, 2));
 
   if (!data.candidates || data.candidates.length === 0) {
     throw new Error('Nenhuma resposta gerada pela Gemini');
   }
 
-  return data.candidates[0].content.parts[0].text;
+  const generatedText = data.candidates[0].content.parts[0].text;
+  console.log('✅ GEMINI: Generated text:', generatedText);
+
+  return generatedText;
 }
 
 async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: string, history: any[]) {

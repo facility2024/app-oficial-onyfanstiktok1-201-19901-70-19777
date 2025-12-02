@@ -182,7 +182,7 @@ export default function ModelChat() {
         if (!savedMessages && panelData.greeting_message) {
           const greetingMsg: Message = {
             role: 'assistant',
-            content: panel.greeting_message,
+            content: panelData.greeting_message,
             timestamp: new Date()
           };
           setMessages([greetingMsg]);

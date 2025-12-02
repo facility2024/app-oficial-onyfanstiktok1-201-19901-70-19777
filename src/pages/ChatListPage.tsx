@@ -59,7 +59,7 @@ export default function ChatListPage() {
 
       // Mapear modelos com status de chat
       const modelPanelMap = new Map(
-        modelPanels?.map(p => [p.model_id, { is_active: p.is_active, is_online: p.is_online }]) || []
+        (modelPanels as any[])?.map((p: any) => [p.model_id, { is_active: p.is_active, is_online: p.is_online }]) || []
       );
 
       models?.forEach(model => {

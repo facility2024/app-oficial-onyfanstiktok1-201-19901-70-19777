@@ -202,7 +202,7 @@ export default function AdminModelChatPanels() {
         
         setPanels(prev => ({
           ...prev,
-          [key]: { ...panel, id: data.id }
+          [key]: { ...panel, id: (data as any).id }
         }));
       }
 

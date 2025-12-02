@@ -13,13 +13,13 @@ serve(async (req) => {
   }
 
   try {
-    const { modelId, message, conversationHistory = [] } = await req.json();
+    const { entityId, message, conversationHistory = [], isCreator = false } = await req.json();
 
-    console.log('🤖 MODEL-CHAT: Recebida requisição para modelo:', modelId);
+    console.log('🤖 MODEL-CHAT: Recebida requisição:', { entityId, isCreator });
 
-    if (!modelId || !message) {
+    if (!entityId || !message) {
       return new Response(
-        JSON.stringify({ error: 'modelId e message são obrigatórios' }),
+        JSON.stringify({ error: 'entityId e message são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -29,14 +29,20 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🔍 Buscando configuração do chat panel para modelo:', modelId);
+    console.log('🔍 Buscando configuração do chat panel...');
 
-    // Buscar configuração do chat panel
-    const { data: chatPanel, error: panelError } = await supabase
+    // Buscar configuração do chat panel - suporta model_id OU creator_id
+    let query = supabase
       .from('model_chat_panels')
-      .select('*')
-      .eq('model_id', modelId)
-      .single();
+      .select('*');
+
+    if (isCreator) {
+      query = query.eq('creator_id', entityId);
+    } else {
+      query = query.eq('model_id', entityId);
+    }
+
+    const { data: chatPanel, error: panelError } = await query.single();
 
     if (panelError) {
       console.error('❌ Erro ao buscar chat panel:', panelError);
@@ -47,12 +53,11 @@ serve(async (req) => {
     }
 
     console.log('✅ Chat panel encontrado:', {
-      model_id: chatPanel.model_id,
       is_active: chatPanel.is_active,
       is_online: chatPanel.is_online,
       ai_provider: chatPanel.ai_provider,
       has_api_key: !!chatPanel.api_key_encrypted,
-      prompt_preview: chatPanel.prompt?.substring(0, 50)
+      isCreator
     });
 
     if (!chatPanel.is_active) {
@@ -70,23 +75,23 @@ serve(async (req) => {
     }
 
     console.log('🤖 Provider:', chatPanel.ai_provider);
-    console.log('📝 Prompt do sistema:', chatPanel.prompt || 'Você é um assistente prestativo.');
 
     let aiResponse = '';
+    const systemPrompt = chatPanel.prompt || 'Você é um assistente prestativo.';
 
     // Chamar a IA apropriada
     if (chatPanel.ai_provider === 'gemini') {
       aiResponse = await callGemini(
         chatPanel.api_key_encrypted,
         message,
-        chatPanel.prompt || 'Você é um assistente prestativo.',
+        systemPrompt,
         conversationHistory
       );
     } else if (chatPanel.ai_provider === 'openai') {
       aiResponse = await callOpenAI(
         chatPanel.api_key_encrypted,
         message,
-        chatPanel.prompt || 'You are a helpful assistant.',
+        systemPrompt,
         conversationHistory
       );
     } else {
@@ -103,25 +108,19 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
-    console.error('❌ Erro na edge function model-chat:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro ao processar mensagem';
+  } catch (error: any) {
+    console.error('❌ Erro geral na função:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: error?.message || 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-async function callGemini(apiKey: string, userMessage: string, systemPrompt: string, history: any[]) {
-  console.log('🤖 GEMINI: Iniciando chamada...');
-  console.log('📝 GEMINI: System Prompt:', systemPrompt);
-  console.log('💬 GEMINI: User Message:', userMessage);
-  console.log('📜 GEMINI: History length:', history.length);
-
+async function callGemini(apiKey: string, userMessage: string, systemPrompt: string, history: any[]): Promise<string> {
   const contents = [];
-  
-  // Adicionar histórico de conversa
+
+  // Adicionar histórico
   for (const msg of history) {
     contents.push({
       role: msg.role === 'user' ? 'user' : 'model',
@@ -129,103 +128,78 @@ async function callGemini(apiKey: string, userMessage: string, systemPrompt: str
     });
   }
 
-  // Adicionar mensagem atual do usuário
+  // Adicionar mensagem atual
   contents.push({
     role: 'user',
     parts: [{ text: userMessage }]
   });
-
-  const requestBody = {
-    contents,
-    systemInstruction: {
-      parts: [{ text: systemPrompt }]
-    },
-    generationConfig: {
-      temperature: 0.9,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 1024,
-    }
-  };
-
-  console.log('📤 GEMINI: Request body:', JSON.stringify(requestBody, null, 2));
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify({
+        contents,
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        generationConfig: {
+          temperature: 0.9,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
+      })
     }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('❌ GEMINI: API error:', errorText);
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    console.error('Erro Gemini:', errorText);
+    throw new Error(`Erro na API Gemini: ${response.status}`);
   }
 
   const data = await response.json();
-  console.log('✅ GEMINI: Response received');
-  console.log('📥 GEMINI: Response data:', JSON.stringify(data, null, 2));
-
-  if (!data.candidates || data.candidates.length === 0) {
-    throw new Error('Nenhuma resposta gerada pela Gemini');
-  }
-
-  const generatedText = data.candidates[0].content.parts[0].text;
-  console.log('✅ GEMINI: Generated text:', generatedText);
-
-  return generatedText;
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
 }
 
-async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: string, history: any[]) {
-  console.log('Chamando OpenAI API...');
-
+async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: string, history: any[]): Promise<string> {
   const messages = [
     { role: 'system', content: systemPrompt }
   ];
 
-  // Adicionar histórico de conversa
+  // Adicionar histórico
   for (const msg of history) {
     messages.push({
-      role: msg.role,
+      role: msg.role === 'user' ? 'user' : 'assistant',
       content: msg.content
     });
   }
 
   // Adicionar mensagem atual
-  messages.push({
-    role: 'user',
-    content: userMessage
-  });
+  messages.push({ role: 'user', content: userMessage });
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages,
-      temperature: 0.7,
-      max_tokens: 1000,
-    }),
+      temperature: 0.9,
+      max_tokens: 1024,
+    })
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Erro OpenAI API:', errorText);
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    console.error('Erro OpenAI:', errorText);
+    throw new Error(`Erro na API OpenAI: ${response.status}`);
   }
 
   const data = await response.json();
-  console.log('Resposta OpenAI recebida');
-
-  if (!data.choices || data.choices.length === 0) {
-    throw new Error('Nenhuma resposta gerada pela OpenAI');
-  }
-
-  return data.choices[0].message.content;
+  return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
 }

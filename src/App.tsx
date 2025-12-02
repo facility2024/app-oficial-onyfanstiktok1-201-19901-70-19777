@@ -200,8 +200,8 @@ const App = () => (
             </Suspense>
           } />
           
-          {/* Chat com Modelo */}
-          <Route path="/chat/:modelId" element={
+          {/* Chat com Modelo ou Criador */}
+          <Route path="/chat/:entityId" element={
             <Suspense fallback={<ComponentFallback />}>
               <ModelChat />
             </Suspense>

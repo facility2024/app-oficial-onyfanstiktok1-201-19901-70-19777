@@ -16,7 +16,7 @@ import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -36,6 +36,8 @@ import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
 import { LocalBusinessCarousel } from '@/components/tiktok/LocalBusinessCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useGenres } from '@/hooks/useGenres';
+import { GenreSelector } from '@/components/tiktok/GenreSelector';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -102,6 +104,9 @@ export const TikTokApp = () => {
     isCreator,
     loading: creatorLoading
   } = useCreatorRole();
+
+  // Hook para gerenciar gêneros
+  const { selectedGenre, setSelectedGenre, genres } = useGenres();
 
   // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
   // const { 
@@ -1112,6 +1117,53 @@ export const TikTokApp = () => {
     console.log('🔍 Estado inicial de loading:', loading);
     initializeFeed();
   }, []); // Executar apenas uma vez na montagem
+
+  // 🎬 FILTRAR VÍDEOS POR GÊNERO SELECIONADO
+  useEffect(() => {
+    if (allAvailableVideos.length === 0 || !selectedGenre) return;
+
+    console.log('🎬 Filtrando por gênero:', selectedGenre);
+
+    if (selectedGenre === 'Todos') {
+      // Mostrar todos os vídeos
+      const firstBlock = allAvailableVideos.slice(0, VIDEOS_PER_BLOCK);
+      setVideos(firstBlock);
+      setCurrentVideoIndex(0);
+      setHasMoreVideos(allAvailableVideos.length > VIDEOS_PER_BLOCK);
+      console.log(`📋 Mostrando todos: ${firstBlock.length} vídeos`);
+    } else {
+      // Filtrar vídeos pelo gênero selecionado
+      const filteredVideos = allAvailableVideos.filter((video: any) => {
+        const videoGenres = video.genres || [];
+        return videoGenres.includes(selectedGenre);
+      });
+      
+      const firstBlock = filteredVideos.slice(0, VIDEOS_PER_BLOCK);
+      setVideos(firstBlock);
+      setCurrentVideoIndex(0);
+      setHasMoreVideos(filteredVideos.length > VIDEOS_PER_BLOCK);
+      console.log(`🎬 Filtrado por "${selectedGenre}": ${firstBlock.length} vídeos de ${filteredVideos.length} total`);
+    }
+
+    // Resetar carousel
+    if (emblaApi) {
+      emblaApi.scrollTo(0);
+    }
+  }, [selectedGenre, allAvailableVideos, emblaApi]);
+
+  // Escutar mudanças de gênero de outros componentes
+  useEffect(() => {
+    const handleGenreChange = (e: CustomEvent) => {
+      if (e.detail?.genre) {
+        console.log('🎬 Gênero alterado via evento:', e.detail.genre);
+      }
+    };
+
+    window.addEventListener('genreChanged', handleGenreChange as EventListener);
+    return () => {
+      window.removeEventListener('genreChanged', handleGenreChange as EventListener);
+    };
+  }, []);
 
   // 🎯 Posicionar no vídeo específico quando vindo de coleções ou links diretos
   useEffect(() => {
@@ -2310,15 +2362,51 @@ export const TikTokApp = () => {
     console.log('🚫 RENDER: videos.length:', videos.length);
     console.log('🚫 RENDER: currentVideoIndex:', currentVideoIndex);
     console.log('🚫 RENDER: currentVideo:', currentVideo);
-    return <div className="flex items-center justify-center min-h-screen bg-black text-white">
-        <div className="text-center">
-          <p className="text-xl mb-4">Nenhum vídeo disponível</p>
-          <p className="text-gray-400">Aguarde novos conteúdos!</p>
-          <Button onClick={initializeFeed} className="mt-4 bg-primary hover:bg-primary/80">
-            Recarregar
-          </Button>
+    console.log('🚫 RENDER: selectedGenre:', selectedGenre);
+    
+    // Verifica se é filtro por gênero ou realmente sem vídeos
+    const isGenreFiltered = selectedGenre && selectedGenre !== 'Todos';
+    const currentGenreData = genres.find(g => g.name === selectedGenre);
+    
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        <div className="text-center px-6 max-w-sm">
+          {isGenreFiltered ? (
+            <>
+              {/* Mensagem de "Vídeos em Breve" para gênero filtrado */}
+              <div className="text-6xl mb-4">{currentGenreData?.icon || '🎬'}</div>
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-teal-400 to-yellow-400 bg-clip-text text-transparent">
+                Vídeos em Breve
+              </h2>
+              <p className="text-gray-400 mb-6">
+                Ainda não há vídeos de <span className="font-semibold text-white">"{selectedGenre}"</span> disponíveis.
+              </p>
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => setSelectedGenre('Todos')} 
+                  className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold"
+                >
+                  <Film className="w-4 h-4 mr-2" />
+                  Ver Todos os Vídeos
+                </Button>
+                <p className="text-xs text-gray-500">
+                  Novos vídeos são adicionados diariamente
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Mensagem padrão sem vídeos */}
+              <p className="text-xl mb-4">Nenhum vídeo disponível</p>
+              <p className="text-gray-400 mb-4">Aguarde novos conteúdos!</p>
+              <Button onClick={initializeFeed} className="bg-primary hover:bg-primary/80">
+                Recarregar
+              </Button>
+            </>
+          )}
         </div>
-      </div>;
+      </div>
+    );
   }
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.title);

@@ -1,10 +1,18 @@
-import { Eye, Heart, MessageCircle, Share2, TrendingUp, Award, Loader2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { Eye, Heart, MessageCircle, Share2, TrendingUp, Award, Loader2, RefreshCw, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useCreatorStats, TopVideo } from '@/hooks/useCreatorStats';
+import { useCreatorStats, TopVideo, StatsPeriod } from '@/hooks/useCreatorStats';
+
+const PERIOD_OPTIONS: { value: StatsPeriod; label: string }[] = [
+  { value: 7, label: '7 dias' },
+  { value: 30, label: '30 dias' },
+  { value: 90, label: '90 dias' },
+];
 
 export function CreatorStatsPanel() {
-  const { stats, loading, error, refetch } = useCreatorStats();
+  const [period, setPeriod] = useState<StatsPeriod>(7);
+  const { stats, loading, error, refetch } = useCreatorStats(period);
 
   if (loading) {
     return (
@@ -32,13 +40,33 @@ export function CreatorStatsPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Header com botão de atualizar */}
-      <div className="flex items-center justify-between">
+      {/* Header com filtro e botão de atualizar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-white">📊 Resumo de Performance</h2>
-        <Button onClick={refetch} variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Filtro de período */}
+          <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+            <Calendar className="w-4 h-4 text-gray-400 ml-2" />
+            {PERIOD_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                onClick={() => setPeriod(option.value)}
+                variant="ghost"
+                size="sm"
+                className={`text-xs px-3 ${
+                  period === option.value 
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+          <Button onClick={refetch} variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Cards principais */}
@@ -69,11 +97,11 @@ export function CreatorStatsPanel() {
         />
       </div>
 
-      {/* Gráfico de Views (Últimos 7 dias) */}
+      {/* Gráfico de Views (período selecionado) */}
       <Card className="bg-gray-800/50 border-gray-700 p-6">
         <h3 className="text-white font-semibold mb-4 flex items-center">
           <TrendingUp className="w-5 h-5 mr-2 text-green-400" />
-          Visualizações (Últimos 7 dias)
+          Visualizações (Últimos {period} dias)
         </h3>
         <div className="flex items-end justify-between gap-2 h-40">
           {stats.viewsLast7Days.map((day, index) => (

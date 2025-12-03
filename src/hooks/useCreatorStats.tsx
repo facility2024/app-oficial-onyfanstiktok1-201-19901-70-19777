@@ -24,7 +24,9 @@ export interface CreatorStats {
   growthRate: number;
 }
 
-export function useCreatorStats() {
+export type StatsPeriod = 7 | 30 | 90;
+
+export function useCreatorStats(period: StatsPeriod = 7) {
   const [stats, setStats] = useState<CreatorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export function useCreatorStats() {
           totalComments: 0,
           totalShares: 0,
           totalVideos: 0,
-          viewsLast7Days: generateEmptyDays(),
+          viewsLast7Days: generateEmptyDays(period),
           topVideos: [],
           engagementRate: 0,
           growthRate: 0,
@@ -93,10 +95,10 @@ export function useCreatorStats() {
           : 0,
       }));
 
-      // Buscar views dos últimos 7 dias
+      // Buscar views do período selecionado
       const videoIds = videos.map((v: any) => v.id);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const periodStart = new Date();
+      periodStart.setDate(periodStart.getDate() - period);
 
       let viewsData: { created_at: string }[] = [];
       try {
@@ -104,14 +106,14 @@ export function useCreatorStats() {
           .from('video_views')
           .select('created_at')
           .in('video_id', videoIds)
-          .gte('created_at', sevenDaysAgo.toISOString()) as any;
+          .gte('created_at', periodStart.toISOString()) as any;
         viewsData = data || [];
       } catch (e) {
         console.log('Tabela video_views não encontrada ou vazia');
       }
 
-      // Agrupar views por dia
-      const viewsByDay = groupViewsByDay(viewsData);
+      // Agrupar views por dia baseado no período
+      const viewsByDay = groupViewsByDay(viewsData, period);
 
       // Calcular crescimento semanal (simplificado)
       const thisWeekViews = viewsData?.length || 0;
@@ -139,31 +141,40 @@ export function useCreatorStats() {
 
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+  }, [fetchStats, period]);
 
   return { stats, loading, error, refetch: fetchStats };
 }
 
-function generateEmptyDays(): { day: string; views: number }[] {
-  const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+function generateEmptyDays(period: StatsPeriod): { day: string; views: number }[] {
   const result = [];
-  for (let i = 6; i >= 0; i--) {
+  const showDays = period <= 7 ? period : (period <= 30 ? 10 : 15);
+  
+  for (let i = showDays - 1; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
     result.push({
-      day: days[date.getDay()],
+      day: formatDayLabel(date, period),
       views: 0,
     });
   }
   return result;
 }
 
-function groupViewsByDay(views: { created_at: string }[]): { day: string; views: number }[] {
+function formatDayLabel(date: Date, period: StatsPeriod): string {
   const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  if (period <= 7) {
+    return days[date.getDay()];
+  }
+  return `${date.getDate()}/${date.getMonth() + 1}`;
+}
+
+function groupViewsByDay(views: { created_at: string }[], period: StatsPeriod): { day: string; views: number }[] {
   const dayMap = new Map<string, number>();
+  const showDays = period <= 7 ? period : (period <= 30 ? 10 : 15);
   
-  // Inicializar últimos 7 dias
-  for (let i = 6; i >= 0; i--) {
+  // Inicializar dias do período
+  for (let i = showDays - 1; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
     const key = date.toISOString().split('T')[0];
@@ -183,7 +194,7 @@ function groupViewsByDay(views: { created_at: string }[]): { day: string; views:
   dayMap.forEach((count, dateStr) => {
     const date = new Date(dateStr);
     result.push({
-      day: days[date.getDay()],
+      day: formatDayLabel(date, period),
       views: count,
     });
   });

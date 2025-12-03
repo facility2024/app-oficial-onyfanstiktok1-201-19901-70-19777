@@ -10,6 +10,7 @@ import { AdCarousel } from "./AdCarousel";
 import { ModelCarousel } from "./ModelCarousel";
 import { MarketplaceCarousel } from "./MarketplaceCarousel";
 import { LocalBusinessCarousel } from "./LocalBusinessCarousel";
+import { GenreSelector } from "./GenreSelector";
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -237,6 +238,15 @@ export const CategoryMenu = ({
             
             {/* Top 10 Comércios Locais */}
             <LocalBusinessCarousel />
+          </div>
+
+          {/* Seletor de Gênero */}
+          <div className="px-4 py-2 border-b border-white/10">
+            <p className="text-xs text-gray-400 mb-2 px-2">Filtrar por Gênero</p>
+            <GenreSelector 
+              onGenreSelect={() => setOpen(false)} 
+              showLabel={true}
+            />
           </div>
 
           {/* Menu de Navegação */}

@@ -6,16 +6,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3 } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film } from 'lucide-react';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
+import { useGenres } from '@/hooks/useGenres';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres').max(500),
   video_url: z.string().url('URL do vídeo inválida'),
   thumbnail_url: z.string().url('URL da thumbnail inválida'),
+  genres: z.array(z.string()).min(1, 'Selecione pelo menos um gênero'),
 });
 
 export default function CreatorStudio() {
@@ -24,12 +27,14 @@ export default function CreatorStudio() {
   const [uploading, setUploading] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
+  const { genres, loading: genresLoading } = useGenres();
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     video_url: '',
     thumbnail_url: '',
+    genres: [] as string[],
   });
 
   useEffect(() => {
@@ -69,6 +74,17 @@ export default function CreatorStudio() {
     }
   };
 
+  const handleToggleGenre = (genreName: string) => {
+    setFormData(prev => {
+      const currentGenres = prev.genres || [];
+      if (currentGenres.includes(genreName)) {
+        return { ...prev, genres: currentGenres.filter(g => g !== genreName) };
+      } else {
+        return { ...prev, genres: [...currentGenres, genreName] };
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
@@ -93,7 +109,8 @@ export default function CreatorStudio() {
           visibility: 'public',
           is_active: true,
           duration: '00:00',
-        });
+          genres: validatedData.genres,
+        } as any);
 
       if (videoError) throw videoError;
 
@@ -105,6 +122,7 @@ export default function CreatorStudio() {
         description: '',
         video_url: '',
         thumbnail_url: '',
+        genres: [],
       });
 
     } catch (error: any) {
@@ -238,6 +256,59 @@ export default function CreatorStudio() {
                   <p className="text-xs text-gray-400 mt-1">
                     Cole a URL da imagem de capa do vídeo
                   </p>
+                </div>
+
+                {/* Seleção de Gêneros */}
+                <div>
+                  <label className="text-white font-semibold mb-2 block">
+                    <Film className="w-4 h-4 inline mr-2" />
+                    Gêneros do Vídeo *
+                  </label>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Selecione os gêneros que melhor descrevem seu vídeo (pode selecionar vários)
+                  </p>
+                  {genresLoading ? (
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Carregando gêneros...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {genres
+                        .filter(genre => genre.name !== 'Todos')
+                        .map((genre) => {
+                          const isSelected = formData.genres.includes(genre.name);
+                          return (
+                            <button
+                              key={genre.id}
+                              type="button"
+                              onClick={() => handleToggleGenre(genre.name)}
+                              className={`
+                                flex items-center gap-2 p-3 rounded-lg transition-all duration-200
+                                ${isSelected 
+                                  ? 'bg-gradient-to-r from-pink-500/30 to-purple-600/30 border-2 border-pink-400/50' 
+                                  : 'bg-gray-700 border border-gray-600 hover:bg-gray-600'
+                                }
+                              `}
+                            >
+                              <Checkbox 
+                                checked={isSelected}
+                                className="data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
+                              />
+                              <span className="text-lg">{genre.icon}</span>
+                              <span className={`text-sm ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                                {genre.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+                  {formData.genres.length > 0 && (
+                    <p className="text-xs text-green-400 mt-2">
+                      ✓ {formData.genres.length} gênero(s) selecionado(s): {formData.genres.join(', ')}
+                    </p>
+                  )}
                 </div>
 
                 {/* Preview */}

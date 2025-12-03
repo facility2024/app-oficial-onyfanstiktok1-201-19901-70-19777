@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film } from 'lucide-react';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
+import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
 import { useGenres } from '@/hooks/useGenres';
 
 const videoSchema = z.object({
@@ -380,15 +381,7 @@ export default function CreatorStudio() {
 
           {/* Tab: Estatísticas */}
           <TabsContent value="stats">
-            <Card className="p-12 bg-gray-800/50 border-gray-700 text-center">
-              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-white text-xl font-semibold mb-2">
-                Estatísticas em Breve
-              </h3>
-              <p className="text-gray-400">
-                Dashboard com métricas de performance dos seus vídeos será disponibilizado em breve.
-              </p>
-            </Card>
+            <CreatorStatsPanel />
           </TabsContent>
         </Tabs>
       </div>

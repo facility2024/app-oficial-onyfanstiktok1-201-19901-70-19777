@@ -14,19 +14,19 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
   const { trackNavigation } = useAnalytics();
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home, shortLabel: '🏠' },
+    { id: 'videos', label: 'Vídeos', icon: Play, shortLabel: '🎬' },
+    { id: 'genres', label: 'Gêneros', icon: Tags, shortLabel: '🎭' },
     { id: 'posts', label: 'Postagens', icon: BookOpen, shortLabel: '📝' },
     { id: 'users', label: 'Usuários', icon: Users, shortLabel: '👥' },
-    { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },
     { id: 'creators', label: 'Criadores', icon: Sparkles, shortLabel: '✨' },
-    { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
     { id: 'marketplace', label: 'Marketplace', icon: Settings, shortLabel: '🛒' },
     { id: 'local-businesses', label: 'Comércios', icon: MapPin, shortLabel: '📍' },
     { id: 'chat-panels', label: 'Chat IA', icon: Bot, shortLabel: '🤖' },
+    { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
+    { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },
+    { id: 'money', label: 'Financeiro', icon: DollarSign, shortLabel: '💰' },
     { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },
     { id: 'app', label: 'App', icon: Play, shortLabel: '🎵' },
-    { id: 'videos', label: 'Vídeos', icon: Play, shortLabel: '🎬' },
-    { id: 'genres', label: 'Gêneros', icon: Tags, shortLabel: '🎭' },
-    { id: 'money', label: 'Financeiro', icon: DollarSign, shortLabel: '💰' },
     { id: 'documentation', label: 'Documentação', icon: BookOpen, shortLabel: '📘' },
   ];
 

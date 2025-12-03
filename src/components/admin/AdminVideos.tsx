@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter } from 'lucide-react';
+import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminVideoGenresModal } from './AdminVideoGenresModal';
+import { useGenres } from '@/hooks/useGenres';
 
 export const AdminVideos = () => {
   const [filter, setFilter] = useState('all');
   const [videoType, setVideoType] = useState<'all' | 'models' | 'creators'>('all');
+  const [genreFilter, setGenreFilter] = useState('all');
   const [isTogglingAll, setIsTogglingAll] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<any>(null);
+  const { genres } = useGenres();
   const [videoStats, setVideoStats] = useState([
     { label: 'Total de Vídeos', value: '0', icon: Play, color: 'text-primary' },
     { label: 'Views Hoje', value: '0', icon: Eye, color: 'text-success' },
@@ -59,7 +64,7 @@ export const AdminVideos = () => {
       ]);
 
       // Buscar vídeos com dados do usuário e perfil do criador
-      const { data: videosData } = await supabase
+      const { data: videosData } = await (supabase as any)
         .from('videos')
         .select(`
           *,
@@ -67,12 +72,12 @@ export const AdminVideos = () => {
           profiles!videos_creator_id_fkey (name, email)
         `)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       setVideos(videosData?.map((video: any) => ({
         id: video.id,
         title: video.title || 'Vídeo sem título',
-        thumbnail: video.thumbnail_url || '/api/placeholder/160/90',
+        thumbnail_url: video.thumbnail_url || '/api/placeholder/160/90',
         duration: '0:00',
         views: formatNumber(video.views_count || 0),
         likes: formatNumber(video.likes_count || 0),
@@ -83,7 +88,8 @@ export const AdminVideos = () => {
         model_id: video.model_id,
         creator_id: video.creator_id,
         creator_email: video.profiles?.email,
-        is_active: video.is_active
+        is_active: video.is_active,
+        genres: video.genres || []
       })) || []);
 
     } catch (error) {
@@ -167,6 +173,10 @@ export const AdminVideos = () => {
     if (videoType === 'models' && !video.model_id) return false;
     if (videoType === 'creators' && !video.creator_id) return false;
     
+    // Filtro por gênero
+    if (genreFilter === 'none' && video.genres?.length > 0) return false;
+    if (genreFilter !== 'all' && genreFilter !== 'none' && !video.genres?.includes(genreFilter)) return false;
+    
     return true;
   });
 
@@ -245,6 +255,20 @@ export const AdminVideos = () => {
                 <option value="creators">Criadores</option>
               </select>
               
+              <select 
+                value={genreFilter} 
+                onChange={(e) => setGenreFilter(e.target.value)}
+                className="px-3 py-1.5 border border-border rounded-md text-sm bg-background"
+              >
+                <option value="all">Todos Gêneros</option>
+                <option value="none">Sem Gênero</option>
+                {genres.filter(g => g.name !== 'Todos').map(genre => (
+                  <option key={genre.id} value={genre.name}>
+                    {genre.icon} {genre.name}
+                  </option>
+                ))}
+              </select>
+              
               <Button className="bg-gradient-primary hover:shadow-glow text-primary-foreground">
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Vídeo
@@ -299,24 +323,51 @@ export const AdminVideos = () => {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-medium text-foreground line-clamp-1 flex-1">{video.title}</h3>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-7 w-7 p-0 ml-2"
-                      onClick={() => toggleVideoStatus(video.id, video.is_active)}
-                    >
-                      {video.is_active ? (
-                        <Eye className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-red-500" />
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 w-7 p-0"
+                        onClick={() => setEditingVideo(video)}
+                        title="Editar Gêneros"
+                      >
+                        <Tags className="w-4 h-4 text-primary" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 w-7 p-0"
+                        onClick={() => toggleVideoStatus(video.id, video.is_active)}
+                      >
+                        {video.is_active ? (
+                          <Eye className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-red-500" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   {video.creator_email && (
                     <Badge className="mb-2 bg-purple-600 text-white text-xs">
                       ✨ Criador: {video.creator_email}
                     </Badge>
+                  )}
+
+                  {/* Genre Badges */}
+                  {video.genres?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {video.genres.slice(0, 3).map((genre: string) => (
+                        <Badge key={genre} variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary">
+                          {genre}
+                        </Badge>
+                      ))}
+                      {video.genres.length > 3 && (
+                        <Badge variant="outline" className="text-xs bg-muted border-border">
+                          +{video.genres.length - 3}
+                        </Badge>
+                      )}
+                    </div>
                   )}
                   
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground mb-3">
@@ -338,12 +389,6 @@ export const AdminVideos = () => {
                     <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(video.uploadDate).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                        <Share2 className="w-3 h-3" />
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -428,6 +473,14 @@ export const AdminVideos = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Gêneros */}
+      <AdminVideoGenresModal
+        video={editingVideo}
+        isOpen={!!editingVideo}
+        onClose={() => setEditingVideo(null)}
+        onSave={fetchVideoData}
+      />
     </div>
   );
 };

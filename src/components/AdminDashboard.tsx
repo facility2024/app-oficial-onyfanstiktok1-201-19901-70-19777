@@ -35,6 +35,7 @@ import { AdminCreatorApplications } from './admin/AdminCreatorApplications';
 import { AdminMarketplace } from './admin/AdminMarketplace';
 import { AdminLocalBusinesses } from './admin/AdminLocalBusinesses';
 import AdminModelChatPanels from './admin/AdminModelChatPanels';
+import { AdminGenres } from './admin/AdminGenres';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -136,7 +137,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','videos','money','settings','documentation'];
+    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','videos','genres','money','settings','documentation'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -189,6 +190,8 @@ export const AdminDashboard = () => {
         return <AdminModelChatPanels />;
       case 'videos':
         return <AdminVideos />;
+      case 'genres':
+        return <AdminGenres />;
       case 'money':
         return <AdminMoney />;
       case 'documentation':

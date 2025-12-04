@@ -129,6 +129,7 @@ export const TikTokApp = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
+  const [chatActiveMap, setChatActiveMap] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('app_isMuted');
     return saved === 'true';
@@ -762,18 +763,24 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao carregar modelos:', modelsError);
       }
 
-      // 🔥 Carregar painéis de chat para verificar status online
+      // 🔥 Carregar painéis de chat para verificar status online e ativo
       const {
         data: chatPanelsData,
         error: chatPanelsError
-      } = await supabase.from('model_chat_panels' as any).select('model_id, is_online');
+      } = await supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active');
       if (chatPanelsError) {
         console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
       }
       const chatPanelsMap: Record<string, boolean> = {};
+      const chatActiveMapTemp: Record<string, boolean> = {};
       (chatPanelsData as any[])?.forEach((panel: any) => {
-        chatPanelsMap[panel.model_id] = panel.is_online;
+        const entityId = panel.model_id || panel.creator_id;
+        if (entityId) {
+          chatPanelsMap[entityId] = panel.is_online;
+          chatActiveMapTemp[entityId] = panel.is_active === true;
+        }
       });
+      setChatActiveMap(chatActiveMapTemp);
 
       // Carregar criadores (via user_roles)
       const {
@@ -2533,8 +2540,9 @@ export const TikTokApp = () => {
             <span className="text-xs">Marketplace</span>
           </button>
 
-          <button onClick={() => {
-            if (currentVideo) {
+          {/* Chat - só aparece se o criador/modelo tem chat ativo */}
+          {currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && (
+            <button onClick={() => {
               setChatEntity({
                 name: currentVideo.user.username,
                 avatar: currentVideo.user.avatar_url,
@@ -2542,13 +2550,12 @@ export const TikTokApp = () => {
                 isCreator: !!currentVideo.creator_id
               });
               setShowChat(true);
-            }
-          }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
-            <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
-            <span className="text-xs">Chat</span>
-            {/* Indicador de ativo */}
-            <div className="absolute bottom-0 w-1 h-1 bg-white rounded-full"></div>
-          </button>
+            }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
+              <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+              <span className="text-xs">Chat</span>
+              <div className="absolute bottom-0 w-1 h-1 bg-white rounded-full"></div>
+            </button>
+          )}
         </div>
 
         {/* Vertical Carousel Container */}
@@ -2851,10 +2858,20 @@ export const TikTokApp = () => {
                     variant: "destructive"
                   });
                 }
-              }} onFullscreen={handleFullscreen} onOpenChat={() => {
-                console.log('Desktop chat clicked');
-                setShowChat(true);
-              }} onExit={async () => {
+              }} onFullscreen={handleFullscreen} onOpenChat={
+                currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id]
+                  ? () => {
+                      console.log('Desktop chat clicked');
+                      setChatEntity({
+                        name: currentVideo.user.username,
+                        avatar: currentVideo.user.avatar_url,
+                        id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
+                        isCreator: !!currentVideo.creator_id
+                      });
+                      setShowChat(true);
+                    }
+                  : undefined
+              } onExit={async () => {
                 try {
                   sessionStorage.setItem('logging_out', 'true');
                   await supabase.auth.signOut();

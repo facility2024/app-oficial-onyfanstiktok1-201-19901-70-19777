@@ -62,7 +62,7 @@ export const ChatScreen = ({
     try {
       let query = supabase
         .from('model_chat_panels' as any)
-        .select('is_active, is_online, greeting_message, message_delay_min');
+        .select('is_active, is_online, greeting_message, message_delay_seconds');
       
       if (isCreator) {
         query = query.eq('creator_id', entityId);
@@ -132,7 +132,7 @@ export const ChatScreen = ({
     setIsTyping(true);
     setTypingText('');
     
-    const baseDelay = (chatConfig?.message_delay_min || 2) * 1000;
+    const baseDelay = (chatConfig?.message_delay_seconds || 2) * 1000;
     const words = fullText.split(' ');
     let currentText = '';
     

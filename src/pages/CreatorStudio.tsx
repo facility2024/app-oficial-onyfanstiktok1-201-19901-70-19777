@@ -73,7 +73,7 @@ export default function CreatorStudio() {
     try {
       const { data, error } = await (supabase
         .from('model_chat_panels' as any)
-        .select('is_active, is_online, greeting_message, ai_provider, api_key_encrypted, prompt, message_delay_min')
+        .select('is_active, is_online, greeting_message, ai_provider, api_key_encrypted, prompt, message_delay_seconds')
         .eq('creator_id', userId)
         .maybeSingle() as any);
       
@@ -84,7 +84,7 @@ export default function CreatorStudio() {
         setAiProvider(data.ai_provider || 'gemini');
         setApiKey(data.api_key_encrypted || '');
         setAiPrompt(data.prompt || '');
-        setMessageDelay([data.message_delay_min || 2]);
+        setMessageDelay([data.message_delay_seconds || 2]);
       }
     } catch (error) {
       console.error('Erro ao carregar config do chat:', error);
@@ -108,7 +108,7 @@ export default function CreatorStudio() {
           ai_provider: aiProvider,
           api_key_encrypted: apiKey,
           prompt: aiPrompt,
-          message_delay_min: messageDelay[0],
+          message_delay_seconds: messageDelay[0],
         }, { onConflict: 'creator_id' }) as any);
       
       if (error) throw error;

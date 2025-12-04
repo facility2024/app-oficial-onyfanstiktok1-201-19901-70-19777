@@ -294,7 +294,8 @@ export default function CreatorStudio() {
                             >
                               <Checkbox 
                                 checked={isSelected}
-                                className="data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
+                                onCheckedChange={() => {}}
+                                className="data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500 pointer-events-none"
                               />
                               <span className="text-lg">{genre.icon}</span>
                               <span className={`text-sm ${isSelected ? 'text-white' : 'text-gray-300'}`}>

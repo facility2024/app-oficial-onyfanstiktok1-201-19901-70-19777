@@ -116,6 +116,18 @@ export const useCurrentUser = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
+      // Persistir avatar_url na tabela profiles
+      const { error: updateError } = await supabaseSimple
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Erro ao salvar avatar no perfil:', updateError);
+        throw updateError;
+      }
+
+      // Manter localStorage como cache local
       localStorage.setItem(`avatar_${user.id}`, publicUrl);
 
       if (profile) {

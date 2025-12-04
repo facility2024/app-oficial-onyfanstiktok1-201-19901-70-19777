@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { toast } from 'sonner';
 import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film } from 'lucide-react';
 import { z } from 'zod';
@@ -292,11 +292,21 @@ export default function CreatorStudio() {
                                 }
                               `}
                             >
-                              <Checkbox 
-                                checked={isSelected}
-                                onCheckedChange={() => {}}
-                                className="data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500 pointer-events-none"
-                              />
+                              <div 
+                                className={`
+                                  w-4 h-4 rounded border-2 flex items-center justify-center transition-colors
+                                  ${isSelected 
+                                    ? 'bg-pink-500 border-pink-500' 
+                                    : 'border-gray-400 bg-transparent'
+                                  }
+                                `}
+                              >
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                )}
+                              </div>
                               <span className="text-lg">{genre.icon}</span>
                               <span className={`text-sm ${isSelected ? 'text-white' : 'text-gray-300'}`}>
                                 {genre.name}

@@ -993,8 +993,8 @@ export const TikTokApp = () => {
             created_at: ownerData.created_at || ''
           } : {
             id: video.creator_id || video.model_id || '',
-            username: video.title || 'Usuário',
-            avatar_url: '',
+            username: video.creator_id ? 'Criador' : 'Modelo',
+            avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
             followers_count: 0,
             following_count: 0,
             is_online: false,

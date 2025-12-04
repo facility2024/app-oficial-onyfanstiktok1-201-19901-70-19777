@@ -37,8 +37,39 @@ export const ChatScreen = ({
   const [typingText, setTypingText] = useState('');
   const [isAiResponding, setIsAiResponding] = useState(false);
   const [chatConfig, setChatConfig] = useState<any>(null);
+  const [displayName, setDisplayName] = useState(modelName);
+  const [displayAvatar, setDisplayAvatar] = useState(modelAvatar);
   const scrollRef = useRef<HTMLDivElement>(null);
   const storageKey = `chat_messages_${entityId || modelName}`;
+
+  // Fetch real profile when name is generic
+  useEffect(() => {
+    if (isOpen && entityId && (modelName === 'Criador' || modelName === 'Modelo')) {
+      const fetchRealProfile = async () => {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('name, email, avatar_url')
+            .eq('id', entityId)
+            .single() as any;
+          
+          if (data) {
+            const realName = data.name || data.email?.split('@')[0] || modelName;
+            setDisplayName(realName);
+            if (data.avatar_url) {
+              setDisplayAvatar(data.avatar_url);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao buscar perfil:', error);
+        }
+      };
+      fetchRealProfile();
+    } else {
+      setDisplayName(modelName);
+      setDisplayAvatar(modelAvatar);
+    }
+  }, [isOpen, entityId, modelName, modelAvatar]);
 
   // Load chat config and messages on mount
   useEffect(() => {
@@ -91,7 +122,7 @@ export const ChatScreen = ({
         // No config, show default greeting
         const defaultGreeting: Message = {
           id: 'greeting',
-          text: `Olá! Sou ${modelName}. Como posso te ajudar? 💕`,
+          text: `Olá! Sou ${displayName}. Como posso te ajudar? 💕`,
           sender: 'model',
           timestamp: new Date()
         };
@@ -267,8 +298,8 @@ export const ChatScreen = ({
           <div className="flex items-center gap-3 flex-1">
             <div className="relative">
               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shrink-0">
-                {modelAvatar ? (
-                  <img src={modelAvatar} alt={modelName} className="w-full h-full object-cover" />
+                {displayAvatar ? (
+                  <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-white/20">
                     <User className="w-6 h-6 text-white" />
@@ -281,7 +312,7 @@ export const ChatScreen = ({
               )}
             </div>
             <div>
-              <h2 className="font-semibold text-lg">{modelName}</h2>
+              <h2 className="font-semibold text-lg">{displayName}</h2>
               <p className="text-xs text-white/80">
                 {isTyping ? 'Digitando...' : chatConfig?.is_online ? 'Online agora' : 'Offline'}
               </p>
@@ -354,7 +385,7 @@ export const ChatScreen = ({
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && !isAiResponding && handleSendMessage()}
-            placeholder={isAiResponding ? `${modelName} está digitando...` : "Digite sua mensagem..."}
+            placeholder={isAiResponding ? `${displayName} está digitando...` : "Digite sua mensagem..."}
             className="flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 rounded-full"
             disabled={isAiResponding}
           />

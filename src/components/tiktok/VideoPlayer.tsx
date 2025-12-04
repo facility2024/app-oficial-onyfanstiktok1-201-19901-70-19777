@@ -2,7 +2,6 @@ import { forwardRef, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
-import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { UniversalVideoPlayer } from './UniversalVideoPlayer';
 
 interface VideoPlayerProps {
@@ -41,7 +40,6 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
   ({ video, isPlaying, isMuted, volume = 0.8, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
     const [doubleTapHeart, setDoubleTapHeart] = useState(false);
     const [lastTap, setLastTap] = useState(0);
-    const [showPreviewModal, setShowPreviewModal] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isInView, setIsInView] = useState(false);
@@ -379,7 +377,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               <h3 className="text-base font-semibold">Conteúdo premium</h3>
               <p className="text-sm text-muted-foreground">Torne-se premium para desbloquear este vídeo.</p>
               <button
-                onClick={() => setShowPreviewModal(true)}
+                onClick={() => window.location.href = '/subscribe'}
                 className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover-scale"
               >
                 Quero ser premium
@@ -387,21 +385,6 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             </div>
           </div>
         )}
-
-        {/* Modal de cadastro premium */}
-        <VideoPreviewModal
-          isOpen={showPreviewModal}
-          onClose={() => setShowPreviewModal(false)}
-          content={{
-            id: video.id,
-            modelId: modelId,
-            platform: 'premium',
-            displayName: (video as any).display_name || 'Modelo',
-            avatarUrl: (video as any).avatar_url || '/placeholder.svg',
-            views: (video as any).views || 0,
-            likes: (video as any).likes || 0
-          }}
-        />
 
         {doubleTapHeart && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl text-red-500 pointer-events-none animate-pulse z-50">

@@ -150,29 +150,20 @@ export const AdminStats = () => {
   useEffect(() => {
     const fetchUserStats = async () => {
       try {
-        // Total de usuários em ambas as tabelas
-        const { data: bonusUsers, error: bonusError } = await supabase
-          .from('bonus_users')
-          .select('id', { count: 'exact', head: true });
-
+        // Total de usuários de gamificação
         const { data: gamificationUsers, error: gamificationError } = await supabase
           .from('gamification_users')
           .select('id', { count: 'exact', head: true });
 
         // Novos usuários hoje
-        const { data: newBonusToday, error: newBonusError } = await supabase
-          .from('bonus_users')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', new Date().toISOString().split('T')[0]);
-
         const { data: newGamificationToday, error: newGamificationError } = await supabase
           .from('gamification_users')
           .select('id', { count: 'exact', head: true })
           .gte('created_at', new Date().toISOString().split('T')[0]);
 
-        if (!bonusError && !gamificationError && !newBonusError && !newGamificationError) {
-          const totalUsers = (bonusUsers?.length || 0) + (gamificationUsers?.length || 0);
-          const newToday = (newBonusToday?.length || 0) + (newGamificationToday?.length || 0);
+        if (!gamificationError && !newGamificationError) {
+          const totalUsers = gamificationUsers?.length || 0;
+          const newToday = newGamificationToday?.length || 0;
           
           setUserStats({ totalUsers, newToday });
         }

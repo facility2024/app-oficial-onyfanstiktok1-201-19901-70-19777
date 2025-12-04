@@ -12,7 +12,6 @@ import { BonusGift } from '@/components/tiktok/BonusGift';
 import { VinylRecord } from '@/components/tiktok/VinylRecord';
 import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTracker';
 import { useAppAnalytics } from '@/hooks/useAppAnalytics';
-import { VideoPreviewModal } from '@/components/admin/VideoPreviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -221,8 +220,6 @@ export const TikTokApp = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
-  const [showVideoPreview, setShowVideoPreview] = useState(false);
-  const [selectedVideoForPreview, setSelectedVideoForPreview] = useState<any>(null);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
@@ -2284,20 +2281,8 @@ export const TikTokApp = () => {
     console.log('🔒 Bloqueando vídeo:', currentVideo.title);
     console.log('🔒 User:', currentVideo.user.username);
 
-    // Prepare content data for preview modal
-    const contentData = {
-      id: currentVideo.id,
-      displayName: currentVideo.user.username,
-      avatarUrl: currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-      platform: 'premium',
-      // Define como premium para mostrar o modal
-      views: currentVideo.views_count,
-      likes: currentVideo.likes_count
-    };
-    console.log('🔒 Content data:', contentData);
-    setSelectedVideoForPreview(contentData);
-    setShowVideoPreview(true);
-    console.log('🔒 Modal deve estar aberto agora');
+    // Redireciona para página de assinatura premium
+    navigate('/subscribe');
   };
   const handleFullscreen = () => {
     if (!currentVideo) return;
@@ -2335,7 +2320,7 @@ export const TikTokApp = () => {
   // Keyboard navigation for desktop
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isMobile && !showProfile && !showComments && !showSearch && !showLive && !showVideoPreview) {
+      if (!isMobile && !showProfile && !showComments && !showSearch && !showLive) {
         switch (e.key) {
           case 'ArrowUp':
             e.preventDefault();
@@ -2355,7 +2340,7 @@ export const TikTokApp = () => {
 
     // Mouse wheel for desktop
     const handleWheel = (e: WheelEvent) => {
-      if (!isMobile && !showProfile && !showComments && !showChat && !showSearch && !showLive && !showVideoPreview) {
+      if (!isMobile && !showProfile && !showComments && !showChat && !showSearch && !showLive) {
         e.preventDefault();
         if (e.deltaY > 0) {
           nextVideo();
@@ -2372,7 +2357,7 @@ export const TikTokApp = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [isMobile, isPlaying, nextVideo, prevVideo, showProfile, showComments, showChat, showSearch, showLive, showVideoPreview]);
+  }, [isMobile, isPlaying, nextVideo, prevVideo, showProfile, showComments, showChat, showSearch, showLive]);
 
   // Remove old touch gestures - now handled by Embla
 
@@ -2637,9 +2622,6 @@ export const TikTokApp = () => {
         <ActionTracker onActionAttempt={async (actionType, userName) => {
         return await handleActionAttempt(actionType, userName);
       }} />
-
-        {/* Video Preview Modal (Premium Content) */}
-        <VideoPreviewModal isOpen={showVideoPreview} onClose={() => setShowVideoPreview(false)} content={selectedVideoForPreview} />
       </div>;
   }
 
@@ -3064,9 +3046,6 @@ export const TikTokApp = () => {
       <ActionTracker onActionAttempt={async (actionType, userName) => {
       return await handleActionAttempt(actionType, userName);
     }} />
-
-      {/* Video Preview Modal (Premium Content) */}
-      <VideoPreviewModal isOpen={showVideoPreview} onClose={() => setShowVideoPreview(false)} content={selectedVideoForPreview} />
 
       {/* Fullscreen Video Modal */}
       <FullscreenVideoModal videoUrl={currentVideo?.video_url || ''} isOpen={showFullscreen} onClose={handleCloseFullscreen} currentTime={fullscreenVideoTime} />

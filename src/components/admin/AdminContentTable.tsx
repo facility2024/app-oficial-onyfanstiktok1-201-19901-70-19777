@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Eye, EyeOff, Crown, Trash2, Globe, Play, Lock, Unlock, Bot } from 'lucide-react';
 import { ContentModal } from './ContentModal';
 import { LiveManagementModal } from './LiveManagementModal';
-import { VideoPreviewModal } from './VideoPreviewModal';
 import { IntegrationsModal } from './IntegrationsModal';
 import { OffersModal } from './OffersModal';
 import { ModelChatPanelModal } from './ModelChatPanelModal';
@@ -16,7 +15,6 @@ import { toast } from 'sonner';
 export const AdminContentTable = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState(false);
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
   const [isChatPanelModalOpen, setIsChatPanelModalOpen] = useState(false);
@@ -540,7 +538,7 @@ export const AdminContentTable = () => {
 
   const handlePreviewContent = (content: any) => {
     setSelectedContent(content);
-    setIsPreviewModalOpen(true);
+    // Preview removed - bonus_users system deprecated
   };
 
   const handleCloseModal = () => {
@@ -866,13 +864,7 @@ export const AdminContentTable = () => {
         onClose={() => setIsLiveModalOpen(false)}
       />
       
-      <VideoPreviewModal 
-        isOpen={isPreviewModalOpen} 
-        onClose={() => setIsPreviewModalOpen(false)} 
-        content={selectedContent}
-      />
-      
-      <IntegrationsModal 
+      <IntegrationsModal
         isOpen={isIntegrationsModalOpen} 
         onClose={() => setIsIntegrationsModalOpen(false)} 
       />

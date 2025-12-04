@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserPlus, Activity, MapPin, Crown, Trash2 } from 'lucide-react';
+import { Users, UserPlus, Activity, MapPin, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
@@ -27,9 +27,7 @@ export const AdminUsers = () => {
 
   const [topUsers, setTopUsers] = useState([]);
   const [bonusUsers, setBonusUsers] = useState([]);
-  const [premiumUsers, setPremiumUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentPremiumPage, setCurrentPremiumPage] = useState(1);
   const [models, setModels] = useState([]);
   const [currentModelsPage, setCurrentModelsPage] = useState(1);
   const usersPerPage = 20;
@@ -73,12 +71,6 @@ export const AdminUsers = () => {
           .order('total_points', { ascending: false })
           .limit(10);
 
-        // Buscar dados dos usuários do formulário VIP (Conteúdo premium)
-        const { data: premiumUsersData } = await supabase
-          .from('bonus_users')
-          .select('*')
-          .order('created_at', { ascending: false });
-
         // Buscar dados dos modelos para fallback
         const { data: modelsData } = await supabase
           .from('models')
@@ -96,7 +88,7 @@ export const AdminUsers = () => {
         const processedGamificationUsers = gamificationUsersData?.map(user => ({
           name: user.name,
           email: user.email,
-          whatsapp: 'Não informado', // Campo não existe na tabela gamification_users
+          whatsapp: 'Não informado',
           location: 'Brasil',
           spent: `${user.total_points || 0} pontos`,
           points: user.total_points || 0,
@@ -105,24 +97,7 @@ export const AdminUsers = () => {
           type: 'gamification'
         })) || [];
 
-        // CORRETO: setBonusUsers recebe dados de gamificação (formulário tarefas)
         setBonusUsers(processedGamificationUsers);
-
-        // Processar dados dos usuários VIP (formulário VIP - Conteúdo premium)
-        const processedPremiumUsers = premiumUsersData?.map(user => ({
-          name: user.name,
-          email: user.email,
-          whatsapp: user.whatsapp,
-          location: user.location || 'Brasil',
-          spent: `R$ ${user.total_spent?.toFixed(2) || '0.00'}`,
-          points: user.points || 0,
-          status: user.status || 'standard',
-          created_at: user.created_at,
-          type: 'premium'
-        })) || [];
-
-        // CORRETO: setPremiumUsers recebe dados do formulário VIP
-        setPremiumUsers(processedPremiumUsers);
 
         // Processar dados dos modelos como fallback
         const processedModels = modelsData?.map(model => ({
@@ -151,7 +126,6 @@ export const AdminUsers = () => {
           onlineUsers: onlineUsers || 0,
           newUsersToday: newUsersToday || 0,
           gamificationUsers: gamificationUsersData?.length || 0,
-          premiumUsers: premiumUsersData?.length || 0,
           topModels: modelsData?.length || 0
         });
 
@@ -281,62 +255,6 @@ export const AdminUsers = () => {
           );
         })}
       </div>
-
-      {/* Conteúdo Premium - Usuários do Formulário VIP */}
-      <Card className="bg-gradient-card border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Crown className="w-5 h-5 text-warning" />
-            <span>Conteúdo premium ({premiumUsers.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Email</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">WhatsApp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getPaginatedData(premiumUsers, currentPremiumPage).length > 0 ? getPaginatedData(premiumUsers, currentPremiumPage).map((user, index) => (
-                  <tr key={index} className="border-b border-border/50 hover:bg-card-hover transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="font-medium text-foreground">{user.name}</span>
-                          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            <span>{user.location}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      <span className="text-sm">{user.email}</span>
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      <span className="text-sm">{user.whatsapp}</span>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={3} className="py-8 text-center text-muted-foreground">
-                      Nenhum usuário premium cadastrado ainda
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {renderPagination(premiumUsers.length, currentPremiumPage, setCurrentPremiumPage)}
-        </CardContent>
-      </Card>
 
       {/* Top Usuários Cadastrados - Usuários de Gamificação */}
       <Card className="bg-gradient-card border-border/50">

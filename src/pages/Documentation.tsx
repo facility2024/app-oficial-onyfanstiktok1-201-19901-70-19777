@@ -220,11 +220,6 @@ const Documentation = () => {
       component: "OffersModal"
     },
     {
-      name: "Modal de Preview de Vídeo",
-      description: "Visualização e moderação de conteúdo de vídeo",
-      component: "VideoPreviewModal"
-    },
-    {
       name: "Modal de Integrações",
       description: "Configuração de webhooks e APIs externas",
       component: "IntegrationsModal"

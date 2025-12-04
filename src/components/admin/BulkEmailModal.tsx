@@ -81,22 +81,6 @@ export const BulkEmailModal = ({ isOpen, onClose }: BulkEmailModalProps) => {
         selected: true
       });
 
-      // Buscar bonus users com email válido e formato correto
-      const { count: bonusCount } = await supabase
-        .from('bonus_users')
-        .select('*', { count: 'exact', head: true })
-        .not('email', 'is', null)
-        .neq('email', '')
-        .like('email', '%@%')
-        .like('email', '%.%');
-
-      groups.push({
-        id: 'bonus_users',
-        name: 'Usuários Bonus',
-        table: 'bonus_users',
-        count: bonusCount || 0,
-        selected: true
-      });
 
       // Buscar usuários regulares com email válido e formato correto
       const { count: regularCount } = await supabase
@@ -182,15 +166,6 @@ export const BulkEmailModal = ({ isOpen, onClose }: BulkEmailModalProps) => {
             .like('email', '%@%')
             .like('email', '%.%')
             .eq('status', 'active');
-          users = data || [];
-        } else if (group.table === 'bonus_users') {
-          const { data } = await supabase
-            .from('bonus_users')
-            .select('email, name')
-            .not('email', 'is', null)
-            .neq('email', '')
-            .like('email', '%@%')
-            .like('email', '%.%');
           users = data || [];
         } else if (group.table === 'users') {
           const { data } = await supabase

@@ -130,6 +130,7 @@ export const TikTokApp = () => {
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [chatActiveMap, setChatActiveMap] = useState<Record<string, boolean>>({});
+  const [chatOnlineMap, setChatOnlineMap] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('app_isMuted');
     return saved === 'true';
@@ -773,14 +774,17 @@ export const TikTokApp = () => {
       }
       const chatPanelsMap: Record<string, boolean> = {};
       const chatActiveMapTemp: Record<string, boolean> = {};
+      const chatOnlineMapTemp: Record<string, boolean> = {};
       (chatPanelsData as any[])?.forEach((panel: any) => {
         const entityId = panel.model_id || panel.creator_id;
         if (entityId) {
           chatPanelsMap[entityId] = panel.is_online;
           chatActiveMapTemp[entityId] = panel.is_active === true;
+          chatOnlineMapTemp[entityId] = panel.is_online === true;
         }
       });
       setChatActiveMap(chatActiveMapTemp);
+      setChatOnlineMap(chatOnlineMapTemp);
 
       // Carregar criadores (via user_roles)
       const {
@@ -2551,9 +2555,14 @@ export const TikTokApp = () => {
               });
               setShowChat(true);
             }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
-              <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+              <div className="relative">
+                <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+                {/* Indicador de Online */}
+                {chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && (
+                  <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-black animate-pulse"></div>
+                )}
+              </div>
               <span className="text-xs">Chat</span>
-              <div className="absolute bottom-0 w-1 h-1 bg-white rounded-full"></div>
             </button>
           )}
         </div>
@@ -2871,6 +2880,8 @@ export const TikTokApp = () => {
                       setShowChat(true);
                     }
                   : undefined
+              } isChatOnline={
+                currentVideo ? chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] || false : false
               } onExit={async () => {
                 try {
                   sessionStorage.setItem('logging_out', 'true');

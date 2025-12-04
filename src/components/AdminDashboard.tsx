@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { SaleNotification } from './admin/SaleNotification';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -36,12 +36,14 @@ import { AdminMarketplace } from './admin/AdminMarketplace';
 import { AdminLocalBusinesses } from './admin/AdminLocalBusinesses';
 import AdminModelChatPanels from './admin/AdminModelChatPanels';
 import { AdminGenres } from './admin/AdminGenres';
-import { AdminIntelligentFeed } from './admin/AdminIntelligentFeed';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { TikTokApp } from '@/pages/TikTokApp';
 import { AdminVideoScheduler } from './admin/AdminVideoScheduler';
+
+// Lazy load AdminIntelligentFeed to avoid build issues
+const AdminIntelligentFeed = lazy(() => import('./admin/AdminIntelligentFeed').then(mod => ({ default: mod.AdminIntelligentFeed })));
 
 export const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -194,7 +196,11 @@ export const AdminDashboard = () => {
       case 'genres':
         return <AdminGenres />;
       case 'intelligent-feed':
-        return <AdminIntelligentFeed />;
+        return (
+          <Suspense fallback={<div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+            <AdminIntelligentFeed />
+          </Suspense>
+        );
       case 'money':
         return <AdminMoney />;
       case 'documentation':

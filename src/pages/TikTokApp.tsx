@@ -44,9 +44,9 @@ import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
 import coconudiLogo from '@/assets/coconudi-logo-header.png';
 import headerBackground from '@/assets/header-background.png';
-// Feed inteligente desativado temporariamente
-// import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
-// import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
+// Feed inteligente reativado
+import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
+import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 
 interface Video {
   id: string;
@@ -108,16 +108,19 @@ export const TikTokApp = () => {
   // Hook para gerenciar gêneros
   const { selectedGenre, setSelectedGenre, genres } = useGenres();
 
-  // 🧠 FEED INTELIGENTE DESATIVADO TEMPORARIAMENTE (causando loop)
-  // const { 
-  //   videos: intelligentVideos, 
-  //   loading: intelligentLoading,
-  //   currentFeed,
-  //   refreshFeed: refreshIntelligentFeed,
-  //   markVideoAsWatched,
-  //   markModelAsFavorite,
-  //   getUserMemory
-  // } = useIntelligentFeed();
+  // 🧠 FEED INTELIGENTE REATIVADO com proteções anti-loop
+  const { 
+    videos: intelligentVideos, 
+    loading: intelligentLoading,
+    currentFeed,
+    refreshFeed: refreshIntelligentFeed,
+    markVideoAsWatched,
+    markModelAsFavorite,
+    getUserMemory
+  } = useIntelligentFeed();
+
+  // Flag para evitar loops de refresh
+  const isRefreshingFeed = useRef(false);
 
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -368,6 +371,15 @@ export const TikTokApp = () => {
       if (newIndex !== currentVideoIndex) {
         console.log('📹 Mudando de vídeo:', currentVideoIndex, '→', newIndex);
         setCurrentVideoIndex(newIndex);
+
+        // 🧠 FEED INTELIGENTE: Marcar vídeo como assistido
+        const watchedVideo = videos[newIndex];
+        if (watchedVideo && markVideoAsWatched) {
+          const entityId = watchedVideo.creator_id || watchedVideo.model_id || watchedVideo.user?.id;
+          if (entityId) {
+            markVideoAsWatched(watchedVideo.id, entityId);
+          }
+        }
 
         // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
         if (!currentUser && newIndex > currentVideoIndex) {
@@ -1618,7 +1630,10 @@ export const TikTokApp = () => {
         ensureInteractedModel(userId);
         await checkAndTrackAction('like', currentVideo.id, userId);
 
-        // markModelAsFavorite desativado temporariamente
+        // 🧠 FEED INTELIGENTE: Marcar modelo/criador como favorito ao dar like
+        if (newLikedState && markModelAsFavorite) {
+          markModelAsFavorite(userId);
+        }
       }
 
       // Update video likes count

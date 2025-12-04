@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle } from 'lucide-react';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
@@ -28,7 +29,15 @@ export default function CreatorStudio() {
   const [uploading, setUploading] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const { genres, loading: genresLoading } = useGenres();
+  
+  // Chat settings state
+  const [chatEnabled, setChatEnabled] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState('');
+  const [savingChat, setSavingChat] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -41,6 +50,59 @@ export default function CreatorStudio() {
   useEffect(() => {
     checkCreatorRole();
   }, []);
+  
+  // Load chat config when userId is available
+  useEffect(() => {
+    if (userId) {
+      loadChatConfig();
+    }
+  }, [userId]);
+  
+  const loadChatConfig = async () => {
+    if (!userId) return;
+    setLoadingChat(true);
+    try {
+      const { data, error } = await (supabase
+        .from('model_chat_panels' as any)
+        .select('is_active, is_online, greeting_message')
+        .eq('creator_id', userId)
+        .maybeSingle() as any);
+      
+      if (data) {
+        setChatEnabled(data.is_active || false);
+        setIsOnline(data.is_online || false);
+        setGreetingMessage(data.greeting_message || '');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar config do chat:', error);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+  
+  const saveChatSettings = async () => {
+    if (!userId) return;
+    setSavingChat(true);
+    try {
+      const { error } = await (supabase
+        .from('model_chat_panels' as any)
+        .upsert({
+          creator_id: userId,
+          model_id: null,
+          is_active: chatEnabled,
+          is_online: isOnline,
+          greeting_message: greetingMessage,
+        }, { onConflict: 'creator_id' }) as any);
+      
+      if (error) throw error;
+      toast.success('Configurações do chat salvas!');
+    } catch (error: any) {
+      console.error('Erro ao salvar config do chat:', error);
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setSavingChat(false);
+    }
+  };
 
   const checkCreatorRole = async () => {
     try {
@@ -66,6 +128,7 @@ export default function CreatorStudio() {
       }
 
       setIsCreator(true);
+      setUserId(user.id);
     } catch (error) {
       console.error('Erro ao verificar role:', error);
       toast.error('Erro ao verificar permissões');
@@ -173,7 +236,7 @@ export default function CreatorStudio() {
 
         {/* Tabs */}
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-800/50 border border-gray-700 mb-6">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-800/50 border border-gray-700 mb-6">
             <TabsTrigger value="upload" className="data-[state=active]:bg-gray-700">
               <Upload className="w-4 h-4 mr-2" />
               Upload
@@ -185,6 +248,10 @@ export default function CreatorStudio() {
             <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700">
               <BarChart3 className="w-4 h-4 mr-2" />
               Estatísticas
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="data-[state=active]:bg-gray-700">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Chat
             </TabsTrigger>
           </TabsList>
 
@@ -393,6 +460,92 @@ export default function CreatorStudio() {
           {/* Tab: Estatísticas */}
           <TabsContent value="stats">
             <CreatorStatsPanel />
+          </TabsContent>
+
+          {/* Tab: Chat */}
+          <TabsContent value="chat">
+            <Card className="bg-gray-800/50 border-gray-700 p-6">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <MessageCircle className="w-5 h-5" />
+                Configurações do Chat
+              </h3>
+              
+              {loadingChat ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Toggle Habilitar Chat */}
+                  <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                    <div>
+                      <Label className="text-white font-semibold">Habilitar Chat</Label>
+                      <p className="text-sm text-gray-400">Permite que usuários iniciem conversas com você</p>
+                    </div>
+                    <Switch 
+                      checked={chatEnabled} 
+                      onCheckedChange={setChatEnabled}
+                    />
+                  </div>
+                  
+                  {/* Toggle Aparecer Online */}
+                  <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                    <div>
+                      <Label className="text-white font-semibold">Aparecer Online</Label>
+                      <p className="text-sm text-gray-400">Mostra seu status como online para os usuários</p>
+                    </div>
+                    <Switch 
+                      checked={isOnline} 
+                      onCheckedChange={setIsOnline}
+                      disabled={!chatEnabled}
+                    />
+                  </div>
+                  
+                  {/* Mensagem de Boas-vindas */}
+                  <div className="space-y-2">
+                    <Label className="text-white font-semibold">Mensagem de Boas-vindas</Label>
+                    <p className="text-sm text-gray-400">Mensagem automática enviada quando alguém inicia um chat</p>
+                    <Textarea
+                      value={greetingMessage}
+                      onChange={(e) => setGreetingMessage(e.target.value)}
+                      placeholder="Olá! Como posso te ajudar? 💕"
+                      className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
+                      disabled={!chatEnabled}
+                    />
+                  </div>
+                  
+                  {/* Botão Salvar */}
+                  <Button 
+                    onClick={saveChatSettings}
+                    disabled={savingChat}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+                  >
+                    {savingChat ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      'Salvar Configurações'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </Card>
+            
+            {/* Info Card */}
+            <Card className="mt-6 bg-blue-500/10 border-blue-500/30 p-4">
+              <h3 className="text-white font-semibold mb-2 flex items-center">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Sobre o Chat
+              </h3>
+              <ul className="text-sm text-gray-300 space-y-2 list-disc list-inside">
+                <li>Quando habilitado, os usuários podem iniciar conversas com você</li>
+                <li>O status "Online" mostra que você está disponível para responder</li>
+                <li>A mensagem de boas-vindas é enviada automaticamente ao iniciar o chat</li>
+                <li>Desabilite o chat quando não quiser receber mensagens</li>
+              </ul>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

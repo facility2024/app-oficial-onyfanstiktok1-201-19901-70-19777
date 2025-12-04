@@ -2585,7 +2585,9 @@ export const TikTokApp = () => {
             setChatEntity(null);
           }} 
           modelName={chatEntity?.name || currentVideo.user.username} 
-          modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} 
+          modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url}
+          entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id}
+          isCreator={chatEntity?.isCreator || !!currentVideo.creator_id}
         />
 
         {/* Comments Screen */}
@@ -2977,7 +2979,17 @@ export const TikTokApp = () => {
     }} />
 
       {/* Desktop Chat Screen */}
-      <ChatScreen isOpen={showChat} onClose={() => setShowChat(false)} modelName={currentVideo.user.username} modelAvatar={currentVideo.user.avatar_url} />
+      <ChatScreen 
+        isOpen={showChat} 
+        onClose={() => {
+          setShowChat(false);
+          setChatEntity(null);
+        }} 
+        modelName={chatEntity?.name || currentVideo.user.username} 
+        modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url}
+        entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id}
+        isCreator={chatEntity?.isCreator || !!currentVideo.creator_id}
+      />
 
       {/* Desktop Comments Screen */}
       <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />

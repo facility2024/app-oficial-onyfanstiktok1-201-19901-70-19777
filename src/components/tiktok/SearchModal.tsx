@@ -97,11 +97,11 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
           id: c.id,
           name: displayName,
           username: displayName,
-          avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png', // Padrão até SQL executar
-          followers_count: 0, // Padrão até SQL executar
+          avatar_url: c.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          followers_count: 0,
           is_live: false,
-          is_verified: true, // Criadores são verificados
-          is_creator: true // Flag para identificar visualmente
+          is_verified: true,
+          is_creator: true
         };
       });
 

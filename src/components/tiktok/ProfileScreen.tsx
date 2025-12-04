@@ -82,53 +82,45 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         const following = await checkCreatorFollow(user.id);
         setIsFollowingCreator(following);
       }
-    } catch (error) {
-      console.error('Erro ao verificar status de criador:', error);
+    } catch {
+      // Silently fail
     }
   };
 
   // Verificar se o usuário já está seguindo a modelo
   const checkFollowingStatus = async () => {
     try {
-      // Sempre resetar estado ao checar
       setIsFollowing(false);
 
-      // Usar localStorage (fonte unificada de IDs)
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || localStorage.getItem('anonymous_user_id');
-      if (!userId) return;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const currentUserId = authUser?.id || localStorage.getItem('anonymous_user_id');
+      if (!currentUserId) return;
 
-      // Primeiro verificar no localStorage (mais rápido)
-      const followKey = `follow_${userId}_${user.id}`;
+      // user.id é o ID da modelo/criador do perfil (prop)
+      const modelId = user.id;
+      const followKey = `follow_${currentUserId}_${modelId}`;
       const localFollow = localStorage.getItem(followKey);
       
       if (localFollow === 'true') {
         setIsFollowing(true);
-        console.log('✅ Following encontrado no localStorage');
         return;
       }
 
-      // Se não encontrou no localStorage, verificar no Supabase
       const { data, error } = await supabase
         .from('model_followers')
         .select('is_active')
-        .eq('user_id', userId)
-        .eq('model_id', user.id)
+        .eq('user_id', currentUserId)
+        .eq('model_id', modelId)
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error) {
-        console.warn('checkFollowingStatus error:', error);
-        return;
-      }
+      if (error) return;
 
       if (data) {
         setIsFollowing(true);
-        // Sincronizar com localStorage
         localStorage.setItem(followKey, 'true');
       }
     } catch (error) {
-      // Em qualquer falha, garantir estado como não seguindo
       setIsFollowing(false);
     }
   };
@@ -140,8 +132,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     const currentUserId = localStorage.getItem('anonymous_user_id');
     if (!currentUserId) return;
 
-    console.log('🔌 Conectando real-time para follow status:', user.id);
-
     const channel = supabase
       .channel(`follow-status-${user.id}-${currentUserId}`)
       .on('postgres_changes', {
@@ -150,20 +140,14 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         table: 'model_followers',
         filter: `model_id=eq.${user.id}`
       }, (payload) => {
-        console.log('🔔 Real-time: Follow status change', payload);
-        
         const newData = payload.new as any;
-        // Verificar se é o nosso follow
         if (newData?.user_id === currentUserId) {
           setIsFollowing(newData?.is_active ?? false);
         }
       })
-      .subscribe((status) => {
-        console.log('📡 Follow status channel:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('🔌 Desconectando follow status real-time');
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
@@ -177,18 +161,14 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const loadModelContent = async () => {
     setLoading(true);
     try {
-      console.log('Loading content for user:', user.id, user.username);
-      
-      // Check cache first for faster loading
       const cacheKey = `profile_${user.id}`;
       const cached = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
       
       if (cached && cacheTime) {
         const age = Date.now() - parseInt(cacheTime);
-        if (age < 30000) { // Cache valid for 30 seconds
+        if (age < 30000) {
           const cachedData = JSON.parse(cached);
-          console.log('✅ Conteúdo carregado do cache');
           setContents(cachedData.contents);
           setPanelUrl(cachedData.panelUrl);
           setLoading(false);
@@ -196,7 +176,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         }
       }
       
-      // 1️⃣ Verificar se o usuário é criador
       const { data: creatorRole } = await (supabase as any)
         .from('user_roles')
         .select('role')
@@ -205,7 +184,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         .maybeSingle();
 
       const isUserCreator = !!creatorRole;
-      console.log(`🎬 Usuário ${user.username} é criador:`, isUserCreator);
       
       // 2️⃣ Load model data and videos in parallel for faster performance
       const [modelDataResult, videosDataResult, imagesDataResult] = await Promise.all([
@@ -266,18 +244,13 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       const videosError = videosDataResult.error;
       const imagesData = (imagesDataResult as any).data;
 
-      if (modelError) {
-        console.warn('Erro ao carregar dados do modelo:', modelError);
-      } else {
+      if (!modelError) {
         setPanelUrl(modelData?.posting_panel_url || null);
       }
 
       if (videosError) {
-        console.error('Supabase error:', videosError);
         throw videosError;
       }
-
-      console.log('Videos data received:', videosData);
 
       // Transformar vídeos para o formato de conteúdo
       const transformedVideos = videosData?.map(item => ({
@@ -311,7 +284,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      console.log('All content (videos + images):', allContent);
       setContents(allContent);
       
       // Cache the results for faster subsequent loads
@@ -321,7 +293,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       }));
       sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
     } catch (error) {
-      console.error('Error loading model content:', error);
       setContents([]);
     } finally {
       setLoading(false);
@@ -345,8 +316,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
           }));
         }
       }
-    } catch (error) {
-      console.error('Error getting model images:', error);
+    } catch {
+      // Silently fail
     }
     return [];
   };
@@ -354,97 +325,64 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   // Função para carregar imagens do painel de postagem
   const loadMyContentImages = async () => {
     try {
-      console.log('🔍 Carregando imagens para modelo:', user.id, user.username);
-
-      // Buscar posts da tabela posts_principais (posts publicados automaticamente)
       const { data: mainPostsData, error: mainError } = await supabase
         .from('posts_principais')
         .select('*')
         .eq('modelo_id', user.id)
         .order('created_at', { ascending: false });
 
-      // Buscar todos os posts agendados da modelo (publicados e agendados)
       const { data: scheduledPostsData, error: scheduledError } = await supabase
         .from('posts_agendados')
         .select('*')
         .eq('modelo_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (mainError) {
-        console.error('❌ Erro ao carregar posts principais:', mainError);
-      }
-      
-      if (scheduledError) {
-        console.error('❌ Erro ao carregar posts agendados:', scheduledError);
-      }
+      if (mainError || scheduledError) return;
 
-      console.log('📊 Posts principais encontrados:', mainPostsData?.length || 0);
-      console.log('📊 Posts agendados encontrados:', scheduledPostsData?.length || 0);
-
-      // Combinar todos os posts
       const allPosts = [
         ...(mainPostsData || []),
         ...(scheduledPostsData || [])
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // Extrair todas as URLs de imagens
       const allImages: string[] = [];
       allPosts.forEach(post => {
-        console.log('🔍 Processando post:', post);
-        
-        // Para posts_agendados (verificar campos 'imagens' e 'conteudo_url')
         if ('imagens' in post && post.imagens && Array.isArray(post.imagens)) {
-          console.log('📸 Imagens encontradas no campo imagens:', post.imagens);
           allImages.push(...post.imagens);
         } else if ('conteudo_url' in post && post.conteudo_url) {
-          console.log('📸 Imagem encontrada no campo conteudo_url:', post.conteudo_url);
           allImages.push(post.conteudo_url);
         }
         
-        // Para posts_principais (com campo 'conteudo_url')
         if ('tipo_conteudo' in post && post.tipo_conteudo === 'imagem' && post.conteudo_url) {
-          console.log('📸 Imagem principal encontrada:', post.conteudo_url);
           if (!allImages.includes(post.conteudo_url)) {
             allImages.push(post.conteudo_url);
           }
         }
       });
 
-      console.log('✅ Posts carregados do painel:', allPosts.length);
-      console.log('✅ Imagens extraídas:', allImages);
       setMyContentImages(allImages);
-    } catch (error) {
-      console.error('❌ Erro ao carregar conteúdo da modelo:', error);
+    } catch {
+      // Silently fail
     }
   };
 
   const followModel = async () => {
     if (isFollowing) return;
 
-    console.log('🔔 PROFILE SEGUIR: Iniciando processo de seguir modelo', user.id);
-
     try {
-      // ✅ GARANTIR que user_id é do usuário autenticado se estiver logado
       const { data: { user: authUser } } = await supabase.auth.getUser();
       let userId = authUser?.id || localStorage.getItem('anonymous_user_id');
       
       if (!userId) {
-        // Criar novo ID anônimo se não existir
         userId = crypto.randomUUID();
         localStorage.setItem('anonymous_user_id', userId);
       }
-      
-      console.log('✅ PROFILE SEGUIR: Usando user_id:', userId, authUser ? '(autenticado)' : '(anônimo)');
 
-      // Atualizar estado local IMEDIATAMENTE
       setIsFollowing(true);
 
-      // Salvar no localStorage para persistência
       const followKey = `follow_${userId}_${user.id}`;
       localStorage.setItem(followKey, 'true');
 
-      // Inserir diretamente na tabela model_followers
-      const { error } = await supabase
+      await supabase
         .from('model_followers')
         .upsert({
           user_id: userId,
@@ -455,18 +393,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         }, {
           onConflict: 'user_id,model_id'
         });
-
-      if (error) {
-        console.warn('⚠️ Erro ao salvar no banco (mas mantendo estado local):', error);
-      } else {
-        console.log('✅ PROFILE SEGUIR: Seguindo modelo com sucesso!');
-      }
       
       toast.success(`Seguindo @${user.username}`);
       
-    } catch (error) {
-      console.error('❌ PROFILE SEGUIR: Erro:', error);
-      // Manter o estado como seguindo (já salvou no localStorage)
+    } catch {
       toast.success(`Seguindo @${user.username}`);
     }
   };

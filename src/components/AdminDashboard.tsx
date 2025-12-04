@@ -235,15 +235,6 @@ export const AdminDashboard = () => {
         onClose={() => setShowSaleNotification(false)} 
       />
       
-      {/* Test App Button */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <Button
-          onClick={() => window.open('/app', '_blank')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg"
-        >
-          🎵 Testar App TikTok
-        </Button>
-      </div>
       <div className="min-h-screen bg-black">
         <AdminHeader 
           notifications={notifications}

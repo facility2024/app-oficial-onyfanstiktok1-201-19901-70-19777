@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Send, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Message {
   id: string;
@@ -35,6 +34,20 @@ export const ChatScreen = ({ isOpen, onClose, modelName, modelAvatar }: ChatScre
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Reset messages when model changes
+  useEffect(() => {
+    if (isOpen && modelName) {
+      setMessages([
+        {
+          id: '1',
+          text: `Olá! Sou a ${modelName}. Como posso te ajudar? 💕`,
+          sender: 'model',
+          timestamp: new Date()
+        }
+      ]);
+    }
+  }, [modelName, isOpen]);
 
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
@@ -74,10 +87,23 @@ export const ChatScreen = ({ isOpen, onClose, modelName, modelAvatar }: ChatScre
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Block scroll propagation
+  const handleWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
+    <div 
+      className="fixed inset-0 z-[100] bg-black"
+      onWheel={handleWheel}
+      onTouchMove={handleTouchMove}
+    >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gradient-to-r from-pink-500 to-purple-600 text-white">
         <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 py-3">
@@ -112,6 +138,8 @@ export const ChatScreen = ({ isOpen, onClose, modelName, modelAvatar }: ChatScre
       <div 
         ref={scrollRef}
         className="max-w-2xl mx-auto h-[calc(100vh-140px)] overflow-y-auto px-4 py-4 space-y-4"
+        onWheel={handleWheel}
+        onTouchMove={handleTouchMove}
       >
         {messages.map((message) => (
           <div

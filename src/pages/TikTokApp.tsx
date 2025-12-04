@@ -124,6 +124,7 @@ export const TikTokApp = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [chatEntity, setChatEntity] = useState<{ name: string; avatar: string; id: string; isCreator: boolean } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
@@ -2328,7 +2329,7 @@ export const TikTokApp = () => {
 
     // Mouse wheel for desktop
     const handleWheel = (e: WheelEvent) => {
-      if (!isMobile && !showProfile && !showComments && !showSearch && !showLive && !showVideoPreview) {
+      if (!isMobile && !showProfile && !showComments && !showChat && !showSearch && !showLive && !showVideoPreview) {
         e.preventDefault();
         if (e.deltaY > 0) {
           nextVideo();
@@ -2345,7 +2346,7 @@ export const TikTokApp = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [isMobile, isPlaying, nextVideo, prevVideo, showProfile, showComments, showSearch, showLive, showVideoPreview]);
+  }, [isMobile, isPlaying, nextVideo, prevVideo, showProfile, showComments, showChat, showSearch, showLive, showVideoPreview]);
 
   // Remove old touch gestures - now handled by Embla
 
@@ -2532,7 +2533,17 @@ export const TikTokApp = () => {
             <span className="text-xs">Marketplace</span>
           </button>
 
-          <button onClick={() => setShowChat(true)} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
+          <button onClick={() => {
+            if (currentVideo) {
+              setChatEntity({
+                name: currentVideo.user.username,
+                avatar: currentVideo.user.avatar_url,
+                id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
+                isCreator: !!currentVideo.creator_id
+              });
+              setShowChat(true);
+            }
+          }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
             <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Chat</span>
             {/* Indicador de ativo */}
@@ -2567,7 +2578,15 @@ export const TikTokApp = () => {
       }} />
 
         {/* Chat Screen */}
-        <ChatScreen isOpen={showChat} onClose={() => setShowChat(false)} modelName={currentVideo.user.username} modelAvatar={currentVideo.user.avatar_url} />
+        <ChatScreen 
+          isOpen={showChat} 
+          onClose={() => {
+            setShowChat(false);
+            setChatEntity(null);
+          }} 
+          modelName={chatEntity?.name || currentVideo.user.username} 
+          modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} 
+        />
 
         {/* Comments Screen */}
         <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />

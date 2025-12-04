@@ -97,19 +97,41 @@ export default function CreatorStudio() {
     if (!userId) return;
     setSavingChat(true);
     try {
-      const { error } = await (supabase
+      // 1. Verificar se já existe um registro para este criador
+      const { data: existing } = await (supabase
         .from('model_chat_panels' as any)
-        .upsert({
-          creator_id: userId,
-          model_id: null,
-          is_active: chatEnabled,
-          is_online: isOnline,
-          greeting_message: greetingMessage,
-          ai_provider: aiProvider,
-          api_key_encrypted: apiKey,
-          prompt: aiPrompt,
-          message_delay_seconds: messageDelay[0],
-        }, { onConflict: 'creator_id' }) as any);
+        .select('id')
+        .eq('creator_id', userId)
+        .maybeSingle() as any);
+
+      const chatData = {
+        creator_id: userId,
+        model_id: null,
+        is_active: chatEnabled,
+        is_online: isOnline,
+        greeting_message: greetingMessage,
+        ai_provider: aiProvider,
+        api_key_encrypted: apiKey,
+        prompt: aiPrompt,
+        message_delay_seconds: messageDelay[0],
+      };
+
+      let error;
+
+      if (existing) {
+        // 2a. Se existe, fazer UPDATE
+        const result = await (supabase
+          .from('model_chat_panels' as any)
+          .update(chatData)
+          .eq('creator_id', userId) as any);
+        error = result.error;
+      } else {
+        // 2b. Se não existe, fazer INSERT
+        const result = await (supabase
+          .from('model_chat_panels' as any)
+          .insert(chatData) as any);
+        error = result.error;
+      }
       
       if (error) throw error;
       toast.success('Configurações do chat salvas!');

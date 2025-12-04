@@ -8,8 +8,10 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock } from 'lucide-react';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
@@ -39,6 +41,13 @@ export default function CreatorStudio() {
   const [savingChat, setSavingChat] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   
+  // AI Configuration state
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai'>('gemini');
+  const [apiKey, setApiKey] = useState('');
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [messageDelay, setMessageDelay] = useState([2]); // seconds
+  const [showApiKey, setShowApiKey] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -64,7 +73,7 @@ export default function CreatorStudio() {
     try {
       const { data, error } = await (supabase
         .from('model_chat_panels' as any)
-        .select('is_active, is_online, greeting_message')
+        .select('is_active, is_online, greeting_message, ai_provider, api_key_encrypted, prompt, message_delay_min')
         .eq('creator_id', userId)
         .maybeSingle() as any);
       
@@ -72,6 +81,10 @@ export default function CreatorStudio() {
         setChatEnabled(data.is_active || false);
         setIsOnline(data.is_online || false);
         setGreetingMessage(data.greeting_message || '');
+        setAiProvider(data.ai_provider || 'gemini');
+        setApiKey(data.api_key_encrypted || '');
+        setAiPrompt(data.prompt || '');
+        setMessageDelay([data.message_delay_min || 2]);
       }
     } catch (error) {
       console.error('Erro ao carregar config do chat:', error);
@@ -92,13 +105,17 @@ export default function CreatorStudio() {
           is_active: chatEnabled,
           is_online: isOnline,
           greeting_message: greetingMessage,
+          ai_provider: aiProvider,
+          api_key_encrypted: apiKey,
+          prompt: aiPrompt,
+          message_delay_min: messageDelay[0],
         }, { onConflict: 'creator_id' }) as any);
       
       if (error) throw error;
       toast.success('Configurações do chat salvas!');
     } catch (error: any) {
       console.error('Erro ao salvar config do chat:', error);
-      toast.error('Erro ao salvar configurações');
+      toast.error('Erro ao salvar configurações: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setSavingChat(false);
     }
@@ -467,7 +484,7 @@ export default function CreatorStudio() {
             <Card className="bg-gray-800/50 border-gray-700 p-6">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <MessageCircle className="w-5 h-5" />
-                Configurações do Chat
+                Configurações do Chat com IA
               </h3>
               
               {loadingChat ? (
@@ -501,15 +518,129 @@ export default function CreatorStudio() {
                     />
                   </div>
                   
+                  {/* AI Provider Selection */}
+                  <div className="space-y-2 p-4 bg-gray-700/50 rounded-lg">
+                    <Label className="text-white font-semibold flex items-center gap-2">
+                      <Bot className="w-4 h-4" />
+                      Provedor de IA
+                    </Label>
+                    <p className="text-sm text-gray-400 mb-2">Escolha qual inteligência artificial será usada no atendimento</p>
+                    <Select 
+                      value={aiProvider} 
+                      onValueChange={(value: 'gemini' | 'openai') => setAiProvider(value)}
+                      disabled={!chatEnabled}
+                    >
+                      <SelectTrigger className="bg-gray-600 border-gray-500 text-white">
+                        <SelectValue placeholder="Selecione o provedor" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-700 border-gray-600">
+                        <SelectItem value="gemini" className="text-white hover:bg-gray-600">
+                          🔷 Google Gemini (Recomendado)
+                        </SelectItem>
+                        <SelectItem value="openai" className="text-white hover:bg-gray-600">
+                          🟢 OpenAI GPT
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* API Key */}
+                  <div className="space-y-2 p-4 bg-gray-700/50 rounded-lg">
+                    <Label className="text-white font-semibold flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      Chave da API ({aiProvider === 'gemini' ? 'Google AI Studio' : 'OpenAI'})
+                    </Label>
+                    <p className="text-sm text-gray-400 mb-2">
+                      {aiProvider === 'gemini' 
+                        ? 'Obtenha sua chave em: aistudio.google.com/apikey' 
+                        : 'Obtenha sua chave em: platform.openai.com/api-keys'}
+                    </p>
+                    <div className="relative">
+                      <Input
+                        type={showApiKey ? 'text' : 'password'}
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                        placeholder={apiKey ? '••••••••••••••••' : 'Cole sua API key aqui'}
+                        className="bg-gray-600 border-gray-500 text-white pr-20"
+                        disabled={!chatEnabled}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        {showApiKey ? 'Ocultar' : 'Mostrar'}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* AI Prompt */}
+                  <div className="space-y-2 p-4 bg-gray-700/50 rounded-lg">
+                    <Label className="text-white font-semibold">Prompt do Agente (Personalidade da IA)</Label>
+                    <p className="text-sm text-gray-400 mb-2">
+                      Defina como a IA deve se comportar e responder. Use markdown para formatar.
+                    </p>
+                    <Textarea
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder={`Você é a [Seu Nome], uma criadora de conteúdo carismática e simpática.
+
+## Personalidade:
+- Seja amigável e acolhedora
+- Use emojis ocasionalmente 💕
+- Mantenha um tom casual e divertido
+- Responda de forma breve e natural
+
+## Regras:
+- Nunca revele que é uma IA
+- Não fale sobre outros criadores
+- Seja educada mas mantenha limites
+
+## Sobre mim:
+- [Adicione informações sobre você]
+- [Seus interesses]
+- [Seu conteúdo]`}
+                      className="bg-gray-600 border-gray-500 text-white min-h-[200px] font-mono text-sm"
+                      disabled={!chatEnabled}
+                    />
+                  </div>
+                  
+                  {/* Message Delay */}
+                  <div className="space-y-2 p-4 bg-gray-700/50 rounded-lg">
+                    <Label className="text-white font-semibold flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Tempo de Digitação: {messageDelay[0]}s
+                    </Label>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Tempo base para simular digitação humana (ajuda a parecer mais natural)
+                    </p>
+                    <Slider
+                      value={messageDelay}
+                      onValueChange={setMessageDelay}
+                      min={1}
+                      max={5}
+                      step={0.5}
+                      className="w-full"
+                      disabled={!chatEnabled}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Rápido (1s)</span>
+                      <span>Natural (3s)</span>
+                      <span>Lento (5s)</span>
+                    </div>
+                  </div>
+                  
                   {/* Mensagem de Boas-vindas */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 p-4 bg-gray-700/50 rounded-lg">
                     <Label className="text-white font-semibold">Mensagem de Boas-vindas</Label>
                     <p className="text-sm text-gray-400">Mensagem automática enviada quando alguém inicia um chat</p>
                     <Textarea
                       value={greetingMessage}
                       onChange={(e) => setGreetingMessage(e.target.value)}
                       placeholder="Olá! Como posso te ajudar? 💕"
-                      className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
+                      className="bg-gray-600 border-gray-500 text-white min-h-[80px]"
                       disabled={!chatEnabled}
                     />
                   </div>
@@ -536,14 +667,15 @@ export default function CreatorStudio() {
             {/* Info Card */}
             <Card className="mt-6 bg-blue-500/10 border-blue-500/30 p-4">
               <h3 className="text-white font-semibold mb-2 flex items-center">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Sobre o Chat
+                <Bot className="w-4 h-4 mr-2" />
+                Sobre o Chat com IA
               </h3>
               <ul className="text-sm text-gray-300 space-y-2 list-disc list-inside">
-                <li>Quando habilitado, os usuários podem iniciar conversas com você</li>
-                <li>O status "Online" mostra que você está disponível para responder</li>
-                <li>A mensagem de boas-vindas é enviada automaticamente ao iniciar o chat</li>
-                <li>Desabilite o chat quando não quiser receber mensagens</li>
+                <li>A IA responderá automaticamente simulando sua personalidade</li>
+                <li>Configure um prompt detalhado para respostas mais naturais</li>
+                <li>O tempo de digitação simula um atendimento humano</li>
+                <li>Use Gemini (gratuito) ou OpenAI (pago) como provedor</li>
+                <li>A API key é necessária para o funcionamento do chat</li>
               </ul>
             </Card>
           </TabsContent>

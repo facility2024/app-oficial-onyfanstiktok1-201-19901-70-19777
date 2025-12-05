@@ -146,10 +146,17 @@ export const AdminLocalBusinesses = () => {
 
   const handleSubmit = async (data: BusinessFormData) => {
     try {
+      // Add default latitude/longitude values for database compatibility
+      const businessData = {
+        ...data,
+        latitude: 0,
+        longitude: 0,
+      };
+
       if (editingBusiness) {
         const { error } = await supabase
           .from('local_businesses' as any)
-          .update(data)
+          .update(businessData)
           .eq('id', editingBusiness.id);
 
         if (error) throw error;
@@ -157,7 +164,7 @@ export const AdminLocalBusinesses = () => {
       } else {
         const { error } = await supabase
           .from('local_businesses' as any)
-          .insert([data]);
+          .insert([businessData]);
 
         if (error) throw error;
         toast({ title: 'Sucesso', description: 'Comércio adicionado com sucesso' });

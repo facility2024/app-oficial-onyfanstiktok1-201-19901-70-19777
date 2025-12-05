@@ -23,8 +23,7 @@ interface LocalBusiness {
   address: string;
   phone?: string;
   website?: string;
-  latitude: number;
-  longitude: number;
+  google_maps_url?: string;
   rating?: number;
   image_url?: string;
   is_active: boolean;
@@ -39,8 +38,7 @@ const businessSchema = z.object({
   address: z.string().min(5, 'Endereço deve ter pelo menos 5 caracteres'),
   phone: z.string().optional(),
   website: z.string().url('URL inválida').optional().or(z.literal('')),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
+  google_maps_url: z.string().url('URL do Google Maps inválida').optional().or(z.literal('')),
   rating: z.number().min(0).max(5).optional(),
   image_url: z.string().url('URL inválida').optional().or(z.literal('')),
   is_active: z.boolean(),
@@ -69,8 +67,7 @@ export const AdminLocalBusinesses = () => {
       address: '',
       phone: '',
       website: '',
-      latitude: -23.5505,
-      longitude: -46.6333,
+      google_maps_url: '',
       rating: 5,
       image_url: '',
       is_active: true,
@@ -189,8 +186,7 @@ export const AdminLocalBusinesses = () => {
       address: business.address,
       phone: business.phone || '',
       website: business.website || '',
-      latitude: business.latitude,
-      longitude: business.longitude,
+      google_maps_url: business.google_maps_url || '',
       rating: business.rating,
       image_url: business.image_url || '',
       is_active: business.is_active,
@@ -405,45 +401,25 @@ export const AdminLocalBusinesses = () => {
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="latitude"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Latitude</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="any"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="longitude"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Longitude</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="any"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="google_maps_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>URL do Google Maps (opcional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://www.google.com/maps/place/..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Cole o link do Google Maps do estabelecimento para o botão "Como Chegar"
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="grid grid-cols-2 gap-4">
                       <FormField

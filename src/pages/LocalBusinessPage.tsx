@@ -18,8 +18,7 @@ interface LocalBusiness {
   address: string;
   phone?: string;
   website?: string;
-  latitude: number;
-  longitude: number;
+  google_maps_url?: string;
   rating?: number;
   image_url?: string;
   is_active?: boolean;
@@ -88,8 +87,9 @@ const LocalBusinessPage = () => {
   };
 
   const handleGetDirections = (business: LocalBusiness) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`;
-    window.open(url, '_blank');
+    if (business.google_maps_url) {
+      window.open(business.google_maps_url, '_blank');
+    }
   };
 
   return (
@@ -260,8 +260,9 @@ const BusinessCard = ({ business }: { business: LocalBusiness }) => {
   };
 
   const handleGetDirections = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`;
-    window.open(url, '_blank');
+    if (business.google_maps_url) {
+      window.open(business.google_maps_url, '_blank');
+    }
   };
 
   return (

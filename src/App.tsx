@@ -1,33 +1,33 @@
-import React, { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Lazy load components for better mobile performance
-const PWAInstallPrompt = lazy(() => import("@/components/PWAInstallPrompt").then(m => ({ default: m.PWAInstallPrompt })));
-const OfflineHandler = lazy(() => import("@/components/OfflineHandler").then(m => ({ default: m.OfflineHandler })));
-const Index = lazy(() => import("./pages/Index"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const AdminDashboard = lazy(() => import("@/components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const AdminRoute = lazy(() => import("@/components/AdminRoute").then(m => ({ default: m.AdminRoute })));
-const Auth = lazy(() => import("./pages/Auth"));
-const ProtectedRoute = lazy(() => import("@/components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const CreatorApplication = lazy(() => import("./pages/CreatorApplication"));
-const CreatorStudio = lazy(() => import("./pages/CreatorStudio"));
-const ExplorePage = lazy(() => import("./pages/ExplorePage"));
-const FollowingPage = lazy(() => import("./pages/FollowingPage"));
-const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
-const LocalBusinessPage = lazy(() => import("./pages/LocalBusinessPage"));
-const BusinessFavoritesPage = lazy(() => import("./pages/BusinessFavoritesPage"));
-const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
-const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
-const AdvertisersPage = lazy(() => import("./pages/AdvertisersPage"));
-const FollowingCreatorsPage = lazy(() => import("./pages/FollowingCreatorsPage"));
-const ModelChat = lazy(() => import("./pages/ModelChat"));
-const ChatListPage = lazy(() => import("./pages/ChatListPage"));
+// Direct imports to avoid dynamic import issues in production
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { OfflineHandler } from "@/components/OfflineHandler";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import { AdminDashboard } from "@/components/AdminDashboard";
+import { AdminRoute } from "@/components/AdminRoute";
+import Auth from "./pages/Auth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import UserProfile from "./pages/UserProfile";
+import CreatorApplication from "./pages/CreatorApplication";
+import CreatorStudio from "./pages/CreatorStudio";
+import ExplorePage from "./pages/ExplorePage";
+import FollowingPage from "./pages/FollowingPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import LocalBusinessPage from "./pages/LocalBusinessPage";
+import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
+import CollectionsPage from "./pages/CollectionsPage";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import AdvertisersPage from "./pages/AdvertisersPage";
+import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
+import ModelChat from "./pages/ModelChat";
+import ChatListPage from "./pages/ChatListPage";
+import SplashScreen from "./pages/SplashScreen";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -41,213 +41,105 @@ const queryClient = new QueryClient({
   },
 });
 
-// Loading fallback for lazy components
-const ComponentFallback = () => (
-  <div className="flex items-center justify-center min-h-screen bg-black">
-    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
-
-// Lazy load SplashScreen
-const SplashScreen = lazy(() => import("./pages/SplashScreen"));
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <Suspense fallback={<ComponentFallback />}>
-        <PWAInstallPrompt />
-        <OfflineHandler />
-      </Suspense>
+      <PWAInstallPrompt />
+      <OfflineHandler />
       <BrowserRouter>
         <Routes>
           {/* Splash Screen como HOME */}
-          <Route path="/" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <SplashScreen />
-            </Suspense>
-          } />
+          <Route path="/" element={<SplashScreen />} />
           
-          <Route path="/auth" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <Auth />
-            </Suspense>
-          } />
+          <Route path="/auth" element={<Auth />} />
           
           {/* App SEM proteção - aceita usuários anônimos */}
-          <Route path="/app" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <Index />
-            </Suspense>
-          } />
-          
-          <Route path="/tiktok" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <Index />
-            </Suspense>
-          } />
-          
-          <Route path="/home" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <Index />
-            </Suspense>
-          } />
-          
-          <Route path="/index" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <Index />
-            </Suspense>
-          } />
-          
-          <Route path="/main" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <Index />
-            </Suspense>
-          } />
+          <Route path="/app" element={<Index />} />
+          <Route path="/tiktok" element={<Index />} />
+          <Route path="/home" element={<Index />} />
+          <Route path="/index" element={<Index />} />
+          <Route path="/main" element={<Index />} />
 
           {/* Perfil do usuário */}
           <Route path="/profile" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            </Suspense>
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
           } />
 
           {/* Aplicação de Criador */}
           <Route path="/creator-application" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <CreatorApplication />
-              </ProtectedRoute>
-            </Suspense>
+            <ProtectedRoute>
+              <CreatorApplication />
+            </ProtectedRoute>
           } />
           
           <Route path="/creator" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <CreatorApplication />
-              </ProtectedRoute>
-            </Suspense>
+            <ProtectedRoute>
+              <CreatorApplication />
+            </ProtectedRoute>
           } />
           
           {/* Estúdio de Criador */}
           <Route path="/creator-studio" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <CreatorStudio />
-              </ProtectedRoute>
-            </Suspense>
+            <ProtectedRoute>
+              <CreatorStudio />
+            </ProtectedRoute>
           } />
           
           {/* Página de Explorar */}
           <Route path="/explore" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <ExplorePage />
-              </ProtectedRoute>
-            </Suspense>
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
           } />
           
           {/* Página de Seguindo */}
           <Route path="/following" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ProtectedRoute>
-                <FollowingPage />
-              </ProtectedRoute>
-            </Suspense>
+            <ProtectedRoute>
+              <FollowingPage />
+            </ProtectedRoute>
           } />
           
           {/* Página de Criadores Seguidos */}
-          <Route path="/following-creators" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <FollowingCreatorsPage />
-            </Suspense>
-          } />
+          <Route path="/following-creators" element={<FollowingCreatorsPage />} />
           
           {/* Marketplace */}
-          <Route path="/marketplace" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <MarketplacePage />
-            </Suspense>
-          } />
+          <Route path="/marketplace" element={<MarketplacePage />} />
           
           {/* Negócios Locais */}
-          <Route path="/local-business" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <LocalBusinessPage />
-            </Suspense>
-          } />
-          
-          <Route path="/local-businesses" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <LocalBusinessPage />
-            </Suspense>
-          } />
+          <Route path="/local-business" element={<LocalBusinessPage />} />
+          <Route path="/local-businesses" element={<LocalBusinessPage />} />
           
           {/* Favoritos de Negócios Locais */}
-          <Route path="/business-favorites" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <BusinessFavoritesPage />
-            </Suspense>
-          } />
+          <Route path="/business-favorites" element={<BusinessFavoritesPage />} />
           
           {/* Coleções */}
-          <Route path="/collections" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <CollectionsPage />
-            </Suspense>
-          } />
+          <Route path="/collections" element={<CollectionsPage />} />
           
           {/* Chat com Modelo ou Criador */}
-          <Route path="/chat/:entityId" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ModelChat />
-            </Suspense>
-          } />
+          <Route path="/chat/:entityId" element={<ModelChat />} />
           
           {/* Lista de Chats - Rota alternativa para Chat IA */}
-          <Route path="/ChatIA" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ChatListPage />
-            </Suspense>
-          } />
-          
-          <Route path="/chats" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <ChatListPage />
-            </Suspense>
-          } />
+          <Route path="/ChatIA" element={<ChatListPage />} />
+          <Route path="/chats" element={<ChatListPage />} />
           
           {/* Assinaturas */}
-          <Route path="/subscriptions" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <SubscriptionsPage />
-            </Suspense>
-          } />
+          <Route path="/subscriptions" element={<SubscriptionsPage />} />
           
           {/* Anunciantes */}
-          <Route path="/advertisers" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <AdvertisersPage />
-            </Suspense>
-          } />
+          <Route path="/advertisers" element={<AdvertisersPage />} />
           
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            </Suspense>
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
           } />
           
-          <Route path="*" element={
-            <Suspense fallback={<ComponentFallback />}>
-              <NotFound />
-            </Suspense>
-          } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

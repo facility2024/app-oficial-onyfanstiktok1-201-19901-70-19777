@@ -3,7 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, Video, CheckCircle, AlertCircle, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+
+// Bunny.net credentials - Direct upload
+const BUNNY_LIBRARY_ID = '558340';
+const BUNNY_API_KEY = '3be9e550-5641-40ea-ba4696767be3-755b-449f';
+const BUNNY_CDN_HOSTNAME = 'vz-2342b018-2d3.b-cdn.net';
 
 interface BunnyVideoUploaderProps {
   onUploadComplete: (videoUrl: string, thumbnailUrl: string) => void;
@@ -71,33 +75,65 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
     onUploadStart?.();
 
     try {
-      const formData = new FormData();
-      formData.append('video', selectedFile);
-      formData.append('title', selectedFile.name.replace(/\.[^/.]+$/, ''));
+      // Step 1: Create video object in Bunny Stream
+      setProgress(15);
+      const createResponse = await fetch(
+        `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
+        {
+          method: 'POST',
+          headers: {
+            'AccessKey': BUNNY_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: selectedFile.name.replace(/\.[^/.]+$/, '')
+          })
+        }
+      );
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`Erro ao criar vídeo: ${errorText}`);
+      }
+
+      const videoData = await createResponse.json();
+      const videoGuid = videoData.guid;
+
+      if (!videoGuid) {
+        throw new Error('GUID do vídeo não retornado pela Bunny');
+      }
 
       setProgress(30);
 
-      // Call Edge Function
-      const { data, error } = await supabase.functions.invoke('bunny-video-upload', {
-        body: formData,
-      });
+      // Step 2: Upload the video file directly to Bunny
+      const uploadResponse = await fetch(
+        `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoGuid}`,
+        {
+          method: 'PUT',
+          headers: {
+            'AccessKey': BUNNY_API_KEY,
+            'Content-Type': 'application/octet-stream'
+          },
+          body: selectedFile
+        }
+      );
 
-      setProgress(90);
-
-      if (error) {
-        throw new Error(error.message || 'Erro ao fazer upload');
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erro desconhecido');
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        throw new Error(`Erro no upload: ${errorText}`);
       }
 
       setProgress(100);
       setUploadStatus('success');
+      
+      // Build CDN URLs
+      const videoUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/play_720p.mp4`;
+      const thumbnailUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`;
+
       toast.success('Vídeo enviado com sucesso!');
       
       // Pass URLs to parent
-      onUploadComplete(data.videoUrl, data.thumbnailUrl);
+      onUploadComplete(videoUrl, thumbnailUrl);
 
     } catch (error: any) {
       console.error('Erro no upload:', error);

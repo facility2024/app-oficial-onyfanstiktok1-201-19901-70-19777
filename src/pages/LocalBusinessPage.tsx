@@ -238,6 +238,7 @@ const LocalBusinessPage = () => {
 
 // Componente BusinessCard separado para usar o hook de favoritos
 const BusinessCard = ({ business }: { business: LocalBusiness }) => {
+  const navigate = useNavigate();
   const { isFavorite, loading, toggleFavorite } = useBusinessFavorites(business.id);
 
   const renderStars = (rating?: number) => {
@@ -259,14 +260,27 @@ const BusinessCard = ({ business }: { business: LocalBusiness }) => {
     );
   };
 
-  const handleGetDirections = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+    navigate(`/local-business/${business.id}`);
+  };
+
+  const handleGetDirections = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (business.google_maps_url) {
       window.open(business.google_maps_url, '_blank');
     }
   };
 
   return (
-    <Card className="bg-gray-900/50 border border-white/10 hover:border-white/20 transition-all overflow-hidden relative">
+    <Card 
+      className="bg-gray-900/50 border border-white/10 hover:border-white/20 transition-all overflow-hidden relative cursor-pointer"
+      onClick={handleCardClick}
+    >
       <CardContent className="p-0">
         {/* Badge PATROCINADO */}
         {business.is_sponsored && (

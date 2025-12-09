@@ -20,6 +20,7 @@ import ExplorePage from "./pages/ExplorePage";
 import FollowingPage from "./pages/FollowingPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import LocalBusinessPage from "./pages/LocalBusinessPage";
+import LocalBusinessDetailsPage from "./pages/LocalBusinessDetailsPage";
 import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
 import CollectionsPage from "./pages/CollectionsPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
@@ -112,6 +113,7 @@ const App = () => (
           {/* Negócios Locais */}
           <Route path="/local-business" element={<LocalBusinessPage />} />
           <Route path="/local-businesses" element={<LocalBusinessPage />} />
+          <Route path="/local-business/:businessId" element={<LocalBusinessDetailsPage />} />
           
           {/* Favoritos de Negócios Locais */}
           <Route path="/business-favorites" element={<BusinessFavoritesPage />} />

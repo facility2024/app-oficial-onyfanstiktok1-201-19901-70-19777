@@ -1,4 +1,4 @@
-// New Edge Function for Bunny upload - v1
+// Bunny Upload Edge Function - v2 - Force deploy trigger 2025-12-09T11:18:00Z
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {

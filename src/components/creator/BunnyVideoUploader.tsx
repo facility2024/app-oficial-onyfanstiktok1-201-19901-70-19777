@@ -85,32 +85,43 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
   };
 
   const togglePause = () => {
-    if (!tusUploadRef.current) return;
-    
-    if (isPaused) {
-      tusUploadRef.current.start();
-      setIsPaused(false);
-    } else {
-      tusUploadRef.current.abort();
-      setIsPaused(true);
+    if (tusUploadRef.current) {
+      if (isPaused) {
+        tusUploadRef.current.start();
+      } else {
+        tusUploadRef.current.abort();
+      }
+      setIsPaused(!isPaused);
     }
   };
 
-  // Helper: Fetch with retry for network resilience
+  // Helper: Fetch with retry and longer timeout (30s)
   const fetchWithRetry = async (url: string, options: RequestInit, retries = 3): Promise<Response> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     for (let i = 0; i < retries; i++) {
       try {
         console.log(`[TUS Upload] Fetch attempt ${i + 1}/${retries}...`);
-        const response = await fetch(url, options);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeout);
         return response;
       } catch (error: any) {
         console.error(`[TUS Upload] Fetch attempt ${i + 1} failed:`, error);
-        if (i === retries - 1) throw error;
-        const delay = 1000 * (i + 1);
+        if (error.name === 'AbortError') {
+          clearTimeout(timeout);
+          throw new Error('Timeout: servidor demorou muito para responder (30s)');
+        }
+        if (i === retries - 1) {
+          clearTimeout(timeout);
+          throw error;
+        }
+        const delay = 2000 * (i + 1); // Longer delays: 2s, 4s, 6s
         console.log(`[TUS Upload] Retrying in ${delay}ms...`);
         await new Promise(r => setTimeout(r, delay));
       }
     }
+    clearTimeout(timeout);
     throw new Error('Todas as tentativas falharam');
   };
 

@@ -111,24 +111,48 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
     setUploadProgress(0);
 
     try {
-      // Step 1: Create video object in Bunny (lightweight call, only title)
-      console.log('[TUS Upload] Step 1: Creating video object...');
+      console.log('[TUS Upload] ===== STARTING UPLOAD =====');
+      console.log('[TUS Upload] File:', file.name, 'Size:', file.size, 'Type:', file.type);
+      console.log('[TUS Upload] Title:', title.trim());
       
-      const { data, error } = await supabase.functions.invoke('upload-bunny-stream', {
-        body: { title: title.trim() }
-      });
-
-      if (error) {
-        console.error('[TUS Upload] Edge function error:', error);
-        throw new Error(error.message || 'Erro ao criar objeto de vídeo');
+      // Step 1: Create video object in Bunny (lightweight call, only title)
+      console.log('[TUS Upload] Step 1: Calling Edge Function...');
+      
+      let response;
+      try {
+        response = await supabase.functions.invoke('upload-bunny-stream', {
+          body: { title: title.trim() }
+        });
+        console.log('[TUS Upload] Edge Function raw response:', response);
+      } catch (invokeError: any) {
+        console.error('[TUS Upload] supabase.functions.invoke threw:', invokeError);
+        throw new Error('Falha ao conectar com o servidor: ' + (invokeError.message || 'Erro desconhecido'));
       }
 
-      if (!data || !data.success) {
-        console.error('[TUS Upload] API error:', data);
+      const { data, error } = response;
+
+      if (error) {
+        console.error('[TUS Upload] Edge function error object:', error);
+        const errorMsg = typeof error === 'object' 
+          ? JSON.stringify(error) 
+          : (error.message || 'Erro ao criar objeto de vídeo');
+        throw new Error(errorMsg);
+      }
+
+      if (!data) {
+        console.error('[TUS Upload] No data in response');
+        throw new Error('Servidor não retornou dados. Verifique se a Edge Function está deployada.');
+      }
+
+      if (!data.success) {
+        console.error('[TUS Upload] API returned error:', data);
         throw new Error(data?.error || 'Falha ao criar vídeo no Bunny');
       }
 
-      console.log('[TUS Upload] Video object created:', data.videoId);
+      console.log('[TUS Upload] Video object created successfully!');
+      console.log('[TUS Upload] Video ID:', data.videoId);
+      console.log('[TUS Upload] Library ID:', data.libraryId);
+      console.log('[TUS Upload] TUS Endpoint:', data.tusEndpoint);
       console.log('[TUS Upload] Step 2: Starting TUS upload...');
 
       // Step 2: Upload file directly to Bunny via TUS protocol

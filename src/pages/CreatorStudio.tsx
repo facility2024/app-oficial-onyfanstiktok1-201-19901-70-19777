@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link } from 'lucide-react';
+import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
@@ -327,43 +328,50 @@ export default function CreatorStudio() {
                   />
                 </div>
 
-                {/* URL do Vídeo */}
+                {/* Upload de Vídeo */}
                 <div>
-                  <label className="text-white font-semibold mb-2 block">
+                  <label className="text-white font-semibold mb-3 block">
                     <Video className="w-4 h-4 inline mr-2" />
-                    URL do Vídeo (Bunny.net) *
+                    Upload do Vídeo *
                   </label>
-                  <Input
-                    type="url"
-                    placeholder="https://tiktokonyfans.b-cdn.net/..."
-                    value={formData.video_url}
-                    onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    required
+                  <BunnyVideoUploader
+                    onUploadComplete={(videoUrl, thumbnailUrl) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        video_url: videoUrl,
+                        thumbnail_url: thumbnailUrl,
+                      }));
+                    }}
                   />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Cole a URL do seu vídeo hospedado no Bunny.net
-                  </p>
                 </div>
 
-                {/* URL da Thumbnail */}
-                <div>
-                  <label className="text-white font-semibold mb-2 block">
-                    <Image className="w-4 h-4 inline mr-2" />
-                    URL da Thumbnail *
-                  </label>
-                  <Input
-                    type="url"
-                    placeholder="https://tiktokonyfans.b-cdn.net/..."
-                    value={formData.thumbnail_url}
-                    onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    required
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Cole a URL da imagem de capa do vídeo
-                  </p>
-                </div>
+                {/* URLs Preenchidas (readonly) */}
+                {formData.video_url && (
+                  <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                      <Link className="w-4 h-4" />
+                      URLs preenchidas automaticamente
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-xs block mb-1">URL do Vídeo:</label>
+                      <Input
+                        type="url"
+                        value={formData.video_url}
+                        readOnly
+                        className="bg-gray-800 border-gray-600 text-gray-300 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-xs block mb-1">URL da Thumbnail:</label>
+                      <Input
+                        type="url"
+                        value={formData.thumbnail_url}
+                        readOnly
+                        className="bg-gray-800 border-gray-600 text-gray-300 text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Seleção de Gêneros */}
                 <div>

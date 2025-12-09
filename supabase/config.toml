@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.model-chat]
 verify_jwt = false
+
+[functions.upload-bunny-stream]
+verify_jwt = true

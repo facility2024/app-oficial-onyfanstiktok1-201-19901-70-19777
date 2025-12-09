@@ -1,3 +1,4 @@
+// Re-deploy trigger: 2025-12-09T11:00:00Z - Force deployment
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {

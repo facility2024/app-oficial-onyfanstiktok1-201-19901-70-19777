@@ -1,4 +1,4 @@
-// Simplified version for deployment testing - v3
+// Force redeploy: 2025-12-09T11:08:00Z - Simplified diagnostic version v4
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {

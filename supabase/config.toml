@@ -1,5 +1,8 @@
 project_id = "tnzvhwapfhkhqjgyiomk"
 
+[functions.bunny-upload]
+verify_jwt = false
+
 [functions.follow-model]
 verify_jwt = false
 

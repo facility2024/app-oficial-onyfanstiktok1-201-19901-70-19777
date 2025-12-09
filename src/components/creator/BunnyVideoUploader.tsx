@@ -156,7 +156,7 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
       // Step 1: Create video object in Bunny using DIRECT FETCH
       console.log('[TUS Upload] Step 1: Calling Edge Function via direct fetch...');
       
-      const functionUrl = 'https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/upload-bunny-stream';
+      const functionUrl = 'https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/bunny-upload';
       
       let response: Response;
       try {

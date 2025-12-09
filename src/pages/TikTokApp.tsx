@@ -2518,7 +2518,7 @@ export const TikTokApp = () => {
               description: `Redirecionando para ${currentVideo.user.username}`
             });
           }
-        }} onFullscreen={handleFullscreen} />
+        }} onFullscreen={handleFullscreen} onShare={shareVideo} />
           </div>}
 
         {/* Barra de Navegação Inferior - Estilo TikTok */}
@@ -2896,7 +2896,7 @@ export const TikTokApp = () => {
                     replace: true
                   });
                 }
-              }} />
+              }} onShare={shareVideo} />
                 </div>}
 
             {/* Desktop Video Info Below */}

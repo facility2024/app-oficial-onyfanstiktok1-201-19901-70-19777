@@ -25,6 +25,7 @@ interface SideMenuProps {
   onFullscreen?: () => void;
   onOpenChat?: () => void;
   isChatOnline?: boolean;
+  onShare?: () => void;
 }
 
 export const SideMenu = ({
@@ -47,7 +48,8 @@ export const SideMenu = ({
   onExit,
   onFullscreen,
   onOpenChat,
-  isChatOnline = false
+  isChatOnline = false,
+  onShare
 }: SideMenuProps) => {
   const [showVolumeSlider, setShowVolumeSlider] = React.useState(false);
   // 🔍 DEBUG: Verificar se o posting_panel_url está presente
@@ -254,16 +256,15 @@ export const SideMenu = ({
         )}
       </div>
 
-      {/* Explorar - Desktop Only */}
-      <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={() => {
-        console.log('🔍 Navegando para /explore');
-        window.location.href = '/explore';
-      }}>
-        <div className="w-12 h-12 flex items-center justify-center transition-all">
-          <Compass className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
+      {/* Compartilhar */}
+      {onShare && (
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onShare}>
+          <div className="w-12 h-12 flex items-center justify-center transition-all">
+            <Share className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
+          </div>
+          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">compartilhar</span>
         </div>
-        <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">explorar</span>
-      </div>
+      )}
 
       {/* Chat - Desktop Only */}
       {onOpenChat && (

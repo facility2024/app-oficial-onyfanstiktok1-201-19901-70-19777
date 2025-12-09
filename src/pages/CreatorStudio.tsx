@@ -16,7 +16,6 @@ import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
 import { useGenres } from '@/hooks/useGenres';
-import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
@@ -26,8 +25,6 @@ const videoSchema = z.object({
   genres: z.array(z.string()).min(1, 'Selecione pelo menos um gênero'),
 });
 
-type UploadMode = 'bunny' | 'manual';
-
 export default function CreatorStudio() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -36,7 +33,6 @@ export default function CreatorStudio() {
   const [checkingRole, setCheckingRole] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const { genres, loading: genresLoading } = useGenres();
-  const [uploadMode, setUploadMode] = useState<UploadMode>('bunny');
   
   // Chat settings state
   const [chatEnabled, setChatEnabled] = useState(false);
@@ -331,91 +327,42 @@ export default function CreatorStudio() {
                   />
                 </div>
 
-                {/* Upload Mode Selector */}
+                {/* URL do Vídeo */}
                 <div>
-                  <label className="text-white font-semibold mb-3 block">
+                  <label className="text-white font-semibold mb-2 block">
                     <Video className="w-4 h-4 inline mr-2" />
-                    Vídeo *
+                    URL do Vídeo (Bunny.net) *
                   </label>
-                  <div className="flex gap-2 mb-4">
-                    <Button
-                      type="button"
-                      variant={uploadMode === 'bunny' ? 'default' : 'outline'}
-                      onClick={() => setUploadMode('bunny')}
-                      className={uploadMode === 'bunny' 
-                        ? 'bg-gradient-to-r from-pink-500 to-purple-600' 
-                        : 'border-gray-600 text-gray-300'}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Direto
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={uploadMode === 'manual' ? 'default' : 'outline'}
-                      onClick={() => setUploadMode('manual')}
-                      className={uploadMode === 'manual' 
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600' 
-                        : 'border-gray-600 text-gray-300'}
-                    >
-                      <Video className="w-4 h-4 mr-2" />
-                      URL Manual
-                    </Button>
-                  </div>
+                  <Input
+                    type="url"
+                    placeholder="https://tiktokonyfans.b-cdn.net/..."
+                    value={formData.video_url}
+                    onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                    className="bg-gray-700 border-gray-600 text-white"
+                    required
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Cole a URL do seu vídeo hospedado no Bunny.net
+                  </p>
+                </div>
 
-                  {uploadMode === 'bunny' ? (
-                    <BunnyVideoUploader 
-                      title={formData.title}
-                      onUploadComplete={(videoUrl, thumbnailUrl) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          video_url: videoUrl,
-                          thumbnail_url: thumbnailUrl,
-                        }));
-                      }}
-                    />
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <Input
-                          type="url"
-                          placeholder="https://vz-xxx.b-cdn.net/video.mp4"
-                          value={formData.video_url}
-                          onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                          className="bg-gray-700 border-gray-600 text-white"
-                          required
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          Cole a URL do vídeo hospedado no Bunny.net
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-white font-semibold mb-2 block">
-                          <Image className="w-4 h-4 inline mr-2" />
-                          URL da Thumbnail *
-                        </label>
-                        <Input
-                          type="url"
-                          placeholder="https://vz-xxx.b-cdn.net/thumbnail.jpg"
-                          value={formData.thumbnail_url}
-                          onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                          className="bg-gray-700 border-gray-600 text-white"
-                          required
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          Cole a URL da imagem de capa do vídeo
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* URLs preenchidas automaticamente */}
-                  {uploadMode === 'bunny' && formData.video_url && (
-                    <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg space-y-2">
-                      <p className="text-green-400 text-sm font-medium">✓ URLs preenchidas automaticamente:</p>
-                      <p className="text-xs text-gray-400 truncate">Vídeo: {formData.video_url}</p>
-                      <p className="text-xs text-gray-400 truncate">Thumbnail: {formData.thumbnail_url}</p>
-                    </div>
-                  )}
+                {/* URL da Thumbnail */}
+                <div>
+                  <label className="text-white font-semibold mb-2 block">
+                    <Image className="w-4 h-4 inline mr-2" />
+                    URL da Thumbnail *
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://tiktokonyfans.b-cdn.net/..."
+                    value={formData.thumbnail_url}
+                    onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                    className="bg-gray-700 border-gray-600 text-white"
+                    required
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Cole a URL da imagem de capa do vídeo
+                  </p>
                 </div>
 
                 {/* Seleção de Gêneros */}

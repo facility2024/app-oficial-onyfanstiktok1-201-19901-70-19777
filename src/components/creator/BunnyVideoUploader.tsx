@@ -3,14 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
-import { Upload, Video, X, CheckCircle, Loader2, FileVideo } from 'lucide-react';
+import { Upload, Video, X, CheckCircle, Loader2, FileVideo, Pause, Play } from 'lucide-react';
+import * as tus from 'tus-js-client';
 
 interface BunnyVideoUploaderProps {
   onUploadComplete: (videoUrl: string, thumbnailUrl: string) => void;
   title: string;
 }
 
-const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 const ACCEPTED_FORMATS = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/webm'];
 
 export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUploaderProps) {
@@ -20,18 +20,13 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tusUploadRef = useRef<tus.Upload | null>(null);
 
   const handleFileSelect = useCallback((selectedFile: File) => {
-    // Validate file type
     if (!ACCEPTED_FORMATS.includes(selectedFile.type)) {
       toast.error('Formato não suportado. Use MP4, MOV, AVI, MKV ou WebM.');
-      return;
-    }
-
-    // Validate file size
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      toast.error('Arquivo muito grande. O limite é 500MB.');
       return;
     }
 
@@ -39,6 +34,7 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
     setPreview(URL.createObjectURL(selectedFile));
     setUploadComplete(false);
     setUploadProgress(0);
+    setIsPaused(false);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +66,10 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
   }, [handleFileSelect]);
 
   const removeFile = () => {
+    if (tusUploadRef.current) {
+      tusUploadRef.current.abort();
+      tusUploadRef.current = null;
+    }
     if (preview) {
       URL.revokeObjectURL(preview);
     }
@@ -77,8 +77,22 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
     setPreview(null);
     setUploadComplete(false);
     setUploadProgress(0);
+    setIsPaused(false);
+    setUploading(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const togglePause = () => {
+    if (!tusUploadRef.current) return;
+    
+    if (isPaused) {
+      tusUploadRef.current.start();
+      setIsPaused(false);
+    } else {
+      tusUploadRef.current.abort();
+      setIsPaused(true);
     }
   };
 
@@ -94,59 +108,86 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
     }
 
     setUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(0);
 
     try {
-      // Convert file to base64
-      const reader = new FileReader();
+      // Step 1: Create video object in Bunny (lightweight call, only title)
+      console.log('[TUS Upload] Step 1: Creating video object...');
       
-      const fileBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove the data URL prefix (e.g., "data:video/mp4;base64,")
-          const base64 = result.split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+      const { data, error } = await supabase.functions.invoke('upload-bunny-stream', {
+        body: { title: title.trim() }
       });
 
-      setUploadProgress(30);
+      if (error) {
+        console.error('[TUS Upload] Edge function error:', error);
+        throw new Error(error.message || 'Erro ao criar objeto de vídeo');
+      }
 
-      // Call edge function
-      const { data, error } = await supabase.functions.invoke('upload-bunny-stream', {
-        body: {
-          title: title.trim(),
-          fileBase64,
-          fileName: file.name,
+      if (!data || !data.success) {
+        console.error('[TUS Upload] API error:', data);
+        throw new Error(data?.error || 'Falha ao criar vídeo no Bunny');
+      }
+
+      console.log('[TUS Upload] Video object created:', data.videoId);
+      console.log('[TUS Upload] Step 2: Starting TUS upload...');
+
+      // Step 2: Upload file directly to Bunny via TUS protocol
+      const upload = new tus.Upload(file, {
+        endpoint: data.tusEndpoint,
+        retryDelays: [0, 1000, 3000, 5000, 10000],
+        chunkSize: 5 * 1024 * 1024, // 5MB chunks
+        metadata: {
+          filename: file.name,
+          filetype: file.type,
+        },
+        headers: {
+          'AuthorizationSignature': data.authorizationSignature,
+          'AuthorizationExpire': data.expirationTime.toString(),
+          'VideoId': data.videoId,
+          'LibraryId': data.libraryId,
+        },
+        onError: (error) => {
+          console.error('[TUS Upload] Upload failed:', error);
+          toast.error('Erro no upload: ' + error.message);
+          setUploading(false);
+          setUploadProgress(0);
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          const percentage = Math.round((bytesUploaded / bytesTotal) * 100);
+          setUploadProgress(percentage);
+          console.log(`[TUS Upload] Progress: ${percentage}% (${bytesUploaded}/${bytesTotal})`);
+        },
+        onSuccess: () => {
+          console.log('[TUS Upload] Upload completed successfully!');
+          setUploadProgress(100);
+          setUploadComplete(true);
+          setUploading(false);
+          
+          onUploadComplete(data.videoUrl, data.thumbnailUrl);
+          
+          toast.success('Vídeo enviado com sucesso! 🎉', {
+            description: 'O processamento pode levar alguns minutos.',
+          });
         },
       });
 
-      setUploadProgress(90);
+      // Store reference for pause/resume
+      tusUploadRef.current = upload;
 
-      if (error) {
-        throw new Error(error.message || 'Erro ao enviar vídeo');
+      // Check for previous upload to resume
+      const previousUploads = await upload.findPreviousUploads();
+      if (previousUploads.length > 0) {
+        console.log('[TUS Upload] Resuming previous upload...');
+        upload.resumeFromPreviousUpload(previousUploads[0]);
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Falha no upload');
-      }
-
-      setUploadProgress(100);
-      setUploadComplete(true);
-      
-      // Pass URLs back to parent
-      onUploadComplete(data.videoUrl, data.thumbnailUrl);
-      
-      toast.success('Vídeo enviado com sucesso! 🎉', {
-        description: 'O processamento pode levar alguns minutos.',
-      });
+      // Start upload
+      upload.start();
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('[TUS Upload] Error:', error);
       toast.error('Erro ao enviar vídeo: ' + (error.message || 'Tente novamente'));
       setUploadProgress(0);
-    } finally {
       setUploading(false);
     }
   };
@@ -155,7 +196,10 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
     if (bytes < 1024 * 1024) {
       return `${(bytes / 1024).toFixed(1)} KB`;
     }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   };
 
   return (
@@ -194,7 +238,7 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
                 {dragActive ? 'Solte o vídeo aqui' : 'Arraste seu vídeo aqui ou clique'}
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                MP4, MOV, AVI, MKV, WebM • Máximo 500MB
+                MP4, MOV, AVI, MKV, WebM • Sem limite de tamanho
               </p>
             </div>
           </div>
@@ -218,7 +262,7 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
               variant="ghost"
               size="icon"
               onClick={removeFile}
-              disabled={uploading}
+              disabled={uploading && !isPaused}
               className="text-gray-400 hover:text-white"
             >
               <X className="w-5 h-5" />
@@ -238,10 +282,32 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
           {uploading && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Enviando para Bunny Stream...</span>
+                <span className="text-gray-400">
+                  {isPaused ? 'Upload pausado' : 'Enviando via TUS Protocol...'}
+                </span>
                 <span className="text-white font-medium">{uploadProgress}%</span>
               </div>
               <Progress value={uploadProgress} className="h-2" />
+              
+              {/* Pause/Resume Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={togglePause}
+                className="w-full"
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Retomar Upload
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pausar Upload
+                  </>
+                )}
+              </Button>
             </div>
           )}
 
@@ -256,24 +322,22 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
           )}
 
           {/* Upload Button */}
-          {!uploadComplete && (
+          {!uploadComplete && !uploading && (
             <Button
               onClick={uploadToBunny}
-              disabled={uploading || !title || title.trim().length < 3}
+              disabled={!title || title.trim().length < 3}
               className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Video className="w-4 h-4 mr-2" />
-                  Fazer Upload para Bunny Stream
-                </>
-              )}
+              <Video className="w-4 h-4 mr-2" />
+              Fazer Upload para Bunny Stream
             </Button>
+          )}
+
+          {uploading && !isPaused && (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Upload resumível - pode fechar e retomar depois
+            </div>
           )}
 
           {!title || title.trim().length < 3 ? (

@@ -1,13 +1,11 @@
-// Bunny Upload Edge Function - v2 - Force deploy trigger 2025-12-09T11:18:00Z
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
+// Bunny Upload Edge Function - v3 - Using Deno.serve native (no external imports)
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,7 +18,7 @@ serve(async (req) => {
       JSON.stringify({ 
         status: 'ok', 
         message: 'bunny-upload Edge Function is deployed and running!',
-        version: 'v1',
+        version: 'v3-native',
         timestamp: new Date().toISOString()
       }),
       { 

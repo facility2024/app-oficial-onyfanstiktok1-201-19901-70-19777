@@ -96,6 +96,24 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
     }
   };
 
+  // Helper: Fetch with retry for network resilience
+  const fetchWithRetry = async (url: string, options: RequestInit, retries = 3): Promise<Response> => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`[TUS Upload] Fetch attempt ${i + 1}/${retries}...`);
+        const response = await fetch(url, options);
+        return response;
+      } catch (error: any) {
+        console.error(`[TUS Upload] Fetch attempt ${i + 1} failed:`, error);
+        if (i === retries - 1) throw error;
+        const delay = 1000 * (i + 1);
+        console.log(`[TUS Upload] Retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+    throw new Error('Todas as tentativas falharam');
+  };
+
   const uploadToBunny = async () => {
     if (!file) {
       toast.error('Selecione um vídeo primeiro');
@@ -115,33 +133,54 @@ export function BunnyVideoUploader({ onUploadComplete, title }: BunnyVideoUpload
       console.log('[TUS Upload] File:', file.name, 'Size:', file.size, 'Type:', file.type);
       console.log('[TUS Upload] Title:', title.trim());
       
-      // Step 1: Create video object in Bunny (lightweight call, only title)
-      console.log('[TUS Upload] Step 1: Calling Edge Function...');
+      // Step 0: Verify user session
+      console.log('[TUS Upload] Step 0: Checking user session...');
+      const { data: { session } } = await supabase.auth.getSession();
       
-      let response;
+      if (!session) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+      console.log('[TUS Upload] Session valid, user:', session.user.email);
+      
+      // Step 1: Create video object in Bunny using DIRECT FETCH
+      console.log('[TUS Upload] Step 1: Calling Edge Function via direct fetch...');
+      
+      const functionUrl = 'https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/upload-bunny-stream';
+      
+      let response: Response;
       try {
-        response = await supabase.functions.invoke('upload-bunny-stream', {
-          body: { title: title.trim() }
+        response = await fetchWithRetry(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ title: title.trim() })
         });
-        console.log('[TUS Upload] Edge Function raw response:', response);
-      } catch (invokeError: any) {
-        console.error('[TUS Upload] supabase.functions.invoke threw:', invokeError);
-        throw new Error('Falha ao conectar com o servidor: ' + (invokeError.message || 'Erro desconhecido'));
+        
+        console.log('[TUS Upload] Response status:', response.status);
+        console.log('[TUS Upload] Response headers:', Object.fromEntries(response.headers.entries()));
+        
+      } catch (fetchError: any) {
+        console.error('[TUS Upload] Fetch completely failed:', fetchError);
+        throw new Error(`Falha de conexão: ${fetchError.message}. Verifique sua internet ou se a Edge Function está deployada.`);
       }
 
-      const { data, error } = response;
+      // Parse response
+      const responseText = await response.text();
+      console.log('[TUS Upload] Response body:', responseText);
 
-      if (error) {
-        console.error('[TUS Upload] Edge function error object:', error);
-        const errorMsg = typeof error === 'object' 
-          ? JSON.stringify(error) 
-          : (error.message || 'Erro ao criar objeto de vídeo');
-        throw new Error(errorMsg);
+      if (!response.ok) {
+        console.error('[TUS Upload] HTTP Error:', response.status, responseText);
+        throw new Error(`Erro ${response.status}: ${responseText || 'Erro desconhecido no servidor'}`);
       }
 
-      if (!data) {
-        console.error('[TUS Upload] No data in response');
-        throw new Error('Servidor não retornou dados. Verifique se a Edge Function está deployada.');
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('[TUS Upload] Failed to parse JSON:', parseError);
+        throw new Error('Resposta inválida do servidor. Resposta: ' + responseText.substring(0, 200));
       }
 
       if (!data.success) {

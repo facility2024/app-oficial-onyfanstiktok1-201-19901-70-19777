@@ -398,9 +398,15 @@ export default function MarketplacePage() {
                       </div>}
                   </div>
                   
-                  <h3 className="font-semibold text-sm mb-2 line-clamp-2 text-white">
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-1 text-white">
                     {product.name}
                   </h3>
+                  
+                  {product.description && (
+                    <p className="text-xs text-gray-400 mb-2 line-clamp-2">
+                      {product.description}
+                    </p>
+                  )}
                   
                   <div className="flex items-center gap-1 mb-2">
                     {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`w-3 h-3 ${star <= product.average_rating ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`} />)}

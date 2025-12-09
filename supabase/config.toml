@@ -8,3 +8,30 @@ verify_jwt = false
 
 [functions.upload-bunny-stream]
 verify_jwt = false
+
+[functions.generate-pix]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.process-scheduled-posts]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-sms]
+verify_jwt = false
+
+[functions.strong-sms]
+verify_jwt = false
+
+[functions.trigger-webhook]
+verify_jwt = false
+
+[functions.update-model-panel]
+verify_jwt = false

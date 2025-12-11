@@ -245,6 +245,17 @@ export const ChatScreen = ({
 
       if (error) {
         console.error('❌ Erro da Edge Function:', error);
+        // Tentar extrair detalhes do erro
+        const errorContext = error?.context;
+        console.error('❌ Contexto do erro:', errorContext);
+        if (errorContext?.body) {
+          try {
+            const errorBody = await errorContext.json?.() || errorContext.body;
+            console.error('❌ Corpo do erro:', errorBody);
+          } catch (e) {
+            console.error('❌ Não foi possível parsear corpo do erro');
+          }
+        }
         throw error;
       }
 
@@ -252,11 +263,13 @@ export const ChatScreen = ({
         await typeMessageWithEffect(data.response);
       } else if (data?.error) {
         console.error('❌ Erro retornado pela IA:', data.error);
-        await typeMessageWithEffect(`Desculpe, estou com problemas técnicos: ${data.error.substring(0, 50)}... 😅`);
+        console.error('❌ Detalhes:', data?.details);
+        await typeMessageWithEffect(`Desculpe, estou com problemas técnicos: ${data.error}... 😅`);
       }
     } catch (error: any) {
       console.error('❌ Erro ao enviar mensagem:', error);
       console.error('❌ Tipo do erro:', error?.name, error?.message);
+      console.error('❌ Error context:', error?.context);
       
       // Mensagem mais específica baseada no tipo de erro
       let errorMsg = 'Ops! Algo deu errado. Tente novamente em alguns instantes! 💕';

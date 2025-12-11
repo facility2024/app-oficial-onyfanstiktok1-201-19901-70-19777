@@ -6,7 +6,10 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-const VERSION = "creator-chat-v1.0";
+const VERSION = "creator-chat-v1.1";
+const BUILD_TIME = "2025-12-11T14:30:00Z";
+
+console.log(`🔄 [${VERSION}] Build time: ${BUILD_TIME} - Forcing redeploy`);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

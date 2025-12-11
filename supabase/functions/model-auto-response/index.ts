@@ -1,10 +1,12 @@
+// =====================================================
+// MODEL-AUTO-RESPONSE v3.0 - COMPLETE REWRITE
+// Deployed: 2024-12-11 - FORCE CACHE INVALIDATION
+// =====================================================
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-// Edge Function v2.1 - Model Auto Response (Ultra Robust) - FORCE REDEPLOY
-// NUNCA retorna 500 - sempre retorna 200 com mensagem amigável
-// Deployed: ${new Date().toISOString()}
-console.log('🚀 MODEL-AUTO-RESPONSE v2.1 FORCE REDEPLOY loaded at', new Date().toISOString());
+const VERSION = "v3.0-FORCE-CACHE-CLEAR";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,218 +14,224 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
-// Função auxiliar para retornar resposta amigável
-function friendlyResponse(message: string, debug?: any) {
-  console.log('📤 Retornando resposta amigável:', message, debug ? JSON.stringify(debug) : '');
-  return new Response(
-    JSON.stringify({ 
-      response: message,
-      debug: debug || null
-    }),
-    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
+console.log(`🚀 [${VERSION}] Edge Function initialized at ${new Date().toISOString()}`);
 
-Deno.serve(async (req: Request) => {
-  const requestId = Math.random().toString(36).substring(7);
-  console.log(`\n${'='.repeat(50)}`);
-  console.log(`📨 [${requestId}] NOVA REQUISIÇÃO: ${req.method} ${new Date().toISOString()}`);
+// Função auxiliar para resposta amigável - NUNCA retorna erro 500
+const createResponse = (data: any, status = 200) => {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+};
+
+const friendlyError = (message: string, debugInfo?: any) => {
+  console.log(`📤 Resposta amigável: ${message}`, debugInfo || '');
+  return createResponse({ response: message, debug: debugInfo });
+};
+
+// Handler principal
+const handler = async (req: Request): Promise<Response> => {
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   
-  // Handle CORS preflight requests
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`📨 [${requestId}] ${req.method} request received`);
+  console.log(`📨 [${requestId}] Version: ${VERSION}`);
+
+  // CORS preflight
   if (req.method === 'OPTIONS') {
     console.log(`✅ [${requestId}] CORS preflight OK`);
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // MEGA TRY-CATCH - Envolve TUDO
   try {
-    // ETAPA 1: Parse do body
-    console.log(`📥 [${requestId}] ETAPA 1: Parseando body...`);
-    let body: any;
+    // Step 1: Parse request body
+    console.log(`📥 [${requestId}] Step 1: Parsing request body...`);
+    
+    let requestBody: any;
     try {
-      body = await req.json();
-      console.log(`✅ [${requestId}] Body parseado:`, JSON.stringify(body));
-    } catch (parseError: any) {
-      console.error(`❌ [${requestId}] Erro ao parsear JSON:`, parseError?.message);
-      return friendlyResponse('Ops! Não entendi sua mensagem. Tente novamente! 💕', { step: 'parse', error: parseError?.message });
+      const rawBody = await req.text();
+      console.log(`📥 [${requestId}] Raw body length: ${rawBody.length}`);
+      requestBody = JSON.parse(rawBody);
+    } catch (parseErr: any) {
+      console.error(`❌ [${requestId}] JSON parse error:`, parseErr?.message);
+      return friendlyError('Não entendi sua mensagem. Tente novamente! 💕', { step: 1, error: 'parse_error' });
     }
 
-    const { entityId, message, conversationHistory = [], isCreator = false } = body;
-    console.log(`📋 [${requestId}] Dados extraídos:`, { entityId, isCreator, messageLength: message?.length, historyLength: conversationHistory?.length });
+    const { entityId, message, conversationHistory, isCreator } = requestBody;
+    console.log(`📋 [${requestId}] Extracted data:`, {
+      entityId: entityId || 'MISSING',
+      isCreator: isCreator || false,
+      messageLength: message?.length || 0,
+      historyLength: conversationHistory?.length || 0
+    });
 
-    // ETAPA 2: Validar campos obrigatórios
-    console.log(`🔍 [${requestId}] ETAPA 2: Validando campos...`);
-    if (!entityId || !message) {
-      console.error(`❌ [${requestId}] Campos obrigatórios ausentes`);
-      return friendlyResponse('Por favor, envie uma mensagem! 💕', { step: 'validation', missing: { entityId: !entityId, message: !message } });
+    // Step 2: Validate required fields
+    console.log(`🔍 [${requestId}] Step 2: Validating fields...`);
+    
+    if (!entityId) {
+      console.error(`❌ [${requestId}] Missing entityId`);
+      return friendlyError('Erro de configuração. Tente novamente! 💕', { step: 2, missing: 'entityId' });
+    }
+    
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      console.error(`❌ [${requestId}] Missing or invalid message`);
+      return friendlyError('Por favor, digite uma mensagem! 💕', { step: 2, missing: 'message' });
     }
 
-    // ETAPA 3: Verificar variáveis de ambiente
-    console.log(`🔧 [${requestId}] ETAPA 3: Verificando env vars...`);
+    // Step 3: Create Supabase client
+    console.log(`🔧 [${requestId}] Step 3: Creating Supabase client...`);
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error(`❌ [${requestId}] Variáveis de ambiente Supabase ausentes`);
-      return friendlyResponse('Estou com problemas técnicos. Tente mais tarde! 💕', { step: 'env', hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey });
+    if (!supabaseUrl || !supabaseKey) {
+      console.error(`❌ [${requestId}] Missing Supabase env vars`);
+      return friendlyError('Configuração do servidor incompleta. 💕', { step: 3, error: 'env_vars' });
     }
-    console.log(`✅ [${requestId}] Env vars OK`);
-
-    // ETAPA 4: Criar cliente Supabase
-    console.log(`🔧 [${requestId}] ETAPA 4: Criando cliente Supabase...`);
-    let supabase: any;
-    try {
-      supabase = createClient(supabaseUrl, supabaseServiceKey);
-      console.log(`✅ [${requestId}] Cliente Supabase criado`);
-    } catch (clientError: any) {
-      console.error(`❌ [${requestId}] Erro ao criar cliente Supabase:`, clientError?.message);
-      return friendlyResponse('Problema de conexão. Tente novamente! 💕', { step: 'supabase_client', error: clientError?.message });
-    }
-
-    // ETAPA 5: Buscar chat panel
-    console.log(`🔍 [${requestId}] ETAPA 5: Buscando chat panel para ${isCreator ? 'creator_id' : 'model_id'} = ${entityId}`);
-    let chatPanel: any = null;
     
-    try {
-      const columnName = isCreator ? 'creator_id' : 'model_id';
-      const { data, error } = await supabase
-        .from('model_chat_panels')
-        .select('*')
-        .eq(columnName, entityId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error(`❌ [${requestId}] Erro na query:`, error);
-        return friendlyResponse('Não consegui acessar minha configuração. Tente novamente! 💕', { step: 'query', error: error.message });
-      }
-      
-      chatPanel = data;
-      console.log(`✅ [${requestId}] Query executada. Resultado:`, chatPanel ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
-    } catch (queryError: any) {
-      console.error(`❌ [${requestId}] Exception na query:`, queryError?.message);
-      return friendlyResponse('Erro ao buscar configuração. Tente novamente! 💕', { step: 'query_exception', error: queryError?.message });
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log(`✅ [${requestId}] Supabase client created`);
+
+    // Step 4: Fetch chat panel configuration
+    console.log(`🔍 [${requestId}] Step 4: Fetching chat panel...`);
+    console.log(`🔍 [${requestId}] Looking for ${isCreator ? 'creator_id' : 'model_id'} = ${entityId}`);
+    
+    const columnName = isCreator === true ? 'creator_id' : 'model_id';
+    
+    const { data: chatPanel, error: queryError } = await supabase
+      .from('model_chat_panels')
+      .select('*')
+      .eq(columnName, entityId)
+      .maybeSingle();
+
+    if (queryError) {
+      console.error(`❌ [${requestId}] Query error:`, queryError);
+      return friendlyError('Não consegui acessar minha configuração. 💕', { step: 4, error: queryError.message });
     }
 
-    // ETAPA 6: Verificar se chat panel existe
-    console.log(`🔍 [${requestId}] ETAPA 6: Verificando existência do chat panel...`);
     if (!chatPanel) {
-      console.log(`⚠️ [${requestId}] Chat panel NÃO encontrado para ${isCreator ? 'creator' : 'model'}: ${entityId}`);
-      return friendlyResponse('Meu chat ainda não foi configurado. Configure-o primeiro! 💕', { step: 'not_found', entityId, isCreator });
+      console.log(`⚠️ [${requestId}] Chat panel NOT FOUND for ${columnName}=${entityId}`);
+      return friendlyError('Meu chat ainda não foi configurado. Configure no painel admin! 💕', { step: 4, notFound: true });
     }
 
-    // ETAPA 7: Log completo do chat panel
-    console.log(`📋 [${requestId}] ETAPA 7: Chat panel encontrado - DETALHES COMPLETOS:`);
-    console.log(`   - ID: ${chatPanel.id}`);
-    console.log(`   - is_active: ${chatPanel.is_active}`);
-    console.log(`   - is_online: ${chatPanel.is_online}`);
-    console.log(`   - ai_provider: "${chatPanel.ai_provider}"`);
-    console.log(`   - api_key_encrypted: ${chatPanel.api_key_encrypted ? `"${chatPanel.api_key_encrypted.substring(0, 10)}..." (${chatPanel.api_key_encrypted.length} chars)` : 'VAZIO/NULL'}`);
-    console.log(`   - prompt: ${chatPanel.prompt ? `"${chatPanel.prompt.substring(0, 50)}..."` : 'VAZIO/NULL'}`);
-    console.log(`   - model_id: ${chatPanel.model_id}`);
-    console.log(`   - creator_id: ${chatPanel.creator_id}`);
+    // Step 5: Log chat panel details
+    console.log(`✅ [${requestId}] Step 5: Chat panel found!`);
+    console.log(`   📋 ID: ${chatPanel.id}`);
+    console.log(`   📋 is_active: ${chatPanel.is_active}`);
+    console.log(`   📋 is_online: ${chatPanel.is_online}`);
+    console.log(`   📋 ai_provider: "${chatPanel.ai_provider}"`);
+    console.log(`   📋 api_key: ${chatPanel.api_key_encrypted ? `${chatPanel.api_key_encrypted.substring(0, 8)}... (${chatPanel.api_key_encrypted.length} chars)` : 'EMPTY'}`);
+    console.log(`   📋 prompt: ${chatPanel.prompt ? `"${chatPanel.prompt.substring(0, 40)}..."` : 'EMPTY'}`);
 
-    // ETAPA 8: Verificar se está ativo
-    console.log(`🔍 [${requestId}] ETAPA 8: Verificando status...`);
+    // Step 6: Validate chat panel status
+    console.log(`🔍 [${requestId}] Step 6: Validating chat status...`);
+    
     if (!chatPanel.is_active) {
-      console.log(`⚠️ [${requestId}] Chat está DESATIVADO`);
-      return friendlyResponse('Meu chat está desativado no momento. 💕', { step: 'inactive' });
+      console.log(`⚠️ [${requestId}] Chat is INACTIVE`);
+      return friendlyError('Meu chat está desativado no momento. 💕', { step: 6, inactive: true });
     }
 
-    // ETAPA 9: Verificar provider
-    console.log(`🔍 [${requestId}] ETAPA 9: Verificando provider...`);
-    const provider = chatPanel.ai_provider?.toLowerCase()?.trim();
-    console.log(`   Provider normalizado: "${provider}"`);
+    // Step 7: Validate AI provider
+    console.log(`🔍 [${requestId}] Step 7: Validating AI provider...`);
     
-    if (!provider) {
-      console.error(`❌ [${requestId}] Provider não configurado. Valor raw: "${chatPanel.ai_provider}"`);
-      return friendlyResponse('Configure o provedor de IA no painel admin! 💕', { step: 'no_provider', rawProvider: chatPanel.ai_provider });
-    }
-
-    // ETAPA 10: Verificar API key
-    console.log(`🔍 [${requestId}] ETAPA 10: Verificando API key...`);
-    const apiKey = chatPanel.api_key_encrypted?.trim();
+    const provider = (chatPanel.ai_provider || '').toLowerCase().trim();
+    console.log(`   Provider normalized: "${provider}"`);
     
-    if (!apiKey) {
-      console.error(`❌ [${requestId}] API Key não configurada`);
-      return friendlyResponse('Configure a API Key no painel admin! 💕', { step: 'no_api_key' });
+    if (!provider || (provider !== 'gemini' && provider !== 'openai')) {
+      console.error(`❌ [${requestId}] Invalid provider: "${provider}"`);
+      return friendlyError(`Configure o provedor de IA (gemini ou openai) no painel admin! 💕`, { step: 7, provider: chatPanel.ai_provider });
     }
-    console.log(`✅ [${requestId}] API Key presente: ${apiKey.substring(0, 8)}... (${apiKey.length} chars)`);
 
-    // ETAPA 11: Chamar IA
-    console.log(`🤖 [${requestId}] ETAPA 11: Chamando IA (provider: ${provider})...`);
+    // Step 8: Validate API key
+    console.log(`🔍 [${requestId}] Step 8: Validating API key...`);
+    
+    const apiKey = (chatPanel.api_key_encrypted || '').trim();
+    
+    if (!apiKey || apiKey.length < 10) {
+      console.error(`❌ [${requestId}] Invalid API key (length: ${apiKey.length})`);
+      return friendlyError('Configure a API Key no painel admin! 💕', { step: 8, keyLength: apiKey.length });
+    }
+    console.log(`✅ [${requestId}] API key valid: ${apiKey.substring(0, 8)}... (${apiKey.length} chars)`);
+
+    // Step 9: Prepare AI request
+    console.log(`🤖 [${requestId}] Step 9: Preparing AI request...`);
+    
     const systemPrompt = chatPanel.prompt || 'Você é um assistente prestativo e amigável.';
-    let aiResponse = '';
+    const history = Array.isArray(conversationHistory) ? conversationHistory : [];
+    
+    console.log(`   System prompt: "${systemPrompt.substring(0, 50)}..."`);
+    console.log(`   History messages: ${history.length}`);
+    console.log(`   User message: "${message.substring(0, 50)}..."`);
 
+    // Step 10: Call AI API
+    console.log(`🤖 [${requestId}] Step 10: Calling ${provider.toUpperCase()} API...`);
+    
+    let aiResponse: string;
+    
     try {
       if (provider === 'gemini') {
-        console.log(`🔧 [${requestId}] Iniciando chamada Gemini...`);
-        aiResponse = await callGemini(apiKey, message, systemPrompt, conversationHistory, requestId);
-      } else if (provider === 'openai') {
-        console.log(`🔧 [${requestId}] Iniciando chamada OpenAI...`);
-        aiResponse = await callOpenAI(apiKey, message, systemPrompt, conversationHistory, requestId);
+        aiResponse = await callGeminiAPI(apiKey, message, systemPrompt, history, requestId);
       } else {
-        console.error(`❌ [${requestId}] Provider não suportado: "${provider}"`);
-        return friendlyResponse(`Provider "${provider}" não é suportado. Use "gemini" ou "openai"! 💕`, { step: 'unsupported_provider', provider });
+        aiResponse = await callOpenAIAPI(apiKey, message, systemPrompt, history, requestId);
       }
-
-      console.log(`✅ [${requestId}] Resposta da IA recebida (${aiResponse.length} chars)`);
+      
+      console.log(`✅ [${requestId}] AI response received (${aiResponse.length} chars)`);
     } catch (aiError: any) {
-      console.error(`❌ [${requestId}] ERRO NA IA:`, aiError?.message);
-      console.error(`❌ [${requestId}] Stack:`, aiError?.stack?.substring(0, 500));
-      return friendlyResponse('Estou com dificuldades técnicas. Tente novamente! 💕', { 
-        step: 'ai_error', 
-        provider,
-        error: aiError?.message,
-        apiKeyPrefix: apiKey.substring(0, 8)
+      console.error(`❌ [${requestId}] AI API error:`, aiError?.message);
+      return friendlyError('Estou com dificuldades técnicas. Tente novamente! 💕', { 
+        step: 10, 
+        provider, 
+        error: aiError?.message 
       });
     }
 
-    // ETAPA 12: Retornar resposta
-    console.log(`✅ [${requestId}] ETAPA 12: Retornando resposta final`);
-    console.log(`${'='.repeat(50)}\n`);
+    // Step 11: Return success response
+    console.log(`✅ [${requestId}] Step 11: Returning success response`);
+    console.log(`${'='.repeat(60)}\n`);
     
-    return new Response(
-      JSON.stringify({ response: aiResponse }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createResponse({ response: aiResponse });
 
-  } catch (MEGA_ERROR: any) {
-    // MEGA CATCH - Captura QUALQUER erro não previsto
-    console.error(`\n🚨🚨🚨 [MEGA ERROR] ERRO NÃO CAPTURADO 🚨🚨🚨`);
-    console.error(`Mensagem: ${MEGA_ERROR?.message}`);
-    console.error(`Stack: ${MEGA_ERROR?.stack}`);
-    console.error(`Tipo: ${typeof MEGA_ERROR}`);
-    console.error(`JSON: ${JSON.stringify(MEGA_ERROR)}`);
+  } catch (unexpectedError: any) {
+    // Catch-all for any unexpected errors
+    console.error(`🚨 [${requestId}] UNEXPECTED ERROR:`, unexpectedError?.message);
+    console.error(`🚨 [${requestId}] Stack:`, unexpectedError?.stack?.substring(0, 500));
     
-    // NUNCA retorna 500 - sempre 200 com mensagem amigável
-    return friendlyResponse('Ops! Algo deu errado. Tente novamente! 💕', {
-      step: 'mega_catch',
-      error: MEGA_ERROR?.message,
-      type: typeof MEGA_ERROR
+    return friendlyError('Ops! Algo deu errado. Tente novamente! 💕', {
+      step: 'unexpected',
+      error: unexpectedError?.message
     });
   }
-});
+};
 
-async function callGemini(apiKey: string, userMessage: string, systemPrompt: string, history: any[], requestId: string): Promise<string> {
-  console.log(`🔧 [${requestId}] Gemini: Preparando request...`);
+// Gemini API call
+async function callGeminiAPI(
+  apiKey: string, 
+  userMessage: string, 
+  systemPrompt: string, 
+  history: any[], 
+  requestId: string
+): Promise<string> {
+  console.log(`🔧 [${requestId}] Gemini: Building request...`);
   
-  const contents = [];
-
-  // Adicionar histórico
+  const contents: any[] = [];
+  
+  // Add history
   for (const msg of history) {
-    contents.push({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
-    });
+    if (msg && msg.content) {
+      contents.push({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: String(msg.content) }]
+      });
+    }
   }
-
-  // Adicionar mensagem atual
+  
+  // Add current message
   contents.push({
     role: 'user',
     parts: [{ text: userMessage }]
   });
 
-  console.log(`🔧 [${requestId}] Gemini: Enviando ${contents.length} mensagens...`);
+  console.log(`🔧 [${requestId}] Gemini: Sending ${contents.length} messages...`);
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -232,9 +240,7 @@ async function callGemini(apiKey: string, userMessage: string, systemPrompt: str
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents,
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
+        systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
           temperature: 0.9,
           topK: 40,
@@ -249,36 +255,51 @@ async function callGemini(apiKey: string, userMessage: string, systemPrompt: str
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`❌ [${requestId}] Gemini erro:`, errorText);
-    throw new Error(`Gemini API error: ${response.status} - ${errorText.substring(0, 200)}`);
+    console.error(`❌ [${requestId}] Gemini error:`, errorText.substring(0, 300));
+    throw new Error(`Gemini API error: ${response.status}`);
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
-  console.log(`✅ [${requestId}] Gemini: Resposta OK (${text.length} chars)`);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+  if (!text) {
+    console.error(`❌ [${requestId}] Gemini: No text in response`);
+    throw new Error('Gemini returned empty response');
+  }
+  
+  console.log(`✅ [${requestId}] Gemini: Success (${text.length} chars)`);
   return text;
 }
 
-async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: string, history: any[], requestId: string): Promise<string> {
-  console.log(`🔧 [${requestId}] OpenAI: Preparando request...`);
-  console.log(`🔧 [${requestId}] OpenAI: API Key prefix: ${apiKey.substring(0, 10)}...`);
+// OpenAI API call
+async function callOpenAIAPI(
+  apiKey: string, 
+  userMessage: string, 
+  systemPrompt: string, 
+  history: any[], 
+  requestId: string
+): Promise<string> {
+  console.log(`🔧 [${requestId}] OpenAI: Building request...`);
+  console.log(`🔧 [${requestId}] OpenAI: API key prefix: ${apiKey.substring(0, 10)}...`);
   
-  const messages = [
+  const messages: any[] = [
     { role: 'system', content: systemPrompt }
   ];
-
-  // Adicionar histórico
+  
+  // Add history
   for (const msg of history) {
-    messages.push({
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.content
-    });
+    if (msg && msg.content) {
+      messages.push({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: String(msg.content)
+      });
+    }
   }
-
-  // Adicionar mensagem atual
+  
+  // Add current message
   messages.push({ role: 'user', content: userMessage });
 
-  console.log(`🔧 [${requestId}] OpenAI: Enviando ${messages.length} mensagens...`);
+  console.log(`🔧 [${requestId}] OpenAI: Sending ${messages.length} messages...`);
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -298,19 +319,30 @@ async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: str
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`❌ [${requestId}] OpenAI erro raw:`, errorText);
+    console.error(`❌ [${requestId}] OpenAI error:`, errorText.substring(0, 300));
     
+    let errorMessage = `OpenAI API error: ${response.status}`;
     try {
       const errorJson = JSON.parse(errorText);
-      const errorMessage = errorJson.error?.message || errorText;
-      throw new Error(`OpenAI: ${errorMessage}`);
-    } catch (parseErr) {
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText.substring(0, 200)}`);
-    }
+      if (errorJson.error?.message) {
+        errorMessage = errorJson.error.message;
+      }
+    } catch {}
+    
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();
-  const text = data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
-  console.log(`✅ [${requestId}] OpenAI: Resposta OK (${text.length} chars)`);
+  const text = data.choices?.[0]?.message?.content;
+  
+  if (!text) {
+    console.error(`❌ [${requestId}] OpenAI: No text in response`);
+    throw new Error('OpenAI returned empty response');
+  }
+  
+  console.log(`✅ [${requestId}] OpenAI: Success (${text.length} chars)`);
   return text;
 }
+
+// Start the server
+Deno.serve(handler);

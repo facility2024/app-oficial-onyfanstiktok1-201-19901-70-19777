@@ -6,5 +6,8 @@ verify_jwt = false
 [functions.model-chat]
 verify_jwt = false
 
+[functions.model-auto-response]
+verify_jwt = false
+
 [functions.bunny-video-upload]
 verify_jwt = false

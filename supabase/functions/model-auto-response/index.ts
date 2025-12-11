@@ -1,9 +1,10 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-// Edge Function v2.0 - Model Auto Response (Ultra Robust)
+// Edge Function v2.1 - Model Auto Response (Ultra Robust) - FORCE REDEPLOY
 // NUNCA retorna 500 - sempre retorna 200 com mensagem amigável
-console.log('🚀 MODEL-AUTO-RESPONSE v2.0 ULTRA ROBUST loaded at', new Date().toISOString());
+// Deployed: ${new Date().toISOString()}
+console.log('🚀 MODEL-AUTO-RESPONSE v2.1 FORCE REDEPLOY loaded at', new Date().toISOString());
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

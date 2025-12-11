@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.bunny-video-upload]
 verify_jwt = false
+
+[functions.creator-chat]
+verify_jwt = false

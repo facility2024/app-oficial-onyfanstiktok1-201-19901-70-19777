@@ -229,10 +229,10 @@ export const ChatScreen = ({
         content: m.text
       }));
 
-      console.log('📤 Enviando mensagem para Edge Function creator-chat...', { entityId, isCreator });
+      console.log('📤 Enviando mensagem para Edge Function model-auto-response...', { entityId, isCreator });
 
-      // Call AI edge function - usando creator-chat (nova função)
-      const { data, error } = await supabase.functions.invoke('creator-chat', {
+      // Call AI edge function
+      const { data, error } = await supabase.functions.invoke('model-auto-response', {
         body: {
           entityId,
           message: inputMessage,

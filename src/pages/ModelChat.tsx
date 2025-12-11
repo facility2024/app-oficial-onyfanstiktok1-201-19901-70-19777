@@ -254,8 +254,8 @@ export default function ModelChat() {
         content: msg.content
       }));
 
-      console.log('📤 Enviando para model-auto-response:', { entityId, isCreator });
-      const { data, error } = await supabase.functions.invoke('model-auto-response', {
+      console.log('📤 Enviando para creator-chat:', { entityId, isCreator });
+      const { data, error } = await supabase.functions.invoke('creator-chat', {
         body: {
           entityId,
           message: userMessage.content,

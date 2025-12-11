@@ -165,6 +165,9 @@ async function callGemini(apiKey: string, userMessage: string, systemPrompt: str
 }
 
 async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: string, history: any[]): Promise<string> {
+  console.log('🔑 OpenAI: Iniciando chamada...');
+  console.log('🔑 OpenAI: API Key começa com:', apiKey.substring(0, 10) + '...');
+  
   const messages = [
     { role: 'system', content: systemPrompt }
   ];
@@ -180,26 +183,45 @@ async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: str
   // Adicionar mensagem atual
   messages.push({ role: 'user', content: userMessage });
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages,
-      temperature: 0.9,
-      max_tokens: 1024,
-    })
-  });
+  console.log('🔑 OpenAI: Enviando', messages.length, 'mensagens');
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Erro OpenAI:', errorText);
-    throw new Error(`Erro na API OpenAI: ${response.status}`);
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages,
+        temperature: 0.9,
+        max_tokens: 1024,
+      })
+    });
+
+    console.log('🔑 OpenAI: Status da resposta:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Erro OpenAI - Status:', response.status);
+      console.error('❌ Erro OpenAI - Body:', errorText);
+      
+      // Parse para dar mensagem mais clara
+      try {
+        const errorJson = JSON.parse(errorText);
+        const errorMessage = errorJson.error?.message || errorText;
+        throw new Error(`OpenAI: ${errorMessage}`);
+      } catch {
+        throw new Error(`Erro na API OpenAI: ${response.status} - ${errorText}`);
+      }
+    }
+
+    const data = await response.json();
+    console.log('✅ OpenAI: Resposta recebida com sucesso');
+    return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
+  } catch (error: any) {
+    console.error('❌ OpenAI Exception:', error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
 }

@@ -41,30 +41,73 @@ Deno.serve(async (req: Request) => {
     }
 
     // Criar cliente Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Variáveis de ambiente Supabase não configuradas');
+      return new Response(
+        JSON.stringify({ error: 'Configuração do servidor incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🔍 Buscando configuração do chat panel...');
+    console.log('🔍 Buscando configuração do chat panel para:', isCreator ? 'creator_id' : 'model_id', entityId);
 
     // Buscar configuração do chat panel - suporta model_id OU creator_id
-    let query = supabase
-      .from('model_chat_panels')
-      .select('*');
+    let chatPanel = null;
+    let panelError = null;
 
-    if (isCreator) {
-      query = query.eq('creator_id', entityId);
-    } else {
-      query = query.eq('model_id', entityId);
+    try {
+      if (isCreator) {
+        const result = await supabase
+          .from('model_chat_panels')
+          .select('*')
+          .eq('creator_id', entityId)
+          .maybeSingle();
+        chatPanel = result.data;
+        panelError = result.error;
+      } else {
+        const result = await supabase
+          .from('model_chat_panels')
+          .select('*')
+          .eq('model_id', entityId)
+          .maybeSingle();
+        chatPanel = result.data;
+        panelError = result.error;
+      }
+    } catch (queryError: any) {
+      console.error('❌ Erro ao consultar chat panel:', queryError);
+      return new Response(
+        JSON.stringify({ 
+          response: 'Desculpe, não consegui acessar minha configuração. Tente novamente! 💕',
+          error: queryError?.message 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    const { data: chatPanel, error: panelError } = await query.single();
 
     if (panelError) {
       console.error('❌ Erro ao buscar chat panel:', panelError);
       return new Response(
-        JSON.stringify({ error: 'Chat panel não encontrado' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          response: 'Desculpe, houve um problema ao carregar minha configuração. 💕',
+          error: panelError.message 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!chatPanel) {
+      console.log('⚠️ Chat panel não encontrado para:', entityId, 'isCreator:', isCreator);
+      return new Response(
+        JSON.stringify({ 
+          response: 'Meu chat ainda não foi configurado. Por favor, configure-o no painel de administração! 💕',
+          notConfigured: true 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

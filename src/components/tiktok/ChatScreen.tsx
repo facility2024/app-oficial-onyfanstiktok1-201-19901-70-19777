@@ -229,53 +229,112 @@ export const ChatScreen = ({
         content: m.text
       }));
 
-      console.log('📤 Enviando mensagem para Edge Function model-auto-response...', { entityId, isCreator });
+      console.log('📤 Usando fallback direto para IA...', { entityId, isCreator });
 
-      // Call AI edge function
-      const { data, error } = await supabase.functions.invoke('model-auto-response', {
-        body: {
-          entityId,
-          message: inputMessage,
-          conversationHistory,
-          isCreator
-        }
-      });
+      // Buscar configuração do chat panel diretamente
+      const columnName = isCreator ? 'creator_id' : 'model_id';
+      const { data: chatPanel, error: panelError } = await supabase
+        .from('model_chat_panels' as any)
+        .select('*')
+        .eq(columnName, entityId)
+        .maybeSingle() as { data: any; error: any };
 
-      console.log('📥 Resposta da Edge Function:', { data, error });
+      if (panelError || !chatPanel) {
+        console.error('❌ Chat panel não encontrado:', panelError);
+        throw new Error('Chat não configurado');
+      }
 
-      if (error) {
-        console.error('❌ Erro da Edge Function:', error);
-        // Tentar extrair detalhes do erro
-        const errorContext = error?.context;
-        console.error('❌ Contexto do erro:', errorContext);
-        if (errorContext?.body) {
-          try {
-            const errorBody = await errorContext.json?.() || errorContext.body;
-            console.error('❌ Corpo do erro:', errorBody);
-          } catch (e) {
-            console.error('❌ Não foi possível parsear corpo do erro');
+      if (!chatPanel.is_active) {
+        throw new Error('Chat desativado');
+      }
+
+      const provider = (chatPanel.ai_provider || '').toLowerCase().trim();
+      const apiKey = (chatPanel.api_key_encrypted || '').trim();
+      const systemPrompt = chatPanel.prompt || 'Você é um assistente amigável.';
+
+      if (!provider || !apiKey || apiKey.length < 10) {
+        throw new Error('API não configurada');
+      }
+
+      console.log(`🤖 Chamando ${provider} diretamente...`);
+
+      let aiResponse: string;
+
+      if (provider === 'gemini') {
+        // Chamada direta ao Gemini
+        const contents = conversationHistory.map(m => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }]
+        }));
+        contents.push({ role: 'user', parts: [{ text: inputMessage }] });
+
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents,
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              generationConfig: { temperature: 0.9, maxOutputTokens: 1024 }
+            })
           }
+        );
+
+        if (!geminiRes.ok) {
+          const errText = await geminiRes.text();
+          console.error('❌ Gemini error:', errText);
+          throw new Error('Erro na API Gemini');
         }
-        throw error;
+
+        const geminiData = await geminiRes.json();
+        aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta';
+      } else {
+        // Chamada direta ao OpenAI
+        const openaiMessages = [
+          { role: 'system', content: systemPrompt },
+          ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
+          { role: 'user', content: inputMessage }
+        ];
+
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: openaiMessages,
+            temperature: 0.9,
+            max_tokens: 1024
+          })
+        });
+
+        if (!openaiRes.ok) {
+          const errText = await openaiRes.text();
+          console.error('❌ OpenAI error:', errText);
+          throw new Error('Erro na API OpenAI');
+        }
+
+        const openaiData = await openaiRes.json();
+        aiResponse = openaiData.choices?.[0]?.message?.content || 'Sem resposta';
       }
 
-      if (data?.response) {
-        await typeMessageWithEffect(data.response);
-      } else if (data?.error) {
-        console.error('❌ Erro retornado pela IA:', data.error);
-        console.error('❌ Detalhes:', data?.details);
-        await typeMessageWithEffect(`Desculpe, estou com problemas técnicos: ${data.error}... 😅`);
-      }
+      console.log('✅ Resposta da IA recebida:', aiResponse.length, 'chars');
+      await typeMessageWithEffect(aiResponse);
+
     } catch (error: any) {
       console.error('❌ Erro ao enviar mensagem:', error);
-      console.error('❌ Tipo do erro:', error?.name, error?.message);
-      console.error('❌ Error context:', error?.context);
       
-      // Mensagem mais específica baseada no tipo de erro
-      let errorMsg = 'Ops! Algo deu errado. Tente novamente em alguns instantes! 💕';
+      let errorMsg = 'Ops! Algo deu errado. Tente novamente! 💕';
       
-      if (error?.message?.includes('Failed to send') || error?.message?.includes('FetchError')) {
-        errorMsg = 'Não consegui conectar ao servidor. Verifique sua conexão e tente novamente! 🔌';
+      if (error?.message?.includes('Chat não configurado')) {
+        errorMsg = 'Meu chat ainda não foi configurado. Configure no painel admin! 💕';
+      } else if (error?.message?.includes('Chat desativado')) {
+        errorMsg = 'Meu chat está desativado no momento. 💕';
+      } else if (error?.message?.includes('API não configurada')) {
+        errorMsg = 'Configure a API Key no painel admin! 💕';
       } else if (error?.message?.includes('timeout')) {
         errorMsg = 'A resposta demorou muito. Tente novamente! ⏰';
       }

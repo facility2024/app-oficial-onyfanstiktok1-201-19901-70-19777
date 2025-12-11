@@ -1,21 +1,22 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-// Edge Function v3.1 - Model Chat - CORS FIX
-console.log('🚀 MODEL-CHAT Edge Function v3.1 loaded - ' + new Date().toISOString());
+// Edge Function v3.2 - Model Chat - FORCE REDEPLOY 2024-12-11
+// Supabase Deno Edge Function for AI chat with models/creators
+console.log('🚀 MODEL-CHAT v3.2 loaded at', new Date().toISOString());
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
-Deno.serve(async (req) => {
-  console.log('📨 MODEL-CHAT v3.1 - Requisição:', req.method, req.url);
+Deno.serve(async (req: Request) => {
+  const url = new URL(req.url);
+  console.log('📨 v3.2 Request:', req.method, url.pathname);
   
-  // CORS preflight - MUST return 'ok' body per Supabase docs
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('✅ Respondendo OPTIONS/CORS com body "ok"');
     return new Response('ok', { headers: corsHeaders });
   }
 

@@ -2,26 +2,38 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-// Edge Function v2.1 - Model Chat with OpenAI/Gemini support
-console.log('🚀 MODEL-CHAT Edge Function loaded v2.1');
+// Edge Function v2.2 - Model Chat with OpenAI/Gemini support - FORCE REDEPLOY
+console.log('🚀 MODEL-CHAT Edge Function loaded v2.2 - ' + new Date().toISOString());
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
-  console.log('📨 Requisição recebida:', req.method);
+  console.log('📨 MODEL-CHAT v2.2 - Requisição recebida:', req.method, req.url);
+  
+  // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    console.log('✅ Respondendo OPTIONS/CORS');
+    return new Response(null, { headers: corsHeaders, status: 200 });
   }
 
   try {
-    const { entityId, message, conversationHistory = [], isCreator = false } = await req.json();
+    console.log('📥 Parseando body da requisição...');
+    const body = await req.json();
+    const { entityId, message, conversationHistory = [], isCreator = false } = body;
 
-    console.log('🤖 MODEL-CHAT: Recebida requisição:', { entityId, isCreator });
+    console.log('🤖 MODEL-CHAT v2.2: Recebida requisição:', { 
+      entityId, 
+      isCreator, 
+      messageLength: message?.length,
+      historyLength: conversationHistory?.length 
+    });
 
     if (!entityId || !message) {
+      console.error('❌ Campos obrigatórios ausentes:', { entityId: !!entityId, message: !!message });
       return new Response(
         JSON.stringify({ error: 'entityId e message são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -114,8 +126,12 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('❌ Erro geral na função:', error);
+    console.error('❌ Stack trace:', error?.stack);
     return new Response(
-      JSON.stringify({ error: error?.message || 'Erro interno do servidor' }),
+      JSON.stringify({ 
+        error: error?.message || 'Erro interno do servidor',
+        details: error?.stack?.substring(0, 200) || 'No stack trace'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

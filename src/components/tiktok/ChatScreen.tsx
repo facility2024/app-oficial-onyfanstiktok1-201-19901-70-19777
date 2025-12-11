@@ -229,6 +229,8 @@ export const ChatScreen = ({
         content: m.text
       }));
 
+      console.log('📤 Enviando mensagem para Edge Function...', { entityId, isCreator });
+
       // Call AI edge function
       const { data, error } = await supabase.functions.invoke('model-chat', {
         body: {
@@ -239,18 +241,33 @@ export const ChatScreen = ({
         }
       });
 
-      if (error) throw error;
+      console.log('📥 Resposta da Edge Function:', { data, error });
+
+      if (error) {
+        console.error('❌ Erro da Edge Function:', error);
+        throw error;
+      }
 
       if (data?.response) {
         await typeMessageWithEffect(data.response);
       } else if (data?.error) {
-        // Show error as model message
-        await typeMessageWithEffect('Desculpe, estou com problemas técnicos no momento. Tente novamente mais tarde! 😅');
+        console.error('❌ Erro retornado pela IA:', data.error);
+        await typeMessageWithEffect(`Desculpe, estou com problemas técnicos: ${data.error.substring(0, 50)}... 😅`);
       }
     } catch (error: any) {
-      console.error('Erro ao enviar mensagem:', error);
-      // Fallback response
-      await typeMessageWithEffect('Ops! Algo deu errado. Tente novamente em alguns instantes! 💕');
+      console.error('❌ Erro ao enviar mensagem:', error);
+      console.error('❌ Tipo do erro:', error?.name, error?.message);
+      
+      // Mensagem mais específica baseada no tipo de erro
+      let errorMsg = 'Ops! Algo deu errado. Tente novamente em alguns instantes! 💕';
+      
+      if (error?.message?.includes('Failed to send') || error?.message?.includes('FetchError')) {
+        errorMsg = 'Não consegui conectar ao servidor. Verifique sua conexão e tente novamente! 🔌';
+      } else if (error?.message?.includes('timeout')) {
+        errorMsg = 'A resposta demorou muito. Tente novamente! ⏰';
+      }
+      
+      await typeMessageWithEffect(errorMsg);
     } finally {
       setIsAiResponding(false);
     }

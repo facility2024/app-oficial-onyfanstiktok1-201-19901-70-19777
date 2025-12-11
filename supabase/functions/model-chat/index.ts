@@ -1,9 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-// Edge Function v2.2 - Model Chat with OpenAI/Gemini support - FORCE REDEPLOY
-console.log('🚀 MODEL-CHAT Edge Function loaded v2.2 - ' + new Date().toISOString());
+// Edge Function v3.0 - Model Chat with Deno.serve() - FIXED DEPLOY
+console.log('🚀 MODEL-CHAT Edge Function v3.0 loaded - ' + new Date().toISOString());
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +10,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   console.log('📨 MODEL-CHAT v2.2 - Requisição recebida:', req.method, req.url);
   
   // CORS preflight

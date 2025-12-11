@@ -91,38 +91,56 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log('🤖 Provider:', chatPanel.ai_provider);
+    console.log('🔑 API Key presente:', !!chatPanel.api_key_encrypted, 'Tamanho:', chatPanel.api_key_encrypted?.length || 0);
 
     let aiResponse = '';
     const systemPrompt = chatPanel.prompt || 'Você é um assistente prestativo.';
 
-    // Chamar a IA apropriada
-    if (chatPanel.ai_provider === 'gemini') {
-      aiResponse = await callGemini(
-        chatPanel.api_key_encrypted,
-        message,
-        systemPrompt,
-        conversationHistory
-      );
-    } else if (chatPanel.ai_provider === 'openai') {
-      aiResponse = await callOpenAI(
-        chatPanel.api_key_encrypted,
-        message,
-        systemPrompt,
-        conversationHistory
-      );
-    } else {
+    // Chamar a IA apropriada com try-catch específico
+    try {
+      if (chatPanel.ai_provider === 'gemini') {
+        console.log('🔧 Iniciando chamada Gemini...');
+        aiResponse = await callGemini(
+          chatPanel.api_key_encrypted,
+          message,
+          systemPrompt,
+          conversationHistory
+        );
+      } else if (chatPanel.ai_provider === 'openai') {
+        console.log('🔧 Iniciando chamada OpenAI...');
+        aiResponse = await callOpenAI(
+          chatPanel.api_key_encrypted,
+          message,
+          systemPrompt,
+          conversationHistory
+        );
+      } else {
+        return new Response(
+          JSON.stringify({ error: 'Provider de IA não suportado' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('✅ Resposta da IA gerada com sucesso');
+
       return new Response(
-        JSON.stringify({ error: 'Provider de IA não suportado' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ response: aiResponse }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (aiError: any) {
+      console.error('❌ Erro específico da IA:', aiError?.message || aiError);
+      console.error('❌ Stack:', aiError?.stack?.substring(0, 300));
+      
+      // Retornar mensagem amigável em vez de erro 500
+      return new Response(
+        JSON.stringify({ 
+          response: 'Desculpe, estou com dificuldades técnicas agora. Tente novamente em alguns instantes! 💕',
+          aiError: true,
+          errorDetails: aiError?.message || 'Erro desconhecido na API de IA'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('✅ Resposta da IA gerada com sucesso');
-
-    return new Response(
-      JSON.stringify({ response: aiResponse }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error: any) {
     console.error('❌ Erro geral na função:', error);

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
 import { UniversalVideoPlayer } from './UniversalVideoPlayer';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface VideoPlayerProps {
   video: Video;
@@ -52,29 +53,13 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const timersRef = useRef<number[]>([]);
 
     const modelId = (video as any)?.user_id || (video as any)?.model_id || '';
-    const isPremium = (video as any)?.visibility === 'premium';
-    const [isVip, setIsVip] = useState(false);
-    useEffect(() => {
-      let mounted = true;
-      supabase.auth.getUser().then(({ data }) => {
-        if (!mounted) return;
-        setIsVip(!!data.user?.user_metadata?.is_vip);
-      });
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-        setIsVip(!!session?.user?.user_metadata?.is_vip);
-      });
-      return () => {
-        mounted = false;
-        sub?.subscription.unsubscribe();
-      };
-    }, []);
-
-    // Verifica se o usuário se registrou e desbloqueou o vídeo/modelo
-    const isUserRegistered = localStorage.getItem('user_registered') === 'true';
-    const isVideoUnlocked = localStorage.getItem(`video_unlocked_${video.id}`) === 'true';
-    const isModelUnlocked = localStorage.getItem(`model_unlocked_${modelId}`) === 'true';
-    const modelLockActive = localStorage.getItem(`model_locked_${modelId}`) === 'true';
-    const locked = !isVip && !isUserRegistered && !isModelUnlocked && (isPremium || modelLockActive);
+    const isPremiumVideo = (video as any)?.visibility === 'premium';
+    
+    // Usar o hook de status premium
+    const { isPremium: isUserPremium, isContentUnlocked } = usePremiumStatus();
+    
+    // Verificar se o vídeo está bloqueado
+    const locked = isPremiumVideo && !isUserPremium && !isContentUnlocked('video', video.id);
 
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
@@ -192,10 +177,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     }, [isMuted, ref]);
 
     useEffect(() => {
-      if (isPremium && locked) {
+      if (isPremiumVideo && locked) {
         try { localStorage.setItem(`model_locked_${modelId}`, 'true'); } catch {}
       }
-    }, [isPremium, locked, modelId]);
+    }, [isPremiumVideo, locked, modelId]);
 
     useEffect(() => {
       if (!isInView) return;

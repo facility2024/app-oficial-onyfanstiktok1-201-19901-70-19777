@@ -6,9 +6,10 @@ interface BottomInfoProps {
   video: Video;
   isNew?: boolean;
   isPlaying?: boolean;
+  isPremium?: boolean;
 }
 
-export const BottomInfo = ({ video, isNew = false, isPlaying = true }: BottomInfoProps) => {
+export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium = false }: BottomInfoProps) => {
   const handleMusicClick = () => {
     // Abre o perfil do autor da música (modelo)
     const authorUrl = video.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(video.user?.username || '')}`;
@@ -35,6 +36,11 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true }: BottomInf
           />
         </div>
         <span className="text-white md:text-gray-800 font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
+        {isPremium && (
+          <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+            👑 PREMIUM
+          </span>
+        )}
       </div>
 
       {/* Video Description */}

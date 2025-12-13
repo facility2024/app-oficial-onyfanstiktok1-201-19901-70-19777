@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search } from 'lucide-react';
+import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown } from 'lucide-react';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { EditVideoModal } from './EditVideoModal';
 import { DeleteVideoDialog } from './DeleteVideoDialog';
@@ -21,6 +21,7 @@ export const VideoManagementTable = () => {
     visibilityFilter,
     setVisibilityFilter,
     toggleVideoActive,
+    toggleVideoPremium,
   } = useCreatorVideos();
 
   const [editingVideo, setEditingVideo] = useState<CreatorVideo | null>(null);
@@ -165,6 +166,17 @@ export const VideoManagementTable = () => {
                           Ativar
                         </>
                       )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleVideoPremium(video.id, video.visibility)}
+                      className={video.visibility === 'premium' 
+                        ? 'border-yellow-500 text-yellow-400 hover:bg-yellow-950' 
+                        : 'border-gray-600 text-white hover:bg-gray-700'}
+                    >
+                      <Crown className="w-3 h-3 mr-1" />
+                      {video.visibility === 'premium' ? 'Premium' : 'Marcar Premium'}
                     </Button>
                     <Button
                       size="sm"

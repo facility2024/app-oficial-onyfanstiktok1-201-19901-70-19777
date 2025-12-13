@@ -130,6 +130,24 @@ export const useCreatorVideos = () => {
     }
   };
 
+  const toggleVideoPremium = async (videoId: string, currentVisibility: string) => {
+    try {
+      const newVisibility = currentVisibility === 'premium' ? 'public' : 'premium';
+      const { error } = await supabase
+        .from('videos')
+        .update({ visibility: newVisibility })
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast.success(newVisibility === 'premium' ? '👑 Vídeo marcado como Premium!' : 'Vídeo agora é público');
+      fetchVideos();
+    } catch (error) {
+      console.error('Erro ao alterar visibilidade:', error);
+      toast.error('Erro ao alterar visibilidade do vídeo');
+    }
+  };
+
   return {
     videos,
     loading,
@@ -140,6 +158,7 @@ export const useCreatorVideos = () => {
     visibilityFilter,
     setVisibilityFilter,
     toggleVideoActive,
+    toggleVideoPremium,
     updateVideo,
     deleteVideo,
     refetch: fetchVideos,

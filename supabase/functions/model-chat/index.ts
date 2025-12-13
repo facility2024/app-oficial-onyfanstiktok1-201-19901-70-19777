@@ -1,39 +1,23 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-
-// Edge Function v3.2 - Model Chat - FORCE REDEPLOY 2024-12-11
-// Supabase Deno Edge Function for AI chat with models/creators
-console.log('🚀 MODEL-CHAT v3.2 loaded at', new Date().toISOString());
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
-Deno.serve(async (req: Request) => {
-  const url = new URL(req.url);
-  console.log('📨 v3.2 Request:', req.method, url.pathname);
-  
-  // Handle CORS preflight requests
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('📥 Parseando body da requisição...');
-    const body = await req.json();
-    const { entityId, message, conversationHistory = [], isCreator = false } = body;
+    const { entityId, message, conversationHistory = [], isCreator = false } = await req.json();
 
-    console.log('🤖 MODEL-CHAT v2.2: Recebida requisição:', { 
-      entityId, 
-      isCreator, 
-      messageLength: message?.length,
-      historyLength: conversationHistory?.length 
-    });
+    console.log('🤖 MODEL-CHAT: Recebida requisição:', { entityId, isCreator });
 
     if (!entityId || !message) {
-      console.error('❌ Campos obrigatórios ausentes:', { entityId: !!entityId, message: !!message });
       return new Response(
         JSON.stringify({ error: 'entityId e message são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -126,12 +110,8 @@ Deno.serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error('❌ Erro geral na função:', error);
-    console.error('❌ Stack trace:', error?.stack);
     return new Response(
-      JSON.stringify({ 
-        error: error?.message || 'Erro interno do servidor',
-        details: error?.stack?.substring(0, 200) || 'No stack trace'
-      }),
+      JSON.stringify({ error: error?.message || 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -185,9 +165,6 @@ async function callGemini(apiKey: string, userMessage: string, systemPrompt: str
 }
 
 async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: string, history: any[]): Promise<string> {
-  console.log('🔑 OpenAI: Iniciando chamada...');
-  console.log('🔑 OpenAI: API Key começa com:', apiKey.substring(0, 10) + '...');
-  
   const messages = [
     { role: 'system', content: systemPrompt }
   ];
@@ -203,45 +180,26 @@ async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: str
   // Adicionar mensagem atual
   messages.push({ role: 'user', content: userMessage });
 
-  console.log('🔑 OpenAI: Enviando', messages.length, 'mensagens');
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages,
+      temperature: 0.9,
+      max_tokens: 1024,
+    })
+  });
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages,
-        temperature: 0.9,
-        max_tokens: 1024,
-      })
-    });
-
-    console.log('🔑 OpenAI: Status da resposta:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erro OpenAI - Status:', response.status);
-      console.error('❌ Erro OpenAI - Body:', errorText);
-      
-      // Parse para dar mensagem mais clara
-      try {
-        const errorJson = JSON.parse(errorText);
-        const errorMessage = errorJson.error?.message || errorText;
-        throw new Error(`OpenAI: ${errorMessage}`);
-      } catch {
-        throw new Error(`Erro na API OpenAI: ${response.status} - ${errorText}`);
-      }
-    }
-
-    const data = await response.json();
-    console.log('✅ OpenAI: Resposta recebida com sucesso');
-    return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
-  } catch (error: any) {
-    console.error('❌ OpenAI Exception:', error);
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Erro OpenAI:', errorText);
+    throw new Error(`Erro na API OpenAI: ${response.status}`);
   }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
 }

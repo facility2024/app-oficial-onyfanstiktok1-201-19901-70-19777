@@ -254,97 +254,28 @@ export default function ModelChat() {
         content: msg.content
       }));
 
-      console.log('📤 Usando fallback direto para IA...', { entityId, isCreator });
+      const { data, error } = await supabase.functions.invoke('model-chat', {
+        body: {
+          entityId,
+          message: userMessage.content,
+          conversationHistory,
+          isCreator
+        }
+      });
 
-      // Buscar configuração do chat panel diretamente
-      const columnName = isCreator ? 'creator_id' : 'model_id';
-      const { data: chatPanel, error: panelError } = await supabase
-        .from('model_chat_panels' as any)
-        .select('*')
-        .eq(columnName, entityId)
-        .maybeSingle() as { data: any; error: any };
+      if (error) throw error;
 
-      if (panelError || !chatPanel) {
-        console.error('❌ Chat panel não encontrado:', panelError);
-        throw new Error('Chat não configurado. Configure no painel admin!');
+      if (data?.response) {
+        await simulateTyping(data.response);
+        
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, assistantMessage]);
       }
-
-      if (!chatPanel.is_active) {
-        throw new Error('Chat desativado no momento.');
-      }
-
-      const provider = (chatPanel.ai_provider || '').toLowerCase().trim();
-      const apiKey = (chatPanel.api_key_encrypted || '').trim();
-      const systemPrompt = chatPanel.prompt || 'Você é um assistente amigável.';
-
-      if (!provider || !apiKey || apiKey.length < 10) {
-        throw new Error('Configure a API Key no painel admin!');
-      }
-
-      console.log(`🤖 Chamando ${provider} diretamente...`);
-
-      let aiResponse: string;
-
-      if (provider === 'gemini') {
-        const contents = conversationHistory.map(m => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.content }]
-        }));
-        contents.push({ role: 'user', parts: [{ text: userMessage.content }] });
-
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents,
-              systemInstruction: { parts: [{ text: systemPrompt }] },
-              generationConfig: { temperature: 0.9, maxOutputTokens: 1024 }
-            })
-          }
-        );
-
-        if (!geminiRes.ok) throw new Error('Erro na API Gemini');
-        const geminiData = await geminiRes.json();
-        aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta';
-      } else {
-        const openaiMessages = [
-          { role: 'system', content: systemPrompt },
-          ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
-          { role: 'user', content: userMessage.content }
-        ];
-
-        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: openaiMessages,
-            temperature: 0.9,
-            max_tokens: 1024
-          })
-        });
-
-        if (!openaiRes.ok) throw new Error('Erro na API OpenAI');
-        const openaiData = await openaiRes.json();
-        aiResponse = openaiData.choices?.[0]?.message?.content || 'Sem resposta';
-      }
-
-      console.log('✅ Resposta da IA recebida:', aiResponse.length, 'chars');
-      
-      await simulateTyping(aiResponse);
-      
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: aiResponse,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
 
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error);

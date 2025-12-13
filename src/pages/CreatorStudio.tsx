@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
@@ -55,6 +55,7 @@ export default function CreatorStudio() {
     video_url: '',
     thumbnail_url: '',
     genres: [] as string[],
+    is_premium: false,
   });
 
   useEffect(() => {
@@ -210,7 +211,7 @@ export default function CreatorStudio() {
           thumbnail_url: validatedData.thumbnail_url,
           creator_id: user.id,  // ID do criador autenticado (oculto)
           model_id: null,       // NULL para criadores
-          visibility: 'public',
+          visibility: formData.is_premium ? 'premium' : 'public',
           is_active: true,
           duration: '00:00',
           genres: validatedData.genres,
@@ -227,6 +228,7 @@ export default function CreatorStudio() {
         video_url: '',
         thumbnail_url: '',
         genres: [],
+        is_premium: false,
       });
 
     } catch (error: any) {
@@ -435,6 +437,23 @@ export default function CreatorStudio() {
                       ✓ {formData.genres.length} gênero(s) selecionado(s): {formData.genres.join(', ')}
                     </p>
                   )}
+                </div>
+
+                {/* Toggle Premium */}
+                <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Crown className="w-5 h-5 text-yellow-500" />
+                      <div>
+                        <Label className="text-white font-semibold">Conteúdo Premium</Label>
+                        <p className="text-xs text-gray-400">Apenas assinantes VIP poderão ver este vídeo</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={formData.is_premium}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
+                    />
+                  </div>
                 </div>
 
                 {/* Preview */}

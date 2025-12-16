@@ -122,9 +122,9 @@ export const CategoryMenu = ({
       name: "Assinaturas",
       icon: <CreditCard className="w-5 h-5" />,
       onClick: () => {
-        console.log('💳 Navegando para Assinaturas');
+        console.log('💳 Navegando para Assinatura VIP');
         setOpen(false);
-        setTimeout(() => navigate('/subscriptions'), 100);
+        setTimeout(() => navigate('/subscribe'), 100);
       }
     },
     {

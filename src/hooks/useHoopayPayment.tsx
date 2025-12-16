@@ -109,7 +109,7 @@ export function useHoopayPayment() {
         payload.address = address;
       }
 
-      const { data, error } = await supabase.functions.invoke('hoopay-charge', {
+      const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: payload,
       });
 
@@ -145,7 +145,7 @@ export function useHoopayPayment() {
   const verifyPayment = async (orderUuid: string): Promise<VerifyResponse> => {
     setVerifying(true);
     try {
-      const { data, error } = await supabase.functions.invoke('hoopay-verify', {
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
         body: { order_uuid: orderUuid },
       });
 

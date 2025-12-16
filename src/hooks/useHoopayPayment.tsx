@@ -155,13 +155,20 @@ export function useHoopayPayment() {
         return { success: false, error: error.message };
       }
 
-      const result = data as unknown as VerifyResponse;
-
-      if (result?.is_paid) {
+      const result = data as any;
+      
+      const isPaid = result?.status === 'paid' || result?.is_paid;
+      
+      if (isPaid) {
         toast.success('Pagamento confirmado! Bem-vindo ao VIP!');
       }
 
-      return result || { success: false, error: 'No response' };
+      return { 
+        success: result?.success ?? false, 
+        status: result?.status,
+        is_paid: isPaid,
+        error: result?.error 
+      };
     } catch (err: any) {
       console.error('Error in verifyPayment:', err);
       return { success: false, error: err.message };

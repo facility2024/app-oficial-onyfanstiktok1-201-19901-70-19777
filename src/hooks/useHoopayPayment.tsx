@@ -46,6 +46,7 @@ export interface CustomerData {
   document: string; // CPF
 }
 
+// Keep these for backwards compatibility (credit card coming soon)
 export interface CardData {
   number: string;
   holder_name: string;
@@ -74,6 +75,7 @@ export interface ChargeResponse {
   pix_qr_code?: string;
   amount?: number;
   plan_name?: string;
+  plan_days?: number;
   error?: string;
 }
 
@@ -93,46 +95,44 @@ export function useHoopayPayment() {
     planId: string,
     paymentMethod: 'pix' | 'credit_card',
     customer: CustomerData,
-    cardData?: CardData,
-    address?: AddressData
+    _cardData?: CardData,
+    _address?: AddressData
   ): Promise<ChargeResponse> => {
     setLoading(true);
     try {
-      const payload: any = {
-        plan_id: planId,
-        payment_method: paymentMethod,
-        customer,
-      };
-
-      if (paymentMethod === 'credit_card' && cardData && address) {
-        payload.card_data = cardData;
-        payload.address = address;
+      // Credit card not supported via RPC yet
+      if (paymentMethod === 'credit_card') {
+        toast.error('Pagamento por cartão em breve! Use PIX por enquanto.');
+        return { success: false, error: 'Credit card not available yet' };
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-pix', {
-        body: payload,
+      // Use RPC function instead of Edge Function
+      const { data, error } = await supabase.rpc('create_pix_charge' as any, {
+        p_plan_id: planId,
+        p_customer_name: customer.name,
+        p_customer_email: customer.email,
+        p_customer_phone: customer.phone,
+        p_customer_document: customer.document,
       });
 
       if (error) {
         console.error('Error creating charge:', error);
-        toast.error('Erro ao criar cobrança');
+        toast.error('Erro ao criar cobrança: ' + error.message);
         return { success: false, error: error.message };
       }
 
-      if (!data.success) {
-        toast.error(data.error || 'Erro ao processar pagamento');
-        return { success: false, error: data.error };
+      const result = data as unknown as ChargeResponse;
+
+      if (!result || !result.success) {
+        const errorMsg = result?.error || 'Erro ao processar pagamento';
+        toast.error(errorMsg);
+        return { success: false, error: errorMsg };
       }
 
-      setPaymentData(data);
-      
-      if (paymentMethod === 'pix') {
-        toast.success('PIX gerado com sucesso! Escaneie o QR Code para pagar.');
-      } else if (data.status === 'paid') {
-        toast.success('Pagamento aprovado! Bem-vindo ao VIP!');
-      }
+      setPaymentData(result);
+      toast.success('PIX gerado com sucesso! Escaneie o QR Code para pagar.');
 
-      return data;
+      return result;
     } catch (err: any) {
       console.error('Error in createCharge:', err);
       toast.error('Erro ao processar pagamento');
@@ -145,8 +145,9 @@ export function useHoopayPayment() {
   const verifyPayment = async (orderUuid: string): Promise<VerifyResponse> => {
     setVerifying(true);
     try {
-      const { data, error } = await supabase.functions.invoke('verify-payment', {
-        body: { order_uuid: orderUuid },
+      // Use RPC function instead of Edge Function
+      const { data, error } = await supabase.rpc('verify_pix_payment' as any, {
+        p_order_uuid: orderUuid,
       });
 
       if (error) {
@@ -154,11 +155,13 @@ export function useHoopayPayment() {
         return { success: false, error: error.message };
       }
 
-      if (data.is_paid) {
+      const result = data as unknown as VerifyResponse;
+
+      if (result?.is_paid) {
         toast.success('Pagamento confirmado! Bem-vindo ao VIP!');
       }
 
-      return data;
+      return result || { success: false, error: 'No response' };
     } catch (err: any) {
       console.error('Error in verifyPayment:', err);
       return { success: false, error: err.message };

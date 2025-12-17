@@ -10,17 +10,14 @@ interface GeneratePixRequest {
   name: string;
   email: string;
   whatsapp: string;
+  plan?: 'monthly' | 'quarterly' | 'yearly';
+  amount?: number;
 }
 
-const generatePixCode = (amount: number, name: string, city: string = "SAO PAULO") => {
-  // Simular geração de código PIX (em produção usar API do banco)
-  const pixKey = "pagamento@onyfanstiktok.com"; // Chave PIX fictícia
-  const txid = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
-  
-  // Código PIX BR Code simplificado (em produção usar biblioteca oficial)
-  const pixCode = `00020126580014BR.GOV.BCB.PIX0136${pixKey}0208${txid}520400005303986540${amount.toFixed(2)}5802BR5913${name.substr(0, 25)}6009${city}62070503***6304`;
-  
-  return { pixCode, txid };
+const PLAN_PRICES: Record<string, { amount: number; days: number; name: string }> = {
+  monthly: { amount: 19.99, days: 30, name: 'VIP Mensal' },
+  quarterly: { amount: 49.99, days: 90, name: 'VIP Trimestral' },
+  yearly: { amount: 149.99, days: 365, name: 'VIP Anual' }
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -36,37 +33,100 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { name, email, whatsapp }: GeneratePixRequest = await req.json();
+    const { name, email, whatsapp, plan = 'monthly', amount }: GeneratePixRequest = await req.json();
 
-    if (!name || !email || !whatsapp) {
+    if (!name || !email) {
       return new Response(JSON.stringify({ error: "Dados incompletos" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Criar cliente Supabase
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Gerar código PIX
-    const amount = 19.99;
-    const { pixCode, txid } = generatePixCode(amount, name);
+    // Get Hoopay credentials from payment_config
+    const { data: configData } = await supabase
+      .from('payment_config')
+      .select('config')
+      .eq('provider', 'hoopay')
+      .single();
+
+    const planInfo = PLAN_PRICES[plan] || PLAN_PRICES.monthly;
+    const finalAmount = amount || planInfo.amount;
+
+    let pixCode: string;
+    let txid: string;
+    let qrCode: string | null = null;
+
+    // Try Hoopay API if credentials exist
+    if (configData?.config?.api_key && configData?.config?.secret_key) {
+      try {
+        const apiKey = configData.config.api_key;
+        const secretKey = configData.config.secret_key;
+        const apiUrl = configData.config.api_url || 'https://api.pay.hoopay.com.br';
+
+        const authString = btoa(`${apiKey}:${secretKey}`);
+
+        const hoopayResponse = await fetch(`${apiUrl}/charge`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authString}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            paymentMethod: 'pix',
+            amount: Math.round(finalAmount * 100), // centavos
+            customer: {
+              name: name,
+              email: email,
+              phone: whatsapp || undefined,
+            },
+            items: [{
+              name: planInfo.name,
+              quantity: 1,
+              price: Math.round(finalAmount * 100),
+            }],
+          }),
+        });
+
+        const hoopayData = await hoopayResponse.json();
+        console.log('Hoopay response:', hoopayData);
+
+        if (hoopayData.pixPayload) {
+          pixCode = hoopayData.pixPayload;
+          txid = hoopayData.orderUUID || `TXN${Date.now()}`;
+          qrCode = hoopayData.pixQrCode || null;
+        } else {
+          throw new Error('Hoopay não retornou pixPayload');
+        }
+      } catch (hoopayError) {
+        console.error('Erro Hoopay, usando fallback:', hoopayError);
+        txid = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+        pixCode = `00020126580014BR.GOV.BCB.PIX0136pagamento@coconudi.com0208${txid}520400005303986540${finalAmount.toFixed(2)}5802BR5913COCONUDI VIP6009SAO PAULO62070503***6304`;
+      }
+    } else {
+      // Fallback: gerar código PIX simulado
+      txid = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+      pixCode = `00020126580014BR.GOV.BCB.PIX0136pagamento@coconudi.com0208${txid}520400005303986540${finalAmount.toFixed(2)}5802BR5913COCONUDI VIP6009SAO PAULO62070503***6304`;
+    }
 
     // Salvar pagamento no banco
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    
     const { data: payment, error: paymentError } = await supabase
       .from("pix_payments")
       .insert({
         email,
         name,
         whatsapp,
-        amount,
+        amount: finalAmount,
         pix_code: pixCode,
         txid,
         status: "pending",
-        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
+        expires_at: expiresAt,
       })
       .select()
       .single();
@@ -76,16 +136,19 @@ const handler = async (req: Request): Promise<Response> => {
       throw paymentError;
     }
 
-    console.log("Pagamento PIX gerado:", payment.id);
+    console.log("Pagamento PIX gerado:", payment.id, "Plan:", plan);
 
     return new Response(
       JSON.stringify({
         success: true,
         payment_id: payment.id,
         pix_code: pixCode,
+        qr_code: qrCode,
         txid,
-        amount,
-        expires_at: payment.expires_at,
+        amount: finalAmount,
+        plan,
+        plan_days: planInfo.days,
+        expires_at: expiresAt,
         message: "Código PIX gerado com sucesso",
       }),
       {

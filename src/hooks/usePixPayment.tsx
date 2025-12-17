@@ -6,6 +6,8 @@ interface PaymentData {
   name: string;
   email: string;
   whatsapp: string;
+  plan?: 'monthly' | 'quarterly' | 'yearly';
+  amount?: number;
 }
 
 interface PixPaymentResponse {

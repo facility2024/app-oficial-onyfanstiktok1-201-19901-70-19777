@@ -23,7 +23,7 @@ import LocalBusinessPage from "./pages/LocalBusinessPage";
 import LocalBusinessDetailsPage from "./pages/LocalBusinessDetailsPage";
 import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
 import CollectionsPage from "./pages/CollectionsPage";
-import SubscriptionsPage from "./pages/SubscriptionsPage";
+
 import AdvertisersPage from "./pages/AdvertisersPage";
 import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
 import ModelChat from "./pages/ModelChat";
@@ -128,8 +128,6 @@ const App = () => (
           <Route path="/ChatIA" element={<ChatListPage />} />
           <Route path="/chats" element={<ChatListPage />} />
           
-          {/* Assinaturas */}
-          <Route path="/subscriptions" element={<SubscriptionsPage />} />
           
           {/* Anunciantes */}
           <Route path="/advertisers" element={<AdvertisersPage />} />

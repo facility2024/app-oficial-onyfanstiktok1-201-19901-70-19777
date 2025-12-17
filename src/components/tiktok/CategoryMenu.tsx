@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Bot } from "lucide-react";
+import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
@@ -115,16 +115,6 @@ export const CategoryMenu = ({
         console.log('📚 Navegando para Coleções');
         setOpen(false);
         setTimeout(() => navigate('/collections'), 100);
-      }
-    },
-    {
-      id: "subscriptions",
-      name: "Assinaturas",
-      icon: <CreditCard className="w-5 h-5" />,
-      onClick: () => {
-        console.log('💳 Navegando para Assinaturas');
-        setOpen(false);
-        setTimeout(() => navigate('/subscriptions'), 100);
       }
     },
     {

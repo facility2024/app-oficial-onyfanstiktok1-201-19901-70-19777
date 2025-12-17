@@ -123,23 +123,25 @@ export const usePixPayment = () => {
         try {
           const authString = btoa(`${hoopayConfig.api_key}:${hoopayConfig.secret_key}`);
           
-          // Build request payload according to Hoopay documentation
+          // Build request payload according to Hoopay documentation - wrapped in "data" object
           const requestPayload = {
-            customer: {
-              email: data.email,
-              name: data.name || 'Cliente CocoNudi',
-              phone: data.whatsapp?.replace(/\D/g, '') || '11999999999',
-              document: ''
-            },
-            products: [{
-              title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-              price: amountInCents, // Hoopay expects price in cents
-              quantity: 1
-            }],
-            payments: [{
-              type: 'pix'
-            }],
-            ip: '192.168.0.1'
+            data: {
+              customer: {
+                email: data.email,
+                name: data.name || 'Cliente CocoNudi',
+                phone: data.whatsapp?.replace(/\D/g, '') || '11999999999',
+                document: ''
+              },
+              products: [{
+                title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
+                price: amountInCents, // Hoopay expects price in cents
+                quantity: 1
+              }],
+              payments: [{
+                type: 'pix'
+              }],
+              ip: '192.168.0.1'
+            }
           };
 
           const apiUrl = `${hoopayConfig.api_url}/charge`;

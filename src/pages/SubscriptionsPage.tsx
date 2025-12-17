@@ -60,7 +60,7 @@ const SubscriptionsPage = () => {
           renewal_date,
           is_active,
           payment_frequency,
-          model:models (
+          model:users!model_subscriptions_model_id_fkey (
             id,
             username,
             avatar_url,

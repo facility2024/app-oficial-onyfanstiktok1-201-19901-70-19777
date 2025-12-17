@@ -29,7 +29,6 @@ import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
 import ModelChat from "./pages/ModelChat";
 import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
-import Subscribe from "./pages/Subscribe";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -134,9 +133,6 @@ const App = () => (
           
           {/* Anunciantes */}
           <Route path="/advertisers" element={<AdvertisersPage />} />
-          
-          {/* Página de Assinatura VIP */}
-          <Route path="/subscribe" element={<Subscribe />} />
           
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={

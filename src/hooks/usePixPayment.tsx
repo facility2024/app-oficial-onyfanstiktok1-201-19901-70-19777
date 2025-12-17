@@ -48,17 +48,15 @@ export const usePixPayment = () => {
       const planType = data.plan || 'monthly';
       const amount = data.amount || 19.99;
 
-      // Call Edge Function to create PIX charge
-      const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
+      // Call existing generate-pix Edge Function
+      const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('generate-pix', {
         body: {
-          action: 'create_charge',
           user_id: user.id,
           email: data.email,
           name: data.name,
           whatsapp: data.whatsapp || '',
           amount: amount,
-          plan_type: planType,
-          plan_days: planDays
+          plan: planType
         }
       });
 
@@ -108,10 +106,9 @@ export const usePixPayment = () => {
   const verifyPayment = useCallback(async (paymentId: string): Promise<PaymentVerificationResponse> => {
     setVerifying(true);
     try {
-      // Call Edge Function to verify payment
-      const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
+      // Call existing verify-payment Edge Function
+      const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('verify-payment', {
         body: {
-          action: 'verify_payment',
           payment_id: paymentId
         }
       });

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Comment } from '@/types/database';
 import ProfileMessageBox from '@/components/tiktok/ProfileMessageBox';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
-import { Wifi } from 'lucide-react';
+import { Wifi, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,6 +19,7 @@ interface CommentsScreenProps {
 
 export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoId, onReloadComments }: CommentsScreenProps) => {
   const { user, profile } = useCurrentUser();
+  const { isPremium } = usePremiumStatus();
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
 
   // Real-time sync for new comments
@@ -162,12 +164,17 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
       {/* Comment Input */}
       <div className="border-t border-white/10 p-4 flex gap-3 items-end">
         {/* User Avatar */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 relative">
           <img
             src={profile?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
             alt={profile?.username || user?.email || 'Meu perfil'}
-            className="w-8 h-8 rounded-full object-cover"
+            className={`w-8 h-8 rounded-full object-cover ${isPremium ? 'ring-2 ring-amber-400' : ''}`}
           />
+          {isPremium && (
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+              <Crown className="w-2.5 h-2.5 text-black" />
+            </div>
+          )}
         </div>
         <div className="flex-1">
           <ProfileMessageBox

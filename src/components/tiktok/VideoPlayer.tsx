@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
 import { UniversalVideoPlayer } from './UniversalVideoPlayer';
+import { PremiumContentOverlay } from './PremiumContentOverlay';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface VideoPlayerProps {
@@ -348,27 +349,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Premium gating overlay */}
         {locked && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-            {/* Thumbnail locked como fundo */}
-            {(video as any).thumbnail_locked && (
-              <img 
-                src={(video as any).thumbnail_locked} 
-                alt="Thumbnail bloqueada"
-                className="absolute inset-0 w-full h-full object-cover opacity-30"
-              />
-            )}
-            <div className="relative z-10 w-80 max-w-[85%] rounded-lg bg-card text-card-foreground p-4 shadow-xl text-center space-y-2 animate-enter">
-              <h3 className="text-base font-semibold">Conteúdo premium</h3>
-              <p className="text-sm text-muted-foreground">Torne-se premium para desbloquear este vídeo.</p>
-              <button
-                onClick={() => window.location.href = '/subscribe'}
-                className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover-scale"
-              >
-                Quero ser premium
-              </button>
-            </div>
-          </div>
+          <PremiumContentOverlay 
+            thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
+            modelName={video.user?.username}
+          />
         )}
 
         {doubleTapHeart && (

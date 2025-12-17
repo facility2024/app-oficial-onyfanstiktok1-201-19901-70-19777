@@ -123,46 +123,57 @@ export const usePixPayment = () => {
         try {
           const authString = btoa(`${hoopayConfig.api_key}:${hoopayConfig.secret_key}`);
           
-          const hoopayResponse = await fetch(`${hoopayConfig.api_url}/charge`, {
+          // Build request payload
+          const requestPayload = {
+            paymentMethod: 'pix',
+            amount: amount,
+            dueDate: new Date(Date.now() + 30 * 60 * 1000).toISOString().split('T')[0],
+            customer: {
+              name: data.name || 'Cliente CocoNudi',
+              email: data.email,
+              phone: data.whatsapp?.replace(/\D/g, '') || '',
+              document: ''
+            },
+            items: [{
+              title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
+              quantity: 1,
+              unitPrice: amount,
+              tangible: false
+            }],
+            externalReference: `COCO${Date.now()}`
+          };
+
+          const apiUrl = `${hoopayConfig.api_url}/charge`;
+          console.log('🔗 Hoopay API URL:', apiUrl);
+          console.log('📦 Hoopay Request Payload:', JSON.stringify(requestPayload, null, 2));
+          
+          const hoopayResponse = await fetch(apiUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Basic ${authString}`
             },
-            body: JSON.stringify({
-              paymentMethod: 'pix',
-              amount: amount,
-              dueDate: new Date(Date.now() + 30 * 60 * 1000).toISOString().split('T')[0],
-              customer: {
-                name: data.name || 'Cliente CocoNudi',
-                email: data.email,
-                phone: data.whatsapp?.replace(/\D/g, '') || '',
-                document: ''
-              },
-              items: [{
-                title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-                quantity: 1,
-                unitPrice: amount,
-                tangible: false
-              }],
-              externalReference: `COCO${Date.now()}`
-            })
+            body: JSON.stringify(requestPayload)
           });
 
+          console.log('📡 Hoopay Response Status:', hoopayResponse.status);
+          
           const hoopayData = await hoopayResponse.json();
+          console.log('📄 Hoopay Response Data:', hoopayData);
 
           if (hoopayResponse.ok && hoopayData.orderUUID) {
             pix_code = hoopayData.pixPayload || hoopayData.pix_code || '';
             pix_qrcode = hoopayData.pixQrCode || hoopayData.qr_code || '';
             txid = hoopayData.orderUUID;
             orderUUID = hoopayData.orderUUID;
-            console.log('Hoopay PIX created successfully:', txid);
+            console.log('✅ Hoopay PIX created successfully:', txid);
           } else {
-            console.error('Hoopay API error:', hoopayData);
-            throw new Error(hoopayData.message || 'Erro na API Hoopay');
+            console.error('❌ Hoopay API error:', hoopayData);
+            console.error('❌ Status:', hoopayResponse.status, hoopayResponse.statusText);
+            throw new Error(hoopayData.message || `Erro na API Hoopay: ${hoopayResponse.status}`);
           }
         } catch (apiError) {
-          console.error('Hoopay API call failed, using simulated PIX:', apiError);
+          console.error('❌ Hoopay API call failed, using simulated PIX:', apiError);
           const simulated = generateSimulatedPix(amount);
           pix_code = simulated.pix_code;
           pix_qrcode = simulated.pix_qrcode;

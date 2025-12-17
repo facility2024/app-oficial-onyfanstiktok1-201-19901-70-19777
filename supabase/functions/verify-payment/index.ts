@@ -10,6 +10,12 @@ interface VerifyPaymentRequest {
   payment_id: string;
 }
 
+const PLAN_DAYS: Record<string, number> = {
+  monthly: 30,
+  quarterly: 90,
+  yearly: 365
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -51,24 +57,30 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Se já está pago, retornar status
+    if (payment.status === "paid") {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          status: "paid",
+          message: "Pagamento já confirmado",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Verificar se já expirou
     const now = new Date();
     const expiresAt = new Date(payment.expires_at);
 
     if (now > expiresAt && payment.status === "pending") {
-      // Marcar como expirado
       await supabase
         .from("pix_payments")
         .update({ status: "expired" })
         .eq("id", payment_id);
-
-      // Enviar notificação de cancelamento
-      await supabase.from("user_notifications").insert({
-        email: payment.email,
-        title: "Pagamento Cancelado",
-        message: `Que pena ${payment.name}! Seu email foi cancelado da área premium. Esperamos você novamente para se divertir aqui no app OnyfansTikTok!`,
-        type: "warning",
-      });
 
       return new Response(
         JSON.stringify({
@@ -83,15 +95,55 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Simular verificação de pagamento (em produção integrar com API do banco)
-    // Por enquanto, marcar como pago após 2 minutos (para teste)
+    // Consultar status real na API Hoopay
+    let hoopayStatus: string | null = null;
+    
+    const { data: configData } = await supabase
+      .from('payment_config')
+      .select('config')
+      .eq('provider', 'hoopay')
+      .single();
+
+    if (configData?.config?.api_key && configData?.config?.secret_key && payment.txid) {
+      try {
+        const apiKey = configData.config.api_key;
+        const secretKey = configData.config.secret_key;
+        const apiUrl = configData.config.api_url || 'https://api.pay.hoopay.com.br';
+        const authString = btoa(`${apiKey}:${secretKey}`);
+
+        console.log(`Consultando Hoopay para txid: ${payment.txid}`);
+
+        const hoopayResponse = await fetch(`${apiUrl}/pix/consult/${payment.txid}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${authString}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const hoopayData = await hoopayResponse.json();
+        console.log('Hoopay response:', hoopayData);
+
+        // Hoopay status: PENDING, PAID, EXPIRED, CANCELLED
+        if (hoopayData.status) {
+          hoopayStatus = hoopayData.status.toUpperCase();
+        }
+      } catch (hoopayError) {
+        console.error('Erro ao consultar Hoopay:', hoopayError);
+      }
+    }
+
+    // Se Hoopay confirmou pagamento OU simular após 2 min (fallback dev)
     const createdAt = new Date(payment.created_at);
     const timeDiff = now.getTime() - createdAt.getTime();
-    const shouldMarkAsPaid = timeDiff > 2 * 60 * 1000; // 2 minutos para teste
+    const devFallback = timeDiff > 2 * 60 * 1000; // 2 min para teste
 
-    if (shouldMarkAsPaid && payment.status === "pending") {
+    const isPaid = hoopayStatus === 'PAID' || hoopayStatus === 'APPROVED' || 
+                   hoopayStatus === 'CONFIRMED' || (!hoopayStatus && devFallback);
+
+    if (isPaid && payment.status === "pending") {
       // Marcar como pago
-      const { error: updateError } = await supabase
+      await supabase
         .from("pix_payments")
         .update({ 
           status: "paid",
@@ -99,48 +151,79 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq("id", payment_id);
 
-      if (updateError) {
-        console.error("Erro ao atualizar pagamento:", updateError);
-        throw updateError;
+      // Determinar dias do plano baseado no valor
+      let planDays = 30;
+      let subscriptionType = 'monthly';
+      
+      if (payment.amount >= 140) {
+        planDays = 365;
+        subscriptionType = 'yearly';
+      } else if (payment.amount >= 45) {
+        planDays = 90;
+        subscriptionType = 'quarterly';
       }
 
-      // Criar usuário premium
-      const { data: premiumUser, error: premiumError } = await supabase
+      const subscriptionEnd = new Date(now.getTime() + planDays * 24 * 60 * 60 * 1000);
+
+      // Criar ou atualizar usuário premium
+      const { data: existingPremium } = await supabase
         .from("premium_users")
-        .insert({
-          email: payment.email,
-          name: payment.name,
-          whatsapp: payment.whatsapp,
-          payment_id: payment.id,
-          subscription_type: "monthly",
-          subscription_status: "active",
-          subscription_start: now.toISOString(),
-          subscription_end: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias
-        })
-        .select()
+        .select("id")
+        .eq("email", payment.email)
         .single();
 
-      if (premiumError) {
-        console.error("Erro ao criar usuário premium:", premiumError);
-        throw premiumError;
+      let premiumUserId: string;
+
+      if (existingPremium) {
+        // Atualizar assinatura existente
+        const { data: updated } = await supabase
+          .from("premium_users")
+          .update({
+            payment_id: payment.id,
+            subscription_type: subscriptionType,
+            subscription_status: "active",
+            subscription_start: now.toISOString(),
+            subscription_end: subscriptionEnd.toISOString(),
+          })
+          .eq("id", existingPremium.id)
+          .select()
+          .single();
+        
+        premiumUserId = updated?.id || existingPremium.id;
+      } else {
+        // Criar novo usuário premium
+        const { data: newPremium, error: premiumError } = await supabase
+          .from("premium_users")
+          .insert({
+            email: payment.email,
+            name: payment.name,
+            whatsapp: payment.whatsapp,
+            payment_id: payment.id,
+            subscription_type: subscriptionType,
+            subscription_status: "active",
+            subscription_start: now.toISOString(),
+            subscription_end: subscriptionEnd.toISOString(),
+          })
+          .select()
+          .single();
+
+        if (premiumError) {
+          console.error("Erro ao criar usuário premium:", premiumError);
+          throw premiumError;
+        }
+        premiumUserId = newPremium.id;
       }
 
-      // Enviar notificação de sucesso
-      await supabase.from("user_notifications").insert({
-        email: payment.email,
-        title: "Bem-vindo ao Premium!",
-        message: `Parabéns ${payment.name}! Seu pagamento foi aprovado e agora você tem acesso a todos os conteúdos premium do OnyfansTikTok!`,
-        type: "success",
-      });
-
-      console.log("Usuário premium criado:", premiumUser.id);
+      console.log(`Premium ativado: ${premiumUserId}, plano: ${subscriptionType}, dias: ${planDays}`);
 
       return new Response(
         JSON.stringify({
           success: true,
           status: "paid",
-          premium_user_id: premiumUser.id,
-          message: "Pagamento aprovado! Bem-vindo ao Premium!",
+          premium_user_id: premiumUserId,
+          subscription_type: subscriptionType,
+          subscription_end: subscriptionEnd.toISOString(),
+          message: "Pagamento aprovado! Bem-vindo ao VIP!",
         }),
         {
           status: 200,
@@ -149,12 +232,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Retornar status atual
+    // Retornar status pendente
     return new Response(
       JSON.stringify({
         success: true,
         status: payment.status,
-        message: payment.status === "pending" ? "Aguardando pagamento..." : payment.status,
+        hoopay_status: hoopayStatus,
+        message: "Aguardando pagamento...",
         expires_at: payment.expires_at,
       }),
       {

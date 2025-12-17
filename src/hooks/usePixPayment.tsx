@@ -83,10 +83,10 @@ export const usePixPayment = () => {
       let lxpayTransactionId: string | null = null;
 
       try {
-        console.log('🔗 Calling LXPay Edge Function...');
+        console.log('🔗 Calling LXPay via hoopay-pix Edge Function...');
         
-        // Call LXPay via Edge Function to bypass CORS
-        const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('lxpay-pix', {
+        // Call LXPay via hoopay-pix Edge Function (already deployed) to bypass CORS
+        const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
           body: {
             action: 'create',
             amount: amount,
@@ -110,11 +110,13 @@ export const usePixPayment = () => {
           throw new Error(edgeError.message || 'Erro na Edge Function');
         }
 
-        if (edgeResponse?.success && edgeResponse?.data) {
-          pix_code = edgeResponse.data.qrCode || '';
-          pix_qrcode = edgeResponse.data.qrCodeImage || '';
-          txid = edgeResponse.data.externalId || identifier;
-          lxpayTransactionId = edgeResponse.data.id || null;
+        if (edgeResponse?.success) {
+          // Handle both response formats (with or without data wrapper)
+          const responseData = edgeResponse.data || edgeResponse;
+          pix_code = responseData.qrCode || edgeResponse.pix_code || '';
+          pix_qrcode = responseData.qrCodeImage || edgeResponse.pix_qrcode || '';
+          txid = responseData.externalId || edgeResponse.txid || identifier;
+          lxpayTransactionId = responseData.id || edgeResponse.transaction_id || null;
           
           console.log('✅ LXPay PIX created via Edge Function:', txid);
           console.log('✅ PIX Code:', pix_code ? 'presente' : 'ausente');
@@ -233,11 +235,12 @@ export const usePixPayment = () => {
       // If we have a LXPay transaction ID or txid, check via Edge Function
       if (payment.hoopay_order_uuid || (payment.txid && payment.txid.startsWith('COCO'))) {
         try {
-          console.log('🔍 Verifying payment via Edge Function...');
+          console.log('🔍 Verifying payment via hoopay-pix Edge Function...');
           
-          const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('lxpay-pix', {
+          const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
             body: {
               action: 'verify',
+              payment_id: paymentId,
               transactionId: payment.hoopay_order_uuid,
               externalId: payment.txid.startsWith('COCO') ? payment.txid : undefined
             }

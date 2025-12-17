@@ -72,6 +72,12 @@ const SubscribePage = () => {
       return;
     }
     
+    // Redirect to Hoopay payment URL for Trimestral plan
+    if (planName === 'Trimestral') {
+      window.open('https://p.hoopay.com.br/v/f488d9e1-3e79-4ea5-a9cc-4a108bb03c92', '_blank');
+      return;
+    }
+    
     toast.info('Sistema de pagamento em breve!', {
       description: 'Estamos preparando a melhor experiência de pagamento para você.',
       duration: 3000

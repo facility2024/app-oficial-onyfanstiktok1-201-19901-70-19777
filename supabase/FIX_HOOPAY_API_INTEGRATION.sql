@@ -1,14 +1,17 @@
 -- =====================================================
 -- CORREÇÃO COMPLETA DA INTEGRAÇÃO HOOPAY
--- Baseado na documentação oficial (Postman Collection)
+-- Corrigido para estrutura JSONB do campo config
 -- =====================================================
 
--- 1. Atualizar URL da API na tabela payment_config
+-- 1. Atualizar/adicionar api_url no campo config JSONB
 UPDATE payment_config 
-SET api_url = 'https://api.pay.hoopay.com.br/charge'
+SET config = COALESCE(config, '{}'::jsonb) || jsonb_build_object(
+    'api_url', 'https://api.pay.hoopay.com.br/charge'
+),
+updated_at = NOW()
 WHERE provider = 'hoopay';
 
--- 2. Recriar função create_pix_charge com estrutura correta
+-- 2. Recriar função create_pix_charge com acesso JSONB correto
 CREATE OR REPLACE FUNCTION public.create_pix_charge(
   p_plan_id TEXT,
   p_customer_name TEXT,
@@ -21,7 +24,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_config RECORD;
+  v_config JSONB;
+  v_api_key TEXT;
+  v_secret_key TEXT;
+  v_api_url TEXT;
   v_amount NUMERIC;
   v_plan_name TEXT;
   v_plan_days INTEGER;
@@ -32,11 +38,23 @@ DECLARE
   v_pix_code TEXT;
   v_qr_code TEXT;
 BEGIN
-  -- Buscar configuração Hoopay
-  SELECT * INTO v_config FROM payment_config WHERE provider = 'hoopay' LIMIT 1;
+  -- Buscar configuração Hoopay (campo config é JSONB)
+  SELECT config INTO v_config 
+  FROM payment_config 
+  WHERE provider = 'hoopay' 
+  LIMIT 1;
   
   IF v_config IS NULL THEN
     RETURN jsonb_build_object('success', false, 'error', 'Hoopay não configurado');
+  END IF;
+
+  -- Extrair credenciais do JSONB
+  v_api_key := v_config->>'api_key';
+  v_secret_key := v_config->>'secret_key';
+  v_api_url := COALESCE(v_config->>'api_url', 'https://api.pay.hoopay.com.br/charge');
+
+  IF v_api_key IS NULL OR v_secret_key IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Credenciais Hoopay não configuradas');
   END IF;
 
   -- Definir valores do plano
@@ -58,7 +76,7 @@ BEGIN
   END CASE;
 
   -- Criar header de autenticação Basic Auth (api_key:secret_key em base64)
-  v_auth_header := 'Basic ' || encode((v_config.api_key || ':' || v_config.secret_key)::bytea, 'base64');
+  v_auth_header := 'Basic ' || encode((v_api_key || ':' || v_secret_key)::bytea, 'base64');
 
   -- Montar body da requisição conforme documentação Hoopay
   v_request_body := jsonb_build_object(
@@ -84,7 +102,7 @@ BEGIN
   SELECT content::jsonb INTO v_response
   FROM http((
     'POST',
-    'https://api.pay.hoopay.com.br/charge',
+    v_api_url,
     ARRAY[
       http_header('Authorization', v_auth_header),
       http_header('Content-Type', 'application/json')
@@ -162,7 +180,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- 3. Recriar função verify_pix_payment com endpoint correto
+-- 3. Recriar função verify_pix_payment com acesso JSONB correto
 CREATE OR REPLACE FUNCTION public.verify_pix_payment(
   p_order_uuid TEXT
 )
@@ -171,7 +189,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_config RECORD;
+  v_config JSONB;
+  v_api_key TEXT;
+  v_secret_key TEXT;
   v_payment RECORD;
   v_response JSONB;
   v_auth_header TEXT;
@@ -200,15 +220,26 @@ BEGIN
     );
   END IF;
 
-  -- Buscar configuração Hoopay
-  SELECT * INTO v_config FROM payment_config WHERE provider = 'hoopay' LIMIT 1;
+  -- Buscar configuração Hoopay (campo config é JSONB)
+  SELECT config INTO v_config 
+  FROM payment_config 
+  WHERE provider = 'hoopay' 
+  LIMIT 1;
   
   IF v_config IS NULL THEN
     RETURN jsonb_build_object('success', false, 'error', 'Hoopay não configurado');
   END IF;
 
+  -- Extrair credenciais do JSONB
+  v_api_key := v_config->>'api_key';
+  v_secret_key := v_config->>'secret_key';
+
+  IF v_api_key IS NULL OR v_secret_key IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Credenciais Hoopay não configuradas');
+  END IF;
+
   -- Criar header de autenticação
-  v_auth_header := 'Basic ' || encode((v_config.api_key || ':' || v_config.secret_key)::bytea, 'base64');
+  v_auth_header := 'Basic ' || encode((v_api_key || ':' || v_secret_key)::bytea, 'base64');
 
   -- Consultar status na API Hoopay
   SELECT content::jsonb INTO v_response
@@ -288,8 +319,9 @@ GRANT EXECUTE ON FUNCTION public.create_pix_charge TO authenticated;
 GRANT EXECUTE ON FUNCTION public.verify_pix_payment TO authenticated;
 
 -- 5. Verificar configuração atual
-SELECT provider, api_url, 
-       CASE WHEN api_key IS NOT NULL THEN 'CONFIGURADO' ELSE 'NÃO CONFIGURADO' END as api_key_status,
-       CASE WHEN secret_key IS NOT NULL THEN 'CONFIGURADO' ELSE 'NÃO CONFIGURADO' END as secret_key_status
+SELECT provider, 
+       config->>'api_url' as api_url,
+       CASE WHEN config->>'api_key' IS NOT NULL THEN 'CONFIGURADO' ELSE 'NÃO CONFIGURADO' END as api_key_status,
+       CASE WHEN config->>'secret_key' IS NOT NULL THEN 'CONFIGURADO' ELSE 'NÃO CONFIGURADO' END as secret_key_status
 FROM payment_config 
 WHERE provider = 'hoopay';

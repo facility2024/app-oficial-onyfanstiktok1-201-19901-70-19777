@@ -1,14 +1,17 @@
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';
-import { User } from 'lucide-react';
+import { User, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+
 export const UserMenuHeader = () => {
   const {
     user,
     profile,
     loading
   } = useCurrentUser();
+  const { isPremium } = usePremiumStatus();
   const navigate = useNavigate();
   if (loading) {
     return <div className="p-4 border-b border-white/10">
@@ -43,9 +46,17 @@ export const UserMenuHeader = () => {
         </div>
         
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-base truncate">
-            {displayName}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-white font-semibold text-base truncate">
+              {displayName}
+            </p>
+            {isPremium && (
+              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded-full text-[10px] font-medium shrink-0">
+                <Crown className="w-2.5 h-2.5" />
+                VIP
+              </div>
+            )}
+          </div>
           {displayUsername && <p className="text-white/60 text-sm truncate">
               @{displayUsername}
             </p>}

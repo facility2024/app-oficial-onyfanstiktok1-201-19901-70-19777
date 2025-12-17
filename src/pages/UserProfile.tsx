@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useCreatorRole } from '@/hooks/useUserRoles';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Share2, Heart, MessageCircle, Users, CheckCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Share2, Heart, MessageCircle, Users, CheckCircle, Trash2, Crown } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,7 @@ const profileSchema = z.object({
 export default function UserProfile() {
   const { user, profile, loading, updating, updateProfile, uploadAvatar } = useCurrentUser();
   const { isCreator, loading: creatorLoading } = useCreatorRole();
+  const { isPremium, getDaysRemaining } = usePremiumStatus();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -326,6 +328,12 @@ export default function UserProfile() {
                     <h1 className="text-2xl md:text-3xl font-bold text-white">
                       {displayProfile.full_name || 'Usuário'}
                     </h1>
+                    {isPremium && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium">
+                        <Crown className="w-3 h-3" />
+                        VIP
+                      </div>
+                    )}
                     {isCreator && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
                         <Sparkles className="w-3 h-3" />

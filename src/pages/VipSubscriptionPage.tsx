@@ -114,16 +114,20 @@ export default function VipSubscriptionPage() {
   }, []);
 
   const handleGeneratePix = async () => {
-    if (!userData.name || !userData.email) {
-      toast({ title: 'Erro', description: 'Preencha nome e email', variant: 'destructive' });
+    // Use automatic user data - no form required
+    const name = userData.name || 'Cliente CocoNudi';
+    const email = userData.email;
+
+    if (!email) {
+      toast({ title: 'Erro', description: 'Faça login para continuar', variant: 'destructive' });
       return;
     }
 
     try {
       const response = await generatePixPayment({
-        name: userData.name,
-        email: userData.email,
-        whatsapp: userData.whatsapp || '',
+        name,
+        email,
+        whatsapp: '',
         plan: selectedPlan.id,
         amount: selectedPlan.price
       });
@@ -258,33 +262,6 @@ export default function VipSubscriptionPage() {
               </div>
             </Card>
 
-            {/* User Form */}
-            <Card className="p-6 bg-gray-900/50 border-white/10 mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Seus dados</h3>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Nome completo"
-                  value={userData.name}
-                  onChange={(e) => setUserData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/20 rounded-lg text-white placeholder:text-gray-500 focus:border-yellow-500 focus:outline-none"
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={userData.email}
-                  onChange={(e) => setUserData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/20 rounded-lg text-white placeholder:text-gray-500 focus:border-yellow-500 focus:outline-none"
-                />
-                <input
-                  type="tel"
-                  placeholder="WhatsApp (opcional)"
-                  value={userData.whatsapp}
-                  onChange={(e) => setUserData(prev => ({ ...prev, whatsapp: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/20 rounded-lg text-white placeholder:text-gray-500 focus:border-yellow-500 focus:outline-none"
-                />
-              </div>
-            </Card>
 
             {/* CTA */}
             <Button

@@ -19,7 +19,6 @@ import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, S
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
-import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -219,7 +218,6 @@ export const TikTokApp = () => {
   const VIDEOS_PER_BLOCK = 50; // Aumentado de 10 para 50 para carregar mais vídeos por vez
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
-  const [showPremium, setShowPremium] = useState(false);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
@@ -1372,7 +1370,6 @@ export const TikTokApp = () => {
     setShowComments(false);
     setShowSearch(false);
     setShowLive(false);
-    setShowPremium(false);
     // Mantém o vídeo atual sem mudar o índice
   };
   const loadComments = useCallback(async (videoId: string) => {
@@ -2633,12 +2630,11 @@ export const TikTokApp = () => {
     }}>
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" onClick={() => {
-          if (showProfile || showSearch || showLive || showPremium) {
+          if (showProfile || showSearch || showLive) {
             // Se estiver em alguma modal/tela, fecha ela
             setShowProfile(false);
             setShowSearch(false);
             setShowLive(false);
-            setShowPremium(false);
           } else {
             // Se estiver na tela principal, volta ao primeiro vídeo
             goToHome();
@@ -3027,9 +3023,6 @@ export const TikTokApp = () => {
 
       {/* Desktop Live Modal */}
       <LiveModal isOpen={showLive} onClose={() => setShowLive(false)} onSelectModel={goToModelVideo} />
-
-      {/* Premium Modal */}
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
       
       {/* Age Verification Modal */}
       <AgeVerificationModal open={showAgeVerification} onClose={() => {

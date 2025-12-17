@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, Check, Star, Zap, ArrowLeft, Copy, Loader2 } from 'lucide-react';
+import { Crown, Check, Star, Zap, ArrowLeft, Copy, Loader2, Clock, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -63,8 +63,33 @@ export default function VipSubscriptionPage() {
   const [step, setStep] = useState<'select' | 'payment' | 'waiting'>('select');
   const [userData, setUserData] = useState({ name: '', email: '', whatsapp: '' });
   const [pixCode, setPixCode] = useState('');
+  const [pixQrCode, setPixQrCode] = useState('');
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState('');
   const [paymentId, setPaymentId] = useState('');
   const { loading, generatePixPayment, verifyPayment, copyPixCode } = usePixPayment();
+
+  // Timer countdown
+  useEffect(() => {
+    if (!expiresAt) return;
+    
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = expiresAt.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setTimeLeft('Expirado');
+        clearInterval(interval);
+        return;
+      }
+      
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [expiresAt]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -105,7 +130,11 @@ export default function VipSubscriptionPage() {
 
       if (response.success && response.pix_code) {
         setPixCode(response.pix_code);
+        setPixQrCode(response.pix_qrcode || '');
         setPaymentId(response.payment_id || '');
+        if (response.expires_at) {
+          setExpiresAt(new Date(response.expires_at));
+        }
         setStep('waiting');
         startPaymentPolling(response.payment_id || '');
       }
@@ -275,45 +304,75 @@ export default function VipSubscriptionPage() {
 
         {step === 'waiting' && (
           <Card className="p-6 bg-gray-900/50 border-white/10 text-center">
-            <Crown className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <Crown className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">Pague com PIX</h2>
-            <p className="text-gray-400 mb-6">Copie o código e pague no seu banco</p>
+            <p className="text-gray-400 mb-4">
+              Valor: <span className="text-yellow-500 font-bold">R$ {selectedPlan.price.toFixed(2)}</span>
+            </p>
             
+            {/* Timer */}
+            {timeLeft && (
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <Clock className="w-5 h-5 text-yellow-500" />
+                <span className={`text-lg font-mono ${timeLeft === 'Expirado' ? 'text-red-500' : 'text-white'}`}>
+                  {timeLeft === 'Expirado' ? 'PIX Expirado' : `Expira em ${timeLeft}`}
+                </span>
+              </div>
+            )}
+            
+            {/* QR Code */}
+            {pixQrCode && (
+              <div className="bg-white p-4 rounded-lg inline-block mb-6">
+                <img 
+                  src={pixQrCode} 
+                  alt="QR Code PIX" 
+                  className="w-48 h-48 mx-auto"
+                />
+              </div>
+            )}
+            
+            {!pixQrCode && (
+              <div className="bg-gray-800 p-8 rounded-lg inline-flex items-center justify-center mb-6">
+                <QrCode className="w-32 h-32 text-gray-600" />
+              </div>
+            )}
+            
+            {/* PIX Code */}
             <div className="bg-black/50 p-4 rounded-lg mb-4">
-              <p className="text-sm text-gray-400 mb-2">Código PIX (copia e cola)</p>
+              <p className="text-sm text-gray-400 mb-2">Código PIX Copia e Cola</p>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   readOnly
                   value={pixCode}
-                  className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm"
+                  className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-xs font-mono"
                 />
                 <Button
                   onClick={() => copyPixCode(pixCode)}
-                  variant="outline"
-                  size="icon"
-                  className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/20"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-black"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar
                 </Button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-yellow-500 mb-4">
+            {/* Status */}
+            <div className="flex items-center justify-center gap-2 text-yellow-500 mb-4 p-3 bg-yellow-500/10 rounded-lg">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Aguardando pagamento...</span>
+              <span className="font-medium">Aguardando confirmação do pagamento...</span>
             </div>
 
-            <p className="text-xs text-gray-500">
-              O pagamento será confirmado automaticamente
+            <p className="text-xs text-gray-500 mb-4">
+              O pagamento será confirmado automaticamente em alguns segundos após o PIX
             </p>
 
             <Button
               variant="ghost"
               onClick={() => setStep('select')}
-              className="mt-4 text-gray-400"
+              className="text-gray-400 hover:text-white"
             >
-              Voltar aos planos
+              ← Voltar aos planos
             </Button>
           </Card>
         )}

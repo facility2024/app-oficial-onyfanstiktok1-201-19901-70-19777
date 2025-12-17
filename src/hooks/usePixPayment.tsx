@@ -70,6 +70,15 @@ export const usePixPayment = () => {
         // Generate a simulated PIX code for demo purposes
         const pixCode = `00020126580014br.gov.bcb.pix0136${user.id.slice(0, 20)}520400005303986540${amount.toFixed(2)}5802BR5913COCONUDI VIP6008SAOPAULO62070503***6304`;
         
+        // Generate a simple QR Code placeholder (base64 encoded SVG)
+        const qrCodeSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="white">
+          <rect width="200" height="200" fill="#1a1a1a"/>
+          <text x="100" y="90" text-anchor="middle" fill="#fbbf24" font-size="14" font-family="Arial">PIX</text>
+          <text x="100" y="115" text-anchor="middle" fill="white" font-size="12" font-family="Arial">R$ ${amount.toFixed(2)}</text>
+          <text x="100" y="140" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">Modo Demo</text>
+        </svg>`;
+        const qrCodeBase64 = `data:image/svg+xml;base64,${btoa(qrCodeSvg)}`;
+        
         const { data: payment, error: insertError } = await supabase
           .from('pix_payments')
           .insert({
@@ -80,6 +89,7 @@ export const usePixPayment = () => {
             amount: amount,
             txid: txid,
             pix_code: pixCode,
+            qr_code_base64: qrCodeBase64,
             status: 'pending',
             expires_at: expiresAt
           })
@@ -94,6 +104,7 @@ export const usePixPayment = () => {
           success: true,
           payment_id: payment.id,
           pix_code: pixCode,
+          pix_qrcode: qrCodeBase64,
           txid: txid,
           amount: amount,
           expires_at: expiresAt,

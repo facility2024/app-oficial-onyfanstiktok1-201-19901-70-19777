@@ -29,12 +29,6 @@ interface PaymentVerificationResponse {
   expires_at?: string;
 }
 
-interface HoopayConfig {
-  api_key: string;
-  secret_key: string;
-  api_url: string;
-}
-
 interface PixPaymentRecord {
   id: string;
   user_id: string;
@@ -53,39 +47,17 @@ interface PixPaymentRecord {
   paid_at: string | null;
 }
 
+// LXPay API Configuration
+const LXPAY_CONFIG = {
+  api_url: 'https://api.lxpay.com.br',
+  public_key: 'otaviogcasartelli_1762996382405',
+  secret_key: 'fcc312bb-01b3-482d-90c5-919155bb082d'
+};
+
 export const usePixPayment = () => {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [paymentData, setPaymentData] = useState<PixPaymentResponse | null>(null);
-
-  // Fetch Hoopay credentials via RPC function (bypasses RLS securely)
-  const getHoopayCredentials = async (): Promise<HoopayConfig | null> => {
-    try {
-      const { data, error } = await (supabase.rpc as any)('get_payment_credentials', {
-        p_provider: 'hoopay'
-      });
-
-      if (error) {
-        console.error('Failed to fetch Hoopay credentials via RPC:', error);
-        return null;
-      }
-
-      const config = data as any;
-      if (!config || !config.api_key) {
-        console.log('No Hoopay credentials configured');
-        return null;
-      }
-      
-      return {
-        api_key: config.api_key || '',
-        secret_key: config.secret_key || '',
-        api_url: config.api_url || 'https://api.pay.hoopay.com.br'
-      };
-    } catch (error) {
-      console.error('Error fetching Hoopay config:', error);
-      return null;
-    }
-  };
 
   // Generate simulated PIX as fallback
   const generateSimulatedPix = (amount: number): { pix_code: string; pix_qrcode: string; txid: string } => {
@@ -108,90 +80,70 @@ export const usePixPayment = () => {
       const planDays = data.plan === 'yearly' ? 365 : data.plan === 'quarterly' ? 90 : 30;
       const planType = data.plan || 'monthly';
       const amount = data.amount || 19.99;
-      const amountInCents = Math.round(amount * 100);
 
-      // Get Hoopay credentials
-      const hoopayConfig = await getHoopayCredentials();
+      // Generate unique identifier for this payment
+      const identifier = `COCO${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
       let pix_code: string;
       let pix_qrcode: string;
       let txid: string;
-      let orderUUID: string | null = null;
+      let lxpayTransactionId: string | null = null;
 
-      if (hoopayConfig && hoopayConfig.api_key && hoopayConfig.secret_key) {
-        // Make direct API call to Hoopay
-        try {
-          const authString = btoa(`${hoopayConfig.api_key}:${hoopayConfig.secret_key}`);
-          
-          // Generate unique txid for this payment
-          const txidGenerated = `COCO${Date.now()}${Math.random().toString(36).substr(2, 8)}`;
-          const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-          
-          // Build request payload according to Hoopay API format (same as Edge Function)
-          const requestPayload = {
-            paymentMethod: 'pix',
-            amount: amountInCents,
-            dueDate: dueDate,
-            customer: {
-              name: data.name || 'Cliente CocoNudi',
-              email: data.email,
-              phone: data.whatsapp?.replace(/\D/g, '') || '',
-              document: ''
-            },
-            items: [{
-              title: `CocoNudi VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-              quantity: 1,
-              unitPrice: amountInCents,
-              tangible: false
-            }],
-            externalReference: txidGenerated
-          };
+      try {
+        // Build request payload according to LXPay API documentation
+        const requestPayload = {
+          amount: amount, // LXPay uses decimal value (49.99), not cents
+          client: {
+            name: data.name || 'Cliente CocoNudi',
+            email: data.email
+          },
+          identifier: identifier,
+          products: [{
+            title: `CocoNudi VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
+            price: amount,
+            quantity: 1
+          }]
+        };
 
-          const apiUrl = `${hoopayConfig.api_url}/charge`;
-          console.log('🔗 Hoopay API URL:', apiUrl);
-          console.log('📦 Hoopay Request Payload:', JSON.stringify(requestPayload, null, 2));
-          
-          const hoopayResponse = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Basic ${authString}`
-            },
-            body: JSON.stringify(requestPayload)
-          });
+        console.log('🔗 LXPay API URL:', `${LXPAY_CONFIG.api_url}/api/v1/gateway/pix/receive`);
+        console.log('📦 LXPay Request Payload:', JSON.stringify(requestPayload, null, 2));
+        
+        const lxpayResponse = await fetch(`${LXPAY_CONFIG.api_url}/api/v1/gateway/pix/receive`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-public-key': LXPAY_CONFIG.public_key,
+            'x-secret-key': LXPAY_CONFIG.secret_key
+          },
+          body: JSON.stringify(requestPayload)
+        });
 
-          console.log('📡 Hoopay Response Status:', hoopayResponse.status);
-          
-          const hoopayData = await hoopayResponse.json();
-          console.log('📄 Hoopay Response Data:', hoopayData);
+        console.log('📡 LXPay Response Status:', lxpayResponse.status);
+        
+        const lxpayData = await lxpayResponse.json();
+        console.log('📄 LXPay Response Data:', lxpayData);
 
-          if (hoopayResponse.ok && hoopayData.orderUUID) {
-            // Extract PIX data from response according to Hoopay documentation
-            const charges = hoopayData.payment?.charges || [];
-            const pixCharge = charges.find((c: any) => c.pixPayload) || charges[0] || {};
-            
-            pix_code = pixCharge.pixPayload || hoopayData.pixPayload || '';
-            pix_qrcode = pixCharge.pixQrCode || hoopayData.pixQrCode || '';
-            txid = hoopayData.orderUUID;
-            orderUUID = hoopayData.orderUUID;
-            console.log('✅ Hoopay PIX created successfully:', txid);
-            console.log('✅ PIX Code:', pix_code ? 'presente' : 'ausente');
-            console.log('✅ QR Code:', pix_qrcode ? 'presente' : 'ausente');
-          } else {
-            console.error('❌ Hoopay API error:', hoopayData);
-            console.error('❌ Status:', hoopayResponse.status, hoopayResponse.statusText);
-            throw new Error(hoopayData.message || `Erro na API Hoopay: ${hoopayResponse.status}`);
-          }
-        } catch (apiError) {
-          console.error('❌ Hoopay API call failed, using simulated PIX:', apiError);
-          const simulated = generateSimulatedPix(amount);
-          pix_code = simulated.pix_code;
-          pix_qrcode = simulated.pix_qrcode;
-          txid = simulated.txid;
+        if (lxpayResponse.ok && lxpayData) {
+          // Extract PIX data from LXPay response
+          // Response structure: { id, externalId, pixInformation: { qrCode, image } }
+          const pixInfo = lxpayData.pixInformation || lxpayData;
+          
+          pix_code = pixInfo.qrCode || pixInfo.pixCode || lxpayData.qrCode || '';
+          pix_qrcode = pixInfo.image || pixInfo.qrCodeImage || lxpayData.image || '';
+          txid = lxpayData.externalId || lxpayData.id || identifier;
+          lxpayTransactionId = lxpayData.id || null;
+          
+          console.log('✅ LXPay PIX created successfully:', txid);
+          console.log('✅ PIX Code:', pix_code ? 'presente' : 'ausente');
+          console.log('✅ QR Code Image:', pix_qrcode ? 'presente' : 'ausente');
+          console.log('✅ Transaction ID:', lxpayTransactionId);
+        } else {
+          console.error('❌ LXPay API error:', lxpayData);
+          console.error('❌ Status:', lxpayResponse.status, lxpayResponse.statusText);
+          throw new Error(lxpayData.message || lxpayData.error || `Erro na API LXPay: ${lxpayResponse.status}`);
         }
-      } else {
-        // No credentials, use simulated PIX
-        console.log('No Hoopay credentials, using simulated PIX');
+      } catch (apiError) {
+        console.error('❌ LXPay API call failed, using simulated PIX:', apiError);
         const simulated = generateSimulatedPix(amount);
         pix_code = simulated.pix_code;
         pix_qrcode = simulated.pix_qrcode;
@@ -215,7 +167,7 @@ export const usePixPayment = () => {
           pix_code: pix_code,
           qr_code: pix_qrcode,
           txid: txid,
-          hoopay_order_uuid: orderUUID,
+          hoopay_order_uuid: lxpayTransactionId, // Reusing column for LXPay transaction ID
           status: 'pending',
           expires_at: expiresAt
         })
@@ -237,7 +189,7 @@ export const usePixPayment = () => {
         txid: txid,
         amount: amount,
         expires_at: expiresAt,
-        message: orderUUID ? 'PIX gerado com sucesso via Hoopay' : 'PIX simulado gerado com sucesso'
+        message: lxpayTransactionId ? 'PIX gerado com sucesso via LXPay' : 'PIX simulado gerado com sucesso'
       };
 
       setPaymentData(response);
@@ -297,72 +249,83 @@ export const usePixPayment = () => {
         };
       }
 
-      // If we have a Hoopay order UUID, check with Hoopay API
-      if (payment.hoopay_order_uuid) {
-        const hoopayConfig = await getHoopayCredentials();
-        
-        if (hoopayConfig && hoopayConfig.api_key && hoopayConfig.secret_key) {
-          try {
-            const authString = btoa(`${hoopayConfig.api_key}:${hoopayConfig.secret_key}`);
-            
-            const consultResponse = await fetch(
-              `${hoopayConfig.api_url}/pix/consult/${payment.hoopay_order_uuid}`,
-              {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Basic ${authString}`
-                }
-              }
-            );
-
-            const consultData = await consultResponse.json();
-
-            if (consultResponse.ok) {
-              const hoopayStatus = consultData.status?.toLowerCase();
-              
-              if (hoopayStatus === 'paid' || hoopayStatus === 'confirmed' || hoopayStatus === 'approved') {
-                // Update payment status
-                await supabase
-                  .from('pix_payments' as any)
-                  .update({ 
-                    status: 'paid',
-                    paid_at: new Date().toISOString()
-                  })
-                  .eq('id', paymentId);
-
-                // Create premium user
-                const subscriptionEnd = new Date();
-                subscriptionEnd.setDate(subscriptionEnd.getDate() + payment.plan_days);
-
-                await supabase
-                  .from('premium_users')
-                  .upsert({
-                    email: payment.email,
-                    name: payment.name,
-                    whatsapp: payment.whatsapp,
-                    subscription_status: 'active',
-                    subscription_start: new Date().toISOString(),
-                    subscription_end: subscriptionEnd.toISOString(),
-                    subscription_type: payment.plan_type
-                  }, { onConflict: 'email' });
-
-                toast({
-                  title: "Pagamento Confirmado!",
-                  description: "Sua assinatura VIP foi ativada com sucesso!",
-                });
-
-                return {
-                  success: true,
-                  status: 'paid',
-                  premium_user_id: payment.user_id,
-                  message: 'Pagamento confirmado! Assinatura VIP ativada.',
-                  expires_at: payment.expires_at
-                };
+      // If we have a LXPay transaction ID, check with LXPay API
+      if (payment.hoopay_order_uuid || payment.txid) {
+        try {
+          // Query by externalId (identifier we sent) or by id
+          const queryParam = payment.txid.startsWith('COCO') 
+            ? `externalId=${payment.txid}` 
+            : `id=${payment.hoopay_order_uuid}`;
+          
+          console.log('🔍 Verificando pagamento LXPay:', queryParam);
+          
+          const consultResponse = await fetch(
+            `${LXPAY_CONFIG.api_url}/api/v1/transactions?${queryParam}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-public-key': LXPAY_CONFIG.public_key,
+                'x-secret-key': LXPAY_CONFIG.secret_key
               }
             }
-          } catch (apiError) {
-            console.error('Hoopay consult error:', apiError);
+          );
+
+          console.log('📡 LXPay Consult Status:', consultResponse.status);
+          
+          const consultData = await consultResponse.json();
+          console.log('📄 LXPay Consult Data:', consultData);
+
+          if (consultResponse.ok) {
+            // LXPay returns transaction data, check status
+            // Status can be: PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
+            const transaction = consultData.data || consultData;
+            const lxpayStatus = (transaction.status || '').toUpperCase();
+            
+            console.log('🔍 LXPay Transaction Status:', lxpayStatus);
+
+            if (lxpayStatus === 'COMPLETED' || lxpayStatus === 'PAID' || lxpayStatus === 'APPROVED') {
+              // Update payment status
+              await supabase
+                .from('pix_payments' as any)
+                .update({ 
+                  status: 'paid',
+                  paid_at: new Date().toISOString()
+                })
+                .eq('id', paymentId);
+
+              // Create premium user
+              const subscriptionEnd = new Date();
+              subscriptionEnd.setDate(subscriptionEnd.getDate() + payment.plan_days);
+
+              await supabase
+                .from('premium_users')
+                .upsert({
+                  email: payment.email,
+                  name: payment.name,
+                  whatsapp: payment.whatsapp,
+                  subscription_status: 'active',
+                  subscription_start: new Date().toISOString(),
+                  subscription_end: subscriptionEnd.toISOString(),
+                  subscription_type: payment.plan_type
+                }, { onConflict: 'email' });
+
+              toast({
+                title: "Pagamento Confirmado!",
+                description: "Sua assinatura VIP foi ativada com sucesso!",
+              });
+
+              return {
+                success: true,
+                status: 'paid',
+                premium_user_id: payment.user_id,
+                message: 'Pagamento confirmado! Assinatura VIP ativada.',
+                expires_at: payment.expires_at
+              };
+            }
           }
+        } catch (apiError) {
+          console.error('LXPay consult error:', apiError);
         }
       }
 

@@ -48,96 +48,47 @@ export const usePixPayment = () => {
       const planType = data.plan || 'monthly';
       const amount = data.amount || 19.99;
 
-      // Try to call RPC function (bypassing TypeScript strict checking)
+      // Call RPC function to create PIX charge
       const { data: rpcResponse, error: rpcError } = await (supabase.rpc as any)('create_pix_charge', {
         p_user_id: user.id,
         p_email: data.email,
         p_name: data.name,
-        p_whatsapp: data.whatsapp,
+        p_whatsapp: data.whatsapp || '',
         p_amount: amount,
         p_plan_type: planType,
         p_plan_days: planDays
       });
 
-      // If RPC doesn't exist, fallback to direct payment creation
+      // Handle RPC response
       if (rpcError) {
-        console.log('RPC not available, using fallback:', rpcError.message);
-        
-        // Create payment record directly
-        const txid = `PIX_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 min expiry
-        
-        // Generate a simulated PIX code for demo purposes
-        const pixCode = `00020126580014br.gov.bcb.pix0136${user.id.slice(0, 20)}520400005303986540${amount.toFixed(2)}5802BR5913COCONUDI VIP6008SAOPAULO62070503***6304`;
-        
-        // Generate a simple QR Code placeholder (base64 encoded SVG)
-        const qrCodeSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="white">
-          <rect width="200" height="200" fill="#1a1a1a"/>
-          <text x="100" y="90" text-anchor="middle" fill="#fbbf24" font-size="14" font-family="Arial">PIX</text>
-          <text x="100" y="115" text-anchor="middle" fill="white" font-size="12" font-family="Arial">R$ ${amount.toFixed(2)}</text>
-          <text x="100" y="140" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">Modo Demo</text>
-        </svg>`;
-        const qrCodeBase64 = `data:image/svg+xml;base64,${btoa(qrCodeSvg)}`;
-        
-        const { data: payment, error: insertError } = await supabase
-          .from('pix_payments')
-          .insert({
-            user_id: user.id,
-            email: data.email,
-            name: data.name,
-            whatsapp: data.whatsapp,
-            amount: amount,
-            txid: txid,
-            pix_code: pixCode,
-            qr_code_base64: qrCodeBase64,
-            status: 'pending',
-            expires_at: expiresAt
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          throw new Error('Erro ao criar pagamento: ' + insertError.message);
-        }
-        
-        const response: PixPaymentResponse = {
-          success: true,
-          payment_id: payment.id,
-          pix_code: pixCode,
-          pix_qrcode: qrCodeBase64,
-          txid: txid,
-          amount: amount,
-          expires_at: expiresAt,
-          message: 'PIX gerado com sucesso (modo demonstração)'
-        };
-
-        setPaymentData(response);
-        
-        toast({
-          title: "PIX Gerado!",
-          description: "Código PIX gerado. Em ambiente de produção, conecte com Hoopay.",
-        });
-
-        return response;
+        console.error('RPC Error:', rpcError);
+        throw new Error('Erro ao gerar PIX: ' + rpcError.message);
       }
 
-      // RPC succeeded
+      // Parse JSON response from RPC
+      const rpcData = typeof rpcResponse === 'string' ? JSON.parse(rpcResponse) : rpcResponse;
+      
+      if (!rpcData.success) {
+        throw new Error(rpcData.message || rpcData.error || 'Erro ao gerar PIX');
+      }
+
+      // Build response from RPC data
       const response: PixPaymentResponse = {
         success: true,
-        payment_id: rpcResponse?.payment_id,
-        pix_code: rpcResponse?.pix_code,
-        pix_qrcode: rpcResponse?.pix_qrcode,
-        txid: rpcResponse?.txid,
+        payment_id: rpcData.payment_id,
+        pix_code: rpcData.pix_code,
+        pix_qrcode: rpcData.pix_qrcode,
+        txid: rpcData.txid,
         amount: amount,
-        expires_at: rpcResponse?.expires_at,
-        message: 'PIX gerado com sucesso'
+        expires_at: rpcData.expires_at,
+        message: rpcData.message || 'PIX gerado com sucesso'
       };
 
       setPaymentData(response);
       
       toast({
         title: "PIX Gerado!",
-        description: "Código PIX gerado com sucesso. Copie e cole para pagar.",
+        description: "Escaneie o QR Code ou copie o código para pagar.",
       });
 
       return response;
@@ -157,12 +108,13 @@ export const usePixPayment = () => {
   const verifyPayment = useCallback(async (paymentId: string): Promise<PaymentVerificationResponse> => {
     setVerifying(true);
     try {
-      // Try RPC first
+      // Call RPC to verify payment
       const { data: rpcResponse, error: rpcError } = await (supabase.rpc as any)('verify_pix_payment', {
         p_payment_id: paymentId
       });
 
       if (rpcError) {
+        console.error('Verify RPC Error:', rpcError);
         // Fallback: check payment status directly
         const { data: payment, error: fetchError } = await supabase
           .from('pix_payments')
@@ -177,17 +129,20 @@ export const usePixPayment = () => {
         return {
           success: true,
           status: payment.status as any,
-          message: `Status do pagamento: ${payment.status}`,
+          message: `Status: ${payment.status}`,
           expires_at: payment.expires_at
         };
       }
 
+      // Parse JSON response
+      const rpcData = typeof rpcResponse === 'string' ? JSON.parse(rpcResponse) : rpcResponse;
+
       return {
-        success: rpcResponse?.success || false,
-        status: rpcResponse?.status || 'pending',
-        premium_user_id: rpcResponse?.premium_user_id,
-        message: rpcResponse?.message || 'Verificação concluída',
-        expires_at: rpcResponse?.expires_at
+        success: rpcData.success || false,
+        status: rpcData.status || 'pending',
+        premium_user_id: rpcData.premium_user_id,
+        message: rpcData.message || 'Verificando...',
+        expires_at: rpcData.expires_at
       };
     } catch (error: any) {
       console.error('Erro ao verificar pagamento:', error);

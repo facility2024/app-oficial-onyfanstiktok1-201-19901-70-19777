@@ -123,24 +123,23 @@ export const usePixPayment = () => {
         try {
           const authString = btoa(`${hoopayConfig.api_key}:${hoopayConfig.secret_key}`);
           
-          // Build request payload
+          // Build request payload according to Hoopay documentation
           const requestPayload = {
-            paymentMethod: 'pix',
-            amount: amount,
-            dueDate: new Date(Date.now() + 30 * 60 * 1000).toISOString().split('T')[0],
             customer: {
-              name: data.name || 'Cliente CocoNudi',
               email: data.email,
-              phone: data.whatsapp?.replace(/\D/g, '') || '',
+              name: data.name || 'Cliente CocoNudi',
+              phone: data.whatsapp?.replace(/\D/g, '') || '11999999999',
               document: ''
             },
-            items: [{
+            products: [{
               title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-              quantity: 1,
-              unitPrice: amount,
-              tangible: false
+              price: amountInCents, // Hoopay expects price in cents
+              quantity: 1
             }],
-            externalReference: `COCO${Date.now()}`
+            payments: [{
+              type: 'pix'
+            }],
+            ip: '192.168.0.1'
           };
 
           const apiUrl = `${hoopayConfig.api_url}/charge`;
@@ -162,11 +161,17 @@ export const usePixPayment = () => {
           console.log('📄 Hoopay Response Data:', hoopayData);
 
           if (hoopayResponse.ok && hoopayData.orderUUID) {
-            pix_code = hoopayData.pixPayload || hoopayData.pix_code || '';
-            pix_qrcode = hoopayData.pixQrCode || hoopayData.qr_code || '';
+            // Extract PIX data from response according to Hoopay documentation
+            const charges = hoopayData.payment?.charges || [];
+            const pixCharge = charges.find((c: any) => c.pixPayload) || charges[0] || {};
+            
+            pix_code = pixCharge.pixPayload || hoopayData.pixPayload || '';
+            pix_qrcode = pixCharge.pixQrCode || hoopayData.pixQrCode || '';
             txid = hoopayData.orderUUID;
             orderUUID = hoopayData.orderUUID;
             console.log('✅ Hoopay PIX created successfully:', txid);
+            console.log('✅ PIX Code:', pix_code ? 'presente' : 'ausente');
+            console.log('✅ QR Code:', pix_qrcode ? 'presente' : 'ausente');
           } else {
             console.error('❌ Hoopay API error:', hoopayData);
             console.error('❌ Status:', hoopayResponse.status, hoopayResponse.statusText);

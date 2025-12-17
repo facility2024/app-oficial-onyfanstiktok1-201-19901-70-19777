@@ -65,6 +65,13 @@ const SubscribePage = () => {
 
   const handleSelectPlan = (planName: string) => {
     setSelectedPlan(planName);
+    
+    // Redirect to Hoopay payment URL for Mensal plan
+    if (planName === 'Mensal') {
+      window.open('https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1', '_blank');
+      return;
+    }
+    
     toast.info('Sistema de pagamento em breve!', {
       description: 'Estamos preparando a melhor experiência de pagamento para você.',
       duration: 3000

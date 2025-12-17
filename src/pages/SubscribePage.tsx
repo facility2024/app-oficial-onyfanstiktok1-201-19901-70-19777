@@ -78,6 +78,12 @@ const SubscribePage = () => {
       return;
     }
     
+    // Redirect to Hoopay payment URL for Anual plan
+    if (planName === 'Anual') {
+      window.open('https://p.hoopay.com.br/v/61207e4a-9455-4cb8-8207-9002a87c5fe6', '_blank');
+      return;
+    }
+    
     toast.info('Sistema de pagamento em breve!', {
       description: 'Estamos preparando a melhor experiência de pagamento para você.',
       duration: 3000

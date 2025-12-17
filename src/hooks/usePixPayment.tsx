@@ -58,23 +58,23 @@ export const usePixPayment = () => {
   const [verifying, setVerifying] = useState(false);
   const [paymentData, setPaymentData] = useState<PixPaymentResponse | null>(null);
 
-  // Fetch Hoopay credentials from payment_config table
+  // Fetch Hoopay credentials via RPC function (bypasses RLS securely)
   const getHoopayCredentials = async (): Promise<HoopayConfig | null> => {
     try {
-      const { data, error } = await supabase
-        .from('payment_config' as any)
-        .select('config')
-        .eq('provider', 'hoopay')
-        .single();
+      const { data, error } = await (supabase.rpc as any)('get_payment_credentials', {
+        p_provider: 'hoopay'
+      });
 
-      if (error || !data) {
-        console.error('Failed to fetch Hoopay credentials:', error);
+      if (error) {
+        console.error('Failed to fetch Hoopay credentials via RPC:', error);
         return null;
       }
 
-      const configData = data as unknown as { config: any };
-      const config = configData.config;
-      if (!config) return null;
+      const config = data as any;
+      if (!config || !config.api_key) {
+        console.log('No Hoopay credentials configured');
+        return null;
+      }
       
       return {
         api_key: config.api_key || '',

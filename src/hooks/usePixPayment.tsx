@@ -48,40 +48,40 @@ export const usePixPayment = () => {
       const planType = data.plan || 'monthly';
       const amount = data.amount || 19.99;
 
-      // Call RPC function to create PIX charge
-      const { data: rpcResponse, error: rpcError } = await (supabase.rpc as any)('create_pix_charge', {
-        p_user_id: user.id,
-        p_email: data.email,
-        p_name: data.name,
-        p_whatsapp: data.whatsapp || '',
-        p_amount: amount,
-        p_plan_type: planType,
-        p_plan_days: planDays
+      // Call Edge Function to create PIX charge
+      const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
+        body: {
+          action: 'create_charge',
+          user_id: user.id,
+          email: data.email,
+          name: data.name,
+          whatsapp: data.whatsapp || '',
+          amount: amount,
+          plan_type: planType,
+          plan_days: planDays
+        }
       });
 
-      // Handle RPC response
-      if (rpcError) {
-        console.error('RPC Error:', rpcError);
-        throw new Error('Erro ao gerar PIX: ' + rpcError.message);
+      // Handle response
+      if (edgeError) {
+        console.error('Edge Function Error:', edgeError);
+        throw new Error('Erro ao gerar PIX: ' + edgeError.message);
       }
 
-      // Parse JSON response from RPC
-      const rpcData = typeof rpcResponse === 'string' ? JSON.parse(rpcResponse) : rpcResponse;
-      
-      if (!rpcData.success) {
-        throw new Error(rpcData.message || rpcData.error || 'Erro ao gerar PIX');
+      if (!edgeResponse.success) {
+        throw new Error(edgeResponse.message || edgeResponse.error || 'Erro ao gerar PIX');
       }
 
-      // Build response from RPC data
+      // Build response from Edge Function data
       const response: PixPaymentResponse = {
         success: true,
-        payment_id: rpcData.payment_id,
-        pix_code: rpcData.pix_code,
-        pix_qrcode: rpcData.pix_qrcode,
-        txid: rpcData.txid,
+        payment_id: edgeResponse.payment_id,
+        pix_code: edgeResponse.pix_code,
+        pix_qrcode: edgeResponse.pix_qrcode,
+        txid: edgeResponse.txid,
         amount: amount,
-        expires_at: rpcData.expires_at,
-        message: rpcData.message || 'PIX gerado com sucesso'
+        expires_at: edgeResponse.expires_at,
+        message: edgeResponse.message || 'PIX gerado com sucesso'
       };
 
       setPaymentData(response);
@@ -108,13 +108,16 @@ export const usePixPayment = () => {
   const verifyPayment = useCallback(async (paymentId: string): Promise<PaymentVerificationResponse> => {
     setVerifying(true);
     try {
-      // Call RPC to verify payment
-      const { data: rpcResponse, error: rpcError } = await (supabase.rpc as any)('verify_pix_payment', {
-        p_payment_id: paymentId
+      // Call Edge Function to verify payment
+      const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
+        body: {
+          action: 'verify_payment',
+          payment_id: paymentId
+        }
       });
 
-      if (rpcError) {
-        console.error('Verify RPC Error:', rpcError);
+      if (edgeError) {
+        console.error('Verify Edge Error:', edgeError);
         // Fallback: check payment status directly
         const { data: payment, error: fetchError } = await supabase
           .from('pix_payments')
@@ -134,15 +137,12 @@ export const usePixPayment = () => {
         };
       }
 
-      // Parse JSON response
-      const rpcData = typeof rpcResponse === 'string' ? JSON.parse(rpcResponse) : rpcResponse;
-
       return {
-        success: rpcData.success || false,
-        status: rpcData.status || 'pending',
-        premium_user_id: rpcData.premium_user_id,
-        message: rpcData.message || 'Verificando...',
-        expires_at: rpcData.expires_at
+        success: edgeResponse.success || false,
+        status: edgeResponse.status || 'pending',
+        premium_user_id: edgeResponse.premium_user_id,
+        message: edgeResponse.message || 'Verificando...',
+        expires_at: edgeResponse.expires_at
       };
     } catch (error: any) {
       console.error('Erro ao verificar pagamento:', error);

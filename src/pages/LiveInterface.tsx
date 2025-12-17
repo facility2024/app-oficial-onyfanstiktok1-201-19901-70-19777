@@ -6,7 +6,6 @@ import { SideMenu } from '@/components/tiktok/SideMenu';
 import { BottomInfo } from '@/components/tiktok/BottomInfo';
 import { ProfileScreen } from '@/components/tiktok/ProfileScreen';
 import { CommentsScreen } from '@/components/tiktok/CommentsScreen';
-import { PremiumModal } from '@/components/tiktok/PremiumModal';
 import { useToast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -67,7 +66,6 @@ export const LiveInterface = () => {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [showPremium, setShowPremium] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -439,13 +437,6 @@ export const LiveInterface = () => {
               });
             }
           }}
-        />
-      )}
-
-      {showPremium && (
-        <PremiumModal
-          isOpen={showPremium}
-          onClose={() => setShowPremium(false)}
         />
       )}
     </div>

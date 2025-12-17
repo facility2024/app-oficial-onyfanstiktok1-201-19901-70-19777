@@ -131,23 +131,21 @@ export const usePixPayment = () => {
             },
             body: JSON.stringify({
               paymentMethod: 'pix',
-              data: {
-                amount: amount,
-                dueDate: new Date(Date.now() + 30 * 60 * 1000).toISOString().split('T')[0],
-                customer: {
-                  name: data.name || 'Cliente CocoNudi',
-                  email: data.email,
-                  phone: data.whatsapp?.replace(/\D/g, '') || '',
-                  document: ''
-                },
-                items: [{
-                  title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-                  quantity: 1,
-                  unitPrice: amount,
-                  tangible: false
-                }],
-                externalReference: `COCO${Date.now()}`
-              }
+              amount: amount,
+              dueDate: new Date(Date.now() + 30 * 60 * 1000).toISOString().split('T')[0],
+              customer: {
+                name: data.name || 'Cliente CocoNudi',
+                email: data.email,
+                phone: data.whatsapp?.replace(/\D/g, '') || '',
+                document: ''
+              },
+              items: [{
+                title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
+                quantity: 1,
+                unitPrice: amount,
+                tangible: false
+              }],
+              externalReference: `COCO${Date.now()}`
             })
           });
 

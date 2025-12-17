@@ -8,9 +8,3 @@ verify_jwt = false
 
 [functions.bunny-video-upload]
 verify_jwt = false
-
-[functions.hoopay-pix]
-verify_jwt = false
-
-[functions.lxpay-pix]
-verify_jwt = false

@@ -1,6 +1,6 @@
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Button } from '@/components/ui/button';
-import { User, Crown } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 export const UserMenuHeader = () => {
@@ -52,19 +52,10 @@ export const UserMenuHeader = () => {
         </div>
       </div>
 
-      {/* Botões de Ação */}
-      <div className="flex flex-col gap-2">
-        <Button onClick={() => navigate('/profile')} className="w-full bg-primary-dark">
-          <User className="w-4 h-4 mr-2" />
-          Ver Perfil
-        </Button>
-        <Button 
-          onClick={() => navigate('/vip')} 
-          className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0"
-        >
-          <Crown className="w-4 h-4 mr-2" />
-          Seja VIP
-        </Button>
-      </div>
+      {/* Botão de Ação */}
+      <Button onClick={() => navigate('/profile')} className="w-full bg-primary-dark">
+        <User className="w-4 h-4 mr-2" />
+        Ver Perfil
+      </Button>
     </div>;
 };

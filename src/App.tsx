@@ -29,7 +29,6 @@ import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
 import ModelChat from "./pages/ModelChat";
 import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
-import VipSubscriptionPage from "./pages/VipSubscriptionPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -131,9 +130,6 @@ const App = () => (
           
           {/* Assinaturas */}
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
-          
-          {/* VIP Subscription */}
-          <Route path="/vip" element={<VipSubscriptionPage />} />
           
           {/* Anunciantes */}
           <Route path="/advertisers" element={<AdvertisersPage />} />

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Crown, Volume1 } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Sparkles, Volume1 } from 'lucide-react';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 import { FloatingHearts } from './FloatingHearts';
 import { CounterPulse } from './CounterPulse';
 import { RealtimeIndicator } from './RealtimeIndicator';
@@ -42,7 +41,6 @@ export const EnhancedSideMenu = ({
   onOpenPremium,
   userId
 }: EnhancedSideMenuProps) => {
-  const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [commentsCount, setCommentsCount] = useState(video.comments_count);
@@ -221,13 +219,15 @@ export const EnhancedSideMenu = ({
         </div>
       )}
 
-      {/* VIP Button - Always visible */}
-      <div className="flex flex-col items-center cursor-pointer group" onClick={() => navigate('/vip')}>
-        <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center group-hover:from-yellow-400/30 group-hover:to-orange-500/30 transition-all duration-300" aria-label="Seja VIP">
-          <Crown className="w-6 h-6 text-yellow-400" strokeWidth={1.5} />
+      {/* Premium - Só aparece se foi configurado pelo admin */}
+      {video?.user?.posting_panel_url && (
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenPremium}>
+          <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center group-hover:from-yellow-400/30 group-hover:to-orange-500/30 transition-all duration-300" aria-label="Abrir Premium">
+            <Sparkles className="w-6 h-6 text-white" strokeWidth={1.5} />
+          </div>
+          <span className="text-white text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
         </div>
-        <span className="text-yellow-400 text-xs mt-1 font-light drop-shadow-md">VIP</span>
-      </div>
+      )}
 
       {/* Sound with Volume Slider */}
       <div className="flex flex-col items-center relative">

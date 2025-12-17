@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot } from "lucide-react";
+import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
@@ -115,6 +115,16 @@ export const CategoryMenu = ({
         console.log('📚 Navegando para Coleções');
         setOpen(false);
         setTimeout(() => navigate('/collections'), 100);
+      }
+    },
+    {
+      id: "subscribe",
+      name: "Seja VIP",
+      icon: <Crown className="w-5 h-5 text-amber-400" />,
+      onClick: () => {
+        console.log('👑 Navegando para Assinatura VIP');
+        setOpen(false);
+        setTimeout(() => navigate('/subscribe'), 100);
       }
     },
     {

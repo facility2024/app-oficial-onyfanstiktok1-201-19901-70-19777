@@ -23,6 +23,7 @@ import LocalBusinessPage from "./pages/LocalBusinessPage";
 import LocalBusinessDetailsPage from "./pages/LocalBusinessDetailsPage";
 import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
 import CollectionsPage from "./pages/CollectionsPage";
+import SubscribePage from "./pages/SubscribePage";
 
 import AdvertisersPage from "./pages/AdvertisersPage";
 import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
@@ -120,6 +121,9 @@ const App = () => (
           
           {/* Coleções */}
           <Route path="/collections" element={<CollectionsPage />} />
+          
+          {/* Assinatura VIP */}
+          <Route path="/subscribe" element={<SubscribePage />} />
           
           {/* Chat com Modelo ou Criador */}
           <Route path="/chat/:entityId" element={<ModelChat />} />

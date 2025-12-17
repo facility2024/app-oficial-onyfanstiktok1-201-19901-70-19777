@@ -76,61 +76,84 @@ export const usePixPayment = () => {
 
       // Generate unique identifier for this payment
       const identifier = `COCO${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      const productTitle = `CocoNudi VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`;
 
       let pix_code: string;
       let pix_qrcode: string;
       let txid: string;
       let lxpayTransactionId: string | null = null;
 
+      // Try RPC function first (PostgreSQL with http extension)
       try {
-        console.log('🔗 Calling LXPay via hoopay-pix Edge Function...');
+        console.log('🔗 Calling LXPay via RPC function...');
         
-        // Call LXPay via hoopay-pix Edge Function (already deployed) to bypass CORS
-        const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
-          body: {
-            action: 'create',
-            amount: amount,
-            client: {
-              name: data.name || 'Cliente CocoNudi',
-              email: data.email
-            },
-            identifier: identifier,
-            products: [{
-              title: `CocoNudi VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-              price: amount,
-              quantity: 1
-            }]
-          }
+        const { data: rpcResponse, error: rpcError } = await (supabase.rpc as any)('create_lxpay_pix', {
+          p_amount: amount,
+          p_client_name: data.name || 'Cliente CocoNudi',
+          p_client_email: data.email,
+          p_identifier: identifier,
+          p_product_title: productTitle
         });
 
-        console.log('📡 Edge Function Response:', edgeResponse);
+        console.log('📡 RPC Response:', rpcResponse);
 
-        if (edgeError) {
-          console.error('❌ Edge Function error:', edgeError);
-          throw new Error(edgeError.message || 'Erro na Edge Function');
-        }
-
-        if (edgeResponse?.success) {
-          // Handle both response formats (with or without data wrapper)
-          const responseData = edgeResponse.data || edgeResponse;
-          pix_code = responseData.qrCode || edgeResponse.pix_code || '';
-          pix_qrcode = responseData.qrCodeImage || edgeResponse.pix_qrcode || '';
-          txid = responseData.externalId || edgeResponse.txid || identifier;
-          lxpayTransactionId = responseData.id || edgeResponse.transaction_id || null;
+        if (!rpcError && rpcResponse?.success) {
+          const lxpayData = rpcResponse.data;
+          const pixInfo = lxpayData?.pixInformation || lxpayData;
           
-          console.log('✅ LXPay PIX created via Edge Function:', txid);
-          console.log('✅ PIX Code:', pix_code ? 'presente' : 'ausente');
-          console.log('✅ QR Code Image:', pix_qrcode ? 'presente' : 'ausente');
+          pix_code = pixInfo?.qrCode || pixInfo?.pixCode || '';
+          pix_qrcode = pixInfo?.image || pixInfo?.qrCodeImage || pixInfo?.base64 || '';
+          txid = lxpayData?.externalId || lxpayData?.id || identifier;
+          lxpayTransactionId = lxpayData?.id || null;
+          
+          console.log('✅ LXPay PIX created via RPC:', txid);
         } else {
-          console.error('❌ LXPay API error via Edge Function:', edgeResponse);
-          throw new Error(edgeResponse?.error || 'Erro na API LXPay');
+          console.log('⚠️ RPC failed, trying Edge Function...', rpcError);
+          throw new Error(rpcError?.message || rpcResponse?.error || 'RPC failed');
         }
-      } catch (apiError: any) {
-        console.error('❌ LXPay API call failed, using simulated PIX:', apiError);
-        const simulated = generateSimulatedPix(amount);
-        pix_code = simulated.pix_code;
-        pix_qrcode = simulated.pix_qrcode;
-        txid = simulated.txid;
+      } catch (rpcError: any) {
+        console.log('⚠️ RPC not available, trying Edge Function...');
+        
+        // Try Edge Function as fallback
+        try {
+          const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
+            body: {
+              action: 'create',
+              amount: amount,
+              client: {
+                name: data.name || 'Cliente CocoNudi',
+                email: data.email
+              },
+              identifier: identifier,
+              products: [{
+                title: productTitle,
+                price: amount,
+                quantity: 1
+              }]
+            }
+          });
+
+          console.log('📡 Edge Function Response:', edgeResponse);
+
+          if (!edgeError && edgeResponse?.success) {
+            const responseData = edgeResponse.data || edgeResponse;
+            pix_code = responseData.qrCode || edgeResponse.pix_code || '';
+            pix_qrcode = responseData.qrCodeImage || edgeResponse.pix_qrcode || '';
+            txid = responseData.externalId || edgeResponse.txid || identifier;
+            lxpayTransactionId = responseData.id || edgeResponse.transaction_id || null;
+            
+            console.log('✅ LXPay PIX created via Edge Function:', txid);
+          } else {
+            console.log('⚠️ Edge Function failed, using simulated PIX');
+            throw new Error(edgeError?.message || edgeResponse?.error || 'Edge Function failed');
+          }
+        } catch (edgeError: any) {
+          console.error('❌ All methods failed, using simulated PIX:', edgeError);
+          const simulated = generateSimulatedPix(amount);
+          pix_code = simulated.pix_code;
+          pix_qrcode = simulated.pix_qrcode;
+          txid = simulated.txid;
+        }
       }
 
       // Calculate expiration (30 minutes from now)
@@ -232,65 +255,122 @@ export const usePixPayment = () => {
         };
       }
 
-      // If we have a LXPay transaction ID or txid, check via Edge Function
+      // If we have a LXPay transaction ID or txid, try to verify
       if (payment.hoopay_order_uuid || (payment.txid && payment.txid.startsWith('COCO'))) {
+        // Try RPC function first
         try {
-          console.log('🔍 Verifying payment via hoopay-pix Edge Function...');
+          console.log('🔍 Verifying payment via RPC...');
           
-          const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
-            body: {
-              action: 'verify',
-              payment_id: paymentId,
-              transactionId: payment.hoopay_order_uuid,
-              externalId: payment.txid.startsWith('COCO') ? payment.txid : undefined
-            }
+          const { data: rpcResponse, error: rpcError } = await (supabase.rpc as any)('verify_lxpay_payment', {
+            p_external_id: payment.txid.startsWith('COCO') ? payment.txid : null,
+            p_transaction_id: payment.hoopay_order_uuid
           });
 
-          console.log('📡 Edge Function Verify Response:', edgeResponse);
+          console.log('📡 RPC Verify Response:', rpcResponse);
 
-          if (edgeError) {
-            console.error('❌ Edge Function verify error:', edgeError);
-          } else if (edgeResponse?.success && edgeResponse?.data?.isPaid) {
-            // Update payment status
-            await supabase
-              .from('pix_payments' as any)
-              .update({ 
+          if (!rpcError && rpcResponse?.success) {
+            const transaction = rpcResponse.data?.data || rpcResponse.data;
+            const status = (transaction?.status || '').toUpperCase();
+            const isPaid = status === 'COMPLETED' || status === 'PAID' || status === 'APPROVED';
+
+            if (isPaid) {
+              // Update payment status
+              await supabase
+                .from('pix_payments' as any)
+                .update({ 
+                  status: 'paid',
+                  paid_at: new Date().toISOString()
+                })
+                .eq('id', paymentId);
+
+              // Create premium user
+              const subscriptionEnd = new Date();
+              subscriptionEnd.setDate(subscriptionEnd.getDate() + payment.plan_days);
+
+              await supabase
+                .from('premium_users')
+                .upsert({
+                  email: payment.email,
+                  name: payment.name,
+                  whatsapp: payment.whatsapp,
+                  subscription_status: 'active',
+                  subscription_start: new Date().toISOString(),
+                  subscription_end: subscriptionEnd.toISOString(),
+                  subscription_type: payment.plan_type
+                }, { onConflict: 'email' });
+
+              toast({
+                title: "Pagamento Confirmado!",
+                description: "Sua assinatura VIP foi ativada com sucesso!",
+              });
+
+              return {
+                success: true,
                 status: 'paid',
-                paid_at: new Date().toISOString()
-              })
-              .eq('id', paymentId);
-
-            // Create premium user
-            const subscriptionEnd = new Date();
-            subscriptionEnd.setDate(subscriptionEnd.getDate() + payment.plan_days);
-
-            await supabase
-              .from('premium_users')
-              .upsert({
-                email: payment.email,
-                name: payment.name,
-                whatsapp: payment.whatsapp,
-                subscription_status: 'active',
-                subscription_start: new Date().toISOString(),
-                subscription_end: subscriptionEnd.toISOString(),
-                subscription_type: payment.plan_type
-              }, { onConflict: 'email' });
-
-            toast({
-              title: "Pagamento Confirmado!",
-              description: "Sua assinatura VIP foi ativada com sucesso!",
+                premium_user_id: payment.user_id,
+                message: 'Pagamento confirmado! Assinatura VIP ativada.',
+                expires_at: payment.expires_at
+              };
+            }
+          }
+        } catch (rpcError) {
+          console.log('⚠️ RPC verify not available, trying Edge Function...');
+          
+          // Try Edge Function as fallback
+          try {
+            const { data: edgeResponse, error: edgeError } = await supabase.functions.invoke('hoopay-pix', {
+              body: {
+                action: 'verify',
+                payment_id: paymentId,
+                transactionId: payment.hoopay_order_uuid,
+                externalId: payment.txid.startsWith('COCO') ? payment.txid : undefined
+              }
             });
 
-            return {
-              success: true,
-              status: 'paid',
-              premium_user_id: payment.user_id,
-              message: 'Pagamento confirmado! Assinatura VIP ativada.',
-              expires_at: payment.expires_at
-            };
+            console.log('📡 Edge Function Verify Response:', edgeResponse);
+
+            if (!edgeError && edgeResponse?.success && edgeResponse?.data?.isPaid) {
+              // Update payment status
+              await supabase
+                .from('pix_payments' as any)
+                .update({ 
+                  status: 'paid',
+                  paid_at: new Date().toISOString()
+                })
+                .eq('id', paymentId);
+
+              // Create premium user
+              const subscriptionEnd = new Date();
+              subscriptionEnd.setDate(subscriptionEnd.getDate() + payment.plan_days);
+
+              await supabase
+                .from('premium_users')
+                .upsert({
+                  email: payment.email,
+                  name: payment.name,
+                  whatsapp: payment.whatsapp,
+                  subscription_status: 'active',
+                  subscription_start: new Date().toISOString(),
+                  subscription_end: subscriptionEnd.toISOString(),
+                  subscription_type: payment.plan_type
+                }, { onConflict: 'email' });
+
+              toast({
+                title: "Pagamento Confirmado!",
+                description: "Sua assinatura VIP foi ativada com sucesso!",
+              });
+
+              return {
+                success: true,
+                status: 'paid',
+                premium_user_id: payment.user_id,
+                message: 'Pagamento confirmado! Assinatura VIP ativada.',
+                expires_at: payment.expires_at
+              };
+            }
+          } catch (edgeError) {
+            console.error('Edge Function verify error:', edgeError);
           }
-        } catch (apiError) {
-          console.error('LXPay verify error:', apiError);
         }
       }
 

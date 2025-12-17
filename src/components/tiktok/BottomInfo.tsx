@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Music } from 'lucide-react';
+import { Music, Crown } from 'lucide-react';
 import { VinylRecord } from './VinylRecord';
 
 interface BottomInfoProps {
@@ -37,8 +37,9 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
         </div>
         <span className="text-white md:text-gray-800 font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
         {isPremium && (
-          <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
-            👑 PREMIUM
+          <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black px-2.5 py-1 rounded-full text-xs font-bold shadow-lg shadow-amber-500/30 animate-pulse">
+            <Crown className="w-3 h-3" />
+            VIP
           </span>
         )}
       </div>

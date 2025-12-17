@@ -212,16 +212,6 @@ const SubscribePage = () => {
         <p className="text-center text-gray-500 text-xs mt-3">
           🔒 Pagamento seguro • Cancele quando quiser
         </p>
-        
-        {/* Coming Soon Notice */}
-        <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <p className="text-amber-400 text-center text-sm font-medium">
-            ⚡ Sistema de pagamento em desenvolvimento
-          </p>
-          <p className="text-gray-400 text-center text-xs mt-1">
-            Em breve você poderá assinar e aproveitar todos os benefícios VIP!
-          </p>
-        </div>
       </div>
     </div>
   );

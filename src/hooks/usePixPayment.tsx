@@ -123,25 +123,28 @@ export const usePixPayment = () => {
         try {
           const authString = btoa(`${hoopayConfig.api_key}:${hoopayConfig.secret_key}`);
           
-          // Build request payload according to Hoopay documentation - wrapped in "data" object
+          // Generate unique txid for this payment
+          const txidGenerated = `COCO${Date.now()}${Math.random().toString(36).substr(2, 8)}`;
+          const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          
+          // Build request payload according to Hoopay API format (same as Edge Function)
           const requestPayload = {
-            data: {
-              customer: {
-                email: data.email,
-                name: data.name || 'Cliente CocoNudi',
-                phone: data.whatsapp?.replace(/\D/g, '') || '11999999999',
-                document: ''
-              },
-              products: [{
-                title: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-                price: amountInCents, // Hoopay expects price in cents
-                quantity: 1
-              }],
-              payments: [{
-                type: 'pix'
-              }],
-              ip: '192.168.0.1'
-            }
+            paymentMethod: 'pix',
+            amount: amountInCents,
+            dueDate: dueDate,
+            customer: {
+              name: data.name || 'Cliente CocoNudi',
+              email: data.email,
+              phone: data.whatsapp?.replace(/\D/g, '') || '',
+              document: ''
+            },
+            items: [{
+              title: `CocoNudi VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
+              quantity: 1,
+              unitPrice: amountInCents,
+              tangible: false
+            }],
+            externalReference: txidGenerated
           };
 
           const apiUrl = `${hoopayConfig.api_url}/charge`;

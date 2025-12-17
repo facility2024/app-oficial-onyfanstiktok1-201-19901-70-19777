@@ -15,7 +15,7 @@ import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, CreditCard, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -2743,17 +2743,6 @@ export const TikTokApp = () => {
                 />
               </div>
               
-              <button onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('💳 Clicou Assinaturas - Navegando...');
-              window.location.href = '/subscriptions';
-            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors cursor-pointer relative z-50" style={{
-              pointerEvents: 'auto'
-            }}>
-                <CreditCard className="w-5 h-5 mr-3" />
-                <span>Assinaturas</span>
-              </button>
               {isCreator === true && creatorLoading === false && <button onClick={() => {
               console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
               navigate('/creator-studio');

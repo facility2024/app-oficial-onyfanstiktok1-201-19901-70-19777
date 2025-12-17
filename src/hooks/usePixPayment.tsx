@@ -130,20 +130,17 @@ export const usePixPayment = () => {
               'Authorization': `Basic ${authString}`
             },
             body: JSON.stringify({
-              data: {
-                paymentMethod: 'pix',
-                amount: amountInCents,
-                customer: {
-                  name: data.name,
-                  email: data.email,
-                  phone: data.whatsapp?.replace(/\D/g, '') || ''
-                },
-                items: [{
-                  name: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
-                  quantity: 1,
-                  price: amountInCents
-                }]
-              }
+              paymentMethod: 'pix',
+              amount: amountInCents,
+              customer: {
+                name: data.name || 'Cliente CocoNudi',
+                email: data.email
+              },
+              items: [{
+                name: `VIP ${planType === 'yearly' ? 'Anual' : planType === 'quarterly' ? 'Trimestral' : 'Mensal'}`,
+                quantity: 1,
+                price: amountInCents
+              }]
             })
           });
 

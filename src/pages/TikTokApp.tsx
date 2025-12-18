@@ -2897,31 +2897,7 @@ export const TikTokApp = () => {
             <div className="mt-4 px-2">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 cursor-pointer border-2 border-gray-300" onClick={() => {
-                      if (checkAndTrackAction('profile_view')) {
-                        trackFollow(currentVideo.user.id);
-                        setShowProfile(true);
-                      }
-                    }}>
-                      <img src={currentVideo.user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'} alt={currentVideo.user.username} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-700">{currentVideo.user.username}</p>
-                      <p className="text-gray-600 text-sm">{currentVideo.user.followers_count} seguidores</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const currentIsFollowing = followingModels[currentVideo?.user?.id] || false;
-                      console.log('🔥 BOTÃO SEGUIR CLICADO!', {
-                        currentVideo: currentVideo?.user?.username,
-                        currentIsFollowing,
-                        modelId: currentVideo?.user?.id
-                      });
-                      followModel();
-                    }} disabled={followingModels[currentVideo?.user?.id] || false} className={followingModels[currentVideo?.user?.id] || false ? "border-green-500 text-green-500 bg-green-500/10" : "border-red-500 text-red-500 hover:bg-red-500 hover:text-white"}>
-                        {followingModels[currentVideo?.user?.id] || false ? 'Seguindo' : 'Seguir'}
-                     </Button>
-                  </div>
+                  {/* Seção de perfil do modelo - oculta no desktop */}
                   
                   {/* Desktop Action Buttons - Funcionais */}
                   <div className="flex items-center space-x-4 mt-4">

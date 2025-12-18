@@ -7,10 +7,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Settings, User, Bell, Shield, Database, Palette, Globe, Smartphone, Key, Lock, CreditCard, Webhook, RefreshCw, Download, Eye, Users } from 'lucide-react';
-import { useAdminSettings } from '@/hooks/useAdminSettings';
+import { Loader2, Settings, User, Bell, Shield, Database, Palette, Globe, Smartphone, Key, Lock, CreditCard, Webhook, RefreshCw, Download, Eye, Users, Crown, Star, Zap, Plus, Trash2, Save } from 'lucide-react';
+import { useAdminSettings, VIPPlans } from '@/hooks/useAdminSettings';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export const AdminSettings = () => {
   const {
@@ -18,11 +19,14 @@ export const AdminSettings = () => {
     settings,
     systemStatus,
     loading,
+    vipPlans,
+    vipPlansLoading,
     updateSetting,
     connectPlatform,
     performBackup,
     getAppStatByType,
     getSecurityLogByType,
+    updateVIPPlans,
     refreshData
   } = useAdminSettings();
 
@@ -33,6 +37,9 @@ export const AdminSettings = () => {
     accessToken: '',
     username: ''
   });
+
+  const [editingPlans, setEditingPlans] = useState<VIPPlans | null>(null);
+  const [newFeature, setNewFeature] = useState({ mensal: '', trimestral: '', anual: '' });
 
   const handleConnect = async (platformName: string) => {
     await connectPlatform(platformName, {
@@ -48,6 +55,86 @@ export const AdminSettings = () => {
       accessToken: '',
       username: ''
     });
+  };
+
+  const handleEditPlans = () => {
+    setEditingPlans({ ...vipPlans });
+  };
+
+  const handleSavePlans = async () => {
+    if (editingPlans) {
+      await updateVIPPlans(editingPlans);
+      setEditingPlans(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPlans(null);
+  };
+
+  const updatePlanPrice = (plan: keyof VIPPlans, price: number) => {
+    if (editingPlans) {
+      setEditingPlans({
+        ...editingPlans,
+        [plan]: { ...editingPlans[plan], price }
+      });
+    }
+  };
+
+  const updatePlanDiscount = (plan: keyof VIPPlans, discount: string) => {
+    if (editingPlans) {
+      setEditingPlans({
+        ...editingPlans,
+        [plan]: { ...editingPlans[plan], discount }
+      });
+    }
+  };
+
+  const updatePlanPaymentUrl = (plan: keyof VIPPlans, paymentUrl: string) => {
+    if (editingPlans) {
+      setEditingPlans({
+        ...editingPlans,
+        [plan]: { ...editingPlans[plan], paymentUrl }
+      });
+    }
+  };
+
+  const addFeature = (plan: keyof VIPPlans) => {
+    if (editingPlans && newFeature[plan].trim()) {
+      setEditingPlans({
+        ...editingPlans,
+        [plan]: {
+          ...editingPlans[plan],
+          features: [...editingPlans[plan].features, newFeature[plan].trim()]
+        }
+      });
+      setNewFeature({ ...newFeature, [plan]: '' });
+    }
+  };
+
+  const removeFeature = (plan: keyof VIPPlans, index: number) => {
+    if (editingPlans) {
+      setEditingPlans({
+        ...editingPlans,
+        [plan]: {
+          ...editingPlans[plan],
+          features: editingPlans[plan].features.filter((_, i) => i !== index)
+        }
+      });
+    }
+  };
+
+  const togglePopular = (plan: keyof VIPPlans) => {
+    if (editingPlans) {
+      // Remove popular from all plans first
+      const updated = { ...editingPlans };
+      Object.keys(updated).forEach((key) => {
+        updated[key as keyof VIPPlans].popular = false;
+      });
+      // Set the selected plan as popular
+      updated[plan].popular = true;
+      setEditingPlans(updated);
+    }
   };
 
   const settingsSections = [
@@ -193,8 +280,200 @@ export const AdminSettings = () => {
     );
   }
 
+  const currentPlans = editingPlans || vipPlans;
+  const planIcons = {
+    mensal: <Star className="w-5 h-5" />,
+    trimestral: <Crown className="w-5 h-5" />,
+    anual: <Zap className="w-5 h-5" />
+  };
+  const planNames = {
+    mensal: 'Mensal',
+    trimestral: 'Trimestral',
+    anual: 'Anual'
+  };
+
   return (
     <div className="space-y-6">
+      {/* VIP Plans Configuration */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center space-x-2">
+            <Crown className="w-5 h-5 text-amber-500" />
+            <span>💎 Configuração dos Planos VIP</span>
+          </CardTitle>
+          {!editingPlans ? (
+            <Button
+              onClick={handleEditPlans}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Editar Planos
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCancelEdit}
+                variant="outline"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSavePlans}
+                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Salvar
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {(Object.keys(currentPlans) as Array<keyof VIPPlans>).map((planKey) => {
+              const plan = currentPlans[planKey];
+              return (
+                <div 
+                  key={planKey} 
+                  className={`p-4 border rounded-lg relative ${
+                    plan.popular 
+                      ? 'border-amber-500 bg-amber-500/10' 
+                      : 'border-border hover:border-border/80'
+                  }`}
+                >
+                  {plan.popular && (
+                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-amber-600 text-black text-xs">
+                      ⭐ Mais Popular
+                    </Badge>
+                  )}
+                  
+                  <div className="flex items-center gap-2 mb-4 mt-2">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      plan.popular 
+                        ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-black' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {planIcons[planKey]}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{planNames[planKey]}</h3>
+                      {plan.discount && (
+                        <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400">
+                          {plan.discount}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {editingPlans ? (
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Preço (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={plan.price}
+                          onChange={(e) => updatePlanPrice(planKey, parseFloat(e.target.value) || 0)}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      {planKey !== 'mensal' && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Desconto</Label>
+                          <Input
+                            value={plan.discount || ''}
+                            onChange={(e) => updatePlanDiscount(planKey, e.target.value)}
+                            placeholder="Ex: 17% OFF"
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground">URL de Pagamento</Label>
+                        <Input
+                          value={plan.paymentUrl || ''}
+                          onChange={(e) => updatePlanPaymentUrl(planKey, e.target.value)}
+                          placeholder="https://..."
+                          className="mt-1 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs text-muted-foreground">Features</Label>
+                          <Button
+                            size="sm"
+                            variant={plan.popular ? "default" : "outline"}
+                            className={plan.popular ? "bg-amber-500 text-black text-xs h-6" : "text-xs h-6"}
+                            onClick={() => togglePopular(planKey)}
+                          >
+                            {plan.popular ? '⭐ Popular' : 'Marcar Popular'}
+                          </Button>
+                        </div>
+                        <div className="space-y-1">
+                          {plan.features.map((feature, idx) => (
+                            <div key={idx} className="flex items-center gap-1 text-xs">
+                              <span className="flex-1 text-muted-foreground truncate">{feature}</span>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-5 w-5 text-destructive hover:text-destructive"
+                                onClick={() => removeFeature(planKey, idx)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-1 mt-2">
+                          <Input
+                            value={newFeature[planKey]}
+                            onChange={(e) => setNewFeature({ ...newFeature, [planKey]: e.target.value })}
+                            placeholder="Nova feature..."
+                            className="text-xs h-8"
+                            onKeyDown={(e) => e.key === 'Enter' && addFeature(planKey)}
+                          />
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => addFeature(planKey)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="text-2xl font-bold text-foreground">
+                        R$ {plan.price.toFixed(2).replace('.', ',')}
+                      </div>
+                      <div className="space-y-1">
+                        {plan.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="text-green-500">✓</span>
+                            {feature}
+                          </div>
+                        ))}
+                      </div>
+                      {plan.paymentUrl && (
+                        <div className="pt-2 border-t border-border">
+                          <p className="text-xs text-muted-foreground truncate">
+                            🔗 {plan.paymentUrl.substring(0, 40)}...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Platform Connections */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader className="flex flex-row items-center justify-between">

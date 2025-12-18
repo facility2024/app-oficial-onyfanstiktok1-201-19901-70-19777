@@ -2,8 +2,60 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface VIPPlan {
+  price: number;
+  discount?: string;
+  popular?: boolean;
+  features: string[];
+  paymentUrl?: string;
+}
+
+interface VIPPlans {
+  mensal: VIPPlan;
+  trimestral: VIPPlan;
+  anual: VIPPlan;
+}
+
+const defaultVIPPlans: VIPPlans = {
+  mensal: {
+    price: 19.99,
+    features: [
+      'Acesso a conteúdo premium',
+      'Sem anúncios',
+      'Chat exclusivo com modelos',
+      'Badge VIP no perfil'
+    ],
+    paymentUrl: 'https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1'
+  },
+  trimestral: {
+    price: 49.99,
+    discount: '17% OFF',
+    popular: true,
+    features: [
+      'Tudo do plano Mensal',
+      'Acesso antecipado a novidades',
+      'Suporte prioritário',
+      'Conteúdo exclusivo semanal'
+    ],
+    paymentUrl: 'https://p.hoopay.com.br/v/f488d9e1-3e79-4ea5-a9cc-4a108bb03c92'
+  },
+  anual: {
+    price: 149.99,
+    discount: '38% OFF',
+    features: [
+      'Tudo do plano Trimestral',
+      'Lives exclusivas VIP',
+      'Sorteios e brindes',
+      'Perfil verificado especial'
+    ],
+    paymentUrl: 'https://p.hoopay.com.br/v/61207e4a-9455-4cb8-8207-9002a87c5fe6'
+  }
+};
+
 export const useAdminSettings = () => {
   const [platforms, setPlatforms] = useState<any[]>([]);
+  const [vipPlans, setVipPlans] = useState<VIPPlans>(defaultVIPPlans);
+  const [vipPlansLoading, setVipPlansLoading] = useState(false);
   const [settings, setSettings] = useState<Record<string, boolean>>({
     notifications: true,
     auto_post: false,
@@ -47,13 +99,41 @@ export const useAdminSettings = () => {
   ]);
   const [loading, setLoading] = useState(false);
 
+  // Fetch VIP Plans from localStorage (simulating persistence)
+  const fetchVIPPlans = async () => {
+    setVipPlansLoading(true);
+    try {
+      const stored = localStorage.getItem('vip_plans');
+      if (stored) {
+        setVipPlans(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error fetching VIP plans:', error);
+    } finally {
+      setVipPlansLoading(false);
+    }
+  };
+
+  // Update VIP Plans
+  const updateVIPPlans = async (plans: VIPPlans) => {
+    try {
+      localStorage.setItem('vip_plans', JSON.stringify(plans));
+      setVipPlans(plans);
+      toast.success('Planos VIP atualizados com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('Error updating VIP plans:', error);
+      toast.error('Erro ao atualizar planos VIP');
+      return false;
+    }
+  };
+
   const updateSetting = async (settingKey: string, enabled: boolean) => {
     setSettings(prev => ({ ...prev, [settingKey]: enabled }));
     toast.success(`Configuração ${enabled ? 'ativada' : 'desativada'} com sucesso`);
   };
 
   const connectPlatform = async (platformName: string, credentials: any) => {
-    // Update platform status
     setPlatforms(prev => prev.map(p => 
       p.platform === platformName 
         ? { ...p, status: 'connected' }
@@ -90,6 +170,7 @@ export const useAdminSettings = () => {
 
   useEffect(() => {
     setPlatforms(formatPlatformStats());
+    fetchVIPPlans();
   }, []);
 
   return {
@@ -99,11 +180,17 @@ export const useAdminSettings = () => {
     appStats,
     securityLogs,
     loading,
+    vipPlans,
+    vipPlansLoading,
     updateSetting,
     connectPlatform,
     performBackup,
     getAppStatByType,
     getSecurityLogByType,
+    updateVIPPlans,
+    fetchVIPPlans,
     refreshData: () => toast.success('Dados atualizados!')
   };
 };
+
+export type { VIPPlans, VIPPlan };

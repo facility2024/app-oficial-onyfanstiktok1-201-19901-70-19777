@@ -9,12 +9,37 @@ export const usePremiumStatus = () => {
   const checkPremiumStatus = useCallback(async () => {
     setLoading(true);
     try {
-      // Verificar localStorage primeiro
+      // 1. PRIMEIRO: Obter usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email;
+      
+      // 2. Se tem usuário autenticado, verificar no banco DIRETO
+      if (userEmail) {
+        const { data, error } = await supabase
+          .from('premium_users')
+          .select('*')
+          .eq('email', userEmail)
+          .eq('subscription_status', 'active')
+          .gte('subscription_end', new Date().toISOString())
+          .single();
+
+        if (data && !error) {
+          // Usuário é premium - atualizar localStorage e estado
+          localStorage.setItem('premium_user', 'true');
+          localStorage.setItem('premium_email', userEmail);
+          setIsPremium(true);
+          setPremiumData(data);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // 3. FALLBACK: Verificar localStorage (para sessões anteriores)
       const localPremium = localStorage.getItem('premium_user');
       const localEmail = localStorage.getItem('premium_email');
       
       if (localPremium === 'true' && localEmail) {
-        // Verificar no banco se o usuário ainda é premium
+        // Verificar no banco se ainda é válido
         const { data, error } = await supabase
           .from('premium_users')
           .select('*')
@@ -23,18 +48,11 @@ export const usePremiumStatus = () => {
           .gte('subscription_end', new Date().toISOString())
           .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Erro ao verificar premium status:', error);
-          // Limpar localStorage se houver erro
-          localStorage.removeItem('premium_user');
-          localStorage.removeItem('premium_email');
-          setIsPremium(false);
-          setPremiumData(null);
-        } else if (data) {
+        if (data && !error) {
           setIsPremium(true);
           setPremiumData(data);
         } else {
-          // Premium expirado ou cancelado
+          // Limpar localStorage se expirou
           localStorage.removeItem('premium_user');
           localStorage.removeItem('premium_email');
           setIsPremium(false);

@@ -441,10 +441,10 @@ export default function UserProfile() {
               {isCreator && (
                 <Button 
                   onClick={() => navigate('/creator-studio')}
-                  className="w-full mb-4 text-white font-semibold"
+                  className="w-full mb-4 text-white font-semibold hover:opacity-90"
                   size="lg"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
+                    background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%)'
                   }}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />

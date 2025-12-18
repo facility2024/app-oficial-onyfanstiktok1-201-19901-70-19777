@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Crown, Search, Edit, XCircle, RefreshCw, Users, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Crown, Search, Edit, XCircle, RefreshCw, Users, Clock, AlertTriangle, TrendingUp, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useVIPManagement, VIPUser } from '@/hooks/useVIPManagement';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const AdminVIPUsers = () => {
@@ -18,6 +18,7 @@ export const AdminVIPUsers = () => {
     vipStats, 
     fetchVIPUsers, 
     updateVIPUser, 
+    createVIPUser,
     cancelSubscription, 
     renewSubscription,
     checkExpiredSubscriptions 
@@ -28,6 +29,16 @@ export const AdminVIPUsers = () => {
   const [planFilter, setPlanFilter] = useState('all');
   const [editingUser, setEditingUser] = useState<VIPUser | null>(null);
   const [editForm, setEditForm] = useState({ name: '', whatsapp: '', subscription_status: '' });
+  
+  // Estado para modal de criação
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    name: '',
+    whatsapp: '',
+    subscription_type: 'mensal' as 'mensal' | 'trimestral' | 'anual',
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     // Verificar expirados ao carregar
@@ -78,6 +89,42 @@ export const AdminVIPUsers = () => {
     }
   };
 
+  // Calcular dias baseado no plano
+  const getPlanDays = (plan: 'mensal' | 'trimestral' | 'anual') => {
+    switch (plan) {
+      case 'anual': return 365;
+      case 'trimestral': return 90;
+      default: return 30;
+    }
+  };
+
+  // Handler para criar VIP
+  const handleCreateVIP = async () => {
+    if (!createForm.email) return;
+    
+    setIsCreating(true);
+    const now = new Date();
+    const days = getPlanDays(createForm.subscription_type);
+    const endDate = addDays(now, days);
+    
+    const success = await createVIPUser({
+      email: createForm.email,
+      name: createForm.name,
+      whatsapp: createForm.whatsapp || undefined,
+      subscription_type: createForm.subscription_type,
+      subscription_start: now.toISOString(),
+      subscription_end: endDate.toISOString(),
+    });
+    
+    setIsCreating(false);
+    
+    if (success) {
+      setShowCreateModal(false);
+      setCreateForm({ email: '', name: '', whatsapp: '', subscription_type: 'mensal' });
+      fetchVIPUsers({ status: statusFilter, planType: planFilter, search: searchTerm });
+    }
+  };
+
   const getDaysRemaining = (endDate: string) => {
     const days = differenceInDays(new Date(endDate), new Date());
     return days > 0 ? days : 0;
@@ -117,10 +164,16 @@ export const AdminVIPUsers = () => {
           <Crown className="w-8 h-8 text-amber-400" />
           <h1 className="text-2xl font-bold text-white">Gestão de VIPs</h1>
         </div>
-        <Button onClick={() => checkExpiredSubscriptions().then(() => fetchVIPUsers())} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowCreateModal(true)} className="bg-amber-500 hover:bg-amber-600">
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar VIP
+          </Button>
+          <Button onClick={() => checkExpiredSubscriptions().then(() => fetchVIPUsers())} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -346,6 +399,94 @@ export const AdminVIPUsers = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>Cancelar</Button>
             <Button onClick={handleSaveEdit} className="bg-amber-500 hover:bg-amber-600">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create VIP Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Crown className="w-5 h-5 text-amber-400" />
+              Adicionar Novo VIP
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-gray-300">Email *</Label>
+              <Input 
+                type="email"
+                placeholder="email@exemplo.com"
+                value={createForm.email} 
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                className="bg-gray-800 border-gray-700"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-300">Nome</Label>
+              <Input 
+                placeholder="Nome do usuário"
+                value={createForm.name} 
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                className="bg-gray-800 border-gray-700"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-300">WhatsApp</Label>
+              <Input 
+                placeholder="(11) 99999-9999"
+                value={createForm.whatsapp} 
+                onChange={(e) => setCreateForm({ ...createForm, whatsapp: e.target.value })}
+                className="bg-gray-800 border-gray-700"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-300">Plano</Label>
+              <Select 
+                value={createForm.subscription_type} 
+                onValueChange={(v: 'mensal' | 'trimestral' | 'anual') => setCreateForm({ ...createForm, subscription_type: v })}
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mensal">Mensal (30 dias)</SelectItem>
+                  <SelectItem value="trimestral">Trimestral (90 dias)</SelectItem>
+                  <SelectItem value="anual">Anual (365 dias)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="pt-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+              <p className="text-sm text-gray-400">
+                <span className="text-gray-300 font-medium">Início:</span> {format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}
+              </p>
+              <p className="text-sm text-gray-400">
+                <span className="text-gray-300 font-medium">Término:</span> {format(addDays(new Date(), getPlanDays(createForm.subscription_type)), 'dd/MM/yyyy', { locale: ptBR })}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)} disabled={isCreating}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateVIP} 
+              className="bg-amber-500 hover:bg-amber-600"
+              disabled={!createForm.email || isCreating}
+            >
+              {isCreating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar VIP
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -250,6 +250,48 @@ export const useVIPManagement = () => {
     }
   }, []);
 
+  // Criar novo usuário VIP
+  const createVIPUser = useCallback(async (userData: {
+    email: string;
+    name: string;
+    whatsapp?: string;
+    subscription_type: 'mensal' | 'trimestral' | 'anual';
+    subscription_start: string;
+    subscription_end: string;
+  }): Promise<boolean> => {
+    try {
+      const { error } = await (supabase as any)
+        .from('premium_users')
+        .insert({
+          email: userData.email,
+          name: userData.name,
+          whatsapp: userData.whatsapp || null,
+          subscription_type: userData.subscription_type,
+          subscription_status: 'active',
+          subscription_start: userData.subscription_start,
+          subscription_end: userData.subscription_end,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Este email já possui uma assinatura VIP');
+        } else {
+          throw error;
+        }
+        return false;
+      }
+      
+      toast.success('Usuário VIP criado com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('Erro ao criar VIP:', error);
+      toast.error('Erro ao criar usuário VIP');
+      return false;
+    }
+  }, []);
+
   return {
     vipUsers,
     webhookLogs,
@@ -259,6 +301,7 @@ export const useVIPManagement = () => {
     fetchVIPUsers,
     fetchWebhookLogs,
     updateVIPUser,
+    createVIPUser,
     cancelSubscription,
     renewSubscription,
     checkExpiredSubscriptions,

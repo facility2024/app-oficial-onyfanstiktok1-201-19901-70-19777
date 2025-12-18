@@ -2793,25 +2793,10 @@ export const TikTokApp = () => {
                 </Button>
               </div>
 
-              {/* Desktop Footer - Avatar e Nome da modelo com estilo */}
+              {/* Desktop Footer - Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">
-                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2 w-fit">
-                  <div 
-                    className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() => {
-                      if (checkAndTrackAction('profile_view')) {
-                        trackFollow(currentVideo?.user?.id || '');
-                        setShowProfile(true);
-                      }
-                    }}
-                  >
-                    <img 
-                      src={currentVideo?.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'} 
-                      alt={currentVideo?.user?.username} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="font-bold text-lg bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                <div className="flex items-center">
+                  <p className="text-white font-semibold text-lg drop-shadow-lg">
                     {currentVideo?.user?.username || 'Modelo'}
                   </p>
                 </div>

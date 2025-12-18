@@ -24,6 +24,7 @@ import LocalBusinessDetailsPage from "./pages/LocalBusinessDetailsPage";
 import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
 import CollectionsPage from "./pages/CollectionsPage";
 import SubscribePage from "./pages/SubscribePage";
+import PaymentConfirmation from "./pages/PaymentConfirmation";
 
 import AdvertisersPage from "./pages/AdvertisersPage";
 import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
@@ -124,6 +125,7 @@ const App = () => (
           
           {/* Assinatura VIP */}
           <Route path="/subscribe" element={<SubscribePage />} />
+          <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
           
           {/* Chat com Modelo ou Criador */}
           <Route path="/chat/:entityId" element={<ModelChat />} />

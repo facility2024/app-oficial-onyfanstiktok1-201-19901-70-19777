@@ -22,6 +22,7 @@ interface HoopayWebhookPayload {
     name?: string;
     customer_name?: string;
     phone?: string;
+    whatsapp?: string;
     product_id?: string;
     productId?: string;
     amount?: number;
@@ -33,6 +34,8 @@ interface HoopayWebhookPayload {
   customer_email?: string;
   name?: string;
   customer_name?: string;
+  phone?: string;
+  whatsapp?: string;
   product_id?: string;
   productId?: string;
   status?: string;
@@ -59,6 +62,7 @@ serve(async (req: Request): Promise<Response> => {
     const data = payload.data || payload;
     const email = data.email || data.customer_email;
     const name = data.name || data.customer_name || "Assinante VIP";
+    const phone = data.phone || data.whatsapp || "";
     const productId = data.product_id || data.productId;
     const status = data.status || payload.event;
     const amount = data.amount || data.value;
@@ -136,6 +140,7 @@ serve(async (req: Request): Promise<Response> => {
         .from("premium_users")
         .update({
           name,
+          whatsapp: phone || undefined, // Atualiza whatsapp se disponível
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -157,6 +162,7 @@ serve(async (req: Request): Promise<Response> => {
         .insert({
           email,
           name,
+          whatsapp: phone, // Campo whatsapp incluído
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -171,18 +177,18 @@ serve(async (req: Request): Promise<Response> => {
       console.log(`🆕 Novo usuário VIP criado - Fim: ${subscriptionEnd.toISOString()}`);
     }
 
-    // Log do webhook processado (opcional, ignora erros se tabela não existir)
+    // Log do webhook processado
     try {
       await supabase.from("webhook_logs").insert({
         webhook_type: "hoopay_payment",
-        payload: JSON.stringify(payload),
+        payload: payload, // JSONB aceita objeto diretamente
         processed: true,
         email,
         plan_type: planType,
       });
       console.log("📝 Log do webhook salvo");
     } catch (logErr) {
-      console.log("⚠️ Não foi possível salvar log (tabela pode não existir)");
+      console.log("⚠️ Não foi possível salvar log:", logErr);
     }
 
     return new Response(

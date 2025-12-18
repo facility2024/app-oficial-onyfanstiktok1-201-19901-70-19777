@@ -19,8 +19,13 @@ interface HoopayWebhookPayload {
   data?: {
     email?: string;
     customer_email?: string;
+    buyer_email?: string;
+    payer_email?: string;
+    user_email?: string;
+    client_email?: string;
     name?: string;
     customer_name?: string;
+    buyer_name?: string;
     phone?: string;
     whatsapp?: string;
     product_id?: string;
@@ -28,12 +33,32 @@ interface HoopayWebhookPayload {
     amount?: number;
     value?: number;
     status?: string;
+    customer?: {
+      email?: string;
+      name?: string;
+      phone?: string;
+    };
+    buyer?: {
+      email?: string;
+      name?: string;
+      phone?: string;
+    };
+    payer?: {
+      email?: string;
+      name?: string;
+      phone?: string;
+    };
   };
   // Formato alternativo (payload direto)
   email?: string;
   customer_email?: string;
+  buyer_email?: string;
+  payer_email?: string;
+  user_email?: string;
+  client_email?: string;
   name?: string;
   customer_name?: string;
+  buyer_name?: string;
   phone?: string;
   whatsapp?: string;
   product_id?: string;
@@ -41,6 +66,80 @@ interface HoopayWebhookPayload {
   status?: string;
   amount?: number;
   value?: number;
+  customer?: {
+    email?: string;
+    name?: string;
+    phone?: string;
+  };
+  buyer?: {
+    email?: string;
+    name?: string;
+    phone?: string;
+  };
+  payer?: {
+    email?: string;
+    name?: string;
+    phone?: string;
+  };
+}
+
+// Função para extrair email do payload (tenta múltiplos campos)
+function extractEmail(payload: HoopayWebhookPayload): string | null {
+  const data = payload.data || payload;
+  
+  // Lista de possíveis campos de email (ordenados por prioridade)
+  const emailCandidates = [
+    data.buyer_email,
+    data.payer_email,
+    data.customer_email,
+    data.user_email,
+    data.client_email,
+    data.email,
+    data.customer?.email,
+    data.buyer?.email,
+    data.payer?.email,
+    payload.buyer_email,
+    payload.payer_email,
+    payload.customer_email,
+    payload.user_email,
+    payload.client_email,
+    payload.email,
+    payload.customer?.email,
+    payload.buyer?.email,
+    payload.payer?.email,
+  ];
+  
+  // Retorna o primeiro email válido encontrado
+  for (const email of emailCandidates) {
+    if (email && typeof email === 'string' && email.includes('@') && !email.includes('@hoopay')) {
+      return email.toLowerCase().trim();
+    }
+  }
+  
+  // Se não encontrou email válido, tenta qualquer email (inclusive @hoopay como fallback)
+  for (const email of emailCandidates) {
+    if (email && typeof email === 'string' && email.includes('@')) {
+      return email.toLowerCase().trim();
+    }
+  }
+  
+  return null;
+}
+
+// Função para extrair nome do payload
+function extractName(payload: HoopayWebhookPayload): string {
+  const data = payload.data || payload;
+  
+  return data.buyer_name || 
+         data.customer_name || 
+         data.name || 
+         data.customer?.name || 
+         data.buyer?.name || 
+         data.payer?.name || 
+         payload.buyer_name || 
+         payload.customer_name || 
+         payload.name || 
+         "Assinante VIP";
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -60,12 +159,31 @@ serve(async (req: Request): Promise<Response> => {
 
     // Extrair dados do payload (suporta múltiplos formatos)
     const data = payload.data || payload;
-    const email = data.email || data.customer_email;
-    const name = data.name || data.customer_name || "Assinante VIP";
-    const phone = data.phone || data.whatsapp || "";
+    
+    // Log detalhado de todos os campos de email encontrados
+    console.log("📧 TODOS OS CAMPOS DE EMAIL ENCONTRADOS:", {
+      "data.email": data.email,
+      "data.customer_email": data.customer_email,
+      "data.buyer_email": data.buyer_email,
+      "data.payer_email": data.payer_email,
+      "data.user_email": data.user_email,
+      "data.client_email": data.client_email,
+      "data.customer?.email": data.customer?.email,
+      "data.buyer?.email": data.buyer?.email,
+      "data.payer?.email": data.payer?.email,
+      "payload.email": payload.email,
+      "payload.customer_email": payload.customer_email,
+      "payload.buyer_email": payload.buyer_email,
+    });
+    
+    const email = extractEmail(payload);
+    const name = extractName(payload);
+    const phone = data.phone || data.whatsapp || data.customer?.phone || data.buyer?.phone || "";
     const productId = data.product_id || data.productId;
     const status = data.status || payload.event;
     const amount = data.amount || data.value;
+    
+    console.log(`📧 Email extraído: ${email} | Nome: ${name}`);
 
     // Validar campos obrigatórios
     if (!email) {

@@ -341,7 +341,7 @@ export default function MarketplacePage() {
       {/* CATEGORIAS - Gênero */}
       <div className="container mx-auto px-4 py-6 border-t border-white/10">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-bold text-xl">CATEGORIAS - Gênero</h2>
+          <h2 className="text-white font-bold text-xl">CATEGORIAS - GÊNERO</h2>
           <div className="flex gap-2">
             <Button variant="ghost" size="icon" onClick={() => emblaApi?.scrollPrev()} className="text-white hover:bg-white/10 h-8 w-8">
               <ChevronLeft className="w-5 h-5" />

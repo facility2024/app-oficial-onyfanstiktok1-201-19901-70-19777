@@ -235,8 +235,8 @@ export default function MarketplacePage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: false, 
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false,
     align: "start",
     slidesToScroll: 3
   });
@@ -322,7 +322,7 @@ export default function MarketplacePage() {
 
       {/* Banner Promocional */}
       <div className="container mx-auto px-4 py-6">
-        <Card className="!border-none overflow-hidden relative" style={{ background: 'linear-gradient(to bottom right, #C4842E, #8B4513)' }}>
+        <Card className="!bg-gradient-to-br !from-purple-600 !to-pink-600 !border-none overflow-hidden relative">
           <CardContent className="p-6 text-center">
             <div className="absolute inset-0 bg-black/20" />
             <div className="relative z-10">
@@ -330,8 +330,8 @@ export default function MarketplacePage() {
               <h3 className="text-white text-2xl md:text-3xl font-bold mb-2">
                 ATUALIZAÇÃO MENSAL
               </h3>
-              <p className="text-white/90 text-lg">
-                DE CONTEÚDOS EXCLUSIVOS COCO NUDI
+              <p className="text-white/90 text-base">
+                DE CONTEÚDOS EXCLUSIVOS COCONUDI
               </p>
             </div>
           </CardContent>
@@ -343,20 +343,10 @@ export default function MarketplacePage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white font-bold text-xl">CATEGORIAS - Gênero</h2>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => emblaApi?.scrollPrev()}
-              className="text-white hover:bg-white/10 h-8 w-8"
-            >
+            <Button variant="ghost" size="icon" onClick={() => emblaApi?.scrollPrev()} className="text-white hover:bg-white/10 h-8 w-8">
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => emblaApi?.scrollNext()}
-              className="text-white hover:bg-white/10 h-8 w-8"
-            >
+            <Button variant="ghost" size="icon" onClick={() => emblaApi?.scrollNext()} className="text-white hover:bg-white/10 h-8 w-8">
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
@@ -364,20 +354,9 @@ export default function MarketplacePage() {
         
         <div className="overflow-hidden -mx-4" ref={emblaRef}>
           <div className="flex gap-3 px-4">
-            {categories.map(category => (
-              <Button 
-                key={category} 
-                variant={selectedCategory === category ? "default" : "outline"} 
-                onClick={() => setSelectedCategory(category)} 
-                className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${
-                  selectedCategory === category 
-                    ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none" 
-                    : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
-                }`}
-              >
+            {categories.map(category => <Button key={category} variant={selectedCategory === category ? "default" : "outline"} onClick={() => setSelectedCategory(category)} className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${selectedCategory === category ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none" : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"}`}>
                 {category === "all" ? "Todos" : category.charAt(0).toUpperCase() + category.slice(1)}
-              </Button>
-            ))}
+              </Button>)}
           </div>
         </div>
       </div>
@@ -402,11 +381,9 @@ export default function MarketplacePage() {
                     {product.name}
                   </h3>
                   
-                  {product.description && (
-                    <p className="text-xs text-gray-400 mb-2 line-clamp-2">
+                  {product.description && <p className="text-xs text-gray-400 mb-2 line-clamp-2">
                       {product.description}
-                    </p>
-                  )}
+                    </p>}
                   
                   <div className="flex items-center gap-1 mb-2">
                     {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`w-3 h-3 ${star <= product.average_rating ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`} />)}

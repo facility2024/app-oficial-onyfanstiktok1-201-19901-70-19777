@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-
-const SUPABASE_URL = "https://tnzvhwapfhkhqjgyiomk.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuenZod2FwZmhraHFqZ3lpb21rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NjM5MzUsImV4cCI6MjA2OTQzOTkzNX0.mWv0UEbkeczgKUMRaDm94Azo3Olgu3-sOnkZ7kamWuM";
-
-// Cliente simples sem tipos complexos
-const supabaseSimple = createClient(SUPABASE_URL, SUPABASE_KEY);
+import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
   id: string;
@@ -41,7 +35,7 @@ export const useCurrentUser = () => {
     try {
       setUpdating(true);
       
-      const { data, error }: any = await supabaseSimple
+      const { data, error }: any = await supabase
         .from('profiles')
         .update({
           name: updates.full_name || updates.username,
@@ -103,7 +97,7 @@ export const useCurrentUser = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      const { error }: any = await supabaseSimple.storage
+      const { error }: any = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -112,14 +106,14 @@ export const useCurrentUser = () => {
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabaseSimple.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
       // Persistir avatar_url na tabela profiles
-      const { error: updateError } = await supabaseSimple
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: publicUrl } as any)
         .eq('id', user.id);
 
       if (updateError) {
@@ -155,7 +149,7 @@ export const useCurrentUser = () => {
   const ensureProfileExists = async (authUser: any) => {
     try {
       // Buscar perfil usando id
-      let { data: profileData } = await supabaseSimple
+      let { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
@@ -163,7 +157,7 @@ export const useCurrentUser = () => {
 
       // Se ainda não existir, criar perfil
       if (!profileData) {
-        const { data: newProfile, error: insertError } = await supabaseSimple
+        const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
             id: authUser.id,
@@ -186,7 +180,7 @@ export const useCurrentUser = () => {
           ? profileData.name
           : (authUser.email?.split('@')[0] || 'Usuário');
         
-        const displayUsername = profileData.username || authUser.email?.split('@')[0] || '';
+        const displayUsername = (profileData as any).username || authUser.email?.split('@')[0] || '';
 
         return {
           ...profileData,
@@ -206,7 +200,7 @@ export const useCurrentUser = () => {
     try {
       setLoading(true);
       
-      const { data: { user: authUser } } = await supabaseSimple.auth.getUser();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
       
       if (authUser) {
         setUser(authUser);
@@ -219,8 +213,8 @@ export const useCurrentUser = () => {
             email: profileData.email || authUser.email,
             username: (profileData as any).displayUsername || null,
             full_name: (profileData as any).displayName || null,
-            avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || profileData.avatar_url || null,
-            bio: profileData.bio || null,
+            avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || (profileData as any).avatar_url || null,
+            bio: (profileData as any).bio || null,
             created_at: profileData.created_at
           });
         }
@@ -239,7 +233,7 @@ export const useCurrentUser = () => {
       try {
         setLoading(true);
         
-        const { data: { user: authUser } } = await supabaseSimple.auth.getUser();
+        const { data: { user: authUser } } = await supabase.auth.getUser();
         
         if (authUser && mounted) {
           setUser(authUser);
@@ -252,8 +246,8 @@ export const useCurrentUser = () => {
               email: profileData.email || authUser.email,
               username: (profileData as any).displayUsername || null,
               full_name: (profileData as any).displayName || null,
-              avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || profileData.avatar_url || null,
-              bio: profileData.bio || null,
+              avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || (profileData as any).avatar_url || null,
+              bio: (profileData as any).bio || null,
               created_at: profileData.created_at
             });
           }
@@ -267,7 +261,7 @@ export const useCurrentUser = () => {
 
     initUser();
 
-    const { data: { subscription } } = supabaseSimple.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Não reagir a eventos durante logout
       if (sessionStorage.getItem('logging_out')) {
         if (event === 'SIGNED_OUT') {

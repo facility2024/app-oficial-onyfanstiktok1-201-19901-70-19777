@@ -329,7 +329,10 @@ export default function UserProfile() {
                       {displayProfile.full_name || 'Usuário'}
                     </h1>
                     {isPremium && (
-                      <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500/30 to-yellow-500/30 text-amber-400 rounded-full text-xs font-medium border border-amber-500/30">
+                      <button
+                        onClick={() => navigate('/vip-management')}
+                        className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500/30 to-yellow-500/30 text-amber-400 rounded-full text-xs font-medium border border-amber-500/30 hover:from-amber-500/40 hover:to-yellow-500/40 transition-colors cursor-pointer"
+                      >
                         <Crown className="w-3.5 h-3.5" />
                         <span>VIP</span>
                         {getDaysRemaining() > 0 && (
@@ -337,7 +340,7 @@ export default function UserProfile() {
                             • {getDaysRemaining()} {getDaysRemaining() === 1 ? 'dia' : 'dias'}
                           </span>
                         )}
-                      </div>
+                      </button>
                     )}
                     {isCreator && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">

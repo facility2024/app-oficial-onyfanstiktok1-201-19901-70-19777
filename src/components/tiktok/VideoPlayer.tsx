@@ -407,7 +407,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {isInView && <VideoProgressBar videoRef={ref} />}
+        {/* VideoProgressBar - oculto no desktop */}
+        {isInView && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
       </div>
     );
   }

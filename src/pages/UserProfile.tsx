@@ -227,7 +227,7 @@ export default function UserProfile() {
     <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-white/10" style={{
-        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
       }}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button 
@@ -259,7 +259,7 @@ export default function UserProfile() {
           <div 
             className="h-48 md:h-64 relative overflow-hidden"
             style={{
-              background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+              background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
             }}
           >
             {/* Overlay gradient */}

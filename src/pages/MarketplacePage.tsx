@@ -76,7 +76,7 @@ const ProductDetailModal = ({
             </div>
           </div>
 
-          <Button onClick={() => onBuy(product)} disabled={product.stock === 0} className="w-full bg-gradient-to-r from-green-500 to-yellow-500 hover:from-green-600 hover:to-yellow-600" size="lg">
+          <Button onClick={() => onBuy(product)} disabled={product.stock === 0} className="w-full bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513]" size="lg">
             <ShoppingCart className="mr-2" />
             Comprar Agora
           </Button>
@@ -218,7 +218,7 @@ const CheckoutModal = ({
           })} placeholder="00000-000" className="bg-gray-800 border-white/10 text-white" />
           </div>
 
-          <Button onClick={handleCheckout} disabled={loading} className="w-full bg-gradient-to-r from-green-500 to-yellow-500 hover:from-green-600 hover:to-yellow-600" size="lg">
+          <Button onClick={handleCheckout} disabled={loading} className="w-full bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513]" size="lg">
             {loading ? "Processando..." : "Pagar com PIX"}
           </Button>
         </div>
@@ -289,7 +289,7 @@ export default function MarketplacePage() {
       <div className="min-h-full pb-20">
         {/* Header com Gradiente Colorido */}
         <div className="sticky top-0 z-20 backdrop-blur-sm border-b border-white/10" style={{
-        background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.95) 0%, rgba(124, 252, 0, 0.95) 25%, rgba(255, 193, 7, 0.95) 50%, rgba(255, 152, 0, 0.95) 75%, rgba(255, 87, 34, 0.95) 100%)'
+        background: 'linear-gradient(135deg, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
       }}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -371,7 +371,7 @@ export default function MarketplacePage() {
                 onClick={() => setSelectedCategory(category)} 
                 className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${
                   selectedCategory === category 
-                    ? "bg-gradient-to-r from-green-500 to-yellow-500 text-white border-none" 
+                    ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none" 
                     : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
                 }`}
               >

@@ -30,7 +30,7 @@ const PaymentConfirmation = () => {
       <div 
         className="sticky top-0 z-50 px-4 py-3 flex items-center justify-center"
         style={{
-          background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.95) 0%, rgba(0, 255, 150, 0.9) 25%, rgba(180, 255, 100, 0.9) 50%, rgba(255, 230, 80, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)',
+          background: 'linear-gradient(135deg, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)',
         }}
       >
         <img src={coconudiLogo} alt="CocoNudi" className="h-8" />

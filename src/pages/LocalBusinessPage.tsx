@@ -96,7 +96,7 @@ const LocalBusinessPage = () => {
     <div className="fixed inset-0 bg-black overflow-y-auto">
       {/* Header com gradiente da navbar */}
       <div className="sticky top-0 z-20 border-b border-white/10" style={{
-        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           {/* Botão Voltar */}
@@ -148,7 +148,7 @@ const LocalBusinessPage = () => {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === category
-                    ? 'bg-gradient-to-r from-green-500 to-yellow-500 text-white'
+                    ? 'bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white'
                     : 'bg-gray-800 text-white hover:bg-gray-700'
                 }`}
               >
@@ -377,7 +377,7 @@ const BusinessCard = ({ business }: { business: LocalBusiness }) => {
             size="sm"
             className="w-full text-white font-semibold text-xs"
             style={{
-              background: 'linear-gradient(135deg, rgba(191, 234, 124, 1) 0%, rgba(254, 228, 64, 1) 100%)'
+              background: 'linear-gradient(135deg, rgba(124, 179, 66, 1) 0%, rgba(196, 132, 46, 1) 100%)'
             }}
           >
             Como Chegar

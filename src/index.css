@@ -112,7 +112,7 @@
     --dark-bg-secondary: 0 0% 10%;
     
     /* Custom colorful gradient */
-    --gradient-top: linear-gradient(to right, #f5d800, #c8e000, #00e690, #00dccc, #00ceeb);
+    --gradient-top: linear-gradient(to right, #7CB342, #558B2F, #C4842E, #8B4513);
 
     /* Card System */
     --card: 0 0% 100%;
@@ -134,9 +134,9 @@
     --secondary-foreground: 240 5.9% 10%;
 
     /* Accent Colors - Golden Yellow */
-    --accent: 45 93% 58%;
-    --accent-foreground: 240 10% 3.9%;
-    --accent-light: 45 93% 68%;
+    --accent: 30 75% 40%;
+    --accent-foreground: 0 0% 98%;
+    --accent-light: 30 75% 50%;
 
     /* Success/Money Colors */
     --success: 142 76% 36%;

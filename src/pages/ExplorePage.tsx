@@ -174,7 +174,7 @@ const ExplorePage = () => {
       {/* Conteúdo Principal */}
       <div className="flex-1 flex flex-col">
         {/* Header Mobile */}
-        <div className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-md border-b border-white/10">
+        <div className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-[rgba(124,179,66,0.95)] via-[rgba(196,132,46,0.95)] to-[rgba(139,69,19,0.95)] backdrop-blur-md border-b border-white/10">
           <div className="flex items-center justify-between p-3 gap-2">
             {/* Botão Voltar */}
             <button 
@@ -214,7 +214,7 @@ const ExplorePage = () => {
         </div>
 
         {/* Header Desktop */}
-        <div className="hidden md:block sticky top-0 z-40 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-md border-b border-white/10">
+        <div className="hidden md:block sticky top-0 z-40 bg-gradient-to-r from-[rgba(124,179,66,0.95)] via-[rgba(196,132,46,0.95)] to-[rgba(139,69,19,0.95)] backdrop-blur-md border-b border-white/10">
           <div className="flex items-center justify-between p-4 gap-4">
             {/* Botão Voltar */}
             <button 
@@ -261,7 +261,7 @@ const ExplorePage = () => {
               onClick={() => setFilter("all")}
               className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
                 filter === "all"
-                  ? "bg-gradient-to-r from-green-400 to-yellow-400 text-black font-semibold"
+                  ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white font-semibold"
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
             >
@@ -271,7 +271,7 @@ const ExplorePage = () => {
               onClick={() => setFilter("creators")}
               className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
                 filter === "creators"
-                  ? "bg-gradient-to-r from-green-400 to-yellow-400 text-black font-semibold"
+                  ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white font-semibold"
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
             >
@@ -281,7 +281,7 @@ const ExplorePage = () => {
               onClick={() => setFilter("models")}
               className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
                 filter === "models"
-                  ? "bg-gradient-to-r from-green-400 to-yellow-400 text-black font-semibold"
+                  ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white font-semibold"
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
             >

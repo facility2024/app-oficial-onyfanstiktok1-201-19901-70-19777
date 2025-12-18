@@ -2478,7 +2478,7 @@ export const TikTokApp = () => {
           </button>}
 
         {/* Side Menu - Mobile positioning - Só aparece na tela principal */}
-        {!showProfile && !showChat && <div className="fixed top-2 right-3 z-[9999] pointer-events-auto">
+        {!showProfile && !showChat && <div className="fixed top-20 right-3 z-[9999] pointer-events-auto">
             <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
           console.log('Mobile like clicked via SideMenu');
           toggleLike();

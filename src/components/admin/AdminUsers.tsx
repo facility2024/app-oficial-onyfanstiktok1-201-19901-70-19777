@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserPlus, Activity, MapPin, Trash2 } from 'lucide-react';
+import { Users, UserPlus, Activity, MapPin, Trash2, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
@@ -15,18 +15,30 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface PremiumUser {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  subscription_type: string;
+  subscription_status: string;
+  subscription_start: string;
+  subscription_end: string;
+}
 
 export const AdminUsers = () => {
   const { stats: realTimeStats } = useRealTimeStats();
   const [userStats, setUserStats] = useState([
     { label: 'Total de Usuários', value: '0', icon: Users, color: 'text-primary' },
     { label: 'Novos Hoje', value: '0', icon: UserPlus, color: 'text-success' },
-    { label: 'Ativos Agora', value: '0', icon: Activity, color: 'text-warning' },
+    { label: 'VIPs Ativos', value: '0', icon: Crown, color: 'text-warning' },
     { label: 'Online BR', value: '0', icon: MapPin, color: 'text-accent' },
   ]);
 
-  const [topUsers, setTopUsers] = useState([]);
-  const [bonusUsers, setBonusUsers] = useState([]);
+  const [premiumUsers, setPremiumUsers] = useState<PremiumUser[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [models, setModels] = useState([]);
   const [currentModelsPage, setCurrentModelsPage] = useState(1);
@@ -64,12 +76,18 @@ export const AdminUsers = () => {
           .select('*', { count: 'exact', head: true })
           .gte('created_at', today.toISOString());
 
-        // Buscar dados dos usuários de gamificação (tarefas)
-        const { data: gamificationUsersData } = await supabase
-          .from('gamification_users')
+        // Buscar usuários Premium/VIP reais do banco
+        const { data: premiumData, error: premiumError } = await supabase
+          .from('premium_users')
           .select('*')
-          .order('total_points', { ascending: false })
-          .limit(10);
+          .order('created_at', { ascending: false });
+
+        if (premiumError) {
+          console.error('Erro ao buscar premium_users:', premiumError);
+        }
+
+        // Contar VIPs ativos
+        const activeVips = premiumData?.filter(u => u.subscription_status === 'active').length || 0;
 
         // Buscar dados dos modelos para fallback
         const { data: modelsData } = await supabase
@@ -80,24 +98,12 @@ export const AdminUsers = () => {
         setUserStats([
           { label: 'Total de Usuários', value: formatNumber(totalUsers || 0), icon: Users, color: 'text-primary' },
           { label: 'Novos Hoje', value: formatNumber(newUsersToday || 0), icon: UserPlus, color: 'text-success' },
-          { label: 'Ativos Agora', value: formatNumber(realTimeStats?.activeUsers || 0), icon: Activity, color: 'text-warning' },
+          { label: 'VIPs Ativos', value: formatNumber(activeVips), icon: Crown, color: 'text-warning' },
           { label: 'Online BR', value: formatNumber(onlineUsers || 0), icon: MapPin, color: 'text-accent' },
         ]);
 
-        // Processar dados dos usuários de gamificação (formulário de tarefas - Top Usuários Cadastrados)
-        const processedGamificationUsers = gamificationUsersData?.map(user => ({
-          name: user.name,
-          email: user.email,
-          whatsapp: 'Não informado',
-          location: 'Brasil',
-          spent: `${user.total_points || 0} pontos`,
-          points: user.total_points || 0,
-          status: user.is_premium ? 'premium' : 'standard',
-          created_at: user.created_at,
-          type: 'gamification'
-        })) || [];
-
-        setBonusUsers(processedGamificationUsers);
+        // Processar dados dos usuários Premium/VIP
+        setPremiumUsers(premiumData || []);
 
         // Processar dados dos modelos como fallback
         const processedModels = modelsData?.map(model => ({
@@ -118,14 +124,11 @@ export const AdminUsers = () => {
 
         setModels(processedModels);
 
-        // Usar dados de gamificação como priority, depois fallback para modelos
-        setTopUsers(gamificationUsersData?.length > 0 ? processedGamificationUsers : processedModels);
-
         console.log('👥 AdminUsers - Dados carregados:', {
           totalUsers: totalUsers || 0,
           onlineUsers: onlineUsers || 0,
-          newUsersToday: newUsersToday || 0,
-          gamificationUsers: gamificationUsersData?.length || 0,
+          premiumUsers: premiumData?.length || 0,
+          activeVips,
           topModels: modelsData?.length || 0
         });
 
@@ -256,12 +259,12 @@ export const AdminUsers = () => {
         })}
       </div>
 
-      {/* Top Usuários Cadastrados - Usuários de Gamificação */}
+      {/* Usuários Premium VIP */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Users className="w-5 h-5 text-primary" />
-            <span>Top Usuários Cadastrados - Tarefas ({bonusUsers.length})</span>
+            <Crown className="w-5 h-5 text-warning" />
+            <span>Usuários Premium VIP ({premiumUsers.length})</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -272,56 +275,72 @@ export const AdminUsers = () => {
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nome</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">Email</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">WhatsApp</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Pontos Totais</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Plano</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">Expira em</th>
                 </tr>
               </thead>
               <tbody>
-                {getPaginatedData(bonusUsers, currentPage).length > 0 ? getPaginatedData(bonusUsers, currentPage).map((user, index) => (
-                  <tr key={index} className="border-b border-border/50 hover:bg-card-hover transition-colors">
+                {getPaginatedData(premiumUsers, currentPage).length > 0 ? getPaginatedData(premiumUsers, currentPage).map((user: PremiumUser) => (
+                  <tr key={user.id} className="border-b border-border/50 hover:bg-card-hover transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-                          {user.name.charAt(0).toUpperCase()}
+                        <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full flex items-center justify-center text-black text-sm font-medium">
+                          {user.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <div>
-                          <span className="font-medium text-foreground">{user.name}</span>
+                          <span className="font-medium text-foreground">{user.name || 'Sem nome'}</span>
                           <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            <span>{user.location}</span>
+                            <Crown className="w-3 h-3 text-warning" />
+                            <span>VIP</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">
-                      <span className="text-sm">{user.email}</span>
+                      <span className="text-sm">{user.email || '-'}</span>
                     </td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
-                      <span className="text-sm">{user.whatsapp}</span>
+                      <span className="text-sm">{user.whatsapp || 'Não informado'}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center space-x-1">
-                        <span className="font-semibold text-warning">{user.points}</span>
-                        <span className="text-xs text-muted-foreground">pts</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={user.status === 'premium' ? 'default' : 'secondary'}>
-                        {user.status === 'premium' ? 'Premium' : 'Standard'}
+                      <Badge variant="outline" className="capitalize">
+                        {user.subscription_type === 'monthly' && 'Mensal'}
+                        {user.subscription_type === 'quarterly' && 'Trimestral'}
+                        {user.subscription_type === 'annual' && 'Anual'}
+                        {!['monthly', 'quarterly', 'annual'].includes(user.subscription_type) && (user.subscription_type || 'N/A')}
                       </Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge 
+                        variant={user.subscription_status === 'active' ? 'default' : 'destructive'}
+                        className={user.subscription_status === 'active' ? 'bg-success text-success-foreground' : ''}
+                      >
+                        {user.subscription_status === 'active' && 'Ativo'}
+                        {user.subscription_status === 'expired' && 'Expirado'}
+                        {user.subscription_status === 'cancelled' && 'Cancelado'}
+                        {!['active', 'expired', 'cancelled'].includes(user.subscription_status) && (user.subscription_status || 'N/A')}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
+                      <span className="text-sm">
+                        {user.subscription_end 
+                          ? format(new Date(user.subscription_end), "dd/MM/yyyy", { locale: ptBR })
+                          : '-'}
+                      </span>
                     </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                      Nenhum usuário de gamificação cadastrado ainda
+                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                      Nenhum usuário VIP cadastrado ainda
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-          {renderPagination(bonusUsers.length, currentPage, setCurrentPage)}
+          {renderPagination(premiumUsers.length, currentPage, setCurrentPage)}
         </CardContent>
       </Card>
 

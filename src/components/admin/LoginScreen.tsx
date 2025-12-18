@@ -112,15 +112,15 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
         <div 
           className="rounded-t-3xl p-8 border-b border-white/10"
           style={{
-            backgroundImage: 'linear-gradient(135deg, #ffb200, #fdb410, #fbb61b, #fab724, #f8b92b)',
+            backgroundImage: 'linear-gradient(135deg, #7CB342, #558B2F, #C4842E, #8B4513)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)'
           }}
         >
           <CardHeader className="p-0">
-            <CardTitle className="text-3xl text-black font-bold text-center mb-2 min-h-[36px]">
-              <TypewriterText text="Facility-SOFTWARE" delay={80} />
+            <CardTitle className="text-3xl text-white font-bold text-center mb-2 min-h-[36px] drop-shadow-lg">
+              <TypewriterText text="CocoNudi Admin" delay={80} />
             </CardTitle>
-            <p className="text-black/80 text-center text-sm font-medium">
+            <p className="text-white/90 text-center text-sm font-medium drop-shadow">
               Área Restrita - Admin Panel
             </p>
           </CardHeader>
@@ -130,13 +130,13 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
         <CardContent 
           className="p-8"
           style={{
-            backgroundImage: 'linear-gradient(135deg, #ffb200, #fdb410, #fbb61b, #fab724, #f8b92b)',
+            backgroundImage: 'linear-gradient(135deg, #7CB342, #558B2F, #C4842E, #8B4513)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
           }}
         >
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-black font-semibold text-sm">
+              <Label htmlFor="email" className="text-white font-semibold text-sm drop-shadow">
                 Email
               </Label>
               <Input
@@ -146,12 +146,12 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/95 border-2 border-black/10 text-black placeholder:text-black/50 focus:border-black/30 focus:bg-white rounded-xl h-12 shadow-inner transition-all duration-200 hover:bg-white focus:shadow-lg"
+                className="bg-white/95 border-2 border-white/20 text-black placeholder:text-black/50 focus:border-white/40 focus:bg-white rounded-xl h-12 shadow-inner transition-all duration-200 hover:bg-white focus:shadow-lg"
               />
             </div>
             
             <div className="space-y-3">
-              <Label htmlFor="password" className="text-black font-semibold text-sm">
+              <Label htmlFor="password" className="text-white font-semibold text-sm drop-shadow">
                 Senha
               </Label>
               <Input
@@ -161,22 +161,22 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white/95 border-2 border-black/10 text-black placeholder:text-black/50 focus:border-black/30 focus:bg-white rounded-xl h-12 shadow-inner transition-all duration-200 hover:bg-white focus:shadow-lg"
+                className="bg-white/95 border-2 border-white/20 text-black placeholder:text-black/50 focus:border-white/40 focus:bg-white rounded-xl h-12 shadow-inner transition-all duration-200 hover:bg-white focus:shadow-lg"
               />
             </div>
             
             <Button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-black/90 text-white hover:bg-black font-semibold py-3 h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gray-900 text-white hover:bg-black font-semibold py-3 h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
           
           <div className="mt-6 text-center">
-            <p className="text-xs text-black/60 font-medium">
-              © 2024 Facility Software - Todos os direitos reservados
+            <p className="text-xs text-white/70 font-medium drop-shadow">
+              © 2024 CocoNudi - Todos os direitos reservados
             </p>
           </div>
         </CardContent>

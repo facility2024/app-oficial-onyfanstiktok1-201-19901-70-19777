@@ -34,7 +34,12 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
   ];
 
   return (
-    <nav className="bg-black/80 shadow-lg border-b border-white/10 fixed top-0 left-0 right-0 z-50 backdrop-blur-md">
+    <nav 
+      className="shadow-lg border-b border-white/10 fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
+      style={{
+        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+      }}
+    >
       <div className="container">
         <div className="flex overflow-x-auto scrollbar-hide">
           <div className="flex space-x-1 sm:space-x-2 lg:space-x-4 py-2 sm:py-3 lg:py-4 min-w-max px-2 sm:px-4">
@@ -52,10 +57,10 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
                   variant={isActive ? "default" : "ghost"}
                   size="sm"
                   className={cn(
-                    "flex items-center px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm lg:text-base font-medium transition-all duration-200 shadow-elegant",
+                    "flex items-center px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm lg:text-base font-medium transition-all duration-200",
                     isActive 
-                      ? "bg-primary text-primary-foreground shadow-glow" 
-                      : "text-primary-foreground/70 hover:bg-primary/20 hover:text-primary-foreground"
+                      ? "bg-gray-900 text-white shadow-lg" 
+                      : "text-gray-900 hover:bg-black/20 hover:text-gray-900"
                   )}
                 >
                   <Icon className="w-4 h-4 mr-1 sm:mr-2 drop-shadow-md" />

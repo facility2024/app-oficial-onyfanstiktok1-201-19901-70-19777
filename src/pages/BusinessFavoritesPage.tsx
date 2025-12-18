@@ -36,7 +36,7 @@ const BusinessFavoritesPage = () => {
   return (
     <div className="fixed inset-0 bg-black overflow-y-auto">
       {/* Header fixo com gradiente do app */}
-      <div className="sticky top-0 z-50 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-sm">
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-[rgba(124,179,66,0.95)] via-[rgba(196,132,46,0.95)] to-[rgba(139,69,19,0.95)] backdrop-blur-sm">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Button
@@ -77,7 +77,7 @@ const BusinessFavoritesPage = () => {
             </p>
             <Button
               onClick={() => navigate("/local-business")}
-              className="bg-gradient-to-r from-green-500 to-yellow-500"
+              className="bg-gradient-to-r from-[#7CB342] to-[#C4842E]"
             >
               Explorar Comércios
             </Button>
@@ -165,7 +165,7 @@ const BusinessFavoritesPage = () => {
                       <Button
                         onClick={() => handleGetDirections(business.latitude, business.longitude)}
                         size="sm"
-                        className="w-full bg-gradient-to-r from-green-500 to-yellow-500 hover:from-green-600 hover:to-yellow-600 text-white text-xs"
+                        className="w-full bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513] text-white text-xs"
                       >
                         <MapPin className="h-3 w-3 mr-1" />
                         Como Chegar

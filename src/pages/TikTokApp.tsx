@@ -2428,7 +2428,7 @@ export const TikTokApp = () => {
         
         {/* Top Bar Mobile - Nova barra com ícones */}
         <div className="fixed top-0 left-0 right-0 z-40 h-14 backdrop-blur-sm flex items-center justify-between px-4" style={{
-        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
       }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
@@ -2626,7 +2626,7 @@ export const TikTokApp = () => {
   return <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
       <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-sm" style={{
-      background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+      background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
     }}>
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" onClick={() => {

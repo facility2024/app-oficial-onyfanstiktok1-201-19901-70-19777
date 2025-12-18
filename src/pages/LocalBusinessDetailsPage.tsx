@@ -102,7 +102,7 @@ const LocalBusinessDetailsPage = () => {
       <div className="fixed inset-0 bg-black overflow-y-auto">
         {/* Header Skeleton */}
         <div className="sticky top-0 z-20 border-b border-white/10 p-4" style={{
-          background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+          background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
         }}>
           <div className="max-w-4xl mx-auto flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-full bg-white/30" />
@@ -139,7 +139,7 @@ const LocalBusinessDetailsPage = () => {
     <div className="fixed inset-0 bg-black overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 z-20 border-b border-white/10" style={{
-        background: 'linear-gradient(to right, rgba(0, 245, 212, 0.95) 0%, rgba(0, 229, 204, 0.95) 25%, rgba(191, 234, 124, 0.95) 50%, rgba(254, 228, 64, 0.95) 75%, rgba(255, 217, 61, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
       }}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -269,7 +269,7 @@ const LocalBusinessDetailsPage = () => {
             onClick={handleGetDirections}
             className="w-full py-6 text-lg font-semibold text-gray-900"
             style={{
-              background: 'linear-gradient(135deg, rgba(0, 245, 212, 1) 0%, rgba(191, 234, 124, 1) 50%, rgba(254, 228, 64, 1) 100%)'
+              background: 'linear-gradient(135deg, rgba(124, 179, 66, 1) 0%, rgba(85, 139, 47, 1) 50%, rgba(196, 132, 46, 1) 100%)'
             }}
           >
             <MapPin className="h-5 w-5 mr-2" />

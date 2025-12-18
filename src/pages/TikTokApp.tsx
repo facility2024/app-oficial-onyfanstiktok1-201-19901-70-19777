@@ -2793,9 +2793,16 @@ export const TikTokApp = () => {
                 </Button>
               </div>
 
-              {/* Desktop Footer - Nome da modelo */}
+              {/* Desktop Footer - Avatar e Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
+                    <img 
+                      src={currentVideo?.user?.avatar_url || '/placeholder.svg'} 
+                      alt={currentVideo?.user?.username || 'Modelo'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <p className="text-white font-semibold text-lg drop-shadow-lg">
                     {currentVideo?.user?.username || 'Modelo'}
                   </p>

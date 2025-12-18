@@ -322,7 +322,7 @@ export default function MarketplacePage() {
 
       {/* Banner Promocional */}
       <div className="container mx-auto px-4 py-6">
-        <Card className="!bg-gradient-to-br !from-purple-600 !to-pink-600 !border-none overflow-hidden relative">
+        <Card className="!border-none overflow-hidden relative" style={{ background: 'linear-gradient(to bottom right, #C4842E, #8B4513)' }}>
           <CardContent className="p-6 text-center">
             <div className="absolute inset-0 bg-black/20" />
             <div className="relative z-10">

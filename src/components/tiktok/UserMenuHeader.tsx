@@ -64,7 +64,11 @@ export const UserMenuHeader = () => {
       </div>
 
       {/* Botão de Ação */}
-      <Button onClick={() => navigate('/profile')} className="w-full bg-primary-dark">
+      <Button 
+        onClick={() => navigate('/profile')} 
+        className="w-full text-white hover:opacity-90 transition-opacity"
+        style={{ background: 'linear-gradient(to right, #C4842E, #8B4513)' }}
+      >
         <User className="w-4 h-4 mr-2" />
         Ver Perfil
       </Button>

@@ -2793,17 +2793,12 @@ export const TikTokApp = () => {
                 </Button>
               </div>
 
-              {/* Desktop Controls Overlay */}
+              {/* Desktop Footer - Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Button variant="ghost" size="sm" onClick={() => setIsPlaying(!isPlaying)} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm">
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setIsMuted(!isMuted)} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm">
-                      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                    </Button>
-                  </div>
+                <div className="flex items-center">
+                  <p className="text-white font-semibold text-lg drop-shadow-lg">
+                    {currentVideo?.user?.username || 'Modelo'}
+                  </p>
                 </div>
               </div>
             </div>

@@ -20,6 +20,7 @@ const loginSchema = z.object({
 
 const signupSchema = loginSchema.extend({
   name: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
+  phone: z.string().trim().min(10, 'Telefone deve ter no mínimo 10 dígitos').max(20, 'Telefone muito longo'),
 });
 
 const forgotPasswordSchema = z.object({
@@ -39,6 +40,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,14 +109,25 @@ const Auth = () => {
     }
   }, []);
 
+  const formatPhoneInput = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       setLoading(true);
       
+      // Normalizar telefone (só números)
+      const normalizedPhone = phone.replace(/\D/g, '');
+      
       // Validar dados
-      const validated = signupSchema.parse({ email, password, name });
+      const validated = signupSchema.parse({ email, password, name, phone: normalizedPhone });
       
       const { data, error } = await supabase.auth.signUp({
         email: validated.email,
@@ -122,12 +135,22 @@ const Auth = () => {
         options: {
           data: { 
             full_name: validated.name,
+            phone: validated.phone,
           },
           emailRedirectTo: `${window.location.origin}/app`
         }
       });
       
       if (error) throw error;
+      
+      // Se tem sessão, salvar telefone no perfil
+      if (data.user) {
+        // Usar rpc ou update direto (phone será adicionado via SQL)
+        await supabase
+          .from('profiles')
+          .update({ phone: validated.phone } as any)
+          .eq('id', data.user.id);
+      }
       
       // Se confirmação de email está desabilitada, já vai ter sessão
       if (data.session) {
@@ -292,19 +315,35 @@ const Auth = () => {
           handleResetPassword
         } className="space-y-3">
           {mode === 'signup' && (
-            <div className="space-y-1">
-              <Label htmlFor="name" className="text-xs md:text-sm text-foreground">Nome Completo</Label>
-              <Input 
-                id="name" 
-                type="text" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="bg-background border-border text-foreground"
-                placeholder="Seu nome"
-                required
-                disabled={loading}
-              />
-            </div>
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-xs md:text-sm text-foreground">Nome Completo</Label>
+                <Input 
+                  id="name" 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-background border-border text-foreground"
+                  placeholder="Seu nome"
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="phone" className="text-xs md:text-sm text-foreground">Telefone (WhatsApp)</Label>
+                <Input 
+                  id="phone" 
+                  type="tel" 
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                  className="bg-background border-border text-foreground"
+                  placeholder="(00) 00000-0000"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-[10px] text-muted-foreground">Use o mesmo número para pagamentos VIP</p>
+              </div>
+            </>
           )}
           
           <div className="space-y-1">
@@ -453,6 +492,7 @@ const Auth = () => {
                 setEmail('');
                 setPassword('');
                 setName('');
+                setPhone('');
               }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               disabled={loading}

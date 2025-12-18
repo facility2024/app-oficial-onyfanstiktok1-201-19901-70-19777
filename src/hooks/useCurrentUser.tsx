@@ -10,6 +10,7 @@ interface UserProfile {
   full_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  phone: string | null;
   created_at: string;
 }
 
@@ -18,6 +19,7 @@ interface ProfileUpdates {
   username?: string;
   email?: string;
   bio?: string;
+  phone?: string;
 }
 
 export const useCurrentUser = () => {
@@ -42,6 +44,7 @@ export const useCurrentUser = () => {
           email: updates.email,
           bio: updates.bio,
           username: updates.username,
+          phone: updates.phone,
         })
         .eq('id', user.id)
         .select();
@@ -60,6 +63,7 @@ export const useCurrentUser = () => {
           username: updates.username ?? profile.username,
           email: updates.email ?? profile.email,
           bio: updates.bio ?? profile.bio,
+          phone: updates.phone ?? profile.phone,
           avatar_url: profile.avatar_url,
           created_at: profile.created_at,
         });
@@ -131,6 +135,7 @@ export const useCurrentUser = () => {
           username: profile.username,
           full_name: profile.full_name,
           bio: profile.bio,
+          phone: profile.phone,
           avatar_url: publicUrl,
           created_at: profile.created_at,
         });
@@ -215,6 +220,7 @@ export const useCurrentUser = () => {
             full_name: (profileData as any).displayName || null,
             avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || (profileData as any).avatar_url || null,
             bio: (profileData as any).bio || null,
+            phone: (profileData as any).phone || null,
             created_at: profileData.created_at
           });
         }
@@ -248,6 +254,7 @@ export const useCurrentUser = () => {
               full_name: (profileData as any).displayName || null,
               avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || (profileData as any).avatar_url || null,
               bio: (profileData as any).bio || null,
+              phone: (profileData as any).phone || null,
               created_at: profileData.created_at
             });
           }

@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, Check, Sparkles, Star, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Crown, Check, Sparkles, Star, Zap, Loader2, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import coconudiLogo from '@/assets/coconudi-logo-header.png';
 
 interface VIPPlan {
@@ -59,12 +63,15 @@ const defaultVIPPlans: VIPPlans = {
 
 const SubscribePage = () => {
   const navigate = useNavigate();
+  const { user, profile, loading: userLoading, updateProfile } = useCurrentUser();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [vipPlans, setVipPlans] = useState<VIPPlans>(defaultVIPPlans);
   const [loading, setLoading] = useState(true);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [savingPhone, setSavingPhone] = useState(false);
 
   useEffect(() => {
-    // Fetch VIP plans from localStorage
     const fetchPlans = () => {
       try {
         const stored = localStorage.getItem('vip_plans');
@@ -80,19 +87,96 @@ const SubscribePage = () => {
     fetchPlans();
   }, []);
 
-  const handleSelectPlan = (planKey: string) => {
+  // Preencher telefone do perfil se existir
+  useEffect(() => {
+    if (profile?.phone) {
+      setPhoneInput(profile.phone);
+    }
+  }, [profile]);
+
+  // Função para formatar telefone
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    return value;
+  };
+
+  // Função para salvar telefone no perfil
+  const savePhoneToProfile = async () => {
+    if (!user) return false;
+    
+    const normalizedPhone = phoneInput.replace(/\D/g, '');
+    if (normalizedPhone.length < 10) {
+      toast.error('Telefone inválido. Use DDD + número (ex: 15988163462)');
+      return false;
+    }
+
+    setSavingPhone(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ phone: normalizedPhone } as any)
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Telefone salvo com sucesso!');
+      setShowPhoneModal(false);
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao salvar telefone:', error);
+      toast.error('Erro ao salvar telefone');
+      return false;
+    } finally {
+      setSavingPhone(false);
+    }
+  };
+
+  const handleSelectPlan = async (planKey: string) => {
     setSelectedPlan(planKey);
     
+    // Verificar se usuário está logado
+    if (!user) {
+      toast.error('Você precisa estar logado para assinar VIP');
+      localStorage.setItem('returnTo', '/subscribe');
+      navigate('/auth');
+      return;
+    }
+
+    // Verificar se tem telefone cadastrado
+    const currentPhone = profile?.phone || phoneInput.replace(/\D/g, '');
+    if (!currentPhone || currentPhone.length < 10) {
+      setShowPhoneModal(true);
+      toast.info('Por favor, informe seu telefone para continuar');
+      return;
+    }
+
     const plan = vipPlans[planKey as keyof VIPPlans];
     if (plan?.paymentUrl) {
+      // Salvar telefone antes de redirecionar (se ainda não salvou)
+      if (!profile?.phone && phoneInput) {
+        await savePhoneToProfile();
+      }
+      
       window.open(plan.paymentUrl, '_blank');
+      toast.success('Use o MESMO telefone no pagamento!', {
+        description: `Telefone cadastrado: ${formatPhone(currentPhone)}`,
+        duration: 8000
+      });
       return;
     }
     
-    toast.info('Sistema de pagamento em breve!', {
-      description: 'Estamos preparando a melhor experiência de pagamento para você.',
-      duration: 3000
-    });
+    toast.info('Sistema de pagamento em breve!');
+  };
+
+  const handlePhoneSubmit = async () => {
+    const success = await savePhoneToProfile();
+    if (success && selectedPlan) {
+      // Tentar novamente após salvar telefone
+      handleSelectPlan(selectedPlan);
+    }
   };
 
   const planIcons = {
@@ -119,7 +203,7 @@ const SubscribePage = () => {
     anual: '365 dias de acesso'
   };
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
@@ -129,6 +213,62 @@ const SubscribePage = () => {
 
   return (
     <div className="fixed inset-0 bg-black overflow-y-auto">
+      {/* Modal de Telefone */}
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-gray-900 border-amber-500/30">
+            <CardHeader>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <Phone className="w-8 h-8 text-amber-500" />
+              </div>
+              <CardTitle className="text-white text-center">Informe seu Telefone</CardTitle>
+              <CardDescription className="text-center text-gray-400">
+                Precisamos do seu telefone para identificar seu pagamento no Hoopay.
+                <br />
+                <strong className="text-amber-400">Use o MESMO número no pagamento!</strong>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-white">Telefone (com DDD)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(15) 98816-3462"
+                  value={formatPhone(phoneInput)}
+                  onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ''))}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  maxLength={15}
+                />
+                <p className="text-xs text-gray-500">
+                  Ex: 15988163462 (DDD + número)
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => setShowPhoneModal(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
+                  onClick={handlePhoneSubmit}
+                  disabled={savingPhone || phoneInput.replace(/\D/g, '').length < 10}
+                >
+                  {savingPhone ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  Continuar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Header */}
       <header 
         className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between"
@@ -153,6 +293,18 @@ const SubscribePage = () => {
           className="h-8 w-auto"
         />
       </header>
+
+      {/* Info de usuário logado */}
+      {user && (
+        <div className="px-4 py-2 bg-green-900/30 border-b border-green-500/20">
+          <p className="text-sm text-green-400 text-center">
+            ✓ Logado como: <strong>{user.email}</strong>
+            {profile?.phone && (
+              <span className="ml-2">| Tel: {formatPhone(profile.phone)}</span>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Hero Section */}
       <div className="relative px-4 py-8 text-center">

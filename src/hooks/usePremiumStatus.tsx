@@ -9,27 +9,24 @@ export const usePremiumStatus = () => {
   const checkPremiumStatus = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. PRIMEIRO: Obter usuário autenticado
+      // 1. Obter usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
       const userEmail = user?.email;
       
       console.log('👑 Verificando status premium para:', userEmail);
       
-      // 2. Se tem usuário autenticado, verificar no banco DIRETO
+      // 2. Se tem usuário autenticado, verificar no banco
       if (userEmail) {
-        // Primeiro tenta buscar por email (mais abrangente)
+        // Primeiro busca por email
         const { data, error } = await supabase
           .from('premium_users')
           .select('*')
           .eq('email', userEmail.toLowerCase())
           .eq('subscription_status', 'active')
           .gte('subscription_end', new Date().toISOString())
-          .single();
-
-        console.log('👑 Resultado da busca premium:', { data, error });
+          .maybeSingle();
 
         if (data && !error) {
-          // Usuário é premium - atualizar localStorage e estado
           console.log('✅ Usuário é VIP! Plano:', data.subscription_type);
           localStorage.setItem('premium_user', 'true');
           localStorage.setItem('premium_email', userEmail);
@@ -39,7 +36,7 @@ export const usePremiumStatus = () => {
           return;
         }
         
-        // Se não encontrou, verifica também pelo user_id (caso tenha sido linkado)
+        // Se não encontrou por email, busca por user_id
         if (user?.id) {
           const { data: dataById, error: errorById } = await supabase
             .from('premium_users')
@@ -47,9 +44,7 @@ export const usePremiumStatus = () => {
             .eq('user_id', user.id)
             .eq('subscription_status', 'active')
             .gte('subscription_end', new Date().toISOString())
-            .single();
-
-          console.log('👑 Resultado busca por user_id:', { dataById, errorById });
+            .maybeSingle();
 
           if (dataById && !errorById) {
             console.log('✅ Usuário é VIP (via user_id)! Plano:', dataById.subscription_type);
@@ -62,28 +57,55 @@ export const usePremiumStatus = () => {
           }
         }
         
+        // Se não encontrou por email ou user_id, busca pelo telefone do perfil
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user?.id)
+          .maybeSingle();
+        
+        const userPhone = (profileData as any)?.phone;
+        if (userPhone) {
+          console.log('🔍 Buscando VIP por telefone:', userPhone);
+          const { data: dataByPhone, error: errorByPhone } = await supabase
+            .from('premium_users')
+            .select('*')
+            .eq('whatsapp', userPhone)
+            .eq('subscription_status', 'active')
+            .gte('subscription_end', new Date().toISOString())
+            .maybeSingle();
+
+          if (dataByPhone && !errorByPhone) {
+            console.log('✅ Usuário é VIP (via telefone)! Plano:', dataByPhone.subscription_type);
+            localStorage.setItem('premium_user', 'true');
+            localStorage.setItem('premium_email', userEmail);
+            setIsPremium(true);
+            setPremiumData(dataByPhone);
+            setLoading(false);
+            return;
+          }
+        }
+        
         console.log('❌ Usuário NÃO é VIP ou assinatura expirada');
       }
       
-      // 3. FALLBACK: Verificar localStorage (para sessões anteriores)
+      // 3. Fallback: localStorage
       const localPremium = localStorage.getItem('premium_user');
       const localEmail = localStorage.getItem('premium_email');
       
       if (localPremium === 'true' && localEmail) {
-        // Verificar no banco se ainda é válido
         const { data, error } = await supabase
           .from('premium_users')
           .select('*')
           .eq('email', localEmail.toLowerCase())
           .eq('subscription_status', 'active')
           .gte('subscription_end', new Date().toISOString())
-          .single();
+          .maybeSingle();
 
         if (data && !error) {
           setIsPremium(true);
           setPremiumData(data);
         } else {
-          // Limpar localStorage se expirou
           localStorage.removeItem('premium_user');
           localStorage.removeItem('premium_email');
           setIsPremium(false);

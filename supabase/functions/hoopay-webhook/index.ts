@@ -28,6 +28,10 @@ interface HoopayWebhookPayload {
     buyer_name?: string;
     phone?: string;
     whatsapp?: string;
+    cellphone?: string;
+    mobile?: string;
+    telefone?: string;
+    celular?: string;
     product_id?: string;
     productId?: string;
     amount?: number;
@@ -37,16 +41,19 @@ interface HoopayWebhookPayload {
       email?: string;
       name?: string;
       phone?: string;
+      cellphone?: string;
     };
     buyer?: {
       email?: string;
       name?: string;
       phone?: string;
+      cellphone?: string;
     };
     payer?: {
       email?: string;
       name?: string;
       phone?: string;
+      cellphone?: string;
     };
   };
   // Formato alternativo (payload direto)
@@ -61,6 +68,10 @@ interface HoopayWebhookPayload {
   buyer_name?: string;
   phone?: string;
   whatsapp?: string;
+  cellphone?: string;
+  mobile?: string;
+  telefone?: string;
+  celular?: string;
   product_id?: string;
   productId?: string;
   status?: string;
@@ -70,24 +81,73 @@ interface HoopayWebhookPayload {
     email?: string;
     name?: string;
     phone?: string;
+    cellphone?: string;
   };
   buyer?: {
     email?: string;
     name?: string;
     phone?: string;
+    cellphone?: string;
   };
   payer?: {
     email?: string;
     name?: string;
     phone?: string;
+    cellphone?: string;
   };
+}
+
+// Função para normalizar telefone (remove tudo que não é número)
+function normalizePhone(phone: string | undefined | null): string {
+  if (!phone) return "";
+  return phone.replace(/[^0-9]/g, "");
+}
+
+// Função para extrair telefone do payload (tenta múltiplos campos)
+function extractPhone(payload: HoopayWebhookPayload): string {
+  const data = payload.data || payload;
+  
+  // Lista de possíveis campos de telefone
+  const phoneCandidates = [
+    data.phone,
+    data.cellphone,
+    data.mobile,
+    data.whatsapp,
+    data.telefone,
+    data.celular,
+    data.customer?.phone,
+    data.customer?.cellphone,
+    data.buyer?.phone,
+    data.buyer?.cellphone,
+    data.payer?.phone,
+    data.payer?.cellphone,
+    payload.phone,
+    payload.cellphone,
+    payload.mobile,
+    payload.whatsapp,
+    payload.telefone,
+    payload.celular,
+    payload.customer?.phone,
+    payload.buyer?.phone,
+    payload.payer?.phone,
+  ];
+  
+  for (const phone of phoneCandidates) {
+    if (phone && typeof phone === 'string') {
+      const normalized = normalizePhone(phone);
+      if (normalized.length >= 10) { // Telefone brasileiro tem pelo menos 10 dígitos
+        return normalized;
+      }
+    }
+  }
+  
+  return "";
 }
 
 // Função para extrair email do payload (tenta múltiplos campos)
 function extractEmail(payload: HoopayWebhookPayload): string | null {
   const data = payload.data || payload;
   
-  // Lista de possíveis campos de email (ordenados por prioridade)
   const emailCandidates = [
     data.buyer_email,
     data.payer_email,
@@ -109,14 +169,14 @@ function extractEmail(payload: HoopayWebhookPayload): string | null {
     payload.payer?.email,
   ];
   
-  // Retorna o primeiro email válido encontrado
+  // Retorna o primeiro email válido (não @hoopay)
   for (const email of emailCandidates) {
     if (email && typeof email === 'string' && email.includes('@') && !email.includes('@hoopay')) {
       return email.toLowerCase().trim();
     }
   }
   
-  // Se não encontrou email válido, tenta qualquer email (inclusive @hoopay como fallback)
+  // Fallback: qualquer email
   for (const email of emailCandidates) {
     if (email && typeof email === 'string' && email.includes('@')) {
       return email.toLowerCase().trim();
@@ -143,7 +203,6 @@ function extractName(payload: HoopayWebhookPayload): string {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -157,44 +216,99 @@ serve(async (req: Request): Promise<Response> => {
     
     console.log("📥 Webhook Hoopay recebido:", JSON.stringify(payload, null, 2));
 
-    // Extrair dados do payload (suporta múltiplos formatos)
     const data = payload.data || payload;
     
-    // Log detalhado de todos os campos de email encontrados
-    console.log("📧 TODOS OS CAMPOS DE EMAIL ENCONTRADOS:", {
-      "data.email": data.email,
-      "data.customer_email": data.customer_email,
-      "data.buyer_email": data.buyer_email,
-      "data.payer_email": data.payer_email,
-      "data.user_email": data.user_email,
-      "data.client_email": data.client_email,
-      "data.customer?.email": data.customer?.email,
-      "data.buyer?.email": data.buyer?.email,
-      "data.payer?.email": data.payer?.email,
-      "payload.email": payload.email,
-      "payload.customer_email": payload.customer_email,
-      "payload.buyer_email": payload.buyer_email,
-    });
-    
-    const email = extractEmail(payload);
+    // Extrair dados
+    const phone = extractPhone(payload);
+    const emailFromPayload = extractEmail(payload);
     const name = extractName(payload);
-    const phone = data.phone || data.whatsapp || data.customer?.phone || data.buyer?.phone || "";
     const productId = data.product_id || data.productId;
     const status = data.status || payload.event;
     const amount = data.amount || data.value;
     
-    console.log(`📧 Email extraído: ${email} | Nome: ${name}`);
+    console.log("📱 TELEFONE EXTRAÍDO:", phone);
+    console.log("📧 EMAIL DO PAYLOAD:", emailFromPayload);
+    console.log("👤 NOME:", name);
 
-    // Validar campos obrigatórios
-    if (!email) {
-      console.error("❌ Email não encontrado no payload");
+    // NOVA LÓGICA: Buscar usuário pelo TELEFONE na tabela profiles
+    let userEmail = emailFromPayload;
+    let userId: string | null = null;
+
+    if (phone) {
+      console.log(`🔍 Buscando usuário pelo telefone normalizado: ${phone}`);
+      
+      // Buscar na tabela profiles pelo telefone
+      const { data: profileByPhone, error: phoneError } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .or(`phone.eq.${phone},phone.ilike.%${phone}%`)
+        .limit(1)
+        .maybeSingle();
+      
+      if (phoneError) {
+        console.log("⚠️ Erro ao buscar por telefone:", phoneError.message);
+      }
+      
+      if (profileByPhone) {
+        console.log(`✅ USUÁRIO ENCONTRADO PELO TELEFONE!`);
+        console.log(`   ID: ${profileByPhone.id}`);
+        console.log(`   Email: ${profileByPhone.email}`);
+        console.log(`   Nome: ${profileByPhone.full_name}`);
+        
+        userEmail = profileByPhone.email || userEmail;
+        userId = profileByPhone.id;
+      } else {
+        console.log("❌ Nenhum usuário encontrado com este telefone");
+        
+        // Fallback: tentar buscar removendo o DDD ou código do país
+        if (phone.length > 10) {
+          const phoneWithoutCountry = phone.slice(-11); // Últimos 11 dígitos (DDD + número)
+          const phoneWithoutDDD = phone.slice(-9); // Últimos 9 dígitos (só número)
+          
+          console.log(`🔍 Tentando variações: ${phoneWithoutCountry}, ${phoneWithoutDDD}`);
+          
+          const { data: profileAlt } = await supabase
+            .from("profiles")
+            .select("id, email, full_name")
+            .or(`phone.ilike.%${phoneWithoutCountry}%,phone.ilike.%${phoneWithoutDDD}%`)
+            .limit(1)
+            .maybeSingle();
+          
+          if (profileAlt) {
+            console.log(`✅ USUÁRIO ENCONTRADO COM VARIAÇÃO DO TELEFONE!`);
+            userEmail = profileAlt.email || userEmail;
+            userId = profileAlt.id;
+          }
+        }
+      }
+    }
+
+    // Se ainda não encontrou por telefone, tentar por email
+    if (!userId && userEmail && !userEmail.includes('@hoopay')) {
+      console.log(`🔍 Buscando usuário pelo email: ${userEmail}`);
+      
+      const { data: profileByEmail } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("email", userEmail)
+        .maybeSingle();
+      
+      if (profileByEmail) {
+        console.log(`✅ USUÁRIO ENCONTRADO PELO EMAIL!`);
+        userId = profileByEmail.id;
+      }
+    }
+
+    // Validar que temos pelo menos um identificador
+    if (!userEmail && !userId) {
+      console.error("❌ Não foi possível identificar o usuário (sem email nem telefone válido)");
       return new Response(
-        JSON.stringify({ error: "Email é obrigatório" }),
+        JSON.stringify({ error: "Não foi possível identificar o usuário" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verificar se é um evento de pagamento aprovado
+    // Verificar se é pagamento aprovado
     const isApproved = 
       status === "paid" || 
       status === "approved" || 
@@ -218,7 +332,6 @@ serve(async (req: Request): Promise<Response> => {
       planType = PLAN_CONFIG[productId].type;
       planDays = PLAN_CONFIG[productId].days;
     } else if (amount) {
-      // Fallback: determinar pelo valor
       if (amount >= 200) {
         planType = "anual";
         planDays = 365;
@@ -228,23 +341,36 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Calcular datas de início e fim
+    // Calcular datas
     const subscriptionStart = new Date();
     const subscriptionEnd = new Date();
     subscriptionEnd.setDate(subscriptionEnd.getDate() + planDays);
 
-    console.log(`✅ Ativando VIP para ${email} - Plano: ${planType} (${planDays} dias)`);
+    console.log(`✅ Ativando VIP - Email: ${userEmail} | UserID: ${userId} | Plano: ${planType}`);
 
-    // Verificar se já existe registro para este email
-    const { data: existingUser } = await supabase
-      .from("premium_users")
-      .select("id, subscription_end")
-      .eq("email", email)
-      .single();
+    // Verificar se já existe registro
+    let existingUser = null;
+    
+    if (userId) {
+      const { data } = await supabase
+        .from("premium_users")
+        .select("id, subscription_end")
+        .eq("user_id", userId)
+        .maybeSingle();
+      existingUser = data;
+    }
+    
+    if (!existingUser && userEmail) {
+      const { data } = await supabase
+        .from("premium_users")
+        .select("id, subscription_end")
+        .eq("email", userEmail)
+        .maybeSingle();
+      existingUser = data;
+    }
 
     if (existingUser) {
       // Atualizar assinatura existente
-      // Se ainda tem tempo, adicionar ao tempo restante
       let newEndDate = subscriptionEnd;
       if (existingUser.subscription_end) {
         const currentEnd = new Date(existingUser.subscription_end);
@@ -258,7 +384,9 @@ serve(async (req: Request): Promise<Response> => {
         .from("premium_users")
         .update({
           name,
-          whatsapp: phone || undefined, // Atualiza whatsapp se disponível
+          email: userEmail, // Garantir email correto
+          user_id: userId, // Garantir user_id correto
+          whatsapp: phone || undefined,
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -272,15 +400,16 @@ serve(async (req: Request): Promise<Response> => {
         throw updateError;
       }
 
-      console.log(`🔄 Assinatura atualizada - Nova data de fim: ${newEndDate.toISOString()}`);
+      console.log(`🔄 Assinatura atualizada - Fim: ${newEndDate.toISOString()}`);
     } else {
       // Criar novo registro
       const { error: insertError } = await supabase
         .from("premium_users")
         .insert({
-          email,
+          email: userEmail,
+          user_id: userId,
           name,
-          whatsapp: phone, // Campo whatsapp incluído
+          whatsapp: phone,
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -295,16 +424,15 @@ serve(async (req: Request): Promise<Response> => {
       console.log(`🆕 Novo usuário VIP criado - Fim: ${subscriptionEnd.toISOString()}`);
     }
 
-    // Log do webhook processado
+    // Log do webhook
     try {
       await supabase.from("webhook_logs").insert({
         webhook_type: "hoopay_payment",
-        payload: payload, // JSONB aceita objeto diretamente
+        payload: payload,
         processed: true,
-        email,
+        email: userEmail,
         plan_type: planType,
       });
-      console.log("📝 Log do webhook salvo");
     } catch (logErr) {
       console.log("⚠️ Não foi possível salvar log:", logErr);
     }
@@ -312,9 +440,10 @@ serve(async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `VIP ativado para ${email}`,
+        message: `VIP ativado para ${userEmail}`,
         plan: planType,
-        expires: subscriptionEnd.toISOString()
+        expires: subscriptionEnd.toISOString(),
+        identifiedBy: userId ? "phone" : "email"
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -2,11 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminVideoGenresModal } from './AdminVideoGenresModal';
 import { useGenres } from '@/hooks/useGenres';
+import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
+import { z } from 'zod';
+
+const videoSchema = z.object({
+  title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
+  description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres').max(500),
+  video_url: z.string().url('URL do vídeo inválida'),
+  thumbnail_url: z.string().url('URL da thumbnail inválida'),
+  genres: z.array(z.string()).min(1, 'Selecione pelo menos um gênero'),
+});
+
+interface Model {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
 
 export const AdminVideos = () => {
   const [filter, setFilter] = useState('all');
@@ -14,7 +35,22 @@ export const AdminVideos = () => {
   const [genreFilter, setGenreFilter] = useState('all');
   const [isTogglingAll, setIsTogglingAll] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
-  const { genres } = useGenres();
+  const { genres, loading: genresLoading } = useGenres();
+  
+  // Upload form state
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [models, setModels] = useState<Model[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    video_url: '',
+    thumbnail_url: '',
+    genres: [] as string[],
+    is_premium: false,
+    model_id: '',
+  });
+  
   const [videoStats, setVideoStats] = useState([
     { label: 'Total de Vídeos', value: '0', icon: Play, color: 'text-primary' },
     { label: 'Views Hoje', value: '0', icon: Eye, color: 'text-success' },
@@ -97,6 +133,94 @@ export const AdminVideos = () => {
     }
   };
 
+  const fetchModels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('models')
+        .select('id, name, avatar_url')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (!error && data) {
+        setModels(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar modelos:', error);
+    }
+  };
+
+  const handleToggleGenre = (genreName: string) => {
+    setFormData(prev => {
+      const currentGenres = prev.genres || [];
+      if (currentGenres.includes(genreName)) {
+        return { ...prev, genres: currentGenres.filter(g => g !== genreName) };
+      } else {
+        return { ...prev, genres: [...currentGenres, genreName] };
+      }
+    });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      video_url: '',
+      thumbnail_url: '',
+      genres: [],
+      is_premium: false,
+      model_id: '',
+    });
+    setShowUploadForm(false);
+  };
+
+  const handleSubmitVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploading(true);
+
+    try {
+      // Validar dados
+      const validatedData = videoSchema.parse(formData);
+
+      if (!formData.model_id) {
+        toast.error('Selecione uma modelo');
+        setUploading(false);
+        return;
+      }
+
+      // Inserir vídeo na tabela videos (usando model_id)
+      const { error: videoError } = await supabase
+        .from('videos')
+        .insert({
+          title: validatedData.title,
+          description: validatedData.description,
+          video_url: validatedData.video_url,
+          thumbnail_url: validatedData.thumbnail_url,
+          model_id: formData.model_id,
+          creator_id: null,
+          visibility: formData.is_premium ? 'premium' : 'public',
+          is_active: true,
+          duration: '00:00',
+          genres: validatedData.genres,
+        } as any);
+
+      if (videoError) throw videoError;
+
+      toast.success('Vídeo publicado para a modelo com sucesso! 🎉');
+      resetForm();
+      fetchVideoData();
+
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => toast.error(err.message));
+      } else {
+        console.error('Erro ao publicar vídeo:', error);
+        toast.error('Erro ao publicar vídeo. Tente novamente.');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const toggleAllModelVideos = async (activate: boolean) => {
     setIsTogglingAll(true);
     try {
@@ -137,6 +261,7 @@ export const AdminVideos = () => {
 
   useEffect(() => {
     fetchVideoData();
+    fetchModels();
     const interval = setInterval(fetchVideoData, 30000);
 
     // Realtime: atualiza imediatamente ao inserir/atualizar vídeos e registrar views
@@ -269,9 +394,12 @@ export const AdminVideos = () => {
                 ))}
               </select>
               
-              <Button className="bg-gradient-primary hover:shadow-glow text-primary-foreground">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Vídeo
+              <Button 
+                onClick={() => setShowUploadForm(!showUploadForm)}
+                className="bg-gradient-primary hover:shadow-glow text-primary-foreground"
+              >
+                {showUploadForm ? <X className="w-4 h-4 mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                {showUploadForm ? 'Fechar' : 'Upload Vídeo'}
               </Button>
             </div>
           </div>
@@ -302,6 +430,227 @@ export const AdminVideos = () => {
               </span>
             )}
           </div>
+
+          {/* Upload Form */}
+          {showUploadForm && (
+            <div className="bg-muted/30 border border-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Video className="w-5 h-5 text-primary" />
+                Publicar Vídeo para Modelo
+              </h3>
+              
+              <form onSubmit={handleSubmitVideo} className="space-y-4">
+                {/* Seletor de Modelo */}
+                <div>
+                  <Label className="text-foreground font-semibold mb-2 block">
+                    👤 Selecionar Modelo *
+                  </Label>
+                  <Select
+                    value={formData.model_id}
+                    onValueChange={(value) => setFormData({ ...formData, model_id: value })}
+                  >
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue placeholder="Escolha uma modelo..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border-border z-50">
+                      {models.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {models.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">Nenhuma modelo ativa encontrada</p>
+                  )}
+                </div>
+
+                {/* Título */}
+                <div>
+                  <Label className="text-foreground font-semibold mb-2 block">
+                    📝 Título do Vídeo *
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="Ex: Ensaio fotográfico verão 2025"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="bg-background border-border"
+                    required
+                  />
+                </div>
+
+                {/* Descrição */}
+                <div>
+                  <Label className="text-foreground font-semibold mb-2 block">
+                    📄 Descrição *
+                  </Label>
+                  <Textarea
+                    placeholder="Descreva o vídeo..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="bg-background border-border min-h-[80px]"
+                    required
+                  />
+                </div>
+
+                {/* Upload de Vídeo */}
+                <div>
+                  <Label className="text-foreground font-semibold mb-3 block">
+                    <Video className="w-4 h-4 inline mr-2" />
+                    Upload do Vídeo *
+                  </Label>
+                  <BunnyVideoUploader
+                    onUploadComplete={(videoUrl, thumbnailUrl) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        video_url: videoUrl,
+                        thumbnail_url: thumbnailUrl,
+                      }));
+                    }}
+                  />
+                </div>
+
+                {/* URLs Preenchidas (readonly) */}
+                {formData.video_url && (
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-green-500 text-sm font-medium">
+                      <Link className="w-4 h-4" />
+                      URLs preenchidas automaticamente
+                    </div>
+                    <div>
+                      <label className="text-muted-foreground text-xs block mb-1">URL do Vídeo:</label>
+                      <Input
+                        type="url"
+                        value={formData.video_url}
+                        readOnly
+                        className="bg-background border-border text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-muted-foreground text-xs block mb-1">URL da Thumbnail:</label>
+                      <Input
+                        type="url"
+                        value={formData.thumbnail_url}
+                        readOnly
+                        className="bg-background border-border text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Seleção de Gêneros */}
+                <div>
+                  <Label className="text-foreground font-semibold mb-2 block">
+                    <Film className="w-4 h-4 inline mr-2" />
+                    Gêneros do Vídeo *
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Selecione os gêneros que melhor descrevem o vídeo
+                  </p>
+                  {genresLoading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Carregando gêneros...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {genres
+                        .filter(genre => genre.name !== 'Todos')
+                        .map((genre) => {
+                          const isSelected = formData.genres.includes(genre.name);
+                          return (
+                            <button
+                              key={genre.id}
+                              type="button"
+                              onClick={() => handleToggleGenre(genre.name)}
+                              className={`
+                                flex items-center gap-2 p-2 rounded-lg transition-all duration-200 text-sm
+                                ${isSelected 
+                                  ? 'bg-primary/20 border-2 border-primary/50' 
+                                  : 'bg-muted border border-border hover:bg-muted/80'
+                                }
+                              `}
+                            >
+                              <div 
+                                className={`
+                                  w-4 h-4 rounded border-2 flex items-center justify-center transition-colors
+                                  ${isSelected 
+                                    ? 'bg-primary border-primary' 
+                                    : 'border-muted-foreground bg-transparent'
+                                  }
+                                `}
+                              >
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span className="text-lg">{genre.icon}</span>
+                              <span className={`${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                {genre.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+                  {formData.genres.length > 0 && (
+                    <p className="text-xs text-green-500 mt-2">
+                      ✓ {formData.genres.length} gênero(s) selecionado(s): {formData.genres.join(', ')}
+                    </p>
+                  )}
+                </div>
+
+                {/* Toggle Premium */}
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Crown className="w-5 h-5 text-yellow-500" />
+                      <div>
+                        <Label className="text-foreground font-semibold">Conteúdo Premium</Label>
+                        <p className="text-xs text-muted-foreground">Apenas assinantes VIP poderão ver este vídeo</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={formData.is_premium}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
+                    />
+                  </div>
+                </div>
+
+                {/* Botão Submit */}
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="submit"
+                    disabled={uploading || !formData.video_url || !formData.model_id}
+                    className="flex-1 bg-gradient-primary hover:shadow-glow text-primary-foreground"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Publicando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Publicar Vídeo para Modelo
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetForm}
+                    className="border-border"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
         </CardHeader>
         
         <CardContent>

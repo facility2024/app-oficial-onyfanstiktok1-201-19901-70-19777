@@ -25,7 +25,7 @@ export const SaleNotification = ({ show, onClose }: SaleNotificationProps) => {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] flex justify-center p-4">
-      <div className="animate-slide-in-top bg-gradient-to-r from-success via-primary to-accent p-[2px] rounded-lg shadow-2xl max-w-md w-full">
+      <div className="animate-slide-in-top bg-gradient-to-r from-[#7CB342] via-[#558B2F] to-[#C4842E] p-[2px] rounded-lg shadow-2xl max-w-md w-full">
         <div className="bg-background rounded-lg p-4 space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -86,7 +86,7 @@ export const SaleNotification = ({ show, onClose }: SaleNotificationProps) => {
 
           {/* Progress bar */}
           <div className="w-full bg-muted rounded-full h-1">
-            <div className="bg-gradient-to-r from-success to-primary h-1 rounded-full animate-progress-decrease"></div>
+            <div className="bg-gradient-to-r from-[#7CB342] to-[#C4842E] h-1 rounded-full animate-progress-decrease"></div>
           </div>
         </div>
       </div>

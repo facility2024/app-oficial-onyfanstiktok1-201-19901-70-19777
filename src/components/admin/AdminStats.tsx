@@ -112,8 +112,8 @@ export const AdminStats = () => {
       title: 'Total de Criadores',
       value: '0',
       icon: Crown,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10',
+      color: 'text-[#7CB342]',
+      bgColor: 'bg-[#7CB342]/10',
       shortTitle: 'Criadores',
       category: 'creators'
     },
@@ -121,8 +121,8 @@ export const AdminStats = () => {
       title: 'Vídeos de Criadores',
       value: '0',
       icon: Play,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-600/10',
+      color: 'text-[#558B2F]',
+      bgColor: 'bg-[#558B2F]/10',
       shortTitle: 'Vídeos',
       category: 'creators'
     },
@@ -130,8 +130,8 @@ export const AdminStats = () => {
       title: 'Engajamento Médio',
       value: '0',
       icon: TrendingUp,
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10',
+      color: 'text-[#C4842E]',
+      bgColor: 'bg-[#C4842E]/10',
       shortTitle: 'Engaj.',
       category: 'creators'
     }
@@ -313,7 +313,7 @@ export const AdminStats = () => {
 
       {/* Seção de Estatísticas de Criadores */}
       <div className="space-y-2">
-        <Badge className="bg-purple-500 text-white hover:bg-purple-600">
+        <Badge className="bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white hover:from-[#558B2F] hover:to-[#8B4513]">
           ✨ ESTATÍSTICAS DE CRIADORES
         </Badge>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">

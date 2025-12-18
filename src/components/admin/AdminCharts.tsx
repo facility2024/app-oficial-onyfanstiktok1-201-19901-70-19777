@@ -64,8 +64,8 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
       {
         label: 'Views',
         data: dailyViewsData,
-        borderColor: 'hsl(270 91% 65%)',
-        backgroundColor: 'hsl(270 91% 65% / 0.1)',
+        borderColor: '#7CB342',
+        backgroundColor: 'rgba(124, 179, 66, 0.1)',
         tension: 0.4,
         fill: true,
       },
@@ -80,10 +80,10 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
         label: 'Vendas (R$)',
         data: weeklySalesData,
         backgroundColor: [
-          'hsl(142 76% 36%)',
-          'hsl(142 69% 58%)',
-          'hsl(120 100% 25%)',
-          'hsl(142 76% 36%)',
+          '#7CB342',
+          '#558B2F',
+          '#C4842E',
+          '#8B4513',
         ],
         borderWidth: 0,
       },
@@ -107,12 +107,12 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
       {
         data: topStates.map(state => parseFloat(state.percentage)),
         backgroundColor: [
-          'hsl(142 76% 36%)',
-          'hsl(217 91% 60%)',
-          'hsl(45 93% 58%)',
-          'hsl(0 84% 60%)',
-          'hsl(270 91% 65%)',
-          'hsl(240 5% 65%)',
+          '#7CB342',
+          '#558B2F',
+          '#C4842E',
+          '#8B4513',
+          '#A0522D',
+          '#CD853F',
         ],
         borderWidth: 0,
       },
@@ -270,7 +270,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
                   </div>
                 </div>
                 
-                <Button size="sm" className="bg-gradient-primary hover:shadow-glow text-primary-foreground">
+                <Button size="sm" className="bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513] text-white">
                   <Activity className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Webhook</span>
                   <span className="sm:hidden">API</span>

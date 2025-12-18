@@ -329,9 +329,14 @@ export default function UserProfile() {
                       {displayProfile.full_name || 'Usuário'}
                     </h1>
                     {isPremium && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium">
-                        <Crown className="w-3 h-3" />
-                        VIP
+                      <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500/30 to-yellow-500/30 text-amber-400 rounded-full text-xs font-medium border border-amber-500/30">
+                        <Crown className="w-3.5 h-3.5" />
+                        <span>VIP</span>
+                        {getDaysRemaining() > 0 && (
+                          <span className="text-amber-300/80 ml-1">
+                            • {getDaysRemaining()} {getDaysRemaining() === 1 ? 'dia' : 'dias'}
+                          </span>
+                        )}
                       </div>
                     )}
                     {isCreator && (

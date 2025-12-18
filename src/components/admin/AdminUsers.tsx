@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserPlus, Activity, MapPin, Trash2, Crown } from 'lucide-react';
+import { Users, UserPlus, Activity, MapPin, Trash2, Crown, Edit, RefreshCw, XCircle, Filter, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
@@ -15,8 +15,12 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
-import { format } from 'date-fns';
+import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 interface PremiumUser {
   id: string;
@@ -43,6 +47,21 @@ export const AdminUsers = () => {
   const [models, setModels] = useState([]);
   const [currentModelsPage, setCurrentModelsPage] = useState(1);
   const usersPerPage = 20;
+
+  // Filtros VIP
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [planFilter, setPlanFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Modal de edição
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<PremiumUser | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    whatsapp: '',
+    subscription_status: '',
+    subscription_end: ''
+  });
 
   const formatNumber = (num) => {
     if (num >= 1000000) {
@@ -186,6 +205,114 @@ export const AdminUsers = () => {
     }
   };
 
+  // Funções de ação VIP
+  const handleEditUser = (user: PremiumUser) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name || '',
+      whatsapp: user.whatsapp || '',
+      subscription_status: user.subscription_status || 'active',
+      subscription_end: user.subscription_end ? user.subscription_end.split('T')[0] : ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from('premium_users')
+        .update({
+          name: editForm.name,
+          whatsapp: editForm.whatsapp,
+          subscription_status: editForm.subscription_status,
+          subscription_end: editForm.subscription_end || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingUser.id);
+
+      if (error) throw error;
+
+      setPremiumUsers(prev => prev.map(u => 
+        u.id === editingUser.id 
+          ? { ...u, name: editForm.name, whatsapp: editForm.whatsapp, subscription_status: editForm.subscription_status, subscription_end: editForm.subscription_end }
+          : u
+      ));
+      
+      toast.success('Usuário atualizado com sucesso!');
+      setEditModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      toast.error('Erro ao atualizar usuário');
+    }
+  };
+
+  const handleRenewSubscription = async (user: PremiumUser) => {
+    const daysToAdd = user.subscription_type === 'monthly' ? 30 : user.subscription_type === 'quarterly' ? 90 : 365;
+    const baseDate = user.subscription_end ? new Date(user.subscription_end) : new Date();
+    const newEndDate = addDays(baseDate, daysToAdd);
+    
+    try {
+      const { error } = await supabase
+        .from('premium_users')
+        .update({
+          subscription_status: 'active',
+          subscription_end: newEndDate.toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setPremiumUsers(prev => prev.map(u => 
+        u.id === user.id 
+          ? { ...u, subscription_status: 'active', subscription_end: newEndDate.toISOString() }
+          : u
+      ));
+      
+      toast.success(`Assinatura renovada por mais ${daysToAdd} dias!`);
+    } catch (error) {
+      console.error('Erro ao renovar assinatura:', error);
+      toast.error('Erro ao renovar assinatura');
+    }
+  };
+
+  const handleCancelSubscription = async (user: PremiumUser) => {
+    if (!confirm(`Cancelar assinatura de ${user.name || user.email}?`)) return;
+    
+    try {
+      const { error } = await supabase
+        .from('premium_users')
+        .update({
+          subscription_status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setPremiumUsers(prev => prev.map(u => 
+        u.id === user.id ? { ...u, subscription_status: 'cancelled' } : u
+      ));
+      
+      toast.success('Assinatura cancelada');
+    } catch (error) {
+      console.error('Erro ao cancelar assinatura:', error);
+      toast.error('Erro ao cancelar assinatura');
+    }
+  };
+
+  // Filtrar usuários Premium
+  const filteredPremiumUsers = premiumUsers.filter(user => {
+    const matchesStatus = statusFilter === 'all' || user.subscription_status === statusFilter;
+    const matchesPlan = planFilter === 'all' || user.subscription_type === planFilter;
+    const matchesSearch = !searchQuery || 
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesPlan && matchesSearch;
+  });
+
   // Função para calcular paginação
   const getPaginatedData = (data, page) => {
     const startIndex = (page - 1) * usersPerPage;
@@ -212,7 +339,7 @@ export const AdminUsers = () => {
             />
           </PaginationItem>
           
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((page) => (
             <PaginationItem key={page}>
               <PaginationLink
                 onClick={() => setCurrentPage(page)}
@@ -262,10 +389,49 @@ export const AdminUsers = () => {
       {/* Usuários Premium VIP */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Crown className="w-5 h-5 text-warning" />
-            <span>Usuários Premium VIP ({premiumUsers.length})</span>
-          </CardTitle>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <CardTitle className="flex items-center space-x-2">
+              <Crown className="w-5 h-5 text-warning" />
+              <span>Usuários Premium VIP ({filteredPremiumUsers.length})</span>
+            </CardTitle>
+            
+            {/* Filtros */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 w-40 h-8 text-sm"
+                />
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32 h-8 text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Ativos</SelectItem>
+                  <SelectItem value="expired">Expirados</SelectItem>
+                  <SelectItem value="cancelled">Cancelados</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={planFilter} onValueChange={setPlanFilter}>
+                <SelectTrigger className="w-32 h-8 text-sm">
+                  <SelectValue placeholder="Plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="quarterly">Trimestral</SelectItem>
+                  <SelectItem value="annual">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -278,10 +444,11 @@ export const AdminUsers = () => {
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Plano</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">Expira em</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {getPaginatedData(premiumUsers, currentPage).length > 0 ? getPaginatedData(premiumUsers, currentPage).map((user: PremiumUser) => (
+                {getPaginatedData(filteredPremiumUsers, currentPage).length > 0 ? getPaginatedData(filteredPremiumUsers, currentPage).map((user: PremiumUser) => (
                   <tr key={user.id} className="border-b border-border/50 hover:bg-card-hover transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3">
@@ -329,20 +496,108 @@ export const AdminUsers = () => {
                           : '-'}
                       </span>
                     </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => handleEditUser(user)}
+                          title="Editar"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-success hover:text-success"
+                          onClick={() => handleRenewSubscription(user)}
+                          title="Renovar"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => handleCancelSubscription(user)}
+                          title="Cancelar"
+                          disabled={user.subscription_status === 'cancelled'}
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                      Nenhum usuário VIP cadastrado ainda
+                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                      Nenhum usuário VIP encontrado
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-          {renderPagination(premiumUsers.length, currentPage, setCurrentPage)}
+          {renderPagination(filteredPremiumUsers.length, currentPage, setCurrentPage)}
         </CardContent>
       </Card>
+
+      {/* Modal de Edição */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário VIP</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nome</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-whatsapp">WhatsApp</Label>
+              <Input
+                id="edit-whatsapp"
+                value={editForm.whatsapp}
+                onChange={(e) => setEditForm({ ...editForm, whatsapp: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select
+                value={editForm.subscription_status}
+                onValueChange={(value) => setEditForm({ ...editForm, subscription_status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="expired">Expirado</SelectItem>
+                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-end">Data de Expiração</Label>
+              <Input
+                id="edit-end"
+                type="date"
+                value={editForm.subscription_end}
+                onChange={(e) => setEditForm({ ...editForm, subscription_end: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Tabela de Modelos Cadastrados */}
       <Card className="bg-gradient-card border-border/50">

@@ -152,7 +152,19 @@ export const CategoryMenu = ({
   ];
 
   // Adicionar "Seja VIP" apenas se NÃO for premium
-  if (!isPremium) {
+  // Adicionar opção VIP baseado no status premium
+  if (isPremium) {
+    baseMenuItems.push({
+      id: "vip-management",
+      name: "Minha Assinatura VIP",
+      icon: <Crown className="w-5 h-5 text-amber-400" />,
+      onClick: () => {
+        console.log('👑 Navegando para Gestão VIP');
+        setOpen(false);
+        setTimeout(() => navigate('/vip-management'), 100);
+      }
+    });
+  } else {
     baseMenuItems.push({
       id: "subscribe",
       name: "Seja VIP",

@@ -12,6 +12,7 @@ import { MarketplaceCarousel } from "./MarketplaceCarousel";
 import { LocalBusinessCarousel } from "./LocalBusinessCarousel";
 import { GenreSelector } from "./GenreSelector";
 import { useCreatorRole } from '@/hooks/useUserRoles';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -47,9 +48,10 @@ export const CategoryMenu = ({
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const navigate = useNavigate();
   const { isCreator, loading: creatorLoading } = useCreatorRole();
+  const { isPremium } = usePremiumStatus();
   
   // Debug log para verificar o estado do creator
-  console.log('🔐 CategoryMenu useCreatorRole:', { isCreator, creatorLoading });
+  console.log('🔐 CategoryMenu useCreatorRole:', { isCreator, creatorLoading, isPremium });
 
   const handleLogout = async () => {
     try {
@@ -118,13 +120,13 @@ export const CategoryMenu = ({
       }
     },
     {
-      id: "subscribe",
-      name: "Seja VIP",
-      icon: <Crown className="w-5 h-5 text-amber-400" />,
+      id: "following-creators",
+      name: "Criadores Seguidos",
+      icon: <Sparkles className="w-5 h-5" />,
       onClick: () => {
-        console.log('👑 Navegando para Assinatura VIP');
+        console.log('✨ Navegando para Criadores Seguidos');
         setOpen(false);
-        setTimeout(() => navigate('/subscribe'), 100);
+        setTimeout(() => navigate('/following-creators'), 100);
       }
     },
     {
@@ -148,6 +150,20 @@ export const CategoryMenu = ({
       }
     }
   ];
+
+  // Adicionar "Seja VIP" apenas se NÃO for premium
+  if (!isPremium) {
+    baseMenuItems.push({
+      id: "subscribe",
+      name: "Seja VIP",
+      icon: <Crown className="w-5 h-5 text-amber-400" />,
+      onClick: () => {
+        console.log('👑 Navegando para Assinatura VIP');
+        setOpen(false);
+        setTimeout(() => navigate('/subscribe'), 100);
+      }
+    });
+  }
 
   // Adicionar "Sou Criador" apenas se isCreator === true E não está carregando
   if (isCreator === true && creatorLoading === false) {

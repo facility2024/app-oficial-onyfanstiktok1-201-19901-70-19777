@@ -32,6 +32,12 @@ interface HoopayWebhookPayload {
     mobile?: string;
     telefone?: string;
     celular?: string;
+    // Campos de CPF
+    cpf?: string;
+    customer_cpf?: string;
+    buyer_cpf?: string;
+    document?: string;
+    documento?: string;
     product_id?: string;
     productId?: string;
     amount?: number;
@@ -42,18 +48,24 @@ interface HoopayWebhookPayload {
       name?: string;
       phone?: string;
       cellphone?: string;
+      cpf?: string;
+      document?: string;
     };
     buyer?: {
       email?: string;
       name?: string;
       phone?: string;
       cellphone?: string;
+      cpf?: string;
+      document?: string;
     };
     payer?: {
       email?: string;
       name?: string;
       phone?: string;
       cellphone?: string;
+      cpf?: string;
+      document?: string;
     };
   };
   // Formato alternativo (payload direto)
@@ -72,6 +84,12 @@ interface HoopayWebhookPayload {
   mobile?: string;
   telefone?: string;
   celular?: string;
+  // Campos de CPF direto
+  cpf?: string;
+  customer_cpf?: string;
+  buyer_cpf?: string;
+  document?: string;
+  documento?: string;
   product_id?: string;
   productId?: string;
   status?: string;
@@ -82,18 +100,24 @@ interface HoopayWebhookPayload {
     name?: string;
     phone?: string;
     cellphone?: string;
+    cpf?: string;
+    document?: string;
   };
   buyer?: {
     email?: string;
     name?: string;
     phone?: string;
     cellphone?: string;
+    cpf?: string;
+    document?: string;
   };
   payer?: {
     email?: string;
     name?: string;
     phone?: string;
     cellphone?: string;
+    cpf?: string;
+    document?: string;
   };
 }
 
@@ -202,6 +226,45 @@ function extractName(payload: HoopayWebhookPayload): string {
          "Assinante VIP";
 }
 
+// Função para extrair CPF do payload
+function extractCPF(payload: HoopayWebhookPayload): string {
+  const data = payload.data || payload;
+  
+  const cpfCandidates = [
+    data.cpf,
+    data.customer_cpf,
+    data.buyer_cpf,
+    data.document,
+    data.documento,
+    data.customer?.cpf,
+    data.customer?.document,
+    data.buyer?.cpf,
+    data.buyer?.document,
+    data.payer?.cpf,
+    data.payer?.document,
+    payload.cpf,
+    payload.customer_cpf,
+    payload.buyer_cpf,
+    payload.document,
+    payload.documento,
+    payload.customer?.cpf,
+    payload.buyer?.cpf,
+    payload.payer?.cpf,
+  ];
+  
+  for (const cpf of cpfCandidates) {
+    if (cpf && typeof cpf === 'string') {
+      // Normalizar CPF (remover pontos e traços)
+      const normalized = cpf.replace(/[^0-9]/g, "");
+      if (normalized.length === 11) {
+        return normalized;
+      }
+    }
+  }
+  
+  return "";
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -222,20 +285,50 @@ serve(async (req: Request): Promise<Response> => {
     const phone = extractPhone(payload);
     const emailFromPayload = extractEmail(payload);
     const name = extractName(payload);
+    const cpf = extractCPF(payload);
     const productId = data.product_id || data.productId;
     const status = data.status || payload.event;
     const amount = data.amount || data.value;
     
+    console.log("📧 EMAIL EXTRAÍDO:", emailFromPayload);
     console.log("📱 TELEFONE EXTRAÍDO:", phone);
-    console.log("📧 EMAIL DO PAYLOAD:", emailFromPayload);
+    console.log("🆔 CPF EXTRAÍDO:", cpf);
     console.log("👤 NOME:", name);
 
-    // NOVA LÓGICA: Buscar usuário pelo TELEFONE na tabela profiles
+    // NOVA LÓGICA: PRIORIZAR EMAIL sobre telefone (mais confiável)
     let userEmail = emailFromPayload;
     let userId: string | null = null;
 
-    if (phone) {
-      console.log(`🔍 Buscando usuário pelo telefone normalizado: ${phone}`);
+    // 1️⃣ PRIMEIRO: Buscar por EMAIL (prioridade máxima)
+    if (emailFromPayload && !emailFromPayload.includes('@hoopay')) {
+      console.log(`🔍 [PRIORIDADE 1] Buscando usuário pelo EMAIL: ${emailFromPayload}`);
+      
+      const { data: profileByEmail, error: emailError } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("email", emailFromPayload.toLowerCase())
+        .maybeSingle();
+      
+      if (emailError) {
+        console.log("⚠️ Erro ao buscar por email:", emailError.message);
+      }
+      
+      if (profileByEmail) {
+        console.log(`✅ USUÁRIO ENCONTRADO PELO EMAIL!`);
+        console.log(`   ID: ${profileByEmail.id}`);
+        console.log(`   Email: ${profileByEmail.email}`);
+        console.log(`   Nome: ${profileByEmail.full_name}`);
+        
+        userEmail = profileByEmail.email || emailFromPayload;
+        userId = profileByEmail.id;
+      } else {
+        console.log("❌ Nenhum usuário encontrado com este email no profiles");
+      }
+    }
+
+    // 2️⃣ SEGUNDO: Se não encontrou por email, buscar por TELEFONE
+    if (!userId && phone) {
+      console.log(`🔍 [PRIORIDADE 2] Buscando usuário pelo TELEFONE: ${phone}`);
       
       // Buscar na tabela profiles pelo telefone
       const { data: profileByPhone, error: phoneError } = await supabase
@@ -280,22 +373,6 @@ serve(async (req: Request): Promise<Response> => {
             userId = profileAlt.id;
           }
         }
-      }
-    }
-
-    // Se ainda não encontrou por telefone, tentar por email
-    if (!userId && userEmail && !userEmail.includes('@hoopay')) {
-      console.log(`🔍 Buscando usuário pelo email: ${userEmail}`);
-      
-      const { data: profileByEmail } = await supabase
-        .from("profiles")
-        .select("id, email, full_name")
-        .eq("email", userEmail)
-        .maybeSingle();
-      
-      if (profileByEmail) {
-        console.log(`✅ USUÁRIO ENCONTRADO PELO EMAIL!`);
-        userId = profileByEmail.id;
       }
     }
 

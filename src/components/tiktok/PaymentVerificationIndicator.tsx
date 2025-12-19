@@ -1,8 +1,65 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle2, Crown, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// Função para criar som de celebração usando Web Audio API
+const playCelebrationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Criar múltiplos "pops" de confete
+    const playPop = (delay: number, frequency: number) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + delay);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.5, audioContext.currentTime + delay + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + delay);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + delay + 0.15);
+      
+      oscillator.start(audioContext.currentTime + delay);
+      oscillator.stop(audioContext.currentTime + delay + 0.15);
+    };
+
+    // Sequência de "pops" de confete
+    const frequencies = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; // C5, E5, G5, C6, E6, G6
+    frequencies.forEach((freq, i) => {
+      playPop(i * 0.08, freq);
+    });
+
+    // Som de "fanfarra" final
+    setTimeout(() => {
+      const fanfare = audioContext.createOscillator();
+      const fanfareGain = audioContext.createGain();
+      
+      fanfare.connect(fanfareGain);
+      fanfareGain.connect(audioContext.destination);
+      
+      fanfare.type = 'triangle';
+      fanfare.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+      fanfare.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.15); // E5
+      fanfare.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.3); // G5
+      fanfare.frequency.setValueAtTime(1046.50, audioContext.currentTime + 0.45); // C6
+      
+      fanfareGain.gain.setValueAtTime(0.4, audioContext.currentTime);
+      fanfareGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+      
+      fanfare.start(audioContext.currentTime);
+      fanfare.stop(audioContext.currentTime + 0.8);
+    }, 500);
+
+    console.log('🎉 Som de celebração tocado!');
+  } catch (error) {
+    console.error('Erro ao tocar som de celebração:', error);
+  }
+};
 
 interface PaymentVerificationIndicatorProps {
   userEmail?: string;
@@ -18,6 +75,7 @@ export const PaymentVerificationIndicator = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVIPActivated, setIsVIPActivated] = useState(false);
   const { toast } = useToast();
+  const soundPlayedRef = useRef(false);
 
   // Verificar se veio da página de assinatura
   useEffect(() => {
@@ -96,6 +154,12 @@ export const PaymentVerificationIndicator = ({
 
   const handleVIPActivation = useCallback((vipData: any) => {
     console.log('🎉 VIP ATIVADO!', vipData);
+    
+    // Evitar tocar som múltiplas vezes
+    if (!soundPlayedRef.current) {
+      soundPlayedRef.current = true;
+      playCelebrationSound();
+    }
     
     // Atualizar estados
     setIsVerifying(false);

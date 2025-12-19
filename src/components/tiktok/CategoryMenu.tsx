@@ -5,7 +5,7 @@ import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
 import { useNavigate } from "react-router-dom";
-import { FeaturedSection } from "./FeaturedSection";
+
 import { AdCarousel } from "./AdCarousel";
 import { ModelCarousel } from "./ModelCarousel";
 import { MarketplaceCarousel } from "./MarketplaceCarousel";
@@ -243,8 +243,6 @@ export const CategoryMenu = ({
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-6">
           {/* Seções de Destaque, Patrocinado e Modelos */}
           <div className="py-4 space-y-4 px-4">
-            {/* Destaque */}
-            <FeaturedSection />
             
             {/* Patrocinado */}
             <AdCarousel />

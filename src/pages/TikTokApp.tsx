@@ -27,7 +27,7 @@ import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { FeaturedSection } from '@/components/tiktok/FeaturedSection';
+
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
@@ -2952,7 +2952,7 @@ export const TikTokApp = () => {
             <div className="hidden xl:block w-72 2xl:w-80">
               <ScrollArea className="h-screen pb-20">
                 <div className="space-y-4 pr-2">
-                  <FeaturedSection />
+                  
                   <AdCarousel />
                   <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
                   goToModelVideo(modelId);

@@ -161,11 +161,13 @@ const SubscribePage = () => {
       }
       
       window.open(plan.paymentUrl, '_blank');
-      toast.success('Use o MESMO telefone no pagamento!', {
-        description: `Telefone cadastrado: ${formatPhone(currentPhone)}`,
+      toast.success('Pagamento aberto em nova aba!', {
+        description: 'Após pagar, seu VIP será ativado automaticamente. Volte aqui para verificar!',
         duration: 8000
       });
-      return;
+      
+      // Redirecionar para a página inicial para verificar status VIP
+      navigate('/');
     }
     
     toast.info('Sistema de pagamento em breve!');

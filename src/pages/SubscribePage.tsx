@@ -160,9 +160,12 @@ const SubscribePage = () => {
         await savePhoneToProfile();
       }
       
+      // Marcar que está verificando pagamento
+      sessionStorage.setItem('checking_payment', 'true');
+      
       window.open(plan.paymentUrl, '_blank');
       toast.success('Pagamento aberto em nova aba!', {
-        description: 'Após pagar, seu VIP será ativado automaticamente. Volte aqui para verificar!',
+        description: 'Você será notificado automaticamente quando seu VIP for ativado!',
         duration: 8000
       });
       

@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ========================================
+// HOOPAY WEBHOOK - V2.0 - 2025-01-19
+// Forçar redeploy com logs melhorados
+// ========================================
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -51,12 +56,23 @@ function normalizePhone(phone: string | undefined | null): string {
 }
 
 serve(async (req: Request): Promise<Response> => {
+  console.log("🚀 ========================================");
+  console.log("🚀 HOOPAY WEBHOOK V2.0 - INICIANDO");
+  console.log("🚀 Timestamp:", new Date().toISOString());
+  console.log("🚀 ========================================");
+
   if (req.method === "OPTIONS") {
+    console.log("👋 CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  
+  console.log("🔧 Conectando ao Supabase...");
+  console.log("🔧 URL:", supabaseUrl ? "✅ Configurada" : "❌ NÃO CONFIGURADA");
+  console.log("🔧 Service Key:", supabaseServiceKey ? "✅ Configurada" : "❌ NÃO CONFIGURADA");
+  
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   let payload: HoopayPayload | null = null;
@@ -65,7 +81,10 @@ serve(async (req: Request): Promise<Response> => {
   try {
     // Parse do payload
     const rawBody = await req.text();
-    console.log("📥 RAW BODY recebido:", rawBody);
+    console.log("📥 ========================================");
+    console.log("📥 RAW BODY recebido:");
+    console.log(rawBody);
+    console.log("📥 ========================================");
     
     try {
       payload = JSON.parse(rawBody);
@@ -335,7 +354,12 @@ serve(async (req: Request): Promise<Response> => {
       }).eq("id", logId);
     }
 
+    console.log("✅ ========================================");
     console.log(`✅ VIP ATIVADO COM SUCESSO para ${email}!`);
+    console.log(`✅ Plano: ${planType} (${planDays} dias)`);
+    console.log(`✅ Expira em: ${subscriptionEnd.toISOString()}`);
+    console.log(`✅ UserID: ${userId || "não encontrado no profiles"}`);
+    console.log("✅ ========================================");
 
     return new Response(
       JSON.stringify({ 
@@ -344,7 +368,8 @@ serve(async (req: Request): Promise<Response> => {
         plan: planType,
         days: planDays,
         expires: subscriptionEnd.toISOString(),
-        userId: userId || "não encontrado no profiles"
+        userId: userId || "não encontrado no profiles",
+        version: "2.0"
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

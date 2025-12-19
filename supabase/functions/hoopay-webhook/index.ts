@@ -13,256 +13,148 @@ const PLAN_CONFIG: Record<string, { type: string; days: number }> = {
   "61207e4a-9455-4cb8-8207-9002a87c5fe6": { type: "anual", days: 365 },
 };
 
-interface HoopayWebhookPayload {
-  event?: string;
-  type?: string;
-  data?: {
-    email?: string;
-    customer_email?: string;
-    buyer_email?: string;
-    payer_email?: string;
-    user_email?: string;
-    client_email?: string;
-    name?: string;
-    customer_name?: string;
-    buyer_name?: string;
-    phone?: string;
-    whatsapp?: string;
-    cellphone?: string;
-    mobile?: string;
-    telefone?: string;
-    celular?: string;
-    // Campos de CPF
-    cpf?: string;
-    customer_cpf?: string;
-    buyer_cpf?: string;
-    document?: string;
-    documento?: string;
-    product_id?: string;
-    productId?: string;
-    amount?: number;
-    value?: number;
-    status?: string;
-    customer?: {
-      email?: string;
-      name?: string;
-      phone?: string;
-      cellphone?: string;
-      cpf?: string;
-      document?: string;
-    };
-    buyer?: {
-      email?: string;
-      name?: string;
-      phone?: string;
-      cellphone?: string;
-      cpf?: string;
-      document?: string;
-    };
-    payer?: {
-      email?: string;
-      name?: string;
-      phone?: string;
-      cellphone?: string;
-      cpf?: string;
-      document?: string;
-    };
-  };
-  // Formato alternativo (payload direto)
-  email?: string;
-  customer_email?: string;
-  buyer_email?: string;
-  payer_email?: string;
-  user_email?: string;
-  client_email?: string;
-  name?: string;
-  customer_name?: string;
-  buyer_name?: string;
-  phone?: string;
-  whatsapp?: string;
-  cellphone?: string;
-  mobile?: string;
-  telefone?: string;
-  celular?: string;
-  // Campos de CPF direto
-  cpf?: string;
-  customer_cpf?: string;
-  buyer_cpf?: string;
-  document?: string;
-  documento?: string;
-  product_id?: string;
-  productId?: string;
-  status?: string;
-  amount?: number;
-  value?: number;
-  customer?: {
-    email?: string;
-    name?: string;
-    phone?: string;
-    cellphone?: string;
-    cpf?: string;
-    document?: string;
-  };
-  buyer?: {
-    email?: string;
-    name?: string;
-    phone?: string;
-    cellphone?: string;
-    cpf?: string;
-    document?: string;
-  };
-  payer?: {
-    email?: string;
-    name?: string;
-    phone?: string;
-    cellphone?: string;
-    cpf?: string;
-    document?: string;
-  };
-}
-
 // Função para normalizar telefone (remove tudo que não é número)
 function normalizePhone(phone: string | undefined | null): string {
   if (!phone) return "";
   return phone.replace(/[^0-9]/g, "");
 }
 
-// Função para extrair telefone do payload (tenta múltiplos campos)
-function extractPhone(payload: HoopayWebhookPayload): string {
-  const data = payload.data || payload;
+// Função genérica para buscar campo recursivamente
+function findField(obj: any, fieldNames: string[]): any {
+  if (!obj || typeof obj !== 'object') return null;
   
-  // Lista de possíveis campos de telefone
-  const phoneCandidates = [
-    data.phone,
-    data.cellphone,
-    data.mobile,
-    data.whatsapp,
-    data.telefone,
-    data.celular,
-    data.customer?.phone,
-    data.customer?.cellphone,
-    data.buyer?.phone,
-    data.buyer?.cellphone,
-    data.payer?.phone,
-    data.payer?.cellphone,
-    payload.phone,
-    payload.cellphone,
-    payload.mobile,
-    payload.whatsapp,
-    payload.telefone,
-    payload.celular,
-    payload.customer?.phone,
-    payload.buyer?.phone,
-    payload.payer?.phone,
-  ];
+  for (const fieldName of fieldNames) {
+    // Busca direta
+    if (obj[fieldName] !== undefined && obj[fieldName] !== null && obj[fieldName] !== '') {
+      return obj[fieldName];
+    }
+  }
   
-  for (const phone of phoneCandidates) {
-    if (phone && typeof phone === 'string') {
-      const normalized = normalizePhone(phone);
-      if (normalized.length >= 10) { // Telefone brasileiro tem pelo menos 10 dígitos
-        return normalized;
+  // Busca em objetos aninhados comuns
+  const nestedObjects = ['data', 'customer', 'buyer', 'payer', 'client', 'user', 'sale', 'transaction', 'payment'];
+  for (const nested of nestedObjects) {
+    if (obj[nested] && typeof obj[nested] === 'object') {
+      for (const fieldName of fieldNames) {
+        if (obj[nested][fieldName] !== undefined && obj[nested][fieldName] !== null && obj[nested][fieldName] !== '') {
+          return obj[nested][fieldName];
+        }
       }
-    }
-  }
-  
-  return "";
-}
-
-// Função para extrair email do payload (tenta múltiplos campos)
-function extractEmail(payload: HoopayWebhookPayload): string | null {
-  const data = payload.data || payload;
-  
-  const emailCandidates = [
-    data.buyer_email,
-    data.payer_email,
-    data.customer_email,
-    data.user_email,
-    data.client_email,
-    data.email,
-    data.customer?.email,
-    data.buyer?.email,
-    data.payer?.email,
-    payload.buyer_email,
-    payload.payer_email,
-    payload.customer_email,
-    payload.user_email,
-    payload.client_email,
-    payload.email,
-    payload.customer?.email,
-    payload.buyer?.email,
-    payload.payer?.email,
-  ];
-  
-  // Retorna o primeiro email válido (não @hoopay)
-  for (const email of emailCandidates) {
-    if (email && typeof email === 'string' && email.includes('@') && !email.includes('@hoopay')) {
-      return email.toLowerCase().trim();
-    }
-  }
-  
-  // Fallback: qualquer email
-  for (const email of emailCandidates) {
-    if (email && typeof email === 'string' && email.includes('@')) {
-      return email.toLowerCase().trim();
     }
   }
   
   return null;
 }
 
-// Função para extrair nome do payload
-function extractName(payload: HoopayWebhookPayload): string {
-  const data = payload.data || payload;
-  
-  return data.buyer_name || 
-         data.customer_name || 
-         data.name || 
-         data.customer?.name || 
-         data.buyer?.name || 
-         data.payer?.name || 
-         payload.buyer_name || 
-         payload.customer_name || 
-         payload.name || 
-         "Assinante VIP";
-}
-
-// Função para extrair CPF do payload
-function extractCPF(payload: HoopayWebhookPayload): string {
-  const data = payload.data || payload;
-  
-  const cpfCandidates = [
-    data.cpf,
-    data.customer_cpf,
-    data.buyer_cpf,
-    data.document,
-    data.documento,
-    data.customer?.cpf,
-    data.customer?.document,
-    data.buyer?.cpf,
-    data.buyer?.document,
-    data.payer?.cpf,
-    data.payer?.document,
-    payload.cpf,
-    payload.customer_cpf,
-    payload.buyer_cpf,
-    payload.document,
-    payload.documento,
-    payload.customer?.cpf,
-    payload.buyer?.cpf,
-    payload.payer?.cpf,
+// Função para extrair email do payload (tenta múltiplos campos)
+function extractEmail(payload: any): string | null {
+  const emailFields = [
+    'email', 'buyer_email', 'payer_email', 'customer_email', 'user_email', 
+    'client_email', 'Email', 'EMAIL', 'e-mail', 'mail'
   ];
   
-  for (const cpf of cpfCandidates) {
-    if (cpf && typeof cpf === 'string') {
-      // Normalizar CPF (remover pontos e traços)
-      const normalized = cpf.replace(/[^0-9]/g, "");
-      if (normalized.length === 11) {
-        return normalized;
-      }
+  const email = findField(payload, emailFields);
+  
+  if (email && typeof email === 'string' && email.includes('@') && !email.includes('@hoopay')) {
+    return email.toLowerCase().trim();
+  }
+  
+  // Fallback: qualquer email
+  if (email && typeof email === 'string' && email.includes('@')) {
+    return email.toLowerCase().trim();
+  }
+  
+  return null;
+}
+
+// Função para extrair telefone do payload (tenta múltiplos campos)
+function extractPhone(payload: any): string {
+  const phoneFields = [
+    'phone', 'cellphone', 'mobile', 'whatsapp', 'telefone', 'celular',
+    'Phone', 'Cellphone', 'Mobile', 'Whatsapp', 'Telefone', 'Celular',
+    'fone', 'tel', 'numero', 'number'
+  ];
+  
+  const phone = findField(payload, phoneFields);
+  
+  if (phone) {
+    const normalized = normalizePhone(String(phone));
+    if (normalized.length >= 10) {
+      return normalized;
     }
   }
   
   return "";
+}
+
+// Função para extrair nome do payload
+function extractName(payload: any): string {
+  const nameFields = [
+    'name', 'buyer_name', 'customer_name', 'full_name', 'fullName',
+    'Name', 'NOME', 'nome', 'Nome', 'razao_social', 'razaoSocial'
+  ];
+  
+  const name = findField(payload, nameFields);
+  return name ? String(name) : "Assinante VIP";
+}
+
+// Função para extrair CPF do payload
+function extractCPF(payload: any): string {
+  const cpfFields = [
+    'cpf', 'customer_cpf', 'buyer_cpf', 'document', 'documento',
+    'CPF', 'Cpf', 'doc', 'Doc', 'cpf_cnpj', 'tax_id', 'taxId'
+  ];
+  
+  const cpf = findField(payload, cpfFields);
+  
+  if (cpf) {
+    const normalized = String(cpf).replace(/[^0-9]/g, "");
+    if (normalized.length === 11) {
+      return normalized;
+    }
+  }
+  
+  return "";
+}
+
+// Função para extrair status do pagamento
+function extractStatus(payload: any): string {
+  const statusFields = [
+    'status', 'event', 'type', 'event_type', 'eventType',
+    'Status', 'EVENT', 'state', 'State', 'situation', 'situacao'
+  ];
+  
+  const status = findField(payload, statusFields);
+  return status ? String(status).toLowerCase() : "";
+}
+
+// Função para extrair valor/amount
+function extractAmount(payload: any): number {
+  const amountFields = [
+    'amount', 'value', 'total', 'price', 'valor', 'preco',
+    'Amount', 'Value', 'Total', 'Price', 'Valor'
+  ];
+  
+  const amount = findField(payload, amountFields);
+  
+  if (amount !== null) {
+    const num = typeof amount === 'number' ? amount : parseFloat(String(amount));
+    if (!isNaN(num)) {
+      return num;
+    }
+  }
+  
+  return 0;
+}
+
+// Função para extrair product_id
+function extractProductId(payload: any): string | null {
+  const productFields = [
+    'product_id', 'productId', 'product', 'plan_id', 'planId',
+    'ProductId', 'Product_Id', 'sku', 'item_id', 'itemId'
+  ];
+  
+  const productId = findField(payload, productFields);
+  return productId ? String(productId) : null;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -274,32 +166,73 @@ serve(async (req: Request): Promise<Response> => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+  let payload: any = null;
+  let logId: string | null = null;
+
   try {
-    const payload: HoopayWebhookPayload = await req.json();
+    // Parse do payload
+    const rawBody = await req.text();
+    console.log("📥 RAW BODY recebido:", rawBody);
+    
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error("❌ Erro ao fazer parse do JSON:", parseError);
+      payload = { raw: rawBody };
+    }
     
     console.log("📥 Webhook Hoopay recebido:", JSON.stringify(payload, null, 2));
 
-    const data = payload.data || payload;
-    
-    // Extrair dados
-    const phone = extractPhone(payload);
+    // SALVAR LOG IMEDIATAMENTE (antes de qualquer processamento)
+    try {
+      const { data: logData, error: logError } = await supabase
+        .from("webhook_logs")
+        .insert({
+          webhook_type: "hoopay_payment",
+          payload: payload,
+          processed: false,
+          email: null,
+          plan_type: null,
+          error_message: null,
+        })
+        .select('id')
+        .single();
+      
+      if (logData) {
+        logId = logData.id;
+        console.log("📝 Log criado com ID:", logId);
+      }
+      if (logError) {
+        console.log("⚠️ Erro ao criar log inicial:", logError.message);
+      }
+    } catch (logErr) {
+      console.log("⚠️ Não foi possível salvar log inicial:", logErr);
+    }
+
+    // Extrair dados usando funções flexíveis
     const emailFromPayload = extractEmail(payload);
+    const phone = extractPhone(payload);
     const name = extractName(payload);
     const cpf = extractCPF(payload);
-    const productId = data.product_id || data.productId;
-    const status = data.status || payload.event;
-    const amount = data.amount || data.value;
+    const status = extractStatus(payload);
+    const amount = extractAmount(payload);
+    const productId = extractProductId(payload);
     
-    console.log("📧 EMAIL EXTRAÍDO:", emailFromPayload);
-    console.log("📱 TELEFONE EXTRAÍDO:", phone);
-    console.log("🆔 CPF EXTRAÍDO:", cpf);
+    console.log("=== DADOS EXTRAÍDOS ===");
+    console.log("📧 EMAIL:", emailFromPayload);
+    console.log("📱 TELEFONE:", phone);
     console.log("👤 NOME:", name);
+    console.log("🆔 CPF:", cpf);
+    console.log("📊 STATUS:", status);
+    console.log("💰 AMOUNT:", amount);
+    console.log("📦 PRODUCT_ID:", productId);
+    console.log("========================");
 
-    // NOVA LÓGICA: PRIORIZAR EMAIL sobre telefone (mais confiável)
+    // Buscar usuário por EMAIL ou TELEFONE
     let userEmail = emailFromPayload;
     let userId: string | null = null;
 
-    // 1️⃣ PRIMEIRO: Buscar por EMAIL (prioridade máxima)
+    // 1️⃣ PRIMEIRO: Buscar por EMAIL
     if (emailFromPayload && !emailFromPayload.includes('@hoopay')) {
       console.log(`🔍 [PRIORIDADE 1] Buscando usuário pelo EMAIL: ${emailFromPayload}`);
       
@@ -316,13 +249,10 @@ serve(async (req: Request): Promise<Response> => {
       if (profileByEmail) {
         console.log(`✅ USUÁRIO ENCONTRADO PELO EMAIL!`);
         console.log(`   ID: ${profileByEmail.id}`);
-        console.log(`   Email: ${profileByEmail.email}`);
-        console.log(`   Nome: ${profileByEmail.full_name}`);
-        
         userEmail = profileByEmail.email || emailFromPayload;
         userId = profileByEmail.id;
       } else {
-        console.log("❌ Nenhum usuário encontrado com este email no profiles");
+        console.log("❌ Nenhum usuário encontrado com este email");
       }
     }
 
@@ -330,7 +260,6 @@ serve(async (req: Request): Promise<Response> => {
     if (!userId && phone) {
       console.log(`🔍 [PRIORIDADE 2] Buscando usuário pelo TELEFONE: ${phone}`);
       
-      // Buscar na tabela profiles pelo telefone
       const { data: profileByPhone, error: phoneError } = await supabase
         .from("profiles")
         .select("id, email, full_name")
@@ -344,33 +273,33 @@ serve(async (req: Request): Promise<Response> => {
       
       if (profileByPhone) {
         console.log(`✅ USUÁRIO ENCONTRADO PELO TELEFONE!`);
-        console.log(`   ID: ${profileByPhone.id}`);
-        console.log(`   Email: ${profileByPhone.email}`);
-        console.log(`   Nome: ${profileByPhone.full_name}`);
-        
         userEmail = profileByPhone.email || userEmail;
         userId = profileByPhone.id;
       } else {
         console.log("❌ Nenhum usuário encontrado com este telefone");
         
-        // Fallback: tentar buscar removendo o DDD ou código do país
+        // Fallback: variações do telefone
         if (phone.length > 10) {
-          const phoneWithoutCountry = phone.slice(-11); // Últimos 11 dígitos (DDD + número)
-          const phoneWithoutDDD = phone.slice(-9); // Últimos 9 dígitos (só número)
+          const phoneVariations = [
+            phone.slice(-11),
+            phone.slice(-9),
+            phone.slice(-8),
+          ];
           
-          console.log(`🔍 Tentando variações: ${phoneWithoutCountry}, ${phoneWithoutDDD}`);
-          
-          const { data: profileAlt } = await supabase
-            .from("profiles")
-            .select("id, email, full_name")
-            .or(`phone.ilike.%${phoneWithoutCountry}%,phone.ilike.%${phoneWithoutDDD}%`)
-            .limit(1)
-            .maybeSingle();
-          
-          if (profileAlt) {
-            console.log(`✅ USUÁRIO ENCONTRADO COM VARIAÇÃO DO TELEFONE!`);
-            userEmail = profileAlt.email || userEmail;
-            userId = profileAlt.id;
+          for (const variation of phoneVariations) {
+            const { data: profileAlt } = await supabase
+              .from("profiles")
+              .select("id, email, full_name")
+              .ilike("phone", `%${variation}%`)
+              .limit(1)
+              .maybeSingle();
+            
+            if (profileAlt) {
+              console.log(`✅ USUÁRIO ENCONTRADO COM VARIAÇÃO: ${variation}`);
+              userEmail = profileAlt.email || userEmail;
+              userId = profileAlt.id;
+              break;
+            }
           }
         }
       }
@@ -378,23 +307,39 @@ serve(async (req: Request): Promise<Response> => {
 
     // Validar que temos pelo menos um identificador
     if (!userEmail && !userId) {
-      console.error("❌ Não foi possível identificar o usuário (sem email nem telefone válido)");
+      const errorMsg = "Não foi possível identificar o usuário (sem email nem telefone válido)";
+      console.error("❌", errorMsg);
+      
+      // Atualizar log com erro
+      if (logId) {
+        await supabase.from("webhook_logs").update({
+          processed: false,
+          error_message: errorMsg,
+        }).eq("id", logId);
+      }
+      
       return new Response(
-        JSON.stringify({ error: "Não foi possível identificar o usuário" }),
+        JSON.stringify({ error: errorMsg }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Verificar se é pagamento aprovado
-    const isApproved = 
-      status === "paid" || 
-      status === "approved" || 
-      status === "payment.approved" ||
-      status === "completed" ||
-      status === "success";
+    const approvedStatuses = ['paid', 'approved', 'payment.approved', 'completed', 'success', 'active', 'confirmed'];
+    const isApproved = approvedStatuses.some(s => status.includes(s));
 
     if (!isApproved) {
       console.log(`⏭️ Evento ignorado (status: ${status})`);
+      
+      // Atualizar log
+      if (logId) {
+        await supabase.from("webhook_logs").update({
+          processed: false,
+          email: userEmail,
+          error_message: `Status não aprovado: ${status}`,
+        }).eq("id", logId);
+      }
+      
       return new Response(
         JSON.stringify({ message: "Evento ignorado", status }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -461,10 +406,10 @@ serve(async (req: Request): Promise<Response> => {
         .from("premium_users")
         .update({
           name,
-          email: userEmail, // Garantir email correto
-          user_id: userId, // Garantir user_id correto
+          email: userEmail,
+          user_id: userId,
           whatsapp: phone || undefined,
-          cpf: cpf || undefined, // Salvar CPF se disponível
+          cpf: cpf || undefined,
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -475,6 +420,16 @@ serve(async (req: Request): Promise<Response> => {
 
       if (updateError) {
         console.error("❌ Erro ao atualizar premium_users:", updateError);
+        
+        if (logId) {
+          await supabase.from("webhook_logs").update({
+            processed: false,
+            email: userEmail,
+            plan_type: planType,
+            error_message: `Erro ao atualizar: ${updateError.message}`,
+          }).eq("id", logId);
+        }
+        
         throw updateError;
       }
 
@@ -488,7 +443,7 @@ serve(async (req: Request): Promise<Response> => {
           user_id: userId,
           name,
           whatsapp: phone,
-          cpf: cpf || null, // Salvar CPF se disponível
+          cpf: cpf || null,
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -497,23 +452,30 @@ serve(async (req: Request): Promise<Response> => {
 
       if (insertError) {
         console.error("❌ Erro ao inserir premium_users:", insertError);
+        
+        if (logId) {
+          await supabase.from("webhook_logs").update({
+            processed: false,
+            email: userEmail,
+            plan_type: planType,
+            error_message: `Erro ao inserir: ${insertError.message}`,
+          }).eq("id", logId);
+        }
+        
         throw insertError;
       }
 
       console.log(`🆕 Novo usuário VIP criado - Fim: ${subscriptionEnd.toISOString()}`);
     }
 
-    // Log do webhook
-    try {
-      await supabase.from("webhook_logs").insert({
-        webhook_type: "hoopay_payment",
-        payload: payload,
+    // Atualizar log como processado com sucesso
+    if (logId) {
+      await supabase.from("webhook_logs").update({
         processed: true,
         email: userEmail,
         plan_type: planType,
-      });
-    } catch (logErr) {
-      console.log("⚠️ Não foi possível salvar log:", logErr);
+        error_message: null,
+      }).eq("id", logId);
     }
 
     return new Response(
@@ -522,13 +484,33 @@ serve(async (req: Request): Promise<Response> => {
         message: `VIP ativado para ${userEmail}`,
         plan: planType,
         expires: subscriptionEnd.toISOString(),
-        identifiedBy: userId ? "phone" : "email"
+        identifiedBy: userId ? "user_id" : "email"
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
     console.error("❌ Erro no webhook Hoopay:", error);
+    
+    // Salvar erro no log se ainda não foi salvo
+    if (logId) {
+      await supabase.from("webhook_logs").update({
+        processed: false,
+        error_message: error.message || "Erro interno",
+      }).eq("id", logId);
+    } else if (payload) {
+      // Criar log de erro se não existe
+      try {
+        await supabase.from("webhook_logs").insert({
+          webhook_type: "hoopay_payment",
+          payload: payload,
+          processed: false,
+          error_message: error.message || "Erro interno",
+        });
+      } catch (e) {
+        console.log("⚠️ Não foi possível salvar log de erro");
+      }
+    }
     
     return new Response(
       JSON.stringify({ error: error.message || "Erro interno" }),

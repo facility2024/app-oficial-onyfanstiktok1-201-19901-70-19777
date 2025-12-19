@@ -44,6 +44,7 @@ import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
+import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
 interface Video {
   id: string;
   title: string;
@@ -3010,5 +3011,15 @@ export const TikTokApp = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Payment Verification Indicator - Realtime VIP Activation */}
+      <PaymentVerificationIndicator 
+        userEmail={authUser?.email || undefined}
+        userId={authUser?.id || undefined}
+        onVIPActivated={() => {
+          console.log('🎉 VIP ativado! Atualizando status...');
+          checkPremiumStatus();
+        }}
+      />
     </div>;
 };

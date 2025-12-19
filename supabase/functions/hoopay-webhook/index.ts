@@ -464,6 +464,7 @@ serve(async (req: Request): Promise<Response> => {
           email: userEmail, // Garantir email correto
           user_id: userId, // Garantir user_id correto
           whatsapp: phone || undefined,
+          cpf: cpf || undefined, // Salvar CPF se disponível
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),
@@ -487,6 +488,7 @@ serve(async (req: Request): Promise<Response> => {
           user_id: userId,
           name,
           whatsapp: phone,
+          cpf: cpf || null, // Salvar CPF se disponível
           subscription_status: "active",
           subscription_type: planType,
           subscription_start: subscriptionStart.toISOString(),

@@ -27,7 +27,6 @@ import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
@@ -45,7 +44,6 @@ import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
-
 interface Video {
   id: string;
   title: string;
@@ -104,11 +102,15 @@ export const TikTokApp = () => {
   } = useCreatorRole();
 
   // Hook para gerenciar gêneros
-  const { selectedGenre, setSelectedGenre, genres } = useGenres();
+  const {
+    selectedGenre,
+    setSelectedGenre,
+    genres
+  } = useGenres();
 
   // 🧠 FEED INTELIGENTE REATIVADO com proteções anti-loop
-  const { 
-    videos: intelligentVideos, 
+  const {
+    videos: intelligentVideos,
     loading: intelligentLoading,
     currentFeed,
     refreshFeed: refreshIntelligentFeed,
@@ -119,13 +121,17 @@ export const TikTokApp = () => {
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
-
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [chatEntity, setChatEntity] = useState<{ name: string; avatar: string; id: string; isCreator: boolean } | null>(null);
+  const [chatEntity, setChatEntity] = useState<{
+    name: string;
+    avatar: string;
+    id: string;
+    isCreator: boolean;
+  } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
@@ -1140,9 +1146,7 @@ export const TikTokApp = () => {
   // 🎬 FILTRAR VÍDEOS POR GÊNERO SELECIONADO
   useEffect(() => {
     if (allAvailableVideos.length === 0 || !selectedGenre) return;
-
     console.log('🎬 Filtrando por gênero:', selectedGenre);
-
     if (selectedGenre === 'Todos') {
       // Mostrar todos os vídeos
       const firstBlock = allAvailableVideos.slice(0, VIDEOS_PER_BLOCK);
@@ -1156,7 +1160,6 @@ export const TikTokApp = () => {
         const videoGenres = video.genres || [];
         return videoGenres.includes(selectedGenre);
       });
-      
       const firstBlock = filteredVideos.slice(0, VIDEOS_PER_BLOCK);
       setVideos(firstBlock);
       setCurrentVideoIndex(0);
@@ -1177,7 +1180,6 @@ export const TikTokApp = () => {
         console.log('🎬 Gênero alterado via evento:', e.detail.genre);
       }
     };
-
     window.addEventListener('genreChanged', handleGenreChange as EventListener);
     return () => {
       window.removeEventListener('genreChanged', handleGenreChange as EventListener);
@@ -2372,16 +2374,13 @@ export const TikTokApp = () => {
     console.log('🚫 RENDER: currentVideoIndex:', currentVideoIndex);
     console.log('🚫 RENDER: currentVideo:', currentVideo);
     console.log('🚫 RENDER: selectedGenre:', selectedGenre);
-    
+
     // Verifica se é filtro por gênero ou realmente sem vídeos
     const isGenreFiltered = selectedGenre && selectedGenre !== 'Todos';
     const currentGenreData = genres.find(g => g.name === selectedGenre);
-    
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+    return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center px-6 max-w-sm">
-          {isGenreFiltered ? (
-            <>
+          {isGenreFiltered ? <>
               {/* Mensagem de "Vídeos em Breve" para gênero filtrado */}
               <div className="text-6xl mb-4">{currentGenreData?.icon || '🎬'}</div>
               <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-teal-400 to-yellow-400 bg-clip-text text-transparent">
@@ -2391,10 +2390,7 @@ export const TikTokApp = () => {
                 Ainda não há vídeos de <span className="font-semibold text-white">"{selectedGenre}"</span> disponíveis.
               </p>
               <div className="space-y-3">
-                <Button 
-                  onClick={() => setSelectedGenre('Todos')} 
-                  className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold"
-                >
+                <Button onClick={() => setSelectedGenre('Todos')} className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold">
                   <Film className="w-4 h-4 mr-2" />
                   Ver Todos os Vídeos
                 </Button>
@@ -2402,20 +2398,16 @@ export const TikTokApp = () => {
                   Novos vídeos são adicionados diariamente
                 </p>
               </div>
-            </>
-          ) : (
-            <>
+            </> : <>
               {/* Mensagem padrão sem vídeos */}
               <p className="text-xl mb-4">Nenhum vídeo disponível</p>
               <p className="text-gray-400 mb-4">Aguarde novos conteúdos!</p>
               <Button onClick={initializeFeed} className="bg-primary hover:bg-primary/80">
                 Recarregar
               </Button>
-            </>
-          )}
+            </>}
         </div>
-      </div>
-    );
+      </div>;
   }
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.title);
@@ -2530,11 +2522,9 @@ export const TikTokApp = () => {
             <span className="text-xs">Explorar</span>
           </button>
 
-          {isCreator && (
-            <button onClick={() => setShowLive(true)} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
+          {isCreator && <button onClick={() => setShowLive(true)} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
               <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
-            </button>
-          )}
+            </button>}
 
           <button onClick={() => navigate('/marketplace')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <ShoppingBag className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
@@ -2542,26 +2532,22 @@ export const TikTokApp = () => {
           </button>
 
           {/* Chat - só aparece se o criador/modelo tem chat ativo */}
-          {currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && (
-            <button onClick={() => {
-              setChatEntity({
-                name: currentVideo.user.username,
-                avatar: currentVideo.user.avatar_url,
-                id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
-                isCreator: !!currentVideo.creator_id
-              });
-              setShowChat(true);
-            }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
+          {currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && <button onClick={() => {
+          setChatEntity({
+            name: currentVideo.user.username,
+            avatar: currentVideo.user.avatar_url,
+            id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
+            isCreator: !!currentVideo.creator_id
+          });
+          setShowChat(true);
+        }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
               <div className="relative">
                 <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
                 {/* Indicador de Online */}
-                {chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && (
-                  <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-black animate-pulse"></div>
-                )}
+                {chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-black animate-pulse"></div>}
               </div>
               <span className="text-xs">Chat</span>
-            </button>
-          )}
+            </button>}
         </div>
 
         {/* Vertical Carousel Container */}
@@ -2591,17 +2577,10 @@ export const TikTokApp = () => {
       }} />
 
         {/* Chat Screen */}
-        <ChatScreen 
-          isOpen={showChat} 
-          onClose={() => {
-            setShowChat(false);
-            setChatEntity(null);
-          }} 
-          modelName={chatEntity?.name || currentVideo.user.username} 
-          modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url}
-          entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id}
-          isCreator={chatEntity?.isCreator || !!currentVideo.creator_id}
-        />
+        <ChatScreen isOpen={showChat} onClose={() => {
+        setShowChat(false);
+        setChatEntity(null);
+      }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
         {/* Comments Screen */}
         <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />
@@ -2653,17 +2632,11 @@ export const TikTokApp = () => {
         </div>
               <div className="flex items-center space-x-3">
                 {/* Indicador de Gênero Selecionado */}
-                {selectedGenre && selectedGenre !== 'Todos' && (
-                  <button
-                    onClick={() => setSelectedGenre('Todos')}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full hover:bg-black/30 transition-colors"
-                    title="Clique para ver todos os gêneros"
-                  >
+                {selectedGenre && selectedGenre !== 'Todos' && <button onClick={() => setSelectedGenre('Todos')} className="flex items-center gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full hover:bg-black/30 transition-colors" title="Clique para ver todos os gêneros">
                     <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
                     <span className="text-sm font-medium text-black">{selectedGenre}</span>
                     <span className="text-xs text-black/60">×</span>
-                  </button>
-                )}
+                  </button>}
                 <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-black/30 transition-colors" title="Pesquisar">
                   <Search className="w-5 h-5" />
                 </button>
@@ -2734,30 +2707,24 @@ export const TikTokApp = () => {
               {/* Seletor de Gênero - Desktop */}
               <div className="px-2 py-2 border-t border-white/10 mt-2">
                 <p className="text-xs text-gray-400 mb-2 px-4">Filtrar por Gênero</p>
-                <GenreSelector 
-                  onGenreSelect={(genre) => {
-                    console.log('🎬 Gênero selecionado (desktop):', genre);
-                  }} 
-                  showLabel={false}
-                  triggerClassName="w-full justify-start px-4 py-2.5 text-white hover:bg-white/10 rounded-lg cursor-pointer"
-                />
+                <GenreSelector onGenreSelect={genre => {
+                console.log('🎬 Gênero selecionado (desktop):', genre);
+              }} showLabel={false} triggerClassName="w-full justify-start px-4 py-2.5 text-white hover:bg-white/10 rounded-lg cursor-pointer" />
               </div>
               
-              {!isPremium && (
-                <button onClick={() => {
-                  console.log('👑 Botão VIP clicado - Navegando para /subscribe');
-                  navigate('/subscribe');
-                }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
+              {!isPremium && <button onClick={() => {
+              console.log('👑 Botão VIP clicado - Navegando para /subscribe');
+              navigate('/subscribe');
+            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                   <Crown className="w-5 h-5 mr-3 text-amber-400" />
                   <span className="text-amber-400 font-medium">Seja VIP</span>
-                </button>
-              )}
+                </button>}
               {isCreator === true && creatorLoading === false && <button onClick={() => {
               console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
               navigate('/creator-studio');
             }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                   <Sparkles className="w-5 h-5 mr-3" />
-                  <span>Creator Studio</span>
+                  <span>Estudio do Criador </span>
                 </button>}
               <button onClick={() => {
               console.log('🚪 Botão Sair clicado (Desktop) - abrindo AlertDialog');
@@ -2797,11 +2764,7 @@ export const TikTokApp = () => {
               <div className="absolute bottom-4 left-4 right-4 z-20">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <img 
-                      src={currentVideo?.user?.avatar_url || '/placeholder.svg'} 
-                      alt={currentVideo?.user?.username || 'Modelo'}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
                   </div>
                   <p className="text-white font-semibold text-lg drop-shadow-lg">
                     {currentVideo?.user?.username || 'Modelo'}
@@ -2860,22 +2823,16 @@ export const TikTokApp = () => {
                     variant: "destructive"
                   });
                 }
-              }} onFullscreen={handleFullscreen} onOpenChat={
-                currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id]
-                  ? () => {
-                      console.log('Desktop chat clicked');
-                      setChatEntity({
-                        name: currentVideo.user.username,
-                        avatar: currentVideo.user.avatar_url,
-                        id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
-                        isCreator: !!currentVideo.creator_id
-                      });
-                      setShowChat(true);
-                    }
-                  : undefined
-              } isChatOnline={
-                currentVideo ? chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] || false : false
-              } onExit={async () => {
+              }} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
+                console.log('Desktop chat clicked');
+                setChatEntity({
+                  name: currentVideo.user.username,
+                  avatar: currentVideo.user.avatar_url,
+                  id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
+                  isCreator: !!currentVideo.creator_id
+                });
+                setShowChat(true);
+              } : undefined} isChatOnline={currentVideo ? chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] || false : false} onExit={async () => {
                 try {
                   sessionStorage.setItem('logging_out', 'true');
                   await supabase.auth.signOut();
@@ -2976,17 +2933,10 @@ export const TikTokApp = () => {
     }} />
 
       {/* Desktop Chat Screen */}
-      <ChatScreen 
-        isOpen={showChat} 
-        onClose={() => {
-          setShowChat(false);
-          setChatEntity(null);
-        }} 
-        modelName={chatEntity?.name || currentVideo.user.username} 
-        modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url}
-        entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id}
-        isCreator={chatEntity?.isCreator || !!currentVideo.creator_id}
-      />
+      <ChatScreen isOpen={showChat} onClose={() => {
+      setShowChat(false);
+      setChatEntity(null);
+    }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
       {/* Desktop Comments Screen */}
       <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, ShoppingCart, ArrowLeft, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, ShoppingCart, ArrowLeft, Sparkles, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  video_url?: string;
   category: string;
   stock: number;
   average_rating: number;
@@ -36,15 +37,53 @@ const ProductDetailModal = ({
   onClose,
   onBuy
 }: ProductModalProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Reset video state when modal closes
+  useEffect(() => {
+    if (!open && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  }, [open]);
+
   if (!product) return null;
-  return <Dialog open={open} onOpenChange={onClose}>
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto !bg-gray-900 !border-white/10">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white">{product.name}</DialogTitle>
           <DialogDescription>
             <div className="flex items-center gap-2 mt-2">
               <div className="flex">
-                {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`w-5 h-5 ${star <= product.average_rating ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`} />)}
+                {[1, 2, 3, 4, 5].map(star => (
+                  <Star 
+                    key={star} 
+                    className={`w-5 h-5 ${star <= product.average_rating ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`} 
+                  />
+                ))}
               </div>
               <span className="text-sm text-gray-400">
                 ({product.total_reviews} avaliações)
@@ -54,7 +93,60 @@ const ProductDetailModal = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          <img src={product.image_url} alt={product.name} className="w-full h-64 object-cover rounded-lg" />
+          {/* Video or Image */}
+          {product.video_url ? (
+            <div className="relative rounded-lg overflow-hidden bg-black">
+              <video
+                ref={videoRef}
+                src={product.video_url}
+                poster={product.image_url}
+                className="w-full max-h-80 object-contain"
+                playsInline
+                loop
+                muted={isMuted}
+                onClick={togglePlay}
+              />
+              
+              {/* Video Controls */}
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={togglePlay}
+                  className="bg-black/50 hover:bg-black/70 text-white rounded-full h-10 w-10"
+                >
+                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMute}
+                  className="bg-black/50 hover:bg-black/70 text-white rounded-full h-10 w-10"
+                >
+                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                </Button>
+              </div>
+
+              {/* Play overlay when paused */}
+              {!isPlaying && (
+                <div 
+                  className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+                  onClick={togglePlay}
+                >
+                  <div className="bg-white/20 rounded-full p-4 backdrop-blur-sm">
+                    <Play className="w-10 h-10 text-white" />
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <img 
+              src={product.image_url} 
+              alt={product.name} 
+              className="w-full h-64 object-cover rounded-lg" 
+            />
+          )}
 
           <div>
             <h3 className="font-semibold text-lg mb-2 text-white">Descrição</h3>
@@ -76,13 +168,19 @@ const ProductDetailModal = ({
             </div>
           </div>
 
-          <Button onClick={() => onBuy(product)} disabled={product.stock === 0} className="w-full bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513]" size="lg">
+          <Button 
+            onClick={() => onBuy(product)} 
+            disabled={product.stock === 0} 
+            className="w-full bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513]" 
+            size="lg"
+          >
             <ShoppingCart className="mr-2" />
             Comprar Agora
           </Button>
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
 interface CheckoutModalProps {
   product: Product | null;

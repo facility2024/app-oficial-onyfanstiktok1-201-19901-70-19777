@@ -468,8 +468,18 @@ export default function MarketplacePage() {
           </div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredProducts.map(product => <Card key={product.id} className="cursor-pointer hover:scale-105 transition-transform !bg-gray-900/50 !border-white/10" onClick={() => handleProductClick(product)}>
                 <CardContent className="p-3">
-                  <div className="relative mb-3">
+                  <div className="relative mb-3 group">
                     <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover rounded-md" />
+                    
+                    {/* Video Play Icon */}
+                    {product.video_url && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/50 rounded-full p-3 group-hover:bg-black/70 group-hover:scale-110 transition-all duration-200">
+                          <Play className="w-8 h-8 text-white fill-white" />
+                        </div>
+                      </div>
+                    )}
+                    
                     {product.stock > 0 && product.stock <= 5 && <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
                         Últimas {product.stock}
                       </div>}

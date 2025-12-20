@@ -19,6 +19,7 @@ interface Product {
   description: string;
   price: number;
   image_url: string;
+  video_url?: string;
   category: string;
   stock: number;
   average_rating: number;
@@ -42,6 +43,7 @@ const productSchema = z.object({
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres'),
   price: z.number().positive('Preço deve ser maior que zero'),
   image_url: z.string().url('URL da imagem inválida'),
+  video_url: z.string().url('URL do vídeo inválida').optional().or(z.literal('')),
   category: z.string().min(2, 'Categoria é obrigatória'),
   stock: z.number().min(0, 'Estoque não pode ser negativo'),
   is_active: z.boolean()
@@ -78,6 +80,7 @@ export const AdminMarketplace = () => {
     description: '',
     price: 0,
     image_url: '',
+    video_url: '',
     category: '',
     stock: 0,
     is_active: true
@@ -390,6 +393,7 @@ export const AdminMarketplace = () => {
       description: '',
       price: 0,
       image_url: '',
+      video_url: '',
       category: '',
       stock: 0,
       is_active: true
@@ -417,6 +421,7 @@ export const AdminMarketplace = () => {
       description: product.description,
       price: product.price,
       image_url: product.image_url,
+      video_url: product.video_url || '',
       category: product.category,
       stock: product.stock,
       is_active: product.is_active
@@ -805,6 +810,20 @@ export const AdminMarketplace = () => {
                 placeholder="https://..."
                 className="bg-gray-950 border-gray-700 text-white"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="video_url" className="text-white">URL do Vídeo (opcional)</Label>
+              <Input
+                id="video_url"
+                value={formData.video_url}
+                onChange={(e) => setFormData({...formData, video_url: e.target.value})}
+                placeholder="https://... (MP4, WebM, Bunny.net, etc)"
+                className="bg-gray-950 border-gray-700 text-white"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Cole o link do vídeo do produto. O vídeo aparecerá na página de detalhes.
+              </p>
             </div>
 
             <div>

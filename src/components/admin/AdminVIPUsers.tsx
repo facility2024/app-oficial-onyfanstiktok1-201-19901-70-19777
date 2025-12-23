@@ -378,6 +378,9 @@ export const AdminVIPUsers = () => {
                         <div>
                           <p className="font-medium text-white">{user.name || 'Sem nome'}</p>
                           <p className="text-sm text-gray-400">{user.email}</p>
+                          {user.cpf && (
+                            <p className="text-xs text-blue-400">CPF: {user.cpf}</p>
+                          )}
                           {user.whatsapp && (
                             <p className="text-xs text-gray-500">{user.whatsapp}</p>
                           )}

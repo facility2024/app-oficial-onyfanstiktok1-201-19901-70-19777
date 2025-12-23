@@ -6,7 +6,8 @@ export interface VIPUser {
   id: string;
   email: string;
   name: string;
-  whatsapp: string;
+  whatsapp?: string;
+  cpf?: string;
   subscription_status: string;
   subscription_type: string;
   subscription_start: string;

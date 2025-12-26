@@ -75,9 +75,11 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       let creatorsData: any[] = [];
       if (creatorRoles && creatorRoles.length > 0) {
         const creatorIds = creatorRoles.map((r: any) => r.user_id);
+        console.log('🔍 SearchModal: IDs de criadores encontrados:', creatorIds);
+        
         const { data: creatorsProfiles, error: creatorsError } = await supabase
           .from('profiles')
-          .select('id, name, email, avatar_url, bio')
+          .select('id, name, email, avatar_url, bio, username')
           .in('id', creatorIds);
 
         if (creatorsError) {
@@ -85,13 +87,22 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
         }
         
         creatorsData = creatorsProfiles || [];
+        console.log('🔍 SearchModal: Perfis de criadores carregados:', creatorsData);
       }
 
       // Transformar criadores para formato Model
       const creators = (creatorsData || []).map((c: any) => {
-        const displayName = c.name && c.name !== c.email
-          ? c.name
-          : (c.email?.split('@')[0] || 'Criador');
+        // Priorizar: username > name (se não for email) > parte do email
+        let displayName = c.username || '';
+        if (!displayName && c.name && c.name !== c.email && !c.name.includes('@')) {
+          displayName = c.name;
+        }
+        if (!displayName && c.email) {
+          displayName = c.email.split('@')[0];
+        }
+        if (!displayName) {
+          displayName = 'Criador';
+        }
         
         return {
           id: c.id,
@@ -104,6 +115,8 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
           is_creator: true
         };
       });
+      
+      console.log('🔍 SearchModal: Criadores formatados para exibição:', creators);
 
       // Combinar modelos + criadores
       setModels([...modelsWithChatStatus, ...creators]);

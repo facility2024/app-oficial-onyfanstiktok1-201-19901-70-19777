@@ -825,31 +825,8 @@ export const TikTokApp = () => {
       // Debug: Verificar vídeos de criadores no banco
       const videosWithCreatorId = videosData?.filter((v: any) => v.creator_id) || [];
       console.log(`🎨 Vídeos com creator_id no banco: ${videosWithCreatorId.length}`);
-      
-      // 🆕 BUSCAR PERFIS DE TODOS OS CRIADORES COM VÍDEOS (fallback para criadores sem role)
       if (videosWithCreatorId.length > 0) {
-        const creatorIdsFromVideos = [...new Set(videosWithCreatorId.map((v: any) => v.creator_id))];
-        console.log('🎨 IDs de criadores com vídeos:', creatorIdsFromVideos);
-        
-        // Verificar quais criadores já temos e quais precisamos buscar
-        const existingCreatorIds = new Set(creatorsData.map((c: any) => c.id));
-        const missingCreatorIds = creatorIdsFromVideos.filter(id => !existingCreatorIds.has(id));
-        
-        if (missingCreatorIds.length > 0) {
-          console.log('🔍 Buscando perfis de criadores faltantes:', missingCreatorIds);
-          const { data: missingCreators, error: missingError } = await supabase
-            .from('profiles')
-            .select('id, name, email, avatar_url, bio, username')
-            .in('id', missingCreatorIds);
-          
-          if (missingError) {
-            console.warn('⚠️ Erro ao buscar perfis faltantes:', missingError);
-          } else if (missingCreators && missingCreators.length > 0) {
-            console.log('✅ Perfis de criadores encontrados:', missingCreators.map((c: any) => ({ id: c.id, name: c.name })));
-            creatorsData = [...creatorsData, ...missingCreators];
-          }
-        }
-        
+        console.log('🎨 IDs de criadores com vídeos:', [...new Set(videosWithCreatorId.map((v: any) => v.creator_id))]);
         console.log('🎨 Criadores disponíveis:', creatorsData?.map((c: any) => ({
           id: c.id,
           name: c.name,
@@ -990,29 +967,16 @@ export const TikTokApp = () => {
         // Procurar owner: priorizar creator_id, depois model_id
         const owner: any = video.creator_id ? creatorsData?.find((c: any) => c.id === video.creator_id) : modelsData?.find((m: any) => m.id === video.model_id);
 
-        // Se é criador, formatar nome com @ no início
+        // Se é criador, formatar nome
         let ownerData: any = owner;
         if (video.creator_id && owner) {
-          // Priorizar: username > name (se não for email) > parte do email antes do @
-          let displayName = owner.username || '';
-          if (!displayName && owner.name && owner.name !== owner.email && !owner.name.includes('@')) {
-            displayName = owner.name;
-          }
-          if (!displayName && owner.email) {
-            displayName = owner.email.split('@')[0];
-          }
-          if (!displayName) {
-            displayName = 'Criador';
-          }
-          // Garantir que começa com @
-          const formattedUsername = displayName.startsWith('@') ? displayName : `@${displayName}`;
-          
+          const displayName = owner.name && owner.name !== owner.email ? owner.name : owner.email?.split('@')[0] || 'Criador';
           ownerData = {
             id: owner.id,
-            username: formattedUsername,
+            username: displayName,
             name: displayName,
             avatar_url: owner.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-            followers_count: owner.followers_count || 0,
+            followers_count: 0,
             is_live: false,
             bio: owner.bio || '',
             posting_panel_url: '',

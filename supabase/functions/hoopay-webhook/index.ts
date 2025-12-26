@@ -2,17 +2,17 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ========================================
-// HOOPAY WEBHOOK - V2.1 - 2025-01-26
-// Logs ultra-detalhados para debug
+// HOOPAY WEBHOOK - V2.2 - 2025-01-26
+// Suporta MÚLTIPLAS estruturas de payload
 // ========================================
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "X-Webhook-Version": "2.2",
 };
 
 // Product IDs (variantUUID) mapeados para tipos de plano e duração em dias
-// IMPORTANTE: Adicionar novos UUIDs aqui quando criar novos produtos no Hoopay
 const PLAN_CONFIG: Record<string, { type: string; days: number }> = {
   // Plano Mensal
   "6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1": { type: "mensal", days: 30 },
@@ -20,42 +20,26 @@ const PLAN_CONFIG: Record<string, { type: string; days: number }> = {
   "f488d9e1-3e79-4ea5-a9cc-4a108bb03c92": { type: "trimestral", days: 90 },
   // Plano Anual
   "61207e4a-9455-4cb8-8207-9002a87c5fe6": { type: "anual", days: 365 },
-  // "Plano Conteúdo Premium" - adicione o UUID correto aqui quando descobrir
-  // "NOVO_UUID_AQUI": { type: "mensal", days: 30 },
 };
 
-// Lista de todos os product IDs configurados (para log)
-const KNOWN_PRODUCT_IDS = Object.keys(PLAN_CONFIG);
-
-// Interface para payload da Hoopay (estrutura real)
-interface HoopayPayload {
-  id: number;
-  amount: number;
-  payment?: {
-    status: string;
-    charges?: any[];
-  };
-  customer?: {
-    name?: string;
-    email?: string;
-    phone?: {
-      masked?: string;
-      numbersOnly?: string;
-      phoneNumber?: string;
-    };
-    document?: {
-      type?: string;
-      number?: string;
-    };
-  };
-  products?: Array<{
-    title?: string;
-    productId?: number;
-    variantId?: number;
-    variantUUID?: string;
-  }>;
-  createdAt?: string;
-  orderUUID?: string;
+// Função para extrair valor de múltiplos caminhos possíveis no payload
+function extractValue(payload: any, paths: string[]): any {
+  for (const path of paths) {
+    const parts = path.split(".");
+    let value = payload;
+    for (const part of parts) {
+      if (value && typeof value === "object" && part in value) {
+        value = value[part];
+      } else {
+        value = undefined;
+        break;
+      }
+    }
+    if (value !== undefined && value !== null && value !== "") {
+      return value;
+    }
+  }
+  return null;
 }
 
 // Função para normalizar telefone
@@ -64,107 +48,169 @@ function normalizePhone(phone: string | undefined | null): string {
   return phone.replace(/[^0-9]/g, "");
 }
 
+// Função para logar todas as chaves do payload recursivamente
+function logPayloadKeys(obj: any, prefix = ""): void {
+  if (!obj || typeof obj !== "object") return;
+  
+  for (const key of Object.keys(obj)) {
+    const fullPath = prefix ? `${prefix}.${key}` : key;
+    const value = obj[key];
+    const type = Array.isArray(value) ? "array" : typeof value;
+    console.log(`  📋 ${fullPath} (${type}): ${type === "object" || type === "array" ? "[...]" : String(value).substring(0, 50)}`);
+    
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      logPayloadKeys(value, fullPath);
+    }
+  }
+}
+
 serve(async (req: Request): Promise<Response> => {
   console.log("🚀 ========================================");
-  console.log("🚀 HOOPAY WEBHOOK V2.1 - INICIANDO");
+  console.log("🚀 HOOPAY WEBHOOK V2.2 - INICIANDO");
+  console.log("🚀 Suporta múltiplas estruturas de payload");
   console.log("🚀 Timestamp:", new Date().toISOString());
   console.log("🚀 Request Method:", req.method);
-  console.log("🚀 Request URL:", req.url);
-  console.log("🚀 Headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
-  console.log("🚀 PLAN_CONFIG conhecidos:", KNOWN_PRODUCT_IDS.join(", "));
   console.log("🚀 ========================================");
 
   if (req.method === "OPTIONS") {
-    console.log("👋 CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  
-  console.log("🔧 Conectando ao Supabase...");
-  console.log("🔧 URL:", supabaseUrl ? "✅ Configurada" : "❌ NÃO CONFIGURADA");
-  console.log("🔧 Service Key:", supabaseServiceKey ? "✅ Configurada" : "❌ NÃO CONFIGURADA");
-  
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  let payload: HoopayPayload | null = null;
+  let payload: any = null;
   let logId: string | null = null;
 
   try {
-    // Parse do payload
     const rawBody = await req.text();
-    console.log("📥 ========================================");
-    console.log("📥 RAW BODY recebido:");
-    console.log(rawBody);
-    console.log("📥 ========================================");
+    console.log("📥 RAW BODY:", rawBody.substring(0, 500));
     
     try {
       payload = JSON.parse(rawBody);
     } catch (parseError) {
-      console.error("❌ Erro ao fazer parse do JSON:", parseError);
+      console.error("❌ JSON inválido:", parseError);
       return new Response(
-        JSON.stringify({ error: "JSON inválido" }),
+        JSON.stringify({ error: "JSON inválido", version: "2.2" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
-    console.log("📥 Webhook Hoopay recebido:", JSON.stringify(payload, null, 2));
 
-    // SALVAR LOG IMEDIATAMENTE (antes de qualquer processamento)
+    // Logar TODAS as chaves do payload para debug
+    console.log("📋 ========================================");
+    console.log("📋 ESTRUTURA DO PAYLOAD RECEBIDO:");
+    logPayloadKeys(payload);
+    console.log("📋 ========================================");
+
+    // Salvar log imediatamente
     try {
       const { data: logData } = await supabase
         .from("webhook_logs")
         .insert({
-          webhook_type: "hoopay_payment",
+          webhook_type: "hoopay_payment_v2.2",
           payload: payload,
           processed: false,
-          email: null,
-          plan_type: null,
-          error_message: null,
         })
-        .select('id')
+        .select("id")
         .single();
       
-      if (logData) {
-        logId = logData.id;
-        console.log("📝 Log criado com ID:", logId);
-      }
+      if (logData) logId = logData.id;
     } catch (logErr) {
-      console.log("⚠️ Não foi possível salvar log inicial:", logErr);
+      console.log("⚠️ Não foi possível salvar log inicial");
     }
 
-    // Extrair dados da estrutura REAL da Hoopay
-    const customer = payload?.customer;
-    const payment = payload?.payment;
-    const products = payload?.products || [];
+    // ========================================
+    // EXTRAIR DADOS DE MÚLTIPLAS ESTRUTURAS
+    // ========================================
     
-    // Extrair campos
-    const email = customer?.email?.toLowerCase().trim() || null;
-    const name = customer?.name || "Assinante VIP";
-    const phone = normalizePhone(
-      customer?.phone?.numbersOnly || 
-      customer?.phone?.phoneNumber || 
-      customer?.phone?.masked
-    );
-    const cpf = customer?.document?.number?.replace(/[^0-9]/g, "") || "";
-    const status = payment?.status?.toLowerCase() || "";
-    const variantUUID = products[0]?.variantUUID || null;
-    
-    console.log("=== DADOS EXTRAÍDOS (Estrutura Hoopay) ===");
+    // EMAIL - tentar múltiplos caminhos
+    const email = extractValue(payload, [
+      "customer.email",
+      "data.email",
+      "email",
+      "data.customer.email",
+      "buyer.email",
+      "data.buyer.email",
+    ])?.toLowerCase().trim();
+
+    // NOME
+    const name = extractValue(payload, [
+      "customer.name",
+      "data.name",
+      "name",
+      "data.customer.name",
+      "buyer.name",
+      "data.buyer.name",
+    ]) || "Assinante VIP";
+
+    // TELEFONE
+    const phoneRaw = extractValue(payload, [
+      "customer.phone.numbersOnly",
+      "customer.phone.phoneNumber",
+      "customer.phone.masked",
+      "customer.phone",
+      "data.phone",
+      "phone",
+      "data.customer.phone",
+      "buyer.phone",
+    ]);
+    const phone = normalizePhone(typeof phoneRaw === "object" ? phoneRaw?.numbersOnly || phoneRaw?.phoneNumber : phoneRaw);
+
+    // CPF
+    const cpfRaw = extractValue(payload, [
+      "customer.document.number",
+      "customer.cpf",
+      "data.cpf",
+      "cpf",
+      "data.customer.cpf",
+      "data.customer.document.number",
+      "buyer.cpf",
+      "buyer.document",
+    ]);
+    const cpf = cpfRaw?.replace(/[^0-9]/g, "") || "";
+
+    // STATUS
+    const status = extractValue(payload, [
+      "payment.status",
+      "data.status",
+      "status",
+      "data.payment.status",
+      "order.status",
+    ])?.toLowerCase() || "";
+
+    // PRODUCT ID / VARIANT UUID
+    const variantUUID = extractValue(payload, [
+      "products.0.variantUUID",
+      "data.product_id",
+      "product_id",
+      "data.variantUUID",
+      "variantUUID",
+      "data.products.0.variantUUID",
+    ]);
+
+    // Se products é um array, pegar o primeiro
+    let finalVariantUUID = variantUUID;
+    if (!finalVariantUUID && payload?.products && Array.isArray(payload.products) && payload.products.length > 0) {
+      finalVariantUUID = payload.products[0]?.variantUUID;
+    }
+    if (!finalVariantUUID && payload?.data?.products && Array.isArray(payload.data.products)) {
+      finalVariantUUID = payload.data.products[0]?.variantUUID;
+    }
+
+    console.log("=== DADOS EXTRAÍDOS (V2.2 Multi-estrutura) ===");
     console.log("📧 EMAIL:", email);
     console.log("👤 NOME:", name);
     console.log("📱 TELEFONE:", phone);
     console.log("🆔 CPF:", cpf);
     console.log("📊 STATUS:", status);
-    console.log("📦 VARIANT_UUID:", variantUUID);
-    console.log("📦 VARIANT_UUID CONHECIDO?:", variantUUID ? (PLAN_CONFIG[variantUUID] ? "✅ SIM" : "❌ NÃO - PRECISA ADICIONAR AO PLAN_CONFIG") : "❌ Não informado");
-    console.log("📦 TODOS OS PRODUTOS:", JSON.stringify(products));
+    console.log("📦 VARIANT_UUID:", finalVariantUUID);
+    console.log("📦 CONHECIDO?:", finalVariantUUID && PLAN_CONFIG[finalVariantUUID] ? "✅ SIM" : "❌ NÃO");
     console.log("==========================================");
 
-    // Validar que temos email
+    // Validar email
     if (!email) {
-      const errorMsg = "Email do cliente não encontrado no payload";
+      const errorMsg = "Email não encontrado no payload";
       console.error("❌", errorMsg);
       
       if (logId) {
@@ -175,82 +221,67 @@ serve(async (req: Request): Promise<Response> => {
       }
       
       return new Response(
-        JSON.stringify({ error: errorMsg }),
+        JSON.stringify({ error: errorMsg, version: "2.2" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Buscar usuário pelo EMAIL
+    // Buscar usuário
     let userId: string | null = null;
     
-    console.log(`🔍 Buscando usuário pelo EMAIL: ${email}`);
-    
-    const { data: profileByEmail, error: emailError } = await supabase
+    const { data: profileByEmail } = await supabase
       .from("profiles")
-      .select("id, email, full_name")
+      .select("id")
       .eq("email", email)
       .maybeSingle();
     
-    if (emailError) {
-      console.log("⚠️ Erro ao buscar por email:", emailError.message);
-    }
-    
     if (profileByEmail) {
-      console.log(`✅ USUÁRIO ENCONTRADO!`);
-      console.log(`   ID: ${profileByEmail.id}`);
-      console.log(`   Email: ${profileByEmail.email}`);
       userId = profileByEmail.id;
-    } else {
-      console.log("❌ Nenhum usuário encontrado com este email no profiles");
+      console.log("✅ Usuário encontrado por email:", userId);
+    } else if (phone) {
+      const { data: profileByPhone } = await supabase
+        .from("profiles")
+        .select("id")
+        .or(`phone.eq.${phone},phone.ilike.%${phone.slice(-9)}%`)
+        .limit(1)
+        .maybeSingle();
       
-      // Fallback: buscar por telefone
-      if (phone) {
-        console.log(`🔍 Tentando buscar por TELEFONE: ${phone}`);
-        
-        const { data: profileByPhone } = await supabase
-          .from("profiles")
-          .select("id, email, full_name")
-          .or(`phone.eq.${phone},phone.ilike.%${phone.slice(-9)}%`)
-          .limit(1)
-          .maybeSingle();
-        
-        if (profileByPhone) {
-          console.log(`✅ USUÁRIO ENCONTRADO PELO TELEFONE!`);
-          userId = profileByPhone.id;
-        }
+      if (profileByPhone) {
+        userId = profileByPhone.id;
+        console.log("✅ Usuário encontrado por telefone:", userId);
       }
     }
 
-    // Verificar se é pagamento aprovado
-    const isApproved = status === "paid" || status === "approved" || status === "completed";
+    // Verificar status aprovado
+    const approvedStatuses = ["paid", "approved", "completed", "captured", "succeeded"];
+    const isApproved = approvedStatuses.includes(status);
 
     if (!isApproved) {
-      console.log(`⏭️ Evento ignorado (status: ${status})`);
+      console.log(`⏭️ Status não aprovado: ${status}`);
       
       if (logId) {
         await supabase.from("webhook_logs").update({
           processed: false,
-          email: email,
-          error_message: `Status não aprovado: ${status}`,
+          email,
+          error_message: `Status: ${status}`,
         }).eq("id", logId);
       }
       
       return new Response(
-        JSON.stringify({ message: "Evento ignorado", status }),
+        JSON.stringify({ message: "Status não aprovado", status, version: "2.2" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Determinar tipo de plano e duração
+    // Determinar plano (com fallback para mensal)
     let planType = "mensal";
     let planDays = 30;
 
-    if (variantUUID && PLAN_CONFIG[variantUUID]) {
-      planType = PLAN_CONFIG[variantUUID].type;
-      planDays = PLAN_CONFIG[variantUUID].days;
-      console.log(`📦 Plano identificado pelo variantUUID: ${planType} (${planDays} dias)`);
+    if (finalVariantUUID && PLAN_CONFIG[finalVariantUUID]) {
+      planType = PLAN_CONFIG[finalVariantUUID].type;
+      planDays = PLAN_CONFIG[finalVariantUUID].days;
     } else {
-      console.log(`⚠️ variantUUID não mapeado: ${variantUUID}, usando plano mensal`);
+      console.log("⚠️ UUID não mapeado, usando mensal como fallback");
     }
 
     // Calcular datas
@@ -258,9 +289,7 @@ serve(async (req: Request): Promise<Response> => {
     const subscriptionEnd = new Date();
     subscriptionEnd.setDate(subscriptionEnd.getDate() + planDays);
 
-    console.log(`✅ Ativando VIP - Email: ${email} | UserID: ${userId} | Plano: ${planType}`);
-
-    // Verificar se já existe registro
+    // Verificar/criar/atualizar premium_users
     let existingUser = null;
     
     if (userId) {
@@ -282,18 +311,16 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     if (existingUser) {
-      // Atualizar assinatura existente - estender se ainda ativa
       let newEndDate = subscriptionEnd;
       if (existingUser.subscription_end) {
         const currentEnd = new Date(existingUser.subscription_end);
         if (currentEnd > subscriptionStart) {
           newEndDate = new Date(currentEnd);
           newEndDate.setDate(newEndDate.getDate() + planDays);
-          console.log(`🔄 Estendendo assinatura existente até: ${newEndDate.toISOString()}`);
         }
       }
 
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from("premium_users")
         .update({
           name,
@@ -309,25 +336,10 @@ serve(async (req: Request): Promise<Response> => {
         })
         .eq("id", existingUser.id);
 
-      if (updateError) {
-        console.error("❌ Erro ao atualizar premium_users:", updateError);
-        
-        if (logId) {
-          await supabase.from("webhook_logs").update({
-            processed: false,
-            email,
-            plan_type: planType,
-            error_message: `Erro ao atualizar: ${updateError.message}`,
-          }).eq("id", logId);
-        }
-        
-        throw updateError;
-      }
-
-      console.log(`🔄 Assinatura atualizada - Fim: ${newEndDate.toISOString()}`);
+      if (error) throw error;
+      console.log("🔄 Assinatura atualizada");
     } else {
-      // Criar novo registro
-      const { error: insertError } = await supabase
+      const { error } = await supabase
         .from("premium_users")
         .insert({
           email,
@@ -341,78 +353,45 @@ serve(async (req: Request): Promise<Response> => {
           subscription_end: subscriptionEnd.toISOString(),
         });
 
-      if (insertError) {
-        console.error("❌ Erro ao inserir premium_users:", insertError);
-        
-        if (logId) {
-          await supabase.from("webhook_logs").update({
-            processed: false,
-            email,
-            plan_type: planType,
-            error_message: `Erro ao inserir: ${insertError.message}`,
-          }).eq("id", logId);
-        }
-        
-        throw insertError;
-      }
-
-      console.log(`🆕 Novo usuário VIP criado - Fim: ${subscriptionEnd.toISOString()}`);
+      if (error) throw error;
+      console.log("🆕 Novo VIP criado");
     }
 
-    // Atualizar log como processado com sucesso
+    // Atualizar log
     if (logId) {
       await supabase.from("webhook_logs").update({
         processed: true,
         email,
         plan_type: planType,
-        error_message: null,
       }).eq("id", logId);
     }
 
-    console.log("✅ ========================================");
-    console.log(`✅ VIP ATIVADO COM SUCESSO para ${email}!`);
-    console.log(`✅ Plano: ${planType} (${planDays} dias)`);
-    console.log(`✅ Expira em: ${subscriptionEnd.toISOString()}`);
-    console.log(`✅ UserID: ${userId || "não encontrado no profiles"}`);
-    console.log("✅ ========================================");
+    console.log("✅ VIP ATIVADO:", email, planType);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `VIP ativado para ${email}`,
+        email,
         plan: planType,
         days: planDays,
         expires: subscriptionEnd.toISOString(),
-        userId: userId || "não encontrado no profiles",
-        version: "2.0"
+        version: "2.2"
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
-    console.error("❌ Erro no webhook Hoopay:", error);
+    console.error("❌ Erro:", error);
     
-    // Salvar erro no log
     if (logId) {
       await supabase.from("webhook_logs").update({
         processed: false,
-        error_message: error.message || "Erro interno",
+        error_message: error.message,
       }).eq("id", logId);
-    } else if (payload) {
-      try {
-        await supabase.from("webhook_logs").insert({
-          webhook_type: "hoopay_payment",
-          payload: payload,
-          processed: false,
-          error_message: error.message || "Erro interno",
-        });
-      } catch (e) {
-        console.log("⚠️ Não foi possível salvar log de erro");
-      }
     }
     
     return new Response(
-      JSON.stringify({ error: error.message || "Erro interno" }),
+      JSON.stringify({ error: error.message, version: "2.2" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

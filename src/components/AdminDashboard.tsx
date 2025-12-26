@@ -38,6 +38,7 @@ import AdminModelChatPanels from './admin/AdminModelChatPanels';
 import { AdminGenres } from './admin/AdminGenres';
 import { AdminVIPUsers } from './admin/AdminVIPUsers';
 import { AdminWebhookLogs } from './admin/AdminWebhookLogs';
+import { AdminActivateVIP } from './admin/AdminActivateVIP';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';

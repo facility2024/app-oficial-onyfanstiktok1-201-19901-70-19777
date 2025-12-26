@@ -11,6 +11,7 @@ import { useVIPManagement, VIPUser, WebhookTestResult } from '@/hooks/useVIPMana
 import { format, differenceInDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AdminActivateVIP } from './AdminActivateVIP';
 
 export const AdminVIPUsers = () => {
   const { 
@@ -213,6 +214,9 @@ export const AdminVIPUsers = () => {
 
   return (
     <div className="space-y-6">
+      {/* Painel de Ativação Manual VIP */}
+      <AdminActivateVIP />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ========================================
-// HOOPAY WEBHOOK - V2.0 - 2025-01-19
-// Forçar redeploy com logs melhorados
+// HOOPAY WEBHOOK - V2.1 - 2025-01-26
+// Logs ultra-detalhados para debug
 // ========================================
 
 const corsHeaders = {
@@ -12,11 +12,20 @@ const corsHeaders = {
 };
 
 // Product IDs (variantUUID) mapeados para tipos de plano e duração em dias
+// IMPORTANTE: Adicionar novos UUIDs aqui quando criar novos produtos no Hoopay
 const PLAN_CONFIG: Record<string, { type: string; days: number }> = {
+  // Plano Mensal
   "6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1": { type: "mensal", days: 30 },
+  // Plano Trimestral
   "f488d9e1-3e79-4ea5-a9cc-4a108bb03c92": { type: "trimestral", days: 90 },
+  // Plano Anual
   "61207e4a-9455-4cb8-8207-9002a87c5fe6": { type: "anual", days: 365 },
+  // "Plano Conteúdo Premium" - adicione o UUID correto aqui quando descobrir
+  // "NOVO_UUID_AQUI": { type: "mensal", days: 30 },
 };
+
+// Lista de todos os product IDs configurados (para log)
+const KNOWN_PRODUCT_IDS = Object.keys(PLAN_CONFIG);
 
 // Interface para payload da Hoopay (estrutura real)
 interface HoopayPayload {
@@ -57,8 +66,12 @@ function normalizePhone(phone: string | undefined | null): string {
 
 serve(async (req: Request): Promise<Response> => {
   console.log("🚀 ========================================");
-  console.log("🚀 HOOPAY WEBHOOK V2.0 - INICIANDO");
+  console.log("🚀 HOOPAY WEBHOOK V2.1 - INICIANDO");
   console.log("🚀 Timestamp:", new Date().toISOString());
+  console.log("🚀 Request Method:", req.method);
+  console.log("🚀 Request URL:", req.url);
+  console.log("🚀 Headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
+  console.log("🚀 PLAN_CONFIG conhecidos:", KNOWN_PRODUCT_IDS.join(", "));
   console.log("🚀 ========================================");
 
   if (req.method === "OPTIONS") {
@@ -145,6 +158,8 @@ serve(async (req: Request): Promise<Response> => {
     console.log("🆔 CPF:", cpf);
     console.log("📊 STATUS:", status);
     console.log("📦 VARIANT_UUID:", variantUUID);
+    console.log("📦 VARIANT_UUID CONHECIDO?:", variantUUID ? (PLAN_CONFIG[variantUUID] ? "✅ SIM" : "❌ NÃO - PRECISA ADICIONAR AO PLAN_CONFIG") : "❌ Não informado");
+    console.log("📦 TODOS OS PRODUTOS:", JSON.stringify(products));
     console.log("==========================================");
 
     // Validar que temos email

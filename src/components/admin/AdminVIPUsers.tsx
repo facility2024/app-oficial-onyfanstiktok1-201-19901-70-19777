@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Crown, Search, Edit, XCircle, RefreshCw, Users, Clock, AlertTriangle, TrendingUp, Plus, Zap, CheckCircle } from 'lucide-react';
+import { Crown, Search, Edit, XCircle, RefreshCw, Users, Clock, AlertTriangle, TrendingUp, Plus, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { useVIPManagement, VIPUser, WebhookTestResult } from '@/hooks/useVIPManagement';
+import { useVIPManagement, VIPUser } from '@/hooks/useVIPManagement';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminActivateVIP } from './AdminActivateVIP';
 
 export const AdminVIPUsers = () => {
@@ -18,14 +17,12 @@ export const AdminVIPUsers = () => {
     vipUsers, 
     loading, 
     vipStats, 
-    testingWebhook,
     fetchVIPUsers, 
     updateVIPUser, 
     createVIPUser,
     cancelSubscription, 
     renewSubscription,
     checkExpiredSubscriptions,
-    testHoopayWebhook,
     activateVIPManually,
   } = useVIPManagement();
 
@@ -45,16 +42,14 @@ export const AdminVIPUsers = () => {
   });
   const [isCreating, setIsCreating] = useState(false);
 
-  // Estado para modal de teste de webhook
-  const [showTestModal, setShowTestModal] = useState(false);
-  const [testForm, setTestForm] = useState({
+  // Estado para modal de ativação direta
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [activateForm, setActivateForm] = useState({
     email: '',
     name: '',
-    phone: '',
-    cpf: '',
     plan_type: 'mensal' as 'mensal' | 'trimestral' | 'anual',
   });
-  const [testResult, setTestResult] = useState<WebhookTestResult | null>(null);
+  const [isActivating, setIsActivating] = useState(false);
 
   useEffect(() => {
     // Verificar expirados ao carregar
@@ -114,43 +109,23 @@ export const AdminVIPUsers = () => {
     }
   };
 
-  // Handler para testar webhook
-  const handleTestWebhook = async (activateDirect: boolean = false) => {
-    if (!testForm.email) return;
+  // Handler para ativar VIP diretamente
+  const handleActivateDirect = async () => {
+    if (!activateForm.email) return;
     
-    if (activateDirect) {
-      // Ativar VIP diretamente sem testar webhook
-      const success = await activateVIPManually({
-        email: testForm.email,
-        name: testForm.name || undefined,
-        phone: testForm.phone || undefined,
-        cpf: testForm.cpf || undefined,
-        plan_type: testForm.plan_type,
-      });
-      
-      if (success) {
-        setTestResult({ 
-          success: true, 
-          mode: 'direct', 
-          message: 'VIP ativado diretamente com sucesso!' 
-        });
-        fetchVIPUsers({ status: statusFilter, planType: planFilter, search: searchTerm });
-      }
-    } else {
-      // Testar via webhook
-      const result = await testHoopayWebhook({
-        email: testForm.email,
-        name: testForm.name || undefined,
-        phone: testForm.phone || undefined,
-        cpf: testForm.cpf || undefined,
-        plan_type: testForm.plan_type,
-      });
-      
-      setTestResult(result);
-      
-      if (result.success) {
-        fetchVIPUsers({ status: statusFilter, planType: planFilter, search: searchTerm });
-      }
+    setIsActivating(true);
+    const success = await activateVIPManually({
+      email: activateForm.email,
+      name: activateForm.name || undefined,
+      plan_type: activateForm.plan_type,
+    });
+    
+    setIsActivating(false);
+    
+    if (success) {
+      setShowActivateModal(false);
+      setActivateForm({ email: '', name: '', plan_type: 'mensal' });
+      fetchVIPUsers({ status: statusFilter, planType: planFilter, search: searchTerm });
     }
   };
 
@@ -226,15 +201,14 @@ export const AdminVIPUsers = () => {
         <div className="flex gap-2">
           <Button 
             onClick={() => {
-              setTestForm({ email: '', name: '', phone: '', cpf: '', plan_type: 'mensal' });
-              setTestResult(null);
-              setShowTestModal(true);
+              setActivateForm({ email: '', name: '', plan_type: 'mensal' });
+              setShowActivateModal(true);
             }} 
             variant="outline" 
             className="border-green-500/50 text-green-400 hover:bg-green-500/10"
           >
-            <Zap className="w-4 h-4 mr-2" />
-            Testar Webhook
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Ativar VIP
           </Button>
           <Button onClick={() => setShowCreateModal(true)} className="bg-amber-500 hover:bg-amber-600">
             <Plus className="w-4 h-4 mr-2" />
@@ -565,205 +539,77 @@ export const AdminVIPUsers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Test Webhook Modal */}
-      <Dialog open={showTestModal} onOpenChange={setShowTestModal}>
-        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg">
+      {/* Activate VIP Modal */}
+      <Dialog open={showActivateModal} onOpenChange={setShowActivateModal}>
+        <DialogContent className="bg-gray-900 border-gray-700 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Zap className="w-5 h-5 text-green-400" />
-              Testar Webhook Hoopay
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              Ativar VIP Diretamente
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Simule um pagamento da Hoopay para testar a ativação VIP ou ative diretamente.
+              Ative um usuário VIP diretamente no banco de dados.
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="test" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-              <TabsTrigger value="test">Testar Webhook</TabsTrigger>
-              <TabsTrigger value="direct">Ativar Direto</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="test" className="space-y-4 mt-4">
-              <div>
-                <Label className="text-gray-300">Email *</Label>
-                <Input 
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={testForm.email} 
-                  onChange={(e) => setTestForm({ ...testForm, email: e.target.value })}
-                  className="bg-gray-800 border-gray-700"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-300">Nome</Label>
-                  <Input 
-                    placeholder="Nome do usuário"
-                    value={testForm.name} 
-                    onChange={(e) => setTestForm({ ...testForm, name: e.target.value })}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-300">Telefone</Label>
-                  <Input 
-                    placeholder="(11) 99999-9999"
-                    value={testForm.phone} 
-                    onChange={(e) => setTestForm({ ...testForm, phone: e.target.value })}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-300">CPF</Label>
-                  <Input 
-                    placeholder="123.456.789-00"
-                    value={testForm.cpf} 
-                    onChange={(e) => setTestForm({ ...testForm, cpf: e.target.value })}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-300">Plano</Label>
-                  <Select 
-                    value={testForm.plan_type} 
-                    onValueChange={(v: 'mensal' | 'trimestral' | 'anual') => setTestForm({ ...testForm, plan_type: v })}
-                  >
-                    <SelectTrigger className="bg-gray-800 border-gray-700">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mensal">Mensal</SelectItem>
-                      <SelectItem value="trimestral">Trimestral</SelectItem>
-                      <SelectItem value="anual">Anual</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={() => handleTestWebhook(false)} 
-                className="w-full bg-green-600 hover:bg-green-700"
-                disabled={!testForm.email || testingWebhook}
-              >
-                {testingWebhook ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Testando...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Enviar Webhook de Teste
-                  </>
-                )}
-              </Button>
-            </TabsContent>
-            
-            <TabsContent value="direct" className="space-y-4 mt-4">
-              <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                <p className="text-sm text-amber-300">
-                  ⚡ Ativação direta ignora o webhook e cria o VIP diretamente no banco de dados.
-                </p>
-              </div>
-              
-              <div>
-                <Label className="text-gray-300">Email *</Label>
-                <Input 
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={testForm.email} 
-                  onChange={(e) => setTestForm({ ...testForm, email: e.target.value })}
-                  className="bg-gray-800 border-gray-700"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-300">Nome</Label>
-                  <Input 
-                    placeholder="Nome do usuário"
-                    value={testForm.name} 
-                    onChange={(e) => setTestForm({ ...testForm, name: e.target.value })}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-300">Plano</Label>
-                  <Select 
-                    value={testForm.plan_type} 
-                    onValueChange={(v: 'mensal' | 'trimestral' | 'anual') => setTestForm({ ...testForm, plan_type: v })}
-                  >
-                    <SelectTrigger className="bg-gray-800 border-gray-700">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mensal">Mensal</SelectItem>
-                      <SelectItem value="trimestral">Trimestral</SelectItem>
-                      <SelectItem value="anual">Anual</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={() => handleTestWebhook(true)} 
-                className="w-full bg-amber-500 hover:bg-amber-600"
-                disabled={!testForm.email || testingWebhook}
-              >
-                {testingWebhook ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Ativando...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Ativar VIP Diretamente
-                  </>
-                )}
-              </Button>
-            </TabsContent>
-          </Tabs>
-          
-          {/* Resultado do Teste */}
-          {testResult && (
-            <div className={`mt-4 p-4 rounded-lg border ${
-              testResult.success 
-                ? 'bg-green-500/10 border-green-500/30' 
-                : 'bg-red-500/10 border-red-500/30'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                {testResult.success ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-400" />
-                )}
-                <span className={`font-medium ${testResult.success ? 'text-green-400' : 'text-red-400'}`}>
-                  {testResult.success ? 'Sucesso!' : 'Falha'}
-                </span>
-              </div>
-              <p className="text-sm text-gray-300">{testResult.message}</p>
-              
-              {testResult.vip_status && testResult.vip_status !== 'não encontrado' && (
-                <div className="mt-2 text-xs text-gray-400">
-                  <p>Status VIP: <span className="text-green-400">{testResult.vip_status.subscription_status}</span></p>
-                  {testResult.vip_status.subscription_end && (
-                    <p>Expira: {format(new Date(testResult.vip_status.subscription_end), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                  )}
-                </div>
-              )}
-              
-              {testResult.error && (
-                <p className="mt-2 text-xs text-red-400">{testResult.error}</p>
-              )}
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-gray-300">Email *</Label>
+              <Input 
+                type="email"
+                placeholder="email@exemplo.com"
+                value={activateForm.email} 
+                onChange={(e) => setActivateForm({ ...activateForm, email: e.target.value })}
+                className="bg-gray-800 border-gray-700"
+              />
             </div>
-          )}
+            <div>
+              <Label className="text-gray-300">Nome</Label>
+              <Input 
+                placeholder="Nome do usuário"
+                value={activateForm.name} 
+                onChange={(e) => setActivateForm({ ...activateForm, name: e.target.value })}
+                className="bg-gray-800 border-gray-700"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-300">Plano</Label>
+              <Select 
+                value={activateForm.plan_type} 
+                onValueChange={(v: 'mensal' | 'trimestral' | 'anual') => setActivateForm({ ...activateForm, plan_type: v })}
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mensal">Mensal (30 dias)</SelectItem>
+                  <SelectItem value="trimestral">Trimestral (90 dias)</SelectItem>
+                  <SelectItem value="anual">Anual (365 dias)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTestModal(false)}>
-              Fechar
+            <Button variant="outline" onClick={() => setShowActivateModal(false)} disabled={isActivating}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleActivateDirect} 
+              className="bg-green-600 hover:bg-green-700"
+              disabled={!activateForm.email || isActivating}
+            >
+              {isActivating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Ativando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Ativar VIP
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

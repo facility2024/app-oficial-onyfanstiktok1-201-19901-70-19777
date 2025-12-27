@@ -9,11 +9,5 @@ verify_jwt = false
 [functions.bunny-video-upload]
 verify_jwt = false
 
-[functions.hoopay-webhook]
-verify_jwt = false
-
-[functions.test-hoopay-webhook]
-verify_jwt = false
-
 [functions.trigger-webhook]
 verify_jwt = false

@@ -43,22 +43,12 @@ export interface WebhookStats {
   last24h: number;
 }
 
-export interface WebhookTestResult {
-  success: boolean;
-  mode: string;
-  message: string;
-  webhook_status?: number;
-  webhook_result?: any;
-  vip_status?: any;
-  payload_sent?: any;
-  error?: string;
-}
+// WebhookTestResult removed - Hoopay integration cleaned up
 
 export const useVIPManagement = () => {
   const [vipUsers, setVIPUsers] = useState<VIPUser[]>([]);
   const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(false);
-  const [testingWebhook, setTestingWebhook] = useState(false);
   const [vipStats, setVIPStats] = useState<VIPStats>({ total: 0, active: 0, expiring: 0, expired: 0, newThisMonth: 0 });
   const [webhookStats, setWebhookStats] = useState<WebhookStats>({ total: 0, success: 0, errors: 0, last24h: 0 });
 
@@ -306,47 +296,6 @@ export const useVIPManagement = () => {
   }, []);
 
   // Testar webhook Hoopay
-  const testHoopayWebhook = useCallback(async (params: {
-    email: string;
-    name?: string;
-    phone?: string;
-    cpf?: string;
-    plan_type?: 'mensal' | 'trimestral' | 'anual';
-    simulate_only?: boolean;
-  }): Promise<WebhookTestResult> => {
-    setTestingWebhook(true);
-    try {
-      console.log('🧪 Testando webhook para:', params.email);
-      
-      const { data, error } = await supabase.functions.invoke('test-hoopay-webhook', {
-        body: params
-      });
-
-      if (error) {
-        console.error('❌ Erro ao testar webhook:', error);
-        toast.error('Erro ao testar webhook: ' + error.message);
-        return { success: false, mode: 'error', message: error.message, error: error.message };
-      }
-
-      console.log('📥 Resultado do teste:', data);
-      
-      if (data.success) {
-        toast.success(data.message || 'Webhook testado com sucesso!');
-      } else {
-        toast.error(data.error || 'Falha no teste do webhook');
-      }
-
-      return data as WebhookTestResult;
-    } catch (error) {
-      console.error('❌ Erro ao testar webhook:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error('Erro ao testar webhook: ' + errorMessage);
-      return { success: false, mode: 'error', message: errorMessage, error: errorMessage };
-    } finally {
-      setTestingWebhook(false);
-    }
-  }, []);
-
   // Ativar VIP manualmente (direto no banco)
   const activateVIPManually = useCallback(async (params: {
     email: string;
@@ -424,7 +373,6 @@ export const useVIPManagement = () => {
     vipUsers,
     webhookLogs,
     loading,
-    testingWebhook,
     vipStats,
     webhookStats,
     fetchVIPUsers,
@@ -434,7 +382,6 @@ export const useVIPManagement = () => {
     cancelSubscription,
     renewSubscription,
     checkExpiredSubscriptions,
-    testHoopayWebhook,
     activateVIPManually,
   };
 };

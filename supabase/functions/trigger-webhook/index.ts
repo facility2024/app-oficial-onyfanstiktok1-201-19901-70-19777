@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 // VERSÃO DO TRIGGER WEBHOOK - Para verificar deploy
-const TRIGGER_VERSION = "1.2";
-const DEPLOY_TIMESTAMP = "2025-12-27T12:30:00Z";
+const TRIGGER_VERSION = "1.3";
+const DEPLOY_TIMESTAMP = "2025-12-27T14:45:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

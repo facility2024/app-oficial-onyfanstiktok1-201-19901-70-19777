@@ -2,13 +2,13 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ========================================
-// HOOPAY WEBHOOK - V2.3 - 2025-12-27
-// Suporta MÚLTIPLAS estruturas de payload
-// INCLUI CHECK DE VERSÃO COM _test: true
+// HOOPAY WEBHOOK - V3.0 - 2025-12-27
+// FORCE REDEPLOY - NÃO EXIGE WHATSAPP!
+// Phone/WhatsApp é OPCIONAL
 // ========================================
 
-const WEBHOOK_VERSION = "2.3";
-const DEPLOY_TIMESTAMP = "2025-12-27T14:50:00Z";
+const WEBHOOK_VERSION = "3.0";
+const DEPLOY_TIMESTAMP = new Date().toISOString();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

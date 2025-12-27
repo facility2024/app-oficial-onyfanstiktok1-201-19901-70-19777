@@ -11,6 +11,7 @@ import { useVIPManagement, VIPUser } from '@/hooks/useVIPManagement';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AdminActivateVIP } from './AdminActivateVIP';
+import { WebhookTester } from './WebhookTester';
 
 export const AdminVIPUsers = () => {
   const { 
@@ -189,6 +190,9 @@ export const AdminVIPUsers = () => {
 
   return (
     <div className="space-y-6">
+      {/* Ferramenta de Teste do Webhook */}
+      <WebhookTester />
+
       {/* Painel de Ativação Manual VIP */}
       <AdminActivateVIP />
 

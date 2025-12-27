@@ -27,14 +27,14 @@ interface VIPPlans {
 
 const defaultVIPPlans: VIPPlans = {
   mensal: {
-    price: 19.99,
+    price: 19.90,
     features: [
       'Acesso a conteúdo premium',
       'Sem anúncios',
       'Chat exclusivo com modelos',
       'Badge VIP no perfil'
     ],
-    paymentUrl: 'https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1'
+    paymentUrl: 'https://p.hoopay.com.br/v/4957ea7a-71f2-47ec-8fff-df29df9a340a'
   },
   trimestral: {
     price: 49.99,

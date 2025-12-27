@@ -1,7 +1,7 @@
 // ========================================
-// TEST HOOPAY WEBHOOK - V2.5 - 2025-12-27
-// Força redeploy - Remove validação WhatsApp
-// Phone é opcional, não obrigatório!
+// TEST HOOPAY WEBHOOK - V3.0 - 2025-12-27
+// FORCE REDEPLOY - Phone é OPCIONAL!
+// NÃO exige WhatsApp para funcionar
 // ========================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";

@@ -205,9 +205,18 @@ export const IntegrationsModal = ({ isOpen, onClose }: IntegrationsModalProps) =
           description: 'SMS de teste enviado com sucesso',
         });
       } else if (type === 'webhook') {
-        const { error } = await supabase.functions.invoke('trigger-webhook', {
+        if (!webhookUrl || webhookUrl.trim() === '') {
+          toast({
+            title: 'URL não configurada',
+            description: 'Configure uma URL de webhook antes de testar',
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        const { data, error } = await supabase.functions.invoke('trigger-webhook', {
           body: {
-            url: webhookUrl,
+            url: webhookUrl.trim(),
             data: {
               type: 'test',
               message: 'Teste de webhook',
@@ -220,7 +229,7 @@ export const IntegrationsModal = ({ isOpen, onClose }: IntegrationsModalProps) =
 
         toast({
           title: 'Teste realizado!',
-          description: 'Webhook disparado com sucesso',
+          description: `Webhook disparado com sucesso${data?.version ? ` (v${data.version})` : ''}`,
         });
       }
     } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Search, CheckCircle, XCircle, Clock, RefreshCw, Eye } from 'lucide-react';
+import { FileText, Search, CheckCircle, XCircle, Clock, RefreshCw, Eye, Zap, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useVIPManagement, WebhookLog } from '@/hooks/useVIPManagement';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const AdminWebhookLogs = () => {
   const { webhookLogs, loading, webhookStats, fetchWebhookLogs } = useVIPManagement();
@@ -17,10 +19,49 @@ export const AdminWebhookLogs = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
+  const [testingWebhook, setTestingWebhook] = useState(false);
+  const [webhookVersion, setWebhookVersion] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWebhookLogs();
   }, []);
+
+  const testWebhookVersion = async () => {
+    setTestingWebhook(true);
+    try {
+      // Envia um payload de teste mínimo para verificar a versão deployada
+      const { data, error } = await supabase.functions.invoke('hoopay-webhook', {
+        body: {
+          _test: true,
+          customer: { email: 'test@version-check.com' },
+          payment: { status: 'test' }
+        }
+      });
+
+      if (error) {
+        console.error('Erro ao testar webhook:', error);
+        toast.error('Erro ao testar webhook: ' + error.message);
+        setWebhookVersion('Erro');
+        return;
+      }
+
+      const version = data?.version || 'Desconhecida';
+      const deployedAt = data?.deployedAt || 'N/A';
+      setWebhookVersion(`V${version} (Deploy: ${deployedAt})`);
+      
+      if (version === '2.3') {
+        toast.success(`Webhook V${version} está deployado corretamente!`);
+      } else {
+        toast.warning(`Webhook V${version} detectado. Esperado: V2.3`);
+      }
+    } catch (err: any) {
+      console.error('Exception ao testar webhook:', err);
+      toast.error('Falha ao testar webhook');
+      setWebhookVersion('Falha na conexão');
+    } finally {
+      setTestingWebhook(false);
+    }
+  };
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -47,16 +88,49 @@ export const AdminWebhookLogs = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <FileText className="w-8 h-8 text-blue-400" />
           <h1 className="text-2xl font-bold text-white">Logs de Webhooks</h1>
         </div>
-        <Button onClick={() => fetchWebhookLogs()} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={testWebhookVersion} 
+            variant="outline" 
+            size="sm"
+            disabled={testingWebhook}
+            className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            {testingWebhook ? 'Testando...' : 'Testar Versão'}
+          </Button>
+          <Button onClick={() => fetchWebhookLogs()} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
       </div>
+
+      {/* Webhook Version Status */}
+      {webhookVersion && (
+        <Card className={`border ${webhookVersion.includes('2.3') ? 'bg-green-900/20 border-green-500/30' : 'bg-amber-900/20 border-amber-500/30'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              {webhookVersion.includes('2.3') ? (
+                <CheckCircle className="w-6 h-6 text-green-400" />
+              ) : (
+                <AlertTriangle className="w-6 h-6 text-amber-400" />
+              )}
+              <div>
+                <p className="font-medium text-white">Versão do Webhook Deployado</p>
+                <p className={webhookVersion.includes('2.3') ? 'text-green-400' : 'text-amber-400'}>
+                  {webhookVersion}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

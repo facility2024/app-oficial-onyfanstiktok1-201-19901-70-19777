@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AdminHeader } from './admin/AdminHeader';
-import { AdminNavigation } from './admin/AdminNavigation';
+import { AdminSidebar } from './admin/AdminSidebar';
 import { AdminStats } from './admin/AdminStats';
 import { AdminCharts } from './admin/AdminCharts';
 import { AdminContentTable } from './admin/AdminContentTable';
@@ -44,6 +44,7 @@ import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { TikTokApp } from '@/pages/TikTokApp';
 import { AdminVideoScheduler } from './admin/AdminVideoScheduler';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 // Lazy load AdminIntelligentFeed to avoid build issues
 const AdminIntelligentFeed = lazy(() => import('./admin/AdminIntelligentFeed').then(mod => ({ default: mod.AdminIntelligentFeed })));
@@ -143,7 +144,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','videos','genres','intelligent-feed','money','vip','webhook-logs','settings','documentation'];
+    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','webhook-logs','settings','documentation'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -225,8 +226,8 @@ export const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-lg text-white">Carregando...</div>
       </div>
     );
   }
@@ -242,24 +243,30 @@ export const AdminDashboard = () => {
         onClose={() => setShowSaleNotification(false)} 
       />
       
-      <div className="min-h-screen bg-black">
-        <AdminHeader 
-          notifications={notifications}
-          setNotifications={setNotifications}
-          user={user}
-          onLogout={handleLogout}
-        />
-        
-        <AdminNavigation 
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          userId={user?.id}
-        />
-        
-        <main className="max-w-[1200px] mx-auto py-2 sm:py-4 lg:py-6 px-2 sm:px-4 lg:px-6 pt-20">
-          {renderContent()}
-        </main>
-      </div>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-black">
+          <AdminSidebar 
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+            userId={user?.id}
+          />
+          
+          <div className="flex-1 flex flex-col min-w-0">
+            <AdminHeader 
+              notifications={notifications}
+              setNotifications={setNotifications}
+              user={user}
+              onLogout={handleLogout}
+            />
+            
+            <main className="flex-1 p-2 sm:p-4 lg:p-6 overflow-auto">
+              <div className="max-w-[1400px] mx-auto">
+                {renderContent()}
+              </div>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
     </>
   );
 };

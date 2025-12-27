@@ -50,16 +50,19 @@ serve(async (req) => {
       });
     }
 
-    // Extrair dados do cliente
-    const email = payload.customer?.email || payload.email;
-    const phone = payload.customer?.phone || payload.phone;
-    const customerName = payload.customer?.name || payload.name || 'Cliente Hoopay';
+    // Extrair dados do cliente (suporta múltiplos formatos de payload)
+    const email = payload.customer?.email || payload.email || payload.data?.customer?.email || payload.data?.email;
+    const phone = payload.customer?.phone || payload.customer?.whatsapp || payload.phone || payload.whatsapp || payload.data?.customer?.phone;
+    const customerName = payload.customer?.name || payload.name || payload.data?.customer?.name || 'Cliente Hoopay';
 
-    if (!email && !phone) {
-      console.error('❌ Sem email ou telefone para identificar cliente');
+    console.log('👤 Cliente extraído:', { email, phone, customerName });
+
+    if (!email) {
+      console.error('❌ Email não encontrado no payload:', JSON.stringify(payload, null, 2));
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Email ou telefone do cliente não encontrado' 
+        error: 'Email é obrigatório',
+        received_payload: payload
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

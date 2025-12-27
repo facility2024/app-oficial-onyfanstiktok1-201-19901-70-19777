@@ -41,7 +41,7 @@ export const AdminWebhookLogs = () => {
   const [simName, setSimName] = useState('');
   const [simPhone, setSimPhone] = useState('');
   const [simCpf, setSimCpf] = useState('');
-  const [simPlanType, setSimPlanType] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');
+  const [simPlanType, setSimPlanType] = useState<'mensal' | 'trimestral' | 'anual'>('mensal');
 
   useEffect(() => {
     fetchWebhookLogs();
@@ -180,7 +180,7 @@ export const AdminWebhookLogs = () => {
     setSimName('');
     setSimPhone('');
     setSimCpf('');
-    setSimPlanType('monthly');
+    setSimPlanType('mensal');
   };
 
   useEffect(() => {
@@ -562,24 +562,24 @@ export const AdminWebhookLogs = () => {
               {/* Tipo de Plano */}
               <div className="space-y-2">
                 <Label className="text-white">Tipo de Plano</Label>
-                <Select value={simPlanType} onValueChange={(v: 'monthly' | 'quarterly' | 'annual') => setSimPlanType(v)}>
+                <Select value={simPlanType} onValueChange={(v: 'mensal' | 'trimestral' | 'anual') => setSimPlanType(v)}>
                   <SelectTrigger className="bg-gray-800 border-gray-700">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">
+                    <SelectItem value="mensal">
                       <div className="flex items-center gap-2">
                         <span>Mensal</span>
                         <span className="text-xs text-gray-400">(30 dias - R$ 19,90)</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="quarterly">
+                    <SelectItem value="trimestral">
                       <div className="flex items-center gap-2">
                         <span>Trimestral</span>
                         <span className="text-xs text-gray-400">(90 dias - R$ 49,90)</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="annual">
+                    <SelectItem value="anual">
                       <div className="flex items-center gap-2">
                         <span>Anual</span>
                         <span className="text-xs text-gray-400">(365 dias - R$ 149,90)</span>

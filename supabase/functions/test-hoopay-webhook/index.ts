@@ -1,15 +1,16 @@
 // ========================================
-// TEST HOOPAY WEBHOOK - V3.1 - 2025-12-27
-// FORCE REDEPLOY - CORRIGIDO LOOP DE ERRO
-// Phone/WhatsApp é COMPLETAMENTE OPCIONAL
-// NÃO exige telefone para funcionar
+// TEST HOOPAY WEBHOOK - V3.2 - FORCE DEPLOY
+// Timestamp: 2025-12-27T03:50:00Z
+// PHONE/WHATSAPP IS 100% OPTIONAL
+// This version does NOT require phone
+// Build ID: force-deploy-v32-no-whatsapp
 // ========================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const FUNCTION_VERSION = "3.1";
-const DEPLOY_TIMESTAMP = "2025-12-27T15:00:00Z";
+const FUNCTION_VERSION = "3.2";
+const BUILD_ID = "force-deploy-v32-no-whatsapp-20251227";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,11 +24,11 @@ interface TestWebhookRequest {
   cpf?: string;
   plan_type?: 'mensal' | 'trimestral' | 'anual';
   simulate_only?: boolean;
-  _test?: boolean; // Para teste de versão
+  _test?: boolean;
 }
 
 serve(async (req: Request): Promise<Response> => {
-  console.log(`🧪 Test Hoopay Webhook V${FUNCTION_VERSION} - Iniciando...`);
+  console.log(`🧪 Test Hoopay Webhook V${FUNCTION_VERSION} (${BUILD_ID}) - Starting...`);
   
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -40,28 +41,30 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const request: TestWebhookRequest = await req.json();
     
-    // Teste de versão - responde imediatamente
+    // Version test - responds immediately
     if (request._test === true) {
-      console.log(`✅ Teste de versão: V${FUNCTION_VERSION}`);
+      console.log(`✅ Version test: V${FUNCTION_VERSION} (${BUILD_ID})`);
       return new Response(
         JSON.stringify({ 
           success: true,
           version: FUNCTION_VERSION,
-          message: "Test webhook funcionando!",
-          deploy: DEPLOY_TIMESTAMP,
-          timestamp: new Date().toISOString()
+          build: BUILD_ID,
+          message: "Test webhook V3.2 funcionando!",
+          timestamp: new Date().toISOString(),
+          phoneRequired: false
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
-    console.log("🧪 Teste de Webhook Hoopay V3.1 iniciado");
+    console.log("🧪 Test Hoopay Webhook V3.2 started");
     console.log("📧 Email:", request.email);
-    console.log("👤 Nome:", request.name || "Teste VIP");
-    console.log("📱 Telefone:", request.phone || "(não informado - OPCIONAL)");
-    console.log("🆔 CPF:", request.cpf || "(não informado - OPCIONAL)");
-    console.log("📦 Plano:", request.plan_type || "mensal");
+    console.log("👤 Name:", request.name || "Teste VIP");
+    console.log("📱 Phone:", request.phone || "(NOT PROVIDED - THIS IS OK!)");
+    console.log("🆔 CPF:", request.cpf || "(not provided - optional)");
+    console.log("📦 Plan:", request.plan_type || "mensal");
     
+    // ONLY email is required - phone is 100% optional
     if (!request.email) {
       return new Response(
         JSON.stringify({ success: false, error: "Email é obrigatório" }),
@@ -69,7 +72,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Determinar valores baseado no plano
+    // Plan configuration
     const planConfig = {
       mensal: { days: 30, amount: 29.90, product_id: "6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1" },
       trimestral: { days: 90, amount: 79.90, product_id: "f488d9e1-3e79-4ea5-a9cc-4a108bb03c92" },
@@ -78,7 +81,7 @@ serve(async (req: Request): Promise<Response> => {
     
     const plan = planConfig[request.plan_type || 'mensal'];
 
-    // Simular payload da Hoopay - phone é opcional
+    // Simulate Hoopay payload - phone is optional (empty string is fine)
     const hoopayPayload = {
       event: "payment.approved",
       type: "payment",
@@ -89,7 +92,6 @@ serve(async (req: Request): Promise<Response> => {
         customer_email: request.email,
         name: request.name || "Teste VIP",
         buyer_name: request.name || "Teste VIP",
-        // Phone é OPCIONAL - pode ser vazio
         phone: request.phone || "",
         whatsapp: request.phone || "",
         cpf: request.cpf || "",
@@ -98,14 +100,14 @@ serve(async (req: Request): Promise<Response> => {
       }
     };
 
-    console.log("📤 Payload simulado V3.1:", JSON.stringify(hoopayPayload, null, 2));
+    console.log("📤 Simulated payload V3.2:", JSON.stringify(hoopayPayload, null, 2));
 
-    // Registrar log do teste
+    // Register test log
     try {
       await supabase
         .from("webhook_logs")
         .insert({
-          webhook_type: "hoopay_test_v3.1",
+          webhook_type: "hoopay_test_v3.2",
           payload: hoopayPayload,
           email: request.email,
           plan_type: request.plan_type || "mensal",
@@ -113,25 +115,25 @@ serve(async (req: Request): Promise<Response> => {
           created_at: new Date().toISOString(),
         });
     } catch (logError) {
-      console.log("⚠️ Erro ao criar log (não crítico):", logError);
+      console.log("⚠️ Log error (non-critical):", logError);
     }
 
     if (request.simulate_only) {
-      console.log("🔍 Modo simulação - não enviando para webhook real");
+      console.log("🔍 Simulation mode - not sending to real webhook");
       return new Response(
         JSON.stringify({ 
           success: true, 
           mode: "simulation",
           version: FUNCTION_VERSION,
-          message: "Payload simulado gerado (não enviado)",
+          message: "Simulated payload generated (not sent)",
           payload: hoopayPayload 
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Chamar o webhook real internamente
-    console.log("📡 Enviando para hoopay-webhook V3.0...");
+    // Call real webhook
+    console.log("📡 Sending to hoopay-webhook V3.0...");
     
     const webhookResponse = await fetch(`${supabaseUrl}/functions/v1/hoopay-webhook`, {
       method: "POST",
@@ -143,9 +145,9 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     const webhookResult = await webhookResponse.json();
-    console.log("📥 Resposta do webhook:", webhookResult);
+    console.log("📥 Webhook response:", webhookResult);
 
-    // Verificar se VIP foi ativado
+    // Check if VIP was activated
     const { data: vipCheck } = await supabase
       .from("premium_users")
       .select("id, email, subscription_status, subscription_end")
@@ -159,6 +161,7 @@ serve(async (req: Request): Promise<Response> => {
         success: webhookResponse.ok,
         mode: "real",
         version: FUNCTION_VERSION,
+        build: BUILD_ID,
         message: webhookResponse.ok 
           ? `VIP ${vipActivated ? 'ativado' : 'processado'} com sucesso!`
           : "Erro ao processar webhook",
@@ -171,14 +174,15 @@ serve(async (req: Request): Promise<Response> => {
     );
 
   } catch (error: unknown) {
-    console.error("❌ Erro no teste de webhook V3.1:", error);
+    console.error("❌ Error in test webhook V3.2:", error);
     
-    const errorMessage = error instanceof Error ? error.message : "Erro interno";
+    const errorMessage = error instanceof Error ? error.message : "Internal error";
     
     return new Response(
       JSON.stringify({ 
         success: false, 
         version: FUNCTION_VERSION,
+        build: BUILD_ID,
         error: errorMessage,
         details: String(error)
       }),

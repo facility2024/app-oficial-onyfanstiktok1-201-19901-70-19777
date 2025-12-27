@@ -68,11 +68,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!targetUrl) {
+      console.log("❌ No webhook URL provided and no active integration found");
       return new Response(
         JSON.stringify({
           success: false,
-          error: "No webhook URL provided",
-          message: "Provide a 'webhook_url' or 'url' parameter, or configure a webhook integration",
+          error: "No webhook URL configured",
+          message: "Configure uma URL de webhook nas integrações ou forneça 'url' no body",
+          version: TRIGGER_VERSION,
         }),
         {
           status: 400,

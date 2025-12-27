@@ -46,7 +46,7 @@ const defaultVIPPlans: VIPPlans = {
       'Suporte prioritário',
       'Conteúdo exclusivo semanal'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/f488d9e1-3e79-4ea5-a9cc-4a108bb03c92'
+    paymentUrl: 'https://p.hoopay.com.br/v/6834a36c-2528-4fc8-a101-e98c838f0312'
   },
   anual: {
     price: 149.99,
@@ -57,7 +57,7 @@ const defaultVIPPlans: VIPPlans = {
       'Sorteios e brindes',
       'Perfil verificado especial'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/61207e4a-9455-4cb8-8207-9002a87c5fe6'
+    paymentUrl: 'https://p.hoopay.com.br/v/8dc017f6-2419-4df3-98fe-04a07e250015'
   }
 };
 

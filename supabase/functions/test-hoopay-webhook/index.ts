@@ -1,3 +1,8 @@
+// ========================================
+// TEST HOOPAY WEBHOOK - V2.4 - 2025-12-27
+// Força redeploy - Remove validação WhatsApp
+// ========================================
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

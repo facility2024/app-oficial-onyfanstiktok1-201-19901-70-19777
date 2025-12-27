@@ -70,10 +70,10 @@ export const AdminWebhookLogs = () => {
       const deployedAt = data?.deployedAt || 'N/A';
       setWebhookVersion(`V${version} (Deploy: ${deployedAt})`);
       
-      if (version === '2.3') {
+      if (version === '3.0') {
         toast.success(`Webhook V${version} está deployado corretamente!`);
       } else {
-        toast.warning(`Webhook V${version} detectado. Esperado: V2.3`);
+        toast.warning(`Webhook V${version} detectado. Esperado: V3.0`);
       }
     } catch (err: any) {
       console.error('Exception ao testar webhook:', err);
@@ -244,17 +244,17 @@ export const AdminWebhookLogs = () => {
 
       {/* Webhook Version Status */}
       {webhookVersion && (
-        <Card className={`border ${webhookVersion.includes('2.3') ? 'bg-green-900/20 border-green-500/30' : 'bg-amber-900/20 border-amber-500/30'}`}>
+        <Card className={`border ${webhookVersion.includes('3.0') ? 'bg-green-900/20 border-green-500/30' : 'bg-amber-900/20 border-amber-500/30'}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              {webhookVersion.includes('2.3') ? (
+              {webhookVersion.includes('3.0') ? (
                 <CheckCircle className="w-6 h-6 text-green-400" />
               ) : (
                 <AlertTriangle className="w-6 h-6 text-amber-400" />
               )}
               <div>
                 <p className="font-medium text-white">Versão do Webhook Deployado</p>
-                <p className={webhookVersion.includes('2.3') ? 'text-green-400' : 'text-amber-400'}>
+                <p className={webhookVersion.includes('3.0') ? 'text-green-400' : 'text-amber-400'}>
                   {webhookVersion}
                 </p>
               </div>

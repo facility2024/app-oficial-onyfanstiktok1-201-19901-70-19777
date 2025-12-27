@@ -4,11 +4,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ========================================
 // HOOPAY WEBHOOK - V2.3 - 2025-12-27
 // Suporta MÚLTIPLAS estruturas de payload
-// FORÇANDO REDEPLOY COM LOGS MELHORADOS
+// INCLUI CHECK DE VERSÃO COM _test: true
 // ========================================
 
 const WEBHOOK_VERSION = "2.3";
-const DEPLOY_TIMESTAMP = "2025-12-27T12:30:00Z";
+const DEPLOY_TIMESTAMP = "2025-12-27T14:50:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -100,6 +100,21 @@ serve(async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "JSON inválido", version: WEBHOOK_VERSION }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // CHECK DE VERSÃO - Retorna imediatamente se for um teste de versão
+    if (payload?._test === true) {
+      console.log("🧪 Teste de versão detectado - retornando info da versão");
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: "Webhook funcionando!",
+          version: WEBHOOK_VERSION,
+          deployedAt: DEPLOY_TIMESTAMP,
+          timestamp: new Date().toISOString()
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

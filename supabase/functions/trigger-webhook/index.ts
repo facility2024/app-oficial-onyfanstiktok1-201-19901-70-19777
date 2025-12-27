@@ -52,8 +52,10 @@ const handler = async (req: Request): Promise<Response> => {
         console.error('Error fetching integration:', integrationError);
       }
 
-      if (integration?.configuration?.url && integration.configuration.enabled) {
+      // Se a integração existe e tem URL, usar (is_active já foi verificado na query)
+      if (integration?.configuration?.url) {
         targetUrl = integration.configuration.url;
+        console.log('Using webhook URL from integration config:', targetUrl);
       }
     }
 

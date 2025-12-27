@@ -50,35 +50,42 @@ export const AdminWebhookLogs = () => {
   const testWebhookVersion = async () => {
     setTestingWebhook(true);
     try {
-      // Envia um payload de teste mínimo para verificar a versão deployada
-      const { data, error } = await supabase.functions.invoke('hoopay-webhook', {
-        body: {
-          _test: true,
-          customer: { email: 'test@version-check.com' },
-          payment: { status: 'test' }
-        }
+      // Testar hoopay-webhook
+      const { data: mainData, error: mainError } = await supabase.functions.invoke('hoopay-webhook', {
+        body: { _test: true }
       });
-
-      if (error) {
-        console.error('Erro ao testar webhook:', error);
-        toast.error('Erro ao testar webhook: ' + error.message);
-        setWebhookVersion('Erro');
+      
+      // Testar test-hoopay-webhook
+      const { data: testData, error: testError } = await supabase.functions.invoke('test-hoopay-webhook', {
+        body: { _test: true }
+      });
+      
+      if (mainError && testError) {
+        console.error('Error testing webhooks:', mainError, testError);
+        toast.error(`Erro ao testar webhooks`);
+        setWebhookVersion('Erro ao obter versões');
         return;
       }
-
-      const version = data?.version || 'Desconhecida';
-      const deployedAt = data?.deployedAt || 'N/A';
-      setWebhookVersion(`V${version} (Deploy: ${deployedAt})`);
       
-      if (version === '3.0') {
-        toast.success(`Webhook V${version} está deployado corretamente!`);
+      const mainVersion = mainData?.version || 'Erro';
+      const testVersion = testData?.version || 'Erro';
+      
+      setWebhookVersion(`hoopay-webhook: V${mainVersion} | test-hoopay-webhook: V${testVersion}`);
+      
+      const mainOk = mainVersion === '3.0';
+      const testOk = testVersion === '3.1';
+      
+      if (mainOk && testOk) {
+        toast.success(`Ambos webhooks deployados corretamente! Main: V${mainVersion}, Test: V${testVersion}`);
+      } else if (mainOk || testOk) {
+        toast.warning(`Parcialmente OK - Main: V${mainVersion} (${mainOk ? '✓' : '✗'}), Test: V${testVersion} (${testOk ? '✓' : '✗'})`);
       } else {
-        toast.warning(`Webhook V${version} detectado. Esperado: V3.0`);
+        toast.error(`Versões incorretas - Main: V${mainVersion}, Test: V${testVersion}`);
       }
     } catch (err: any) {
       console.error('Exception ao testar webhook:', err);
-      toast.error('Falha ao testar webhook');
-      setWebhookVersion('Falha na conexão');
+      toast.error(`Exceção: ${err.message}`);
+      setWebhookVersion('Erro de conexão');
     } finally {
       setTestingWebhook(false);
     }
@@ -244,18 +251,21 @@ export const AdminWebhookLogs = () => {
 
       {/* Webhook Version Status */}
       {webhookVersion && (
-        <Card className={`border ${webhookVersion.includes('3.0') ? 'bg-green-900/20 border-green-500/30' : 'bg-amber-900/20 border-amber-500/30'}`}>
+        <Card className={`border ${webhookVersion.includes('3.0') && webhookVersion.includes('3.1') ? 'bg-green-900/20 border-green-500/30' : 'bg-amber-900/20 border-amber-500/30'}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              {webhookVersion.includes('3.0') ? (
+              {webhookVersion.includes('3.0') && webhookVersion.includes('3.1') ? (
                 <CheckCircle className="w-6 h-6 text-green-400" />
               ) : (
                 <AlertTriangle className="w-6 h-6 text-amber-400" />
               )}
               <div>
-                <p className="font-medium text-white">Versão do Webhook Deployado</p>
-                <p className={webhookVersion.includes('3.0') ? 'text-green-400' : 'text-amber-400'}>
+                <p className="font-medium text-white">Versões dos Webhooks Deployados</p>
+                <p className={webhookVersion.includes('3.0') && webhookVersion.includes('3.1') ? 'text-green-400' : 'text-amber-400'}>
                   {webhookVersion}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Esperado: hoopay-webhook V3.0 + test-hoopay-webhook V3.1
                 </p>
               </div>
             </div>

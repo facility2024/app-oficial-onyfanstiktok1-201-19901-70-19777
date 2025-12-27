@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, BookOpen, Smartphone, LogOut, User } from 'lucide-react';
+import { Bell, BookOpen, Smartphone, LogOut, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { PremiumStatusBadge } from './PremiumStatusBadge';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import coconudiLogo from '@/assets/coconudi-logo-header.png';
 
 interface AdminHeaderProps {
@@ -53,9 +54,10 @@ export const AdminHeader = ({ notifications, setNotifications, user, onLogout }:
         background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
       }}
     >
-      <div className="container flex h-14 sm:h-16 items-center justify-between px-2 sm:px-4">
-        {/* Logo e Título */}
+      <div className="flex h-14 sm:h-16 items-center justify-between px-2 sm:px-4 w-full">
+        {/* Sidebar Toggle + Logo e Título */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          <SidebarTrigger className="text-gray-900 hover:bg-black/10 p-2 rounded-lg" />
           <img 
             src={coconudiLogo} 
             alt="CocoNudi Logo" 

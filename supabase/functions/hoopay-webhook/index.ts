@@ -2,14 +2,19 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ========================================
-// HOOPAY WEBHOOK - V2.2 - 2025-01-26
+// HOOPAY WEBHOOK - V2.3 - 2025-12-27
 // Suporta MÚLTIPLAS estruturas de payload
+// FORÇANDO REDEPLOY COM LOGS MELHORADOS
 // ========================================
+
+const WEBHOOK_VERSION = "2.3";
+const DEPLOY_TIMESTAMP = "2025-12-27T12:00:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "X-Webhook-Version": "2.2",
+  "X-Webhook-Version": WEBHOOK_VERSION,
+  "X-Webhook-Deployed-At": DEPLOY_TIMESTAMP,
 };
 
 // Product IDs (variantUUID) mapeados para tipos de plano e duração em dias
@@ -65,12 +70,13 @@ function logPayloadKeys(obj: any, prefix = ""): void {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  console.log("🚀 ========================================");
-  console.log("🚀 HOOPAY WEBHOOK V2.2 - INICIANDO");
+  console.log("🚀 ==========================================");
+  console.log(`🚀 HOOPAY WEBHOOK V${WEBHOOK_VERSION} - INICIANDO`);
+  console.log("🚀 Deploy Timestamp:", DEPLOY_TIMESTAMP);
   console.log("🚀 Suporta múltiplas estruturas de payload");
-  console.log("🚀 Timestamp:", new Date().toISOString());
+  console.log("🚀 Request Time:", new Date().toISOString());
   console.log("🚀 Request Method:", req.method);
-  console.log("🚀 ========================================");
+  console.log("🚀 ==========================================");
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -92,7 +98,7 @@ serve(async (req: Request): Promise<Response> => {
     } catch (parseError) {
       console.error("❌ JSON inválido:", parseError);
       return new Response(
-        JSON.stringify({ error: "JSON inválido", version: "2.2" }),
+        JSON.stringify({ error: "JSON inválido", version: WEBHOOK_VERSION }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -103,21 +109,29 @@ serve(async (req: Request): Promise<Response> => {
     logPayloadKeys(payload);
     console.log("📋 ========================================");
 
-    // Salvar log imediatamente
+    // Salvar log imediatamente com try/catch detalhado
+    console.log("📝 Salvando log inicial no webhook_logs...");
     try {
-      const { data: logData } = await supabase
+      const { data: logData, error: logError } = await supabase
         .from("webhook_logs")
         .insert({
-          webhook_type: "hoopay_payment_v2.2",
+          webhook_type: `hoopay_payment_v${WEBHOOK_VERSION}`,
           payload: payload,
           processed: false,
+          ip_address: req.headers.get("x-forwarded-for") || "unknown"
         })
         .select("id")
         .single();
       
-      if (logData) logId = logData.id;
-    } catch (logErr) {
-      console.log("⚠️ Não foi possível salvar log inicial");
+      if (logError) {
+        console.error("❌ Erro ao salvar log inicial:", JSON.stringify(logError));
+        console.error("   Code:", logError.code, "| Message:", logError.message);
+      } else if (logData) {
+        logId = logData.id;
+        console.log("✅ Log inicial salvo com ID:", logId);
+      }
+    } catch (logErr: any) {
+      console.error("❌ Exception ao salvar log inicial:", logErr?.message || logErr);
     }
 
     // ========================================
@@ -221,7 +235,7 @@ serve(async (req: Request): Promise<Response> => {
       }
       
       return new Response(
-        JSON.stringify({ error: errorMsg, version: "2.2" }),
+        JSON.stringify({ error: errorMsg, version: WEBHOOK_VERSION }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -268,7 +282,7 @@ serve(async (req: Request): Promise<Response> => {
       }
       
       return new Response(
-        JSON.stringify({ message: "Status não aprovado", status, version: "2.2" }),
+        JSON.stringify({ message: "Status não aprovado", status, version: WEBHOOK_VERSION }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -357,16 +371,33 @@ serve(async (req: Request): Promise<Response> => {
       console.log("🆕 Novo VIP criado");
     }
 
-    // Atualizar log
+    // Atualizar log com sucesso
     if (logId) {
-      await supabase.from("webhook_logs").update({
-        processed: true,
-        email,
-        plan_type: planType,
-      }).eq("id", logId);
+      console.log("📝 Atualizando log como processado...");
+      try {
+        const { error: updateError } = await supabase.from("webhook_logs").update({
+          processed: true,
+          email,
+          plan_type: planType,
+        }).eq("id", logId);
+        
+        if (updateError) {
+          console.error("❌ Erro ao atualizar log:", JSON.stringify(updateError));
+        } else {
+          console.log("✅ Log atualizado com sucesso");
+        }
+      } catch (updateErr: any) {
+        console.error("❌ Exception ao atualizar log:", updateErr?.message || updateErr);
+      }
     }
 
-    console.log("✅ VIP ATIVADO:", email, planType);
+    console.log("🎉 ==========================================");
+    console.log("🎉 VIP ATIVADO COM SUCESSO!");
+    console.log("🎉 Email:", email);
+    console.log("🎉 Plano:", planType);
+    console.log("🎉 Dias:", planDays);
+    console.log("🎉 Expira:", subscriptionEnd.toISOString());
+    console.log("🎉 ==========================================");
 
     return new Response(
       JSON.stringify({ 
@@ -375,23 +406,36 @@ serve(async (req: Request): Promise<Response> => {
         plan: planType,
         days: planDays,
         expires: subscriptionEnd.toISOString(),
-        version: "2.2"
+        version: WEBHOOK_VERSION,
+        deployedAt: DEPLOY_TIMESTAMP,
+        logId
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
-    console.error("❌ Erro:", error);
+    console.error("❌ ==========================================");
+    console.error("❌ ERRO NO WEBHOOK:", error?.message || error);
+    console.error("❌ Stack:", error?.stack);
+    console.error("❌ ==========================================");
     
     if (logId) {
-      await supabase.from("webhook_logs").update({
-        processed: false,
-        error_message: error.message,
-      }).eq("id", logId);
+      try {
+        await supabase.from("webhook_logs").update({
+          processed: false,
+          error_message: error.message,
+        }).eq("id", logId);
+      } catch (updateErr) {
+        console.error("❌ Falha ao atualizar log com erro:", updateErr);
+      }
     }
     
     return new Response(
-      JSON.stringify({ error: error.message, version: "2.2" }),
+      JSON.stringify({ 
+        error: error.message, 
+        version: WEBHOOK_VERSION,
+        deployedAt: DEPLOY_TIMESTAMP
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

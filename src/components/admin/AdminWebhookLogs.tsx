@@ -1,16 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Search, CheckCircle, XCircle, Clock, RefreshCw, Eye, Zap, AlertTriangle } from 'lucide-react';
+import { FileText, Search, CheckCircle, XCircle, Clock, RefreshCw, Eye, Zap, AlertTriangle, CreditCard, User, Mail, Phone, Hash } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useVIPManagement, WebhookLog } from '@/hooks/useVIPManagement';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+interface SimulationResult {
+  success: boolean;
+  message?: string;
+  vipActivated?: boolean;
+  expiresAt?: string;
+  planType?: string;
+  webhookResponse?: any;
+  error?: string;
+}
 
 export const AdminWebhookLogs = () => {
   const { webhookLogs, loading, webhookStats, fetchWebhookLogs } = useVIPManagement();
@@ -21,6 +32,16 @@ export const AdminWebhookLogs = () => {
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
   const [testingWebhook, setTestingWebhook] = useState(false);
   const [webhookVersion, setWebhookVersion] = useState<string | null>(null);
+  
+  // Simulation modal state
+  const [showSimulationModal, setShowSimulationModal] = useState(false);
+  const [simulating, setSimulating] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  const [simEmail, setSimEmail] = useState('');
+  const [simName, setSimName] = useState('');
+  const [simPhone, setSimPhone] = useState('');
+  const [simCpf, setSimCpf] = useState('');
+  const [simPlanType, setSimPlanType] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');
 
   useEffect(() => {
     fetchWebhookLogs();
@@ -63,6 +84,105 @@ export const AdminWebhookLogs = () => {
     }
   };
 
+  const simulatePayment = async () => {
+    if (!simEmail.trim()) {
+      toast.error('Email é obrigatório');
+      return;
+    }
+
+    setSimulating(true);
+    setSimulationResult(null);
+
+    try {
+      console.log('🧪 Iniciando simulação de pagamento VIP...');
+      
+      // Chama test-hoopay-webhook com os dados
+      const { data, error } = await supabase.functions.invoke('test-hoopay-webhook', {
+        body: {
+          email: simEmail.trim(),
+          name: simName.trim() || undefined,
+          phone: simPhone.trim() || undefined,
+          cpf: simCpf.trim() || undefined,
+          plan_type: simPlanType,
+          simulate_only: false
+        }
+      });
+
+      console.log('📥 Resposta do test-hoopay-webhook:', data, error);
+
+      if (error) {
+        setSimulationResult({
+          success: false,
+          error: error.message,
+          webhookResponse: data
+        });
+        toast.error('Erro na simulação: ' + error.message);
+        return;
+      }
+
+      // Verifica se VIP foi ativado buscando na tabela premium_users
+      const { data: vipData, error: vipError } = await supabase
+        .from('premium_users')
+        .select('*')
+        .eq('email', simEmail.trim().toLowerCase())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      console.log('🔍 VIP encontrado:', vipData, vipError);
+
+      // Usa subscription_status e subscription_end conforme schema real
+      const isActive = vipData?.subscription_status === 'active';
+      const expiresAt = vipData?.subscription_end;
+      const planType = vipData?.subscription_type;
+
+      if (vipData && isActive) {
+        setSimulationResult({
+          success: true,
+          vipActivated: true,
+          expiresAt: expiresAt,
+          planType: planType,
+          message: 'VIP ativado com sucesso!',
+          webhookResponse: data
+        });
+        toast.success('✅ VIP ativado com sucesso!');
+      } else {
+        setSimulationResult({
+          success: data?.success || false,
+          vipActivated: false,
+          message: data?.message || 'VIP não foi ativado',
+          webhookResponse: data
+        });
+        if (data?.success) {
+          toast.warning('Webhook processado, mas VIP não encontrado ativo');
+        } else {
+          toast.error('Falha ao ativar VIP');
+        }
+      }
+
+      // Atualiza os logs
+      fetchWebhookLogs();
+    } catch (err: any) {
+      console.error('Exception na simulação:', err);
+      setSimulationResult({
+        success: false,
+        error: err.message || 'Erro desconhecido'
+      });
+      toast.error('Falha na simulação');
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const resetSimulation = () => {
+    setSimulationResult(null);
+    setSimEmail('');
+    setSimName('');
+    setSimPhone('');
+    setSimCpf('');
+    setSimPlanType('monthly');
+  };
+
   useEffect(() => {
     const debounce = setTimeout(() => {
       fetchWebhookLogs({ 
@@ -93,7 +213,18 @@ export const AdminWebhookLogs = () => {
           <FileText className="w-8 h-8 text-blue-400" />
           <h1 className="text-2xl font-bold text-white">Logs de Webhooks</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button 
+            onClick={() => {
+              resetSimulation();
+              setShowSimulationModal(true);
+            }}
+            size="sm"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Simular Pagamento VIP
+          </Button>
           <Button 
             onClick={testWebhookVersion} 
             variant="outline" 
@@ -346,6 +477,218 @@ export const AdminWebhookLogs = () => {
               </pre>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Simulation Modal */}
+      <Dialog open={showSimulationModal} onOpenChange={(open) => {
+        setShowSimulationModal(open);
+        if (!open) resetSimulation();
+      }}>
+        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-purple-400" />
+              Simular Pagamento VIP
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Simula um pagamento completo via webhook para testar a ativação automática de VIP.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!simulationResult ? (
+            <div className="space-y-4">
+              {/* Email - Obrigatório */}
+              <div className="space-y-2">
+                <Label htmlFor="sim-email" className="text-white flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email *
+                </Label>
+                <Input
+                  id="sim-email"
+                  type="email"
+                  placeholder="usuario@exemplo.com"
+                  value={simEmail}
+                  onChange={(e) => setSimEmail(e.target.value)}
+                  className="bg-gray-800 border-gray-700"
+                />
+              </div>
+
+              {/* Nome */}
+              <div className="space-y-2">
+                <Label htmlFor="sim-name" className="text-white flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Nome
+                </Label>
+                <Input
+                  id="sim-name"
+                  placeholder="Nome do usuário"
+                  value={simName}
+                  onChange={(e) => setSimName(e.target.value)}
+                  className="bg-gray-800 border-gray-700"
+                />
+              </div>
+
+              {/* Telefone */}
+              <div className="space-y-2">
+                <Label htmlFor="sim-phone" className="text-white flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Telefone
+                </Label>
+                <Input
+                  id="sim-phone"
+                  placeholder="(11) 99999-9999"
+                  value={simPhone}
+                  onChange={(e) => setSimPhone(e.target.value)}
+                  className="bg-gray-800 border-gray-700"
+                />
+              </div>
+
+              {/* CPF */}
+              <div className="space-y-2">
+                <Label htmlFor="sim-cpf" className="text-white flex items-center gap-2">
+                  <Hash className="w-4 h-4" />
+                  CPF
+                </Label>
+                <Input
+                  id="sim-cpf"
+                  placeholder="000.000.000-00"
+                  value={simCpf}
+                  onChange={(e) => setSimCpf(e.target.value)}
+                  className="bg-gray-800 border-gray-700"
+                />
+              </div>
+
+              {/* Tipo de Plano */}
+              <div className="space-y-2">
+                <Label className="text-white">Tipo de Plano</Label>
+                <Select value={simPlanType} onValueChange={(v: 'monthly' | 'quarterly' | 'annual') => setSimPlanType(v)}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">
+                      <div className="flex items-center gap-2">
+                        <span>Mensal</span>
+                        <span className="text-xs text-gray-400">(30 dias - R$ 19,90)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="quarterly">
+                      <div className="flex items-center gap-2">
+                        <span>Trimestral</span>
+                        <span className="text-xs text-gray-400">(90 dias - R$ 49,90)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="annual">
+                      <div className="flex items-center gap-2">
+                        <span>Anual</span>
+                        <span className="text-xs text-gray-400">(365 dias - R$ 149,90)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter className="pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSimulationModal(false)}
+                  className="border-gray-600"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={simulatePayment}
+                  disabled={simulating || !simEmail.trim()}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  {simulating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Simular Pagamento
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Resultado da Simulação */}
+              <Card className={`border ${simulationResult.vipActivated ? 'bg-green-900/20 border-green-500/30' : simulationResult.success ? 'bg-amber-900/20 border-amber-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    {simulationResult.vipActivated ? (
+                      <CheckCircle className="w-8 h-8 text-green-400 flex-shrink-0" />
+                    ) : simulationResult.success ? (
+                      <AlertTriangle className="w-8 h-8 text-amber-400 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="w-8 h-8 text-red-400 flex-shrink-0" />
+                    )}
+                    <div>
+                      <p className={`font-bold ${simulationResult.vipActivated ? 'text-green-400' : simulationResult.success ? 'text-amber-400' : 'text-red-400'}`}>
+                        {simulationResult.vipActivated ? 'VIP Ativado!' : simulationResult.success ? 'Webhook Processado' : 'Falha na Ativação'}
+                      </p>
+                      <p className="text-gray-300 text-sm mt-1">{simulationResult.message}</p>
+                      {simulationResult.error && (
+                        <p className="text-red-400 text-sm mt-1">{simulationResult.error}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Detalhes do VIP Ativado */}
+              {simulationResult.vipActivated && (
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-800/50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-400">Email</p>
+                    <p className="text-white font-medium">{simEmail}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Plano</p>
+                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                      {simulationResult.planType || simPlanType}
+                    </Badge>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-400">Expira em</p>
+                    <p className="text-green-400 font-medium">
+                      {simulationResult.expiresAt ? format(new Date(simulationResult.expiresAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Resposta do Webhook */}
+              <div>
+                <p className="text-sm text-gray-400 mb-2">Resposta do Webhook</p>
+                <pre className="bg-gray-800 p-3 rounded-lg overflow-x-auto text-xs text-gray-300 max-h-[150px] overflow-y-auto">
+                  {JSON.stringify(simulationResult.webhookResponse, null, 2)}
+                </pre>
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSimulationModal(false)}
+                  className="border-gray-600"
+                >
+                  Fechar
+                </Button>
+                <Button 
+                  onClick={resetSimulation}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  Nova Simulação
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -21,14 +21,15 @@ serve(async (req) => {
     const payload = await req.json();
     console.log('📥 Webhook Hoopay recebido:', JSON.stringify(payload, null, 2));
 
-    // Log do webhook para auditoria
+    // Determinar tipo de evento
+    const eventType = payload.event || payload.type || 'payment';
+
+    // Log do webhook para auditoria (usando campos corretos)
     const { error: logError } = await supabase.from('webhook_logs').insert({
-      webhook_type: 'hoopay',
+      source: 'hoopay',
       payload: payload,
-      processed: false,
-      email: payload.customer?.email || payload.email || null,
-      plan_type: payload.product?.name || payload.plan || null,
-      ip_address: req.headers.get('x-forwarded-for') || 'unknown'
+      event_type: eventType,
+      processed_at: null // será atualizado quando processado
     });
 
     if (logError) {
@@ -52,7 +53,7 @@ serve(async (req) => {
     // Extrair dados do cliente
     const email = payload.customer?.email || payload.email;
     const phone = payload.customer?.phone || payload.phone;
-    const name = payload.customer?.name || payload.name || 'Cliente Hoopay';
+    const customerName = payload.customer?.name || payload.name || 'Cliente Hoopay';
 
     if (!email && !phone) {
       console.error('❌ Sem email ou telefone para identificar cliente');
@@ -68,20 +69,24 @@ serve(async (req) => {
     // Determinar duração do plano (em dias)
     const productName = (payload.product?.name || payload.plan || '').toLowerCase();
     let durationDays = 30; // Default: mensal
+    let subscriptionType = 'mensal';
 
     if (productName.includes('anual') || productName.includes('annual') || productName.includes('12')) {
       durationDays = 365;
+      subscriptionType = 'anual';
     } else if (productName.includes('trimestral') || productName.includes('quarterly') || productName.includes('3')) {
       durationDays = 90;
+      subscriptionType = 'trimestral';
     } else if (productName.includes('semestral') || productName.includes('6')) {
       durationDays = 180;
+      subscriptionType = 'semestral';
     }
 
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + durationDays);
 
-    console.log(`📅 Plano: ${productName}, Duração: ${durationDays} dias`);
+    console.log(`📅 Plano: ${subscriptionType}, Duração: ${durationDays} dias`);
 
     // Verificar se já existe um usuário VIP com esse email
     let existingVip = null;
@@ -96,18 +101,18 @@ serve(async (req) => {
 
     if (existingVip) {
       // Renovar assinatura existente
-      const newEndDate = new Date(existingVip.end_date) > new Date() 
-        ? new Date(existingVip.end_date) 
-        : new Date();
+      const currentEndDate = existingVip.subscription_end ? new Date(existingVip.subscription_end) : new Date();
+      const newEndDate = currentEndDate > new Date() ? currentEndDate : new Date();
       newEndDate.setDate(newEndDate.getDate() + durationDays);
 
       const { error: updateError } = await supabase
         .from('premium_users')
         .update({
-          status: 'active',
-          plan_type: productName || existingVip.plan_type,
-          end_date: newEndDate.toISOString(),
-          whatsapp: phone || existingVip.whatsapp
+          subscription_status: 'active',
+          subscription_type: subscriptionType,
+          subscription_end: newEndDate.toISOString(),
+          whatsapp: phone || existingVip.whatsapp,
+          name: customerName || existingVip.name
         })
         .eq('id', existingVip.id);
 
@@ -118,17 +123,17 @@ serve(async (req) => {
 
       console.log('✅ VIP renovado com sucesso para:', email);
     } else {
-      // Criar novo usuário VIP
+      // Criar novo usuário VIP (usando campos corretos)
       const { error: insertError } = await supabase
         .from('premium_users')
         .insert({
+          name: customerName,
           email: email,
           whatsapp: phone || '',
-          plan_type: productName || 'mensal',
-          status: 'active',
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          payment_method: 'hoopay_pix'
+          subscription_type: subscriptionType,
+          subscription_status: 'active',
+          subscription_start: startDate.toISOString(),
+          subscription_end: endDate.toISOString()
         });
 
       if (insertError) {
@@ -142,15 +147,18 @@ serve(async (req) => {
     // Atualizar log como processado
     await supabase
       .from('webhook_logs')
-      .update({ processed: true })
-      .eq('email', email)
-      .eq('processed', false);
+      .update({ processed_at: new Date().toISOString() })
+      .eq('source', 'hoopay')
+      .is('processed_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'VIP ativado com sucesso',
       email: email,
-      duration_days: durationDays
+      duration_days: durationDays,
+      subscription_type: subscriptionType
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

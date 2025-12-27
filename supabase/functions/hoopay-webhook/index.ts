@@ -1,14 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Force redeploy: 2025-06-27T03:30:00Z
+const VERSION = "1.1.0";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
+  console.log(`🚀 Hoopay Webhook v${VERSION} - Request received`);
+  console.log('📋 Method:', req.method);
+  console.log('📋 Headers:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight handled');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -18,8 +26,25 @@ serve(async (req) => {
   );
 
   try {
-    const payload = await req.json();
-    console.log('📥 Webhook Hoopay recebido:', JSON.stringify(payload, null, 2));
+    const rawBody = await req.text();
+    console.log('📥 Raw body received:', rawBody);
+    
+    let payload;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON:', parseError);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Invalid JSON payload',
+        raw_body: rawBody.substring(0, 500)
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    console.log('📥 Webhook Hoopay parsed:', JSON.stringify(payload, null, 2));
 
     // Determinar tipo de evento
     const eventType = payload.event || payload.type || 'payment';
@@ -51,11 +76,17 @@ serve(async (req) => {
     }
 
     // Extrair dados do cliente (suporta múltiplos formatos de payload)
+    console.log('🔍 Tentando extrair email de diferentes caminhos...');
+    console.log('  - payload.customer?.email:', payload.customer?.email);
+    console.log('  - payload.email:', payload.email);
+    console.log('  - payload.data?.customer?.email:', payload.data?.customer?.email);
+    console.log('  - payload.data?.email:', payload.data?.email);
+    
     const email = payload.customer?.email || payload.email || payload.data?.customer?.email || payload.data?.email;
     const phone = payload.customer?.phone || payload.customer?.whatsapp || payload.phone || payload.whatsapp || payload.data?.customer?.phone;
     const customerName = payload.customer?.name || payload.name || payload.data?.customer?.name || 'Cliente Hoopay';
 
-    console.log('👤 Cliente extraído:', { email, phone, customerName });
+    console.log('👤 Cliente extraído FINAL:', { email, phone, customerName });
 
     if (!email) {
       console.error('❌ Email não encontrado no payload:', JSON.stringify(payload, null, 2));

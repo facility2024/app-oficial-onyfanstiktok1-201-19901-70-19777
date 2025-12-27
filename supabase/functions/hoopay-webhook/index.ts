@@ -8,7 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ========================================
 
 const WEBHOOK_VERSION = "2.3";
-const DEPLOY_TIMESTAMP = "2025-12-27T12:00:00Z";
+const DEPLOY_TIMESTAMP = "2025-12-27T12:30:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

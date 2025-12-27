@@ -38,6 +38,17 @@ interface AdminSidebarProps {
   userId?: string;
 }
 
+// Cores para cada grupo de ícones
+const groupColors: Record<string, string> = {
+  'Principal': 'text-emerald-400',
+  'Conteúdo': 'text-purple-400',
+  'Usuários': 'text-blue-400',
+  'Negócios': 'text-amber-400',
+  'Ferramentas': 'text-pink-400',
+  'Financeiro': 'text-green-400',
+  'Sistema': 'text-gray-400',
+};
+
 const navigationGroups = [
   {
     label: 'Principal',
@@ -110,47 +121,51 @@ export const AdminSidebar = ({ activeSection, setActiveSection, userId }: AdminS
       collapsible="icon"
     >
       <SidebarContent className="py-4">
-        {navigationGroups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="text-gray-400 text-xs uppercase tracking-wider px-4 mb-2">
-              {group.label}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeSection === item.id;
-                  
-                  return (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => handleItemClick(item.id)}
-                        tooltip={item.label}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium",
-                          isActive 
-                            ? "bg-gradient-to-r from-green-600 to-amber-600 text-white shadow-lg" 
-                            : "text-gray-300 hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        <Icon className={cn(
-                          "w-5 h-5 flex-shrink-0",
-                          isActive ? "text-white" : "text-gray-400"
-                        )} />
-                        <span className={cn(
-                          "truncate",
-                          isCollapsed && "hidden"
-                        )}>
-                          {item.label}
-                        </span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {navigationGroups.map((group) => {
+          const iconColor = groupColors[group.label] || 'text-gray-400';
+          
+          return (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel className="text-gray-400 text-xs uppercase tracking-wider px-4 mb-2">
+                {group.label}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeSection === item.id;
+                    
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          onClick={() => handleItemClick(item.id)}
+                          tooltip={item.label}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium",
+                            isActive 
+                              ? "bg-gradient-to-r from-green-600 to-amber-600 text-white shadow-lg" 
+                              : "text-gray-300 hover:bg-white/10 hover:text-white"
+                          )}
+                        >
+                          <Icon className={cn(
+                            "w-5 h-5 flex-shrink-0 transition-colors",
+                            isActive ? "text-white" : iconColor
+                          )} />
+                          <span className={cn(
+                            "truncate",
+                            isCollapsed && "hidden"
+                          )}>
+                            {item.label}
+                          </span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
     </Sidebar>
   );

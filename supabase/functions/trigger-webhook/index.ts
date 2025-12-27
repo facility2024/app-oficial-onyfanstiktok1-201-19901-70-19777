@@ -31,30 +31,44 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { event_type, data, webhook_url }: TriggerWebhookRequest = await req.json();
+    const body = await req.json();
+    const { event_type, data, webhook_url, url }: TriggerWebhookRequest & { url?: string } = body;
 
-    console.log(`Triggering webhook for event:`, { event_type, webhook_url });
+    console.log(`Triggering webhook for event:`, { event_type, webhook_url, url });
 
-    let targetUrl = webhook_url;
+    // Aceita tanto webhook_url quanto url como parâmetro
+    let targetUrl = webhook_url || url;
     
     // If no specific URL provided, get from integration config
     if (!targetUrl) {
-      const { data: integration } = await supabase
+      const { data: integration, error: integrationError } = await supabase
         .from('integrations')
         .select('configuration')
         .eq('integration_type', 'webhook')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (!integration?.configuration?.url || !integration.configuration.enabled) {
-        throw new Error('Webhook integration not configured or inactive');
+      if (integrationError) {
+        console.error('Error fetching integration:', integrationError);
       }
 
-      targetUrl = integration.configuration.url;
+      if (integration?.configuration?.url && integration.configuration.enabled) {
+        targetUrl = integration.configuration.url;
+      }
     }
 
     if (!targetUrl) {
-      throw new Error('Target URL is not configured');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No webhook URL provided",
+          message: "Provide a 'webhook_url' or 'url' parameter, or configure a webhook integration",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const payload = {

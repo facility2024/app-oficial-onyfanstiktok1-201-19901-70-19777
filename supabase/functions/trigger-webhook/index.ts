@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+// VERSÃO DO TRIGGER WEBHOOK - Para verificar deploy
+const TRIGGER_VERSION = "1.1";
+const DEPLOY_TIMESTAMP = "2025-12-27T02:35:00Z";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "X-Trigger-Version": TRIGGER_VERSION,
+  "X-Trigger-Deploy": DEPLOY_TIMESTAMP,
 };
 
 const supabase = createClient(
@@ -12,12 +18,14 @@ const supabase = createClient(
 );
 
 interface TriggerWebhookRequest {
-  event_type: string;
+  event_type?: string;
   data: any;
   webhook_url?: string;
+  url?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log(`🚀 [trigger-webhook V${TRIGGER_VERSION}] Request received at ${new Date().toISOString()}`);
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -83,13 +91,19 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending webhook to ${targetUrl}:`, payload);
 
     // Send webhook
+    const fetchHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Webhook-Source': 'admin-panel',
+    };
+    
+    // Só adiciona X-Event-Type se event_type existir
+    if (event_type) {
+      fetchHeaders['X-Event-Type'] = event_type;
+    }
+
     const response = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Webhook-Source': 'admin-panel',
-        'X-Event-Type': event_type,
-      },
+      headers: fetchHeaders,
       body: JSON.stringify(payload),
     });
 

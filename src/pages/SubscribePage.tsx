@@ -27,14 +27,14 @@ interface VIPPlans {
 
 const defaultVIPPlans: VIPPlans = {
   mensal: {
-    price: 19.90,
+    price: 19.99,
     features: [
       'Acesso a conteúdo premium',
       'Sem anúncios',
       'Chat exclusivo com modelos',
       'Badge VIP no perfil'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/4957ea7a-71f2-47ec-8fff-df29df9a340a'
+    paymentUrl: 'https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1'
   },
   trimestral: {
     price: 49.99,
@@ -46,7 +46,7 @@ const defaultVIPPlans: VIPPlans = {
       'Suporte prioritário',
       'Conteúdo exclusivo semanal'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/6834a36c-2528-4fc8-a101-e98c838f0312'
+    paymentUrl: 'https://p.hoopay.com.br/v/f488d9e1-3e79-4ea5-a9cc-4a108bb03c92'
   },
   anual: {
     price: 149.99,
@@ -57,7 +57,7 @@ const defaultVIPPlans: VIPPlans = {
       'Sorteios e brindes',
       'Perfil verificado especial'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/8dc017f6-2419-4df3-98fe-04a07e250015'
+    paymentUrl: 'https://p.hoopay.com.br/v/61207e4a-9455-4cb8-8207-9002a87c5fe6'
   }
 };
 

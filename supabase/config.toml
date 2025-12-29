@@ -11,6 +11,3 @@ verify_jwt = false
 
 [functions.trigger-webhook]
 verify_jwt = false
-
-[functions.hoopay-webhook]
-verify_jwt = false

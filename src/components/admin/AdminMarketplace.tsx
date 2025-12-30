@@ -46,7 +46,8 @@ const productSchema = z.object({
   video_url: z.string().url('URL do vídeo inválida').optional().or(z.literal('')),
   category: z.string().min(2, 'Categoria é obrigatória'),
   stock: z.number().min(0, 'Estoque não pode ser negativo'),
-  is_active: z.boolean()
+  is_active: z.boolean(),
+  hoopay_sales_url: z.string().url('URL de vendas inválida').optional().or(z.literal(''))
 });
 
 export const AdminMarketplace = () => {
@@ -83,7 +84,8 @@ export const AdminMarketplace = () => {
     video_url: '',
     category: '',
     stock: 0,
-    is_active: true
+    is_active: true,
+    hoopay_sales_url: ''
   });
 
   // Category form state
@@ -396,7 +398,8 @@ export const AdminMarketplace = () => {
       video_url: '',
       category: '',
       stock: 0,
-      is_active: true
+      is_active: true,
+      hoopay_sales_url: ''
     });
     setEditingProduct(null);
   };
@@ -424,7 +427,8 @@ export const AdminMarketplace = () => {
       video_url: product.video_url || '',
       category: product.category,
       stock: product.stock,
-      is_active: product.is_active
+      is_active: product.is_active,
+      hoopay_sales_url: (product as any).hoopay_sales_url || ''
     });
     setShowProductModal(true);
   };
@@ -823,6 +827,20 @@ export const AdminMarketplace = () => {
               />
               <p className="text-xs text-gray-500 mt-1">
                 Cole o link do vídeo do produto. O vídeo aparecerá na página de detalhes.
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="hoopay_sales_url" className="text-white">URL de Vendas Hoopay (opcional)</Label>
+              <Input
+                id="hoopay_sales_url"
+                value={formData.hoopay_sales_url}
+                onChange={(e) => setFormData({...formData, hoopay_sales_url: e.target.value})}
+                placeholder="https://pay.hoopay.com.br/..."
+                className="bg-gray-950 border-gray-700 text-white"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Se preenchido, o botão "Comprar Agora" redirecionará direto para esta página de vendas.
               </p>
             </div>
 

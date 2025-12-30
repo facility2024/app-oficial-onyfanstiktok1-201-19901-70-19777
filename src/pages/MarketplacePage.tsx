@@ -24,9 +24,10 @@ interface Product {
   stock: number;
   average_rating: number;
   total_reviews: number;
+  hoopay_sales_url?: string;
 }
 interface ProductModalProps {
-  product: Product | null;
+  product: (Product & { hoopay_sales_url?: string }) | null;
   open: boolean;
   onClose: () => void;
   onBuy: (product: Product) => void;
@@ -175,7 +176,7 @@ const ProductDetailModal = ({
             size="lg"
           >
             <ShoppingCart className="mr-2" />
-            Comprar Agora
+            {product.hoopay_sales_url ? 'Comprar na Hoopay' : 'Comprar Agora'}
           </Button>
         </div>
       </DialogContent>
@@ -372,6 +373,14 @@ export default function MarketplacePage() {
     setShowDetailModal(true);
   };
   const handleBuyClick = (product: Product) => {
+    // Se tem URL da Hoopay, redireciona direto
+    if (product.hoopay_sales_url) {
+      window.open(product.hoopay_sales_url, '_blank');
+      setShowDetailModal(false);
+      return;
+    }
+    
+    // Comportamento original: abre checkout interno
     setShowDetailModal(false);
     setSelectedProduct(product);
     setShowCheckoutModal(true);

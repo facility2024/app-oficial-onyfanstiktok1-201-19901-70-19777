@@ -11,107 +11,83 @@ export const usePremiumStatus = () => {
     try {
       // 1. Obter usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
-      const userEmail = user?.email;
+      const userEmail = user?.email?.toLowerCase();
+      const userId = user?.id;
       
-      console.log('👑 Verificando status premium para:', userEmail);
+      console.log('👑 Verificando status premium para:', { email: userEmail, userId });
       
-      // 2. Se tem usuário autenticado, verificar no banco
-      if (userEmail) {
-        // Primeiro busca por email
-        const { data, error } = await supabase
-          .from('premium_users')
-          .select('*')
-          .eq('email', userEmail.toLowerCase())
-          .eq('subscription_status', 'active')
-          .gte('subscription_end', new Date().toISOString())
-          .maybeSingle();
-
-        if (data && !error) {
-          console.log('✅ Usuário é VIP! Plano:', data.subscription_type);
-          localStorage.setItem('premium_user', 'true');
-          localStorage.setItem('premium_email', userEmail);
+      if (!userEmail && !userId) {
+        // Fallback: localStorage se não estiver autenticado
+        const localPremium = localStorage.getItem('premium_user');
+        if (localPremium === 'true') {
           setIsPremium(true);
-          setPremiumData(data);
-          setLoading(false);
-          return;
-        }
-        
-        // Se não encontrou por email, busca por user_id
-        if (user?.id) {
-          const { data: dataById, error: errorById } = await supabase
-            .from('premium_users')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('subscription_status', 'active')
-            .gte('subscription_end', new Date().toISOString())
-            .maybeSingle();
-
-          if (dataById && !errorById) {
-            console.log('✅ Usuário é VIP (via user_id)! Plano:', dataById.subscription_type);
-            localStorage.setItem('premium_user', 'true');
-            localStorage.setItem('premium_email', userEmail);
-            setIsPremium(true);
-            setPremiumData(dataById);
-            setLoading(false);
-            return;
-          }
-        }
-        
-        // Se não encontrou por email ou user_id, busca pelo telefone do perfil
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user?.id)
-          .maybeSingle();
-        
-        const userPhone = (profileData as any)?.phone;
-        if (userPhone) {
-          console.log('🔍 Buscando VIP por telefone:', userPhone);
-          const { data: dataByPhone, error: errorByPhone } = await supabase
-            .from('premium_users')
-            .select('*')
-            .eq('whatsapp', userPhone)
-            .eq('subscription_status', 'active')
-            .gte('subscription_end', new Date().toISOString())
-            .maybeSingle();
-
-          if (dataByPhone && !errorByPhone) {
-            console.log('✅ Usuário é VIP (via telefone)! Plano:', dataByPhone.subscription_type);
-            localStorage.setItem('premium_user', 'true');
-            localStorage.setItem('premium_email', userEmail);
-            setIsPremium(true);
-            setPremiumData(dataByPhone);
-            setLoading(false);
-            return;
-          }
-        }
-        
-        console.log('❌ Usuário NÃO é VIP ou assinatura expirada');
-      }
-      
-      // 3. Fallback: localStorage
-      const localPremium = localStorage.getItem('premium_user');
-      const localEmail = localStorage.getItem('premium_email');
-      
-      if (localPremium === 'true' && localEmail) {
-        const { data, error } = await supabase
-          .from('premium_users')
-          .select('*')
-          .eq('email', localEmail.toLowerCase())
-          .eq('subscription_status', 'active')
-          .gte('subscription_end', new Date().toISOString())
-          .maybeSingle();
-
-        if (data && !error) {
-          setIsPremium(true);
-          setPremiumData(data);
         } else {
-          localStorage.removeItem('premium_user');
-          localStorage.removeItem('premium_email');
           setIsPremium(false);
           setPremiumData(null);
         }
+        setLoading(false);
+        return;
+      }
+      
+      // 2. Buscar TODOS os registros premium ativos (RLS deve permitir ver o próprio)
+      const { data: allPremium, error } = await supabase
+        .from('premium_users')
+        .select('*')
+        .eq('subscription_status', 'active')
+        .gte('subscription_end', new Date().toISOString());
+
+      console.log('👑 Registros premium encontrados:', allPremium?.length || 0, error ? `Erro: ${error.message}` : '');
+
+      if (error) {
+        console.error('❌ Erro RLS ao buscar premium_users:', error);
+        // Fallback localStorage
+        const localPremium = localStorage.getItem('premium_user');
+        if (localPremium === 'true') {
+          setIsPremium(true);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // 3. Filtrar no cliente por email (case-insensitive), user_id ou telefone
+      let matchedPremium = null;
+
+      if (allPremium && allPremium.length > 0) {
+        // Buscar por email (case-insensitive)
+        matchedPremium = allPremium.find(p => 
+          p.email && userEmail && p.email.toLowerCase() === userEmail
+        );
+
+        // Se não encontrou por email, buscar por user_id
+        if (!matchedPremium && userId) {
+          matchedPremium = allPremium.find(p => p.user_id === userId);
+        }
+
+        // Se ainda não encontrou, buscar por telefone
+        if (!matchedPremium && userId) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', userId)
+            .maybeSingle();
+          
+          const userPhone = (profileData as any)?.phone;
+          if (userPhone) {
+            matchedPremium = allPremium.find(p => p.whatsapp === userPhone);
+          }
+        }
+      }
+
+      if (matchedPremium) {
+        console.log('✅ Usuário é VIP! Plano:', matchedPremium.subscription_type);
+        localStorage.setItem('premium_user', 'true');
+        localStorage.setItem('premium_email', userEmail || '');
+        setIsPremium(true);
+        setPremiumData(matchedPremium);
       } else {
+        console.log('❌ Usuário NÃO é VIP ou assinatura expirada');
+        localStorage.removeItem('premium_user');
+        localStorage.removeItem('premium_email');
         setIsPremium(false);
         setPremiumData(null);
       }

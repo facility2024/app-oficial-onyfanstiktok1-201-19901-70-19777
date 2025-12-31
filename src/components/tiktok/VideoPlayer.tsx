@@ -4,8 +4,9 @@ import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
 import { UniversalVideoPlayer } from './UniversalVideoPlayer';
 import { PremiumContentOverlay } from './PremiumContentOverlay';
+import { ModelSubscriptionOverlay } from './ModelSubscriptionOverlay';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-
+import { useModelSubscription } from '@/hooks/useModelSubscription';
 interface VideoPlayerProps {
   video: Video;
   isPlaying: boolean;
@@ -53,14 +54,24 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const [offerDismissed, setOfferDismissed] = useState(false);
     const timersRef = useRef<number[]>([]);
 
-    const modelId = (video as any)?.user_id || (video as any)?.model_id || '';
+    const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
     const isPremiumVideo = (video as any)?.visibility === 'premium';
     
-    // Usar o hook de status premium
+    // Usar o hook de status premium (VIP Global)
     const { isPremium: isUserPremium, isContentUnlocked } = usePremiumStatus();
     
+    // Hook para assinatura individual da modelo
+    const { plans, isContentUnlockedSync, loading: loadingSubscription } = useModelSubscription(isPremiumVideo ? modelId : undefined);
+    
+    // Estado para controlar overlay de assinatura individual
+    const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(false);
+    
     // Verificar se o vídeo está bloqueado
-    const locked = isPremiumVideo && !isUserPremium && !isContentUnlocked('video', video.id);
+    // Prioridade: 1) VIP Global, 2) Assinatura individual da modelo, 3) Desbloqueio específico
+    const hasGlobalVIP = isUserPremium;
+    const hasIndividualSubscription = isContentUnlockedSync(modelId);
+    const hasSpecificUnlock = isContentUnlocked('video', video.id);
+    const locked = isPremiumVideo && !hasGlobalVIP && !hasIndividualSubscription && !hasSpecificUnlock;
 
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
@@ -347,11 +358,23 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           <div className="w-full h-full bg-black" />
         )}
 
-        {/* Premium gating overlay */}
-        {locked && (
+        {/* Premium gating overlay - com opção de assinatura individual */}
+        {locked && !showSubscriptionOverlay && (
           <PremiumContentOverlay 
             thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
             modelName={video.user?.username}
+            onSubscribeClick={() => setShowSubscriptionOverlay(true)}
+          />
+        )}
+        
+        {/* Overlay de assinatura individual da modelo */}
+        {locked && showSubscriptionOverlay && plans.length > 0 && (
+          <ModelSubscriptionOverlay
+            modelName={video.user?.username || 'Criadora'}
+            modelAvatar={video.user?.avatar_url}
+            plans={plans}
+            thumbnailUrl={(video as any).thumbnail_url}
+            onClose={() => setShowSubscriptionOverlay(false)}
           />
         )}
 

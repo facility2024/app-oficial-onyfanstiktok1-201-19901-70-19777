@@ -7,17 +7,24 @@ interface PremiumContentOverlayProps {
   thumbnailUrl?: string;
   onClose?: () => void;
   modelName?: string;
+  onSubscribeClick?: () => void; // Callback para abrir opções de assinatura individual
 }
 
 export const PremiumContentOverlay = ({ 
   thumbnailUrl, 
   onClose,
-  modelName 
+  modelName,
+  onSubscribeClick
 }: PremiumContentOverlayProps) => {
   const navigate = useNavigate();
 
   const handleSubscribe = () => {
-    navigate('/subscribe');
+    // Se existe callback de assinatura individual, usar ele primeiro
+    if (onSubscribeClick) {
+      onSubscribeClick();
+    } else {
+      navigate('/subscribe');
+    }
   };
 
   return (

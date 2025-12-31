@@ -93,6 +93,7 @@ const navigationGroups = [
     items: [
       { id: 'money', label: 'Financeiro', icon: DollarSign },
       { id: 'vip', label: 'Usuários VIP', icon: Crown },
+      { id: 'model-subscriptions', label: 'Assinaturas Modelos', icon: Crown },
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },
     ]
   },

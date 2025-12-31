@@ -39,6 +39,7 @@ import { AdminGenres } from './admin/AdminGenres';
 import { AdminVIPUsers } from './admin/AdminVIPUsers';
 import { AdminWebhookLogs } from './admin/AdminWebhookLogs';
 import { AdminActivateVIP } from './admin/AdminActivateVIP';
+import { AdminModelSubscriptions } from './admin/AdminModelSubscriptions';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -144,7 +145,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','webhook-logs','settings','documentation'];
+    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','settings','documentation'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -209,6 +210,8 @@ export const AdminDashboard = () => {
         return <AdminMoney />;
       case 'vip':
         return <AdminVIPUsers />;
+      case 'model-subscriptions':
+        return <AdminModelSubscriptions />;
       case 'webhook-logs':
         return <AdminWebhookLogs />;
       case 'documentation':

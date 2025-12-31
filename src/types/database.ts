@@ -50,3 +50,34 @@ export interface Like {
   video_id: string;
   created_at: string;
 }
+
+// Individual Model Subscription Plans
+export interface ModelSubscriptionPlan {
+  id: string;
+  model_id: string;
+  model_type: 'model' | 'creator';
+  plan_type: 'mensal' | 'trimestral' | 'anual';
+  price: number;
+  discount_label: string | null;
+  payment_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Individual Model Subscriptions
+export interface ModelSubscription {
+  id: string;
+  subscriber_id: string | null;
+  subscriber_email: string;
+  model_id: string;
+  model_type: 'model' | 'creator';
+  subscription_type: 'mensal' | 'trimestral' | 'anual';
+  subscription_status: 'active' | 'expired' | 'cancelled';
+  subscription_start: string;
+  subscription_end: string;
+  price_paid: number | null;
+  payment_reference: string | null;
+  created_at: string;
+  updated_at: string;
+}

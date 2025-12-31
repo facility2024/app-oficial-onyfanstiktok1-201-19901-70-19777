@@ -11,11 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, CreditCard } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
+import { SubscriptionPlansManager } from '@/components/creator/SubscriptionPlansManager';
 import { useGenres } from '@/hooks/useGenres';
 
 const videoSchema = z.object({
@@ -278,7 +279,7 @@ export default function CreatorStudio() {
 
         {/* Tabs */}
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-800/50 border border-gray-700 mb-6">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 border border-gray-700 mb-6">
             <TabsTrigger value="upload" className="data-[state=active]:bg-gray-700">
               <Upload className="w-4 h-4 mr-2" />
               Upload
@@ -290,6 +291,10 @@ export default function CreatorStudio() {
             <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700">
               <BarChart3 className="w-4 h-4 mr-2" />
               Estatísticas
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-gray-700">
+              <CreditCard className="w-4 h-4 mr-2" />
+              Assinaturas
             </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-gray-700">
               <MessageCircle className="w-4 h-4 mr-2" />
@@ -526,6 +531,11 @@ export default function CreatorStudio() {
           {/* Tab: Estatísticas */}
           <TabsContent value="stats">
             <CreatorStatsPanel />
+          </TabsContent>
+
+          {/* Tab: Planos de Assinatura */}
+          <TabsContent value="subscriptions">
+            {userId && <SubscriptionPlansManager creatorId={userId} />}
           </TabsContent>
 
           {/* Tab: Chat */}

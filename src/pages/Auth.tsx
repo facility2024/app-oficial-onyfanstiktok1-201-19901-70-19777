@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import loginBackground from '@/assets/login-background.png';
 import loginBackgroundMobile from '@/assets/login-background-mobile.png';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, RefreshCw } from 'lucide-react';
 
 // Schema de validação
 const loginSchema = z.object({
@@ -44,6 +44,8 @@ const Auth = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   const navigate = useNavigate();
 
   // Preload de imagens críticas
@@ -160,6 +162,9 @@ const Auth = () => {
         localStorage.removeItem('requiresLogin');
         navigate(returnTo);
       } else {
+        // Email precisa confirmação - mostrar tela de aguarde
+        setRegisteredEmail(validated.email);
+        setAwaitingConfirmation(true);
         toast.success('Conta criada! Verifique seu email para confirmar.');
       }
       
@@ -277,6 +282,96 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleResendConfirmation = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: registeredEmail,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Email de confirmação reenviado!');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao reenviar email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderAwaitingConfirmation = () => (
+    <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0">
+      <CardHeader className="space-y-4 text-center pb-2">
+        <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
+          <Mail className="w-8 h-8 text-green-500" />
+        </div>
+        <div className="space-y-2">
+          <CardTitle className="text-xl font-bold text-foreground">
+            Verifique seu Email
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Enviamos um link de confirmação para:
+            <br />
+            <span className="font-semibold text-foreground">{registeredEmail}</span>
+          </CardDescription>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4 pt-2">
+        <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+          <p>📧 Clique no link enviado para ativar sua conta.</p>
+          <p className="mt-2">⚠️ Não recebeu? Verifique a pasta de spam.</p>
+        </div>
+        
+        <Button
+          variant="default"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => {
+            setAwaitingConfirmation(false);
+            setMode('login');
+            setEmail(registeredEmail);
+            setPassword('');
+          }}
+        >
+          Já confirmei, fazer login
+        </Button>
+        
+        <Button
+          variant="ghost"
+          className="w-full text-sm"
+          onClick={handleResendConfirmation}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Reenviando...
+            </>
+          ) : (
+            'Reenviar email de confirmação'
+          )}
+        </Button>
+        
+        <div className="text-center">
+          <button
+            onClick={() => {
+              setAwaitingConfirmation(false);
+              setMode('signup');
+              setEmail('');
+              setPassword('');
+              setName('');
+              setPhone('');
+            }}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ← Usar outro email
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const renderCard = () => (
     <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0">
@@ -540,7 +635,7 @@ const Auth = () => {
         <div className="relative p-1 rounded-lg" style={{
           background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
         }}>
-          {renderCard()}
+          {awaitingConfirmation ? renderAwaitingConfirmation() : renderCard()}
         </div>
       </div>
       
@@ -555,7 +650,7 @@ const Auth = () => {
         <div className="relative p-1 rounded-lg will-change-transform" style={{
           background: 'linear-gradient(135deg, #a855f7, #7c3aed, #6b21a8, #000000)'
         }}>
-          {renderCard()}
+          {awaitingConfirmation ? renderAwaitingConfirmation() : renderCard()}
         </div>
       </div>
     </>

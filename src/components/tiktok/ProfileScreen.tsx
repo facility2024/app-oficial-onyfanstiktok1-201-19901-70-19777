@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@/types/database';
-import { X, ArrowLeft, Heart } from 'lucide-react';
+import { X, ArrowLeft, Heart, Crown, Sparkles } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
+import { useModelSubscription } from '@/hooks/useModelSubscription';
+import { useNavigate } from 'react-router-dom';
 
 
 interface ProfileScreenProps {
@@ -53,6 +55,16 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [isFollowingCreator, setIsFollowingCreator] = useState(false);
   
   const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
+  const navigate = useNavigate();
+  
+  // Hook para assinaturas individuais da modelo
+  const { 
+    plans: modelPlans, 
+    subscription: modelSubscription, 
+    loading: loadingPlans,
+    isPremium,
+    getDaysRemaining 
+  } = useModelSubscription(user.id);
   
   useEffect(() => {
     if (isOpen && user.id) {
@@ -473,27 +485,104 @@ if (!isOpen) return null;
                 </div>
               </div>
 
-            {/* Seção de Promoção com 3 Pacotes */}
+            {/* Seção de Assinatura Individual da Modelo */}
             <div className="px-4 pb-6">
-              {/* Badge de Promoção */}
-              <div className="flex justify-center mb-4">
-                <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-5 py-1.5 rounded-full shadow-lg">
-                  ⭐ PROMOÇÃO ⭐
-                </span>
-              </div>
-              
-              {/* 3 Cards de Assinatura */}
-              <div className="space-y-3">
-                <button className="w-full bg-white/10 border border-white/30 hover:bg-white/20 text-white font-semibold py-3.5 rounded-lg transition-all hover:scale-[1.02] active:scale-95 shadow-lg backdrop-blur-sm">
-                  ASSINAR R$ 14,90
-                </button>
-                <button className="w-full bg-white/10 border border-white/30 hover:bg-white/20 text-white font-semibold py-3.5 rounded-lg transition-all hover:scale-[1.02] active:scale-95 shadow-lg backdrop-blur-sm">
-                  ASSINAR R$ 18,90
-                </button>
-                <button className="w-full bg-white/10 border border-white/30 hover:bg-white/20 text-white font-semibold py-3.5 rounded-lg transition-all hover:scale-[1.02] active:scale-95 shadow-lg backdrop-blur-sm">
-                  ASSINAR R$ 24,90
-                </button>
-              </div>
+              {/* Status de assinatura ou VIP */}
+              {isPremium ? (
+                <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-500/50 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center gap-2 text-amber-400 font-semibold">
+                    <Crown className="w-5 h-5" />
+                    <span>VIP Global - Acesso Total</span>
+                  </div>
+                  <p className="text-center text-amber-400/70 text-xs mt-1">
+                    Você tem acesso a todo conteúdo premium
+                  </p>
+                </div>
+              ) : modelSubscription ? (
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-600/20 border border-green-500/50 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-center gap-2 text-green-400 font-semibold">
+                    <Sparkles className="w-5 h-5" />
+                    <span>Assinante de @{user.username}</span>
+                  </div>
+                  <p className="text-center text-green-400/70 text-xs mt-1">
+                    {getDaysRemaining()} dias restantes
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Badge de Promoção */}
+                  <div className="flex justify-center mb-4">
+                    <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-5 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                      <Crown className="w-3 h-3" /> ASSINE AGORA <Crown className="w-3 h-3" />
+                    </span>
+                  </div>
+                  
+                  {/* Planos Dinâmicos */}
+                  <div className="space-y-3">
+                    {loadingPlans ? (
+                      <div className="flex justify-center py-4">
+                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      modelPlans.map((plan, index) => {
+                        const isPopular = plan.plan_type === 'trimestral';
+                        return (
+                          <button
+                            key={plan.id}
+                            onClick={() => {
+                              if (plan.payment_url) {
+                                window.open(plan.payment_url, '_blank');
+                                toast.info('Redirecionando para pagamento...', {
+                                  description: 'Após o pagamento, seu acesso será liberado automaticamente.',
+                                });
+                              } else {
+                                navigate(`/subscribe?model=${user.id}&plan=${plan.plan_type}&name=${encodeURIComponent(user.username)}`);
+                              }
+                            }}
+                            className={`w-full relative overflow-hidden rounded-xl py-3.5 px-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg ${
+                              isPopular 
+                                ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border-2 border-amber-500' 
+                                : 'bg-white/10 border border-white/30 hover:bg-white/20'
+                            }`}
+                          >
+                            {isPopular && (
+                              <span className="absolute -top-0 right-2 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-b">
+                                POPULAR
+                              </span>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                  isPopular ? 'bg-amber-500' : 'bg-white/20'
+                                }`}>
+                                  <Crown className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-white font-semibold capitalize">{plan.plan_type}</p>
+                                  {plan.discount_label && (
+                                    <span className="text-xs text-green-400">{plan.discount_label}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <span className="text-lg font-bold text-white">
+                                R$ {plan.price.toFixed(2).replace('.', ',')}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                  
+                  {/* Link para VIP Global */}
+                  <button
+                    onClick={() => navigate('/subscribe')}
+                    className="w-full text-center text-xs text-white/50 hover:text-amber-400 transition-colors mt-4"
+                  >
+                    Ou assine o <span className="font-semibold">VIP Global</span> para acessar todas as modelos →
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Botão de Seguir */}

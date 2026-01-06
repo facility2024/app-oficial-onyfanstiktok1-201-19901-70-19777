@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2 } from 'lucide-react';
+import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminVideoGenresModal } from './AdminVideoGenresModal';
@@ -47,7 +47,7 @@ export const AdminVideos = () => {
     video_url: '',
     thumbnail_url: '',
     genres: [] as string[],
-    is_premium: false,
+    visibility: 'public' as 'public' | 'premium' | 'private',
     model_id: '',
   });
   
@@ -167,7 +167,7 @@ export const AdminVideos = () => {
       video_url: '',
       thumbnail_url: '',
       genres: [],
-      is_premium: false,
+      visibility: 'public',
       model_id: '',
     });
     setShowUploadForm(false);
@@ -197,7 +197,7 @@ export const AdminVideos = () => {
           thumbnail_url: validatedData.thumbnail_url,
           model_id: formData.model_id,
           creator_id: null,
-          visibility: formData.is_premium ? 'premium' : 'public',
+          visibility: formData.visibility,
           is_active: true,
           duration: '00:00',
           genres: validatedData.genres,
@@ -603,20 +603,56 @@ export const AdminVideos = () => {
                   )}
                 </div>
 
-                {/* Toggle Premium */}
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Crown className="w-5 h-5 text-yellow-500" />
-                      <div>
-                        <Label className="text-foreground font-semibold">Conteúdo Premium</Label>
-                        <p className="text-xs text-muted-foreground">Apenas assinantes VIP poderão ver este vídeo</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={formData.is_premium}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
-                    />
+                {/* Seletor de Visibilidade */}
+                <div>
+                  <Label className="text-foreground font-semibold mb-3 block">
+                    👁️ Visibilidade do Vídeo *
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Opção Público */}
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({ ...formData, visibility: 'public' })}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        formData.visibility === 'public' 
+                          ? 'border-green-500 bg-green-500/10' 
+                          : 'border-border bg-muted hover:border-green-500/50'
+                      }`}
+                    >
+                      <Eye className="w-6 h-6 text-green-500 mb-2" />
+                      <p className="font-semibold text-foreground">🌐 Público</p>
+                      <p className="text-xs text-muted-foreground">Visível para todos</p>
+                    </button>
+
+                    {/* Opção Premium (VIP Global) */}
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({ ...formData, visibility: 'premium' })}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        formData.visibility === 'premium' 
+                          ? 'border-amber-500 bg-amber-500/10' 
+                          : 'border-border bg-muted hover:border-amber-500/50'
+                      }`}
+                    >
+                      <Crown className="w-6 h-6 text-amber-500 mb-2" />
+                      <p className="font-semibold text-foreground">👑 Premium</p>
+                      <p className="text-xs text-muted-foreground">Apenas VIP Global</p>
+                    </button>
+
+                    {/* Opção Privado (Assinantes da Modelo) */}
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({ ...formData, visibility: 'private' })}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        formData.visibility === 'private' 
+                          ? 'border-purple-500 bg-purple-500/10' 
+                          : 'border-border bg-muted hover:border-purple-500/50'
+                      }`}
+                    >
+                      <Lock className="w-6 h-6 text-purple-500 mb-2" />
+                      <p className="font-semibold text-foreground">🔒 Privado</p>
+                      <p className="text-xs text-muted-foreground">Apenas assinantes da modelo</p>
+                    </button>
                   </div>
                 </div>
 

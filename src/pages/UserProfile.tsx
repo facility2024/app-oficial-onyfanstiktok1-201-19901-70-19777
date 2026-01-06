@@ -437,6 +437,31 @@ export default function UserProfile() {
                 </div>
               </div>
 
+              {/* Minhas Assinaturas */}
+              <div className="bg-gradient-to-r from-amber-900/30 to-purple-900/30 border border-amber-500/20 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <Crown className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-white">Minhas Assinaturas</h3>
+                      <p className="text-xs text-gray-400">
+                        {isPremium ? 'VIP Ativo • Veja todas suas assinaturas' : 'Gerencie suas assinaturas de modelos'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/my-subscriptions')}
+                    className="bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                  >
+                    Ver
+                  </Button>
+                </div>
+              </div>
+
               {/* Creator Studio Button (if creator) */}
               {isCreator && (
                 <Button 

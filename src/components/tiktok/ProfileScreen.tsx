@@ -533,7 +533,6 @@ if (!isOpen) return null;
                       </div>
                     ) : (
                       modelPlans.map((plan, index) => {
-                        const isPopular = plan.plan_type === 'trimestral';
                         return (
                           <button
                             key={plan.id}
@@ -547,22 +546,11 @@ if (!isOpen) return null;
                                 navigate(`/subscribe?model=${user.id}&plan=${plan.plan_type}&name=${encodeURIComponent(user.username)}`);
                               }
                             }}
-                            className={`w-full relative overflow-hidden rounded-xl py-3.5 px-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg ${
-                              isPopular 
-                                ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border-2 border-amber-500' 
-                                : 'bg-white/10 border border-white/30 hover:bg-white/20'
-                            }`}
+                            className="w-full relative overflow-hidden rounded-xl py-3.5 px-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg bg-gradient-to-r from-amber-500/30 to-amber-600/30 border-2 border-amber-500"
                           >
-                            {isPopular && (
-                              <span className="absolute -top-0 right-2 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-b">
-                                POPULAR
-                              </span>
-                            )}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                  isPopular ? 'bg-amber-500' : 'bg-white/20'
-                                }`}>
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-amber-500">
                                   <Crown className="w-4 h-4 text-white" />
                                 </div>
                                 <div className="text-left">

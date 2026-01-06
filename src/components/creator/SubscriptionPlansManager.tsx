@@ -12,7 +12,7 @@ interface Plan {
   id?: string;
   model_id: string;
   model_type: 'creator';
-  plan_type: 'mensal' | 'trimestral' | 'anual';
+  plan_type: 'mensal';
   price: number;
   discount_label: string | null;
   payment_url: string | null;
@@ -28,8 +28,6 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
   const [saving, setSaving] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([
     { model_id: creatorId, model_type: 'creator', plan_type: 'mensal', price: 14.90, discount_label: null, payment_url: null, is_active: true },
-    { model_id: creatorId, model_type: 'creator', plan_type: 'trimestral', price: 18.90, discount_label: '17% OFF', payment_url: null, is_active: true },
-    { model_id: creatorId, model_type: 'creator', plan_type: 'anual', price: 24.90, discount_label: '25% OFF', payment_url: null, is_active: true },
   ]);
 
   useEffect(() => {
@@ -50,7 +48,8 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
       }
 
       if (data && data.length > 0) {
-        setPlans(data);
+        // Filtrar apenas planos mensais
+        setPlans(data.filter((p: any) => p.plan_type === 'mensal'));
       }
     } catch (err) {
       console.error('Erro ao buscar planos:', err);
@@ -59,7 +58,7 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
     }
   };
 
-  const handlePlanChange = (planType: 'mensal' | 'trimestral' | 'anual', field: keyof Plan, value: any) => {
+  const handlePlanChange = (planType: 'mensal', field: keyof Plan, value: any) => {
     setPlans(prev => prev.map(p => 
       p.plan_type === planType ? { ...p, [field]: value } : p
     ));
@@ -268,7 +267,7 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
         </h4>
         <ol className="text-sm text-gray-300 space-y-1 list-decimal list-inside">
           <li>Acesse sua conta no Hoopay (hoopay.com.br)</li>
-          <li>Crie um produto para cada plano (mensal, trimestral, anual)</li>
+          <li>Crie um produto para o plano mensal</li>
           <li>Copie o link de pagamento gerado</li>
           <li>Cole o link no campo correspondente acima</li>
           <li>Quando um usuário pagar, o acesso será liberado automaticamente</li>

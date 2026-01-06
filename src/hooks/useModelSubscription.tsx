@@ -29,8 +29,6 @@ export interface ModelSubscription {
 // Planos padrão caso a modelo não tenha configurado
 const DEFAULT_PLANS: Omit<ModelPlan, 'id' | 'model_id'>[] = [
   { model_type: 'model', plan_type: 'mensal', price: 14.90, discount_label: null, payment_url: null, is_active: true },
-  { model_type: 'model', plan_type: 'trimestral', price: 18.90, discount_label: '17% OFF', payment_url: null, is_active: true },
-  { model_type: 'model', plan_type: 'anual', price: 24.90, discount_label: '25% OFF', payment_url: null, is_active: true },
 ];
 
 export const useModelSubscription = (modelId?: string) => {
@@ -74,7 +72,8 @@ export const useModelSubscription = (modelId?: string) => {
       }
 
       if (data && data.length > 0) {
-        return data as ModelPlan[];
+        // Filtrar apenas planos mensais
+        return (data as ModelPlan[]).filter(p => p.plan_type === 'mensal');
       }
 
       // Retornar planos padrão se não houver configurados

@@ -157,7 +157,7 @@ export const VideoManagementTable = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => setEditingVideo(video)}
-                      className="border-gray-600 text-white hover:bg-gray-700"
+                      className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
                     >
                       <Edit className="w-3 h-3 mr-1" />
                       Editar
@@ -166,7 +166,7 @@ export const VideoManagementTable = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => toggleVideoActive(video.id, video.is_active)}
-                      className="border-gray-600 text-white hover:bg-gray-700"
+                      className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
                     >
                       {video.is_active ? (
                         <>
@@ -186,10 +186,10 @@ export const VideoManagementTable = () => {
                       onClick={() => toggleVideoPremium(video.id, video.visibility)}
                       className={
                         video.visibility === 'premium' 
-                          ? 'border-amber-500 text-amber-400 hover:bg-amber-950' 
+                          ? 'bg-amber-600/20 text-amber-400 border-amber-500/50 hover:bg-amber-600/30' 
                           : video.visibility === 'private'
-                            ? 'border-purple-500 text-purple-400 hover:bg-purple-950'
-                            : 'border-gray-600 text-white hover:bg-gray-700'
+                            ? 'bg-purple-600/20 text-purple-400 border-purple-500/50 hover:bg-purple-600/30'
+                            : 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600'
                       }
                     >
                       {video.visibility === 'public' && (
@@ -215,7 +215,7 @@ export const VideoManagementTable = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => setDeletingVideoId(video.id)}
-                      className="border-red-600 text-red-400 hover:bg-red-950"
+                      className="bg-red-600/20 text-red-400 border-red-500/50 hover:bg-red-600/30"
                     >
                       <Trash2 className="w-3 h-3 mr-1" />
                       Deletar

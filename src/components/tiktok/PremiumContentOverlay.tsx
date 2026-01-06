@@ -8,21 +8,25 @@ interface PremiumContentOverlayProps {
   onClose?: () => void;
   modelName?: string;
   onSubscribeClick?: () => void; // Callback para abrir opções de assinatura individual
+  contentType?: 'premium' | 'private'; // Tipo de bloqueio: premium (VIP Global) ou private (assinatura individual)
 }
 
 export const PremiumContentOverlay = ({ 
   thumbnailUrl, 
   onClose,
   modelName,
-  onSubscribeClick
+  onSubscribeClick,
+  contentType = 'premium'
 }: PremiumContentOverlayProps) => {
   const navigate = useNavigate();
+  const isPrivate = contentType === 'private';
 
   const handleSubscribe = () => {
-    // Se existe callback de assinatura individual, usar ele primeiro
-    if (onSubscribeClick) {
+    // Se é vídeo privado e existe callback de assinatura individual, usar ele
+    if (isPrivate && onSubscribeClick) {
       onSubscribeClick();
     } else {
+      // Para vídeos premium ou sem callback, ir para página VIP Global
       navigate('/subscribe');
     }
   };
@@ -82,15 +86,25 @@ export const PremiumContentOverlay = ({
           <motion.div 
             className="relative"
             animate={{ 
-              boxShadow: ['0 0 20px rgba(251, 191, 36, 0.3)', '0 0 40px rgba(251, 191, 36, 0.5)', '0 0 20px rgba(251, 191, 36, 0.3)']
+              boxShadow: isPrivate 
+                ? ['0 0 20px rgba(168, 85, 247, 0.3)', '0 0 40px rgba(168, 85, 247, 0.5)', '0 0 20px rgba(168, 85, 247, 0.3)']
+                : ['0 0 20px rgba(251, 191, 36, 0.3)', '0 0 40px rgba(251, 191, 36, 0.5)', '0 0 20px rgba(251, 191, 36, 0.3)']
             }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center shadow-2xl">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-2xl ${
+              isPrivate 
+                ? 'bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600' 
+                : 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500'
+            }`}>
               <Lock className="w-10 h-10 text-black" />
             </div>
             <motion.div
-              className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center"
+              className={`absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center ${
+                isPrivate 
+                  ? 'bg-gradient-to-br from-purple-300 to-purple-500' 
+                  : 'bg-gradient-to-br from-yellow-300 to-amber-500'
+              }`}
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 1, repeat: Infinity }}
             >
@@ -100,30 +114,44 @@ export const PremiumContentOverlay = ({
         </div>
 
         {/* Card content */}
-        <div className="bg-gradient-to-b from-gray-900/95 to-black/95 border border-amber-500/30 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
+        <div className={`bg-gradient-to-b from-gray-900/95 to-black/95 border rounded-2xl p-6 backdrop-blur-xl shadow-2xl ${
+          isPrivate ? 'border-purple-500/30' : 'border-amber-500/30'
+        }`}>
           {/* Title */}
           <h3 className="text-xl font-bold text-white text-center mb-2 flex items-center justify-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-400" />
-            Conteúdo Exclusivo
-            <Sparkles className="w-5 h-5 text-amber-400" />
+            <Sparkles className={isPrivate ? 'w-5 h-5 text-purple-400' : 'w-5 h-5 text-amber-400'} />
+            {isPrivate ? 'Conteúdo Privado' : 'Conteúdo Premium'}
+            <Sparkles className={isPrivate ? 'w-5 h-5 text-purple-400' : 'w-5 h-5 text-amber-400'} />
           </h3>
 
           {/* Description */}
           <p className="text-gray-400 text-center text-sm mb-4">
-            {modelName 
-              ? `Este conteúdo de ${modelName} é exclusivo para assinantes VIP.`
-              : 'Este conteúdo é exclusivo para assinantes VIP.'
+            {isPrivate 
+              ? (modelName 
+                  ? `Este conteúdo é exclusivo para assinantes de ${modelName}.`
+                  : 'Este conteúdo é exclusivo para assinantes desta criadora.')
+              : (modelName 
+                  ? `Este conteúdo de ${modelName} é exclusivo para VIP Global.`
+                  : 'Este conteúdo é exclusivo para assinantes VIP Global.')
             }
           </p>
 
           {/* Benefits list */}
           <div className="space-y-2 mb-5">
-            {[
-              'Acesso ilimitado a conteúdos premium',
-              'Sem anúncios',
-              'Chat exclusivo com criadores',
-              'Badge VIP no perfil'
-            ].map((benefit, i) => (
+            {(isPrivate 
+              ? [
+                  `Todos os vídeos privados de ${modelName || 'esta criadora'}`,
+                  'Fotos exclusivas',
+                  'Conteúdo novo toda semana',
+                  'Acesso antecipado'
+                ]
+              : [
+                  'Acesso ilimitado a conteúdos premium',
+                  'Sem anúncios',
+                  'Chat exclusivo com criadores',
+                  'Badge VIP no perfil'
+                ]
+            ).map((benefit, i) => (
               <motion.div 
                 key={i}
                 className="flex items-center gap-2 text-sm text-gray-300"
@@ -131,7 +159,7 @@ export const PremiumContentOverlay = ({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 * i }}
               >
-                <Star className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <Star className={`w-4 h-4 flex-shrink-0 ${isPrivate ? 'text-purple-400' : 'text-amber-400'}`} />
                 {benefit}
               </motion.div>
             ))}
@@ -140,15 +168,22 @@ export const PremiumContentOverlay = ({
           {/* CTA Button */}
           <Button 
             onClick={handleSubscribe}
-            className="w-full py-6 text-lg font-bold bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500 hover:from-amber-600 hover:via-amber-500 hover:to-orange-600 text-black shadow-lg shadow-amber-500/25 transition-all"
+            className={`w-full py-6 text-lg font-bold text-black shadow-lg transition-all ${
+              isPrivate 
+                ? 'bg-gradient-to-r from-purple-500 via-purple-400 to-purple-600 hover:from-purple-600 hover:via-purple-500 hover:to-purple-700 shadow-purple-500/25'
+                : 'bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500 hover:from-amber-600 hover:via-amber-500 hover:to-orange-600 shadow-amber-500/25'
+            }`}
           >
             <Crown className="w-5 h-5 mr-2" />
-            Seja VIP Agora
+            {isPrivate ? `Assinar ${modelName || 'Criadora'}` : 'Seja VIP Global'}
           </Button>
 
           {/* Price hint */}
           <p className="text-center text-gray-500 text-xs mt-3">
-            A partir de R$ 19,99/mês • Cancele quando quiser
+            {isPrivate 
+              ? 'Planos a partir de R$ 14,90/mês'
+              : 'A partir de R$ 19,99/mês • Cancele quando quiser'
+            }
           </p>
         </div>
 

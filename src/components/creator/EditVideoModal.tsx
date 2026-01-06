@@ -14,7 +14,7 @@ const editVideoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres').max(500),
   thumbnail_url: z.string().url('URL da thumbnail inválida'),
-  visibility: z.enum(['public', 'premium']),
+  visibility: z.enum(['public', 'premium', 'private']),
 });
 
 interface EditVideoModalProps {
@@ -117,10 +117,16 @@ export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) =>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="public">Público</SelectItem>
-                <SelectItem value="premium">👑 Premium</SelectItem>
+                <SelectItem value="public">🌐 Público</SelectItem>
+                <SelectItem value="premium">👑 Premium VIP</SelectItem>
+                <SelectItem value="private">🔒 Privado (Meus Assinantes)</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-gray-400 mt-1">
+              {formData.visibility === 'public' && 'Todos podem ver este vídeo'}
+              {formData.visibility === 'premium' && 'Apenas assinantes VIP Global podem ver'}
+              {formData.visibility === 'private' && 'Apenas seus assinantes individuais podem ver'}
+            </p>
           </div>
 
           <DialogFooter>

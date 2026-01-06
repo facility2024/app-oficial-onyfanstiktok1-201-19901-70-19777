@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, CreditCard } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
@@ -56,7 +56,7 @@ export default function CreatorStudio() {
     video_url: '',
     thumbnail_url: '',
     genres: [] as string[],
-    is_premium: false,
+    visibility: 'public' as 'public' | 'premium' | 'private',
   });
 
   useEffect(() => {
@@ -212,7 +212,7 @@ export default function CreatorStudio() {
           thumbnail_url: validatedData.thumbnail_url,
           creator_id: user.id,  // ID do criador autenticado (oculto)
           model_id: null,       // NULL para criadores
-          visibility: formData.is_premium ? 'premium' : 'public',
+          visibility: formData.visibility,
           is_active: true,
           duration: '00:00',
           genres: validatedData.genres,
@@ -229,7 +229,7 @@ export default function CreatorStudio() {
         video_url: '',
         thumbnail_url: '',
         genres: [],
-        is_premium: false,
+        visibility: 'public',
       });
 
     } catch (error: any) {
@@ -444,21 +444,79 @@ export default function CreatorStudio() {
                   )}
                 </div>
 
-                {/* Toggle Premium */}
-                <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Crown className="w-5 h-5 text-yellow-500" />
-                      <div>
-                        <Label className="text-white font-semibold">Conteúdo Premium</Label>
-                        <p className="text-xs text-gray-400">Apenas assinantes VIP poderão ver este vídeo</p>
+                {/* Seletor de Visibilidade */}
+                <div className="space-y-3">
+                  <Label className="text-white font-semibold">Visibilidade do Vídeo</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Público */}
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, visibility: 'public' })}
+                      className={`
+                        p-4 rounded-lg border-2 transition-all duration-200 text-left
+                        ${formData.visibility === 'public' 
+                          ? 'border-green-500 bg-green-500/10' 
+                          : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Globe className={`w-5 h-5 ${formData.visibility === 'public' ? 'text-green-400' : 'text-gray-400'}`} />
+                        <span className={`font-semibold ${formData.visibility === 'public' ? 'text-green-400' : 'text-white'}`}>
+                          Público
+                        </span>
                       </div>
-                    </div>
-                    <Switch
-                      checked={formData.is_premium}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
-                    />
+                      <p className="text-xs text-gray-400">Todos podem ver este vídeo gratuitamente</p>
+                    </button>
+
+                    {/* Premium (VIP Global) */}
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, visibility: 'premium' })}
+                      className={`
+                        p-4 rounded-lg border-2 transition-all duration-200 text-left
+                        ${formData.visibility === 'premium' 
+                          ? 'border-amber-500 bg-amber-500/10' 
+                          : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Crown className={`w-5 h-5 ${formData.visibility === 'premium' ? 'text-amber-400' : 'text-gray-400'}`} />
+                        <span className={`font-semibold ${formData.visibility === 'premium' ? 'text-amber-400' : 'text-white'}`}>
+                          Premium VIP
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400">Apenas assinantes VIP Global podem ver</p>
+                    </button>
+
+                    {/* Privado (Meus Assinantes) */}
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, visibility: 'private' })}
+                      className={`
+                        p-4 rounded-lg border-2 transition-all duration-200 text-left
+                        ${formData.visibility === 'private' 
+                          ? 'border-purple-500 bg-purple-500/10' 
+                          : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lock className={`w-5 h-5 ${formData.visibility === 'private' ? 'text-purple-400' : 'text-gray-400'}`} />
+                        <span className={`font-semibold ${formData.visibility === 'private' ? 'text-purple-400' : 'text-white'}`}>
+                          Privado
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400">Apenas seus assinantes individuais podem ver</p>
+                    </button>
                   </div>
+                  
+                  {formData.visibility === 'private' && (
+                    <p className="text-xs text-purple-400 mt-2">
+                      💡 Configure seus planos de assinatura na aba "Assinaturas" para que usuários possam assinar seu conteúdo.
+                    </p>
+                  )}
                 </div>
 
                 {/* Preview */}

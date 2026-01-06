@@ -9,7 +9,7 @@ export interface CreatorVideo {
   video_url: string;
   thumbnail_url: string;
   thumbnail_locked?: string;
-  visibility: 'public' | 'premium';
+  visibility: 'public' | 'premium' | 'private';
   is_active: boolean;
   views_count: number;
   likes_count: number;
@@ -23,7 +23,7 @@ export const useCreatorVideos = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'premium'>('all');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'premium' | 'private'>('all');
 
   const fetchVideos = useCallback(async () => {
     try {
@@ -130,9 +130,8 @@ export const useCreatorVideos = () => {
     }
   };
 
-  const toggleVideoPremium = async (videoId: string, currentVisibility: string) => {
+  const changeVisibility = async (videoId: string, newVisibility: 'public' | 'premium' | 'private') => {
     try {
-      const newVisibility = currentVisibility === 'premium' ? 'public' : 'premium';
       const { error } = await supabase
         .from('videos')
         .update({ visibility: newVisibility })
@@ -140,12 +139,29 @@ export const useCreatorVideos = () => {
 
       if (error) throw error;
 
-      toast.success(newVisibility === 'premium' ? '👑 Vídeo marcado como Premium!' : 'Vídeo agora é público');
+      const messages = {
+        public: '🌐 Vídeo agora é público!',
+        premium: '👑 Vídeo marcado como Premium VIP!',
+        private: '🔒 Vídeo agora é privado (apenas seus assinantes)',
+      };
+      
+      toast.success(messages[newVisibility]);
       fetchVideos();
     } catch (error) {
       console.error('Erro ao alterar visibilidade:', error);
       toast.error('Erro ao alterar visibilidade do vídeo');
     }
+  };
+
+  const toggleVideoPremium = async (videoId: string, currentVisibility: string) => {
+    // Ciclar: public -> premium -> private -> public
+    const cycle: Record<string, 'public' | 'premium' | 'private'> = {
+      public: 'premium',
+      premium: 'private',
+      private: 'public',
+    };
+    const newVisibility = cycle[currentVisibility] || 'public';
+    await changeVisibility(videoId, newVisibility);
   };
 
   return {
@@ -159,6 +175,7 @@ export const useCreatorVideos = () => {
     setVisibilityFilter,
     toggleVideoActive,
     toggleVideoPremium,
+    changeVisibility,
     updateVideo,
     deleteVideo,
     refetch: fetchVideos,

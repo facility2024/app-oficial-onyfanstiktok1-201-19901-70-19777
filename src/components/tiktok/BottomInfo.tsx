@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Music, Crown } from 'lucide-react';
+import { Music, Crown, Lock } from 'lucide-react';
 import { VinylRecord } from './VinylRecord';
 
 interface BottomInfoProps {
@@ -7,9 +7,10 @@ interface BottomInfoProps {
   isNew?: boolean;
   isPlaying?: boolean;
   isPremium?: boolean;
+  isPrivate?: boolean;
 }
 
-export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium = false }: BottomInfoProps) => {
+export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium = false, isPrivate = false }: BottomInfoProps) => {
   const handleMusicClick = () => {
     // Abre o perfil do autor da música (modelo)
     const authorUrl = video.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(video.user?.username || '')}`;
@@ -40,6 +41,12 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
           <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black px-2.5 py-1 rounded-full text-xs font-bold shadow-lg shadow-amber-500/30 animate-pulse">
             <Crown className="w-3 h-3" />
             VIP
+          </span>
+        )}
+        {isPrivate && (
+          <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg shadow-purple-500/30">
+            <Lock className="w-3 h-3" />
+            EXCLUSIVO
           </span>
         )}
       </div>

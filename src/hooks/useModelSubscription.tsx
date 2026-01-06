@@ -127,39 +127,64 @@ export const useModelSubscription = (modelId?: string) => {
     }
   }, [userId, userEmail]);
 
-  // Verificar se conteúdo está liberado (VIP Global OU assinatura individual)
-  const isContentUnlocked = useCallback(async (targetModelId: string): Promise<boolean> => {
-    // 1. VIP Global libera TUDO
-    if (isPremium) {
-      console.log('✅ Conteúdo liberado: usuário é VIP Global');
-      return true;
-    }
+  // Verificar se conteúdo PREMIUM está liberado (VIP Global)
+  const isPremiumUnlocked = useCallback((): boolean => {
+    return isPremium;
+  }, [isPremium]);
 
-    // 2. Verificar assinatura individual
+  // Verificar se conteúdo PRIVADO está liberado (assinatura individual da modelo)
+  const isPrivateUnlocked = useCallback(async (targetModelId: string): Promise<boolean> => {
     const sub = await checkSubscription(targetModelId);
     if (sub) {
-      console.log('✅ Conteúdo liberado: usuário tem assinatura para esta modelo');
+      console.log('✅ Conteúdo privado liberado: usuário tem assinatura para esta modelo');
       return true;
     }
-
-    console.log('🔒 Conteúdo bloqueado: sem VIP e sem assinatura individual');
+    console.log('🔒 Conteúdo privado bloqueado: sem assinatura individual');
     return false;
-  }, [isPremium, checkSubscription]);
+  }, [checkSubscription]);
 
-  // Verificação síncrona usando cache local
-  const isContentUnlockedSync = useCallback((targetModelId: string): boolean => {
-    // VIP Global
-    if (isPremium) return true;
+  // Verificar se conteúdo está liberado baseado no tipo de visibilidade
+  const isContentUnlocked = useCallback(async (
+    targetModelId: string, 
+    visibility: 'public' | 'premium' | 'private'
+  ): Promise<boolean> => {
+    // Público: sempre liberado
+    if (visibility === 'public') return true;
     
-    // Verificar cache de assinatura
+    // Premium: só VIP Global libera
+    if (visibility === 'premium') {
+      return isPremium;
+    }
+    
+    // Privado: só assinatura individual da modelo libera
+    if (visibility === 'private') {
+      return isPrivateUnlocked(targetModelId);
+    }
+    
+    return false;
+  }, [isPremium, isPrivateUnlocked]);
+
+  // Verificação síncrona para conteúdo PRIVADO usando cache local
+  const isPrivateUnlockedSync = useCallback((targetModelId: string): boolean => {
+    // Verificar cache de assinatura individual
     if (subscription && subscription.model_id === targetModelId) {
       const isActive = subscription.subscription_status === 'active';
       const notExpired = new Date(subscription.subscription_end) >= new Date();
       return isActive && notExpired;
     }
-
     return false;
-  }, [isPremium, subscription]);
+  }, [subscription]);
+
+  // Verificação síncrona baseada no tipo de visibilidade
+  const isContentUnlockedSync = useCallback((
+    targetModelId: string,
+    visibility: 'public' | 'premium' | 'private'
+  ): boolean => {
+    if (visibility === 'public') return true;
+    if (visibility === 'premium') return isPremium;
+    if (visibility === 'private') return isPrivateUnlockedSync(targetModelId);
+    return false;
+  }, [isPremium, isPrivateUnlockedSync]);
 
   // Carregar dados quando modelId muda
   useEffect(() => {
@@ -208,6 +233,9 @@ export const useModelSubscription = (modelId?: string) => {
     subscription,
     loading,
     isPremium,
+    isPremiumUnlocked,
+    isPrivateUnlocked,
+    isPrivateUnlockedSync,
     isContentUnlocked,
     isContentUnlockedSync,
     checkSubscription,

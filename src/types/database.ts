@@ -26,7 +26,7 @@ export interface Video {
   views_count: number;
   music_name: string;
   is_active: boolean;
-  visibility?: 'public' | 'premium';
+  visibility?: 'public' | 'premium' | 'private';
   created_at: string;
   user?: User;
 }

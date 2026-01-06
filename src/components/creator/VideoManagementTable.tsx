@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown } from 'lucide-react';
+import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe } from 'lucide-react';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { EditVideoModal } from './EditVideoModal';
 import { DeleteVideoDialog } from './DeleteVideoDialog';
@@ -81,7 +81,8 @@ export const VideoManagementTable = () => {
             <SelectContent>
               <SelectItem value="all">Todas Visibilidades</SelectItem>
               <SelectItem value="public">Público</SelectItem>
-              <SelectItem value="premium">Premium</SelectItem>
+              <SelectItem value="premium">Premium VIP</SelectItem>
+              <SelectItem value="private">Privado</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -114,9 +115,21 @@ export const VideoManagementTable = () => {
                       <Badge variant={video.is_active ? 'default' : 'secondary'}>
                         {video.is_active ? 'Ativo' : 'Pausado'}
                       </Badge>
-                      <Badge variant={video.visibility === 'premium' ? 'default' : 'outline'}>
-                        {video.visibility === 'premium' ? '👑 Premium' : 'Público'}
-                      </Badge>
+                      {video.visibility === 'public' && (
+                        <Badge variant="outline" className="text-gray-400 border-gray-500">
+                          <Globe className="w-3 h-3 mr-1" /> Público
+                        </Badge>
+                      )}
+                      {video.visibility === 'premium' && (
+                        <Badge variant="default" className="bg-amber-500/20 text-amber-400 border-amber-500">
+                          <Crown className="w-3 h-3 mr-1" /> Premium VIP
+                        </Badge>
+                      )}
+                      {video.visibility === 'private' && (
+                        <Badge variant="default" className="bg-purple-500/20 text-purple-400 border-purple-500">
+                          <Lock className="w-3 h-3 mr-1" /> Privado
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   
@@ -171,12 +184,32 @@ export const VideoManagementTable = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => toggleVideoPremium(video.id, video.visibility)}
-                      className={video.visibility === 'premium' 
-                        ? 'border-yellow-500 text-yellow-400 hover:bg-yellow-950' 
-                        : 'border-gray-600 text-white hover:bg-gray-700'}
+                      className={
+                        video.visibility === 'premium' 
+                          ? 'border-amber-500 text-amber-400 hover:bg-amber-950' 
+                          : video.visibility === 'private'
+                            ? 'border-purple-500 text-purple-400 hover:bg-purple-950'
+                            : 'border-gray-600 text-white hover:bg-gray-700'
+                      }
                     >
-                      <Crown className="w-3 h-3 mr-1" />
-                      {video.visibility === 'premium' ? 'Premium' : 'Marcar Premium'}
+                      {video.visibility === 'public' && (
+                        <>
+                          <Crown className="w-3 h-3 mr-1" />
+                          → Premium
+                        </>
+                      )}
+                      {video.visibility === 'premium' && (
+                        <>
+                          <Lock className="w-3 h-3 mr-1" />
+                          → Privado
+                        </>
+                      )}
+                      {video.visibility === 'private' && (
+                        <>
+                          <Globe className="w-3 h-3 mr-1" />
+                          → Público
+                        </>
+                      )}
                     </Button>
                     <Button
                       size="sm"

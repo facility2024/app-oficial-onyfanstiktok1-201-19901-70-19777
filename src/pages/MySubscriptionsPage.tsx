@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles, RefreshCw, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +15,7 @@ const MySubscriptionsPage = () => {
     premiumData,
     vipDaysRemaining,
     modelSubscriptions,
+    subscriptionHistory,
     loading,
     totalActiveSubscriptions
   } = useAllSubscriptions();
@@ -289,6 +290,68 @@ const MySubscriptionsPage = () => {
                 >
                   Descobrir Criadores
                 </Button>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
+
+        {/* Histórico de Assinaturas */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <History className="w-5 h-5 text-gray-400" />
+            <h2 className="text-lg font-semibold text-white">Histórico</h2>
+            <Badge variant="outline" className="ml-auto text-white/60 border-white/20">
+              {subscriptionHistory.length}
+            </Badge>
+          </div>
+
+          {subscriptionHistory.length > 0 ? (
+            <div className="grid gap-2">
+              {subscriptionHistory.map((sub) => (
+                <Card key={sub.id} className="border border-white/5 bg-white/5">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 opacity-60">
+                        <AvatarImage src={sub.modelInfo?.avatar_url} />
+                        <AvatarFallback className="bg-gray-700">
+                          <User className="w-4 h-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/70 text-sm truncate">
+                          {sub.modelInfo?.name || 'Modelo'}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-white/40">
+                          <span>{getPlanLabel(sub.subscription_type)}</span>
+                          <span>•</span>
+                          <span>{formatDate(sub.subscription_start)} - {formatDate(sub.subscription_end)}</span>
+                        </div>
+                      </div>
+                      
+                      <Badge className={
+                        sub.subscription_status === 'cancelled' 
+                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                          : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                      }>
+                        {sub.subscription_status === 'cancelled' ? 'Cancelada' : 'Expirada'}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border border-white/5 bg-white/5">
+              <CardContent className="p-6 text-center">
+                <History className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                <p className="text-white/50 text-sm">
+                  Nenhum histórico de assinaturas anteriores
+                </p>
               </CardContent>
             </Card>
           )}

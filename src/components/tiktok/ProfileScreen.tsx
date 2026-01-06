@@ -487,18 +487,8 @@ if (!isOpen) return null;
 
             {/* Seção de Assinatura Individual da Modelo */}
             <div className="px-4 pb-6">
-              {/* Status de assinatura ou VIP */}
-              {isPremium ? (
-                <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-500/50 rounded-xl p-4 mb-4">
-                  <div className="flex items-center justify-center gap-2 text-amber-400 font-semibold">
-                    <Crown className="w-5 h-5" />
-                    <span>VIP Global - Acesso Premium</span>
-                  </div>
-                  <p className="text-center text-amber-400/70 text-xs mt-1">
-                    Você tem acesso a vídeos 👑 Premium
-                  </p>
-                </div>
-              ) : modelSubscription ? (
+              {/* Status de assinatura da modelo */}
+              {modelSubscription ? (
                 <div className="bg-gradient-to-r from-green-500/20 to-emerald-600/20 border border-green-500/50 rounded-xl p-4 mb-4">
                   <div className="flex items-center justify-center gap-2 text-green-400 font-semibold">
                     <Sparkles className="w-5 h-5" />
@@ -579,7 +569,7 @@ if (!isOpen) return null;
                     onClick={() => navigate('/subscribe')}
                     className="w-full text-center text-xs text-white/50 hover:text-amber-400 transition-colors mt-4"
                   >
-                    Ou assine o <span className="font-semibold">VIP Global</span> para acessar conteúdo 👑 Premium →
+                    Quer acessar conteúdo 👑 Premium de todas as modelos? <span className="font-semibold">Seja VIP Global →</span>
                   </button>
                 </>
               )}

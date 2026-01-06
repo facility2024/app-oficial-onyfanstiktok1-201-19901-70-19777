@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles, RefreshCw, History } from 'lucide-react';
@@ -5,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAllSubscriptions } from '@/hooks/useAllSubscriptions';
 import coconudiLogo from '@/assets/coconudi-logo-white.png';
 
 const MySubscriptionsPage = () => {
   const navigate = useNavigate();
+  const [historyPeriod, setHistoryPeriod] = useState<string>('all');
+  
   const {
     isPremium,
     premiumData,
@@ -19,6 +23,33 @@ const MySubscriptionsPage = () => {
     loading,
     totalActiveSubscriptions
   } = useAllSubscriptions();
+
+  // Filtrar histórico por período
+  const filteredHistory = useMemo(() => {
+    if (historyPeriod === 'all') return subscriptionHistory;
+    
+    const now = new Date();
+    let cutoffDate: Date;
+    
+    switch (historyPeriod) {
+      case '1month':
+        cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        break;
+      case '3months':
+        cutoffDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        break;
+      case '1year':
+        cutoffDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+      default:
+        return subscriptionHistory;
+    }
+    
+    return subscriptionHistory.filter(sub => {
+      const endDate = new Date(sub.subscription_end);
+      return endDate >= cutoffDate;
+    });
+  }, [subscriptionHistory, historyPeriod]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
@@ -304,14 +335,28 @@ const MySubscriptionsPage = () => {
           <div className="flex items-center gap-2 mb-4">
             <History className="w-5 h-5 text-gray-400" />
             <h2 className="text-lg font-semibold text-white">Histórico</h2>
-            <Badge variant="outline" className="ml-auto text-white/60 border-white/20">
-              {subscriptionHistory.length}
+            
+            {/* Filtro de Período */}
+            <Select value={historyPeriod} onValueChange={setHistoryPeriod}>
+              <SelectTrigger className="w-[140px] ml-auto h-8 text-xs bg-white/5 border-white/10 text-white/70">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-white/10">
+                <SelectItem value="all" className="text-white/80">Todos</SelectItem>
+                <SelectItem value="1month" className="text-white/80">Último mês</SelectItem>
+                <SelectItem value="3months" className="text-white/80">Últimos 3 meses</SelectItem>
+                <SelectItem value="1year" className="text-white/80">Último ano</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Badge variant="outline" className="text-white/60 border-white/20">
+              {filteredHistory.length}
             </Badge>
           </div>
 
-          {subscriptionHistory.length > 0 ? (
+          {filteredHistory.length > 0 ? (
             <div className="grid gap-2">
-              {subscriptionHistory.map((sub) => (
+              {filteredHistory.map((sub) => (
                 <Card key={sub.id} className="border border-white/5 bg-white/5">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">

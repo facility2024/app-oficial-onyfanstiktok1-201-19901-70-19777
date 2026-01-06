@@ -88,14 +88,20 @@ const MySubscriptionsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+    <div className="fixed inset-0 bg-gradient-to-b from-black via-gray-900 to-black overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/10">
         <div className="flex items-center justify-between p-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/app');
+              }
+            }}
             className="text-white hover:bg-white/10"
           >
             <ArrowLeft className="w-5 h-5" />

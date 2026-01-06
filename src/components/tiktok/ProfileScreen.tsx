@@ -19,6 +19,8 @@ interface ProfileScreenProps {
   onOpenChat?: () => void;
 }
 
+type ContentTab = 'public' | 'premium' | 'private';
+
 interface ModelContent {
   id: string;
   title: string;
@@ -29,6 +31,7 @@ interface ModelContent {
   likes_count: number;
   views_count: number;
   created_at: string;
+  visibility?: 'public' | 'premium' | 'private';
 }
 
 interface ModelImage {
@@ -42,6 +45,10 @@ interface ModelImage {
 
 export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, onOpenChat }: ProfileScreenProps) => {
   const [contents, setContents] = useState<ModelContent[]>([]);
+  const [publicContents, setPublicContents] = useState<ModelContent[]>([]);
+  const [premiumContents, setPremiumContents] = useState<ModelContent[]>([]);
+  const [privateContents, setPrivateContents] = useState<ModelContent[]>([]);
+  const [activeTab, setActiveTab] = useState<ContentTab>('public');
   const [loading, setLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [viewerName, setViewerName] = useState('Você');
@@ -220,11 +227,12 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
               created_at,
               is_active,
               model_id,
-              creator_id
+              creator_id,
+              visibility
             `)
             .eq('is_active', true)
             .order('created_at', { ascending: false })
-            .limit(5);
+            .limit(50);
 
           // Aplicar filtro correto baseado no tipo
           if (isUserCreator) {
@@ -273,13 +281,14 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         type: 'video' as const,
         likes_count: item.likes_count || 0,
         views_count: item.views_count || 0,
-        created_at: item.created_at
+        created_at: item.created_at,
+        visibility: (item.visibility as 'public' | 'premium' | 'private') || 'public'
       })) || [];
 
       // Buscar imagens específicas da modelo (usando localStorage como cache temporário)
       const modelImages = getModelImages(user.id);
       
-      // Transformar imagens para o formato de conteúdo
+      // Transformar imagens para o formato de conteúdo (imagens são sempre públicas)
       const transformedImages = modelImages.map((image, index) => ({
         id: `image-${user.id}-${index}`,
         title: `Foto ${index + 1}`,
@@ -288,7 +297,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         type: 'image' as const,
         likes_count: Math.floor(Math.random() * 100),
         views_count: Math.floor(Math.random() * 1000),
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        visibility: 'public' as const
       }));
 
       // Combinar vídeos e imagens
@@ -296,7 +306,15 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
+      // Separar por visibilidade
+      const publicVideos = allContent.filter(v => v.visibility === 'public' || !v.visibility);
+      const premiumVideos = allContent.filter(v => v.visibility === 'premium');
+      const privateVideos = allContent.filter(v => v.visibility === 'private');
+
       setContents(allContent);
+      setPublicContents(publicVideos);
+      setPremiumContents(premiumVideos);
+      setPrivateContents(privateVideos);
       
       // Cache the results for faster subsequent loads
       sessionStorage.setItem(cacheKey, JSON.stringify({
@@ -486,7 +504,7 @@ if (!isOpen) return null;
               </div>
 
             {/* Seção de Assinatura Individual da Modelo */}
-            <div className="px-4 pb-6">
+            <div className="px-4 pb-6" data-subscription-section>
               {/* Status de assinatura da modelo */}
               {modelSubscription ? (
                 <div className="bg-gradient-to-r from-green-500/20 to-emerald-600/20 border border-green-500/50 rounded-xl p-4 mb-4">
@@ -705,109 +723,215 @@ if (!isOpen) return null;
               </div>
             )}
 
-            {/* Grid de Conteúdo com Labels FOTO/VIDEO ORGÂNICO */}
+            {/* Sistema de Abas de Conteúdo */}
             <div className="px-4 pb-6">
-              <h4 className="text-white font-semibold mb-3 text-base">
-                Postagens ({contents.length})
-              </h4>
-              
-              {contents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-white/60">
-                  <div className="text-3xl mb-2">📱</div>
-                  <p className="text-sm">Nenhum conteúdo disponível</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-1">
-                  {contents.map((content) => (
-                    <div 
-                      key={content.id} 
-                      className="relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20"
-                      onClick={() => {
-                        if (content.type === 'video') {
-                          onVideoSelect?.(content.id);
-                          onClose();
-                        } else {
-                          const imageContents = contents.filter(c => c.type === 'image');
-                          const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
-                          const currentImageIndex = imageContents.findIndex(c => c.id === content.id);
-                          setCurrentImageArray(imageUrls);
-                          setCurrentImageIndex(currentImageIndex);
-                          setImageViewerOpen(true);
-                        }
-                      }}
-                    >
-                      {/* Preview do Conteúdo */}
-                      {content.type === 'video' ? (
-                        <>
-                          <video
-                            src={content.video_url}
-                            className="w-full h-full object-cover"
-                            muted
-                            loop
-                            playsInline
-                            autoPlay
-                            preload="metadata"
-                            poster={content.thumbnail_url}
-                            onError={(e) => {
-                              const parent = e.currentTarget.parentElement;
-                              if (parent) {
-                                parent.innerHTML = `<img src="${content.thumbnail_url}" alt="${content.title}" class="w-full h-full object-cover" />`;
-                              }
-                            }}
-                          />
-                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                            <div className="bg-black/40 rounded-full p-2">
-                              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                              </svg>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <img
-                          src={content.image_url || content.thumbnail_url}
-                          alt={content.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                      )}
-                      
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      
-                      {/* Label FOTO/VIDEO ORGÂNICO */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
-                        <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1">
-                          <span className="text-white text-[10px] font-bold uppercase block">
-                            {content.type === 'video' ? 'VIDEO' : 'FOTO'}
-                          </span>
-                          <span className="text-white/80 text-[8px] font-medium uppercase block">
-                            ORGÂNICO
-                          </span>
-                        </div>
+              {/* Navegação das Abas */}
+              <div className="flex gap-1 mb-4 bg-white/5 p-1 rounded-lg">
+                <button
+                  onClick={() => setActiveTab('public')}
+                  className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all ${
+                    activeTab === 'public' 
+                      ? 'bg-white/20 text-white' 
+                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  🌐 Público ({publicContents.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('premium')}
+                  className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all ${
+                    activeTab === 'premium' 
+                      ? 'bg-amber-500/30 text-amber-400' 
+                      : 'text-white/60 hover:text-amber-400 hover:bg-amber-500/10'
+                  }`}
+                >
+                  👑 VIP ({premiumContents.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('private')}
+                  className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all ${
+                    activeTab === 'private' 
+                      ? 'bg-purple-500/30 text-purple-400' 
+                      : 'text-white/60 hover:text-purple-400 hover:bg-purple-500/10'
+                  }`}
+                >
+                  🔒 Exclusivo ({privateContents.length})
+                </button>
+              </div>
+
+              {/* Descrição da Aba Ativa */}
+              <p className="text-center text-white/50 text-xs mb-4">
+                {activeTab === 'public' && 'Conteúdo disponível para todos'}
+                {activeTab === 'premium' && 'Apenas para assinantes VIP Global'}
+                {activeTab === 'private' && `Apenas para assinantes de @${user.username}`}
+              </p>
+
+              {/* Grid de Conteúdo baseado na aba ativa */}
+              {(() => {
+                const currentContents = 
+                  activeTab === 'public' ? publicContents :
+                  activeTab === 'premium' ? premiumContents :
+                  privateContents;
+
+                if (currentContents.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-8 text-white/60">
+                      <div className="text-3xl mb-2">
+                        {activeTab === 'public' && '📱'}
+                        {activeTab === 'premium' && '👑'}
+                        {activeTab === 'private' && '🔒'}
                       </div>
-                      
-                      {/* Stats overlay */}
-                      <div className="absolute top-2 left-2 right-2 flex justify-between">
-                        <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-0.5">
-                          <span className="text-red-400">❤️</span>
-                          <span className="text-white text-[9px] font-medium">
-                            {content.likes_count > 1000 ? `${(content.likes_count/1000).toFixed(1)}k` : content.likes_count}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 bg-black/70 rounded-full px-2 py-0.5">
-                          <span className="text-blue-400">👁️</span>
-                          <span className="text-white text-[9px] font-medium">
-                            {content.views_count > 1000 ? `${(content.views_count/1000).toFixed(1)}k` : content.views_count}
-                          </span>
-                        </div>
-                      </div>
+                      <p className="text-sm">Nenhum conteúdo {activeTab === 'public' ? 'público' : activeTab === 'premium' ? 'VIP' : 'exclusivo'}</p>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-3 gap-1">
+                    {currentContents.map((content) => {
+                      // Verificar acesso ao conteúdo
+                      const canAccessPremium = isPremium;
+                      const canAccessPrivate = !!modelSubscription;
+                      const isLocked = 
+                        (content.visibility === 'premium' && !canAccessPremium) ||
+                        (content.visibility === 'private' && !canAccessPrivate);
+
+                      return (
+                        <div 
+                          key={content.id} 
+                          className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border ${
+                            content.visibility === 'premium' ? 'border-amber-500/50' :
+                            content.visibility === 'private' ? 'border-purple-500/50' :
+                            'border-white/20'
+                          }`}
+                          onClick={() => {
+                            // Verificar acesso antes de abrir
+                            if (content.visibility === 'premium' && !canAccessPremium) {
+                              toast.info('Conteúdo exclusivo para VIP Global', {
+                                description: 'Assine o VIP para desbloquear',
+                                action: {
+                                  label: 'Ver planos',
+                                  onClick: () => navigate('/subscribe')
+                                }
+                              });
+                              return;
+                            }
+                            
+                            if (content.visibility === 'private' && !canAccessPrivate) {
+                              toast.info(`Conteúdo exclusivo para assinantes de @${user.username}`, {
+                                description: 'Assine para desbloquear conteúdo exclusivo'
+                              });
+                              // Scroll para seção de assinatura
+                              const subscriptionSection = document.querySelector('[data-subscription-section]');
+                              subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
+                              return;
+                            }
+
+                            if (content.type === 'video') {
+                              onVideoSelect?.(content.id);
+                              onClose();
+                            } else {
+                              const imageContents = currentContents.filter(c => c.type === 'image');
+                              const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
+                              const currentImageIdx = imageContents.findIndex(c => c.id === content.id);
+                              setCurrentImageArray(imageUrls);
+                              setCurrentImageIndex(currentImageIdx);
+                              setImageViewerOpen(true);
+                            }
+                          }}
+                        >
+                          {/* Preview do Conteúdo */}
+                          {content.type === 'video' ? (
+                            <>
+                              <video
+                                src={isLocked ? undefined : content.video_url}
+                                className="w-full h-full object-cover"
+                                muted
+                                loop
+                                playsInline
+                                autoPlay={!isLocked}
+                                preload="metadata"
+                                poster={content.thumbnail_url}
+                                onError={(e) => {
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `<img src="${content.thumbnail_url}" alt="${content.title}" class="w-full h-full object-cover" />`;
+                                  }
+                                }}
+                              />
+                              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                <div className="bg-black/40 rounded-full p-2">
+                                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <img
+                              src={content.image_url || content.thumbnail_url}
+                              alt={content.title}
+                              className={`w-full h-full object-cover ${isLocked ? 'blur-lg' : ''}`}
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg';
+                              }}
+                            />
+                          )}
+                          
+                          {/* Overlay de bloqueio */}
+                          {isLocked && (
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
+                              <span className="text-2xl mb-1">
+                                {content.visibility === 'premium' ? '👑' : '🔒'}
+                              </span>
+                              <span className="text-white/80 text-[10px] font-semibold">
+                                {content.visibility === 'premium' ? 'VIP' : 'EXCLUSIVO'}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Gradient overlay */}
+                          {!isLocked && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                          )}
+                          
+                          {/* Badge de visibilidade */}
+                          {content.visibility && content.visibility !== 'public' && (
+                            <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                              content.visibility === 'premium' 
+                                ? 'bg-amber-500/90 text-black' 
+                                : 'bg-purple-500/90 text-white'
+                            }`}>
+                              {content.visibility === 'premium' ? '👑 VIP' : '🔒'}
+                            </div>
+                          )}
+                          
+                          {/* Label FOTO/VIDEO */}
+                          {!isLocked && (
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
+                              <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1">
+                                <span className="text-white text-[10px] font-bold uppercase block">
+                                  {content.type === 'video' ? 'VIDEO' : 'FOTO'}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Stats overlay */}
+                          {!isLocked && (
+                            <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 rounded-full px-2 py-0.5">
+                              <span className="text-red-400">❤️</span>
+                              <span className="text-white text-[9px] font-medium">
+                                {content.likes_count > 1000 ? `${(content.likes_count/1000).toFixed(1)}k` : content.likes_count}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Seção de Mais Informações */}

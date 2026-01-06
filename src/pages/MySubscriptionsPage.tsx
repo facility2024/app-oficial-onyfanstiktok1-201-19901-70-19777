@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles, RefreshCw, History } from 'lucide-react';
+import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles, RefreshCw, History, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -76,6 +76,10 @@ const MySubscriptionsPage = () => {
     return 'bg-green-500/20 text-green-400 border-green-500/30';
   };
 
+  const isExpiringSoon = (days: number) => days <= 7 && days >= 0;
+
+  const hasExpiringSoon = isExpiringSoon(vipDaysRemaining) || modelSubscriptions.some(s => isExpiringSoon(s.daysRemaining));
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center">
@@ -116,6 +120,20 @@ const MySubscriptionsPage = () => {
       </div>
 
       <div className="p-4 pb-24 max-w-2xl mx-auto space-y-6">
+        {/* Banner de Alerta de Expiração */}
+        {hasExpiringSoon && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-r from-red-500/20 to-amber-500/20 border border-red-500/30 rounded-lg p-3 flex items-center gap-3"
+          >
+            <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse" />
+            <p className="text-sm text-white/80">
+              Você tem assinaturas próximas de expirar! Renove para não perder acesso.
+            </p>
+          </motion.div>
+        )}
+
         {/* Título */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -174,7 +192,8 @@ const MySubscriptionsPage = () => {
                   </div>
                   
                   <div className="pt-2 border-t border-amber-700/50">
-                    <Badge className={getDaysBadgeColor(vipDaysRemaining)}>
+                    <Badge className={`${getDaysBadgeColor(vipDaysRemaining)} ${isExpiringSoon(vipDaysRemaining) ? 'animate-pulse' : ''}`}>
+                      {isExpiringSoon(vipDaysRemaining) && <AlertTriangle className="w-3 h-3 mr-1" />}
                       <Clock className="w-3 h-3 mr-1" />
                       {getDaysLabel(vipDaysRemaining)}
                     </Badge>
@@ -237,7 +256,7 @@ const MySubscriptionsPage = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * index }}
                 >
-                  <Card className="border border-purple-500/20 bg-gradient-to-br from-purple-900/10 to-purple-800/5 hover:border-purple-500/40 transition-colors">
+                  <Card className={`border ${isExpiringSoon(sub.daysRemaining) ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-purple-500/20'} bg-gradient-to-br from-purple-900/10 to-purple-800/5 hover:border-purple-500/40 transition-colors`}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
                         {/* Avatar */}
@@ -265,9 +284,10 @@ const MySubscriptionsPage = () => {
                             <Badge variant="outline" className="text-xs text-purple-400 border-purple-500/30">
                               {getPlanLabel(sub.subscription_type)}
                             </Badge>
-                            <Badge className={`text-xs ${getDaysBadgeColor(sub.daysRemaining)}`}>
-                              {getDaysLabel(sub.daysRemaining)}
-                            </Badge>
+                    <Badge className={`text-xs ${getDaysBadgeColor(sub.daysRemaining)} ${isExpiringSoon(sub.daysRemaining) ? 'animate-pulse' : ''}`}>
+                      {isExpiringSoon(sub.daysRemaining) && <AlertTriangle className="w-3 h-3 mr-1" />}
+                      {getDaysLabel(sub.daysRemaining)}
+                    </Badge>
                           </div>
                         </div>
 

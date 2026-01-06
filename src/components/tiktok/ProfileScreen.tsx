@@ -574,6 +574,25 @@ if (!isOpen) return null;
                       })
                     )}
                   </div>
+
+                  {/* Lista de Benefícios */}
+                  <div className="mt-4 p-3 rounded-lg bg-white/5 border border-white/10">
+                    <p className="text-xs text-amber-400 font-semibold mb-2">✨ Benefícios incluídos:</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-center gap-2 text-xs text-white/80">
+                        <span className="text-green-400">✓</span> Conteúdo exclusivo ilimitado
+                      </li>
+                      <li className="flex items-center gap-2 text-xs text-white/80">
+                        <span className="text-green-400">✓</span> Chat privado direto
+                      </li>
+                      <li className="flex items-center gap-2 text-xs text-white/80">
+                        <span className="text-green-400">✓</span> Acesso antecipado a novidades
+                      </li>
+                      <li className="flex items-center gap-2 text-xs text-white/80">
+                        <span className="text-green-400">✓</span> Sem anúncios no perfil
+                      </li>
+                    </ul>
+                  </div>
                   
                   {/* Link para VIP Global */}
                   <button

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Crown, DollarSign, Link, Loader2, Save, Percent } from 'lucide-react';
+import { Crown, DollarSign, Link, Loader2, Save, Percent, Sparkles, Plus, Trash2 } from 'lucide-react';
+import { DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 
 interface Plan {
   id?: string;
@@ -17,6 +18,7 @@ interface Plan {
   discount_label: string | null;
   payment_url: string | null;
   is_active: boolean;
+  benefits: string[];
 }
 
 interface SubscriptionPlansManagerProps {
@@ -27,7 +29,7 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([
-    { model_id: creatorId, model_type: 'creator', plan_type: 'mensal', price: 14.90, discount_label: null, payment_url: null, is_active: true },
+    { model_id: creatorId, model_type: 'creator', plan_type: 'mensal', price: 14.90, discount_label: null, payment_url: null, is_active: true, benefits: [...DEFAULT_BENEFITS] },
   ]);
 
   useEffect(() => {
@@ -48,8 +50,11 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
       }
 
       if (data && data.length > 0) {
-        // Filtrar apenas planos mensais
-        setPlans(data.filter((p: any) => p.plan_type === 'mensal'));
+        // Filtrar apenas planos mensais e garantir que benefits tenha valor
+        setPlans(data.filter((p: any) => p.plan_type === 'mensal').map((p: any) => ({
+          ...p,
+          benefits: p.benefits || [...DEFAULT_BENEFITS]
+        })));
       }
     } catch (err) {
       console.error('Erro ao buscar planos:', err);
@@ -64,6 +69,36 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
     ));
   };
 
+  const handleBenefitChange = (planType: 'mensal', index: number, value: string) => {
+    setPlans(prev => prev.map(p => {
+      if (p.plan_type === planType) {
+        const newBenefits = [...p.benefits];
+        newBenefits[index] = value;
+        return { ...p, benefits: newBenefits };
+      }
+      return p;
+    }));
+  };
+
+  const addBenefit = (planType: 'mensal') => {
+    setPlans(prev => prev.map(p => {
+      if (p.plan_type === planType && p.benefits.length < 6) {
+        return { ...p, benefits: [...p.benefits, ''] };
+      }
+      return p;
+    }));
+  };
+
+  const removeBenefit = (planType: 'mensal', index: number) => {
+    setPlans(prev => prev.map(p => {
+      if (p.plan_type === planType && p.benefits.length > 1) {
+        const newBenefits = p.benefits.filter((_, i) => i !== index);
+        return { ...p, benefits: newBenefits };
+      }
+      return p;
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -76,6 +111,7 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
           discount_label: plan.discount_label,
           payment_url: plan.payment_url,
           is_active: plan.is_active,
+          benefits: plan.benefits.filter(b => b.trim() !== ''),
         };
 
         if (plan.id) {
@@ -236,6 +272,51 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
                   disabled={!plan.is_active}
                 />
               </div>
+            </div>
+
+            {/* Benefícios Personalizados */}
+            <div className="mt-4 pt-4 border-t border-gray-600">
+              <Label className="text-gray-300 flex items-center gap-1 mb-3">
+                <Sparkles className="w-3 h-3 text-amber-400" /> Benefícios do seu plano
+              </Label>
+              <div className="space-y-2">
+                {plan.benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-green-400 text-sm">✓</span>
+                    <Input
+                      type="text"
+                      placeholder="Ex: Fotos em alta qualidade"
+                      value={benefit}
+                      onChange={(e) => handleBenefitChange(plan.plan_type, index, e.target.value)}
+                      className="flex-1 bg-gray-600 border-gray-500 text-white text-sm"
+                      disabled={!plan.is_active}
+                      maxLength={50}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeBenefit(plan.plan_type, index)}
+                      disabled={!plan.is_active || plan.benefits.length <= 1}
+                      className="p-2 text-red-400 hover:text-red-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {plan.benefits.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={() => addBenefit(plan.plan_type)}
+                    disabled={!plan.is_active}
+                    className="flex items-center gap-2 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-50 mt-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar benefício
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Máximo de 6 benefícios. Estes aparecerão no seu perfil para atrair assinantes.
+              </p>
             </div>
           </div>
         ))}

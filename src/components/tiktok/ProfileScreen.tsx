@@ -492,10 +492,10 @@ if (!isOpen) return null;
                 <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-500/50 rounded-xl p-4 mb-4">
                   <div className="flex items-center justify-center gap-2 text-amber-400 font-semibold">
                     <Crown className="w-5 h-5" />
-                    <span>VIP Global - Acesso Total</span>
+                    <span>VIP Global - Acesso Premium</span>
                   </div>
                   <p className="text-center text-amber-400/70 text-xs mt-1">
-                    Você tem acesso a todo conteúdo premium
+                    Você tem acesso a vídeos 👑 Premium
                   </p>
                 </div>
               ) : modelSubscription ? (
@@ -579,7 +579,7 @@ if (!isOpen) return null;
                     onClick={() => navigate('/subscribe')}
                     className="w-full text-center text-xs text-white/50 hover:text-amber-400 transition-colors mt-4"
                   >
-                    Ou assine o <span className="font-semibold">VIP Global</span> para acessar todas as modelos →
+                    Ou assine o <span className="font-semibold">VIP Global</span> para acessar conteúdo 👑 Premium →
                   </button>
                 </>
               )}

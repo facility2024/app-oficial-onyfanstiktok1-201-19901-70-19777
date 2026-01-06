@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles } from 'lucide-react';
+import { ArrowLeft, Crown, Lock, User, Calendar, Clock, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -145,6 +145,17 @@ const MySubscriptionsPage = () => {
                   <div className="pt-2 text-xs text-amber-200/70">
                     <Sparkles className="w-3 h-3 inline mr-1" />
                     Acesso a todo conteúdo premium da plataforma
+                  </div>
+
+                  {/* Botão Renovar */}
+                  <div className="pt-3 border-t border-amber-700/50">
+                    <Button
+                      onClick={() => navigate('/subscribe')}
+                      className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Renovar Assinatura
+                    </Button>
                   </div>
                 </div>
               ) : (

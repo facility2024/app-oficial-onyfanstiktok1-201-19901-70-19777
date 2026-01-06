@@ -176,7 +176,7 @@ const ProductDetailModal = ({
             size="lg"
           >
             <ShoppingCart className="mr-2" />
-            {product.hoopay_sales_url ? 'Comprar na Hoopay' : 'Comprar Agora'}
+            Comprar
           </Button>
         </div>
       </DialogContent>
@@ -508,10 +508,6 @@ export default function MarketplacePage() {
                       ({product.total_reviews})
                     </span>
                   </div>
-                  
-                  <p className="text-lg font-bold text-green-400">
-                    R$ {product.price.toFixed(2)}
-                  </p>
                   
                   {product.stock === 0 && <p className="text-xs text-red-400 mt-1 font-semibold">Esgotado</p>}
                 </CardContent>

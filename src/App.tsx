@@ -26,6 +26,7 @@ import CollectionsPage from "./pages/CollectionsPage";
 import SubscribePage from "./pages/SubscribePage";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
 import VIPManagementPage from "./pages/VIPManagementPage";
+import MySubscriptionsPage from "./pages/MySubscriptionsPage";
 
 import AdvertisersPage from "./pages/AdvertisersPage";
 import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
@@ -130,6 +131,11 @@ const App = () => (
           <Route path="/vip-management" element={
             <ProtectedRoute>
               <VIPManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-subscriptions" element={
+            <ProtectedRoute>
+              <MySubscriptionsPage />
             </ProtectedRoute>
           } />
           

@@ -24,6 +24,7 @@ interface ModelSubscription {
 
 export const useAllSubscriptions = () => {
   const { isPremium, premiumData, loading: vipLoading, getDaysRemaining } = usePremiumStatus();
+  const [subscriptionHistory, setSubscriptionHistory] = useState<ModelSubscription[]>([]);
   const [modelSubscriptions, setModelSubscriptions] = useState<ModelSubscription[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -138,9 +139,44 @@ export const useAllSubscriptions = () => {
       subscriptionsWithInfo.sort((a, b) => a.daysRemaining - b.daysRemaining);
       
       setModelSubscriptions(subscriptionsWithInfo);
+
+      // Buscar histórico de assinaturas (expiradas ou canceladas)
+      const { data: historyData } = await supabase
+        .from('model_subscriptions' as any)
+        .select('*')
+        .or(`subscription_status.eq.expired,subscription_status.eq.cancelled`)
+        .or(`subscriber_id.eq.${userId},subscriber_email.ilike.${userEmail}`)
+        .order('subscription_end', { ascending: false })
+        .limit(20);
+
+      if (historyData && historyData.length > 0) {
+        const historyWithInfo: ModelSubscription[] = await Promise.all(
+          (historyData as any[]).map(async (sub: any) => {
+            const modelType = sub.model_type || 'model';
+            const modelInfo = await fetchModelInfo(sub.model_id, modelType as 'model' | 'creator');
+            
+            return {
+              id: sub.id,
+              model_id: sub.model_id,
+              model_type: modelType as 'model' | 'creator',
+              subscription_type: sub.subscription_type as 'mensal' | 'trimestral' | 'anual',
+              subscription_status: sub.subscription_status,
+              subscription_start: sub.subscription_start,
+              subscription_end: sub.subscription_end,
+              price_paid: sub.price_paid,
+              modelInfo: modelInfo || undefined,
+              daysRemaining: 0
+            };
+          })
+        );
+        setSubscriptionHistory(historyWithInfo);
+      } else {
+        setSubscriptionHistory([]);
+      }
     } catch (error) {
       console.error('Erro ao buscar assinaturas:', error);
       setModelSubscriptions([]);
+      setSubscriptionHistory([]);
     } finally {
       setLoading(false);
     }
@@ -158,6 +194,9 @@ export const useAllSubscriptions = () => {
     
     // Assinaturas individuais
     modelSubscriptions,
+    
+    // Histórico
+    subscriptionHistory,
     
     // Estado
     loading: loading || vipLoading,

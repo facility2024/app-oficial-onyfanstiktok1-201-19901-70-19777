@@ -244,16 +244,28 @@ const MySubscriptionsPage = () => {
                         </Button>
                       </div>
 
-                      {/* Datas */}
-                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5 text-xs text-white/40">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          Início: {formatDate(sub.subscription_start)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Expira: {formatDate(sub.subscription_end)}
-                        </span>
+                      {/* Datas e Ações */}
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+                        <div className="flex items-center gap-4 text-xs text-white/40">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            Início: {formatDate(sub.subscription_start)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Expira: {formatDate(sub.subscription_end)}
+                          </span>
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/profile/${sub.model_id}`)}
+                          className="bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20"
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Renovar
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

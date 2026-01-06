@@ -99,13 +99,13 @@ const MySubscriptionsPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className={`border ${isPremium ? 'border-amber-500/30 bg-gradient-to-br from-amber-900/20 to-amber-800/10' : 'border-white/10 bg-white/5'}`}>
+          <Card className={`border ${isPremium ? 'border-amber-500/50 bg-gradient-to-b from-amber-950 to-amber-900' : 'border-white/10 bg-white/5'}`}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Crown className={`w-5 h-5 ${isPremium ? 'text-amber-400' : 'text-white/40'}`} />
-                <span className={isPremium ? 'text-amber-400' : 'text-white/60'}>VIP Global</span>
+                <span className={isPremium ? 'text-amber-300 font-semibold' : 'text-white/60'}>VIP Global</span>
                 {isPremium && (
-                  <Badge className="ml-auto bg-amber-500/20 text-amber-400 border-amber-500/30">
+                  <Badge className="ml-auto bg-amber-500/30 text-amber-200 border-amber-400/50">
                     Ativo
                   </Badge>
                 )}
@@ -115,34 +115,34 @@ const MySubscriptionsPage = () => {
               {isPremium ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/60">Plano</span>
-                    <span className="text-white font-medium">
+                    <span className="text-amber-200/80">Plano</span>
+                    <span className="text-white font-semibold">
                       {getPlanLabel(premiumData?.subscription_type || 'mensal')}
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/60">Início</span>
-                    <span className="text-white">
+                    <span className="text-amber-200/80">Início</span>
+                    <span className="text-white font-medium">
                       {premiumData?.subscription_start ? formatDate(premiumData.subscription_start) : '-'}
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/60">Renovação</span>
-                    <span className="text-white">
+                    <span className="text-amber-200/80">Renovação</span>
+                    <span className="text-white font-medium">
                       {premiumData?.subscription_end ? formatDate(premiumData.subscription_end) : '-'}
                     </span>
                   </div>
                   
-                  <div className="pt-2 border-t border-white/10">
+                  <div className="pt-2 border-t border-amber-700/50">
                     <Badge className={getDaysBadgeColor(vipDaysRemaining)}>
                       <Clock className="w-3 h-3 mr-1" />
                       {getDaysLabel(vipDaysRemaining)}
                     </Badge>
                   </div>
 
-                  <div className="pt-2 text-xs text-white/50">
+                  <div className="pt-2 text-xs text-amber-200/70">
                     <Sparkles className="w-3 h-3 inline mr-1" />
                     Acesso a todo conteúdo premium da plataforma
                   </div>

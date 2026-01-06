@@ -6,7 +6,7 @@ import { User } from '@/types/database';
 import { X, ArrowLeft, Heart, Crown, Sparkles } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
-import { useModelSubscription } from '@/hooks/useModelSubscription';
+import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -579,18 +579,11 @@ if (!isOpen) return null;
                   <div className="mt-4 p-3 rounded-lg bg-white/5 border border-white/10">
                     <p className="text-xs text-amber-400 font-semibold mb-2">✨ Benefícios incluídos:</p>
                     <ul className="space-y-1.5">
-                      <li className="flex items-center gap-2 text-xs text-white/80">
-                        <span className="text-green-400">✓</span> Conteúdo exclusivo ilimitado
-                      </li>
-                      <li className="flex items-center gap-2 text-xs text-white/80">
-                        <span className="text-green-400">✓</span> Chat privado direto
-                      </li>
-                      <li className="flex items-center gap-2 text-xs text-white/80">
-                        <span className="text-green-400">✓</span> Acesso antecipado a novidades
-                      </li>
-                      <li className="flex items-center gap-2 text-xs text-white/80">
-                        <span className="text-green-400">✓</span> Sem anúncios no perfil
-                      </li>
+                      {(modelPlans[0]?.benefits || DEFAULT_BENEFITS).map((benefit, index) => (
+                        <li key={index} className="flex items-center gap-2 text-xs text-white/80">
+                          <span className="text-green-400">✓</span> {benefit}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                   

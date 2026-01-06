@@ -11,7 +11,15 @@ export interface ModelPlan {
   discount_label: string | null;
   payment_url: string | null;
   is_active: boolean;
+  benefits?: string[];
 }
+
+export const DEFAULT_BENEFITS = [
+  'Conteúdo exclusivo ilimitado',
+  'Chat privado direto',
+  'Acesso antecipado a novidades',
+  'Sem anúncios no perfil'
+];
 
 export interface ModelSubscription {
   id: string;
@@ -28,7 +36,7 @@ export interface ModelSubscription {
 
 // Planos padrão caso a modelo não tenha configurado
 const DEFAULT_PLANS: Omit<ModelPlan, 'id' | 'model_id'>[] = [
-  { model_type: 'model', plan_type: 'mensal', price: 14.90, discount_label: null, payment_url: null, is_active: true },
+  { model_type: 'model', plan_type: 'mensal', price: 14.90, discount_label: null, payment_url: null, is_active: true, benefits: DEFAULT_BENEFITS },
 ];
 
 export const useModelSubscription = (modelId?: string) => {

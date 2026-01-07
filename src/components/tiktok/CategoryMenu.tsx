@@ -49,9 +49,6 @@ export const CategoryMenu = ({
   const navigate = useNavigate();
   const { isCreator, loading: creatorLoading } = useCreatorRole();
   const { isPremium } = usePremiumStatus();
-  
-  // Debug log para verificar o estado do creator
-  console.log('🔐 CategoryMenu useCreatorRole:', { isCreator, creatorLoading, isPremium });
 
   const handleLogout = async () => {
     try {
@@ -84,7 +81,6 @@ export const CategoryMenu = ({
       name: "Seguindo",
       icon: <Users className="w-5 h-5" />,
       onClick: () => {
-        console.log('👥 SEGUINDO: Botão do menu clicado');
         setOpen(false);
         window.location.href = '/following';
       }
@@ -94,7 +90,6 @@ export const CategoryMenu = ({
       name: "Market-Place",
       icon: <ShoppingBag className="w-5 h-5" />,
       onClick: () => {
-        console.log('🛍️ Navegando para Marketplace');
         setOpen(false);
         setTimeout(() => navigate('/marketplace'), 100);
       }
@@ -104,7 +99,6 @@ export const CategoryMenu = ({
       name: "Negócios Locais",
       icon: <MapPin className="w-5 h-5" />,
       onClick: () => {
-        console.log('📍 Navegando para Negócios Locais');
         setOpen(false);
         setTimeout(() => navigate('/local-business'), 100);
       }
@@ -114,7 +108,6 @@ export const CategoryMenu = ({
       name: "Coleções",
       icon: <BookmarkPlus className="w-5 h-5" />,
       onClick: () => {
-        console.log('📚 Navegando para Coleções');
         setOpen(false);
         setTimeout(() => navigate('/collections'), 100);
       }
@@ -124,17 +117,6 @@ export const CategoryMenu = ({
       name: "Criadores Seguidos",
       icon: <Sparkles className="w-5 h-5" />,
       onClick: () => {
-        console.log('✨ Navegando para Criadores Seguidos');
-        setOpen(false);
-        setTimeout(() => navigate('/following-creators'), 100);
-      }
-    },
-    {
-      id: "following-creators",
-      name: "Criadores Seguidos",
-      icon: <Sparkles className="w-5 h-5" />,
-      onClick: () => {
-        console.log('✨ Navegando para Criadores Seguidos');
         setOpen(false);
         setTimeout(() => navigate('/following-creators'), 100);
       }
@@ -144,7 +126,6 @@ export const CategoryMenu = ({
       name: "Chat IA",
       icon: <Bot className="w-5 h-5" />,
       onClick: () => {
-        console.log('🤖 Navegando para Chat IA');
         setOpen(false);
         setTimeout(() => navigate('/ChatIA'), 100);
       }
@@ -157,7 +138,6 @@ export const CategoryMenu = ({
     name: "Minhas Assinaturas",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     onClick: () => {
-      console.log('👑 Navegando para Minhas Assinaturas');
       setOpen(false);
       setTimeout(() => navigate('/my-subscriptions'), 100);
     }
@@ -170,7 +150,6 @@ export const CategoryMenu = ({
       name: "Seja VIP",
       icon: <Sparkles className="w-5 h-5 text-amber-400" />,
       onClick: () => {
-        console.log('👑 Navegando para Assinatura VIP');
         setOpen(false);
         setTimeout(() => navigate('/subscribe'), 100);
       }
@@ -179,21 +158,17 @@ export const CategoryMenu = ({
 
   // Adicionar "Sou Criador" apenas se isCreator === true E não está carregando
   if (isCreator === true && creatorLoading === false) {
-    console.log('✅ Adicionando botão Sou Criador - usuário É criador');
     baseMenuItems.push({
       id: "creator",
       name: "Sou Criador",
       icon: <Sparkles className="w-5 h-5" />,
       onClick: () => {
-        console.log('🎯 CategoryMenu: Botão Sou Criador CLICADO!');
         setOpen(false);
         requestAnimationFrame(() => {
           navigate('/creator-studio');
         });
       }
     });
-  } else {
-    console.log('❌ NÃO adicionando botão Sou Criador', { isCreator, creatorLoading });
   }
 
   // Adicionar "Sair" no final
@@ -202,7 +177,6 @@ export const CategoryMenu = ({
     name: "Sair",
     icon: <LogOut className="w-5 h-5" />,
     onClick: () => {
-      console.log('🚪 Botão Sair clicado - abrindo AlertDialog');
       setShowLogoutAlert(true);
     }
   });
@@ -284,9 +258,7 @@ export const CategoryMenu = ({
                     variant="ghost"
                     className="w-full justify-start px-6 py-3 text-white hover:bg-white/10 rounded-none cursor-pointer"
                     onClick={(e) => {
-                      console.log(`🎯 Clique no botão: ${item.name} (id: ${item.id})`);
                       e.preventDefault();
-                      // Não usar stopPropagation para o botão Sair para não interferir com o AlertDialog
                       if (item.id !== 'exit') {
                         e.stopPropagation();
                       }

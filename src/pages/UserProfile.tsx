@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import coconudiLogo from '@/assets/coconudi-logo-white.png';
 import { ReferralSection } from '@/components/profile/ReferralSection';
+import { TransactionHistory } from '@/components/profile/TransactionHistory';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100),
@@ -391,9 +392,14 @@ export default function UserProfile() {
                 📅 Membro desde {format(new Date(displayProfile.created_at), 'dd/MM/yyyy')}
               </div>
 
-              {/* Programa de Afiliados e Carteira Nudix */}
+              {/* Programa de Afiliados */}
               <div className="mb-6">
                 <ReferralSection />
+              </div>
+
+              {/* Histórico de Transações Nudix */}
+              <div className="mb-6">
+                <TransactionHistory />
               </div>
 
               {/* Minhas Assinaturas */}

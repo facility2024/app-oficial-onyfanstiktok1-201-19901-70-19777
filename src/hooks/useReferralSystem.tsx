@@ -87,9 +87,11 @@ export function useReferralSystem() {
   };
 
   const getReferralLink = () => {
-    if (!referralCode) return null;
     const baseUrl = window.location.origin;
-    return `${baseUrl}/auth?ref=${referralCode}`;
+    // Se tem referralCode do perfil, usa ele; senão, gera baseado no user ID
+    const code = referralCode || (user?.id ? user.id.substring(0, 8).toUpperCase() : null);
+    if (!code) return null;
+    return `${baseUrl}/auth?ref=${code}`;
   };
 
   const copyReferralLink = async () => {

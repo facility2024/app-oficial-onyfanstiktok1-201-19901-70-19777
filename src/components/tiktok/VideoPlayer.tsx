@@ -162,8 +162,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           } as any);
 
           sessionStorage.setItem(key, String(Date.now()));
-        } catch (e) {
-          console.error('Erro ao registrar view:', e);
+        } catch {
+          // Silently fail view tracking
         }
       }, 2000); // considera view após 2s
 
@@ -219,8 +219,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           if (error) throw error;
           const o = (data && data[0]) as Offer | undefined;
           if (!cancelled) setOffer(o && withinWindow(o) ? o : null);
-        } catch (e) {
-          console.error('Erro ao buscar oferta:', e);
+        } catch {
+          // Silently fail offer fetch
         }
       };
       loadOffer();
@@ -336,8 +336,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           session_id: (localStorage.getItem('session_id') || null) as any,
           user_agent: navigator.userAgent,
         });
-      } catch (e) {
-        console.error('Erro ao registrar clique na oferta:', e);
+      } catch {
+        // Silently fail click tracking
       }
     };
 

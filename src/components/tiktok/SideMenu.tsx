@@ -91,12 +91,6 @@ export const SideMenu = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🔥🔥🔥 SideMenu: BOTÃO SEGUIR CLICADO!', {
-              isFollowing,
-              videoId: video?.id,
-              modelId: video?.user?.id,
-              username: video?.user?.username
-            });
             onToggleFollow();
           }}
         >
@@ -125,19 +119,14 @@ export const SideMenu = ({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('🔥 SideMenu like CLICK triggered');
-          console.log('🔥 Click event:', e);
           onToggleLike();
         }}
         onTouchStart={(e) => {
-          console.log('🔥 SideMenu like TOUCH START');
           e.stopPropagation();
         }}
         onTouchEnd={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('🔥 SideMenu like TOUCH END triggered');
-          console.log('🔥 Touch event:', e);
           onToggleLike();
         }}
         style={{
@@ -165,20 +154,13 @@ export const SideMenu = ({
           <MessageCircle className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
         </div>
         <span className="text-white md:text-gray-800 text-xs mt-1 font-light">
-          {(() => {
-            const count = video?.comments_count || 0;
-            console.log('🔍 SideMenu comentários:', { videoId: video?.id, commentsCount: count });
-            return formatCount(count);
-          })()}
+          {formatCount(video?.comments_count || 0)}
         </span>
       </div>
 
       {/* Block Video (Eye Icon) - Só aparece quando configurado pelo admin */}
       {onBlockVideo && (
-        <div className="flex flex-col items-center cursor-pointer group" onClick={() => {
-          console.log('🔒 SideMenu block video clicked!');
-          onBlockVideo();
-        }}>
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onBlockVideo}>
           <div className="w-12 h-12 flex items-center justify-center transition-all">
             <Eye className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
           </div>

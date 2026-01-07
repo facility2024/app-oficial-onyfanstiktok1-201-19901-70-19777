@@ -88,8 +88,9 @@ export function useReferralSystem() {
 
   const getReferralLink = () => {
     const baseUrl = window.location.origin;
-    // Se tem referralCode do perfil, usa ele; senão, gera baseado no user ID
-    const code = referralCode || (user?.id ? user.id.substring(0, 8).toUpperCase() : null);
+    // SEMPRE usar o referral_code real do perfil
+    // @ts-ignore - referral_code do perfil
+    const code = profile?.referral_code || referralCode;
     if (!code) return null;
     return `${baseUrl}/auth?ref=${code}`;
   };

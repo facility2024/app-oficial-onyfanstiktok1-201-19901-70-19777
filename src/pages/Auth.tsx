@@ -168,11 +168,11 @@ const Auth = () => {
         // Processar indicação se houver código de referência
         if (referralCode) {
           try {
-            // Buscar quem indicou pelo código
+            // Buscar quem indicou pelo código (case-insensitive)
             const { data: referrerProfile } = await (supabase as any)
               .from('profiles')
               .select('id')
-              .eq('referral_code', referralCode)
+              .ilike('referral_code', referralCode)
               .maybeSingle();
             
             if (referrerProfile?.id) {

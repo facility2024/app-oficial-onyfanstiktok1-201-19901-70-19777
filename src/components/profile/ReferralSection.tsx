@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useReferralSystem } from '@/hooks/useReferralSystem';
 import { useNudixWallet } from '@/hooks/useNudixWallet';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,52 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Copy, Share2, Users, Gift, CheckCircle, Clock, MessageCircle, Link2, TrendingUp, TrendingDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Hook para animação de contador
+function useAnimatedCounter(targetValue: number, duration: number = 1500) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const animationRef = useRef<number>();
+  const startTimeRef = useRef<number>();
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (targetValue === 0 || hasAnimated.current) return;
+    
+    hasAnimated.current = true;
+    const startValue = 0;
+    
+    const animate = (currentTime: number) => {
+      if (!startTimeRef.current) {
+        startTimeRef.current = currentTime;
+      }
+      
+      const elapsed = currentTime - startTimeRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Easing function for smooth deceleration
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      const currentValue = startValue + (targetValue - startValue) * easeOutQuart;
+      
+      setDisplayValue(currentValue);
+      
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setDisplayValue(targetValue);
+      }
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [targetValue, duration]);
+
+  return displayValue;
+}
 
 export function ReferralSection() {
   const { 
@@ -19,6 +65,11 @@ export function ReferralSection() {
   const { wallet, formatNudix } = useNudixWallet();
   const [showAllReferrals, setShowAllReferrals] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  // Animações de contador
+  const animatedBalance = useAnimatedCounter(wallet.nudix_balance);
+  const animatedEarned = useAnimatedCounter(wallet.total_earned, 1200);
+  const animatedSpent = useAnimatedCounter(wallet.total_spent, 1200);
 
   const handleCopyLink = async () => {
     const success = await copyReferralLink();
@@ -59,16 +110,16 @@ export function ReferralSection() {
         </CardHeader>
         <CardContent className="relative">
           <div className="text-4xl font-bold text-white mb-3 drop-shadow-lg" style={{ textShadow: '0 0 20px rgba(255,255,255,0.3)' }}>
-            {formatNudix(wallet.nudix_balance)}
+            {formatNudix(animatedBalance)}
           </div>
           <div className="flex gap-6 text-sm">
             <div className="flex items-center gap-1.5 text-white/90">
               <TrendingUp className="w-4 h-4 text-green-300" />
-              <span>Ganho: <span className="font-semibold">{formatNudix(wallet.total_earned)}</span></span>
+              <span>Ganho: <span className="font-semibold">{formatNudix(animatedEarned)}</span></span>
             </div>
             <div className="flex items-center gap-1.5 text-white/90">
               <TrendingDown className="w-4 h-4 text-red-300" />
-              <span>Gasto: <span className="font-semibold">{formatNudix(wallet.total_spent)}</span></span>
+              <span>Gasto: <span className="font-semibold">{formatNudix(animatedSpent)}</span></span>
             </div>
           </div>
         </CardContent>

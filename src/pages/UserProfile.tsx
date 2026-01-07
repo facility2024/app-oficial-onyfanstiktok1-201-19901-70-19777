@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Share2, Heart, MessageCircle, Users, CheckCircle, Trash2, Crown } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Share2, Heart, MessageCircle, Users, CheckCircle, Crown } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,8 +51,6 @@ export default function UserProfile() {
     comments: 0,
     following: 0,
   });
-  const [showClearDataAlert, setShowClearDataAlert] = useState(false);
-  const [clearingData, setClearingData] = useState(false);
 
   useEffect(() => {
     if (profile || user) {
@@ -140,39 +138,6 @@ export default function UserProfile() {
     }
   };
 
-  const handleClearAnonymousData = async () => {
-    setClearingData(true);
-    try {
-      const keysToRemove: string[] = [];
-      
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          if (key.startsWith('follow_') || 
-              key === 'anonymous_user_id' ||
-              key.startsWith('like_') ||
-              key.startsWith('view_')) {
-            keysToRemove.push(key);
-          }
-        }
-      }
-      
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      
-      console.log('🧹 Dados anônimos removidos:', keysToRemove.length, 'itens');
-      
-      toast.success('Dados anônimos limpos com sucesso!', {
-        description: `${keysToRemove.length} itens foram removidos.`
-      });
-      
-      setShowClearDataAlert(false);
-    } catch (error) {
-      console.error('Erro ao limpar dados:', error);
-      toast.error('Erro ao limpar dados anônimos');
-    } finally {
-      setClearingData(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -416,26 +381,6 @@ export default function UserProfile() {
                 📅 Membro desde {format(new Date(displayProfile.created_at), 'dd/MM/yyyy')}
               </div>
 
-              {/* Limpar Dados Anônimos */}
-              <div className="bg-gray-900/50 border border-white/10 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-white">Dados Anônimos</h3>
-                    <p className="text-xs text-gray-400">
-                      Limpar follows e interações de sessões anteriores
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowClearDataAlert(true)}
-                    className="text-red-400 hover:text-red-300 border-white/10 hover:bg-white/5"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Limpar
-                  </Button>
-                </div>
-              </div>
 
               {/* Minhas Assinaturas */}
               <div className="bg-gradient-to-r from-amber-900/30 to-purple-900/30 border border-amber-500/20 rounded-lg p-4 mb-4">
@@ -569,32 +514,6 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Clear Anonymous Data Alert Dialog */}
-      <AlertDialog open={showClearDataAlert} onOpenChange={setShowClearDataAlert}>
-        <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-black border border-white/20">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white text-xl">
-              Limpar Dados Anônimos
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-300">
-              Isso irá remover todos os follows e interações de sessões anônimas anteriores 
-              salvas neste dispositivo. Seus dados de usuário autenticado não serão afetados.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-700 text-white hover:bg-gray-600 border-gray-600">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleClearAnonymousData}
-              disabled={clearingData}
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
-            >
-              {clearingData ? 'Limpando...' : 'Limpar Dados'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

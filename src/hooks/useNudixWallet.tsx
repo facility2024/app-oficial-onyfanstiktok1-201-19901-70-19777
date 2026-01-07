@@ -17,6 +17,8 @@ interface Wallet {
   total_spent: number;
 }
 
+const PAGE_SIZE = 10;
+
 export function useNudixWallet() {
   const { user } = useCurrentUser();
   const [wallet, setWallet] = useState<Wallet>({
@@ -26,11 +28,14 @@ export function useNudixWallet() {
   });
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     if (user?.id) {
       fetchWallet();
-      fetchTransactions();
+      fetchTransactions(0, true);
     }
   }, [user?.id]);
 
@@ -67,27 +72,53 @@ export function useNudixWallet() {
     }
   };
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (pageNum: number = 0, reset: boolean = false) => {
     if (!user?.id) return;
 
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      // Query genérica para tabela que será criada
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       const { data, error } = await supabase
         .from('wallet_transactions' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(from, to);
 
       if (error) {
-        // Tabela pode não existir ainda
         console.log('Tabela wallet_transactions ainda não existe:', error.message);
+        setHasMore(false);
         return;
       }
 
-      setTransactions((data || []) as unknown as WalletTransaction[]);
+      const newData = (data || []) as unknown as WalletTransaction[];
+      
+      if (reset) {
+        setTransactions(newData);
+      } else {
+        setTransactions(prev => [...prev, ...newData]);
+      }
+      
+      setHasMore(newData.length === PAGE_SIZE);
+      setPage(pageNum);
     } catch (error) {
       console.error('Erro ao buscar transações:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchTransactions(page + 1, false);
     }
   };
 
@@ -127,12 +158,15 @@ export function useNudixWallet() {
     wallet,
     transactions,
     loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     formatNudix,
     getTransactionTypeLabel,
     getTransactionColor,
     refetch: () => {
       fetchWallet();
-      fetchTransactions();
+      fetchTransactions(0, true);
     },
   };
 }

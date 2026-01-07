@@ -4,7 +4,7 @@ import { useNudixWallet } from '@/hooks/useNudixWallet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Share2, Users, Gift, CheckCircle, Clock, MessageCircle, Link2, TrendingUp, TrendingDown, Check } from 'lucide-react';
+import { Copy, Users, Gift, CheckCircle, Clock, Link2, TrendingUp, TrendingDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Hook para animação de contador
@@ -59,8 +59,7 @@ export function ReferralSection() {
     stats, 
     loading, 
     referralLink, 
-    copyReferralLink, 
-    shareReferralLink 
+    copyReferralLink
   } = useReferralSystem();
   const { wallet, formatNudix } = useNudixWallet();
   const [showAllReferrals, setShowAllReferrals] = useState(false);
@@ -84,9 +83,6 @@ export function ReferralSection() {
     }
   };
 
-  const handleShare = async (platform: 'whatsapp' | 'telegram' | 'native') => {
-    await shareReferralLink(platform);
-  };
 
   const displayedReferrals = showAllReferrals ? referrals : referrals.slice(0, 5);
 
@@ -158,46 +154,24 @@ export function ReferralSection() {
                   <Button 
                     size="sm" 
                     onClick={handleCopyLink}
-                    className={`shrink-0 transition-all duration-300 ${
+                    className={`shrink-0 transition-all duration-300 gap-2 px-4 ${
                       copied 
                         ? 'bg-green-500 hover:bg-green-600' 
-                        : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
-                    } text-white border-0`}
+                        : 'bg-gradient-to-r from-[#C4842E] to-[#8B4513] hover:from-[#D4943E] hover:to-[#9B5513]'
+                    } text-white border-0 font-medium`}
                   >
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Copiado!' : 'Copiar'}
                   </Button>
                 </div>
+                <p className="text-xs text-white/60 mt-2 text-center">
+                  Copie e envie para seus amigos
+                </p>
               </div>
             </div>
           )}
 
-          {/* Botões de Compartilhamento */}
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              size="sm"
-              onClick={() => handleShare('whatsapp')}
-              className="bg-[#25D366] hover:bg-[#1DA851] text-white flex-1 rounded-xl h-11 font-medium shadow-lg shadow-[#25D366]/30 transition-all hover:scale-[1.02]"
-            >
-              <MessageCircle className="w-5 h-5 mr-2" />
-              WhatsApp
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => handleShare('telegram')}
-              className="bg-[#0088cc] hover:bg-[#0077b5] text-white flex-1 rounded-xl h-11 font-medium shadow-lg shadow-[#0088cc]/30 transition-all hover:scale-[1.02]"
-            >
-              <Share2 className="w-5 h-5 mr-2" />
-              Telegram
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => handleShare('native')}
-              className="bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#8BC34A] hover:to-[#D4943E] text-white flex-1 rounded-xl h-11 font-medium shadow-lg transition-all hover:scale-[1.02]"
-            >
-              <Share2 className="w-5 h-5 mr-2" />
-              Mais
-            </Button>
-          </div>
+
 
           {/* Estatísticas - Glassmorphism */}
           <div className="grid grid-cols-3 gap-3 pt-2">

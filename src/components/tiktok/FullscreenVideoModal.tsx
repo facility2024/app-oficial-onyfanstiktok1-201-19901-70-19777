@@ -26,22 +26,17 @@ export const FullscreenVideoModal = ({
 
   // Configurar vídeo quando estiver pronto
   const handleVideoLoaded = () => {
-    console.log('📺 Vídeo carregado');
     setIsLoading(false);
     
     if (videoRef.current) {
       videoRef.current.currentTime = currentTime;
-      videoRef.current.play().catch(error => {
-        console.error('📺 Erro ao reproduzir vídeo:', error);
-      });
+      videoRef.current.play().catch(() => {});
     }
   };
 
   if (!isOpen) {
     return null;
   }
-
-  console.log('📺 Renderizando modal de tela cheia, videoUrl:', videoUrl);
 
   return (
     <div 
@@ -61,7 +56,6 @@ export const FullscreenVideoModal = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          console.log('📺 Botão fechar clicado');
           onClose();
         }}
         className="absolute top-6 right-6 z-[1000000] w-14 h-14 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-full hover:bg-black/90 transition-all shadow-2xl"

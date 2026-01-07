@@ -50,8 +50,6 @@ export const ModelCarousel = ({
 
   useEffect(() => {
     const fetchModels = async () => {
-      console.log(`🔍 Buscando modelos para ${title} (carousel ${carouselIndex})`);
-      
       // Buscar TODAS as modelos ativas
       const { data, error } = await supabase
         .from('models')
@@ -60,14 +58,10 @@ export const ModelCarousel = ({
         .order('followers_count', { ascending: false });
 
       if (data && !error) {
-        // 🔥 Buscar painéis de chat para verificar status online
-        const { data: chatPanelsData, error: chatPanelsError } = await supabase
+        // Buscar painéis de chat para verificar status online
+        const { data: chatPanelsData } = await supabase
           .from('model_chat_panels' as any)
           .select('model_id, is_online');
-
-        if (chatPanelsError) {
-          console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
-        }
 
         const chatPanelsMap: Record<string, boolean> = {};
         (chatPanelsData as any[])?.forEach((panel: any) => {
@@ -79,30 +73,20 @@ export const ModelCarousel = ({
           ...m,
           is_live: chatPanelsMap[m.id] || false
         }));
-
-        console.log(`✅ Total de modelos carregadas: ${allModels.length}`);
         
         // Dividir em duas partes iguais
         const halfPoint = Math.ceil(allModels.length / 2);
         
         let carouselModels: Model[];
         if (carouselIndex === 0) {
-          // Primeiro carousel - primeira metade (0 até halfPoint-1)
           carouselModels = allModels.slice(0, halfPoint);
-          console.log(`🔥 Carousel 0: Modelos 0 até ${halfPoint-1} = ${carouselModels.length} modelos`);
         } else {
-          // Segundo carousel - segunda metade (halfPoint até final)
           carouselModels = allModels.slice(halfPoint);
-          console.log(`✨ Carousel 1: Modelos ${halfPoint} até ${allModels.length-1} = ${carouselModels.length} modelos`);
         }
         
         // Duplicar apenas 2x para loop infinito mais suave
         const infiniteModels = [...carouselModels, ...carouselModels];
         setModels(infiniteModels);
-        
-        console.log(`📊 ${title}: ${carouselModels.length} modelos únicas, ${infiniteModels.length} total com duplicação`);
-      } else {
-        console.error(`❌ Erro ao buscar modelos:`, error);
       }
     };
 

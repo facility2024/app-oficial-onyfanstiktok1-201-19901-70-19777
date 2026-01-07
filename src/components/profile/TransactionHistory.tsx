@@ -8,10 +8,12 @@ export function TransactionHistory() {
   const { 
     wallet, 
     transactions, 
-    loading, 
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     formatNudix, 
     getTransactionTypeLabel,
-    refetch 
   } = useNudixWallet();
 
   const getTransactionIcon = (type: string) => {
@@ -81,7 +83,7 @@ export function TransactionHistory() {
       </div>
 
       {/* Lista de Transações */}
-      <div className="max-h-64 overflow-y-auto">
+      <div className="max-h-80 overflow-y-auto">
         {transactions.length === 0 ? (
           <div className="p-6 text-center">
             <Wallet className="w-10 h-10 text-gray-600 mx-auto mb-3" />
@@ -91,43 +93,70 @@ export function TransactionHistory() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
-            {transactions.map((tx, index) => (
-              <motion.div
-                key={tx.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    isPositive(tx.type) ? 'bg-green-500/20' : 'bg-red-500/20'
-                  }`}>
-                    {getTransactionIcon(tx.type)}
-                  </div>
-                  <div>
-                    <p className="text-sm text-white font-medium">
-                      {getTransactionTypeLabel(tx.type)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {format(new Date(tx.created_at), "dd MMM 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                    {tx.description && (
-                      <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[180px]">
-                        {tx.description}
+          <>
+            <div className="divide-y divide-white/5">
+              {transactions.map((tx, index) => (
+                <motion.div
+                  key={tx.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(index * 0.05, 0.5) }}
+                  className="p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      isPositive(tx.type) ? 'bg-green-500/20' : 'bg-red-500/20'
+                    }`}>
+                      {getTransactionIcon(tx.type)}
+                    </div>
+                    <div>
+                      <p className="text-sm text-white font-medium">
+                        {getTransactionTypeLabel(tx.type)}
                       </p>
-                    )}
+                      <p className="text-xs text-gray-500">
+                        {format(new Date(tx.created_at), "dd MMM 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                      {tx.description && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[180px]">
+                          {tx.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <span className={`text-sm font-semibold ${
-                  isPositive(tx.type) ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {isPositive(tx.type) ? '+' : '-'}{formatNudix(Math.abs(tx.amount))}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+                  <span className={`text-sm font-semibold ${
+                    isPositive(tx.type) ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {isPositive(tx.type) ? '+' : '-'}{formatNudix(Math.abs(tx.amount))}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+            
+            {/* Botão Carregar Mais */}
+            {hasMore && (
+              <div className="p-3 border-t border-white/5">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full py-2 text-sm text-green-400 hover:text-green-300 
+                           hover:bg-white/5 rounded-lg transition-colors flex items-center 
+                           justify-center gap-2 disabled:opacity-50"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownCircle className="w-4 h-4" />
+                      Carregar mais
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

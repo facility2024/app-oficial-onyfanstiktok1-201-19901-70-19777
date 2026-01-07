@@ -12,6 +12,7 @@ interface UserProfile {
   bio: string | null;
   phone: string | null;
   created_at: string;
+  referral_code: string | null;
 }
 
 interface ProfileUpdates {
@@ -66,6 +67,7 @@ export const useCurrentUser = () => {
           phone: updates.phone ?? profile.phone,
           avatar_url: profile.avatar_url,
           created_at: profile.created_at,
+          referral_code: profile.referral_code,
         });
       }
       
@@ -138,6 +140,7 @@ export const useCurrentUser = () => {
           phone: profile.phone,
           avatar_url: publicUrl,
           created_at: profile.created_at,
+          referral_code: profile.referral_code,
         });
       }
       
@@ -221,7 +224,8 @@ export const useCurrentUser = () => {
             avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || (profileData as any).avatar_url || null,
             bio: (profileData as any).bio || null,
             phone: (profileData as any).phone || null,
-            created_at: profileData.created_at
+            created_at: profileData.created_at,
+            referral_code: (profileData as any).referral_code || null,
           });
         }
       }
@@ -255,7 +259,8 @@ export const useCurrentUser = () => {
               avatar_url: localStorage.getItem(`avatar_${authUser.id}`) || (profileData as any).avatar_url || null,
               bio: (profileData as any).bio || null,
               phone: (profileData as any).phone || null,
-              created_at: profileData.created_at
+              created_at: profileData.created_at,
+              referral_code: (profileData as any).referral_code || null,
             });
           }
         }

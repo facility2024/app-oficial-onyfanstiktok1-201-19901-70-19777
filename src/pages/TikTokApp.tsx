@@ -2497,18 +2497,7 @@ export const TikTokApp = () => {
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
           setShowLive(true);
-        }} onBlockVideo={undefined} onOpenPremium={() => {
-          console.log('Mobile premium clicked via SideMenu');
-          if (currentVideo?.user?.posting_panel_url) {
-            const raw = currentVideo.user.posting_panel_url;
-            const url = /^(https?:)?\/\//i.test(raw || '') ? raw as string : `https://${raw}`;
-            window.open(url, '_blank');
-            toast({
-              title: "Abrindo página premium",
-              description: `Redirecionando para ${currentVideo.user.username}`
-            });
-          }
-        }} onFullscreen={handleFullscreen} onShare={shareVideo} />
+        }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} />
           </div>}
 
         {/* Barra de Navegação Inferior - Estilo TikTok */}
@@ -2807,24 +2796,7 @@ export const TikTokApp = () => {
               }} onOpenLive={() => {
                 console.log('Desktop live clicked');
                 setShowLive(true);
-              }} onBlockVideo={undefined} onOpenPremium={() => {
-                console.log('Desktop premium clicked');
-                if (currentVideo?.user?.posting_panel_url) {
-                  const raw = currentVideo.user.posting_panel_url;
-                  const url = /^(https?:)?\/\//i.test(raw || '') ? raw as string : `https://${raw}`;
-                  window.open(url, '_blank');
-                  toast({
-                    title: "Abrindo página premium",
-                    description: `Redirecionando para ${currentVideo.user.username}`
-                  });
-                } else {
-                  toast({
-                    title: "Link não configurado",
-                    description: "Esta modelo ainda não tem link premium configurado",
-                    variant: "destructive"
-                  });
-                }
-              }} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
+              }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
                 console.log('Desktop chat clicked');
                 setChatEntity({
                   name: currentVideo.user.username,

@@ -373,16 +373,6 @@ export const LiveInterface = () => {
             setShowComments(true);
           }}
           onOpenProfile={() => setShowProfile(true)}
-          onOpenPremium={() => {
-            const link = (video as any)?.user?.posting_panel_url as string | undefined;
-            if (link) {
-              const url = /^(https?:)?\/\//i.test(link) ? link : `https://${link}`;
-              window.open(url, '_blank');
-              toast({ title: 'Abrindo página premium', description: 'Redirecionando...' });
-            } else {
-              toast({ title: 'Link não configurado', description: 'Este modelo ainda não tem link premium', variant: 'destructive' });
-            }
-          }}
         />
       </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Sparkles, Volume1 } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Volume1 } from 'lucide-react';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +22,6 @@ interface EnhancedSideMenuProps {
   onOpenProfile: () => void;
   onOpenLive?: () => void;
   onBlockVideo?: () => void;
-  onOpenPremium?: () => void;
   userId?: string;
 }
 
@@ -38,7 +37,6 @@ export const EnhancedSideMenu = ({
   onOpenProfile,
   onOpenLive,
   onBlockVideo,
-  onOpenPremium,
   userId
 }: EnhancedSideMenuProps) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -219,15 +217,6 @@ export const EnhancedSideMenu = ({
         </div>
       )}
 
-      {/* Premium - Só aparece se foi configurado pelo admin */}
-      {video?.user?.posting_panel_url && (
-        <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenPremium}>
-          <div className="relative w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm flex items-center justify-center group-hover:from-yellow-400/30 group-hover:to-orange-500/30 transition-all duration-300" aria-label="Abrir Premium">
-            <Sparkles className="w-6 h-6 text-white" strokeWidth={1.5} />
-          </div>
-          <span className="text-white text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
-        </div>
-      )}
 
       {/* Sound with Volume Slider */}
       <div className="flex flex-col items-center relative">

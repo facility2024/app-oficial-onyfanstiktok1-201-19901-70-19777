@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, Sparkles, Compass, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
 import { Slider } from '@/components/ui/slider';
 import React from 'react';
@@ -20,7 +20,6 @@ interface SideMenuProps {
   onToggleFollow?: () => void;
   onOpenLive?: () => void;
   onBlockVideo?: () => void;
-  onOpenPremium?: () => void;
   onExit?: () => void;
   onFullscreen?: () => void;
   onOpenChat?: () => void;
@@ -44,7 +43,6 @@ export const SideMenu = ({
   onToggleFollow,
   onOpenLive,
   onBlockVideo,
-  onOpenPremium,
   onExit,
   onFullscreen,
   onOpenChat,
@@ -52,13 +50,6 @@ export const SideMenu = ({
   onShare
 }: SideMenuProps) => {
   const [showVolumeSlider, setShowVolumeSlider] = React.useState(false);
-  // 🔍 DEBUG: Verificar se o posting_panel_url está presente
-  console.log('🔍 SideMenu DEBUG:', {
-    videoId: video?.id,
-    username: video?.user?.username,
-    posting_panel_url: video?.user?.posting_panel_url,
-    hasPostingPanelUrl: !!video?.user?.posting_panel_url
-  });
 
   const formatCount = (count?: number) => {
     // Handle undefined or null values
@@ -195,15 +186,6 @@ export const SideMenu = ({
         </div>
       )}
 
-      {/* Premium - Só aparece se foi configurado pelo admin */}
-      {video?.user?.posting_panel_url && (
-        <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenPremium}>
-          <div className="relative w-12 h-12 flex items-center justify-center transition-all duration-300" aria-label="Abrir Premium">
-            <Sparkles className="w-8 h-8 text-yellow-500 md:text-yellow-600" strokeWidth={1.5} />
-          </div>
-          <span className="text-white md:text-gray-800 text-xs mt-1 font-light drop-shadow-md">PREMIUM</span>
-        </div>
-      )}
 
       {/* Sound with Volume Slider */}
       <div className="flex flex-col items-center relative">

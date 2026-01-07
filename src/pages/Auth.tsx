@@ -92,7 +92,7 @@ const Auth = () => {
     }
   }, []);
 
-  // Detectar modo reset na URL
+  // Detectar modo reset e código de referência na URL
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
@@ -105,9 +105,17 @@ const Auth = () => {
     
     const urlParams = new URLSearchParams(window.location.search);
     const modeParam = urlParams.get('mode');
+    const refCode = urlParams.get('ref');
     
     if (modeParam === 'reset-password') {
       setMode('reset-password');
+    }
+    
+    // Salvar código de referência para uso no cadastro
+    if (refCode) {
+      sessionStorage.setItem('referral_code', refCode.toUpperCase());
+      setMode('signup');
+      toast.info('🎁 Cadastre-se com o convite e ganhe benefícios!', { duration: 5000 });
     }
   }, []);
 
@@ -128,6 +136,9 @@ const Auth = () => {
       // Normalizar telefone (só números)
       const normalizedPhone = phone.replace(/\D/g, '');
       
+      // Recuperar código de referência (se houver)
+      const referralCode = sessionStorage.getItem('referral_code');
+      
       // Validar dados
       const validated = signupSchema.parse({ email, password, name, phone: normalizedPhone });
       
@@ -138,6 +149,7 @@ const Auth = () => {
           data: { 
             full_name: validated.name,
             phone: validated.phone,
+            referral_code: referralCode,
           },
           emailRedirectTo: `${window.location.origin}/app`
         }
@@ -145,13 +157,39 @@ const Auth = () => {
       
       if (error) throw error;
       
-      // Se tem sessão, salvar telefone no perfil
+      // Se tem sessão, processar referência e salvar dados
       if (data.user) {
-        // Usar rpc ou update direto (phone será adicionado via SQL)
+        // Salvar telefone no perfil
         await supabase
           .from('profiles')
           .update({ phone: validated.phone } as any)
           .eq('id', data.user.id);
+        
+        // Processar indicação se houver código de referência
+        if (referralCode) {
+          try {
+            // Buscar quem indicou pelo código
+            const { data: referrerProfile } = await (supabase as any)
+              .from('profiles')
+              .select('id')
+              .eq('referral_code', referralCode)
+              .maybeSingle();
+            
+            if (referrerProfile?.id) {
+              // Atualizar perfil do novo usuário com referência
+              await (supabase as any)
+                .from('profiles')
+                .update({ referred_by: referrerProfile.id })
+                .eq('id', data.user.id);
+              
+              toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
+            }
+          } catch (refError) {
+            console.log('Sistema de referência ainda não configurado:', refError);
+          }
+          
+          sessionStorage.removeItem('referral_code');
+        }
       }
       
       // Se confirmação de email está desabilitada, já vai ter sessão

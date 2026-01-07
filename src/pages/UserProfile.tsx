@@ -190,7 +190,16 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div 
+      className="min-h-screen bg-black"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch'
+      }}
+    >
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-white/10" style={{
         background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'

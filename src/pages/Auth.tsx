@@ -182,7 +182,18 @@ const Auth = () => {
                 .update({ referred_by: referrerProfile.id })
                 .eq('id', data.user.id);
               
-              toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
+              // Processar bônus de indicação (creditar Nudix)
+              try {
+                await (supabase.rpc as any)('process_referral_completion', {
+                  p_referrer_id: referrerProfile.id,
+                  p_referred_id: data.user.id,
+                  p_referred_email: validated.email
+                });
+                toast.success('🎁 Você foi indicado! Seu amigo ganhou N$ 1,00!');
+              } catch (rpcError) {
+                console.log('RPC de referência não disponível:', rpcError);
+                toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
+              }
             }
           } catch (refError) {
             console.log('Sistema de referência ainda não configurado:', refError);

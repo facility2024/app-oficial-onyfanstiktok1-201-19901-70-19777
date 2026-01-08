@@ -63,13 +63,15 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       }));
 
       // Buscar criadores (via user_roles)
+      console.log('🔍 Buscando criadores...');
       const { data: creatorRoles, error: rolesError } = await (supabase as any)
         .from('user_roles')
         .select('user_id')
         .eq('role', 'creator');
 
+      console.log('📋 Criadores encontrados:', creatorRoles?.length || 0, creatorRoles);
       if (rolesError) {
-        console.error('Error loading creator roles:', rolesError);
+        console.error('❌ Erro ao buscar criadores (RLS?):', rolesError);
       }
 
       let creatorsData: any[] = [];

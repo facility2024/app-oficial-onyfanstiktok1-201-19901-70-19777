@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Share2, Heart, MessageCircle, Users, CheckCircle, Crown } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Heart, MessageCircle, Users, CheckCircle, Crown } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -332,23 +332,14 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="bg-white/5 border-white/10 text-white hover:bg-white/10"
-                  >
-                    Editar Perfil
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/5 border-white/10 text-white hover:bg-white/10"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                >
+                  Editar Perfil
+                </Button>
               </div>
 
               {/* Stats */}

@@ -142,6 +142,8 @@ const Auth = () => {
       // Validar dados
       const validated = signupSchema.parse({ email, password, name, phone: normalizedPhone });
       
+      console.log('📝 Iniciando cadastro...', { email: validated.email, referralCode });
+      
       const { data, error } = await supabase.auth.signUp({
         email: validated.email,
         password: validated.password,
@@ -157,49 +159,97 @@ const Auth = () => {
       
       if (error) throw error;
       
-      // Se tem sessão, processar referência e salvar dados
+      // Se tem usuário criado, processar referência
       if (data.user) {
-        // Salvar telefone no perfil
-        await supabase
-          .from('profiles')
-          .update({ phone: validated.phone } as any)
-          .eq('id', data.user.id);
+        console.log('✅ Usuário criado:', data.user.id);
         
         // Processar indicação se houver código de referência
         if (referralCode) {
+          console.log('🎁 Processando código de referência:', referralCode);
+          
           try {
             // Buscar quem indicou pelo código (case-insensitive)
-            const { data: referrerProfile } = await (supabase as any)
+            const { data: referrerProfile, error: refError } = await supabase
               .from('profiles')
               .select('id')
               .ilike('referral_code', referralCode)
               .maybeSingle();
             
+            if (refError) {
+              console.error('❌ Erro ao buscar referenciador:', refError);
+            }
+            
             if (referrerProfile?.id) {
-              // Atualizar perfil do novo usuário com referência
-              await (supabase as any)
-                .from('profiles')
-                .update({ referred_by: referrerProfile.id })
-                .eq('id', data.user.id);
+              console.log('✅ Referenciador encontrado:', referrerProfile.id);
               
-              // Processar bônus de indicação (creditar Nudix)
-              try {
-                await (supabase.rpc as any)('process_referral_completion', {
-                  p_referrer_id: referrerProfile.id,
-                  p_referred_id: data.user.id,
-                  p_referred_email: validated.email
-                });
-                toast.success('🎁 Você foi indicado! Seu amigo ganhou N$ 1,00!');
-              } catch (rpcError) {
-                console.log('RPC de referência não disponível:', rpcError);
-                toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
+              // Aguardar o perfil ser criado pelo trigger (com retry)
+              let profileUpdated = false;
+              for (let attempt = 1; attempt <= 5 && !profileUpdated; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+                
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ 
+                    referred_by: referrerProfile.id,
+                    phone: validated.phone
+                  } as any)
+                  .eq('id', data.user.id);
+                
+                if (!updateError) {
+                  profileUpdated = true;
+                  console.log('✅ Perfil atualizado com referred_by na tentativa', attempt);
+                } else {
+                  console.log(`⏳ Tentativa ${attempt}/5 falhou:`, updateError.message);
+                }
               }
+              
+              // Chamar RPC para processar bônus (com retry)
+              if (profileUpdated) {
+                let bonusProcessed = false;
+                for (let attempt = 1; attempt <= 3 && !bonusProcessed; attempt++) {
+                  try {
+                    const { error: rpcError } = await (supabase.rpc as any)('process_referral_completion', {
+                      p_referrer_id: referrerProfile.id,
+                      p_referred_id: data.user.id,
+                      p_referred_email: validated.email
+                    });
+                    
+                    if (!rpcError) {
+                      bonusProcessed = true;
+                      console.log('✅ Bônus processado via RPC!');
+                      toast.success('🎁 Você foi indicado! Seu amigo ganhou N$ 1,00!');
+                    } else {
+                      console.log(`⏳ RPC tentativa ${attempt}/3 falhou:`, rpcError.message);
+                      await new Promise(resolve => setTimeout(resolve, 300 * attempt));
+                    }
+                  } catch (rpcError) {
+                    console.log(`⏳ RPC tentativa ${attempt}/3 erro:`, rpcError);
+                    await new Promise(resolve => setTimeout(resolve, 300 * attempt));
+                  }
+                }
+                
+                if (!bonusProcessed) {
+                  // Trigger automático deve processar quando referred_by foi definido
+                  console.log('ℹ️ RPC falhou, trigger automático deve processar');
+                  toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
+                }
+              }
+            } else {
+              console.warn('⚠️ Código de referência inválido ou não encontrado:', referralCode);
             }
           } catch (refError) {
-            console.log('Sistema de referência ainda não configurado:', refError);
+            console.error('❌ Erro no sistema de referência:', refError);
           }
           
           sessionStorage.removeItem('referral_code');
+        } else {
+          // Sem código de referência - apenas atualizar telefone
+          setTimeout(async () => {
+            await supabase
+              .from('profiles')
+              .update({ phone: validated.phone } as any)
+              .eq('id', data.user!.id);
+          }, 1000);
         }
       }
       

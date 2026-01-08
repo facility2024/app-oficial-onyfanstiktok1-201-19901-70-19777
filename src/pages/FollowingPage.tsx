@@ -153,11 +153,8 @@ export default function FollowingPage() {
   }, [followChanges]);
 
   const handleEntityClick = (entity: FollowedEntity) => {
-    if (entity.entity_type === 'model') {
-      navigate(`/app?profile=${entity.id}`);
-    } else {
-      toast.info("Perfil de criador em breve!");
-    }
+    // Navegar para o perfil - funciona tanto para modelos quanto criadores
+    navigate(`/app?profile=${entity.id}`);
   };
 
   const getInitials = (name: string) => {

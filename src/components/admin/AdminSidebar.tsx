@@ -16,7 +16,8 @@ import {
   Crown, 
   FileText,
   Store,
-  Calendar
+  Calendar,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -92,6 +93,7 @@ const navigationGroups = [
     label: 'Financeiro',
     items: [
       { id: 'money', label: 'Financeiro', icon: DollarSign },
+      { id: 'affiliates', label: 'Afiliados', icon: UserPlus },
       { id: 'vip', label: 'Usuários VIP', icon: Crown },
       { id: 'model-subscriptions', label: 'Assinaturas Modelos', icon: Crown },
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },

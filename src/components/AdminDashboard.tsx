@@ -40,6 +40,7 @@ import { AdminVIPUsers } from './admin/AdminVIPUsers';
 import { AdminWebhookLogs } from './admin/AdminWebhookLogs';
 import { AdminActivateVIP } from './admin/AdminActivateVIP';
 import { AdminModelSubscriptions } from './admin/AdminModelSubscriptions';
+import { AdminAffiliates } from './admin/AdminAffiliates';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -208,6 +209,8 @@ export const AdminDashboard = () => {
         );
       case 'money':
         return <AdminMoney />;
+      case 'affiliates':
+        return <AdminAffiliates />;
       case 'vip':
         return <AdminVIPUsers />;
       case 'model-subscriptions':

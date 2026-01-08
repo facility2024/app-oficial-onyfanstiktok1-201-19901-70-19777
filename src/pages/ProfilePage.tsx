@@ -13,18 +13,18 @@ export default function ProfilePage() {
         return;
       }
 
-      console.log('🔍 Resolvendo username:', username);
+      const formattedUsername = username.toLowerCase();
+      console.log('🔍 Resolvendo username:', formattedUsername);
 
-      // 1. Tentar encontrar em models (modelos estáticos)
+      // 1. Tentar encontrar em models (modelos estáticos) - case insensitive
       const { data: model } = await supabase
         .from('models')
         .select('id')
-        .eq('username', username)
+        .ilike('username', formattedUsername)
         .maybeSingle();
 
       if (model) {
         console.log('✅ Encontrado modelo:', model.id);
-        // Navegar passando profileId via state e manter URL amigável
         navigate('/app', { 
           replace: true, 
           state: { profileId: model.id, friendlyUrl: `/${username}` }
@@ -32,25 +32,38 @@ export default function ProfilePage() {
         return;
       }
 
-      // 2. Tentar buscar por nome formatado (fallback para criadores)
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .limit(50);
+      // 2. Buscar criadores aprovados via user_roles primeiro
+      // Usar cast para contornar tipos não gerados
+      const { data: creatorRoles } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'creator');
 
-      if (profiles) {
-        const matchingProfile = profiles.find(p => 
-          p.name && p.name.toLowerCase().replace(/\s+/g, '-') === username.toLowerCase()
-        );
+      if (creatorRoles && creatorRoles.length > 0) {
+        const creatorIds = creatorRoles.map((r: { user_id: string }) => r.user_id);
+        
+        // Buscar perfis APENAS dos criadores
+        const { data: creatorProfiles } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', creatorIds);
 
-        if (matchingProfile) {
-          console.log('✅ Encontrado criador por nome:', matchingProfile.id);
-          // Navegar passando profileId via state e manter URL amigável
-          navigate('/app', { 
-            replace: true, 
-            state: { profileId: matchingProfile.id, friendlyUrl: `/${username}` }
+        if (creatorProfiles) {
+          // Buscar correspondência exata por nome formatado
+          const matchingProfile = creatorProfiles.find(p => {
+            if (!p.name) return false;
+            const formattedName = p.name.toLowerCase().replace(/\s+/g, '-');
+            return formattedName === formattedUsername;
           });
-          return;
+
+          if (matchingProfile) {
+            console.log('✅ Encontrado criador:', matchingProfile.id, matchingProfile.name);
+            navigate('/app', { 
+              replace: true, 
+              state: { profileId: matchingProfile.id, friendlyUrl: `/${username}` }
+            });
+            return;
+          }
         }
       }
 

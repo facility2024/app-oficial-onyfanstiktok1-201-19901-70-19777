@@ -2598,20 +2598,6 @@ export const TikTokApp = () => {
       background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
     }}>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" onClick={() => {
-          if (showProfile || showSearch || showLive) {
-            // Se estiver em alguma modal/tela, fecha ela
-            setShowProfile(false);
-            setShowSearch(false);
-            setShowLive(false);
-          } else {
-            // Se estiver na tela principal, volta ao primeiro vídeo
-            goToHome();
-          }
-        }} className="bg-transparent hover:bg-white/10 text-black border border-black">
-            <ArrowLeft className="h-4 w-4 mr-2 text-black" />
-            Voltar
-          </Button>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center justify-center w-[80px] h-[80px] rounded-full overflow-hidden bg-transparent">

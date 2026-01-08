@@ -33,6 +33,7 @@ import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
 import ModelChat from "./pages/ModelChat";
 import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
+import ProfilePage from "./pages/ProfilePage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -156,6 +157,9 @@ const App = () => (
               <AdminDashboard />
             </AdminRoute>
           } />
+          
+          {/* URL amigável para perfis - DEVE ser antes do catch-all */}
+          <Route path="/:username" element={<ProfilePage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

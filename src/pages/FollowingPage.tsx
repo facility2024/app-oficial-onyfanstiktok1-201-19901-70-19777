@@ -153,8 +153,11 @@ export default function FollowingPage() {
   }, [followChanges]);
 
   const handleEntityClick = (entity: FollowedEntity) => {
-    // Navegar para o perfil - funciona tanto para modelos quanto criadores
-    navigate(`/app?profile=${entity.id}`);
+    // Usar URL amigável baseada no username/nome
+    const slug = entity.username 
+      ? entity.username.toLowerCase().replace(/\s+/g, '-')
+      : entity.name.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/${slug}`);
   };
 
   const getInitials = (name: string) => {

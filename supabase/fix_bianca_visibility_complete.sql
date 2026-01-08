@@ -1,55 +1,54 @@
 -- =====================================================
--- CORREÇÃO COMPLETA: VISIBILIDADE DA @BIANCA NA BUSCA
+-- CORREÇÃO COMPLETA: VISIBILIDADE DE CRIADORES PARA TODOS
 -- =====================================================
--- Execute este script no Supabase SQL Editor
+-- Execute este script no Supabase SQL Editor do projeto COCONUDI
+-- Problema: nathanregis@gmail.com não vê @Bianca, mas coconudi@gmail.com (admin) vê
 
--- 1️⃣ DIAGNÓSTICO: Verificar status atual
-SELECT 'Verificando auth.users...' as step;
-SELECT id, email FROM auth.users WHERE email ILIKE '%bianca%';
+-- 1️⃣ GARANTIR QUE 'creator' EXISTE NO ENUM
+DO $$ BEGIN
+    ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'creator';
+EXCEPTION
+    WHEN duplicate_object THEN null;
+    WHEN others THEN 
+        RAISE NOTICE 'Erro ao adicionar creator ao enum: %', SQLERRM;
+END $$;
 
-SELECT 'Verificando user_roles...' as step;
-SELECT ur.*, au.email 
-FROM public.user_roles ur
-JOIN auth.users au ON ur.user_id = au.id
-WHERE au.email ILIKE '%bianca%';
-
--- 2️⃣ CORRIGIR POLÍTICA RLS
+-- 2️⃣ REMOVER POLÍTICAS ANTIGAS
 DROP POLICY IF EXISTS "user_roles_select_creators_public" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_select_creators_anon" ON public.user_roles;
 
+-- 3️⃣ CRIAR POLÍTICA PARA USUÁRIOS AUTENTICADOS VEREM CRIADORES
 CREATE POLICY "user_roles_select_creators_public" 
 ON public.user_roles 
 FOR SELECT 
 TO authenticated
 USING (role = 'creator'::public.app_role);
 
--- 3️⃣ GARANTIR GRANTS
+-- 4️⃣ CRIAR POLÍTICA PARA USUÁRIOS ANÔNIMOS VEREM CRIADORES
+CREATE POLICY "user_roles_select_creators_anon" 
+ON public.user_roles 
+FOR SELECT 
+TO anon
+USING (role = 'creator'::public.app_role);
+
+-- 5️⃣ GARANTIR GRANTS
 GRANT SELECT ON public.user_roles TO authenticated, anon;
 
--- 4️⃣ APROVAR BIANCA COMO CRIADORA (se ainda não for)
-DO $$ 
-DECLARE
-  v_bianca_id uuid;
-BEGIN
-  SELECT id INTO v_bianca_id FROM auth.users WHERE email ILIKE '%bianca%' LIMIT 1;
-  
-  IF v_bianca_id IS NOT NULL THEN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (v_bianca_id, 'creator')
-    ON CONFLICT (user_id, role) DO NOTHING;
-    
-    RAISE NOTICE '✅ Bianca aprovada com user_id: %', v_bianca_id;
-  ELSE
-    RAISE NOTICE '❌ Usuário Bianca não encontrado';
-  END IF;
-END $$;
-
--- 5️⃣ VERIFICAR RESULTADO FINAL
-SELECT 'Resultado final:' as step;
-SELECT ur.role, au.email, ur.created_at
+-- 6️⃣ VERIFICAR CRIADORES EXISTENTES
+SELECT ur.user_id, ur.role, p.name, p.email
 FROM public.user_roles ur
-JOIN auth.users au ON ur.user_id = au.id
-WHERE au.email ILIKE '%bianca%';
+LEFT JOIN public.profiles p ON ur.user_id = p.id
+WHERE ur.role = 'creator';
+
+-- 7️⃣ VERIFICAR POLÍTICAS CRIADAS
+SELECT policyname, cmd, roles 
+FROM pg_policies 
+WHERE tablename = 'user_roles'
+ORDER BY policyname;
 
 -- =====================================================
--- ✅ APÓS EXECUTAR: @Bianca aparecerá na busca
+-- ✅ APÓS EXECUTAR:
+-- - nathanregis@gmail.com verá @Bianca na busca
+-- - Todos os usuários (autenticados e anônimos) verão criadores
+-- - Roles sensíveis (admin, moderator) permanecem protegidas
 -- =====================================================

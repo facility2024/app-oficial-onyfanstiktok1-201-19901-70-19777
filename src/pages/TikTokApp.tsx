@@ -13,7 +13,7 @@ import { VinylRecord } from '@/components/tiktok/VinylRecord';
 import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTracker';
 import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -240,9 +240,14 @@ export const TikTokApp = () => {
   const [pendingRefresh, setPendingRefresh] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const targetVideoId = searchParams.get('video');
   const targetProfileId = searchParams.get('profile');
+  
+  // 🔗 URL amigável: receber profileId via state (de ProfilePage)
+  const stateProfileId = (location.state as { profileId?: string; friendlyUrl?: string })?.profileId;
+  const friendlyUrl = (location.state as { profileId?: string; friendlyUrl?: string })?.friendlyUrl;
   const {
     toast
   } = useToast();
@@ -1205,18 +1210,24 @@ export const TikTokApp = () => {
     }
   }, [targetVideoId, videos, emblaApi, setSearchParams]);
 
-  // 🎯 Abrir perfil quando vindo de /app?profile=...
+  // 🎯 Abrir perfil quando vindo de /app?profile=... OU via state (URL amigável)
   useEffect(() => {
-    if (!targetProfileId || loading) return;
+    const profileToOpen = targetProfileId || stateProfileId;
+    if (!profileToOpen || loading) return;
     
-    console.log('👤 Abrindo perfil via URL:', targetProfileId);
+    console.log('👤 Abrindo perfil via URL:', profileToOpen, 'friendlyUrl:', friendlyUrl);
     
     // Chamar goToModelVideo para abrir o perfil
-    goToModelVideo(targetProfileId);
+    goToModelVideo(profileToOpen);
     
-    // Limpar parâmetro da URL após processar
-    setSearchParams({});
-  }, [targetProfileId, loading]);
+    // Se veio de URL amigável, restaurar ela na barra de endereços
+    if (friendlyUrl) {
+      window.history.replaceState({}, '', friendlyUrl);
+    } else {
+      // Limpar parâmetro da URL se não tinha URL amigável
+      setSearchParams({});
+    }
+  }, [targetProfileId, stateProfileId, loading]);
 
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {
@@ -1375,11 +1386,25 @@ export const TikTokApp = () => {
       console.error('Erro ao abrir vídeo selecionado:', e);
     }
   };
+  // 🔗 Handler para fechar perfil e restaurar URL /app
+  const handleCloseProfile = useCallback(() => {
+    console.log('❌ Fechando perfil');
+    setShowProfile(false);
+    // Restaurar URL para /app
+    if (window.location.pathname !== '/app') {
+      window.history.replaceState({}, '', '/app');
+    }
+  }, []);
+
   const goToHome = () => {
     console.log('🏠 Voltando para a tela inicial');
     setShowProfile(false);
     setCurrentVideoIndex(0);
     emblaApi?.scrollTo(0);
+    // Restaurar URL para /app
+    if (window.location.pathname !== '/app') {
+      window.history.replaceState({}, '', '/app');
+    }
   };
   const backToCurrentVideo = () => {
     console.log('🏠 Voltando para onde parou a visualização');
@@ -1387,6 +1412,10 @@ export const TikTokApp = () => {
     setShowComments(false);
     setShowSearch(false);
     setShowLive(false);
+    // Restaurar URL para /app
+    if (window.location.pathname !== '/app') {
+      window.history.replaceState({}, '', '/app');
+    }
     // Mantém o vídeo atual sem mudar o índice
   };
   const loadComments = useCallback(async (videoId: string) => {
@@ -2573,10 +2602,10 @@ export const TikTokApp = () => {
       }} />}
 
         {/* Profile Screen */}
-        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={() => setShowProfile(false)} onGoHome={goToHome} onVideoSelect={videoId => {
+        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onVideoSelect={videoId => {
         openSelectedVideo(videoId);
       }} onOpenChat={() => {
-        setShowProfile(false);
+        handleCloseProfile();
         setShowChat(true);
       }} />
 
@@ -2900,8 +2929,8 @@ export const TikTokApp = () => {
       {/* Desktop Profile Screen */}
       <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
       openSelectedVideo(videoId);
-    }} isOpen={showProfile} onClose={() => setShowProfile(false)} onGoHome={goToHome} onOpenChat={() => {
-      setShowProfile(false);
+    }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onOpenChat={() => {
+      handleCloseProfile();
       setShowChat(true);
     }} />
 

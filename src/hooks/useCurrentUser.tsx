@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { usePendingReferral } from './usePendingReferral';
 
 interface UserProfile {
   id: string;
@@ -298,6 +299,9 @@ export const useCurrentUser = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Processar referências pendentes após login
+  usePendingReferral(user?.id);
 
   return {
     user,

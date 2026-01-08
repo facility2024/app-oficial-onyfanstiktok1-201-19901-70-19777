@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAffiliateStats } from '@/hooks/useAffiliateStats';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ import {
   Trophy,
   Medal,
   Award,
+  Play,
+  Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,6 +39,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { toast } from 'sonner';
 
 interface StatCardProps {
   title: string;
@@ -119,6 +123,120 @@ const getStatusBadge = (status: string) => {
 
 export const AdminAffiliates = () => {
   const { stats, loading, error, refetch } = useAffiliateStats();
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [processingAll, setProcessingAll] = useState(false);
+
+  // Processar uma indicação pendente manualmente
+  const processReferral = async (referralId: string, referrerId: string, referredId: string, bonusAmount: number) => {
+    setProcessingIds(prev => new Set(prev).add(referralId));
+    
+    try {
+      // 1. Criar carteira do referenciador se não existir
+      await (supabase as any)
+        .from('user_wallets')
+        .upsert({
+          user_id: referrerId,
+          nudix_balance: 0,
+          total_earned: 0,
+          total_spent: 0,
+        }, { onConflict: 'user_id', ignoreDuplicates: true });
+
+      // 2. Atualizar status da indicação para 'completed'
+      const { error: updateError } = await (supabase as any)
+        .from('referrals')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', referralId);
+
+      if (updateError) throw updateError;
+
+      // 3. Creditar bônus na carteira do referenciador
+      const { data: wallet } = await (supabase as any)
+        .from('user_wallets')
+        .select('nudix_balance, total_earned')
+        .eq('user_id', referrerId)
+        .maybeSingle();
+
+      const currentBalance = wallet?.nudix_balance || 0;
+      const currentEarned = wallet?.total_earned || 0;
+
+      const { error: walletError } = await (supabase as any)
+        .from('user_wallets')
+        .update({
+          nudix_balance: currentBalance + bonusAmount,
+          total_earned: currentEarned + bonusAmount,
+        })
+        .eq('user_id', referrerId);
+
+      if (walletError) throw walletError;
+
+      // 4. Registrar transação
+      await (supabase as any)
+        .from('wallet_transactions')
+        .insert({
+          user_id: referrerId,
+          amount: bonusAmount,
+          type: 'referral_bonus',
+          description: `Bônus por indicação (processado manualmente)`,
+        });
+
+      toast.success('Indicação processada com sucesso!', {
+        description: `N$ ${bonusAmount.toFixed(2)} creditado ao referenciador`,
+      });
+
+      // Atualizar lista
+      refetch();
+    } catch (err) {
+      console.error('Erro ao processar indicação:', err);
+      toast.error('Erro ao processar indicação', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+      });
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(referralId);
+        return newSet;
+      });
+    }
+  };
+
+  // Processar todas as indicações pendentes
+  const processAllPending = async () => {
+    const pendingReferrals = stats.recentReferrals.filter(r => r.status === 'pending');
+    
+    if (pendingReferrals.length === 0) {
+      toast.info('Não há indicações pendentes para processar');
+      return;
+    }
+
+    setProcessingAll(true);
+    let processed = 0;
+    let failed = 0;
+
+    for (const referral of pendingReferrals) {
+      try {
+        await processReferral(
+          referral.id,
+          referral.referrer_id,
+          referral.referred_id,
+          referral.bonus_amount
+        );
+        processed++;
+      } catch {
+        failed++;
+      }
+    }
+
+    setProcessingAll(false);
+
+    if (failed === 0) {
+      toast.success(`${processed} indicações processadas com sucesso!`);
+    } else {
+      toast.warning(`${processed} processadas, ${failed} falharam`);
+    }
+  };
 
   if (loading) {
     return (
@@ -323,11 +441,31 @@ export const AdminAffiliates = () => {
 
       {/* Recent Referrals */}
       <Card className="bg-gray-900/50 border-white/10">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
             <RefreshCw className="w-5 h-5 text-blue-400" />
             Indicações Recentes
           </CardTitle>
+          {stats.pendingReferrals > 0 && (
+            <Button
+              onClick={processAllPending}
+              disabled={processingAll}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {processingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 mr-2" />
+                  Processar Todas Pendentes ({stats.pendingReferrals})
+                </>
+              )}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {stats.recentReferrals.length === 0 ? (
@@ -343,41 +481,74 @@ export const AdminAffiliates = () => {
                   <TableHead className="text-gray-400 text-center">Status</TableHead>
                   <TableHead className="text-gray-400 text-center">Bônus</TableHead>
                   <TableHead className="text-gray-400 text-right">Data</TableHead>
+                  <TableHead className="text-gray-400 text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stats.recentReferrals.map((referral) => (
-                  <TableRow key={referral.id} className="border-white/5">
-                    <TableCell>
-                      <div>
-                        <p className="text-white font-medium text-sm">
-                          {referral.referrer_name || 'Sem nome'}
+                {stats.recentReferrals.map((referral) => {
+                  const isProcessing = processingIds.has(referral.id);
+                  const isPending = referral.status === 'pending';
+                  
+                  return (
+                    <TableRow key={referral.id} className="border-white/5">
+                      <TableCell>
+                        <div>
+                          <p className="text-white font-medium text-sm">
+                            {referral.referrer_name || 'Sem nome'}
+                          </p>
+                          <p className="text-gray-500 text-xs">
+                            Código: {referral.referrer_code || '-'}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-gray-300 text-sm">
+                          {referral.referred_email || 'Email não disponível'}
                         </p>
-                        <p className="text-gray-500 text-xs">
-                          Código: {referral.referrer_code || '-'}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-gray-300 text-sm">
-                        {referral.referred_email || 'Email não disponível'}
-                      </p>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {getStatusBadge(referral.status)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="text-purple-400 font-medium">
-                        N$ {referral.bonus_amount.toFixed(2)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right text-gray-400 text-sm">
-                      {format(new Date(referral.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getStatusBadge(referral.status)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-purple-400 font-medium">
+                          N$ {referral.bonus_amount.toFixed(2)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right text-gray-400 text-sm">
+                        {format(new Date(referral.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {isPending ? (
+                          <Button
+                            onClick={() => processReferral(
+                              referral.id,
+                              referral.referrer_id,
+                              referral.referred_id,
+                              referral.bonus_amount
+                            )}
+                            disabled={isProcessing}
+                            size="sm"
+                            variant="outline"
+                            className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                          >
+                            {isProcessing ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Processar
+                              </>
+                            )}
+                          </Button>
+                        ) : (
+                          <span className="text-gray-500 text-xs">-</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

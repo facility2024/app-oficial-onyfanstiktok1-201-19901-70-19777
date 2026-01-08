@@ -8,7 +8,6 @@ import { ImageViewer } from '@/components/ui/image-viewer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
-import { ShareProfileModal } from './ShareProfileModal';
 
 
 interface ProfileScreenProps {
@@ -61,7 +60,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
   const [isCreator, setIsCreator] = useState(false);
   const [isFollowingCreator, setIsFollowingCreator] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   
   const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
   const navigate = useNavigate();
@@ -461,7 +459,32 @@ if (!isOpen) return null;
           <h2 className="text-white text-lg font-semibold drop-shadow-md">@{user.username}</h2>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowShareModal(true)}
+              onClick={() => {
+                // Gerar URL amigável usando username
+                const formattedName = (user.username || '')
+                  .toLowerCase()
+                  .replace(/\s+/g, '-')
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '');
+                const shareUrl = `${window.location.origin}/${formattedName}`;
+                
+                // Tentar usar Web Share API (mobile)
+                if (navigator.share) {
+                  navigator.share({
+                    title: `@${user.username} no Coconudi`,
+                    text: `Confira o perfil de @${user.username} no Coconudi! 🔥`,
+                    url: shareUrl
+                  }).catch(() => {
+                    // Fallback: copiar para clipboard
+                    navigator.clipboard.writeText(shareUrl);
+                    toast.success('Link copiado!', { description: shareUrl });
+                  });
+                } else {
+                  // Desktop: copiar para clipboard
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success('Link copiado!', { description: shareUrl });
+                }
+              }}
               className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
               title="Compartilhar perfil"
             >
@@ -1016,14 +1039,6 @@ if (!isOpen) return null;
         isOpen={imageViewerOpen}
         onClose={() => setImageViewerOpen(false)}
         onIndexChange={setCurrentImageIndex}
-      />
-
-      {/* Share Profile Modal */}
-      <ShareProfileModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        username={user.username || ''}
-        avatarUrl={user.avatar_url}
       />
     </div>
   );

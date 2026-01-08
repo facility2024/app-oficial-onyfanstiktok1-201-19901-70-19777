@@ -536,7 +536,32 @@ if (!isOpen) return null;
                         return (
                           <button
                             key={plan.id}
-                            onClick={() => {
+                            onClick={async () => {
+                              // Buscar email do usuário logado
+                              const { data: { user: authUser } } = await supabase.auth.getUser();
+                              const subscriberEmail = authUser?.email || '';
+                              
+                              // Enviar dados para webhook N8N
+                              try {
+                                await fetch('https://agencia-facility-n8n.a0f1kq.easypanel.host/webhook-test/model_id', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    event_type: 'subscription_intent',
+                                    subscriber_email: subscriberEmail,
+                                    model_id: user.id,
+                                    model_name: user.username,
+                                    plan_type: plan.plan_type,
+                                    price: plan.price,
+                                    timestamp: new Date().toISOString()
+                                  })
+                                });
+                                console.log('Webhook enviado:', { subscriberEmail, model_id: user.id });
+                              } catch (error) {
+                                console.error('Erro ao enviar webhook:', error);
+                              }
+                              
+                              // Continuar fluxo normal de pagamento
                               if (plan.payment_url) {
                                 window.open(plan.payment_url, '_blank');
                                 toast.info('Redirecionando para pagamento...', {

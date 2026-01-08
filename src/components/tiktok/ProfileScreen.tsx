@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@/types/database';
-import { X, ArrowLeft, Heart, Crown, Sparkles } from 'lucide-react';
+import { X, ArrowLeft, Heart, Crown, Sparkles, Share2 } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
@@ -457,12 +457,46 @@ if (!isOpen) return null;
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h2 className="text-white text-lg font-semibold drop-shadow-md">@{user.username}</h2>
-          <button
-            onClick={onClose}
-            className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                // Gerar URL amigável usando username
+                const formattedName = (user.username || '')
+                  .toLowerCase()
+                  .replace(/\s+/g, '-')
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '');
+                const shareUrl = `${window.location.origin}/${formattedName}`;
+                
+                // Tentar usar Web Share API (mobile)
+                if (navigator.share) {
+                  navigator.share({
+                    title: `@${user.username} no Coconudi`,
+                    text: `Confira o perfil de @${user.username} no Coconudi! 🔥`,
+                    url: shareUrl
+                  }).catch(() => {
+                    // Fallback: copiar para clipboard
+                    navigator.clipboard.writeText(shareUrl);
+                    toast.success('Link copiado!', { description: shareUrl });
+                  });
+                } else {
+                  // Desktop: copiar para clipboard
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success('Link copiado!', { description: shareUrl });
+                }
+              }}
+              className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
+              title="Compartilhar perfil"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Profile Content */}

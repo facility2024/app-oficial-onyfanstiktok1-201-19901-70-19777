@@ -182,10 +182,31 @@ const Auth = () => {
             if (referrerProfile?.id) {
               console.log('✅ Referenciador encontrado:', referrerProfile.id);
               
-              // Aguardar o perfil ser criado pelo trigger (com retry)
+              // Salvar dados para processamento posterior (backup)
+              localStorage.setItem('pending_referral', JSON.stringify({
+                referrerId: referrerProfile.id,
+                referralCode: referralCode,
+                userId: data.user.id,
+                email: validated.email,
+                timestamp: Date.now()
+              }));
+              
+              // Aguardar o perfil ser criado pelo trigger (com retry aumentado)
               let profileUpdated = false;
-              for (let attempt = 1; attempt <= 5 && !profileUpdated; attempt++) {
-                await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+              for (let attempt = 1; attempt <= 8 && !profileUpdated; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 800 * attempt));
+                
+                // Verificar se perfil existe
+                const { data: existingProfile } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('id', data.user.id)
+                  .maybeSingle();
+                
+                if (!existingProfile) {
+                  console.log(`⏳ Tentativa ${attempt}/8: Perfil ainda não existe`);
+                  continue;
+                }
                 
                 const { error: updateError } = await supabase
                   .from('profiles')
@@ -198,41 +219,43 @@ const Auth = () => {
                 if (!updateError) {
                   profileUpdated = true;
                   console.log('✅ Perfil atualizado com referred_by na tentativa', attempt);
+                  
+                  // Remover pendente se sucesso
+                  localStorage.removeItem('pending_referral');
                 } else {
-                  console.log(`⏳ Tentativa ${attempt}/5 falhou:`, updateError.message);
+                  console.log(`⏳ Tentativa ${attempt}/8 falhou:`, updateError.message);
                 }
               }
               
-              // Chamar RPC para processar bônus (com retry)
-              if (profileUpdated) {
-                let bonusProcessed = false;
-                for (let attempt = 1; attempt <= 3 && !bonusProcessed; attempt++) {
-                  try {
-                    const { error: rpcError } = await (supabase.rpc as any)('process_referral_completion', {
-                      p_referrer_id: referrerProfile.id,
-                      p_referred_id: data.user.id,
-                      p_referred_email: validated.email
-                    });
-                    
-                    if (!rpcError) {
-                      bonusProcessed = true;
-                      console.log('✅ Bônus processado via RPC!');
-                      toast.success('🎁 Você foi indicado! Seu amigo ganhou N$ 1,00!');
-                    } else {
-                      console.log(`⏳ RPC tentativa ${attempt}/3 falhou:`, rpcError.message);
-                      await new Promise(resolve => setTimeout(resolve, 300 * attempt));
-                    }
-                  } catch (rpcError) {
-                    console.log(`⏳ RPC tentativa ${attempt}/3 erro:`, rpcError);
-                    await new Promise(resolve => setTimeout(resolve, 300 * attempt));
+              // Chamar RPC para processar bônus (independente do update)
+              let bonusProcessed = false;
+              for (let attempt = 1; attempt <= 5 && !bonusProcessed; attempt++) {
+                try {
+                  const { data: rpcResult, error: rpcError } = await (supabase.rpc as any)('process_referral_completion', {
+                    p_referrer_id: referrerProfile.id,
+                    p_referred_id: data.user.id,
+                    p_referred_email: validated.email
+                  });
+                  
+                  if (!rpcError && rpcResult === true) {
+                    bonusProcessed = true;
+                    console.log('✅ Bônus processado via RPC!');
+                    localStorage.removeItem('pending_referral');
+                    toast.success('🎁 Você foi indicado! Seu amigo ganhou N$ 1,00!');
+                  } else {
+                    console.log(`⏳ RPC tentativa ${attempt}/5:`, rpcError?.message || 'resultado false');
+                    await new Promise(resolve => setTimeout(resolve, 500 * attempt));
                   }
+                } catch (rpcError) {
+                  console.log(`⏳ RPC tentativa ${attempt}/5 erro:`, rpcError);
+                  await new Promise(resolve => setTimeout(resolve, 500 * attempt));
                 }
-                
-                if (!bonusProcessed) {
-                  // Trigger automático deve processar quando referred_by foi definido
-                  console.log('ℹ️ RPC falhou, trigger automático deve processar');
-                  toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
-                }
+              }
+              
+              if (!bonusProcessed) {
+                // Manter pendente para processar após confirmação de email
+                console.log('ℹ️ RPC não confirmou, pendente salvo para reprocessar');
+                toast.success('🎁 Você foi indicado! Bem-vindo ao COCONUDI!');
               }
             } else {
               console.warn('⚠️ Código de referência inválido ou não encontrado:', referralCode);

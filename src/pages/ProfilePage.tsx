@@ -24,14 +24,15 @@ export default function ProfilePage() {
 
       if (model) {
         console.log('✅ Encontrado modelo:', model.id);
-        navigate(`/app?profile=${model.id}`, { replace: true });
+        // Navegar passando profileId via state e manter URL amigável
+        navigate('/app', { 
+          replace: true, 
+          state: { profileId: model.id, friendlyUrl: `/${username}` }
+        });
         return;
       }
 
       // 2. Tentar buscar por nome formatado (fallback para criadores)
-      const formattedName = username.replace(/-/g, ' ');
-      
-      // Buscar em profiles por nome (case-insensitive)
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, name')
@@ -44,7 +45,11 @@ export default function ProfilePage() {
 
         if (matchingProfile) {
           console.log('✅ Encontrado criador por nome:', matchingProfile.id);
-          navigate(`/app?profile=${matchingProfile.id}`, { replace: true });
+          // Navegar passando profileId via state e manter URL amigável
+          navigate('/app', { 
+            replace: true, 
+            state: { profileId: matchingProfile.id, friendlyUrl: `/${username}` }
+          });
           return;
         }
       }

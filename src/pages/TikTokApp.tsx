@@ -242,6 +242,7 @@ export const TikTokApp = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const targetVideoId = searchParams.get('video');
+  const targetProfileId = searchParams.get('profile');
   const {
     toast
   } = useToast();
@@ -1203,6 +1204,19 @@ export const TikTokApp = () => {
       setSearchParams({});
     }
   }, [targetVideoId, videos, emblaApi, setSearchParams]);
+
+  // 🎯 Abrir perfil quando vindo de /app?profile=...
+  useEffect(() => {
+    if (!targetProfileId || loading) return;
+    
+    console.log('👤 Abrindo perfil via URL:', targetProfileId);
+    
+    // Chamar goToModelVideo para abrir o perfil
+    goToModelVideo(targetProfileId);
+    
+    // Limpar parâmetro da URL após processar
+    setSearchParams({});
+  }, [targetProfileId, loading]);
 
   // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
   useEffect(() => {

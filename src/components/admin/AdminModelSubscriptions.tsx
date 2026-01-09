@@ -119,26 +119,35 @@ export const AdminModelSubscriptions = () => {
       // Enrich subscriptions with model/creator names
       const enrichedData = await Promise.all((data || []).map(async (sub: ModelSubscription) => {
         let modelName = '';
+        let actualType = sub.model_type;
         
-        if (sub.model_type === 'model') {
-          // Fetch from models table
-          const { data: model } = await supabase
-            .from('models')
-            .select('name')
-            .eq('id', sub.model_id)
-            .maybeSingle();
-          modelName = model?.name || 'Modelo não encontrado';
+        // Try to fetch from models table first
+        const { data: model } = await supabase
+          .from('models')
+          .select('name')
+          .eq('id', sub.model_id)
+          .maybeSingle();
+        
+        if (model?.name) {
+          modelName = model.name;
+          actualType = 'model';
         } else {
-          // Fetch from profiles table (creators)
+          // If not found in models, try profiles (creators)
           const { data: profile } = await supabase
             .from('profiles')
             .select('name')
             .eq('id', sub.model_id)
             .maybeSingle();
-          modelName = profile?.name || 'Criador não encontrado';
+          
+          if (profile?.name) {
+            modelName = profile.name;
+            actualType = 'creator';
+          } else {
+            modelName = `ID: ${sub.model_id.slice(0, 8)}...`;
+          }
         }
         
-        return { ...sub, model_name: modelName };
+        return { ...sub, model_name: modelName, model_type: actualType };
       }));
 
       setSubscriptions(enrichedData);

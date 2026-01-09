@@ -196,53 +196,49 @@ export const AdminModelSubscriptions = () => {
 
   const fetchAvailableModels = async () => {
     try {
-      // Get unique model_ids from subscriptions
-      const { data } = await (supabase as any)
-        .from('model_subscriptions')
-        .select('model_id, model_type');
+      const allModels: { id: string; name: string; type: string }[] = [];
 
-      if (!data) return;
+      // 1. Fetch all models from models table
+      const { data: modelsData } = await supabase
+        .from('models')
+        .select('id, name')
+        .eq('is_active', true);
 
-      // Get unique model_ids
-      const uniqueModels = new Map<string, { id: string; type: string }>();
-      data.forEach((sub: any) => {
-        if (!uniqueModels.has(sub.model_id)) {
-          uniqueModels.set(sub.model_id, { id: sub.model_id, type: sub.model_type });
+      if (modelsData) {
+        modelsData.forEach((model: any) => {
+          allModels.push({ id: model.id, name: model.name, type: 'model' });
+        });
+      }
+
+      // 2. Fetch all creators from user_roles + profiles
+      const { data: creatorsRoles } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'creator');
+
+      if (creatorsRoles && creatorsRoles.length > 0) {
+        const creatorIds = creatorsRoles.map((r: any) => r.user_id);
+        
+        // Fetch profiles for these creators
+        const { data: creatorsProfiles } = await (supabase as any)
+          .from('profiles')
+          .select('id, name')
+          .in('id', creatorIds);
+
+        if (creatorsProfiles) {
+          creatorsProfiles.forEach((profile: any) => {
+            allModels.push({ 
+              id: profile.id, 
+              name: profile.name || `Criador ${profile.id.slice(0, 8)}`, 
+              type: 'creator' 
+            });
+          });
         }
-      });
-
-      // Fetch names for each model
-      const modelsWithNames = await Promise.all(
-        Array.from(uniqueModels.values()).map(async (model) => {
-          // Try models table first
-          const { data: modelData } = await supabase
-            .from('models')
-            .select('name')
-            .eq('id', model.id)
-            .maybeSingle();
-
-          if (modelData?.name) {
-            return { id: model.id, name: modelData.name, type: 'model' };
-          }
-
-          // Try profiles
-          const { data: profileData } = await (supabase as any)
-            .from('profiles')
-            .select('name')
-            .eq('id', model.id)
-            .maybeSingle();
-
-          return { 
-            id: model.id, 
-            name: profileData?.name || `ID: ${model.id.slice(0, 8)}`, 
-            type: 'creator' 
-          };
-        })
-      );
+      }
 
       // Sort by name
-      modelsWithNames.sort((a, b) => a.name.localeCompare(b.name));
-      setAvailableModels(modelsWithNames);
+      allModels.sort((a, b) => a.name.localeCompare(b.name));
+      setAvailableModels(allModels);
     } catch (error) {
       console.error('Erro ao buscar modelos disponíveis:', error);
     }

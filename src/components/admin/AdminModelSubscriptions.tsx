@@ -46,6 +46,7 @@ interface ModelSubscription {
   model_name?: string;
   model_avatar?: string;
   subscriber_name?: string;
+  subscriber_avatar?: string;
 }
 
 export const AdminModelSubscriptions = () => {
@@ -118,10 +119,12 @@ export const AdminModelSubscriptions = () => {
 
       if (error) throw error;
 
-      // Enrich subscriptions with model/creator names and avatars
+      // Enrich subscriptions with model/creator names and avatars + subscriber avatars
       const enrichedData = await Promise.all((data || []).map(async (sub: ModelSubscription) => {
         let modelName = '';
         let modelAvatar = '';
+        let subscriberName = '';
+        let subscriberAvatar = '';
         let actualType = sub.model_type;
         
         // Try to fetch from models table first
@@ -137,7 +140,6 @@ export const AdminModelSubscriptions = () => {
           actualType = 'model';
         } else {
           // If not found in models, try profiles (creators)
-          // Use 'as any' because avatar_url exists in DB but types are outdated
           const { data: profile } = await (supabase as any)
             .from('profiles')
             .select('name, avatar_url')
@@ -152,8 +154,29 @@ export const AdminModelSubscriptions = () => {
             modelName = `ID: ${sub.model_id.slice(0, 8)}...`;
           }
         }
+
+        // Fetch subscriber profile if subscriber_id exists
+        if (sub.subscriber_id) {
+          const { data: subscriberProfile } = await (supabase as any)
+            .from('profiles')
+            .select('name, avatar_url')
+            .eq('id', sub.subscriber_id)
+            .maybeSingle();
+          
+          if (subscriberProfile) {
+            subscriberName = subscriberProfile.name || '';
+            subscriberAvatar = subscriberProfile.avatar_url || '';
+          }
+        }
         
-        return { ...sub, model_name: modelName, model_avatar: modelAvatar, model_type: actualType };
+        return { 
+          ...sub, 
+          model_name: modelName, 
+          model_avatar: modelAvatar, 
+          model_type: actualType,
+          subscriber_name: subscriberName,
+          subscriber_avatar: subscriberAvatar
+        };
       }));
 
       setSubscriptions(enrichedData);
@@ -365,7 +388,20 @@ export const AdminModelSubscriptions = () => {
                 {filteredSubscriptions.map((sub) => (
                   <TableRow key={sub.id} className="border-gray-700">
                     <TableCell className="text-white font-medium">
-                      {sub.subscriber_email}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8 border border-gray-600">
+                          <AvatarImage src={sub.subscriber_avatar} alt={sub.subscriber_name || sub.subscriber_email} />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-bold">
+                            {(sub.subscriber_name || sub.subscriber_email).charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          {sub.subscriber_name && (
+                            <p className="font-medium text-white text-sm">{sub.subscriber_name}</p>
+                          )}
+                          <p className={sub.subscriber_name ? "text-xs text-gray-400" : "font-medium"}>{sub.subscriber_email}</p>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="text-gray-300">
                       <div className="flex items-center gap-3">

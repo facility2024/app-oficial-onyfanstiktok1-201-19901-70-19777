@@ -116,7 +116,32 @@ export const AdminModelSubscriptions = () => {
 
       if (error) throw error;
 
-      setSubscriptions(data || []);
+      // Enrich subscriptions with model/creator names
+      const enrichedData = await Promise.all((data || []).map(async (sub: ModelSubscription) => {
+        let modelName = '';
+        
+        if (sub.model_type === 'model') {
+          // Fetch from models table
+          const { data: model } = await supabase
+            .from('models')
+            .select('name')
+            .eq('id', sub.model_id)
+            .maybeSingle();
+          modelName = model?.name || 'Modelo não encontrado';
+        } else {
+          // Fetch from profiles table (creators)
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', sub.model_id)
+            .maybeSingle();
+          modelName = profile?.name || 'Criador não encontrado';
+        }
+        
+        return { ...sub, model_name: modelName };
+      }));
+
+      setSubscriptions(enrichedData);
       setTotalCount(count || 0);
     } catch (error) {
       console.error('Erro ao buscar assinaturas:', error);
@@ -201,7 +226,8 @@ export const AdminModelSubscriptions = () => {
 
   const filteredSubscriptions = subscriptions.filter(s =>
     s.subscriber_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.model_id.toLowerCase().includes(searchTerm.toLowerCase())
+    s.model_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.model_name && s.model_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -259,7 +285,7 @@ export const AdminModelSubscriptions = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Buscar por email ou ID da modelo..."
+                placeholder="Buscar por email ou nome do modelo/criador..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-gray-700 border-gray-600 text-white"
@@ -328,7 +354,7 @@ export const AdminModelSubscriptions = () => {
                     </TableCell>
                     <TableCell className="text-gray-300">
                       <span className="text-xs text-gray-500">{sub.model_type === 'creator' ? 'Criador' : 'Modelo'}:</span><br />
-                      <span className="font-mono text-xs">{sub.model_id.slice(0, 8)}...</span>
+                      <span className="font-medium text-white">{sub.model_name || sub.model_id.slice(0, 8)}</span>
                     </TableCell>
                     <TableCell>{getTypeBadge(sub.subscription_type)}</TableCell>
                     <TableCell>{getStatusBadge(sub.subscription_status)}</TableCell>

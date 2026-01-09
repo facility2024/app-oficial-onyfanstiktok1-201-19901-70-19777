@@ -1022,7 +1022,7 @@ export const AdminModelSubscriptions = () => {
                 <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
                   <SelectValue placeholder="Selecione o modelo/criador" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectContent className="bg-gray-800 border-gray-700 z-[9999]">
                   {availableModels.map((model) => (
                     <SelectItem key={model.id} value={model.id} className="text-white hover:bg-gray-700">
                       <span className="flex items-center gap-2">
@@ -1049,7 +1049,7 @@ export const AdminModelSubscriptions = () => {
                 <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectContent className="bg-gray-800 border-gray-700 z-[9999]">
                   <SelectItem value="mensal" className="text-white hover:bg-gray-700">
                     Mensal (30 dias)
                   </SelectItem>

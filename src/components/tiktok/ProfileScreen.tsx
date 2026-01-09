@@ -577,7 +577,7 @@ if (!isOpen) return null;
                               
                               // Enviar dados para webhook N8N (produção)
                               try {
-                                await fetch('https://agencia-facility-n8n.a0f1kq.easypanel.host/webhook/model-privado', {
+                                await fetch('https://agencia-facility-n8n.a0f1kq.easypanel.host/webhook/model_id', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({

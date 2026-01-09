@@ -60,6 +60,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
   const [isCreator, setIsCreator] = useState(false);
   const [isFollowingCreator, setIsFollowingCreator] = useState(false);
+  const [hideSubscriptionSection, setHideSubscriptionSection] = useState(false);
   
   const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
   const navigate = useNavigate();
@@ -206,9 +207,9 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       
       // 2️⃣ Load model data and videos in parallel for faster performance
       const [modelDataResult, videosDataResult, imagesDataResult] = await Promise.all([
-        supabase
+        (supabase as any)
           .from('models')
-          .select('posting_panel_url')
+          .select('posting_panel_url, hide_subscription_button')
           .eq('id', user.id)
           .single(),
         
@@ -264,8 +265,9 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       const videosError = videosDataResult.error;
       const imagesData = (imagesDataResult as any).data;
 
-      if (!modelError) {
+      if (!modelError && modelData) {
         setPanelUrl(modelData?.posting_panel_url || null);
+        setHideSubscriptionSection(modelData?.hide_subscription_button || false);
       }
 
       if (videosError) {
@@ -538,6 +540,7 @@ if (!isOpen) return null;
               </div>
 
             {/* Seção de Assinatura Individual da Modelo */}
+            {!hideSubscriptionSection && (
             <div className="px-4 pb-6" data-subscription-section>
               {/* Status de assinatura da modelo */}
               {modelSubscription ? (
@@ -658,6 +661,7 @@ if (!isOpen) return null;
                 </>
               )}
             </div>
+            )}
 
             {/* Botão de Seguir */}
             <div className="px-4 pb-4">

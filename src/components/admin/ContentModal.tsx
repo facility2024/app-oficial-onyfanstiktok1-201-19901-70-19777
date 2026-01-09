@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Crown, Send, User, Play, Image as ImageIcon, Megaphone, Calendar, Clock, Palette, Sparkles, ExternalLink, Hand, Radio, DollarSign, Gift, FileText, Plus, X } from 'lucide-react';
+import { Crown, Send, User, Play, Image as ImageIcon, Megaphone, Calendar, Clock, Palette, Sparkles, ExternalLink, Hand, Radio, DollarSign, Gift, FileText, Plus, X, EyeOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/use-toast';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { ImageCarousel } from '@/components/ui/image-carousel';
@@ -91,6 +92,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
   });
   const [profileDescription, setProfileDescription] = useState('');
   const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [hideSubscriptionButton, setHideSubscriptionButton] = useState(false);
 
   // Get the current form data based on content type
   const currentFormData = contentType === 'normal' ? normalFormData : vipFormData;
@@ -100,15 +102,16 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
   const loadSubscriptionAndDescription = async (modelId: string) => {
     setLoadingSubscription(true);
     try {
-      // Buscar bio da modelo
-      const { data: modelData } = await supabase
+      // Buscar bio e hide_subscription_button da modelo
+      const { data: modelData } = await (supabase as any)
         .from('models')
-        .select('bio')
+        .select('bio, hide_subscription_button')
         .eq('id', modelId)
         .maybeSingle();
       
-      if (modelData?.bio) {
-        setProfileDescription(modelData.bio);
+      if (modelData) {
+        setProfileDescription(modelData.bio || '');
+        setHideSubscriptionButton(modelData.hide_subscription_button || false);
       }
 
       // Buscar plano de assinatura
@@ -186,6 +189,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         benefits: ['Conteúdo exclusivo ilimitado', 'Chat privado direto', 'Acesso antecipado a novidades', 'Sem anúncios no perfil'],
       });
       setProfileDescription('');
+      setHideSubscriptionButton(false);
       setContentType('normal');
     }
   }, [editingContent, isOpen]);
@@ -516,10 +520,13 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
   // Função para salvar plano de assinatura e descrição
   const saveSubscriptionAndDescription = async (modelId: string) => {
     try {
-      // Atualizar bio na tabela models
-      const { error: bioError } = await supabase
+      // Atualizar bio e hide_subscription_button na tabela models
+      const { error: bioError } = await (supabase as any)
         .from('models')
-        .update({ bio: profileDescription })
+        .update({ 
+          bio: profileDescription,
+          hide_subscription_button: hideSubscriptionButton
+        })
         .eq('id', modelId);
 
       if (bioError) {
@@ -1035,6 +1042,22 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                       <div className="text-center py-4 text-purple-300">Carregando dados do plano...</div>
                     ) : (
                       <>
+                        {/* Toggle para ocultar botão de assinatura */}
+                        <div className="flex items-center justify-between bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+                          <div className="flex items-center gap-2">
+                            <EyeOff className="w-4 h-4 text-red-400" />
+                            <div>
+                              <p className="text-sm text-white font-medium">Desativar "ASSINE AGORA"</p>
+                              <p className="text-xs text-white/60">Oculta a seção de assinatura no perfil</p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={hideSubscriptionButton}
+                            onCheckedChange={setHideSubscriptionButton}
+                            className="data-[state=checked]:bg-red-500"
+                          />
+                        </div>
+
                         {/* Descrição do Perfil */}
                         <div>
                           <Label className="text-sm font-medium text-white flex items-center gap-2">

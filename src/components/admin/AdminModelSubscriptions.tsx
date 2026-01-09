@@ -45,8 +45,10 @@ import {
   CreditCard,
   CalendarDays,
   RotateCcw,
-  TrendingUp
+  TrendingUp,
+  Plus
 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { format, subDays, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -89,6 +91,14 @@ export const AdminModelSubscriptions = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedSubscription, setSelectedSubscription] = useState<ModelSubscription | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newSubscription, setNewSubscription] = useState({
+    subscriber_email: '',
+    model_id: '',
+    subscription_type: 'mensal' as 'mensal' | 'trimestral' | 'anual',
+    price_paid: '',
+  });
+  const [creating, setCreating] = useState(false);
   const itemsPerPage = 10;
 
   // Statistics
@@ -329,6 +339,71 @@ export const AdminModelSubscriptions = () => {
     }
   };
 
+  const handleCreateSubscription = async () => {
+    if (!newSubscription.subscriber_email || !newSubscription.model_id) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newSubscription.subscriber_email)) {
+      toast.error('Email inválido');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      // Calculate subscription end date based on type
+      const now = new Date();
+      let endDate: Date;
+      switch (newSubscription.subscription_type) {
+        case 'trimestral':
+          endDate = new Date(now.setMonth(now.getMonth() + 3));
+          break;
+        case 'anual':
+          endDate = new Date(now.setFullYear(now.getFullYear() + 1));
+          break;
+        default: // mensal
+          endDate = new Date(now.setMonth(now.getMonth() + 1));
+      }
+
+      // Find model type
+      const selectedModel = availableModels.find(m => m.id === newSubscription.model_id);
+
+      const { error } = await (supabase as any)
+        .from('model_subscriptions')
+        .insert({
+          subscriber_email: newSubscription.subscriber_email.trim().toLowerCase(),
+          model_id: newSubscription.model_id,
+          model_type: selectedModel?.type || 'creator',
+          subscription_type: newSubscription.subscription_type,
+          subscription_status: 'active',
+          subscription_start: new Date().toISOString(),
+          subscription_end: endDate.toISOString(),
+          price_paid: parseFloat(newSubscription.price_paid) || 0,
+        });
+
+      if (error) throw error;
+
+      toast.success('Assinatura criada com sucesso!');
+      setCreateModalOpen(false);
+      setNewSubscription({
+        subscriber_email: '',
+        model_id: '',
+        subscription_type: 'mensal',
+        price_paid: '',
+      });
+      fetchSubscriptions();
+      fetchStats();
+      fetchAvailableModels();
+    } catch (error: any) {
+      toast.error('Erro ao criar assinatura: ' + error.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const handleCancelSubscription = async (subscriptionId: string) => {
     if (!confirm('Tem certeza que deseja cancelar esta assinatura?')) return;
 
@@ -412,10 +487,19 @@ export const AdminModelSubscriptions = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-        <Crown className="w-6 h-6 text-amber-500" />
-        Assinaturas Individuais de Modelos/Criadores
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <Crown className="w-6 h-6 text-amber-500" />
+          Assinaturas Individuais de Modelos/Criadores
+        </h2>
+        <Button 
+          onClick={() => setCreateModalOpen(true)}
+          className="bg-green-600 hover:bg-green-700 gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Nova Assinatura
+        </Button>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -901,6 +985,134 @@ export const AdminModelSubscriptions = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Subscription Modal */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Plus className="w-5 h-5 text-green-500" />
+              Nova Assinatura
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            {/* Subscriber Email */}
+            <div className="space-y-2">
+              <Label htmlFor="subscriber_email" className="text-gray-300">
+                Email do Assinante *
+              </Label>
+              <Input
+                id="subscriber_email"
+                type="email"
+                placeholder="email@exemplo.com"
+                value={newSubscription.subscriber_email}
+                onChange={(e) => setNewSubscription(prev => ({ ...prev, subscriber_email: e.target.value }))}
+                className="bg-gray-800 border-gray-600 text-white"
+              />
+            </div>
+
+            {/* Model/Creator */}
+            <div className="space-y-2">
+              <Label htmlFor="model_id" className="text-gray-300">
+                Modelo/Criador *
+              </Label>
+              <Select 
+                value={newSubscription.model_id} 
+                onValueChange={(value) => setNewSubscription(prev => ({ ...prev, model_id: value }))}
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue placeholder="Selecione o modelo/criador" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  {availableModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id} className="text-white hover:bg-gray-700">
+                      <span className="flex items-center gap-2">
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${model.type === 'creator' ? 'bg-purple-500/20 text-purple-400' : 'bg-pink-500/20 text-pink-400'}`}>
+                          {model.type === 'creator' ? 'C' : 'M'}
+                        </span>
+                        {model.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subscription Type */}
+            <div className="space-y-2">
+              <Label htmlFor="subscription_type" className="text-gray-300">
+                Tipo de Plano
+              </Label>
+              <Select 
+                value={newSubscription.subscription_type} 
+                onValueChange={(value: 'mensal' | 'trimestral' | 'anual') => setNewSubscription(prev => ({ ...prev, subscription_type: value }))}
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="mensal" className="text-white hover:bg-gray-700">
+                    Mensal (30 dias)
+                  </SelectItem>
+                  <SelectItem value="trimestral" className="text-white hover:bg-gray-700">
+                    Trimestral (90 dias)
+                  </SelectItem>
+                  <SelectItem value="anual" className="text-white hover:bg-gray-700">
+                    Anual (365 dias)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price Paid */}
+            <div className="space-y-2">
+              <Label htmlFor="price_paid" className="text-gray-300">
+                Valor Pago (R$)
+              </Label>
+              <Input
+                id="price_paid"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={newSubscription.price_paid}
+                onChange={(e) => setNewSubscription(prev => ({ ...prev, price_paid: e.target.value }))}
+                className="bg-gray-800 border-gray-600 text-white"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setCreateModalOpen(false)}
+                disabled={creating}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                onClick={handleCreateSubscription}
+                disabled={creating}
+              >
+                {creating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Criar Assinatura
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

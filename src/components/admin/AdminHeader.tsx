@@ -61,7 +61,9 @@ export const AdminHeader = ({ notifications, setNotifications, user, onLogout }:
           <img 
             src={coconudiLogo} 
             alt="CocoNudi Logo" 
-            className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 object-contain drop-shadow-lg"
+            className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 object-contain drop-shadow-lg cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => navigate('/app')}
+            title="Ir para Home"
           />
           <div className="flex flex-col">
             <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900 drop-shadow-sm leading-tight">

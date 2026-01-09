@@ -20,6 +20,13 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Crown, 
   Search, 
@@ -76,6 +83,8 @@ export const AdminModelSubscriptions = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'cancelled'>('all');
+  const [modelFilter, setModelFilter] = useState<string>('all');
+  const [availableModels, setAvailableModels] = useState<{ id: string; name: string; type: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedSubscription, setSelectedSubscription] = useState<ModelSubscription | null>(null);
@@ -96,7 +105,8 @@ export const AdminModelSubscriptions = () => {
     fetchSubscriptions();
     fetchStats();
     fetchTrendData();
-  }, [currentPage, statusFilter]);
+    fetchAvailableModels();
+  }, [currentPage, statusFilter, modelFilter]);
 
   const fetchStats = async () => {
     try {
@@ -174,6 +184,60 @@ export const AdminModelSubscriptions = () => {
     }
   };
 
+  const fetchAvailableModels = async () => {
+    try {
+      // Get unique model_ids from subscriptions
+      const { data } = await (supabase as any)
+        .from('model_subscriptions')
+        .select('model_id, model_type');
+
+      if (!data) return;
+
+      // Get unique model_ids
+      const uniqueModels = new Map<string, { id: string; type: string }>();
+      data.forEach((sub: any) => {
+        if (!uniqueModels.has(sub.model_id)) {
+          uniqueModels.set(sub.model_id, { id: sub.model_id, type: sub.model_type });
+        }
+      });
+
+      // Fetch names for each model
+      const modelsWithNames = await Promise.all(
+        Array.from(uniqueModels.values()).map(async (model) => {
+          // Try models table first
+          const { data: modelData } = await supabase
+            .from('models')
+            .select('name')
+            .eq('id', model.id)
+            .maybeSingle();
+
+          if (modelData?.name) {
+            return { id: model.id, name: modelData.name, type: 'model' };
+          }
+
+          // Try profiles
+          const { data: profileData } = await (supabase as any)
+            .from('profiles')
+            .select('name')
+            .eq('id', model.id)
+            .maybeSingle();
+
+          return { 
+            id: model.id, 
+            name: profileData?.name || `ID: ${model.id.slice(0, 8)}`, 
+            type: 'creator' 
+          };
+        })
+      );
+
+      // Sort by name
+      modelsWithNames.sort((a, b) => a.name.localeCompare(b.name));
+      setAvailableModels(modelsWithNames);
+    } catch (error) {
+      console.error('Erro ao buscar modelos disponíveis:', error);
+    }
+  };
+
   const fetchSubscriptions = async () => {
     setLoading(true);
     try {
@@ -185,6 +249,10 @@ export const AdminModelSubscriptions = () => {
 
       if (statusFilter !== 'all') {
         query = query.eq('subscription_status', statusFilter);
+      }
+
+      if (modelFilter !== 'all') {
+        query = query.eq('model_id', modelFilter);
       }
 
       const { data, error, count } = await query;
@@ -484,6 +552,29 @@ export const AdminModelSubscriptions = () => {
               />
             </div>
 
+            {/* Model/Creator Filter */}
+            <Select value={modelFilter} onValueChange={(value) => { setModelFilter(value); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[200px] bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Filtrar por modelo" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectItem value="all" className="text-white hover:bg-gray-700">
+                  Todos os Modelos/Criadores
+                </SelectItem>
+                {availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id} className="text-white hover:bg-gray-700">
+                    <span className="flex items-center gap-2">
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${model.type === 'creator' ? 'bg-purple-500/20 text-purple-400' : 'bg-pink-500/20 text-pink-400'}`}>
+                        {model.type === 'creator' ? 'C' : 'M'}
+                      </span>
+                      {model.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
             <div className="flex gap-2">
               {(['all', 'active', 'expired', 'cancelled'] as const).map((status) => (
                 <Button

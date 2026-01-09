@@ -2643,7 +2643,14 @@ export const TikTokApp = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center justify-center w-[80px] h-[80px] rounded-full overflow-hidden bg-transparent">
+              <div 
+                className="flex items-center justify-center w-[80px] h-[80px] rounded-full overflow-hidden bg-transparent cursor-pointer hover:scale-105 transition-transform"
+                onClick={() => {
+                  setCurrentVideoIndex(0);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                title="Ir para o início"
+              >
                 <img src={coconudiLogo} alt="Coconudi" className="w-[80px] h-[80px] object-contain" />
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,10 +37,20 @@ import {
   User,
   CreditCard,
   CalendarDays,
-  RotateCcw
+  RotateCcw,
+  TrendingUp
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 
 interface ModelSubscription {
   id: string;
@@ -79,9 +89,13 @@ export const AdminModelSubscriptions = () => {
     totalSubscribers: 0,
   });
 
+  // Trend chart data
+  const [trendData, setTrendData] = useState<{ date: string; count: number; revenue: number }[]>([]);
+
   useEffect(() => {
     fetchSubscriptions();
     fetchStats();
+    fetchTrendData();
   }, [currentPage, statusFilter]);
 
   const fetchStats = async () => {
@@ -113,6 +127,50 @@ export const AdminModelSubscriptions = () => {
       });
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
+    }
+  };
+
+  const fetchTrendData = async () => {
+    try {
+      // Fetch all subscriptions from last 30 days
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      
+      const { data } = await (supabase as any)
+        .from('model_subscriptions')
+        .select('created_at, price_paid')
+        .gte('created_at', thirtyDaysAgo)
+        .order('created_at', { ascending: true });
+
+      if (!data) return;
+
+      // Group by day
+      const dailyData: Record<string, { count: number; revenue: number }> = {};
+      
+      // Initialize last 30 days with zeros
+      for (let i = 29; i >= 0; i--) {
+        const date = format(subDays(new Date(), i), 'dd/MM');
+        dailyData[date] = { count: 0, revenue: 0 };
+      }
+
+      // Populate with actual data
+      data.forEach((sub: any) => {
+        const date = format(new Date(sub.created_at), 'dd/MM');
+        if (dailyData[date]) {
+          dailyData[date].count += 1;
+          dailyData[date].revenue += sub.price_paid || 0;
+        }
+      });
+
+      // Convert to array
+      const chartData = Object.entries(dailyData).map(([date, values]) => ({
+        date,
+        count: values.count,
+        revenue: values.revenue,
+      }));
+
+      setTrendData(chartData);
+    } catch (error) {
+      console.error('Erro ao buscar tendências:', error);
     }
   };
 
@@ -329,6 +387,88 @@ export const AdminModelSubscriptions = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Trend Chart */}
+      <Card className="bg-gray-800/50 border-gray-700">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-white flex items-center gap-2 text-lg">
+            <TrendingUp className="w-5 h-5 text-green-400" />
+            Tendência de Assinaturas (Últimos 30 dias)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9ca3af" 
+                  fontSize={10}
+                  tickLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                  formatter={(value: number, name: string) => [
+                    name === 'count' ? `${value} assinaturas` : `R$ ${value.toFixed(2)}`,
+                    name === 'count' ? 'Novas Assinaturas' : 'Receita'
+                  ]}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="#10b981" 
+                  fillOpacity={1} 
+                  fill="url(#colorCount)" 
+                  strokeWidth={2}
+                  name="count"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#f59e0b" 
+                  fillOpacity={1} 
+                  fill="url(#colorRevenue)" 
+                  strokeWidth={2}
+                  name="revenue"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center gap-6 mt-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="text-sm text-gray-400">Novas Assinaturas</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+              <span className="text-sm text-gray-400">Receita (R$)</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="bg-gray-800/50 border-gray-700">

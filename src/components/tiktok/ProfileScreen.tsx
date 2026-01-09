@@ -571,8 +571,9 @@ if (!isOpen) return null;
                           <button
                             key={plan.id}
                             onClick={async () => {
-                              // Buscar email do usuário logado
+                              // Buscar dados do usuário logado
                               const { data: { user: authUser } } = await supabase.auth.getUser();
+                              const subscriberId = authUser?.id || '';
                               const subscriberEmail = authUser?.email || '';
                               
                               // Enviar dados para webhook N8N (produção)
@@ -582,6 +583,7 @@ if (!isOpen) return null;
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
                                     event_type: 'subscription_intent',
+                                    subscriber_id: subscriberId,
                                     subscriber_email: subscriberEmail,
                                     model_id: user.id,
                                     model_name: user.username,
@@ -590,7 +592,7 @@ if (!isOpen) return null;
                                     timestamp: new Date().toISOString()
                                   })
                                 });
-                                console.log('Webhook enviado:', { subscriberEmail, model_id: user.id });
+                                console.log('Webhook enviado:', { subscriberId, subscriberEmail, model_id: user.id });
                               } catch (error) {
                                 console.error('Erro ao enviar webhook:', error);
                               }

@@ -6,6 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   Table, 
   TableBody, 
@@ -25,7 +31,13 @@ import {
   CheckCircle,
   Clock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  Mail,
+  User,
+  CreditCard,
+  CalendarDays,
+  RotateCcw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -56,6 +68,8 @@ export const AdminModelSubscriptions = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'cancelled'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedSubscription, setSelectedSubscription] = useState<ModelSubscription | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const itemsPerPage = 10;
 
   // Statistics
@@ -386,7 +400,14 @@ export const AdminModelSubscriptions = () => {
               </TableHeader>
               <TableBody>
                 {filteredSubscriptions.map((sub) => (
-                  <TableRow key={sub.id} className="border-gray-700">
+                  <TableRow 
+                    key={sub.id} 
+                    className="border-gray-700 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                    onClick={() => {
+                      setSelectedSubscription(sub);
+                      setDetailsModalOpen(true);
+                    }}
+                  >
                     <TableCell className="text-white font-medium">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8 border border-gray-600">
@@ -485,6 +506,172 @@ export const AdminModelSubscriptions = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Details Modal */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Eye className="w-5 h-5 text-amber-500" />
+              Detalhes da Assinatura
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedSubscription && (
+            <div className="space-y-6 mt-4">
+              {/* Subscriber Info */}
+              <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Assinante
+                </h3>
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-14 h-14 border-2 border-blue-500">
+                    <AvatarImage src={selectedSubscription.subscriber_avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-lg font-bold">
+                      {(selectedSubscription.subscriber_name || selectedSubscription.subscriber_email).charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    {selectedSubscription.subscriber_name && (
+                      <p className="font-semibold text-white">{selectedSubscription.subscriber_name}</p>
+                    )}
+                    <p className="text-gray-400 flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {selectedSubscription.subscriber_email}
+                    </p>
+                    {selectedSubscription.subscriber_id && (
+                      <p className="text-xs text-gray-500 font-mono mt-1">
+                        ID: {selectedSubscription.subscriber_id.slice(0, 12)}...
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Model/Creator Info */}
+              <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  {selectedSubscription.model_type === 'creator' ? 'Criador' : 'Modelo'}
+                </h3>
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-14 h-14 border-2 border-amber-500">
+                    <AvatarImage src={selectedSubscription.model_avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-amber-500 to-pink-500 text-white text-lg font-bold">
+                      {selectedSubscription.model_name?.charAt(0).toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-white">{selectedSubscription.model_name}</p>
+                    <Badge variant="outline" className={selectedSubscription.model_type === 'creator' ? 'text-purple-400 border-purple-400/50' : 'text-pink-400 border-pink-400/50'}>
+                      {selectedSubscription.model_type === 'creator' ? '✨ Criador Certificado' : '🌟 Modelo'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subscription Details */}
+              <div className="bg-gray-800/50 rounded-lg p-4 space-y-4">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Detalhes do Plano
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500">Tipo de Plano</p>
+                    <div className="mt-1">{getTypeBadge(selectedSubscription.subscription_type)}</div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Status</p>
+                    <div className="mt-1">{getStatusBadge(selectedSubscription.subscription_status)}</div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Valor Pago</p>
+                    <p className="font-semibold text-green-400 text-lg">{formatPrice(selectedSubscription.price_paid)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">ID da Assinatura</p>
+                    <p className="font-mono text-xs text-gray-400">{selectedSubscription.id.slice(0, 12)}...</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4" />
+                  Datas
+                </h3>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-xs text-gray-500">Criada em</p>
+                    <p className="font-medium text-white">
+                      {format(new Date(selectedSubscription.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {format(new Date(selectedSubscription.created_at), 'HH:mm', { locale: ptBR })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Início</p>
+                    <p className="font-medium text-white">
+                      {format(new Date(selectedSubscription.subscription_start), 'dd/MM/yyyy', { locale: ptBR })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Expira em</p>
+                    <p className={`font-medium ${selectedSubscription.subscription_status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
+                      {format(new Date(selectedSubscription.subscription_end), 'dd/MM/yyyy', { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                {selectedSubscription.subscription_status === 'active' ? (
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-red-400 border-red-400/50 hover:bg-red-500/20"
+                    onClick={() => {
+                      handleCancelSubscription(selectedSubscription.id);
+                      setDetailsModalOpen(false);
+                    }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Cancelar Assinatura
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-green-400 border-green-400/50 hover:bg-green-500/20"
+                    onClick={() => {
+                      handleActivateSubscription(selectedSubscription.id);
+                      setDetailsModalOpen(false);
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Ativar Assinatura
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="flex-1 text-amber-400 border-amber-400/50 hover:bg-amber-500/20"
+                  onClick={() => {
+                    handleActivateSubscription(selectedSubscription.id);
+                    setDetailsModalOpen(false);
+                  }}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Renovar +30 dias
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

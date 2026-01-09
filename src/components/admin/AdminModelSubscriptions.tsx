@@ -137,16 +137,16 @@ export const AdminModelSubscriptions = () => {
           actualType = 'model';
         } else {
           // If not found in models, try profiles (creators)
-          const { data: profile } = await supabase
+          // Use 'as any' because avatar_url exists in DB but types are outdated
+          const { data: profile } = await (supabase as any)
             .from('profiles')
-            .select('name')
+            .select('name, avatar_url')
             .eq('id', sub.model_id)
-            .maybeSingle() as { data: { name: string } | null };
+            .maybeSingle();
           
           if (profile?.name) {
             modelName = profile.name;
-            // Try to get avatar from storage URL pattern
-            modelAvatar = `https://tnzvhwapfhkhqjgyiomk.supabase.co/storage/v1/object/public/avatars/${sub.model_id}`;
+            modelAvatar = profile.avatar_url || '';
             actualType = 'creator';
           } else {
             modelName = `ID: ${sub.model_id.slice(0, 8)}...`;

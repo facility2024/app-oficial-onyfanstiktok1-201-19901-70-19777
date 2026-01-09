@@ -575,9 +575,9 @@ if (!isOpen) return null;
                               const { data: { user: authUser } } = await supabase.auth.getUser();
                               const subscriberEmail = authUser?.email || '';
                               
-                              // Enviar dados para webhook N8N
+                              // Enviar dados para webhook N8N (produção)
                               try {
-                                await fetch('https://agencia-facility-n8n.a0f1kq.easypanel.host/webhook-test/model_id', {
+                                await fetch('https://agencia-facility-n8n.a0f1kq.easypanel.host/webhook/model-privado', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({

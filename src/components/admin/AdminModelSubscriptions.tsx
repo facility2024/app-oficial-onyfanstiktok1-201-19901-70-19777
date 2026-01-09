@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Table, 
   TableBody, 
@@ -43,6 +44,7 @@ interface ModelSubscription {
   created_at: string;
   // Joined data
   model_name?: string;
+  model_avatar?: string;
   subscriber_name?: string;
 }
 
@@ -116,20 +118,22 @@ export const AdminModelSubscriptions = () => {
 
       if (error) throw error;
 
-      // Enrich subscriptions with model/creator names
+      // Enrich subscriptions with model/creator names and avatars
       const enrichedData = await Promise.all((data || []).map(async (sub: ModelSubscription) => {
         let modelName = '';
+        let modelAvatar = '';
         let actualType = sub.model_type;
         
         // Try to fetch from models table first
         const { data: model } = await supabase
           .from('models')
-          .select('name')
+          .select('name, avatar_url')
           .eq('id', sub.model_id)
           .maybeSingle();
         
         if (model?.name) {
           modelName = model.name;
+          modelAvatar = model.avatar_url || '';
           actualType = 'model';
         } else {
           // If not found in models, try profiles (creators)
@@ -137,17 +141,19 @@ export const AdminModelSubscriptions = () => {
             .from('profiles')
             .select('name')
             .eq('id', sub.model_id)
-            .maybeSingle();
+            .maybeSingle() as { data: { name: string } | null };
           
           if (profile?.name) {
             modelName = profile.name;
+            // Try to get avatar from storage URL pattern
+            modelAvatar = `https://tnzvhwapfhkhqjgyiomk.supabase.co/storage/v1/object/public/avatars/${sub.model_id}`;
             actualType = 'creator';
           } else {
             modelName = `ID: ${sub.model_id.slice(0, 8)}...`;
           }
         }
         
-        return { ...sub, model_name: modelName, model_type: actualType };
+        return { ...sub, model_name: modelName, model_avatar: modelAvatar, model_type: actualType };
       }));
 
       setSubscriptions(enrichedData);
@@ -362,8 +368,18 @@ export const AdminModelSubscriptions = () => {
                       {sub.subscriber_email}
                     </TableCell>
                     <TableCell className="text-gray-300">
-                      <span className="text-xs text-gray-500">{sub.model_type === 'creator' ? 'Criador' : 'Modelo'}:</span><br />
-                      <span className="font-medium text-white">{sub.model_name || sub.model_id.slice(0, 8)}</span>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10 border border-gray-600">
+                          <AvatarImage src={sub.model_avatar} alt={sub.model_name} />
+                          <AvatarFallback className="bg-gradient-to-br from-amber-500 to-pink-500 text-white text-sm font-bold">
+                            {sub.model_name?.charAt(0).toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <span className="text-xs text-gray-500">{sub.model_type === 'creator' ? 'Criador' : 'Modelo'}</span>
+                          <p className="font-medium text-white">{sub.model_name || sub.model_id.slice(0, 8)}</p>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>{getTypeBadge(sub.subscription_type)}</TableCell>
                     <TableCell>{getStatusBadge(sub.subscription_status)}</TableCell>

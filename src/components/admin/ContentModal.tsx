@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Crown, Send, User, Play, Image as ImageIcon, Megaphone, Calendar, Clock, Palette, Sparkles, ExternalLink, Hand, Radio } from 'lucide-react';
+import { Crown, Send, User, Play, Image as ImageIcon, Megaphone, Calendar, Clock, Palette, Sparkles, ExternalLink, Hand, Radio, DollarSign, Gift, FileText, Plus, X } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { ImageCarousel } from '@/components/ui/image-carousel';
@@ -82,12 +82,60 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
     ad_text_link: '',
   });
 
+  // Estado para plano de assinatura e descrição do perfil
+  const [subscriptionData, setSubscriptionData] = useState({
+    price: 14.90,
+    discount_label: '',
+    payment_url: '',
+    benefits: ['Conteúdo exclusivo ilimitado', 'Chat privado direto', 'Acesso antecipado a novidades', 'Sem anúncios no perfil'] as string[],
+  });
+  const [profileDescription, setProfileDescription] = useState('');
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+
   // Get the current form data based on content type
   const currentFormData = contentType === 'normal' ? normalFormData : vipFormData;
   const setCurrentFormData = contentType === 'normal' ? setNormalFormData : setVipFormData;
 
+  // Carregar dados do plano e descrição ao editar
+  const loadSubscriptionAndDescription = async (modelId: string) => {
+    setLoadingSubscription(true);
+    try {
+      // Buscar bio da modelo
+      const { data: modelData } = await supabase
+        .from('models')
+        .select('bio')
+        .eq('id', modelId)
+        .maybeSingle();
+      
+      if (modelData?.bio) {
+        setProfileDescription(modelData.bio);
+      }
+
+      // Buscar plano de assinatura
+      const { data: planData } = await (supabase as any)
+        .from('model_subscription_plans')
+        .select('*')
+        .eq('model_id', modelId)
+        .eq('plan_type', 'mensal')
+        .maybeSingle();
+
+      if (planData) {
+        setSubscriptionData({
+          price: planData.price || 14.90,
+          discount_label: planData.discount_label || '',
+          payment_url: planData.payment_url || '',
+          benefits: planData.benefits || ['Conteúdo exclusivo ilimitado', 'Chat privado direto', 'Acesso antecipado a novidades', 'Sem anúncios no perfil'],
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do plano:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
   // Pre-populate form when editing
-  React.useEffect(() => {
+  useEffect(() => {
     if (editingContent) {
       const formDataToSet = {
         name: editingContent.name || '',
@@ -105,6 +153,11 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       } else {
         setNormalFormData(formDataToSet);
         setContentType('normal');
+      }
+
+      // Carregar plano e descrição se for modelo existente
+      if (editingContent.id) {
+        loadSubscriptionAndDescription(editingContent.id);
       }
     } else {
       // Reset both forms when not editing
@@ -126,6 +179,13 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         videoList: '',
         imageList: ''
       });
+      setSubscriptionData({
+        price: 14.90,
+        discount_label: '',
+        payment_url: '',
+        benefits: ['Conteúdo exclusivo ilimitado', 'Chat privado direto', 'Acesso antecipado a novidades', 'Sem anúncios no perfil'],
+      });
+      setProfileDescription('');
       setContentType('normal');
     }
   }, [editingContent, isOpen]);
@@ -303,6 +363,11 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       await saveModelToDatabase(newContent);
     }
 
+    // Salvar plano e descrição se estiver editando
+    if (editingContent?.id) {
+      await saveSubscriptionAndDescription(editingContent.id);
+    }
+
     onSubmit(newContent);
     
     toast({
@@ -445,6 +510,83 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
 
     } catch (error) {
       console.error('Erro inesperado ao salvar modelo:', error);
+    }
+  };
+
+  // Função para salvar plano de assinatura e descrição
+  const saveSubscriptionAndDescription = async (modelId: string) => {
+    try {
+      // Atualizar bio na tabela models
+      const { error: bioError } = await supabase
+        .from('models')
+        .update({ bio: profileDescription })
+        .eq('id', modelId);
+
+      if (bioError) {
+        console.error('Erro ao atualizar descrição:', bioError);
+      }
+
+      // Verificar se já existe plano
+      const { data: existingPlan } = await (supabase as any)
+        .from('model_subscription_plans')
+        .select('id')
+        .eq('model_id', modelId)
+        .eq('plan_type', 'mensal')
+        .maybeSingle();
+
+      if (existingPlan) {
+        // Atualizar plano existente
+        await (supabase as any)
+          .from('model_subscription_plans')
+          .update({
+            price: subscriptionData.price,
+            discount_label: subscriptionData.discount_label,
+            payment_url: subscriptionData.payment_url,
+            benefits: subscriptionData.benefits,
+          })
+          .eq('id', existingPlan.id);
+      } else {
+        // Criar novo plano
+        await (supabase as any)
+          .from('model_subscription_plans')
+          .insert({
+            model_id: modelId,
+            model_type: 'model',
+            plan_type: 'mensal',
+            price: subscriptionData.price,
+            discount_label: subscriptionData.discount_label,
+            payment_url: subscriptionData.payment_url,
+            benefits: subscriptionData.benefits,
+            is_active: true,
+          });
+      }
+
+      toast({
+        title: "✅ Plano atualizado!",
+        description: "Descrição e plano de assinatura salvos com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar plano:', error);
+    }
+  };
+
+  // Funções para gerenciar benefícios
+  const handleBenefitChange = (index: number, value: string) => {
+    const newBenefits = [...subscriptionData.benefits];
+    newBenefits[index] = value;
+    setSubscriptionData(prev => ({ ...prev, benefits: newBenefits }));
+  };
+
+  const addBenefit = () => {
+    if (subscriptionData.benefits.length < 6) {
+      setSubscriptionData(prev => ({ ...prev, benefits: [...prev.benefits, ''] }));
+    }
+  };
+
+  const removeBenefit = (index: number) => {
+    if (subscriptionData.benefits.length > 1) {
+      const newBenefits = subscriptionData.benefits.filter((_, i) => i !== index);
+      setSubscriptionData(prev => ({ ...prev, benefits: newBenefits }));
     }
   };
 
@@ -880,6 +1022,116 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                     </div>
                   </div>
                 </div>
+
+                {/* Seção de Plano de Assinatura e Descrição - Apenas em modo edição */}
+                {editingContent?.id && (
+                  <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <DollarSign className="w-5 h-5 text-purple-400" />
+                      <Label className="text-sm font-semibold text-purple-200">Plano de Assinatura Individual</Label>
+                    </div>
+
+                    {loadingSubscription ? (
+                      <div className="text-center py-4 text-purple-300">Carregando dados do plano...</div>
+                    ) : (
+                      <>
+                        {/* Descrição do Perfil */}
+                        <div>
+                          <Label className="text-sm font-medium text-white flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            Descrição do Perfil
+                          </Label>
+                          <Textarea
+                            value={profileDescription}
+                            onChange={(e) => setProfileDescription(e.target.value)}
+                            placeholder="Digite uma descrição para o perfil da modelo..."
+                            className="mt-1 min-h-[80px] bg-black/30 border-purple-500/30 text-white placeholder:text-gray-400"
+                            rows={3}
+                          />
+                        </div>
+
+                        {/* Preço do Plano */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-white">Preço Mensal (R$)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={subscriptionData.price}
+                              onChange={(e) => setSubscriptionData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                              className="mt-1 bg-black/30 border-purple-500/30 text-white"
+                              placeholder="14.90"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-white">Label de Desconto</Label>
+                            <Input
+                              value={subscriptionData.discount_label}
+                              onChange={(e) => setSubscriptionData(prev => ({ ...prev, discount_label: e.target.value }))}
+                              className="mt-1 bg-black/30 border-purple-500/30 text-white"
+                              placeholder="ex: 17% OFF"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Link de Pagamento */}
+                        <div>
+                          <Label className="text-sm font-medium text-white">Link de Pagamento (Hoopay/PIX)</Label>
+                          <Input
+                            value={subscriptionData.payment_url}
+                            onChange={(e) => setSubscriptionData(prev => ({ ...prev, payment_url: e.target.value }))}
+                            className="mt-1 bg-black/30 border-purple-500/30 text-white"
+                            placeholder="https://hoopay.com.br/..."
+                          />
+                        </div>
+
+                        {/* Benefícios */}
+                        <div>
+                          <Label className="text-sm font-medium text-white flex items-center gap-2 mb-2">
+                            <Gift className="w-4 h-4" />
+                            Benefícios do Plano (máx. 6)
+                          </Label>
+                          <div className="space-y-2">
+                            {subscriptionData.benefits.map((benefit, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <span className="text-green-400 text-sm">✓</span>
+                                <Input
+                                  value={benefit}
+                                  onChange={(e) => handleBenefitChange(index, e.target.value)}
+                                  className="flex-1 bg-black/30 border-purple-500/30 text-white text-sm"
+                                  placeholder="Digite um benefício..."
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeBenefit(index)}
+                                  disabled={subscriptionData.benefits.length <= 1}
+                                  className="text-red-400 hover:text-red-300 hover:bg-red-900/20 p-1 h-8 w-8"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                            {subscriptionData.benefits.length < 6 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={addBenefit}
+                                className="text-purple-300 hover:text-purple-200 hover:bg-purple-900/20 text-sm"
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Adicionar benefício
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Preview Section VIP */}

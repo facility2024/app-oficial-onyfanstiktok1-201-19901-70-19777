@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Crown, Send, User, Play, Image as ImageIcon, Megaphone, Calendar, Clock, Palette, Sparkles, ExternalLink, Hand, Radio, DollarSign, Gift, FileText, Plus, X, EyeOff } from 'lucide-react';
+import { Crown, Send, User, Play, Image as ImageIcon, Megaphone, Calendar, Clock, Palette, Sparkles, ExternalLink, Hand, Radio, DollarSign, Gift, FileText, Plus, X, EyeOff, Save } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/use-toast';
 import { VideoCarousel } from '@/components/ui/video-carousel';
@@ -575,6 +575,20 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
     } catch (error) {
       console.error('Erro ao salvar plano:', error);
     }
+  };
+
+  // Função para salvar apenas os dados da aba Plano Privado
+  const handleSaveSubscriptionOnly = async () => {
+    if (!editingContent?.id) {
+      toast({
+        title: "❌ Erro",
+        description: "Nenhum conteúdo selecionado para edição",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await saveSubscriptionAndDescription(editingContent.id);
   };
 
   // Funções para gerenciar benefícios
@@ -1237,6 +1251,16 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                           )}
                         </div>
                       </div>
+
+                      {/* Botão de Salvar dedicado para esta aba */}
+                      <Button
+                        type="button"
+                        onClick={handleSaveSubscriptionOnly}
+                        className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar Configurações do Plano
+                      </Button>
                     </>
                   )}
                 </div>

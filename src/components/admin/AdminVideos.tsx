@@ -38,6 +38,7 @@ export const AdminVideos = () => {
   const [isTogglingPlans, setIsTogglingPlans] = useState(false);
   const [planStats, setPlanStats] = useState({ active: 0, inactive: 0 });
   const [showDisablePlansConfirm, setShowDisablePlansConfirm] = useState(false);
+  const [showDisableModelsConfirm, setShowDisableModelsConfirm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
   const { genres, loading: genresLoading } = useGenres();
   
@@ -464,7 +465,7 @@ export const AdminVideos = () => {
               Ativar Todos Modelos
             </Button>
             <Button 
-              onClick={() => toggleAllModelVideos(false)}
+              onClick={() => setShowDisableModelsConfirm(true)}
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={isTogglingAll}
               size="sm"
@@ -981,6 +982,38 @@ export const AdminVideos = () => {
               className="bg-rose-600 hover:bg-rose-700 text-white"
             >
               <Lock className="w-4 h-4 mr-2" />
+              Sim, Desativar Todos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Confirmação - Desativar Modelos */}
+      <AlertDialog open={showDisableModelsConfirm} onOpenChange={setShowDisableModelsConfirm}>
+        <AlertDialogContent className="bg-gray-900 border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-white">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Confirmar Desativação de Modelos
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              Você está prestes a <strong className="text-rose-400">desativar todos os vídeos</strong> de modelos.
+              <br /><br />
+              Os vídeos ficarão ocultos no feed público até serem reativados. Esta ação pode ser revertida clicando em "Ativar Todos Modelos".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDisableModelsConfirm(false);
+                toggleAllModelVideos(false);
+              }}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              <EyeOff className="w-4 h-4 mr-2" />
               Sim, Desativar Todos
             </AlertDialogAction>
           </AlertDialogFooter>

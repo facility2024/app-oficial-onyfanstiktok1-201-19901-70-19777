@@ -251,6 +251,12 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
   };
 
   const handleSubmit = async () => {
+    // Para aba Plano Privado (subscription), usa função dedicada
+    if (contentType === 'subscription') {
+      await handleSaveSubscriptionOnly();
+      return;
+    }
+
     // Para anúncios, validamos campos específicos
     if (contentType === 'ad') {
       if (!adFormData.productName || !adFormData.description || !adFormData.buttonText || !adFormData.linkUrl) {

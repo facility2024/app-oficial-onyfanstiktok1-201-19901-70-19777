@@ -615,7 +615,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         </DialogHeader>
 
         <Tabs value={contentType} onValueChange={setContentType} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="normal" className="flex items-center space-x-2">
               <User className="w-4 h-4" />
               <span>Vídeo Único</span>
@@ -623,6 +623,10 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
             <TabsTrigger value="vip" className="flex items-center space-x-2">
               <Crown className="w-4 h-4" />
               <span>Conteúdo Top 10</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center space-x-2">
+              <DollarSign className="w-4 h-4" />
+              <span>Plano Privado</span>
             </TabsTrigger>
             <TabsTrigger value="ad" className="flex items-center space-x-2">
               <Megaphone className="w-4 h-4" />
@@ -1030,131 +1034,6 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                   </div>
                 </div>
 
-                {/* Seção de Plano de Assinatura e Descrição - Apenas em modo edição */}
-                {editingContent?.id && (
-                  <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 space-y-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <DollarSign className="w-5 h-5 text-purple-400" />
-                      <Label className="text-sm font-semibold text-purple-200">Plano de Assinatura Individual</Label>
-                    </div>
-
-                    {loadingSubscription ? (
-                      <div className="text-center py-4 text-purple-300">Carregando dados do plano...</div>
-                    ) : (
-                      <>
-                        {/* Toggle para ocultar botão de assinatura */}
-                        <div className="flex items-center justify-between bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
-                          <div className="flex items-center gap-2">
-                            <EyeOff className="w-4 h-4 text-red-400" />
-                            <div>
-                              <p className="text-sm text-white font-medium">Desativar "ASSINE AGORA"</p>
-                              <p className="text-xs text-white/60">Oculta a seção de assinatura no perfil</p>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={hideSubscriptionButton}
-                            onCheckedChange={setHideSubscriptionButton}
-                            className="data-[state=checked]:bg-red-500"
-                          />
-                        </div>
-
-                        {/* Descrição do Perfil */}
-                        <div>
-                          <Label className="text-sm font-medium text-white flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            Descrição do Perfil
-                          </Label>
-                          <Textarea
-                            value={profileDescription}
-                            onChange={(e) => setProfileDescription(e.target.value)}
-                            placeholder="Digite uma descrição para o perfil da modelo..."
-                            className="mt-1 min-h-[80px] bg-black/30 border-purple-500/30 text-white placeholder:text-gray-400"
-                            rows={3}
-                          />
-                        </div>
-
-                        {/* Preço do Plano */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-sm font-medium text-white">Preço Mensal (R$)</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={subscriptionData.price}
-                              onChange={(e) => setSubscriptionData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                              className="mt-1 bg-black/30 border-purple-500/30 text-white"
-                              placeholder="14.90"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-sm font-medium text-white">Label de Desconto</Label>
-                            <Input
-                              value={subscriptionData.discount_label}
-                              onChange={(e) => setSubscriptionData(prev => ({ ...prev, discount_label: e.target.value }))}
-                              className="mt-1 bg-black/30 border-purple-500/30 text-white"
-                              placeholder="ex: 17% OFF"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Link de Pagamento */}
-                        <div>
-                          <Label className="text-sm font-medium text-white">Link de Pagamento (Hoopay/PIX)</Label>
-                          <Input
-                            value={subscriptionData.payment_url}
-                            onChange={(e) => setSubscriptionData(prev => ({ ...prev, payment_url: e.target.value }))}
-                            className="mt-1 bg-black/30 border-purple-500/30 text-white"
-                            placeholder="https://hoopay.com.br/..."
-                          />
-                        </div>
-
-                        {/* Benefícios */}
-                        <div>
-                          <Label className="text-sm font-medium text-white flex items-center gap-2 mb-2">
-                            <Gift className="w-4 h-4" />
-                            Benefícios do Plano (máx. 6)
-                          </Label>
-                          <div className="space-y-2">
-                            {subscriptionData.benefits.map((benefit, index) => (
-                              <div key={index} className="flex items-center gap-2">
-                                <span className="text-green-400 text-sm">✓</span>
-                                <Input
-                                  value={benefit}
-                                  onChange={(e) => handleBenefitChange(index, e.target.value)}
-                                  className="flex-1 bg-black/30 border-purple-500/30 text-white text-sm"
-                                  placeholder="Digite um benefício..."
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeBenefit(index)}
-                                  disabled={subscriptionData.benefits.length <= 1}
-                                  className="text-red-400 hover:text-red-300 hover:bg-red-900/20 p-1 h-8 w-8"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ))}
-                            {subscriptionData.benefits.length < 6 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={addBenefit}
-                                className="text-purple-300 hover:text-purple-200 hover:bg-purple-900/20 text-sm"
-                              >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Adicionar benefício
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Preview Section VIP */}
@@ -1232,6 +1111,142 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                   />
                 </div>
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Nova aba Plano Privado */}
+          <TabsContent value="subscription" className="space-y-4 mt-6 p-6 rounded-lg border border-purple-400/30 bg-black">
+            <div className="space-y-4">
+              {editingContent?.id ? (
+                <div className="p-4 rounded-lg bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign className="w-5 h-5 text-purple-400" />
+                    <Label className="text-sm font-semibold text-purple-200">Plano de Assinatura Individual</Label>
+                  </div>
+
+                  {loadingSubscription ? (
+                    <div className="text-center py-4 text-purple-300">Carregando dados do plano...</div>
+                  ) : (
+                    <>
+                      {/* Toggle para ocultar botão de assinatura */}
+                      <div className="flex items-center justify-between bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2">
+                          <EyeOff className="w-4 h-4 text-red-400" />
+                          <div>
+                            <p className="text-sm text-white font-medium">Desativar "ASSINE AGORA"</p>
+                            <p className="text-xs text-white/60">Oculta a seção de assinatura no perfil</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={hideSubscriptionButton}
+                          onCheckedChange={setHideSubscriptionButton}
+                          className="data-[state=checked]:bg-red-500"
+                        />
+                      </div>
+
+                      {/* Descrição do Perfil */}
+                      <div>
+                        <Label className="text-sm font-medium text-white flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Descrição do Perfil
+                        </Label>
+                        <Textarea
+                          value={profileDescription}
+                          onChange={(e) => setProfileDescription(e.target.value)}
+                          placeholder="Digite uma descrição para o perfil da modelo..."
+                          className="mt-1 min-h-[80px] bg-black/30 border-purple-500/30 text-white placeholder:text-gray-400"
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Preço do Plano */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-white">Preço Mensal (R$)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={subscriptionData.price}
+                            onChange={(e) => setSubscriptionData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                            className="mt-1 bg-black/30 border-purple-500/30 text-white"
+                            placeholder="14.90"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-white">Label de Desconto</Label>
+                          <Input
+                            value={subscriptionData.discount_label}
+                            onChange={(e) => setSubscriptionData(prev => ({ ...prev, discount_label: e.target.value }))}
+                            className="mt-1 bg-black/30 border-purple-500/30 text-white"
+                            placeholder="ex: 17% OFF"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Link de Pagamento */}
+                      <div>
+                        <Label className="text-sm font-medium text-white">Link de Pagamento (Hoopay/PIX)</Label>
+                        <Input
+                          value={subscriptionData.payment_url}
+                          onChange={(e) => setSubscriptionData(prev => ({ ...prev, payment_url: e.target.value }))}
+                          className="mt-1 bg-black/30 border-purple-500/30 text-white"
+                          placeholder="https://hoopay.com.br/..."
+                        />
+                      </div>
+
+                      {/* Benefícios */}
+                      <div>
+                        <Label className="text-sm font-medium text-white flex items-center gap-2 mb-2">
+                          <Gift className="w-4 h-4" />
+                          Benefícios do Plano (máx. 6)
+                        </Label>
+                        <div className="space-y-2">
+                          {subscriptionData.benefits.map((benefit, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <span className="text-green-400 text-sm">✓</span>
+                              <Input
+                                value={benefit}
+                                onChange={(e) => handleBenefitChange(index, e.target.value)}
+                                className="flex-1 bg-black/30 border-purple-500/30 text-white text-sm"
+                                placeholder="Digite um benefício..."
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeBenefit(index)}
+                                disabled={subscriptionData.benefits.length <= 1}
+                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 p-1 h-8 w-8"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          {subscriptionData.benefits.length < 6 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={addBenefit}
+                              className="text-purple-300 hover:text-purple-200 hover:bg-purple-900/20 text-sm"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Adicionar benefício
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-purple-300">
+                  <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Nenhuma modelo selecionada</p>
+                  <p className="text-sm opacity-70">Salve o conteúdo primeiro para configurar o plano de assinatura individual</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 

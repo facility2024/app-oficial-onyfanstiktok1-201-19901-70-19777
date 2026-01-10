@@ -35,6 +35,7 @@ export const AdminVideos = () => {
   const [genreFilter, setGenreFilter] = useState('all');
   const [isTogglingAll, setIsTogglingAll] = useState(false);
   const [isTogglingPlans, setIsTogglingPlans] = useState(false);
+  const [planStats, setPlanStats] = useState({ active: 0, inactive: 0 });
   const [editingVideo, setEditingVideo] = useState<any>(null);
   const { genres, loading: genresLoading } = useGenres();
   
@@ -243,6 +244,23 @@ export const AdminVideos = () => {
     }
   };
 
+  const fetchPlanStats = async () => {
+    try {
+      // Buscar todos os modelos e contar manualmente
+      const { data: models } = await supabase
+        .from('models')
+        .select('id, hide_subscription_button') as { data: { id: string; hide_subscription_button: boolean | null }[] | null };
+      
+      if (models) {
+        const inactive = models.filter(m => m.hide_subscription_button === true).length;
+        const active = models.length - inactive;
+        setPlanStats({ active, inactive });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas de planos:', error);
+    }
+  };
+
   const toggleAllPrivatePlans = async (enable: boolean) => {
     setIsTogglingPlans(true);
     try {
@@ -258,6 +276,9 @@ export const AdminVideos = () => {
           ? 'Planos privados ATIVADOS para todas as modelos! 💰' 
           : 'Planos privados DESATIVADOS para todas as modelos! 🔒'
       );
+      
+      // Recarregar contador após toggle
+      await fetchPlanStats();
     } catch (error) {
       console.error('Erro ao atualizar planos:', error);
       toast.error('Erro ao atualizar planos privados');
@@ -286,6 +307,7 @@ export const AdminVideos = () => {
   useEffect(() => {
     fetchVideoData();
     fetchModels();
+    fetchPlanStats();
     const interval = setInterval(fetchVideoData, 30000);
 
     // Realtime: atualiza imediatamente ao inserir/atualizar vídeos e registrar views
@@ -481,6 +503,18 @@ export const AdminVideos = () => {
                 Atualizando planos...
               </span>
             )}
+
+            {/* Contador de Planos */}
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="outline" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                <DollarSign className="w-3 h-3 mr-1" />
+                {planStats.active} ativos
+              </Badge>
+              <Badge variant="outline" className="bg-gray-500/20 text-gray-300 border-gray-500/30">
+                <Lock className="w-3 h-3 mr-1" />
+                {planStats.inactive} inativos
+              </Badge>
+            </div>
           </div>
 
           {/* Upload Form */}

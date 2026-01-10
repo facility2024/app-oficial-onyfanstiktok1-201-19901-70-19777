@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2, Lock, DollarSign } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2, Lock, DollarSign, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminVideoGenresModal } from './AdminVideoGenresModal';
@@ -36,6 +37,7 @@ export const AdminVideos = () => {
   const [isTogglingAll, setIsTogglingAll] = useState(false);
   const [isTogglingPlans, setIsTogglingPlans] = useState(false);
   const [planStats, setPlanStats] = useState({ active: 0, inactive: 0 });
+  const [showDisablePlansConfirm, setShowDisablePlansConfirm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
   const { genres, loading: genresLoading } = useGenres();
   
@@ -490,7 +492,7 @@ export const AdminVideos = () => {
               Ativar Planos Privados
             </Button>
             <Button 
-              onClick={() => toggleAllPrivatePlans(false)}
+              onClick={() => setShowDisablePlansConfirm(true)}
               className="bg-gray-600 hover:bg-gray-700 text-white"
               disabled={isTogglingPlans}
               size="sm"
@@ -952,6 +954,38 @@ export const AdminVideos = () => {
         onClose={() => setEditingVideo(null)}
         onSave={fetchVideoData}
       />
+
+      {/* Modal de Confirmação - Desativar Planos */}
+      <AlertDialog open={showDisablePlansConfirm} onOpenChange={setShowDisablePlansConfirm}>
+        <AlertDialogContent className="bg-gray-900 border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-white">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Confirmar Desativação em Massa
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              Você está prestes a <strong className="text-rose-400">desativar os planos privados</strong> de <strong className="text-white">{planStats.active} modelos</strong>.
+              <br /><br />
+              Isso irá ocultar o botão "ASSINE AGORA" e os cards de preços em todos os perfis. Esta ação pode ser revertida ativando os planos novamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDisablePlansConfirm(false);
+                toggleAllPrivatePlans(false);
+              }}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Sim, Desativar Todos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2, Lock } from 'lucide-react';
+import { Play, Upload, Eye, EyeOff, Heart, Share2, Clock, Calendar, Filter, Tags, X, Video, Film, Link, Crown, Loader2, Lock, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminVideoGenresModal } from './AdminVideoGenresModal';
@@ -34,6 +34,7 @@ export const AdminVideos = () => {
   const [videoType, setVideoType] = useState<'all' | 'models' | 'creators'>('all');
   const [genreFilter, setGenreFilter] = useState('all');
   const [isTogglingAll, setIsTogglingAll] = useState(false);
+  const [isTogglingPlans, setIsTogglingPlans] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
   const { genres, loading: genresLoading } = useGenres();
   
@@ -242,6 +243,29 @@ export const AdminVideos = () => {
     }
   };
 
+  const toggleAllPrivatePlans = async (enable: boolean) => {
+    setIsTogglingPlans(true);
+    try {
+      const { error } = await supabase
+        .from('models')
+        .update({ hide_subscription_button: !enable } as any)
+        .not('id', 'is', null);
+      
+      if (error) throw error;
+      
+      toast.success(
+        enable 
+          ? 'Planos privados ATIVADOS para todas as modelos! 💰' 
+          : 'Planos privados DESATIVADOS para todas as modelos! 🔒'
+      );
+    } catch (error) {
+      console.error('Erro ao atualizar planos:', error);
+      toast.error('Erro ao atualizar planos privados');
+    } finally {
+      setIsTogglingPlans(false);
+    }
+  };
+
   const toggleVideoStatus = async (videoId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
@@ -405,7 +429,7 @@ export const AdminVideos = () => {
           </div>
 
           {/* Controles em massa para modelos */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <Button 
               onClick={() => toggleAllModelVideos(true)}
               className="bg-green-600 hover:bg-green-700 text-white"
@@ -427,6 +451,34 @@ export const AdminVideos = () => {
             {isTogglingAll && (
               <span className="text-sm text-muted-foreground flex items-center">
                 Processando...
+              </span>
+            )}
+
+            {/* Separador visual */}
+            <div className="border-l border-border h-6 mx-2 hidden sm:block" />
+
+            {/* Controles de Planos Privados */}
+            <Button 
+              onClick={() => toggleAllPrivatePlans(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              disabled={isTogglingPlans}
+              size="sm"
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Ativar Planos Privados
+            </Button>
+            <Button 
+              onClick={() => toggleAllPrivatePlans(false)}
+              className="bg-gray-600 hover:bg-gray-700 text-white"
+              disabled={isTogglingPlans}
+              size="sm"
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Desativar Planos Privados
+            </Button>
+            {isTogglingPlans && (
+              <span className="text-sm text-muted-foreground flex items-center">
+                Atualizando planos...
               </span>
             )}
           </div>

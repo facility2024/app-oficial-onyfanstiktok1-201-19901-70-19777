@@ -475,11 +475,11 @@ export const AdminVideos = () => {
             </div>
           </div>
 
-          {/* Controles em massa para modelos */}
-          <div className="flex flex-wrap gap-2 items-center">
+          {/* Controles em massa - Linha 1: Modelos */}
+          <div className="flex flex-wrap gap-3 items-center">
             <Button 
               onClick={() => toggleAllModelVideos(true)}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-emerald-500/25 transition-all duration-300"
               disabled={isTogglingAll}
               size="sm"
             >
@@ -488,70 +488,74 @@ export const AdminVideos = () => {
             </Button>
             <Button 
               onClick={() => setShowDisableModelsConfirm(true)}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-lg shadow-red-500/25 transition-all duration-300"
               disabled={isTogglingAll}
               size="sm"
             >
               <EyeOff className="w-4 h-4 mr-2" />
               Desativar Todos Modelos
             </Button>
+            
+            {/* Contador de Vídeos de Modelos */}
+            <Badge className="bg-gradient-to-r from-emerald-400 to-green-500 text-white border-0 px-4 py-1.5 text-sm font-semibold shadow-md shadow-emerald-400/30 hover:shadow-lg hover:shadow-emerald-400/40 transition-all duration-300">
+              <Eye className="w-4 h-4 mr-1.5" />
+              {modelVideoStats.active} ativos
+            </Badge>
+            <Badge className="bg-gradient-to-r from-rose-400 to-pink-500 text-white border-0 px-4 py-1.5 text-sm font-semibold shadow-md shadow-rose-400/30 hover:shadow-lg hover:shadow-rose-400/40 transition-all duration-300">
+              <EyeOff className="w-4 h-4 mr-1.5" />
+              {modelVideoStats.inactive} inativos
+            </Badge>
+
             {isTogglingAll && (
-              <span className="text-sm text-muted-foreground flex items-center">
+              <span className="text-sm text-muted-foreground flex items-center animate-pulse">
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                 Processando...
               </span>
             )}
 
-            {/* Contador de Vídeos de Modelos */}
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="outline" className="bg-emerald-600/40 text-emerald-100 border-emerald-400/60 font-medium">
-                <Eye className="w-3 h-3 mr-1" />
-                {modelVideoStats.active} ativos
-              </Badge>
-              <Badge variant="outline" className="bg-rose-600/40 text-rose-100 border-rose-400/60 font-medium">
-                <EyeOff className="w-3 h-3 mr-1" />
-                {modelVideoStats.inactive} inativos
-              </Badge>
-            </div>
-
             {/* Separador visual */}
-            <div className="border-l border-border h-6 mx-2 hidden sm:block" />
+            <div className="border-l border-border/50 h-8 mx-3 hidden lg:block" />
 
-            {/* Controles de Planos Privados */}
+            {/* Botão Ativar Planos - na mesma linha */}
             <Button 
               onClick={() => toggleAllPrivatePlans(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg shadow-purple-500/25 transition-all duration-300"
               disabled={isTogglingPlans}
               size="sm"
             >
               <DollarSign className="w-4 h-4 mr-2" />
               Ativar Planos Privados
             </Button>
+          </div>
+
+          {/* Controles em massa - Linha 2: Planos Privados */}
+          <div className="flex flex-wrap gap-3 items-center">
             <Button 
               onClick={() => setShowDisablePlansConfirm(true)}
-              className="bg-gray-600 hover:bg-gray-700 text-white"
+              className="bg-gradient-to-r from-gray-500 to-slate-600 hover:from-gray-600 hover:to-slate-700 text-white shadow-lg shadow-gray-500/25 transition-all duration-300"
               disabled={isTogglingPlans}
               size="sm"
             >
               <Lock className="w-4 h-4 mr-2" />
               Desativar Planos Privados
             </Button>
+
+            {/* Contador de Planos */}
+            <Badge className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white border-0 px-4 py-1.5 text-sm font-semibold shadow-md shadow-emerald-400/30 hover:shadow-lg hover:shadow-emerald-400/40 transition-all duration-300">
+              <DollarSign className="w-4 h-4 mr-1.5" />
+              {planStats.active} ativos
+            </Badge>
+            <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 px-4 py-1.5 text-sm font-semibold shadow-md shadow-amber-400/30 hover:shadow-lg hover:shadow-amber-400/40 transition-all duration-300">
+              <Lock className="w-4 h-4 mr-1.5" />
+              {planStats.inactive} inativos
+            </Badge>
+
             {isTogglingPlans && (
-              <span className="text-sm text-muted-foreground flex items-center">
+              <span className="text-sm text-muted-foreground flex items-center animate-pulse">
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                 Atualizando planos...
               </span>
             )}
-
-            {/* Contador de Planos */}
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="outline" className="bg-emerald-600/40 text-emerald-100 border-emerald-400/60 font-medium">
-                <DollarSign className="w-3 h-3 mr-1" />
-                {planStats.active} ativos
-              </Badge>
-              <Badge variant="outline" className="bg-rose-600/40 text-rose-100 border-rose-400/60 font-medium">
-                <Lock className="w-3 h-3 mr-1" />
-                {planStats.inactive} inativos
-              </Badge>
-            </div>
           </div>
 
           {/* Upload Form */}

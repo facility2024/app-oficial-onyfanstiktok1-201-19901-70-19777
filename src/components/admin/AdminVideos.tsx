@@ -506,11 +506,11 @@ export const AdminVideos = () => {
 
             {/* Contador de Planos */}
             <div className="flex items-center gap-2 text-sm">
-              <Badge variant="outline" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+              <Badge variant="outline" className="bg-emerald-600/40 text-emerald-100 border-emerald-400/60 font-medium">
                 <DollarSign className="w-3 h-3 mr-1" />
                 {planStats.active} ativos
               </Badge>
-              <Badge variant="outline" className="bg-gray-500/20 text-gray-300 border-gray-500/30">
+              <Badge variant="outline" className="bg-rose-600/40 text-rose-100 border-rose-400/60 font-medium">
                 <Lock className="w-3 h-3 mr-1" />
                 {planStats.inactive} inativos
               </Badge>

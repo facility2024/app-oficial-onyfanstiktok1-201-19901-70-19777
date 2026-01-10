@@ -37,6 +37,7 @@ export const AdminVideos = () => {
   const [isTogglingAll, setIsTogglingAll] = useState(false);
   const [isTogglingPlans, setIsTogglingPlans] = useState(false);
   const [planStats, setPlanStats] = useState({ active: 0, inactive: 0 });
+  const [modelVideoStats, setModelVideoStats] = useState({ active: 0, inactive: 0 });
   const [showDisablePlansConfirm, setShowDisablePlansConfirm] = useState(false);
   const [showDisableModelsConfirm, setShowDisableModelsConfirm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
@@ -239,11 +240,31 @@ export const AdminVideos = () => {
       
       toast.success(`Vídeos de modelos ${activate ? 'ativados' : 'desativados'} com sucesso!`);
       await fetchVideoData();
+      await fetchModelVideoStats();
     } catch (error) {
       console.error('Erro ao atualizar vídeos:', error);
       toast.error('Erro ao atualizar vídeos de modelos');
     } finally {
       setIsTogglingAll(false);
+    }
+  };
+
+  const fetchModelVideoStats = async () => {
+    try {
+      // Buscar vídeos de modelos e contar ativos/inativos
+      const { data: videos } = await supabase
+        .from('videos')
+        .select('id, is_active')
+        .not('model_id', 'is', null)
+        .is('creator_id', null) as { data: { id: string; is_active: boolean }[] | null };
+      
+      if (videos) {
+        const active = videos.filter(v => v.is_active === true).length;
+        const inactive = videos.length - active;
+        setModelVideoStats({ active, inactive });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas de vídeos:', error);
     }
   };
 
@@ -311,6 +332,7 @@ export const AdminVideos = () => {
     fetchVideoData();
     fetchModels();
     fetchPlanStats();
+    fetchModelVideoStats();
     const interval = setInterval(fetchVideoData, 30000);
 
     // Realtime: atualiza imediatamente ao inserir/atualizar vídeos e registrar views
@@ -478,6 +500,18 @@ export const AdminVideos = () => {
                 Processando...
               </span>
             )}
+
+            {/* Contador de Vídeos de Modelos */}
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="outline" className="bg-emerald-600/40 text-emerald-100 border-emerald-400/60 font-medium">
+                <Eye className="w-3 h-3 mr-1" />
+                {modelVideoStats.active} ativos
+              </Badge>
+              <Badge variant="outline" className="bg-rose-600/40 text-rose-100 border-rose-400/60 font-medium">
+                <EyeOff className="w-3 h-3 mr-1" />
+                {modelVideoStats.inactive} inativos
+              </Badge>
+            </div>
 
             {/* Separador visual */}
             <div className="border-l border-border h-6 mx-2 hidden sm:block" />

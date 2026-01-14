@@ -88,7 +88,6 @@ interface Comment {
   };
 }
 export const TikTokApp = () => {
-  console.log('🎬 TikTokApp: Componente renderizado');
 
   // Hook para obter dados do usuário logado
   const {
@@ -155,19 +154,9 @@ export const TikTokApp = () => {
   // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
   const [videosWatched, setVideosWatched] = useState(() => {
     const saved = localStorage.getItem('videosWatched');
-    const count = saved ? parseInt(saved, 10) : 0;
-    console.log('🔐 INICIALIZANDO CONTADOR DE VÍDEOS:', count);
-    return count;
+    return saved ? parseInt(saved, 10) : 0;
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
-
-  // Debug do estado do modal
-  useEffect(() => {
-    console.log('🔐 ESTADO:', {
-      videosWatched,
-      currentUser: !!currentUser
-    });
-  }, [videosWatched, currentUser]);
 
   // Verifica se usuário está logado
   useEffect(() => {
@@ -255,20 +244,7 @@ export const TikTokApp = () => {
   const {
     checkAndTrackAction
   } = useActionTracker();
-  const {
-    trackLike,
-    trackComment,
-    trackShare,
-    trackView,
-    trackFollow
-  } = useAppAnalytics();
-  console.log('🎯 DEBUG: Importações do useAppAnalytics:', {
-    trackLike,
-    trackComment,
-    trackShare,
-    trackView,
-    trackFollow
-  });
+  const { trackLike, trackComment, trackShare, trackView, trackFollow } = useAppAnalytics();
   const {
     isPremium,
     isContentUnlocked,
@@ -327,12 +303,6 @@ export const TikTokApp = () => {
     });
   }, [emblaApi]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
-  console.log('✅ RENDER: Renderizando vídeo');
-  console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
-  console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
-  console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
-  console.log('✅ RENDER: videos.length:', videos.length);
-  console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {
@@ -682,116 +652,119 @@ export const TikTokApp = () => {
     return [];
   };
 
+  // ⚡ Referência para controlar refresh em background
+  const isBackgroundRefreshing = useRef(false);
+  
+  // ⚡ Função para atualizar feed em background (sem bloquear a UI)
+  const refreshFeedInBackground = useCallback(async () => {
+    if (isBackgroundRefreshing.current) return;
+    isBackgroundRefreshing.current = true;
+    console.log('🔄 Atualizando feed em background...');
+    try {
+      // Atualização silenciosa - não mostra loading
+      const { data: freshVideos } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('is_active', true)
+        .order('updated_at', { ascending: false })
+        .limit(100);
+      
+      if (freshVideos && freshVideos.length > 0) {
+        console.log(`🔄 Background: ${freshVideos.length} vídeos atualizados`);
+        // Atualizar cache
+        const CACHE_VERSION = 'v3';
+        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}`, JSON.stringify(freshVideos.slice(0, 50)));
+        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}_time`, Date.now().toString());
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro no refresh background:', error);
+    } finally {
+      isBackgroundRefreshing.current = false;
+    }
+  }, []);
+
   // 📱 NOVA LÓGICA: Inicializar feed com primeiro bloco de vídeos + posts agendados
+  // ⚡ OTIMIZADO para carregamento ultra-rápido
   const initializeFeed = useCallback(async () => {
     // Prevenir múltiplas inicializações simultâneas
     if (isLoadingMore) return;
     try {
-      console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
+      console.log('🚀 INICIANDO CARREGAMENTO ULTRA-RÁPIDO DO FEED...');
       setLoading(true);
 
-      // Check cache first for faster initial load
-      const CACHE_VERSION = 'v2'; // Incrementar quando houver mudanças na estrutura
+      // ⚡ Check cache first for instant load
+      const CACHE_VERSION = 'v3'; // Incrementar quando houver mudanças na estrutura
       const cacheKey = `initial_feed_${CACHE_VERSION}`;
       const cached = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
       if (cached && cacheTime) {
         const age = Date.now() - parseInt(cacheTime);
-        if (age < 60000) {
-          // Cache valid for 1 minute
+        if (age < 120000) { // Cache válido por 2 minutos
           const cachedData = JSON.parse(cached);
-          console.log(`✅ Feed carregado do cache (${cachedData.length} vídeos)`);
+          console.log(`⚡ Feed INSTANTÂNEO do cache (${cachedData.length} vídeos)`);
           setVideos(cachedData);
+          setAllAvailableVideos(cachedData);
           setCurrentVideoIndex(0);
           setLoading(false);
+          
+          // Atualizar em background após 500ms
+          setTimeout(() => {
+            refreshFeedInBackground();
+          }, 500);
           return;
         }
       }
 
-      // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
-      console.log('🌟 Carregando posts agendados recentes...');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // 🆕 SISTEMA DE DESTAQUE: Carregar posts já visualizados
-      const getViewedPosts = (): Set<string> => {
-        try {
-          const stored = localStorage.getItem('viewed_highlight_posts');
-          return new Set(stored ? JSON.parse(stored) : []);
-        } catch {
-          return new Set();
-        }
-      };
-      const viewedPosts = getViewedPosts();
-      console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
-      const {
-        data: postsAgendados,
-        error: postsError
-      } = await supabase.from('posts_agendados').select(`
-          *,
-          modelo:models(*)
-        `).eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', {
-        ascending: false
-      });
-      const {
-        data: postsPrincipais,
-        error: principaisError
-      } = await supabase.from('posts_principais').select(`
-          *,
-          modelo:models(*)
-        `).gte('created_at', today.toISOString()).order('created_at', {
-        ascending: false
-      });
-      if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
-      if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
+      // ⚡ QUERIES PARALELAS - Todas ao mesmo tempo!
+      console.log('⚡ Executando queries em PARALELO...');
+      const startTime = Date.now();
+      
+      const [
+        videosResult,
+        modelsResult,
+        chatPanelsResult,
+        creatorRolesResult,
+        postsAgendadosResult,
+        postsPrincipaisResult
+      ] = await Promise.all([
+        // 1. Vídeos (PRIORIDADE MÁXIMA)
+        supabase.from('videos').select('*').eq('is_active', true).order('updated_at', { ascending: false }).limit(100),
+        
+        // 2. Modelos
+        supabase.from('models').select('*').eq('is_active', true),
+        
+        // 3. Chat panels
+        supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active'),
+        
+        // 4. Creator roles
+        (supabase as any).from('user_roles').select('user_id').eq('role', 'creator'),
+        
+        // 5. Posts agendados
+        supabase.from('posts_agendados').select('*, modelo:models(*)').eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', { ascending: false }).limit(20),
+        
+        // 6. Posts principais
+        supabase.from('posts_principais').select('*, modelo:models(*)').gte('created_at', today.toISOString()).order('created_at', { ascending: false }).limit(20)
+      ]);
 
-      // Carregar todos os vídeos disponíveis
-      console.log('📋 Carregando catálogo de vídeos...');
-      const {
-        data: videosData,
-        error: videosError
-      } = await supabase.from('videos').select('*').eq('is_active', true).order('updated_at', {
-        ascending: false
-      });
-      if (videosError) {
-        console.error('❌ Erro ao carregar vídeos:', videosError);
-        throw videosError;
+      console.log(`⚡ Queries paralelas concluídas em ${Date.now() - startTime}ms`);
+
+      const videosData = videosResult.data || [];
+      const modelsData = modelsResult.data || [];
+      const chatPanelsData = chatPanelsResult.data || [];
+      const creatorRoles = creatorRolesResult.data || [];
+      const postsAgendados = postsAgendadosResult.data || [];
+      const postsPrincipais = postsPrincipaisResult.data || [];
+
+      if (videosResult.error) {
+        console.error('❌ Erro ao carregar vídeos:', videosResult.error);
+        throw videosResult.error;
       }
 
-      // 🔍 DEBUG DETALHADO - Verificar dados dos vídeos
-      console.log('🔍 Query videos result:', {
-        total: videosData?.length || 0,
-        withCreatorId: (videosData as any[])?.filter((v: any) => v.creator_id)?.length || 0,
-        withModelId: (videosData as any[])?.filter((v: any) => v.model_id)?.length || 0,
-        sample: videosData?.[0] ? {
-          id: videosData[0].id,
-          title: videosData[0].title,
-          creator_id: (videosData[0] as any).creator_id,
-          model_id: (videosData[0] as any).model_id,
-          is_active: videosData[0].is_active
-        } : 'nenhum vídeo',
-        creatorVideos: (videosData as any[])?.filter((v: any) => v.creator_id)?.map((v: any) => ({
-          id: v.id,
-          title: v.title,
-          creator_id: v.creator_id
-        })) || []
-      });
-      const {
-        data: modelsData,
-        error: modelsError
-      } = await supabase.from('models').select('*').eq('is_active', true);
-      if (modelsError && (modelsError as any).code !== 'PGRST116') {
-        console.warn('⚠️ Erro ao carregar modelos:', modelsError);
-      }
-
-      // 🔥 Carregar painéis de chat para verificar status online e ativo
-      const {
-        data: chatPanelsData,
-        error: chatPanelsError
-      } = await supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active');
-      if (chatPanelsError) {
-        console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
-      }
+      // Processar chat panels
       const chatPanelsMap: Record<string, boolean> = {};
       const chatActiveMapTemp: Record<string, boolean> = {};
       const chatOnlineMapTemp: Record<string, boolean> = {};
@@ -806,27 +779,26 @@ export const TikTokApp = () => {
       setChatActiveMap(chatActiveMapTemp);
       setChatOnlineMap(chatOnlineMapTemp);
 
-      // Carregar criadores (via user_roles)
-      const {
-        data: creatorRoles,
-        error: rolesError
-      } = await (supabase as any).from('user_roles').select('user_id').eq('role', 'creator');
-      if (rolesError) {
-        console.warn('⚠️ Erro ao carregar roles de criadores:', rolesError);
-      }
+      // ⚡ Carregar perfis de criadores em paralelo se houver
       let creatorsData: any[] = [];
       if (creatorRoles && creatorRoles.length > 0) {
         const creatorIds = creatorRoles.map((r: any) => r.user_id);
-        const {
-          data: creatorsProfiles,
-          error: creatorsError
-        } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
-        if (creatorsError) {
-          console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
-        }
+        const { data: creatorsProfiles } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
         creatorsData = creatorsProfiles || [];
       }
-      console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
+
+      // Carregar posts visualizados do localStorage
+      const getViewedPosts = (): Set<string> => {
+        try {
+          const stored = localStorage.getItem('viewed_highlight_posts');
+          return new Set(stored ? JSON.parse(stored) : []);
+        } catch {
+          return new Set();
+        }
+      };
+      const viewedPosts = getViewedPosts();
+
+      console.log(`⚡ Dados carregados em ${Date.now() - startTime}ms: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores`);
 
       // Debug: Verificar vídeos de criadores no banco
       const videosWithCreatorId = videosData?.filter((v: any) => v.creator_id) || [];
@@ -1104,13 +1076,12 @@ export const TikTokApp = () => {
         setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
         setModelOrder(orderedModels);
         setCycleSize(orderedModels.length);
-        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
+        console.log(`⚡ Feed pronto em ${Date.now() - startTime}ms: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total`);
 
-        // Cache the results for faster subsequent loads
-        console.log('💾 Salvando cache no sessionStorage...');
-        sessionStorage.setItem('initial_feed', JSON.stringify(firstBlock));
-        sessionStorage.setItem('initial_feed_time', Date.now().toString());
-        console.log('✅ Cache salvo com sucesso');
+        // ⚡ Cache otimizado com versão correta
+        const CACHE_VERSION = 'v3';
+        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}`, JSON.stringify(firstBlock));
+        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}_time`, Date.now().toString());
       } else {
         console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
         const exampleData = createExampleData();
@@ -1129,15 +1100,13 @@ export const TikTokApp = () => {
       setLoading(false);
       setIsLoadingMore(false);
 
-      // Iniciar reprodução automaticamente se usuário já verificou idade
+      // ⚡ Iniciar reprodução imediatamente (sem delay)
       const verified = localStorage.getItem('ageVerification');
       if (verified) {
-        console.log('✅ Usuário já verificado, iniciando reprodução automática');
-        setTimeout(() => {
-          setIsPlaying(true);
-        }, 800);
+        console.log('✅ Iniciando reprodução automática...');
+        setIsPlaying(true);
       }
-      console.log('🎉 initializeFeed COMPLETO!');
+      console.log('⚡ Feed pronto!');
     }
   }, []);
 

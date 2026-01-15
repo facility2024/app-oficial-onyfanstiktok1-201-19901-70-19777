@@ -33,10 +33,10 @@ import { useGenres } from '@/hooks/useGenres';
 import { GenreSelector } from '@/components/tiktok/GenreSelector';
 
 // Lazy loading de componentes pesados para acelerar abertura
-const AdCarousel = lazy(() => import('@/components/tiktok/AdCarousel').then(m => ({ default: m.AdCarousel })));
-const ModelCarousel = lazy(() => import('@/components/tiktok/ModelCarousel').then(m => ({ default: m.ModelCarousel })));
-const MarketplaceCarousel = lazy(() => import('@/components/tiktok/MarketplaceCarousel').then(m => ({ default: m.MarketplaceCarousel })));
-const LocalBusinessCarousel = lazy(() => import('@/components/tiktok/LocalBusinessCarousel').then(m => ({ default: m.LocalBusinessCarousel })));
+const AdCarousel = lazy(() => import('@/components/tiktok/AdCarousel'));
+const ModelCarousel = lazy(() => import('@/components/tiktok/ModelCarousel'));
+const MarketplaceCarousel = lazy(() => import('@/components/tiktok/MarketplaceCarousel'));
+const LocalBusinessCarousel = lazy(() => import('@/components/tiktok/LocalBusinessCarousel'));
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';

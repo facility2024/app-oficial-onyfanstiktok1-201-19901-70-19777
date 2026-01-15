@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -27,14 +27,16 @@ import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { AdCarousel } from '@/components/tiktok/AdCarousel';
-import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
-import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
-import { LocalBusinessCarousel } from '@/components/tiktok/LocalBusinessCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGenres } from '@/hooks/useGenres';
 import { GenreSelector } from '@/components/tiktok/GenreSelector';
+
+// Lazy loading de componentes pesados para acelerar abertura
+const AdCarousel = lazy(() => import('@/components/tiktok/AdCarousel').then(m => ({ default: m.AdCarousel })));
+const ModelCarousel = lazy(() => import('@/components/tiktok/ModelCarousel').then(m => ({ default: m.ModelCarousel })));
+const MarketplaceCarousel = lazy(() => import('@/components/tiktok/MarketplaceCarousel').then(m => ({ default: m.MarketplaceCarousel })));
+const LocalBusinessCarousel = lazy(() => import('@/components/tiktok/LocalBusinessCarousel').then(m => ({ default: m.LocalBusinessCarousel })));
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -2887,13 +2889,20 @@ export const TikTokApp = () => {
             <div className="hidden xl:block w-72 2xl:w-80">
               <ScrollArea className="h-screen pb-20">
                 <div className="space-y-4 pr-2">
-                  
-                  <AdCarousel />
-                  <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
-                  goToModelVideo(modelId);
-                }} />
-                  <MarketplaceCarousel />
-                  <LocalBusinessCarousel />
+                  <Suspense fallback={<div className="h-48 bg-black/50 rounded-lg animate-pulse" />}>
+                    <AdCarousel />
+                  </Suspense>
+                  <Suspense fallback={<div className="h-32 bg-black/50 rounded-lg animate-pulse" />}>
+                    <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
+                      goToModelVideo(modelId);
+                    }} />
+                  </Suspense>
+                  <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
+                    <MarketplaceCarousel />
+                  </Suspense>
+                  <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
+                    <LocalBusinessCarousel />
+                  </Suspense>
                 </div>
               </ScrollArea>
             </div>

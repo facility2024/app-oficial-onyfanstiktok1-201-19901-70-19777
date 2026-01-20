@@ -633,18 +633,21 @@ export const TikTokApp = () => {
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 
+  // ⏱️ Referência do timeout para poder limpar quando dados chegarem
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   // ✅ INICIALIZAR FEED QUANDO O APP MONTA + TIMEOUT DE SEGURANÇA
   useEffect(() => {
     console.log('🎬 Inicializando app...');
 
-    // ⏱️ Timeout de segurança - se demorar mais de 15s, mostrar erro
-    const timeoutId = setTimeout(() => {
+    // ⏱️ Timeout de segurança - se demorar mais de 30s, mostrar erro
+    loadingTimeoutRef.current = setTimeout(() => {
       if (loading && videos.length === 0) {
         console.error('⏱️ Timeout ao carregar feed');
         setLoadingTimeout(true);
         setLoading(false);
       }
-    }, 15000);
+    }, 30000); // Aumentado para 30 segundos
 
     // Salvar timestamp da sessão atual para marcar vídeos novos
     const lastSession = localStorage.getItem('last_app_session');
@@ -657,7 +660,9 @@ export const TikTokApp = () => {
 
     // Atualizar timestamp ao fechar/sair
     return () => {
-      clearTimeout(timeoutId);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
       localStorage.setItem('last_app_session', new Date().toISOString());
     };
   }, []); // Executar apenas uma vez na montagem
@@ -722,6 +727,13 @@ export const TikTokApp = () => {
               // Validar estrutura do cache
               if (Array.isArray(cachedData) && cachedData.length > 0 && cachedData[0]?.video_url) {
                 console.log(`⚡ Feed INSTANTÂNEO do cache (${cachedData.length} vídeos)`);
+                // ⏱️ Limpar timeout pois dados chegaram
+                if (loadingTimeoutRef.current) {
+                  clearTimeout(loadingTimeoutRef.current);
+                  loadingTimeoutRef.current = null;
+                }
+                setLoadingTimeout(false);
+                setLoadingError(null);
                 setVideos(cachedData);
                 setAllAvailableVideos(cachedData);
                 setCurrentVideoIndex(0);
@@ -1131,6 +1143,13 @@ export const TikTokApp = () => {
       setHasMoreVideos(false);
     } finally {
       console.log('🏁 FINALIZANDO CARREGAMENTO DO FEED - setLoading(false)');
+      // ⏱️ Limpar timeout pois carregamento finalizou
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      setLoadingTimeout(false);
+      setLoadingError(null);
       setLoading(false);
       setIsLoadingMore(false);
 

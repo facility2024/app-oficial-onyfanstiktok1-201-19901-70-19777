@@ -2667,13 +2667,15 @@ export const TikTokApp = () => {
         display: 'none'
       }} />}
 
-        {/* Profile Screen */}
-        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onVideoSelect={videoId => {
-        openSelectedVideo(videoId);
-      }} onOpenChat={() => {
-        handleCloseProfile();
-        setShowChat(true);
-      }} />
+        {/* Profile Screen - só renderiza se tiver user válido */}
+        {showProfile && currentVideo?.user && (
+          <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onVideoSelect={videoId => {
+            openSelectedVideo(videoId);
+          }} onOpenChat={() => {
+            handleCloseProfile();
+            setShowChat(true);
+          }} />
+        )}
 
         {/* Chat Screen */}
         <ChatScreen isOpen={showChat} onClose={() => {
@@ -3014,13 +3016,15 @@ export const TikTokApp = () => {
         </div>
        </div>
 
-      {/* Desktop Profile Screen */}
-      <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
-      openSelectedVideo(videoId);
-    }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onOpenChat={() => {
-      handleCloseProfile();
-      setShowChat(true);
-    }} />
+      {/* Desktop Profile Screen - só renderiza se tiver user válido */}
+      {showProfile && currentVideo?.user && (
+        <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
+          openSelectedVideo(videoId);
+        }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onOpenChat={() => {
+          handleCloseProfile();
+          setShowChat(true);
+        }} />
+      )}
 
       {/* Desktop Chat Screen */}
       <ChatScreen isOpen={showChat} onClose={() => {

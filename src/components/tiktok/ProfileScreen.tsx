@@ -44,6 +44,14 @@ interface ModelImage {
 }
 
 export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, onOpenChat }: ProfileScreenProps) => {
+  // ✅ PROTEÇÃO: Se não tiver user, não renderiza nada
+  if (!user || !user.id) {
+    if (isOpen) {
+      console.warn('⚠️ ProfileScreen: user é undefined, fechando...');
+      onClose?.();
+    }
+    return null;
+  }
   const [contents, setContents] = useState<ModelContent[]>([]);
   const [publicContents, setPublicContents] = useState<ModelContent[]>([]);
   const [premiumContents, setPremiumContents] = useState<ModelContent[]>([]);

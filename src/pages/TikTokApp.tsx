@@ -15,7 +15,7 @@ import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -31,6 +31,7 @@ import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGenres } from '@/hooks/useGenres';
 import { GenreSelector } from '@/components/tiktok/GenreSelector';
+import { ErrorBoundary, LazyFallback } from '@/components/ErrorBoundary';
 
 // Lazy loading de componentes pesados para acelerar abertura
 const AdCarousel = lazy(() => import('@/components/tiktok/AdCarousel'));
@@ -150,6 +151,8 @@ export const TikTokApp = () => {
   });
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
+  const [loadingTimeout, setLoadingTimeout] = useState(false); // Timeout de loading
+  const [loadingError, setLoadingError] = useState<string | null>(null); // Erro de loading
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
@@ -630,12 +633,20 @@ export const TikTokApp = () => {
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 
-  // ✅ INICIALIZAR FEED QUANDO O APP MONTA
+  // ✅ INICIALIZAR FEED QUANDO O APP MONTA + TIMEOUT DE SEGURANÇA
   useEffect(() => {
     console.log('🎬 Inicializando app...');
 
+    // ⏱️ Timeout de segurança - se demorar mais de 15s, mostrar erro
+    const timeoutId = setTimeout(() => {
+      if (loading && videos.length === 0) {
+        console.error('⏱️ Timeout ao carregar feed');
+        setLoadingTimeout(true);
+        setLoading(false);
+      }
+    }, 15000);
+
     // Salvar timestamp da sessão atual para marcar vídeos novos
-    const now = new Date().toISOString();
     const lastSession = localStorage.getItem('last_app_session');
     if (!lastSession) {
       // Primeira vez no app - marca timestamp de 24h atrás para mostrar vídeos recentes
@@ -646,6 +657,7 @@ export const TikTokApp = () => {
 
     // Atualizar timestamp ao fechar/sair
     return () => {
+      clearTimeout(timeoutId);
       localStorage.setItem('last_app_session', new Date().toISOString());
     };
   }, []); // Executar apenas uma vez na montagem
@@ -694,28 +706,48 @@ export const TikTokApp = () => {
       console.log('🚀 INICIANDO CARREGAMENTO ULTRA-RÁPIDO DO FEED...');
       setLoading(true);
 
-      // ⚡ Check cache first for instant load
+      // ⚡ Check cache first for instant load - com tratamento robusto de erros
       const CACHE_VERSION = 'v3'; // Incrementar quando houver mudanças na estrutura
       const cacheKey = `initial_feed_${CACHE_VERSION}`;
-      const cached = sessionStorage.getItem(cacheKey);
-      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
       
-      if (cached && cacheTime) {
-        const age = Date.now() - parseInt(cacheTime);
-        if (age < 120000) { // Cache válido por 2 minutos
-          const cachedData = JSON.parse(cached);
-          console.log(`⚡ Feed INSTANTÂNEO do cache (${cachedData.length} vídeos)`);
-          setVideos(cachedData);
-          setAllAvailableVideos(cachedData);
-          setCurrentVideoIndex(0);
-          setLoading(false);
-          
-          // Atualizar em background após 500ms
-          setTimeout(() => {
-            refreshFeedInBackground();
-          }, 500);
-          return;
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+        
+        if (cached && cacheTime) {
+          const age = Date.now() - parseInt(cacheTime);
+          if (age < 120000) { // Cache válido por 2 minutos
+            try {
+              const cachedData = JSON.parse(cached);
+              // Validar estrutura do cache
+              if (Array.isArray(cachedData) && cachedData.length > 0 && cachedData[0]?.video_url) {
+                console.log(`⚡ Feed INSTANTÂNEO do cache (${cachedData.length} vídeos)`);
+                setVideos(cachedData);
+                setAllAvailableVideos(cachedData);
+                setCurrentVideoIndex(0);
+                setLoading(false);
+                
+                // Atualizar em background após 500ms
+                setTimeout(() => {
+                  refreshFeedInBackground();
+                }, 500);
+                return;
+              } else {
+                // Cache inválido, limpar
+                console.warn('⚠️ Cache inválido, limpando...');
+                sessionStorage.removeItem(cacheKey);
+                sessionStorage.removeItem(`${cacheKey}_time`);
+              }
+            } catch (parseError) {
+              // Erro ao fazer parse, limpar cache corrompido
+              console.warn('⚠️ Cache corrompido, limpando...', parseError);
+              sessionStorage.removeItem(cacheKey);
+              sessionStorage.removeItem(`${cacheKey}_time`);
+            }
+          }
         }
+      } catch (storageError) {
+        console.warn('⚠️ Erro ao acessar sessionStorage:', storageError);
       }
 
       const today = new Date();
@@ -2375,11 +2407,55 @@ export const TikTokApp = () => {
 
   // Remove old touch gestures - now handled by Embla
 
+  // ⏱️ Estado de timeout - mostrar erro amigável
+  if (loadingTimeout) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        <div className="text-center px-6 max-w-sm">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <RefreshCw className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Tempo Esgotado</h2>
+          <p className="text-gray-400 mb-6">
+            O carregamento demorou mais que o esperado. Verifique sua conexão e tente novamente.
+          </p>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => {
+                setLoadingTimeout(false);
+                setLoading(true);
+                setLoadingError(null);
+                // Limpar cache antes de tentar novamente
+                try {
+                  sessionStorage.removeItem('initial_feed_v3');
+                  sessionStorage.removeItem('initial_feed_v3_time');
+                } catch (e) {}
+                initializeFeed();
+              }} 
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Tentar Novamente
+            </Button>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+              className="w-full border-white/20 text-white hover:bg-white/10"
+            >
+              Recarregar Página
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
           <p>Carregando vídeos...</p>
+          <p className="text-xs text-gray-500 mt-2">Aguarde um momento...</p>
         </div>
       </div>;
   }
@@ -2889,20 +2965,28 @@ export const TikTokApp = () => {
             <div className="hidden xl:block w-72 2xl:w-80">
               <ScrollArea className="h-screen pb-20">
                 <div className="space-y-4 pr-2">
-                  <Suspense fallback={<div className="h-48 bg-black/50 rounded-lg animate-pulse" />}>
-                    <AdCarousel />
-                  </Suspense>
-                  <Suspense fallback={<div className="h-32 bg-black/50 rounded-lg animate-pulse" />}>
-                    <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
-                      goToModelVideo(modelId);
-                    }} />
-                  </Suspense>
-                  <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
-                    <MarketplaceCarousel />
-                  </Suspense>
-                  <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
-                    <LocalBusinessCarousel />
-                  </Suspense>
+                  <ErrorBoundary fallback={<LazyFallback />}>
+                    <Suspense fallback={<div className="h-48 bg-black/50 rounded-lg animate-pulse" />}>
+                      <AdCarousel />
+                    </Suspense>
+                  </ErrorBoundary>
+                  <ErrorBoundary fallback={<LazyFallback />}>
+                    <Suspense fallback={<div className="h-32 bg-black/50 rounded-lg animate-pulse" />}>
+                      <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
+                        goToModelVideo(modelId);
+                      }} />
+                    </Suspense>
+                  </ErrorBoundary>
+                  <ErrorBoundary fallback={<LazyFallback />}>
+                    <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
+                      <MarketplaceCarousel />
+                    </Suspense>
+                  </ErrorBoundary>
+                  <ErrorBoundary fallback={<LazyFallback />}>
+                    <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
+                      <LocalBusinessCarousel />
+                    </Suspense>
+                  </ErrorBoundary>
                 </div>
               </ScrollArea>
             </div>

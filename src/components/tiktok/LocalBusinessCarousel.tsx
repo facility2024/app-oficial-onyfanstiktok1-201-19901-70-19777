@@ -124,5 +124,3 @@ export const LocalBusinessCarousel = () => {
     </div>
   );
 };
-
-export default LocalBusinessCarousel;

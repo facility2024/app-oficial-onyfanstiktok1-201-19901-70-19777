@@ -163,5 +163,3 @@ export const ModelCarousel = ({
     </div>
   );
 };
-
-export default ModelCarousel;

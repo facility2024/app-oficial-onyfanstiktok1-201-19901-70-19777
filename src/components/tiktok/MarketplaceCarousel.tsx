@@ -126,5 +126,3 @@ export const MarketplaceCarousel = () => {
     </div>
   );
 };
-
-export default MarketplaceCarousel;

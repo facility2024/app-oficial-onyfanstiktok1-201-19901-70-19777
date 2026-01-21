@@ -139,5 +139,3 @@ export const AdCarousel = () => {
     </div>
   );
 };
-
-export default AdCarousel;

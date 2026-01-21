@@ -384,8 +384,8 @@ export const LiveInterface = () => {
         />
       </div>
 
-      {/* Telas Modais - só renderiza se tiver user válido */}
-      {showProfile && video?.user && (
+      {/* Telas Modais */}
+      {showProfile && (
         <ProfileScreen
           user={video.user}
           isOpen={showProfile}

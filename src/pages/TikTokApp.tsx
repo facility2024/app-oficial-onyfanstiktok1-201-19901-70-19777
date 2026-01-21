@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -15,7 +15,7 @@ import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { LiveModal } from '@/components/tiktok/LiveModal';
@@ -27,17 +27,14 @@ import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { AdCarousel } from '@/components/tiktok/AdCarousel';
+import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
+import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
+import { LocalBusinessCarousel } from '@/components/tiktok/LocalBusinessCarousel';
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGenres } from '@/hooks/useGenres';
 import { GenreSelector } from '@/components/tiktok/GenreSelector';
-import { ErrorBoundary, LazyFallback } from '@/components/ErrorBoundary';
-
-// Lazy loading de componentes pesados para acelerar abertura
-const AdCarousel = lazy(() => import('@/components/tiktok/AdCarousel'));
-const ModelCarousel = lazy(() => import('@/components/tiktok/ModelCarousel'));
-const MarketplaceCarousel = lazy(() => import('@/components/tiktok/MarketplaceCarousel'));
-const LocalBusinessCarousel = lazy(() => import('@/components/tiktok/LocalBusinessCarousel'));
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
@@ -91,6 +88,7 @@ interface Comment {
   };
 }
 export const TikTokApp = () => {
+  console.log('🎬 TikTokApp: Componente renderizado');
 
   // Hook para obter dados do usuário logado
   const {
@@ -151,17 +149,25 @@ export const TikTokApp = () => {
   });
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
-  const [loadingTimeout, setLoadingTimeout] = useState(false); // Timeout de loading
-  const [loadingError, setLoadingError] = useState<string | null>(null); // Erro de loading
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
   // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
   const [videosWatched, setVideosWatched] = useState(() => {
     const saved = localStorage.getItem('videosWatched');
-    return saved ? parseInt(saved, 10) : 0;
+    const count = saved ? parseInt(saved, 10) : 0;
+    console.log('🔐 INICIALIZANDO CONTADOR DE VÍDEOS:', count);
+    return count;
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Debug do estado do modal
+  useEffect(() => {
+    console.log('🔐 ESTADO:', {
+      videosWatched,
+      currentUser: !!currentUser
+    });
+  }, [videosWatched, currentUser]);
 
   // Verifica se usuário está logado
   useEffect(() => {
@@ -249,7 +255,20 @@ export const TikTokApp = () => {
   const {
     checkAndTrackAction
   } = useActionTracker();
-  const { trackLike, trackComment, trackShare, trackView, trackFollow } = useAppAnalytics();
+  const {
+    trackLike,
+    trackComment,
+    trackShare,
+    trackView,
+    trackFollow
+  } = useAppAnalytics();
+  console.log('🎯 DEBUG: Importações do useAppAnalytics:', {
+    trackLike,
+    trackComment,
+    trackShare,
+    trackView,
+    trackFollow
+  });
   const {
     isPremium,
     isContentUnlocked,
@@ -308,6 +327,12 @@ export const TikTokApp = () => {
     });
   }, [emblaApi]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
+  console.log('✅ RENDER: Renderizando vídeo');
+  console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
+  console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
+  console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
+  console.log('✅ RENDER: videos.length:', videos.length);
+  console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {
@@ -633,23 +658,12 @@ export const TikTokApp = () => {
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 
-  // ⏱️ Referência do timeout para poder limpar quando dados chegarem
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // ✅ INICIALIZAR FEED QUANDO O APP MONTA + TIMEOUT DE SEGURANÇA
+  // ✅ INICIALIZAR FEED QUANDO O APP MONTA
   useEffect(() => {
     console.log('🎬 Inicializando app...');
 
-    // ⏱️ Timeout de segurança - se demorar mais de 30s, mostrar erro
-    loadingTimeoutRef.current = setTimeout(() => {
-      if (loading && videos.length === 0) {
-        console.error('⏱️ Timeout ao carregar feed');
-        setLoadingTimeout(true);
-        setLoading(false);
-      }
-    }, 30000); // Aumentado para 30 segundos
-
     // Salvar timestamp da sessão atual para marcar vídeos novos
+    const now = new Date().toISOString();
     const lastSession = localStorage.getItem('last_app_session');
     if (!lastSession) {
       // Primeira vez no app - marca timestamp de 24h atrás para mostrar vídeos recentes
@@ -660,9 +674,6 @@ export const TikTokApp = () => {
 
     // Atualizar timestamp ao fechar/sair
     return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
       localStorage.setItem('last_app_session', new Date().toISOString());
     };
   }, []); // Executar apenas uma vez na montagem
@@ -671,146 +682,116 @@ export const TikTokApp = () => {
     return [];
   };
 
-  // ⚡ Referência para controlar refresh em background
-  const isBackgroundRefreshing = useRef(false);
-  
-  // ⚡ Função para atualizar feed em background (sem bloquear a UI)
-  const refreshFeedInBackground = useCallback(async () => {
-    if (isBackgroundRefreshing.current) return;
-    isBackgroundRefreshing.current = true;
-    console.log('🔄 Atualizando feed em background...');
-    try {
-      // Atualização silenciosa - não mostra loading
-      const { data: freshVideos } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false })
-        .limit(100);
-      
-      if (freshVideos && freshVideos.length > 0) {
-        console.log(`🔄 Background: ${freshVideos.length} vídeos atualizados`);
-        // Atualizar cache
-        const CACHE_VERSION = 'v3';
-        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}`, JSON.stringify(freshVideos.slice(0, 50)));
-        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}_time`, Date.now().toString());
-      }
-    } catch (error) {
-      console.warn('⚠️ Erro no refresh background:', error);
-    } finally {
-      isBackgroundRefreshing.current = false;
-    }
-  }, []);
-
   // 📱 NOVA LÓGICA: Inicializar feed com primeiro bloco de vídeos + posts agendados
-  // ⚡ OTIMIZADO para carregamento ultra-rápido
   const initializeFeed = useCallback(async () => {
     // Prevenir múltiplas inicializações simultâneas
     if (isLoadingMore) return;
     try {
-      console.log('🚀 INICIANDO CARREGAMENTO ULTRA-RÁPIDO DO FEED...');
+      console.log('🎬 INICIANDO CARREGAMENTO DO FEED...');
       setLoading(true);
 
-      // ⚡ Check cache first for instant load - com tratamento robusto de erros
-      const CACHE_VERSION = 'v3'; // Incrementar quando houver mudanças na estrutura
+      // Check cache first for faster initial load
+      const CACHE_VERSION = 'v2'; // Incrementar quando houver mudanças na estrutura
       const cacheKey = `initial_feed_${CACHE_VERSION}`;
-      
-      try {
-        const cached = sessionStorage.getItem(cacheKey);
-        const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
-        
-        if (cached && cacheTime) {
-          const age = Date.now() - parseInt(cacheTime);
-          if (age < 120000) { // Cache válido por 2 minutos
-            try {
-              const cachedData = JSON.parse(cached);
-              // Validar estrutura do cache
-              if (Array.isArray(cachedData) && cachedData.length > 0 && cachedData[0]?.video_url) {
-                console.log(`⚡ Feed INSTANTÂNEO do cache (${cachedData.length} vídeos)`);
-                // ⏱️ Limpar timeout pois dados chegaram
-                if (loadingTimeoutRef.current) {
-                  clearTimeout(loadingTimeoutRef.current);
-                  loadingTimeoutRef.current = null;
-                }
-                setLoadingTimeout(false);
-                setLoadingError(null);
-                setVideos(cachedData);
-                setAllAvailableVideos(cachedData);
-                setCurrentVideoIndex(0);
-                setLoading(false);
-                
-                // Atualizar em background após 500ms
-                setTimeout(() => {
-                  refreshFeedInBackground();
-                }, 500);
-                return;
-              } else {
-                // Cache inválido, limpar
-                console.warn('⚠️ Cache inválido, limpando...');
-                sessionStorage.removeItem(cacheKey);
-                sessionStorage.removeItem(`${cacheKey}_time`);
-              }
-            } catch (parseError) {
-              // Erro ao fazer parse, limpar cache corrompido
-              console.warn('⚠️ Cache corrompido, limpando...', parseError);
-              sessionStorage.removeItem(cacheKey);
-              sessionStorage.removeItem(`${cacheKey}_time`);
-            }
-          }
+      const cached = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      if (cached && cacheTime) {
+        const age = Date.now() - parseInt(cacheTime);
+        if (age < 60000) {
+          // Cache valid for 1 minute
+          const cachedData = JSON.parse(cached);
+          console.log(`✅ Feed carregado do cache (${cachedData.length} vídeos)`);
+          setVideos(cachedData);
+          setCurrentVideoIndex(0);
+          setLoading(false);
+          return;
         }
-      } catch (storageError) {
-        console.warn('⚠️ Erro ao acessar sessionStorage:', storageError);
       }
 
+      // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
+      console.log('🌟 Carregando posts agendados recentes...');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // ⚡ QUERIES PARALELAS - Todas ao mesmo tempo!
-      console.log('⚡ Executando queries em PARALELO...');
-      const startTime = Date.now();
-      
-      const [
-        videosResult,
-        modelsResult,
-        chatPanelsResult,
-        creatorRolesResult,
-        postsAgendadosResult,
-        postsPrincipaisResult
-      ] = await Promise.all([
-        // 1. Vídeos (PRIORIDADE MÁXIMA)
-        supabase.from('videos').select('*').eq('is_active', true).order('updated_at', { ascending: false }).limit(100),
-        
-        // 2. Modelos
-        supabase.from('models').select('*').eq('is_active', true),
-        
-        // 3. Chat panels
-        supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active'),
-        
-        // 4. Creator roles
-        (supabase as any).from('user_roles').select('user_id').eq('role', 'creator'),
-        
-        // 5. Posts agendados
-        supabase.from('posts_agendados').select('*, modelo:models(*)').eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', { ascending: false }).limit(20),
-        
-        // 6. Posts principais
-        supabase.from('posts_principais').select('*, modelo:models(*)').gte('created_at', today.toISOString()).order('created_at', { ascending: false }).limit(20)
-      ]);
+      // 🆕 SISTEMA DE DESTAQUE: Carregar posts já visualizados
+      const getViewedPosts = (): Set<string> => {
+        try {
+          const stored = localStorage.getItem('viewed_highlight_posts');
+          return new Set(stored ? JSON.parse(stored) : []);
+        } catch {
+          return new Set();
+        }
+      };
+      const viewedPosts = getViewedPosts();
+      console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
+      const {
+        data: postsAgendados,
+        error: postsError
+      } = await supabase.from('posts_agendados').select(`
+          *,
+          modelo:models(*)
+        `).eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', {
+        ascending: false
+      });
+      const {
+        data: postsPrincipais,
+        error: principaisError
+      } = await supabase.from('posts_principais').select(`
+          *,
+          modelo:models(*)
+        `).gte('created_at', today.toISOString()).order('created_at', {
+        ascending: false
+      });
+      if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
+      if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
 
-      console.log(`⚡ Queries paralelas concluídas em ${Date.now() - startTime}ms`);
-
-      const videosData = videosResult.data || [];
-      const modelsData = modelsResult.data || [];
-      const chatPanelsData = chatPanelsResult.data || [];
-      const creatorRoles = creatorRolesResult.data || [];
-      const postsAgendados = postsAgendadosResult.data || [];
-      const postsPrincipais = postsPrincipaisResult.data || [];
-
-      if (videosResult.error) {
-        console.error('❌ Erro ao carregar vídeos:', videosResult.error);
-        throw videosResult.error;
+      // Carregar todos os vídeos disponíveis
+      console.log('📋 Carregando catálogo de vídeos...');
+      const {
+        data: videosData,
+        error: videosError
+      } = await supabase.from('videos').select('*').eq('is_active', true).order('updated_at', {
+        ascending: false
+      });
+      if (videosError) {
+        console.error('❌ Erro ao carregar vídeos:', videosError);
+        throw videosError;
       }
 
-      // Processar chat panels
+      // 🔍 DEBUG DETALHADO - Verificar dados dos vídeos
+      console.log('🔍 Query videos result:', {
+        total: videosData?.length || 0,
+        withCreatorId: (videosData as any[])?.filter((v: any) => v.creator_id)?.length || 0,
+        withModelId: (videosData as any[])?.filter((v: any) => v.model_id)?.length || 0,
+        sample: videosData?.[0] ? {
+          id: videosData[0].id,
+          title: videosData[0].title,
+          creator_id: (videosData[0] as any).creator_id,
+          model_id: (videosData[0] as any).model_id,
+          is_active: videosData[0].is_active
+        } : 'nenhum vídeo',
+        creatorVideos: (videosData as any[])?.filter((v: any) => v.creator_id)?.map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          creator_id: v.creator_id
+        })) || []
+      });
+      const {
+        data: modelsData,
+        error: modelsError
+      } = await supabase.from('models').select('*').eq('is_active', true);
+      if (modelsError && (modelsError as any).code !== 'PGRST116') {
+        console.warn('⚠️ Erro ao carregar modelos:', modelsError);
+      }
+
+      // 🔥 Carregar painéis de chat para verificar status online e ativo
+      const {
+        data: chatPanelsData,
+        error: chatPanelsError
+      } = await supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active');
+      if (chatPanelsError) {
+        console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
+      }
       const chatPanelsMap: Record<string, boolean> = {};
       const chatActiveMapTemp: Record<string, boolean> = {};
       const chatOnlineMapTemp: Record<string, boolean> = {};
@@ -825,26 +806,27 @@ export const TikTokApp = () => {
       setChatActiveMap(chatActiveMapTemp);
       setChatOnlineMap(chatOnlineMapTemp);
 
-      // ⚡ Carregar perfis de criadores em paralelo se houver
+      // Carregar criadores (via user_roles)
+      const {
+        data: creatorRoles,
+        error: rolesError
+      } = await (supabase as any).from('user_roles').select('user_id').eq('role', 'creator');
+      if (rolesError) {
+        console.warn('⚠️ Erro ao carregar roles de criadores:', rolesError);
+      }
       let creatorsData: any[] = [];
       if (creatorRoles && creatorRoles.length > 0) {
         const creatorIds = creatorRoles.map((r: any) => r.user_id);
-        const { data: creatorsProfiles } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
+        const {
+          data: creatorsProfiles,
+          error: creatorsError
+        } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
+        if (creatorsError) {
+          console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
+        }
         creatorsData = creatorsProfiles || [];
       }
-
-      // Carregar posts visualizados do localStorage
-      const getViewedPosts = (): Set<string> => {
-        try {
-          const stored = localStorage.getItem('viewed_highlight_posts');
-          return new Set(stored ? JSON.parse(stored) : []);
-        } catch {
-          return new Set();
-        }
-      };
-      const viewedPosts = getViewedPosts();
-
-      console.log(`⚡ Dados carregados em ${Date.now() - startTime}ms: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores`);
+      console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
 
       // Debug: Verificar vídeos de criadores no banco
       const videosWithCreatorId = videosData?.filter((v: any) => v.creator_id) || [];
@@ -1122,12 +1104,13 @@ export const TikTokApp = () => {
         setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
         setModelOrder(orderedModels);
         setCycleSize(orderedModels.length);
-        console.log(`⚡ Feed pronto em ${Date.now() - startTime}ms: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total`);
+        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
 
-        // ⚡ Cache otimizado com versão correta
-        const CACHE_VERSION = 'v3';
-        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}`, JSON.stringify(firstBlock));
-        sessionStorage.setItem(`initial_feed_${CACHE_VERSION}_time`, Date.now().toString());
+        // Cache the results for faster subsequent loads
+        console.log('💾 Salvando cache no sessionStorage...');
+        sessionStorage.setItem('initial_feed', JSON.stringify(firstBlock));
+        sessionStorage.setItem('initial_feed_time', Date.now().toString());
+        console.log('✅ Cache salvo com sucesso');
       } else {
         console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
         const exampleData = createExampleData();
@@ -1143,23 +1126,18 @@ export const TikTokApp = () => {
       setHasMoreVideos(false);
     } finally {
       console.log('🏁 FINALIZANDO CARREGAMENTO DO FEED - setLoading(false)');
-      // ⏱️ Limpar timeout pois carregamento finalizou
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      setLoadingTimeout(false);
-      setLoadingError(null);
       setLoading(false);
       setIsLoadingMore(false);
 
-      // ⚡ Iniciar reprodução imediatamente (sem delay)
+      // Iniciar reprodução automaticamente se usuário já verificou idade
       const verified = localStorage.getItem('ageVerification');
       if (verified) {
-        console.log('✅ Iniciando reprodução automática...');
-        setIsPlaying(true);
+        console.log('✅ Usuário já verificado, iniciando reprodução automática');
+        setTimeout(() => {
+          setIsPlaying(true);
+        }, 800);
       }
-      console.log('⚡ Feed pronto!');
+      console.log('🎉 initializeFeed COMPLETO!');
     }
   }, []);
 
@@ -2426,55 +2404,11 @@ export const TikTokApp = () => {
 
   // Remove old touch gestures - now handled by Embla
 
-  // ⏱️ Estado de timeout - mostrar erro amigável
-  if (loadingTimeout) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black text-white">
-        <div className="text-center px-6 max-w-sm">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <RefreshCw className="w-8 h-8 text-red-400" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">Tempo Esgotado</h2>
-          <p className="text-gray-400 mb-6">
-            O carregamento demorou mais que o esperado. Verifique sua conexão e tente novamente.
-          </p>
-          <div className="space-y-3">
-            <Button 
-              onClick={() => {
-                setLoadingTimeout(false);
-                setLoading(true);
-                setLoadingError(null);
-                // Limpar cache antes de tentar novamente
-                try {
-                  sessionStorage.removeItem('initial_feed_v3');
-                  sessionStorage.removeItem('initial_feed_v3_time');
-                } catch (e) {}
-                initializeFeed();
-              }} 
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Tentar Novamente
-            </Button>
-            <Button 
-              onClick={() => window.location.reload()} 
-              variant="outline"
-              className="w-full border-white/20 text-white hover:bg-white/10"
-            >
-              Recarregar Página
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
           <p>Carregando vídeos...</p>
-          <p className="text-xs text-gray-500 mt-2">Aguarde um momento...</p>
         </div>
       </div>;
   }
@@ -2667,15 +2601,13 @@ export const TikTokApp = () => {
         display: 'none'
       }} />}
 
-        {/* Profile Screen - só renderiza se tiver user válido */}
-        {showProfile && currentVideo?.user && (
-          <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onVideoSelect={videoId => {
-            openSelectedVideo(videoId);
-          }} onOpenChat={() => {
-            handleCloseProfile();
-            setShowChat(true);
-          }} />
-        )}
+        {/* Profile Screen */}
+        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onVideoSelect={videoId => {
+        openSelectedVideo(videoId);
+      }} onOpenChat={() => {
+        handleCloseProfile();
+        setShowChat(true);
+      }} />
 
         {/* Chat Screen */}
         <ChatScreen isOpen={showChat} onClose={() => {
@@ -2986,28 +2918,13 @@ export const TikTokApp = () => {
             <div className="hidden xl:block w-72 2xl:w-80">
               <ScrollArea className="h-screen pb-20">
                 <div className="space-y-4 pr-2">
-                  <ErrorBoundary fallback={<LazyFallback />}>
-                    <Suspense fallback={<div className="h-48 bg-black/50 rounded-lg animate-pulse" />}>
-                      <AdCarousel />
-                    </Suspense>
-                  </ErrorBoundary>
-                  <ErrorBoundary fallback={<LazyFallback />}>
-                    <Suspense fallback={<div className="h-32 bg-black/50 rounded-lg animate-pulse" />}>
-                      <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
-                        goToModelVideo(modelId);
-                      }} />
-                    </Suspense>
-                  </ErrorBoundary>
-                  <ErrorBoundary fallback={<LazyFallback />}>
-                    <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
-                      <MarketplaceCarousel />
-                    </Suspense>
-                  </ErrorBoundary>
-                  <ErrorBoundary fallback={<LazyFallback />}>
-                    <Suspense fallback={<div className="h-40 bg-black/50 rounded-lg animate-pulse" />}>
-                      <LocalBusinessCarousel />
-                    </Suspense>
-                  </ErrorBoundary>
+                  
+                  <AdCarousel />
+                  <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
+                  goToModelVideo(modelId);
+                }} />
+                  <MarketplaceCarousel />
+                  <LocalBusinessCarousel />
                 </div>
               </ScrollArea>
             </div>
@@ -3016,15 +2933,13 @@ export const TikTokApp = () => {
         </div>
        </div>
 
-      {/* Desktop Profile Screen - só renderiza se tiver user válido */}
-      {showProfile && currentVideo?.user && (
-        <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
-          openSelectedVideo(videoId);
-        }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onOpenChat={() => {
-          handleCloseProfile();
-          setShowChat(true);
-        }} />
-      )}
+      {/* Desktop Profile Screen */}
+      <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
+      openSelectedVideo(videoId);
+    }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} onOpenChat={() => {
+      handleCloseProfile();
+      setShowChat(true);
+    }} />
 
       {/* Desktop Chat Screen */}
       <ChatScreen isOpen={showChat} onClose={() => {

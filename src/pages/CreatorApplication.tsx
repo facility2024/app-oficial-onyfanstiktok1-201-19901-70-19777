@@ -451,11 +451,15 @@ export default function CreatorApplication() {
                       <SelectTrigger className="bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="masculino">Masculino</SelectItem>
-                        <SelectItem value="feminino">Feminino</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
-                        <SelectItem value="prefiro-nao-informar">Prefiro não informar</SelectItem>
+                      <SelectContent 
+                        className="bg-gray-900 border-gray-700 z-[99999]"
+                        position="popper"
+                        sideOffset={4}
+                      >
+                        <SelectItem value="masculino" className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">Masculino</SelectItem>
+                        <SelectItem value="feminino" className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">Feminino</SelectItem>
+                        <SelectItem value="outro" className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">Outro</SelectItem>
+                        <SelectItem value="prefiro-nao-informar" className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">Prefiro não informar</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

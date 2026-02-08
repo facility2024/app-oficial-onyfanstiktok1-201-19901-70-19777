@@ -2637,9 +2637,7 @@ export const TikTokApp = () => {
   // Desktop version (TikTok-like desktop layout)
   return <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
-      <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-sm" style={{
-      background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
-    }}>
+      <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-sm bg-gray-900">
         <div className="flex items-center space-x-4">
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center gap-1">
@@ -2658,12 +2656,12 @@ export const TikTokApp = () => {
         </div>
               <div className="flex items-center space-x-3">
                 {/* Indicador de Gênero Selecionado */}
-                {selectedGenre && selectedGenre !== 'Todos' && <button onClick={() => setSelectedGenre('Todos')} className="flex items-center gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full hover:bg-black/30 transition-colors" title="Clique para ver todos os gêneros">
+                {selectedGenre && selectedGenre !== 'Todos' && <button onClick={() => setSelectedGenre('Todos')} className="flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors" title="Clique para ver todos os gêneros">
                     <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
-                    <span className="text-sm font-medium text-black">{selectedGenre}</span>
-                    <span className="text-xs text-black/60">×</span>
+                    <span className="text-sm font-medium text-white">{selectedGenre}</span>
+                    <span className="text-xs text-white/60">×</span>
                   </button>}
-                <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-black/30 transition-colors" title="Pesquisar">
+                <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors" title="Pesquisar">
                   <Search className="w-5 h-5" />
                 </button>
               </div>

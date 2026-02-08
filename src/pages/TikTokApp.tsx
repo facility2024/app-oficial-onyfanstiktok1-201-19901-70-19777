@@ -2489,6 +2489,18 @@ export const TikTokApp = () => {
           }} />
           </div>
           
+          {/* Logo Centralizada - Mobile */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
+            <img 
+              src={coconudiHeaderLogo} 
+              alt="CocoNudi Logo" 
+              className="h-10 w-auto object-contain drop-shadow-lg"
+              style={{
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+              }}
+            />
+          </div>
+          
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">
             {/* Search/Lupa */}

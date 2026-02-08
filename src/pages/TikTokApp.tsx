@@ -2637,34 +2637,57 @@ export const TikTokApp = () => {
   // Desktop version (TikTok-like desktop layout)
   return <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
-      <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-sm bg-gray-900">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-center gap-1">
-              <div 
-                className="flex items-center justify-center w-[80px] h-[80px] rounded-full overflow-hidden bg-transparent cursor-pointer hover:scale-105 transition-transform"
-                onClick={() => {
-                  setCurrentVideoIndex(0);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                title="Ir para o início"
-              >
-                <img src={coconudiLogo} alt="Coconudi" className="w-[80px] h-[80px] object-contain" />
-              </div>
-            </div>
+      <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-3 border-b border-white/10 backdrop-blur-sm bg-gray-900">
+        {/* Logo à esquerda */}
+        <div className="flex items-center">
+          <div 
+            className="flex items-center justify-center w-[50px] h-[50px] rounded-full overflow-hidden bg-transparent cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => {
+              setCurrentVideoIndex(0);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            title="Ir para o início"
+          >
+            <img src={coconudiLogo} alt="Coconudi" className="w-[50px] h-[50px] object-contain" />
           </div>
         </div>
-              <div className="flex items-center space-x-3">
-                {/* Indicador de Gênero Selecionado */}
-                {selectedGenre && selectedGenre !== 'Todos' && <button onClick={() => setSelectedGenre('Todos')} className="flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors" title="Clique para ver todos os gêneros">
-                    <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
-                    <span className="text-sm font-medium text-white">{selectedGenre}</span>
-                    <span className="text-xs text-white/60">×</span>
-                  </button>}
-                <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors" title="Pesquisar">
-                  <Search className="w-5 h-5" />
-                </button>
-              </div>
+        
+        {/* Título Centralizado */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <h1 
+            className="text-white text-xl font-black tracking-widest uppercase drop-shadow-lg"
+            style={{ 
+              fontFamily: "'Poppins', 'Montserrat', 'Arial Black', sans-serif", 
+              letterSpacing: '0.2em',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+            }}
+          >
+            COCONUDI <span className="text-white/60 mx-1">-</span> STREAMER
+          </h1>
+        </div>
+        
+        {/* Controles à direita */}
+        <div className="flex items-center space-x-3">
+          {/* Indicador de Gênero Selecionado */}
+          {selectedGenre && selectedGenre !== 'Todos' && (
+            <button 
+              onClick={() => setSelectedGenre('Todos')} 
+              className="flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors" 
+              title="Clique para ver todos os gêneros"
+            >
+              <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
+              <span className="text-sm font-medium text-white">{selectedGenre}</span>
+              <span className="text-xs text-white/60">×</span>
+            </button>
+          )}
+          <button 
+            onClick={() => setShowSearch(true)} 
+            className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors" 
+            title="Pesquisar"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Bonus Gift Component - Hidden, just for functionality */}

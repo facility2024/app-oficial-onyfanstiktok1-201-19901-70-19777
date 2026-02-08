@@ -164,6 +164,13 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
             </div>
           ) : (
             <div className="space-y-3">
+              {filteredModels.length === 0 && !loading && (
+                <div className="flex flex-col items-center justify-center py-12 text-white/60">
+                  <Search className="w-12 h-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Nenhum resultado encontrado</p>
+                  <p className="text-sm mt-1">Tente buscar por outro nome</p>
+                </div>
+              )}
               {filteredModels.map((model) => (
                 <div
                   key={model.id}

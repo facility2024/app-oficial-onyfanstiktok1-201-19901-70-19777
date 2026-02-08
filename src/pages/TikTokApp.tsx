@@ -2674,7 +2674,7 @@ export const TikTokApp = () => {
               color: '#7d0000',
               WebkitTextStroke: '2px white',
               textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-            }}>STREAMER</span>
+            }}>VIDEOS</span>
           </h1>
         </div>
         

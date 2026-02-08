@@ -2655,14 +2655,26 @@ export const TikTokApp = () => {
         {/* Título Centralizado */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <h1 
-            className="text-white text-xl font-black tracking-widest uppercase drop-shadow-lg"
+            className="text-xl font-black tracking-widest uppercase drop-shadow-lg flex items-center gap-2"
             style={{ 
               fontFamily: "'Poppins', 'Montserrat', 'Arial Black', sans-serif", 
               letterSpacing: '0.2em',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
             }}
           >
-            COCONUDI <span className="text-white/60 mx-1">-</span> STREAMER
+            <span style={{ 
+              color: '#ba3a24',
+              WebkitTextStroke: '2px white',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+            }}>COCONUDI</span>
+            <span style={{ 
+              color: 'white',
+              WebkitTextStroke: '1px white',
+            }}>-</span>
+            <span style={{ 
+              color: '#7d0000',
+              WebkitTextStroke: '2px white',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+            }}>STREAMER</span>
           </h1>
         </div>
         

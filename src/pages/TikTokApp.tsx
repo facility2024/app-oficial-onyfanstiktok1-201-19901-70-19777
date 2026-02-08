@@ -2109,6 +2109,7 @@ export const TikTokApp = () => {
         } = await (supabase as any).from('videos').select('*').eq('creator_id', modelId).eq('is_active', true).limit(1);
         if (!videoData || videoData.length === 0) {
           console.log('ℹ️ Nenhum vídeo ativo encontrado para o criador');
+          toast({ title: 'Este criador ainda não publicou vídeos', variant: 'destructive' });
           return;
         }
 
@@ -2160,6 +2161,7 @@ export const TikTokApp = () => {
       } = await supabase.from('models').select('*').eq('id', modelId).single();
       if (modelError || !modelData) {
         console.error('❌ Modelo não encontrada:', modelError);
+        toast({ title: 'Modelo não encontrada', variant: 'destructive' });
         return;
       }
 
@@ -2464,8 +2466,8 @@ export const TikTokApp = () => {
     return <div className="relative w-full h-screen bg-white overflow-hidden [&::-webkit-scrollbar]:hidden [-webkit-scrollbar:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         
         {/* Top Bar Mobile - Nova barra com ícones */}
-        <div className="fixed top-0 left-0 right-0 z-40 h-14 backdrop-blur-sm flex items-center justify-between px-4" style={{
-        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        <div className="fixed top-0 left-0 right-0 z-40 h-14 flex items-center justify-between px-4" style={{
+        background: 'transparent'
       }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
@@ -2504,8 +2506,8 @@ export const TikTokApp = () => {
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">
             {/* Search/Lupa */}
-            <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-black hover:bg-white/30 transition-colors" title="Pesquisar">
-              <Search className="w-5 h-5 text-black" />
+            <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center hover:bg-black/40 transition-colors" title="Pesquisar">
+              <Search className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>

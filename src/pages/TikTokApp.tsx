@@ -40,6 +40,7 @@ import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
 import coconudiLogo from '@/assets/coconudi-logo-header.png';
+import coconudiHeaderLogo from '@/assets/coconudi-header-logo.png';
 import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
@@ -2652,8 +2653,13 @@ export const TikTokApp = () => {
           </div>
         </div>
         
-        {/* Título Centralizado */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
+        {/* Título Centralizado com Logo */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
+          <img 
+            src={coconudiHeaderLogo} 
+            alt="CocoNudi Logo" 
+            className="h-10 w-auto object-contain"
+          />
           <h1 
             className="text-xl font-black tracking-widest uppercase drop-shadow-lg flex items-center gap-2"
             style={{ 

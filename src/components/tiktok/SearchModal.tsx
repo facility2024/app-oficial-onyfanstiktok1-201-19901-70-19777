@@ -119,11 +119,12 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
   const filteredModels = models.filter(model => {
     if (!searchQuery.trim()) return true;
     
-    const query = searchQuery.toLowerCase().trim();
+    const words = searchQuery.toLowerCase().trim().split(/\s+/);
     const name = (model.name || '').toLowerCase();
     const username = (model.username || '').toLowerCase();
+    const combined = `${name} ${username}`;
     
-    return name.includes(query) || username.includes(query);
+    return words.every(word => combined.includes(word));
   });
 
   if (!isOpen) return null;

@@ -2647,8 +2647,7 @@ export const TikTokApp = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
-              setCurrentVideoIndex(0);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              navigate('/app');
             }}
             title="Voltar ao início"
             className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"

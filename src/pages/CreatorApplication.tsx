@@ -381,7 +381,7 @@ export default function CreatorApplication() {
 
       {/* Conteúdo Rolável */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 max-w-4xl mx-auto pb-24">
+        <div className="p-4 max-w-4xl mx-auto pb-32">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Etapa 1: Dados Pessoais */}
             {currentStep === 1 && (
@@ -578,7 +578,7 @@ export default function CreatorApplication() {
       </div>
 
       {/* Footer Fixo com Botões */}
-      <div className="sticky bottom-0 bg-black/80 backdrop-blur-md border-t border-white/10 p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-white/10 p-4 z-40">
         <div className="max-w-4xl mx-auto flex gap-3">
           {currentStep > 1 && (
             <Button

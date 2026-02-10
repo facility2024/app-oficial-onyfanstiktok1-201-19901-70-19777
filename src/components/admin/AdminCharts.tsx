@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BrazilMapWithData } from './BrazilMapWithData';
+import { BrazilInteractiveMap } from './BrazilInteractiveMap';
 import { LiveUserIndicator } from './LiveUserIndicator';
 import { Eye, TrendingUp, Activity, MapPin, Users } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -297,7 +297,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
         </CardContent>
       </Card>
       
-      {/* States Chart */}
+      {/* States Chart - Interactive Map */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -305,40 +305,20 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
               <div className="text-lg">🇧🇷</div>
               <div>
                 <CardTitle className="text-sm sm:text-base">
-                  <span className="hidden lg:inline">Estados do Brasil - Usuários Logados</span>
-                  <span className="lg:hidden">Estados BR - Logados</span>
+                  Mapa em Tempo Real
                 </CardTitle>
                 <p className="text-xs text-muted-foreground hidden sm:block">
-                  <span className="hidden lg:inline">📍 Localizações reais dos usuários conectados</span>
-                  <span className="lg:hidden">📍 Usuários conectados</span>
+                  📍 Usuários online por estado
                 </p>
-                <div className="flex flex-col xs:flex-row gap-1 mt-1">
+                <div className="mt-1">
                   <LiveUserIndicator />
-                  {currentLocation && (
-                    <Badge variant="outline" className="text-xs border-success text-success">
-                      📍 Detectado: {currentLocation.state}
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>
-            
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={captureLocation}
-              disabled={isLoading}
-              className="hidden sm:flex items-center space-x-1"
-            >
-              <MapPin className="w-3 h-3" />
-              <span className="text-xs">
-                {isLoading ? 'Detectando...' : 'Atualizar'}
-              </span>
-            </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 h-[500px]">
-          <BrazilMapWithData onlineUsersByState={realTimeStats.onlineUsersByState} />
+        <CardContent>
+          <BrazilInteractiveMap onlineUsersByState={realTimeStats.onlineUsersByState} />
         </CardContent>
       </Card>
     </div>

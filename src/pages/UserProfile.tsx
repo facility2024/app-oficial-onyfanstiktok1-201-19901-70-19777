@@ -433,9 +433,9 @@ export default function UserProfile() {
                 </Button>
               )}
 
-              {/* Become a Creator Link (if NOT creator) */}
+        {/* Become a Creator Link (if NOT creator) */}
               {!isCreator && !creatorLoading && (
-                <div className="bg-gray-900/50 border border-white/10 rounded-lg p-4 text-center">
+                <div className="bg-gray-900/50 border border-white/10 rounded-lg p-4 text-center mb-8">
                   <p className="text-sm text-gray-400 mb-2">
                     Quer compartilhar seu talento com o mundo?
                   </p>
@@ -448,6 +448,9 @@ export default function UserProfile() {
                   </button>
                 </div>
               )}
+
+              {/* Spacer for mobile scroll */}
+              <div className="h-24" />
             </>
           ) : (
             /* Edit Mode */

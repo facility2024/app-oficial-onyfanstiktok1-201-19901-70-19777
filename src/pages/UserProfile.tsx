@@ -194,7 +194,7 @@ export default function UserProfile() {
     <div 
       className="min-h-screen bg-black"
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -210,7 +210,7 @@ export default function UserProfile() {
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/app')}
-            className="text-gray-800 hover:bg-white/20"
+            className="text-white hover:bg-white/20"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Voltar
@@ -220,7 +220,7 @@ export default function UserProfile() {
             variant="ghost" 
             size="sm"
             onClick={() => setIsEditing(!isEditing)}
-            className="text-gray-800 hover:bg-white/20"
+            className="text-white hover:bg-white/20"
           >
             <Settings className="w-5 h-5" />
           </Button>

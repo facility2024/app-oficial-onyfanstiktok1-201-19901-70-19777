@@ -2643,8 +2643,18 @@ export const TikTokApp = () => {
   return <div className="min-h-screen bg-white text-foreground">
       {/* Desktop Header */}
       <div className="sticky top-0 z-[60] flex items-center justify-between px-6 py-3 border-b border-white/10 backdrop-blur-sm bg-gray-900">
-        {/* Logo à esquerda */}
-        <div className="flex items-center">
+        {/* Logo e botão voltar à esquerda */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setCurrentVideoIndex(0);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            title="Voltar ao início"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div 
             className="flex items-center justify-center w-[50px] h-[50px] rounded-full overflow-hidden bg-transparent cursor-pointer hover:scale-105 transition-transform"
             onClick={() => {

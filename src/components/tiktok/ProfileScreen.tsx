@@ -451,7 +451,7 @@ if (!isOpen) return null;
         isOpen ? 'translate-x-0' : 'translate-x-full'
       } flex flex-col`}>
         {/* Header com Gradiente */}
-        <div className="flex justify-between items-center p-4 border-b border-white/10 bg-gradient-to-r from-[rgba(0,245,212,0.95)] via-[rgba(191,234,124,0.95)] to-[rgba(254,228,64,0.95)] backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black/60 backdrop-blur-sm sticky top-0 z-10">
           <button
             onClick={onGoHome || onClose}
             className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"

@@ -123,14 +123,50 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
         throw new Error(`Erro no upload: ${errorText}`);
       }
 
-      setProgress(100);
-      setUploadStatus('success');
-      
-      // Build CDN URLs
+      setProgress(70);
+
+      // Poll Bunny API to check encoding status before confirming
       const videoUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/play_720p.mp4`;
       const thumbnailUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`;
 
-      toast.success('Vídeo enviado com sucesso!');
+      toast.info('Vídeo enviado! Aguardando processamento no servidor...', { duration: 5000 });
+
+      // Poll encoding status (up to 2 minutes)
+      let encoded = false;
+      for (let i = 0; i < 24; i++) {
+        setProgress(70 + Math.min(i * 1.2, 28));
+        try {
+          const statusRes = await fetch(
+            `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoGuid}`,
+            { headers: { 'AccessKey': BUNNY_API_KEY, 'Accept': 'application/json' } }
+          );
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            // status: 0=created, 1=uploaded, 2=processing, 3=transcoding, 4=finished, 5=error
+            console.log(`🔄 Bunny encoding status: ${statusData.status} (attempt ${i + 1})`);
+            if (statusData.status >= 4) {
+              encoded = true;
+              break;
+            }
+            if (statusData.status === 5) {
+              throw new Error('Erro no processamento do vídeo pelo Bunny.net');
+            }
+          }
+        } catch (pollErr: any) {
+          if (pollErr.message?.includes('Erro no processamento')) throw pollErr;
+          console.warn('Poll error:', pollErr);
+        }
+        await new Promise(r => setTimeout(r, 5000)); // wait 5s between polls
+      }
+
+      setProgress(100);
+      setUploadStatus('success');
+
+      if (encoded) {
+        toast.success('Vídeo processado e pronto para exibição! 🎉');
+      } else {
+        toast.warning('Vídeo enviado, mas ainda está sendo processado. Pode levar alguns minutos para aparecer no feed.', { duration: 8000 });
+      }
       
       // Pass URLs to parent
       onUploadComplete(videoUrl, thumbnailUrl);

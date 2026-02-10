@@ -50,7 +50,14 @@ export const useRealTimeStats = () => {
     lastFetchTime.current = now;
     
     try {
-      // Usar Promise.all para executar queries em paralelo e reduzir tempo total
+      const now = new Date();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+
+      // Usar Promise.all para executar queries em paralelo
       const [
         contentResult,
         likesResult,
@@ -60,76 +67,41 @@ export const useRealTimeStats = () => {
         sharesResult,
         followersResult,
         activeUsersResult,
-        onlineUsersResult
+        onlineUsersResult,
+        // Queries adicionais para dados reais de vídeos
+        videosLikesResult,
+        videosViewsResult,
+        videosCommentsResult
       ] = await Promise.all([
-        // Buscar total de conteúdos (modelos)
-        supabase
-          .from('models')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_active', true),
-        
-        // Buscar total de curtidas
-        supabase
-          .from('likes')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_active', true),
-        
-        // Buscar total de comentários
-        supabase
-          .from('comments')
-          .select('*', { count: 'exact', head: true }),
-        
-        // Buscar views de hoje
-        (() => {
-          const now = new Date();
-          const startOfDay = new Date(now);
-          startOfDay.setHours(0, 0, 0, 0);
-          const endOfDay = new Date(now);
-          endOfDay.setHours(23, 59, 59, 999);
-          
-          return supabase
-            .from('video_views')
-            .select('*', { count: 'exact', head: true })
-            .gte('created_at', startOfDay.toISOString())
-            .lte('created_at', endOfDay.toISOString());
-        })(),
-        
-        // Buscar total de views
-        supabase
-          .from('video_views')
-          .select('*', { count: 'exact', head: true }),
-        
-        // Buscar total de compartilhamentos (somar shares_count dos vídeos)
-        supabase
-          .from('videos')
-          .select('shares_count'),
-        
-        // Buscar total de seguidores
-        supabase
-          .from('model_followers')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_active', true),
-        
-        // Buscar usuários ativos
-        (() => {
-          const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-          return supabase
-            .from('user_sessions')
-            .select('*', { count: 'exact', head: true })
-            .eq('is_active', true)
-            .gte('last_activity_at', twoMinutesAgo);
-        })(),
-        
-        // Buscar usuários online por estado
-        (() => {
-          const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-          return supabase
-            .from('online_users')
-            .select('location_state')
-            .eq('is_online', true)
-            .gte('last_seen_at', twoMinutesAgo)
-            .not('location_state', 'is', null);
-        })()
+        // Total de conteúdos (modelos ativos)
+        supabase.from('models').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        // Total de curtidas na tabela likes
+        supabase.from('likes').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        // Total de comentários
+        supabase.from('comments').select('*', { count: 'exact', head: true }),
+        // Views de hoje
+        supabase.from('video_views').select('*', { count: 'exact', head: true })
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString()),
+        // Total de views
+        supabase.from('video_views').select('*', { count: 'exact', head: true }),
+        // Shares dos vídeos
+        supabase.from('videos').select('shares_count'),
+        // Seguidores
+        supabase.from('model_followers').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        // Sessões ativas
+        supabase.from('user_sessions').select('*', { count: 'exact', head: true })
+          .eq('is_active', true).gte('last_activity_at', twoMinutesAgo),
+        // Usuários online por estado
+        supabase.from('online_users').select('location_state')
+          .eq('is_online', true).gte('last_seen_at', twoMinutesAgo)
+          .not('location_state', 'is', null),
+        // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
+        supabase.from('videos').select('likes_count'),
+        // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
+        supabase.from('videos').select('views_count'),
+        // Somar comments_count diretamente dos vídeos
+        supabase.from('videos').select('comments_count')
       ]);
 
       // Processar dados de usuários online por estado
@@ -145,20 +117,38 @@ export const useRealTimeStats = () => {
         totalOnlineUsers = Object.values(onlineUsersByState).reduce((sum, count) => sum + count, 0);
       }
 
-      // Calculate total shares by summing shares_count from all videos
+      // Calculate total shares from videos table
       const totalShares = sharesResult.data?.reduce((sum: number, video: any) => sum + (video.shares_count || 0), 0) || 0;
+
+      // Usar dados da tabela likes OU fallback dos contadores de vídeos
+      const likesFromTable = likesResult.count || 0;
+      const likesFromVideos = videosLikesResult.data?.reduce((sum: number, v: any) => sum + (v.likes_count || 0), 0) || 0;
+      const finalLikes = Math.max(likesFromTable, likesFromVideos);
+
+      // Views: usar tabela video_views OU fallback dos contadores
+      const viewsFromTable = totalViewsResult.count || 0;
+      const viewsFromVideos = videosViewsResult.data?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0;
+      const finalTotalViews = Math.max(viewsFromTable, viewsFromVideos);
+
+      // Comments: tabela comments OU fallback
+      const commentsFromTable = commentsResult.count || 0;
+      const commentsFromVideos = videosCommentsResult.data?.reduce((sum: number, v: any) => sum + (v.comments_count || 0), 0) || 0;
+      const finalComments = Math.max(commentsFromTable, commentsFromVideos);
+
+      // Views hoje: usar tabela ou fallback 
+      const viewsTodayCount = viewsTodayResult.count || 0;
 
       const newStats = {
         totalContent: contentResult.count || 0,
-        totalLikes: likesResult.count || 0,
-        totalComments: commentsResult.count || 0,
-        viewsToday: viewsTodayResult.count || 0,
+        totalLikes: finalLikes,
+        totalComments: finalComments,
+        viewsToday: viewsTodayCount,
         totalShares: totalShares,
         totalFollowers: followersResult.count || 0,
         activeUsers: totalOnlineUsers || 0,
         onlineUsersByState,
         totalOnlineUsers,
-        totalViews: totalViewsResult.count || 0,
+        totalViews: finalTotalViews,
         activeViews: activeUsersResult.count || 0
       };
 

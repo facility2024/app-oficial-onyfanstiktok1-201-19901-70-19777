@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { detectLocation } from '@/utils/geolocation';
 
 /**
  * Invisible component that tracks user location and online status.
- * Placed globally in App.tsx so ALL users (including anonymous) are tracked.
+ * Uses GPS + reverse geocoding + IP fallback for accurate Brazilian state detection.
  */
 export const UserLocationTracker = () => {
   const isInitialized = useRef(false);
@@ -28,50 +29,35 @@ export const UserLocationTracker = () => {
           ? 'mobile'
           : /iPad|Tablet/i.test(ua) ? 'tablet' : 'desktop';
 
-        // Get location from IP
-        let state = 'São Paulo';
-        let city = 'São Paulo';
-        let country = 'BR';
-
-        try {
-          const res = await fetch('https://ipinfo.io/json?token=');
-          if (res.ok) {
-            const data = await res.json();
-            state = data.region || 'São Paulo';
-            city = data.city || 'São Paulo';
-            country = data.country || 'BR';
-          }
-        } catch {
-          // Use defaults
-        }
-
-        console.log('📍 Tracking user location:', { state, city, deviceType });
+        // Robust location detection (GPS → IP → fallback)
+        const location = await detectLocation();
+        console.log(`📍 Location detected [${location.method}]:`, location.state, location.city);
 
         const now = new Date().toISOString();
 
-        // Check if authenticated user - use auth.uid if available
+        // Use auth.uid if logged in, otherwise anonymous UUID
         const { data: sessionData } = await supabase.auth.getSession();
-        const authUserId = sessionData?.session?.user?.id;
-        const finalUserId = authUserId || userId;
+        const finalUserId = sessionData?.session?.user?.id || userId;
 
-        // Try upsert, fall back to insert on conflict
+        const upsertData = {
+          user_id: finalUserId,
+          is_online: true,
+          last_seen_at: now,
+          location_state: location.state,
+          location_city: location.city,
+          location_country: location.country,
+          device_type: deviceType,
+          user_agent: ua,
+        };
+
         const { error } = await supabase
           .from('online_users')
-          .upsert({
-            user_id: finalUserId,
-            is_online: true,
-            last_seen_at: now,
-            location_state: state,
-            location_city: city,
-            location_country: country,
-            device_type: deviceType,
-            user_agent: ua,
-          }, { onConflict: 'user_id' });
+          .upsert(upsertData, { onConflict: 'user_id' });
 
         if (error) {
           console.error('❌ Error tracking online user:', error);
         } else {
-          console.log('✅ User tracked successfully:', { userId: userId.slice(0, 8), state, city });
+          console.log('✅ User tracked:', { state: location.state, city: location.city, method: location.method });
         }
 
         // Heartbeat every 60s
@@ -79,14 +65,8 @@ export const UserLocationTracker = () => {
           await supabase
             .from('online_users')
             .upsert({
-              user_id: finalUserId,
-              is_online: true,
+              ...upsertData,
               last_seen_at: new Date().toISOString(),
-              location_state: state,
-              location_city: city,
-              location_country: country,
-              device_type: deviceType,
-              user_agent: ua,
             }, { onConflict: 'user_id' });
         }, 60000);
       } catch (err) {
@@ -103,5 +83,5 @@ export const UserLocationTracker = () => {
     };
   }, []);
 
-  return null; // Invisible component
+  return null;
 };

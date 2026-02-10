@@ -359,7 +359,16 @@ export default function CreatorApplication() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white flex flex-col">
+    <div 
+      className="bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
       {/* Header Fixo */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
         <div className="flex items-center justify-between p-4 max-w-4xl mx-auto">
@@ -379,9 +388,8 @@ export default function CreatorApplication() {
         <ProgressIndicator currentStep={currentStep} completedSteps={completedSteps} />
       </div>
 
-      {/* Conteúdo Rolável */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 max-w-4xl mx-auto pb-32">
+      {/* Conteúdo */}
+      <div className="p-4 max-w-4xl mx-auto pb-36">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Etapa 1: Dados Pessoais */}
             {currentStep === 1 && (
@@ -575,7 +583,6 @@ export default function CreatorApplication() {
             )}
           </form>
         </div>
-      </div>
 
       {/* Footer Fixo com Botões */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-white/10 p-4 z-40">

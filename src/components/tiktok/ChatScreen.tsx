@@ -230,7 +230,7 @@ export const ChatScreen = ({
       }));
 
       // Call AI edge function
-      const { data, error } = await supabase.functions.invoke('model-chat', {
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           entityId,
           message: inputMessage,

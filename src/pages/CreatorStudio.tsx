@@ -257,8 +257,17 @@ export default function CreatorStudio() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div 
+      className="bg-gradient-to-br from-gray-900 via-gray-800 to-black py-8 px-4"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
+      <div className="max-w-6xl mx-auto pb-24">
         {/* Header */}
         <div className="mb-8">
           <Button
@@ -279,25 +288,25 @@ export default function CreatorStudio() {
 
         {/* Tabs */}
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 border border-gray-700 mb-6">
-            <TabsTrigger value="upload" className="data-[state=active]:bg-gray-700">
-              <Upload className="w-4 h-4 mr-2" />
+          <TabsList className="flex w-full overflow-x-auto bg-gray-800/50 border border-gray-700 mb-6 h-auto flex-wrap md:flex-nowrap">
+            <TabsTrigger value="upload" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <Upload className="w-4 h-4 mr-1" />
               Upload
             </TabsTrigger>
-            <TabsTrigger value="manage" className="data-[state=active]:bg-gray-700">
-              <List className="w-4 h-4 mr-2" />
+            <TabsTrigger value="manage" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <List className="w-4 h-4 mr-1" />
               Meus Vídeos
             </TabsTrigger>
-            <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700">
-              <BarChart3 className="w-4 h-4 mr-2" />
+            <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <BarChart3 className="w-4 h-4 mr-1" />
               Estatísticas
             </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-gray-700">
-              <CreditCard className="w-4 h-4 mr-2" />
+            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <CreditCard className="w-4 h-4 mr-1" />
               Assinaturas
             </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-gray-700">
-              <MessageCircle className="w-4 h-4 mr-2" />
+            <TabsTrigger value="chat" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <MessageCircle className="w-4 h-4 mr-1" />
               Chat
             </TabsTrigger>
           </TabsList>

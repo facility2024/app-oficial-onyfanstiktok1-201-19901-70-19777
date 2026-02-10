@@ -44,7 +44,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const [userStarted, setUserStarted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const retryCountRef = useRef(0);
-    const maxRetries = 3;
+    const maxRetries = 5;
+    const autoRetryTimerRef = useRef<NodeJS.Timeout | null>(null);
     const playLockRef = useRef(false);
 
     // Usar ref externo se fornecido
@@ -225,6 +226,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setupVideo();
       setIsReady(false);
       setHasError(false);
+      // Clear any pending auto-retry timer
+      if (autoRetryTimerRef.current) {
+        clearTimeout(autoRetryTimerRef.current);
+        autoRetryTimerRef.current = null;
+      }
       // Em mobile, sempre mostra o botão no primeiro vídeo. Após primeira interação, mantém desbloqueio.
       if (isMobile) {
         setNeedsUserInteraction(!userStarted);
@@ -237,6 +243,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       if (internalRef && 'current' in internalRef && internalRef.current) {
         try { internalRef.current.load(); } catch {}
       }
+      
+      return () => {
+        if (autoRetryTimerRef.current) {
+          clearTimeout(autoRetryTimerRef.current);
+          autoRetryTimerRef.current = null;
+        }
+      };
     }, [src, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
 
     // Controlar reprodução
@@ -310,18 +323,40 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
       const video = e.currentTarget;
+      const isBunnyVideo = video.src?.includes('b-cdn.net') || video.src?.includes('bunnycdn');
+      
       console.error('❌ Erro no vídeo:', {
         error: video.error,
         errorCode: video.error?.code,
         errorMessage: video.error?.message,
-        src: video.src.substring(0, 50) + '...',
+        src: video.src.substring(0, 80) + '...',
         networkState: video.networkState,
-        readyState: video.readyState
+        readyState: video.readyState,
+        isBunnyVideo,
+        retryCount: retryCountRef.current
       });
+      
+      // Auto-retry for Bunny videos (likely still processing)
+      if (isBunnyVideo && retryCountRef.current < maxRetries) {
+        retryCountRef.current++;
+        const delay = retryCountRef.current * 5000; // 5s, 10s, 15s, 20s, 25s
+        console.log(`🔄 Bunny video may still be processing. Auto-retry ${retryCountRef.current}/${maxRetries} in ${delay / 1000}s`);
+        setIsBuffering(true);
+        setHasError(false);
+        
+        if (autoRetryTimerRef.current) clearTimeout(autoRetryTimerRef.current);
+        autoRetryTimerRef.current = setTimeout(() => {
+          if (internalRef && 'current' in internalRef && internalRef.current) {
+            internalRef.current.load();
+          }
+        }, delay);
+        return;
+      }
+      
       setHasError(true);
       setIsBuffering(false);
       if (onError) onError(e);
-    }, [onError]);
+    }, [onError, internalRef, maxRetries]);
 
     const handleWaiting = useCallback(() => {
       setIsBuffering(true);
@@ -447,6 +482,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
             <div className="text-white text-center p-4">
               <div className="text-3xl mb-2">⚠️</div>
               <div className="text-sm mb-3">Erro ao carregar vídeo</div>
+              <div className="text-xs text-gray-400 mb-3">O vídeo pode ainda estar sendo processado</div>
               <button 
                 onClick={handleRetry}
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm flex items-center gap-2 mx-auto transition-colors"

@@ -6,6 +6,19 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Send, Image as ImageIcon, Mic, Link as LinkIcon, Loader2 } from 'lucide-react';
 
+// Helper to render text with clickable links
+const renderMessageWithLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all hover:text-blue-300">{part}</a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+};
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -457,7 +470,7 @@ export default function ModelChat() {
                     : 'bg-gray-800 text-white'
                 }`}
               >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap">{renderMessageWithLinks(message.content)}</p>
                 <p className="text-xs opacity-60 mt-1">
                   {message.timestamp.toLocaleTimeString('pt-BR', {
                     hour: '2-digit',
@@ -471,7 +484,7 @@ export default function ModelChat() {
           {isTyping && (
             <div className="flex justify-start">
               <div className="max-w-[80%] rounded-2xl px-4 py-2 bg-gray-800 text-white">
-                <p className="whitespace-pre-wrap">{typingText}</p>
+                <p className="whitespace-pre-wrap">{renderMessageWithLinks(typingText)}</p>
                 <span className="inline-block w-2 h-4 bg-white/60 animate-pulse ml-1" />
               </div>
             </div>

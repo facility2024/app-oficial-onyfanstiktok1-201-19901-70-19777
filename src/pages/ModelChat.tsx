@@ -24,6 +24,13 @@ interface ChatPanel {
   can_send_audio: boolean;
   can_send_images: boolean;
   can_send_links: boolean;
+  message_delay_seconds: number;
+}
+
+interface StoredChat {
+  messages: Message[];
+  startedAt: string; // ISO date of first message
+  lastGreetingDate: string | null; // YYYY-MM-DD of last greeting shown
 }
 
 interface EntityData {
@@ -50,23 +57,36 @@ export default function ModelChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [typingText, setTypingText] = useState('');
 
-  // 🔒 ISOLAMENTO: Carregar mensagens do localStorage específico desta entidade
+  // 🔒 ISOLAMENTO: Carregar mensagens do localStorage com expiração de 7 dias
   useEffect(() => {
     if (!entityId) return;
     
-    const storageKey = `chat_messages_${isCreator ? 'creator' : 'model'}_${entityId}`;
+    const storageKey = `chat_data_${isCreator ? 'creator' : 'model'}_${entityId}`;
     console.log('💬 Carregando histórico do chat:', storageKey);
     
     try {
-      const savedMessages = localStorage.getItem(storageKey);
-      if (savedMessages) {
-        const parsed = JSON.parse(savedMessages);
-        const messagesWithDates = parsed.map((msg: any) => ({
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed: StoredChat = JSON.parse(savedData);
+        
+        // Verificar expiração de 7 dias
+        const startedAt = new Date(parsed.startedAt);
+        const now = new Date();
+        const diffDays = (now.getTime() - startedAt.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (diffDays >= 7) {
+          console.log('🗑️ Conversa expirada (7 dias). Limpando...');
+          localStorage.removeItem(storageKey);
+          setMessages([]);
+          return;
+        }
+        
+        const messagesWithDates = parsed.messages.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }));
         setMessages(messagesWithDates);
-        console.log('✅ Histórico carregado:', messagesWithDates.length, 'mensagens');
+        console.log('✅ Histórico carregado:', messagesWithDates.length, 'mensagens, dias restantes:', Math.ceil(7 - diffDays));
       } else {
         console.log('📭 Nenhum histórico encontrado');
         setMessages([]);
@@ -77,14 +97,28 @@ export default function ModelChat() {
     }
   }, [entityId, isCreator]);
 
-  // 🔒 ISOLAMENTO: Salvar mensagens no localStorage específico desta entidade
+  // 🔒 ISOLAMENTO: Salvar mensagens no localStorage com data de início
   useEffect(() => {
     if (!entityId || messages.length === 0) return;
     
-    const storageKey = `chat_messages_${isCreator ? 'creator' : 'model'}_${entityId}`;
-    console.log('💾 Salvando histórico do chat:', storageKey);
+    const storageKey = `chat_data_${isCreator ? 'creator' : 'model'}_${entityId}`;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(messages));
+      const existing = localStorage.getItem(storageKey);
+      let startedAt = new Date().toISOString();
+      let lastGreetingDate: string | null = null;
+      
+      if (existing) {
+        const parsed: StoredChat = JSON.parse(existing);
+        startedAt = parsed.startedAt || startedAt;
+        lastGreetingDate = parsed.lastGreetingDate || null;
+      }
+      
+      const chatData: StoredChat = {
+        messages,
+        startedAt,
+        lastGreetingDate
+      };
+      localStorage.setItem(storageKey, JSON.stringify(chatData));
     } catch (error) {
       console.error('❌ Erro ao salvar histórico:', error);
     }
@@ -157,7 +191,7 @@ export default function ModelChat() {
       // Buscar configuração do chat panel
       let panelQuery = supabase
         .from('model_chat_panels' as any)
-        .select('is_active, is_online, ai_provider, greeting_message, greeting_image_url, greeting_link, greeting_description, can_read_images, can_send_audio, can_send_images, can_send_links');
+        .select('is_active, is_online, ai_provider, greeting_message, greeting_image_url, greeting_link, greeting_description, can_read_images, can_send_audio, can_send_images, can_send_links, message_delay_seconds');
 
       if (isCreator) {
         panelQuery = panelQuery.eq('creator_id', entityId);
@@ -173,20 +207,10 @@ export default function ModelChat() {
 
       const panelData = panel as any;
       if (panelData) {
-        setChatPanel(panelData as ChatPanel);
-        
-        // Adicionar mensagem de saudação se não houver mensagens
-        const storageKey = `chat_messages_${isCreator ? 'creator' : 'model'}_${entityId}`;
-        const savedMessages = localStorage.getItem(storageKey);
-        
-        if (!savedMessages && panelData.greeting_message) {
-          const greetingMsg: Message = {
-            role: 'assistant',
-            content: panelData.greeting_message,
-            timestamp: new Date()
-          };
-          setMessages([greetingMsg]);
-        }
+        setChatPanel({
+          ...panelData,
+          message_delay_seconds: panelData.message_delay_seconds || 1
+        } as ChatPanel);
       } else {
         setChatPanel({
           is_active: false,
@@ -199,7 +223,8 @@ export default function ModelChat() {
           can_read_images: false,
           can_send_audio: false,
           can_send_images: false,
-          can_send_links: false
+          can_send_links: false,
+          message_delay_seconds: 1
         });
       }
 
@@ -244,11 +269,51 @@ export default function ModelChat() {
       timestamp: new Date()
     };
 
+    // 🎁 Verificar se deve enviar saudação diária (1ª mensagem do dia)
+    const today = new Date().toISOString().split('T')[0];
+    const storageKey = `chat_data_${isCreator ? 'creator' : 'model'}_${entityId}`;
+    let shouldShowGreeting = false;
+    
+    try {
+      const existing = localStorage.getItem(storageKey);
+      if (existing) {
+        const parsed: StoredChat = JSON.parse(existing);
+        if (parsed.lastGreetingDate !== today && chatPanel?.greeting_message) {
+          shouldShowGreeting = true;
+        }
+      } else if (chatPanel?.greeting_message) {
+        shouldShowGreeting = true;
+      }
+    } catch {}
+
+    if (shouldShowGreeting && chatPanel?.greeting_message) {
+      const greetingMsg: Message = {
+        role: 'assistant',
+        content: chatPanel.greeting_message,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, greetingMsg]);
+      
+      // Salvar que a saudação do dia foi enviada
+      try {
+        const existing = localStorage.getItem(storageKey);
+        if (existing) {
+          const parsed: StoredChat = JSON.parse(existing);
+          parsed.lastGreetingDate = today;
+          localStorage.setItem(storageKey, JSON.stringify(parsed));
+        }
+      } catch {}
+    }
+
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setSending(true);
 
     try {
+      // ⏱️ Aplicar delay configurado antes de chamar a IA
+      const delayMs = (chatPanel?.message_delay_seconds || 1) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+
       const conversationHistory = messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -299,7 +364,7 @@ export default function ModelChat() {
   const clearChatHistory = () => {
     if (!entityId) return;
     
-    const storageKey = `chat_messages_${isCreator ? 'creator' : 'model'}_${entityId}`;
+    const storageKey = `chat_data_${isCreator ? 'creator' : 'model'}_${entityId}`;
     console.log('🗑️ Limpando histórico:', storageKey);
     localStorage.removeItem(storageKey);
     setMessages([]);

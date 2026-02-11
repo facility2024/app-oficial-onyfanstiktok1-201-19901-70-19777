@@ -343,7 +343,7 @@ export default function ModelChat() {
         content: msg.content
       }));
 
-      const { data, error } = await supabase.functions.invoke('model-chat', {
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           entityId,
           message: userMessage.content,

@@ -1,16 +1,26 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Send, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, User, Loader2, X, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 
 // Helper to render text with clickable links
-const renderMessageWithLinks = (text: string) => {
+const renderMessageWithLinks = (text: string, onLinkClick?: (url: string) => void) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
   return parts.map((part, i) =>
     urlRegex.test(part) ? (
-      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all hover:text-blue-300">{part}</a>
+      <a
+        key={i}
+        href={part}
+        onClick={(e) => {
+          e.preventDefault();
+          onLinkClick?.(part);
+        }}
+        className="text-blue-400 underline break-all hover:text-blue-300 cursor-pointer"
+      >
+        {part}
+      </a>
     ) : (
       <span key={i}>{part}</span>
     )
@@ -52,6 +62,7 @@ export const ChatScreen = ({
   const [chatConfig, setChatConfig] = useState<any>(null);
   const [displayName, setDisplayName] = useState(modelName);
   const [displayAvatar, setDisplayAvatar] = useState(modelAvatar);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const storageKey = `chat_messages_${entityId || modelName}`;
 
@@ -363,7 +374,7 @@ export const ChatScreen = ({
                   : 'bg-gray-800 text-white'
               }`}
             >
-              <p className="text-sm break-words whitespace-pre-wrap">{renderMessageWithLinks(message.text)}</p>
+              <p className="text-sm break-words whitespace-pre-wrap">{renderMessageWithLinks(message.text, setPreviewUrl)}</p>
               <p className={`text-xs mt-1 ${
                 message.sender === 'user' ? 'text-white/70' : 'text-gray-400'
               }`}>
@@ -378,7 +389,7 @@ export const ChatScreen = ({
           <div className="flex justify-start">
             <div className="max-w-[75%] rounded-2xl px-4 py-2 bg-gray-800 text-white">
               {typingText ? (
-                <p className="text-sm break-words whitespace-pre-wrap">{renderMessageWithLinks(typingText)}</p>
+                <p className="text-sm break-words whitespace-pre-wrap">{renderMessageWithLinks(typingText, setPreviewUrl)}</p>
               ) : (
                 <div className="flex items-center gap-1">
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -415,6 +426,45 @@ export const ChatScreen = ({
           </Button>
         </div>
       </div>
+      {/* Link Preview Popup */}
+      {previewUrl && (
+        <div 
+          className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div 
+            className="bg-gray-900 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <p className="text-white text-sm font-medium truncate flex-1 mr-2">
+                {previewUrl}
+              </p>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 p-1"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                </a>
+                <button onClick={() => setPreviewUrl(null)} className="text-gray-400 hover:text-white p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              <iframe
+                src={previewUrl}
+                className="w-full h-[60vh] rounded-lg border border-white/5"
+                sandbox="allow-scripts allow-same-origin"
+                title="Link preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

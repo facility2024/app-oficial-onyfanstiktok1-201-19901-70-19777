@@ -512,7 +512,7 @@ export default function ModelChat() {
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Digite sua mensagem..."
             className="flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
             disabled={sending || isTyping || !chatPanel?.is_active}

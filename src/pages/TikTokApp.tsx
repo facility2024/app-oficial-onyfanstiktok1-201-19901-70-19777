@@ -2366,7 +2366,7 @@ export const TikTokApp = () => {
   // Keyboard navigation for desktop
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isMobile && !showProfile && !showComments && !showSearch && !showLive) {
+      if (!isMobile && !showProfile && !showComments && !showChat && !showSearch && !showLive) {
         switch (e.key) {
           case 'ArrowUp':
             e.preventDefault();

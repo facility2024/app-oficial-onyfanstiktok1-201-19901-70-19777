@@ -19,6 +19,7 @@ import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, S
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { VideoCallPopup } from '@/components/tiktok/VideoCallPopup';
+import { VideoCallListPopup } from '@/components/tiktok/VideoCallListPopup';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -228,6 +229,7 @@ export const TikTokApp = () => {
   const VIDEOS_PER_BLOCK = 50; // Aumentado de 10 para 50 para carregar mais vídeos por vez
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
+  const [showVideoCallList, setShowVideoCallList] = useState(false);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
@@ -2523,7 +2525,7 @@ export const TikTokApp = () => {
       }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
-            <CategoryMenu onOpenLive={() => handleOpenVideoCall()} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
+            <CategoryMenu onOpenLive={() => setShowVideoCallList(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
             try {
               sessionStorage.setItem('logging_out', 'true');
               await supabase.auth.signOut();
@@ -2596,7 +2598,7 @@ export const TikTokApp = () => {
           setShowProfile(true);
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
-          handleOpenVideoCall();
+          setShowVideoCallList(true);
         }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} />
           </div>}
 
@@ -2612,7 +2614,7 @@ export const TikTokApp = () => {
             <span className="text-xs">Explorar</span>
           </button>
 
-          {isCreator && <button onClick={() => handleOpenVideoCall()} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
+          {isCreator && <button onClick={() => setShowVideoCallList(true)} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
               <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
             </button>}
 
@@ -2683,6 +2685,7 @@ export const TikTokApp = () => {
 
         {/* Video Chamada Popup */}
         <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
+        <VideoCallListPopup isOpen={showVideoCallList} onClose={() => setShowVideoCallList(false)} />
 
         {/* Action Tracker */}
         <ActionTracker onActionAttempt={async (actionType, userName) => {
@@ -2770,7 +2773,7 @@ export const TikTokApp = () => {
             <div className="space-y-1 mt-4" style={{
             pointerEvents: 'auto'
           }}>
-              <button onClick={() => handleOpenVideoCall()} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
+              <button onClick={() => setShowVideoCallList(true)} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                 <span className="relative inline-flex items-center justify-center mr-3">
                   <span className="absolute inset-0 rounded-full bg-green-400/20 animate-ping" />
                   <Phone className="w-5 h-5 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />
@@ -2919,7 +2922,7 @@ export const TikTokApp = () => {
                 setShowProfile(true);
               }} onOpenLive={() => {
                 console.log('Desktop live clicked');
-                handleOpenVideoCall();
+                setShowVideoCallList(true);
               }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
                 console.log('Desktop chat clicked');
                 setChatEntity({
@@ -3046,6 +3049,7 @@ export const TikTokApp = () => {
 
       {/* Desktop Video Chamada Popup */}
       <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
+      <VideoCallListPopup isOpen={showVideoCallList} onClose={() => setShowVideoCallList(false)} />
       
       {/* Age Verification Modal */}
       <AgeVerificationModal open={showAgeVerification} onClose={() => {

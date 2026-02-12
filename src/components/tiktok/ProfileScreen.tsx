@@ -710,7 +710,28 @@ if (!isOpen) return null;
             {/* Botão Vídeo Chamada */}
             <div className="px-4 pb-4">
               <button
-                onClick={() => navigate('/video-chamada')}
+                onClick={async () => {
+                  try {
+                    const { data, error } = await (supabase as any)
+                      .from('video_call_models')
+                      .select('id, redirect_url')
+                      .eq('is_active', true)
+                      .eq('selected_model_id', user.id)
+                      .maybeSingle();
+                    
+                    if (!error && data) {
+                      if (data.redirect_url) {
+                        window.open(data.redirect_url, '_blank');
+                      } else {
+                        navigate('/video-chamada');
+                      }
+                    } else {
+                      toast.info('📹 Esta modelo ainda não tem vídeo chamada disponível.');
+                    }
+                  } catch {
+                    toast.info('📹 Esta modelo ainda não tem vídeo chamada disponível.');
+                  }
+                }}
                 className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg"
               >
                 <span className="relative inline-flex items-center justify-center">

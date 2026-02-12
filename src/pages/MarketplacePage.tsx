@@ -463,9 +463,7 @@ export default function MarketplacePage() {
   return <div className="fixed inset-0 bg-black overflow-y-auto overflow-x-hidden">
       <div className="min-h-full pb-20">
         {/* Header com Gradiente Colorido */}
-        <div className="sticky top-0 z-20 backdrop-blur-sm border-b border-white/10" style={{
-        background: 'linear-gradient(135deg, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
-      }}>
+        <div className="sticky top-0 z-20 bg-gray-900 backdrop-blur-sm border-b border-white/10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => navigate("/app")} className="text-white hover:bg-white/20">

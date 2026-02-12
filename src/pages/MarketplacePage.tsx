@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
+
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
@@ -350,6 +350,8 @@ export default function MarketplacePage() {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [genreVideos, setGenreVideos] = useState<any[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(false);
+  const [allModels, setAllModels] = useState<any[]>([]);
+  const [modelsToShow, setModelsToShow] = useState(12); // 3 rows x 4 cols (or 3x3 on mobile)
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -357,6 +359,7 @@ export default function MarketplacePage() {
   });
   useEffect(() => {
     fetchProducts();
+    fetchAllModels();
   }, []);
   useEffect(() => {
     if (productIdFromUrl && products.length > 0) {
@@ -396,6 +399,21 @@ export default function MarketplacePage() {
     } else {
       setSelectedGenre(genre);
       fetchGenreVideos(genre);
+    }
+  };
+
+  const fetchAllModels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('models')
+        .select('id, name, username, avatar_url, followers_count')
+        .eq('is_active', true)
+        .order('followers_count', { ascending: false });
+      if (!error && data) {
+        setAllModels(data);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar modelos:", err);
     }
   };
 
@@ -464,14 +482,41 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* TOP 10 MODELOS Carousel */}
+      {/* TOP MODELOS - Grid Paginado */}
       <div className="bg-gradient-to-b from-gray-900 to-black py-6 border-b border-white/10">
         <div className="container mx-auto px-4">
           <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            TOP 10 MODELOS
+            TOP MODELOS
           </h2>
-          <ModelCarousel title="" icon={null} direction="ltr" carouselIndex={0} onSelectModel={(modelId) => navigate(`/app?profile=${modelId}`)} />
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+            {allModels.slice(0, modelsToShow).map(model => (
+              <div
+                key={model.id}
+                onClick={() => navigate(`/app?profile=${model.id}`)}
+                className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-gray-700 mb-1">
+                  <img
+                    src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                    alt={model.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-white text-xs text-center truncate w-full">{model.name}</p>
+              </div>
+            ))}
+          </div>
+          {modelsToShow < allModels.length && (
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={() => setModelsToShow(prev => prev + 12)}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-full text-sm"
+              >
+                VEJA MAIS MODELOS
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

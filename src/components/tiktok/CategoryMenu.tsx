@@ -77,8 +77,8 @@ export const CategoryMenu = ({
         </span>
       ),
       onClick: () => {
-        onOpenLive?.();
         setOpen(false);
+        setTimeout(() => navigate('/video-chamada'), 100);
       }
     },
     {

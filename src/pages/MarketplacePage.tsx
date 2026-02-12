@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
+import { BannerCarousel } from "@/components/tiktok/BannerCarousel";
 import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
@@ -494,25 +495,10 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Banner Promocional - Lojinha da Coco Nudi */}
-      {/* Desktop: banner original */}
-      <div className="hidden lg:block container mx-auto px-2 sm:px-4 py-6">
+      {/* Banner Promocional - Lojinha da Coco Nudi - Carousel */}
+      <div className="container mx-auto px-2 sm:px-4 py-6">
         <div className="w-full max-w-4xl mx-auto">
-          <img 
-            src="https://tiktokonyfans.b-cdn.net/material%20coconudi/00111.png" 
-            alt="Lojinha da Coco Nudi" 
-            className="w-full rounded-xl object-contain shadow-lg shadow-black/30"
-          />
-        </div>
-      </div>
-      {/* Mobile/Tablet: banner moedas */}
-      <div className="block lg:hidden container mx-auto px-2 sm:px-4 py-6">
-        <div className="w-full max-w-4xl mx-auto">
-          <img 
-            src="https://tiktokonyfans.b-cdn.net/material%20coconudi/Moedas%20coconudi%20(1).png" 
-            alt="Moedas Coconudi" 
-            className="w-full rounded-xl object-contain shadow-lg shadow-black/30"
-          />
+          <BannerCarousel />
         </div>
       </div>
 

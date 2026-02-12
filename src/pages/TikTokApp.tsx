@@ -139,6 +139,8 @@ export const TikTokApp = () => {
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [chatActiveMap, setChatActiveMap] = useState<Record<string, boolean>>({});
+  const [videoCallModels, setVideoCallModels] = useState<any[]>([]);
+  const [activeVideoCallModel, setActiveVideoCallModel] = useState<any>(null);
   const [chatOnlineMap, setChatOnlineMap] = useState<Record<string, boolean>>({});
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('app_isMuted');
@@ -624,6 +626,48 @@ export const TikTokApp = () => {
       supabase.removeChannel(adminChannel);
     };
   }, []); // REMOVIDO currentVideo da dependência para evitar loop
+
+  // 📹 CARREGAR MODELOS DE VÍDEO CHAMADA
+  useEffect(() => {
+    const loadVideoCallModels = async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('video_call_models')
+          .select('*')
+          .eq('is_active', true);
+        if (!error && data) {
+          setVideoCallModels(data);
+        }
+      } catch (e) {
+        console.log('Video call models not available');
+      }
+    };
+    loadVideoCallModels();
+  }, []);
+
+  // 📹 HANDLER: Verifica se modelo atual tem vídeo chamada
+  const handleOpenVideoCall = useCallback(() => {
+    if (!currentVideo) {
+      toast({ title: '📹 Vídeo Chamada', description: 'Nenhum vídeo selecionado.' });
+      return;
+    }
+    const modelId = currentVideo.model_id || currentVideo.creator_id || currentVideo.user?.id;
+    const matched = videoCallModels.find((vc: any) => vc.selected_model_id === modelId);
+    if (matched) {
+      setActiveVideoCallModel({
+        name: matched.model_name,
+        avatar_url: matched.model_avatar,
+        description: matched.description,
+        price: matched.price,
+      });
+      setShowLive(true);
+    } else {
+      toast({
+        title: '📹 Vídeo Chamada',
+        description: 'Esta modelo ainda não tem vídeo chamada disponível.',
+      });
+    }
+  }, [currentVideo, videoCallModels, toast]);
 
   useEffect(() => {
     console.log('🔍 DEBUG: useEffect disparado com currentVideo:', currentVideo?.id);
@@ -2479,7 +2523,7 @@ export const TikTokApp = () => {
       }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
-            <CategoryMenu onOpenLive={() => setShowLive(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
+            <CategoryMenu onOpenLive={() => handleOpenVideoCall()} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
             try {
               sessionStorage.setItem('logging_out', 'true');
               await supabase.auth.signOut();
@@ -2552,7 +2596,7 @@ export const TikTokApp = () => {
           setShowProfile(true);
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
-          setShowLive(true);
+          handleOpenVideoCall();
         }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} />
           </div>}
 
@@ -2568,7 +2612,7 @@ export const TikTokApp = () => {
             <span className="text-xs">Explorar</span>
           </button>
 
-          {isCreator && <button onClick={() => setShowLive(true)} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
+          {isCreator && <button onClick={() => handleOpenVideoCall()} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
               <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
             </button>}
 
@@ -2638,7 +2682,7 @@ export const TikTokApp = () => {
       }} />
 
         {/* Video Chamada Popup */}
-        <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} />
+        <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
 
         {/* Action Tracker */}
         <ActionTracker onActionAttempt={async (actionType, userName) => {
@@ -2726,7 +2770,7 @@ export const TikTokApp = () => {
             <div className="space-y-1 mt-4" style={{
             pointerEvents: 'auto'
           }}>
-              <button onClick={() => setShowLive(true)} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
+              <button onClick={() => handleOpenVideoCall()} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                 <span className="relative inline-flex items-center justify-center mr-3">
                   <span className="absolute inset-0 rounded-full bg-green-400/20 animate-ping" />
                   <Phone className="w-5 h-5 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />
@@ -2875,7 +2919,7 @@ export const TikTokApp = () => {
                 setShowProfile(true);
               }} onOpenLive={() => {
                 console.log('Desktop live clicked');
-                setShowLive(true);
+                handleOpenVideoCall();
               }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
                 console.log('Desktop chat clicked');
                 setChatEntity({
@@ -3001,7 +3045,7 @@ export const TikTokApp = () => {
     }} />
 
       {/* Desktop Video Chamada Popup */}
-      <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} />
+      <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
       
       {/* Age Verification Modal */}
       <AgeVerificationModal open={showAgeVerification} onClose={() => {

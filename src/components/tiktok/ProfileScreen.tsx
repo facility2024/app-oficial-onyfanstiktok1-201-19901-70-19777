@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@/types/database';
-import { X, ArrowLeft, Heart, Crown, Sparkles, Share2 } from 'lucide-react';
+import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
@@ -705,6 +705,20 @@ if (!isOpen) return null;
                   {isFollowing ? '✓ Seguindo' : '❤️ Seguir'}
                 </button>
               )}
+            </div>
+
+            {/* Botão Vídeo Chamada */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => navigate('/video-chamada')}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg"
+              >
+                <span className="relative inline-flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
+                  <Phone className="w-5 h-5" />
+                </span>
+                📹 Vídeo Chamada
+              </button>
             </div>
 
             {/* Links do Painel */}

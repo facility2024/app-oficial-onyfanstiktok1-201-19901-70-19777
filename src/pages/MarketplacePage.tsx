@@ -496,7 +496,7 @@ export default function MarketplacePage() {
 
       {/* Banner Promocional - Formato Google Ads 832x280 responsivo */}
       <div className="container mx-auto px-4 py-6">
-        <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '832 / 280' }}>
+        <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '800 / 220' }}>
           <img 
             src={bannerAtualizacao} 
             alt="Atualização Mensal de Conteúdos Exclusivos CocoNudi" 

@@ -15,9 +15,22 @@ interface VideoCallModel {
   is_active: boolean;
 }
 
+const DEMO_MODELS: VideoCallModel[] = [
+  {
+    id: 'demo-1',
+    model_name: 'Coconudi Model',
+    model_avatar: '/lovable-uploads/video-chamada-demo.png',
+    preview_video_url: '',
+    redirect_url: 'https://coconudi.com',
+    price: 'R$ 49,90',
+    description: 'Vídeo chamada exclusiva e personalizada. Converse ao vivo!',
+    is_active: true,
+  },
+];
+
 export const VideoCallPage = () => {
   const navigate = useNavigate();
-  const [models, setModels] = useState<VideoCallModel[]>([]);
+  const [models, setModels] = useState<VideoCallModel[]>(DEMO_MODELS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,10 +45,13 @@ export const VideoCallPage = () => {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setModels((data as any[]) || []);
+      if (!error && data && data.length > 0) {
+        setModels(data as VideoCallModel[]);
+      }
+      // If error or no data, keep demo models
     } catch (error) {
       console.error('Error loading video call models:', error);
+      // Keep demo models on error
     } finally {
       setLoading(false);
     }

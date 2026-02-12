@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const bannerImages = [
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/00111.png', alt: 'Lojinha da Coco Nudi' },
+  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/Moedas%20coconudi%20(1).png', alt: 'Moedas Coconudi' },
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/2.jpg', alt: 'Banner 2' },
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/3.jpg', alt: 'Banner 3' },
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/4.jpg', alt: 'Banner 4' },

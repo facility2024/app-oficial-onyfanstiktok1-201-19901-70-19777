@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-
+import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
@@ -483,41 +483,14 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* TOP MODELOS - Grid Paginado */}
+      {/* TOP 10 MODELOS Carousel */}
       <div className="bg-gradient-to-b from-gray-900 to-black py-6 border-b border-white/10">
         <div className="container mx-auto px-4">
           <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            TOP MODELOS
+            TOP 10 MODELOS
           </h2>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-            {allModels.slice(0, modelsToShow).map(model => (
-              <div
-                key={model.id}
-                onClick={() => navigate(`/app?profile=${model.id}`)}
-                className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-gray-700 mb-1">
-                  <img
-                    src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                    alt={model.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <p className="text-white text-xs text-center truncate w-full">{model.name}</p>
-              </div>
-            ))}
-          </div>
-          {modelsToShow < allModels.length && (
-            <div className="flex justify-center mt-4">
-              <Button
-                onClick={() => setModelsToShow(prev => prev + 12)}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-full text-sm"
-              >
-                VEJA MAIS MODELOS
-              </Button>
-            </div>
-          )}
+          <ModelCarousel title="" icon={null} direction="ltr" carouselIndex={0} onSelectModel={(modelId) => navigate(`/app?profile=${modelId}`)} />
         </div>
       </div>
 

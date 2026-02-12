@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown } from "lucide-react";
+import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconut-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
@@ -68,9 +68,9 @@ export const CategoryMenu = ({
   // Construir menuItems dinamicamente
   const baseMenuItems: MenuItemProps[] = [
     {
-      id: "live",
-      name: "Live",
-      icon: <Video className="w-5 h-5" />,
+      id: "video-chamada",
+      name: "Vídeo Chamada",
+      icon: <Phone className="w-5 h-5" />,
       onClick: () => {
         onOpenLive?.();
         setOpen(false);

@@ -35,6 +35,7 @@ import ModelChat from "./pages/ModelChat";
 import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
 import ProfilePage from "./pages/ProfilePage";
+import { VideoCallPage } from "./pages/VideoCallPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -152,6 +153,9 @@ const App = () => (
           
           {/* Anunciantes */}
           <Route path="/advertisers" element={<AdvertisersPage />} />
+          
+          {/* Vídeo Chamada */}
+          <Route path="/video-chamada" element={<VideoCallPage />} />
           
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={

@@ -15,10 +15,10 @@ import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Heart, MessageCircle, User, Search, ChevronUp, ChevronDown, Gift, Radio, Home, Video, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Plus, Share2, Music, Grid, Compass, Film, Crown, Phone } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
-import { LiveModal } from '@/components/tiktok/LiveModal';
+import { VideoCallPopup } from '@/components/tiktok/VideoCallPopup';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -2637,8 +2637,8 @@ export const TikTokApp = () => {
         setShowSearch(false);
       }} />
 
-        {/* Live Modal */}
-        <LiveModal isOpen={showLive} onClose={() => setShowLive(false)} onSelectModel={goToModelVideo} />
+        {/* Video Chamada Popup */}
+        <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} />
 
         {/* Action Tracker */}
         <ActionTracker onActionAttempt={async (actionType, userName) => {
@@ -2727,8 +2727,8 @@ export const TikTokApp = () => {
             pointerEvents: 'auto'
           }}>
               <button onClick={() => setShowLive(true)} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
-                <Video className="w-5 h-5 mr-3" />
-                <span>Live</span>
+                <Phone className="w-5 h-5 mr-3" />
+                <span>Vídeo Chamada</span>
               </button>
               <button onClick={e => {
               e.preventDefault();
@@ -2997,8 +2997,8 @@ export const TikTokApp = () => {
       setShowSearch(false);
     }} />
 
-      {/* Desktop Live Modal */}
-      <LiveModal isOpen={showLive} onClose={() => setShowLive(false)} onSelectModel={goToModelVideo} />
+      {/* Desktop Video Chamada Popup */}
+      <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} />
       
       {/* Age Verification Modal */}
       <AgeVerificationModal open={showAgeVerification} onClose={() => {

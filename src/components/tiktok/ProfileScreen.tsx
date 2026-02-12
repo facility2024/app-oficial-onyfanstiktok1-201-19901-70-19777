@@ -17,6 +17,7 @@ interface ProfileScreenProps {
   onVideoSelect?: (videoId: string) => void;
   onGoHome?: () => void;
   onOpenChat?: () => void;
+  isChatActive?: boolean;
 }
 
 type ContentTab = 'public' | 'premium' | 'private';
@@ -43,7 +44,7 @@ interface ModelImage {
   created_at: string;
 }
 
-export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, onOpenChat }: ProfileScreenProps) => {
+export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, onOpenChat, isChatActive = false }: ProfileScreenProps) => {
   const [contents, setContents] = useState<ModelContent[]>([]);
   const [publicContents, setPublicContents] = useState<ModelContent[]>([]);
   const [premiumContents, setPremiumContents] = useState<ModelContent[]>([]);
@@ -1006,23 +1007,25 @@ if (!isOpen) return null;
 
             {/* Seção de Mais Informações */}
             <div className="px-4 pb-6 border-t border-white/10 pt-6">
-              {/* Chat Button */}
-              <div className="flex justify-center mb-4">
-                <button 
-                  onClick={() => {
-                    console.log('Chat button clicked');
-                    if (onOpenChat) {
-                      onOpenChat();
-                    }
-                  }}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full text-sm hover:from-green-600 hover:to-emerald-700 transition-all font-semibold shadow-lg"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                  💬 Conversar
-                </button>
-              </div>
+              {/* Chat Button - só aparece se chat ativo no painel */}
+              {isChatActive && (
+                <div className="flex justify-center mb-4">
+                  <button 
+                    onClick={() => {
+                      console.log('Chat button clicked');
+                      if (onOpenChat) {
+                        onOpenChat();
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full text-sm hover:from-green-600 hover:to-emerald-700 transition-all font-semibold shadow-lg"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    💬 Conversar
+                  </button>
+                </div>
+              )}
 
 
               {/* Footer Links */}

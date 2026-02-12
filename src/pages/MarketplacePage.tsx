@@ -494,13 +494,15 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Banner Promocional */}
-      <div className="container mx-auto px-4 py-6">
-        <img 
-          src={bannerAtualizacao} 
-          alt="Atualização Mensal de Conteúdos Exclusivos CocoNudi" 
-          className="w-full rounded-lg object-cover"
-        />
+      {/* Banner Promocional - Lojinha da Coco Nudi */}
+      <div className="container mx-auto px-2 sm:px-4 py-6">
+        <div className="w-full max-w-4xl mx-auto">
+          <img 
+            src={bannerAtualizacao} 
+            alt="Lojinha da Coco Nudi" 
+            className="w-full rounded-xl object-contain shadow-lg shadow-black/30"
+          />
+        </div>
       </div>
 
       {/* CATEGORIAS - Gênero */}

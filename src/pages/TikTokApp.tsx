@@ -432,8 +432,16 @@ export const TikTokApp = () => {
   useEffect(() => {
     const requiresLogin = localStorage.getItem('requiresLogin');
     if (requiresLogin === 'true' && !currentUser) {
-      console.log('🚫 Login obrigatório - redirecionando para /auth');
-      navigate('/auth');
+      // Verifica se o contador realmente atingiu 10 vídeos
+      const savedCount = parseInt(localStorage.getItem('videosWatched') || '0', 10);
+      if (savedCount >= 10) {
+        console.log('🚫 Login obrigatório - redirecionando para /auth');
+        navigate('/auth');
+      } else {
+        // Limpa flag antiga (regra anterior de 5 vídeos)
+        console.log('🔄 Limpando flag requiresLogin obsoleta, contador:', savedCount);
+        localStorage.removeItem('requiresLogin');
+      }
     }
   }, [currentUser, navigate]);
 

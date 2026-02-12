@@ -494,15 +494,13 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Banner Promocional - Formato Google Ads 832x280 responsivo */}
+      {/* Banner Promocional */}
       <div className="container mx-auto px-4 py-6">
-        <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '800 / 220' }}>
-          <img 
-            src={bannerAtualizacao} 
-            alt="Atualização Mensal de Conteúdos Exclusivos CocoNudi" 
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
+        <img 
+          src={bannerAtualizacao} 
+          alt="Atualização Mensal de Conteúdos Exclusivos CocoNudi" 
+          className="w-full rounded-lg object-cover"
+        />
       </div>
 
       {/* CATEGORIAS - Gênero */}
@@ -631,9 +629,11 @@ export default function MarketplacePage() {
           </>}
       </div>
 
-      {/* Banner de Anúncio */}
+      {/* Banner de Anúncio - Formato 800x220 responsivo */}
       <div className="container mx-auto px-4 pb-8">
-        <AdCarousel />
+        <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '800 / 220' }}>
+          <AdCarousel />
+        </div>
       </div>
 
       {/* Modals */}

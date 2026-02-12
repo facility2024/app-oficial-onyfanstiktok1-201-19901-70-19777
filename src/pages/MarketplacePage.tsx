@@ -14,6 +14,18 @@ import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
+
+const VIDEO_GENRES = [
+  { name: "Gays", icon: "🏳️‍🌈" },
+  { name: "Travesti", icon: "🌈" },
+  { name: "Bunda", icon: "🍑" },
+  { name: "Dupla", icon: "👥" },
+  { name: "Grupo", icon: "👫" },
+  { name: "Swing", icon: "🔄" },
+  { name: "Lésbica", icon: "👩‍❤️‍👩" },
+  { name: "Hétero", icon: "💑" },
+  { name: "Peitos GG", icon: "🍈" },
+];
 interface Product {
   id: string;
   name: string;
@@ -335,6 +347,9 @@ export default function MarketplacePage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [genreVideos, setGenreVideos] = useState<any[]>([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -352,6 +367,38 @@ export default function MarketplacePage() {
       }
     }
   }, [productIdFromUrl, products]);
+
+  const fetchGenreVideos = async (genre: string) => {
+    setLoadingVideos(true);
+    try {
+      const { data, error } = await supabase
+        .from("videos")
+        .select("*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)")
+        .eq("is_active", true)
+        .contains("genres", [genre])
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setGenreVideos(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar vídeos do gênero:", error);
+      setGenreVideos([]);
+    } finally {
+      setLoadingVideos(false);
+    }
+  };
+
+  const handleGenreClick = (genre: string) => {
+    if (selectedGenre === genre) {
+      setSelectedGenre(null);
+      setGenreVideos([]);
+    } else {
+      setSelectedGenre(genre);
+      fetchGenreVideos(genre);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       const {
@@ -441,23 +488,68 @@ export default function MarketplacePage() {
       <div className="container mx-auto px-4 py-6 border-t border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white font-bold text-xl">CATEGORIAS - GÊNERO</h2>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" onClick={() => emblaApi?.scrollPrev()} className="text-white hover:bg-white/10 h-8 w-8">
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => emblaApi?.scrollNext()} className="text-white hover:bg-white/10 h-8 w-8">
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
         </div>
         
-        <div className="overflow-hidden -mx-4" ref={emblaRef}>
-          <div className="flex gap-3 px-4">
-            {categories.map(category => <Button key={category} variant={selectedCategory === category ? "default" : "outline"} onClick={() => setSelectedCategory(category)} className={`whitespace-nowrap flex-shrink-0 min-w-fit px-4 py-2 ${selectedCategory === category ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none" : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"}`}>
-                {category === "all" ? "Todos" : category.charAt(0).toUpperCase() + category.slice(1)}
-              </Button>)}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {VIDEO_GENRES.map(genre => (
+            <Button 
+              key={genre.name} 
+              variant={selectedGenre === genre.name ? "default" : "outline"} 
+              onClick={() => handleGenreClick(genre.name)} 
+              className={`whitespace-nowrap px-4 py-2 ${
+                selectedGenre === genre.name 
+                  ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none" 
+                  : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
+              }`}
+            >
+              {genre.icon} {genre.name}
+            </Button>
+          ))}
         </div>
+
+        {/* Vídeos do gênero selecionado */}
+        {selectedGenre && (
+          <div className="mt-6">
+            <h3 className="text-white font-bold text-lg mb-4">
+              Vídeos - {selectedGenre}
+            </h3>
+            {loadingVideos ? (
+              <p className="text-gray-400 text-center py-8">Carregando vídeos...</p>
+            ) : genreVideos.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">Nenhum vídeo encontrado nesta categoria</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {genreVideos.map(video => (
+                  <div 
+                    key={video.id} 
+                    className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900"
+                    onClick={() => navigate(`/app?video=${video.id}`)}
+                  >
+                    <img 
+                      src={video.thumbnail_url || ''} 
+                      alt={video.title || 'Vídeo'} 
+                      className="w-full aspect-[9/16] object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <p className="text-white text-xs font-semibold line-clamp-2">
+                        {video.title || (video.models?.name || video.profiles?.username || 'Vídeo')}
+                      </p>
+                      <p className="text-gray-300 text-[10px] mt-0.5">
+                        {video.models?.name || video.profiles?.username || ''}
+                      </p>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-black/50 rounded-full p-2">
+                        <Play className="w-6 h-6 text-white fill-white" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* PRODUTOS EM ALTA */}

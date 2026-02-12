@@ -396,13 +396,13 @@ export const TikTokApp = () => {
           console.log('🔐 INCREMENTANDO CONTADOR:', {
             anterior: videosWatched,
             novo: newCount,
-            deveRedirecionar: newCount >= 5
+            deveRedirecionar: newCount >= 10
           });
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
 
-          // Redireciona para /auth após 5 vídeos
-          if (newCount >= 5) {
+          // Redireciona para /auth após 10 vídeos
+          if (newCount >= 10) {
             console.log('🚨 REDIRECIONANDO PARA /AUTH!');
             localStorage.setItem('requiresLogin', 'true');
             localStorage.setItem('returnTo', '/app');
@@ -2033,13 +2033,13 @@ export const TikTokApp = () => {
           console.log('🔐 DESKTOP - INCREMENTANDO CONTADOR:', {
             anterior: videosWatched,
             novo: newCount,
-            deveRedirecionar: newCount >= 5
+            deveRedirecionar: newCount >= 10
           });
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
 
-          // Redireciona para /auth após 5 vídeos
-          if (newCount >= 5) {
+          // Redireciona para /auth após 10 vídeos
+          if (newCount >= 10) {
             console.log('🚨 DESKTOP - REDIRECIONANDO PARA /AUTH!');
             localStorage.setItem('requiresLogin', 'true');
             localStorage.setItem('returnTo', '/app');

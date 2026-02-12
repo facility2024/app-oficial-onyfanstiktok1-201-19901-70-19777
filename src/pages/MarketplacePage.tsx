@@ -471,7 +471,7 @@ export default function MarketplacePage() {
             <Sparkles className="w-5 h-5 text-yellow-400" />
             TOP 10 MODELOS
           </h2>
-          <ModelCarousel title="" icon={null} direction="ltr" carouselIndex={0} />
+          <ModelCarousel title="" icon={null} direction="ltr" carouselIndex={0} onSelectModel={(modelId) => navigate(`/app?profile=${modelId}`)} />
         </div>
       </div>
 

@@ -498,7 +498,7 @@ export default function MarketplacePage() {
       <div className="container mx-auto px-2 sm:px-4 py-6">
         <div className="w-full max-w-4xl mx-auto">
           <img 
-            src={bannerAtualizacao} 
+            src="https://tiktokonyfans.b-cdn.net/material%20coconudi/00111.png" 
             alt="Lojinha da Coco Nudi" 
             className="w-full rounded-xl object-contain shadow-lg shadow-black/30"
           />

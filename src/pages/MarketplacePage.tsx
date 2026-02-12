@@ -351,7 +351,8 @@ export default function MarketplacePage() {
   const [genreVideos, setGenreVideos] = useState<any[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [allModels, setAllModels] = useState<any[]>([]);
-  const [modelsToShow, setModelsToShow] = useState(12); // 3 rows x 4 cols (or 3x3 on mobile)
+  const [modelsToShow, setModelsToShow] = useState(12); // 3 rows x 4 cols
+  const [productsToShow, setProductsToShow] = useState(15); // 3 rows x 5 cols
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -603,13 +604,13 @@ export default function MarketplacePage() {
         
         {filteredProducts.length === 0 ? <div className="text-center py-12">
             <p className="text-gray-400">Nenhum produto encontrado</p>
-          </div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredProducts.map(product => <Card key={product.id} className="cursor-pointer hover:scale-105 transition-transform !bg-gray-900/50 !border-white/10" onClick={() => handleProductClick(product)}>
+          </div> : <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {filteredProducts.slice(0, productsToShow).map(product => <Card key={product.id} className="cursor-pointer hover:scale-105 transition-transform !bg-gray-900/50 !border-white/10" onClick={() => handleProductClick(product)}>
                 <CardContent className="p-3">
                   <div className="relative mb-3 group">
                     <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover rounded-md" />
                     
-                    {/* Video Play Icon */}
                     {product.video_url && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="bg-black/50 rounded-full p-3 group-hover:bg-black/70 group-hover:scale-110 transition-all duration-200">
@@ -641,7 +642,18 @@ export default function MarketplacePage() {
                   {product.stock === 0 && <p className="text-xs text-red-400 mt-1 font-semibold">Esgotado</p>}
                 </CardContent>
               </Card>)}
-          </div>}
+            </div>
+            {productsToShow < filteredProducts.length && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  onClick={() => setProductsToShow(prev => prev + 15)}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-full text-sm"
+                >
+                  VEJA MAIS MODELOS
+                </Button>
+              </div>
+            )}
+          </>}
       </div>
 
       {/* Banner de Anúncio */}

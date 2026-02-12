@@ -70,7 +70,12 @@ export const CategoryMenu = ({
     {
       id: "video-chamada",
       name: "Vídeo Chamada",
-      icon: <Phone className="w-5 h-5" />,
+      icon: (
+        <span className="relative inline-flex items-center justify-center">
+          <span className="absolute inset-0 rounded-full bg-green-400/20 animate-ping" />
+          <Phone className="w-5 h-5 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />
+        </span>
+      ),
       onClick: () => {
         onOpenLive?.();
         setOpen(false);

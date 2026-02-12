@@ -153,12 +153,12 @@ export const TikTokApp = () => {
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
-  // 🔐 CONTADOR DE VÍDEOS PARA LOGIN
+  // 🔐 CONTADOR DE VÍDEOS PARA LOGIN - Reseta a cada visita ao feed (conta 10 por sessão)
   const [videosWatched, setVideosWatched] = useState(() => {
-    const saved = localStorage.getItem('videosWatched');
-    const count = saved ? parseInt(saved, 10) : 0;
-    console.log('🔐 INICIALIZANDO CONTADOR DE VÍDEOS:', count);
-    return count;
+    console.log('🔐 INICIALIZANDO CONTADOR DE VÍDEOS: 0 (reset por sessão)');
+    localStorage.setItem('videosWatched', '0');
+    localStorage.removeItem('requiresLogin');
+    return 0;
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
 

@@ -13,6 +13,7 @@ import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
+import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
 interface Product {
   id: string;
   name: string;
@@ -429,20 +430,11 @@ export default function MarketplacePage() {
 
       {/* Banner Promocional */}
       <div className="container mx-auto px-4 py-6">
-        <Card className="!bg-gradient-to-br !from-purple-600 !to-pink-600 !border-none overflow-hidden relative">
-          <CardContent className="p-6 text-center">
-            <div className="absolute inset-0 bg-black/20" />
-            <div className="relative z-10">
-              <Sparkles className="w-12 h-12 text-yellow-300 mx-auto mb-3 animate-pulse" />
-              <h3 className="text-white text-2xl md:text-3xl font-bold mb-2">
-                ATUALIZAÇÃO MENSAL
-              </h3>
-              <p className="text-white/90 text-base">
-                DE CONTEÚDOS EXCLUSIVOS COCONUDI
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <img 
+          src={bannerAtualizacao} 
+          alt="Atualização Mensal de Conteúdos Exclusivos CocoNudi" 
+          className="w-full rounded-lg object-cover"
+        />
       </div>
 
       {/* CATEGORIAS - Gênero */}

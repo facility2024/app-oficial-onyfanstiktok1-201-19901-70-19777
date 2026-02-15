@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@/types/database';
-import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone } from 'lucide-react';
+import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone, Radio } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
@@ -62,6 +62,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [isCreator, setIsCreator] = useState(false);
   const [isFollowingCreator, setIsFollowingCreator] = useState(false);
   const [hideSubscriptionSection, setHideSubscriptionSection] = useState(false);
+  const [profileVideoCallActive, setProfileVideoCallActive] = useState(false);
+  const [profileVideoCallUrl, setProfileVideoCallUrl] = useState('');
+  const [profileLiveActive, setProfileLiveActive] = useState(false);
+  const [profileLiveUrl, setProfileLiveUrl] = useState('');
   
   const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
   const navigate = useNavigate();
@@ -81,7 +85,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       Promise.all([
         loadModelContent(),
         checkFollowingStatus(),
-        checkCreatorStatus()
+        checkCreatorStatus(),
+        loadServiceStatus()
       ]);
     }
   }, [isOpen, user.id]);
@@ -102,6 +107,26 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       if (isUserCreator) {
         const following = await checkCreatorFollow(user.id);
         setIsFollowingCreator(following);
+      }
+    } catch {
+      // Silently fail
+    }
+  };
+
+  // Carregar status de Vídeo Chamada e Live do perfil
+  const loadServiceStatus = async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('video_call_active, video_call_url, live_active, live_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setProfileVideoCallActive(data.video_call_active || false);
+        setProfileVideoCallUrl(data.video_call_url || '');
+        setProfileLiveActive(data.live_active || false);
+        setProfileLiveUrl(data.live_url || '');
       }
     } catch {
       // Silently fail
@@ -708,9 +733,15 @@ if (!isOpen) return null;
             </div>
 
             {/* Botão Vídeo Chamada */}
-            <div className="px-4 pb-4">
+            <div className="px-4 pb-2">
               <button
                 onClick={async () => {
+                  // Primeiro checar no perfil do criador
+                  if (profileVideoCallActive && profileVideoCallUrl) {
+                    window.open(profileVideoCallUrl, '_blank');
+                    return;
+                  }
+                  // Fallback: checar na tabela video_call_models (admin)
                   try {
                     const { data, error } = await (supabase as any)
                       .from('video_call_models')
@@ -719,12 +750,8 @@ if (!isOpen) return null;
                       .eq('selected_model_id', user.id)
                       .maybeSingle();
                     
-                    if (!error && data) {
-                      if (data.redirect_url) {
-                        window.open(data.redirect_url, '_blank');
-                      } else {
-                        navigate('/video-chamada');
-                      }
+                    if (!error && data && data.redirect_url) {
+                      window.open(data.redirect_url, '_blank');
                     } else {
                       toast.info('📹 Esta modelo ainda não tem vídeo chamada disponível.');
                     }
@@ -739,6 +766,32 @@ if (!isOpen) return null;
                   <Phone className="w-5 h-5" />
                 </span>
                 📹 Vídeo Chamada
+              </button>
+            </div>
+
+            {/* Botão Live */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => {
+                  if (profileLiveActive && profileLiveUrl) {
+                    window.open(profileLiveUrl, '_blank');
+                  } else {
+                    toast.info('🔴 Esta modelo não está com Live no momento.');
+                  }
+                }}
+                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold transition-all shadow-lg ${
+                  profileLiveActive 
+                    ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700' 
+                    : 'bg-gray-700 text-white/60'
+                }`}
+              >
+                <span className="relative inline-flex items-center justify-center">
+                  {profileLiveActive && (
+                    <span className="absolute inset-0 rounded-full bg-red-400/30 animate-ping" />
+                  )}
+                  <Radio className={`w-5 h-5 ${profileLiveActive ? 'text-white' : 'text-white/60'}`} />
+                </span>
+                🔴 Live {profileLiveActive && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full ml-1">AO VIVO</span>}
               </button>
             </div>
 

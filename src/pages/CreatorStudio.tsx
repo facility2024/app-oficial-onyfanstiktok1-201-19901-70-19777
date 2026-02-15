@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard, Phone, Radio, Settings } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
@@ -48,6 +48,14 @@ export default function CreatorStudio() {
   const [apiKey, setApiKey] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [messageDelay, setMessageDelay] = useState([2]); // seconds
+  
+  // Video Call & Live state
+  const [videoCallActive, setVideoCallActive] = useState(false);
+  const [videoCallUrl, setVideoCallUrl] = useState('');
+  const [liveActive, setLiveActive] = useState(false);
+  const [liveUrl, setLiveUrl] = useState('');
+  const [savingServices, setSavingServices] = useState(false);
+  const [loadingServices, setLoadingServices] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -63,10 +71,11 @@ export default function CreatorStudio() {
     checkCreatorRole();
   }, []);
   
-  // Load chat config when userId is available
+  // Load chat config and services when userId is available
   useEffect(() => {
     if (userId) {
       loadChatConfig();
+      loadServicesConfig();
     }
   }, [userId]);
   
@@ -93,6 +102,53 @@ export default function CreatorStudio() {
       console.error('Erro ao carregar config do chat:', error);
     } finally {
       setLoadingChat(false);
+    }
+  };
+  
+  const loadServicesConfig = async () => {
+    if (!userId) return;
+    setLoadingServices(true);
+    try {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('video_call_active, video_call_url, live_active, live_url')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (data) {
+        setVideoCallActive(data.video_call_active || false);
+        setVideoCallUrl(data.video_call_url || '');
+        setLiveActive(data.live_active || false);
+        setLiveUrl(data.live_url || '');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar serviços:', error);
+    } finally {
+      setLoadingServices(false);
+    }
+  };
+  
+  const saveServicesSettings = async () => {
+    if (!userId) return;
+    setSavingServices(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('profiles')
+        .update({
+          video_call_active: videoCallActive,
+          video_call_url: videoCallUrl,
+          live_active: liveActive,
+          live_url: liveUrl,
+        })
+        .eq('id', userId);
+      
+      if (error) throw error;
+      toast.success('Serviços atualizados com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao salvar serviços:', error);
+      toast.error('Erro ao salvar: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setSavingServices(false);
     }
   };
   
@@ -308,6 +364,10 @@ export default function CreatorStudio() {
             <TabsTrigger value="chat" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <MessageCircle className="w-4 h-4 mr-1" />
               Chat
+            </TabsTrigger>
+            <TabsTrigger value="services" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <Settings className="w-4 h-4 mr-1" />
+              Serviços
             </TabsTrigger>
           </TabsList>
 
@@ -803,6 +863,106 @@ export default function CreatorStudio() {
                 <li>Use Gemini (gratuito) ou OpenAI (pago) como provedor</li>
                 <li>A API key é necessária para o funcionamento do chat</li>
               </ul>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Serviços (Vídeo Chamada & Live) */}
+          <TabsContent value="services">
+            <Card className="bg-gray-800/50 border-gray-700 p-6">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Serviços Interativos
+              </h3>
+              
+              {loadingServices ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Vídeo Chamada Section */}
+                  <div className="p-4 bg-gray-700/50 rounded-lg space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                          <Phone className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <Label className="text-white font-semibold">📹 Vídeo Chamada</Label>
+                          <p className="text-sm text-gray-400">Ative para receber chamadas de vídeo dos seus fãs</p>
+                        </div>
+                      </div>
+                      <Switch 
+                        checked={videoCallActive} 
+                        onCheckedChange={setVideoCallActive}
+                      />
+                    </div>
+                    
+                    {videoCallActive && (
+                      <div className="space-y-2 pl-13">
+                        <Label className="text-white text-sm">Link de redirecionamento</Label>
+                        <Input
+                          type="url"
+                          value={videoCallUrl}
+                          onChange={(e) => setVideoCallUrl(e.target.value)}
+                          placeholder="https://seu-link-de-videochamada.com"
+                          className="bg-gray-600 border-gray-500 text-white"
+                        />
+                        <p className="text-xs text-gray-400">Quando o usuário clicar, será redirecionado para este link</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Live Section */}
+                  <div className="p-4 bg-gray-700/50 rounded-lg space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+                          <Radio className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <Label className="text-white font-semibold">🔴 Live</Label>
+                          <p className="text-sm text-gray-400">Ative quando estiver ao vivo para seus seguidores</p>
+                        </div>
+                      </div>
+                      <Switch 
+                        checked={liveActive} 
+                        onCheckedChange={setLiveActive}
+                      />
+                    </div>
+                    
+                    {liveActive && (
+                      <div className="space-y-2 pl-13">
+                        <Label className="text-white text-sm">Link da Live</Label>
+                        <Input
+                          type="url"
+                          value={liveUrl}
+                          onChange={(e) => setLiveUrl(e.target.value)}
+                          placeholder="https://seu-link-de-live.com"
+                          className="bg-gray-600 border-gray-500 text-white"
+                        />
+                        <p className="text-xs text-gray-400">Quando ativo, aparecerá um ícone verde piscando no seu perfil</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botão Salvar */}
+                  <Button 
+                    onClick={saveServicesSettings}
+                    disabled={savingServices}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+                  >
+                    {savingServices ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      'Salvar Serviços'
+                    )}
+                  </Button>
+                </div>
+              )}
             </Card>
           </TabsContent>
         </Tabs>

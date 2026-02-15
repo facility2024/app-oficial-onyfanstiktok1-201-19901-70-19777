@@ -11,6 +11,7 @@ export interface CreatorVideo {
   thumbnail_locked?: string;
   visibility: 'public' | 'premium' | 'private';
   is_active: boolean;
+  is_featured?: boolean;
   views_count: number;
   likes_count: number;
   comments_count: number;
@@ -164,6 +165,23 @@ export const useCreatorVideos = () => {
     await changeVisibility(videoId, newVisibility);
   };
 
+  const toggleVideoFeatured = async (videoId: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_featured: !currentFeatured } as any)
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast.success(!currentFeatured ? '🔥 Vídeo marcado como PRODUTOS EM ALTA!' : 'Vídeo removido dos destaques');
+      fetchVideos();
+    } catch (error) {
+      console.error('Erro ao alterar destaque:', error);
+      toast.error('Erro ao alterar destaque do vídeo');
+    }
+  };
+
   return {
     videos,
     loading,
@@ -175,6 +193,7 @@ export const useCreatorVideos = () => {
     setVisibilityFilter,
     toggleVideoActive,
     toggleVideoPremium,
+    toggleVideoFeatured,
     changeVisibility,
     updateVideo,
     deleteVideo,

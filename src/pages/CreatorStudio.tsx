@@ -65,6 +65,7 @@ export default function CreatorStudio() {
     thumbnail_url: '',
     genres: [] as string[],
     visibility: 'public' as 'public' | 'premium' | 'private',
+    is_featured: false,
   });
 
   useEffect(() => {
@@ -269,6 +270,7 @@ export default function CreatorStudio() {
           creator_id: user.id,  // ID do criador autenticado (oculto)
           model_id: null,       // NULL para criadores
           visibility: formData.visibility,
+          is_featured: formData.is_featured,
           is_active: true,
           duration: '00:00',
           genres: validatedData.genres,
@@ -286,6 +288,7 @@ export default function CreatorStudio() {
         thumbnail_url: '',
         genres: [],
         visibility: 'public',
+        is_featured: false,
       });
 
     } catch (error: any) {
@@ -586,6 +589,21 @@ export default function CreatorStudio() {
                       💡 Configure seus planos de assinatura na aba "Assinaturas" para que usuários possam assinar seu conteúdo.
                     </p>
                   )}
+                </div>
+
+                {/* Toggle PRODUTOS EM ALTA */}
+                <div className="flex items-center justify-between p-4 rounded-lg border-2 border-orange-500/30 bg-orange-500/5">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🔥</span>
+                    <div>
+                      <Label className="text-white font-semibold">Marcar como PRODUTOS EM ALTA</Label>
+                      <p className="text-xs text-gray-400 mt-0.5">Seu conteúdo aparecerá em destaque na home do Marketplace</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formData.is_featured}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                  />
                 </div>
 
                 {/* Preview */}

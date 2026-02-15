@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe } from 'lucide-react';
+import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe, Flame } from 'lucide-react';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { EditVideoModal } from './EditVideoModal';
 import { DeleteVideoDialog } from './DeleteVideoDialog';
@@ -22,6 +22,7 @@ export const VideoManagementTable = () => {
     setVisibilityFilter,
     toggleVideoActive,
     toggleVideoPremium,
+    toggleVideoFeatured,
   } = useCreatorVideos();
 
   const [editingVideo, setEditingVideo] = useState<CreatorVideo | null>(null);
@@ -115,6 +116,11 @@ export const VideoManagementTable = () => {
                       <Badge variant={video.is_active ? 'default' : 'secondary'}>
                         {video.is_active ? 'Ativo' : 'Pausado'}
                       </Badge>
+                      {(video as any).is_featured && (
+                        <Badge variant="default" className="bg-orange-500/20 text-orange-400 border-orange-500">
+                          <Flame className="w-3 h-3 mr-1" /> Em Alta
+                        </Badge>
+                      )}
                       {video.visibility === 'public' && (
                         <Badge variant="outline" className="text-gray-400 border-gray-500">
                           <Globe className="w-3 h-3 mr-1" /> Público
@@ -210,6 +216,18 @@ export const VideoManagementTable = () => {
                           → Público
                         </>
                       )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleVideoFeatured(video.id, !!(video as any).is_featured)}
+                      className={(video as any).is_featured
+                        ? 'bg-orange-600/20 text-orange-400 border-orange-500/50 hover:bg-orange-600/30'
+                        : 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600'
+                      }
+                    >
+                      <Flame className="w-3 h-3 mr-1" />
+                      {(video as any).is_featured ? 'Remover Destaque' : '🔥 Em Alta'}
                     </Button>
                     <Button
                       size="sm"

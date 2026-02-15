@@ -1,5 +1,5 @@
 import { Video } from '@/types/database';
-import { Music, Crown, Lock } from 'lucide-react';
+import { Coffee, Crown, Lock } from 'lucide-react';
 import { VinylRecord } from './VinylRecord';
 
 interface BottomInfoProps {
@@ -56,14 +56,14 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
         {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
       </div>
 
-      {/* Music Info - Clicável */}
+      {/* Cocoa Info - Clicável */}
       <div 
         onClick={handleMusicClick}
         className="flex items-center gap-2 text-white md:text-gray-800 text-xs drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
       >
         <VinylRecord isPlaying={isPlaying} hasMusic={true} />
         <div className="flex items-center gap-1 truncate">
-          <Music className="w-3 h-3 animate-pulse" />
+          <Coffee className="w-3 h-3 animate-pulse" />
           <span className="truncate font-medium">
             {video.music_name || 'Som original'}
           </span>

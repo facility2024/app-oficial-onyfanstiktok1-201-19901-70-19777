@@ -695,9 +695,8 @@ export default function MarketplacePage() {
               {products.length > productsToShow && (
                 <div className="flex justify-center mt-4">
                   <Button
-                    variant="outline"
                     onClick={() => setProductsToShow(prev => prev + 15)}
-                    className="text-white border-white/20 hover:bg-white/10"
+                    className="bg-gray-800 text-white border border-white/20 hover:bg-gray-700 px-6"
                   >
                     Ver mais produtos
                   </Button>

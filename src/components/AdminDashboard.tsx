@@ -42,6 +42,7 @@ import { AdminActivateVIP } from './admin/AdminActivateVIP';
 import { AdminModelSubscriptions } from './admin/AdminModelSubscriptions';
 import { AdminAffiliates } from './admin/AdminAffiliates';
 import { AdminVideoCall } from './admin/AdminVideoCall';
+import { AdminAds } from './admin/AdminAds';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -198,6 +199,8 @@ export const AdminDashboard = () => {
         return <AdminLocalBusinesses />;
       case 'chat-panels':
         return <AdminModelChatPanels />;
+      case 'ads':
+        return <AdminAds />;
       case 'videos':
         return <AdminVideos />;
       case 'genres':

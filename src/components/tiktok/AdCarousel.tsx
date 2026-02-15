@@ -75,15 +75,15 @@ export const AdCarousel = () => {
   };
 
   return (
-    <div className="w-full bg-gradient-to-br from-gray-900 to-black p-4 rounded-lg border border-gray-800">
-      <h2 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
+    <div className="w-full">
+      <h2 className="text-white font-bold text-lg mb-2 flex items-center gap-2">
         <span className="text-blue-400">📢</span>
         Patrocinado
       </h2>
       
       <div
-        className="relative rounded-lg overflow-hidden group cursor-pointer mx-auto"
-        style={{ width: 300, height: 200 }}
+        className="relative overflow-hidden group cursor-pointer mx-auto border border-gray-700"
+        style={{ width: 500, height: 200 }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => navigate('/advertisers')}

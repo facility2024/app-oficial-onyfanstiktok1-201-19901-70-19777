@@ -401,55 +401,36 @@ export default function MarketplacePage() {
   const fetchGenreVideos = async (genre: string) => {
     setLoadingVideos(true);
     try {
-      // Buscar vídeos do gênero
-      const { data: videoData, error: videoError } = await supabase
-        .from("videos")
-        .select("*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)")
-        .eq("is_active", true)
-        .contains("genres", [genre])
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (videoError) throw videoError;
-      setGenreVideos(videoData || []);
+      // A tabela videos NÃO tem coluna genres - não buscar vídeos por gênero
+      setGenreVideos([]);
 
       // Buscar marketplace_products cuja categoria corresponde ao gênero
       console.log('🔍 Buscando produtos para gênero:', genre);
-      const { data: prodData, error: prodError } = await (supabase
+      
+      // Buscar todos os produtos ativos e filtrar no client para máxima flexibilidade
+      const { data: allProds, error: prodError } = await (supabase
         .from("marketplace_products" as any)
         .select("*")
         .eq("is_active", true)
-        .ilike("category", `%${genre}%`)
         .order("created_at", { ascending: false }) as any);
 
-      console.log('📦 Produtos encontrados:', prodData?.length, 'Erro:', prodError);
-      if (prodData?.length) {
-        console.log('📦 Categorias dos produtos:', prodData.map((p: any) => p.category));
+      if (prodError) {
+        console.error('❌ Erro ao buscar produtos:', prodError);
+        setGenreProducts([]);
+        return;
       }
 
-      // Se não encontrou com ilike no gênero, buscar TODOS os produtos e filtrar no client
-      if (!prodError && prodData && prodData.length > 0) {
-        setGenreProducts(prodData as Product[]);
+      if (allProds) {
+        console.log('📦 Todas categorias disponíveis:', [...new Set(allProds.map((p: any) => p.category))]);
+        const filtered = allProds.filter((p: any) => {
+          const cat = (p.category || '').toLowerCase();
+          const g = genre.toLowerCase();
+          return cat.includes(g) || g.includes(cat);
+        });
+        console.log('📦 Produtos filtrados para', genre, ':', filtered.length);
+        setGenreProducts(filtered as Product[]);
       } else {
-        // Fallback: buscar todos e comparar manualmente
-        const { data: allProds } = await (supabase
-          .from("marketplace_products" as any)
-          .select("*")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false }) as any);
-        
-        if (allProds) {
-          console.log('📦 Todas categorias disponíveis:', [...new Set(allProds.map((p: any) => p.category))]);
-          const filtered = allProds.filter((p: any) => {
-            const cat = (p.category || '').toLowerCase();
-            const g = genre.toLowerCase();
-            return cat.includes(g) || g.includes(cat);
-          });
-          console.log('📦 Produtos filtrados manualmente:', filtered.length);
-          setGenreProducts(filtered as Product[]);
-        } else {
-          setGenreProducts([]);
-        }
+        setGenreProducts([]);
       }
     } catch (error) {
       console.error("Erro ao carregar conteúdo do gênero:", error);

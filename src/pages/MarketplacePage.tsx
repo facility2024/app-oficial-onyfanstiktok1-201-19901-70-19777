@@ -432,9 +432,9 @@ export default function MarketplacePage() {
     try {
       const { data, error } = await supabase
         .from('models')
-        .select('id, name, username, avatar_url, followers_count')
+        .select('id, name, username, avatar_url, profile_image_url, followers_count')
         .eq('is_active', true)
-        .order('followers_count', { ascending: false });
+        .order('name', { ascending: true });
       if (!error && data) {
         setAllModels(data);
       }
@@ -601,6 +601,55 @@ export default function MarketplacePage() {
           </div>
         )}
       </div>
+
+      {/* MODELOS - Grid com todas as modelos por nome */}
+      {!selectedGenre && (
+        <div className="container mx-auto px-4 pb-8">
+          <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
+            👑 TODAS AS MODELOS
+          </h2>
+          
+          {allModels.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">Nenhuma modelo encontrada</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                {allModels.slice(0, modelsToShow).map(model => (
+                  <div 
+                    key={model.id} 
+                    className="flex flex-col items-center cursor-pointer group"
+                    onClick={() => navigate(`/app?profile=${model.id}`)}
+                  >
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-1.5 bg-gray-800">
+                      <img 
+                        src={model.profile_image_url || model.avatar_url || '/placeholder.svg'} 
+                        alt={model.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    </div>
+                    <p className="text-white text-xs font-semibold text-center line-clamp-1 w-full">
+                      {model.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {allModels.length > modelsToShow && (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setModelsToShow(prev => prev + 12)}
+                    className="text-white border-white/20 hover:bg-white/10"
+                  >
+                    Ver mais modelos
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* PRODUTOS EM ALTA - Apenas vídeos com is_featured = true */}
       {!selectedGenre && (

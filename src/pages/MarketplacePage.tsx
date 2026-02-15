@@ -651,53 +651,113 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      {/* PRODUTOS EM ALTA - Apenas vídeos com is_featured = true */}
+      {/* PRODUTOS POR MODELO (marketplace_products por categoria) */}
       {!selectedGenre && (
+        <div className="container mx-auto px-4 pb-8">
+          <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
+            🛍️ PRODUTOS POR MODELO
+          </h2>
+
+          {/* Filtro por categoria */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {categories.map(cat => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(cat)}
+                className={`whitespace-nowrap ${
+                  selectedCategory === cat
+                    ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none"
+                    : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
+                }`}
+              >
+                {cat === "all" ? "📦 Todos" : `📁 ${cat}`}
+              </Button>
+            ))}
+          </div>
+
+          {filteredProducts.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {filteredProducts.slice(0, productsToShow).map(product => (
+                  <div
+                    key={product.id}
+                    className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-colors"
+                    onClick={() => handleProductClick(product)}
+                  >
+                    <div className="relative aspect-square overflow-hidden">
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-white text-xs font-semibold line-clamp-1">{product.name}</p>
+                      <p className="text-gray-400 text-[10px] line-clamp-1">{product.description}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-green-400 text-sm font-bold">R$ {product.price.toFixed(2)}</span>
+                        <div className="flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          <span className="text-gray-400 text-[10px]">{product.average_rating.toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {filteredProducts.length > productsToShow && (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setProductsToShow(prev => prev + 15)}
+                    className="text-white border-white/20 hover:bg-white/10"
+                  >
+                    Ver mais produtos
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* PRODUTOS EM ALTA - Apenas vídeos com is_featured = true */}
+      {!selectedGenre && featuredVideos.length > 0 && (
         <div className="container mx-auto px-4 pb-8">
           <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
             🔥 PRODUTOS EM ALTA
           </h2>
           
-          {loadingFeatured ? (
-            <p className="text-gray-400 text-center py-8">Carregando destaques...</p>
-          ) : featuredVideos.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-400">Nenhum produto em destaque no momento</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {featuredVideos.map(video => (
-                <div 
-                  key={video.id} 
-                  className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900"
-                  onClick={() => navigate(`/app?video=${video.id}`)}
-                >
-                  <img 
-                    src={video.thumbnail_url || ''} 
-                    alt={video.title || 'Vídeo'} 
-                    className="w-full aspect-[9/16] object-cover group-hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute top-2 left-2">
-                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 EM ALTA</span>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-2">
-                    <p className="text-white text-xs font-semibold line-clamp-2">
-                      {video.title || (video.models?.name || video.profiles?.username || 'Vídeo')}
-                    </p>
-                    <p className="text-gray-300 text-[10px] mt-0.5">
-                      {video.models?.name || video.profiles?.username || ''}
-                    </p>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-black/50 rounded-full p-2">
-                      <Play className="w-6 h-6 text-white fill-white" />
-                    </div>
-                  </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {featuredVideos.map(video => (
+              <div 
+                key={video.id} 
+                className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900"
+                onClick={() => navigate(`/app?video=${video.id}`)}
+              >
+                <img 
+                  src={video.thumbnail_url || ''} 
+                  alt={video.title || 'Vídeo'} 
+                  className="w-full aspect-[9/16] object-cover group-hover:scale-105 transition-transform"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute top-2 left-2">
+                  <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 EM ALTA</span>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="absolute bottom-0 left-0 right-0 p-2">
+                  <p className="text-white text-xs font-semibold line-clamp-2">
+                    {video.title || (video.models?.name || video.profiles?.username || 'Vídeo')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

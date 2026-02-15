@@ -82,7 +82,8 @@ export const AdCarousel = () => {
       </h2>
       
       <div
-        className="relative aspect-video rounded-lg overflow-hidden group cursor-pointer"
+        className="relative rounded-lg overflow-hidden group cursor-pointer mx-auto"
+        style={{ width: 300, height: 200 }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => navigate('/advertisers')}

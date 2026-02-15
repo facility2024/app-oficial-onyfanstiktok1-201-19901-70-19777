@@ -582,7 +582,7 @@ export default function MarketplacePage() {
                 variant="outline"
                 size="sm"
                 onClick={() => { setSelectedGenre(null); setGenreVideos([]); setGenreProducts([]); }}
-                className="text-white border-white/20 hover:bg-white/10"
+                className="bg-gray-800 text-white border border-white/20 hover:bg-gray-700"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
               </Button>

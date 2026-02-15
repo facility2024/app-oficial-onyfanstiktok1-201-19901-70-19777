@@ -350,6 +350,7 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [genreVideos, setGenreVideos] = useState<any[]>([]);
+  const [genreProducts, setGenreProducts] = useState<Product[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [allModels, setAllModels] = useState<any[]>([]);
   const [featuredVideos, setFeaturedVideos] = useState<any[]>([]);
@@ -400,7 +401,8 @@ export default function MarketplacePage() {
   const fetchGenreVideos = async (genre: string) => {
     setLoadingVideos(true);
     try {
-      const { data, error } = await supabase
+      // Buscar vídeos do gênero
+      const { data: videoData, error: videoError } = await supabase
         .from("videos")
         .select("*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)")
         .eq("is_active", true)
@@ -408,11 +410,26 @@ export default function MarketplacePage() {
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (error) throw error;
-      setGenreVideos(data || []);
+      if (videoError) throw videoError;
+      setGenreVideos(videoData || []);
+
+      // Buscar marketplace_products cuja categoria corresponde ao gênero
+      const { data: prodData, error: prodError } = await (supabase
+        .from("marketplace_products" as any)
+        .select("*")
+        .eq("is_active", true)
+        .eq("category", genre)
+        .order("created_at", { ascending: false }) as any);
+
+      if (!prodError && prodData) {
+        setGenreProducts(prodData as Product[]);
+      } else {
+        setGenreProducts([]);
+      }
     } catch (error) {
-      console.error("Erro ao carregar vídeos do gênero:", error);
+      console.error("Erro ao carregar conteúdo do gênero:", error);
       setGenreVideos([]);
+      setGenreProducts([]);
     } finally {
       setLoadingVideos(false);
     }
@@ -422,6 +439,7 @@ export default function MarketplacePage() {
     if (selectedGenre === genre) {
       setSelectedGenre(null);
       setGenreVideos([]);
+      setGenreProducts([]);
     } else {
       setSelectedGenre(genre);
       fetchGenreVideos(genre);
@@ -547,55 +565,92 @@ export default function MarketplacePage() {
           ))}
         </div>
 
-        {/* Vídeos do gênero selecionado */}
+        {/* Conteúdo do gênero selecionado */}
         {selectedGenre && (
           <div className="mt-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-bold text-lg">
-                Vídeos - {selectedGenre}
+                {selectedGenre}
               </h3>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setSelectedGenre(null); setGenreVideos([]); }}
+                onClick={() => { setSelectedGenre(null); setGenreVideos([]); setGenreProducts([]); }}
                 className="text-white border-white/20 hover:bg-white/10"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
               </Button>
             </div>
+
             {loadingVideos ? (
-              <p className="text-gray-400 text-center py-8">Carregando vídeos...</p>
-            ) : genreVideos.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">Nenhum vídeo encontrado nesta categoria</p>
+              <p className="text-gray-400 text-center py-8">Carregando conteúdo...</p>
+            ) : genreVideos.length === 0 && genreProducts.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">Nenhum conteúdo encontrado nesta categoria</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {genreVideos.map(video => (
-                  <div 
-                    key={video.id} 
-                    className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900"
-                    onClick={() => navigate(`/app?video=${video.id}`)}
-                  >
-                    <img 
-                      src={video.thumbnail_url || ''} 
-                      alt={video.title || 'Vídeo'} 
-                      className="w-full aspect-[9/16] object-cover group-hover:scale-105 transition-transform"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-2">
-                      <p className="text-white text-xs font-semibold line-clamp-2">
-                        {video.title || (video.models?.name || video.profiles?.username || 'Vídeo')}
-                      </p>
-                      <p className="text-gray-300 text-[10px] mt-0.5">
-                        {video.models?.name || video.profiles?.username || ''}
-                      </p>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-black/50 rounded-full p-2">
-                        <Play className="w-6 h-6 text-white fill-white" />
+              <div className="space-y-6">
+                {/* Produtos do marketplace nesta categoria */}
+                {genreProducts.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {genreProducts.map(product => (
+                      <div
+                        key={product.id}
+                        className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-colors"
+                        onClick={() => handleProductClick(product)}
+                      >
+                        <div className="relative aspect-square overflow-hidden">
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        </div>
+                        <div className="p-2">
+                          <p className="text-white text-xs font-semibold line-clamp-1">{product.name}</p>
+                          <p className="text-gray-400 text-[10px] line-clamp-1">{product.description}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-green-400 text-sm font-bold">R$ {product.price.toFixed(2)}</span>
+                            <div className="flex items-center gap-0.5">
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <span className="text-gray-400 text-[10px]">{product.average_rating.toFixed(1)}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {/* Vídeos do gênero */}
+                {genreVideos.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {genreVideos.map(video => (
+                      <div 
+                        key={video.id} 
+                        className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900"
+                        onClick={() => navigate(`/app?video=${video.id}`)}
+                      >
+                        <img 
+                          src={video.thumbnail_url || ''} 
+                          alt={video.title || 'Vídeo'} 
+                          className="w-full aspect-[9/16] object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="text-white text-xs font-semibold line-clamp-2">
+                            {video.title || (video.models?.name || video.profiles?.username || 'Vídeo')}
+                          </p>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="bg-black/50 rounded-full p-2">
+                            <Play className="w-6 h-6 text-white fill-white" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

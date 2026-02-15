@@ -658,31 +658,12 @@ export default function MarketplacePage() {
             🛍️ PRODUTOS POR MODELO
           </h2>
 
-          {/* Filtro por categoria */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {categories.map(cat => (
-              <Button
-                key={cat}
-                variant={selectedCategory === cat ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap ${
-                  selectedCategory === cat
-                    ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none"
-                    : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
-                }`}
-              >
-                {cat === "all" ? "📦 Todos" : `📁 ${cat}`}
-              </Button>
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 ? (
+          {products.length === 0 ? (
             <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {filteredProducts.slice(0, productsToShow).map(product => (
+                {products.slice(0, productsToShow).map(product => (
                   <div
                     key={product.id}
                     className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-colors"
@@ -711,7 +692,7 @@ export default function MarketplacePage() {
                   </div>
                 ))}
               </div>
-              {filteredProducts.length > productsToShow && (
+              {products.length > productsToShow && (
                 <div className="flex justify-center mt-4">
                   <Button
                     variant="outline"

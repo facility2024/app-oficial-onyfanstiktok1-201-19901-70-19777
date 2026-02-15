@@ -418,7 +418,7 @@ export default function MarketplacePage() {
         .from("marketplace_products" as any)
         .select("*")
         .eq("is_active", true)
-        .ilike("category", `${genre}%`)
+        .ilike("category", `%${genre}%`)
         .order("created_at", { ascending: false }) as any);
 
       if (!prodError && prodData) {

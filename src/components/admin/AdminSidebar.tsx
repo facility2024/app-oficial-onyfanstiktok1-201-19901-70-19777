@@ -18,7 +18,8 @@ import {
   Store,
   Calendar,
   UserPlus,
-  Phone
+  Phone,
+  Megaphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -81,6 +82,7 @@ const navigationGroups = [
     items: [
       { id: 'marketplace', label: 'Marketplace', icon: Store },
       { id: 'local-businesses', label: 'Comércios Locais', icon: MapPin },
+      { id: 'ads', label: 'Anúncios', icon: Megaphone },
       { id: 'video-call', label: 'Vídeo Chamada', icon: Phone },
     ]
   },

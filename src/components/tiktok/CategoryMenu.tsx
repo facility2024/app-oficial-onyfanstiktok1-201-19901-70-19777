@@ -238,7 +238,7 @@ export const CategoryMenu = ({
           <div className="py-4 space-y-4 px-4">
             
             {/* Patrocinado */}
-            <AdCarousel />
+            <AdCarousel location="feed" />
             
             {/* Novas Modelos */}
             <ModelCarousel 

@@ -414,6 +414,7 @@ export default function MarketplacePage() {
       setGenreVideos(videoData || []);
 
       // Buscar marketplace_products cuja categoria corresponde ao gênero
+      console.log('🔍 Buscando produtos para gênero:', genre);
       const { data: prodData, error: prodError } = await (supabase
         .from("marketplace_products" as any)
         .select("*")
@@ -421,10 +422,34 @@ export default function MarketplacePage() {
         .ilike("category", `%${genre}%`)
         .order("created_at", { ascending: false }) as any);
 
-      if (!prodError && prodData) {
+      console.log('📦 Produtos encontrados:', prodData?.length, 'Erro:', prodError);
+      if (prodData?.length) {
+        console.log('📦 Categorias dos produtos:', prodData.map((p: any) => p.category));
+      }
+
+      // Se não encontrou com ilike no gênero, buscar TODOS os produtos e filtrar no client
+      if (!prodError && prodData && prodData.length > 0) {
         setGenreProducts(prodData as Product[]);
       } else {
-        setGenreProducts([]);
+        // Fallback: buscar todos e comparar manualmente
+        const { data: allProds } = await (supabase
+          .from("marketplace_products" as any)
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }) as any);
+        
+        if (allProds) {
+          console.log('📦 Todas categorias disponíveis:', [...new Set(allProds.map((p: any) => p.category))]);
+          const filtered = allProds.filter((p: any) => {
+            const cat = (p.category || '').toLowerCase();
+            const g = genre.toLowerCase();
+            return cat.includes(g) || g.includes(cat);
+          });
+          console.log('📦 Produtos filtrados manualmente:', filtered.length);
+          setGenreProducts(filtered as Product[]);
+        } else {
+          setGenreProducts([]);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar conteúdo do gênero:", error);

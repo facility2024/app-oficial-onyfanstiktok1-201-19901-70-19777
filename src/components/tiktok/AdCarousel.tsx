@@ -83,7 +83,7 @@ export const AdCarousel = () => {
       
       <div
         className="relative overflow-hidden group cursor-pointer mx-auto border border-gray-700"
-        style={{ width: 500, height: 200 }}
+        style={{ width: 600, height: 300 }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => navigate('/advertisers')}
@@ -93,7 +93,7 @@ export const AdCarousel = () => {
           <img
             src={sampleAds[currentIndex].image}
             alt={sampleAds[currentIndex].title}
-            className="w-full h-full object-cover transition-all duration-500"
+            className="w-full h-full object-cover"
           />
         </a>
 

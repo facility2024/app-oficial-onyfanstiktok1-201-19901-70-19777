@@ -805,7 +805,7 @@ export default function MarketplacePage() {
       {/* Banner de Anúncio - Formato 800x220 responsivo */}
       <div className="container mx-auto px-4 pb-8 flex justify-center">
         <div className="overflow-hidden" style={{ width: '600px', maxWidth: '100%', height: '300px' }}>
-          <AdCarousel />
+          <AdCarousel location="marketplace" />
         </div>
       </div>
 

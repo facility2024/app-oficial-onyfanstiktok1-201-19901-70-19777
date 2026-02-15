@@ -3019,7 +3019,7 @@ export const TikTokApp = () => {
               <ScrollArea className="h-screen pb-20">
                 <div className="space-y-4 pr-2">
                   
-                  <AdCarousel />
+                  <AdCarousel location="feed" />
                   <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
                   goToModelVideo(modelId);
                 }} />

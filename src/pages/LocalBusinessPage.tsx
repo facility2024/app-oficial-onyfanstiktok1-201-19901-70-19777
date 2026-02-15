@@ -206,7 +206,7 @@ const LocalBusinessPage = () => {
                         EVENTO ESPECIAL
                       </Badge>
                     </div>
-                    <AdCarousel />
+                    <AdCarousel location="comercios" />
                   </div>
                 </CardContent>
               </Card>

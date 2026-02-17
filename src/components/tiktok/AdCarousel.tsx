@@ -56,9 +56,14 @@ export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
       }
     };
     loadAds();
-    const interval = setInterval(loadAds, 2000);
+    const interval = setInterval(loadAds, 3000);
     window.addEventListener('storage', loadAds);
-    return () => { clearInterval(interval); window.removeEventListener('storage', loadAds); };
+    window.addEventListener('ads_updated', loadAds);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', loadAds);
+      window.removeEventListener('ads_updated', loadAds);
+    };
   }, [location]);
 
   useEffect(() => {

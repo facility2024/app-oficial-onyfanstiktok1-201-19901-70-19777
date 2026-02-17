@@ -60,6 +60,7 @@ export const AdminAds = () => {
   const saveAds = (updated: Ad[]) => {
     setAds(updated);
     localStorage.setItem('admin_ads', JSON.stringify(updated));
+    window.dispatchEvent(new Event('ads_updated'));
   };
 
   const toggleAdActive = (id: number) => {

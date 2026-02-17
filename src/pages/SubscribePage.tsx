@@ -327,9 +327,9 @@ const SubscribePage = () => {
         </div>
       </div>
 
-      {/* Plans */}
+      {/* Plans - Apenas Mensal visível */}
       <div className="px-4 pb-8 space-y-4">
-        {(Object.keys(vipPlans) as Array<keyof VIPPlans>).map((planKey) => {
+        {(['mensal'] as Array<keyof VIPPlans>).map((planKey) => {
           const plan = vipPlans[planKey];
           return (
             <Card 

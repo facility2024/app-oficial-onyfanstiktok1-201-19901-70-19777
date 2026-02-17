@@ -24,6 +24,7 @@ interface LiveEntry {
   model_avatar: string;
   model_username: string;
   live_url: string;
+  price: string;
   created_at: string;
 }
 
@@ -36,6 +37,7 @@ export const AdminLive = () => {
   const [liveUrl, setLiveUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
+  const [livePrice, setLivePrice] = useState('');
 
   useEffect(() => {
     loadModels();
@@ -90,6 +92,7 @@ export const AdminLive = () => {
       model_avatar: model.avatar_url,
       model_username: model.username,
       live_url: liveUrl,
+      price: livePrice,
       created_at: new Date().toISOString(),
     };
 
@@ -97,6 +100,7 @@ export const AdminLive = () => {
     setShowModal(false);
     setSelectedModelId('');
     setLiveUrl('');
+    setLivePrice('');
     toast({ title: 'Sucesso!', description: `Live de ${model.name} criada com sucesso` });
   };
 
@@ -154,6 +158,10 @@ export const AdminLive = () => {
                   </div>
                   <Badge className="bg-red-500 text-white text-xs">AO VIVO</Badge>
                 </div>
+
+                {live.price && (
+                  <p className="text-sm font-semibold text-green-400 mb-3">R$ {live.price}</p>
+                )}
 
                 <div className="flex gap-2">
                   <Button
@@ -221,6 +229,16 @@ export const AdminLive = () => {
                 onChange={(e) => setLiveUrl(e.target.value)}
                 placeholder="https://exemplo.com/live-stream"
                 type="url"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="livePrice">Valor da Live (R$)</Label>
+              <Input
+                id="livePrice"
+                value={livePrice}
+                onChange={(e) => setLivePrice(e.target.value)}
+                placeholder="Ex: 29,90"
               />
             </div>
 

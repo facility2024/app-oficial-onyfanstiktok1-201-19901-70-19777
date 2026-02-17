@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Radio, Eye, Users, Plus, Trash2, ExternalLink } from 'lucide-react';
@@ -35,6 +35,7 @@ export const AdminLive = () => {
   const [selectedModelId, setSelectedModelId] = useState('');
   const [liveUrl, setLiveUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadModels();
@@ -180,7 +181,7 @@ export const AdminLive = () => {
 
       {/* Modal criar live */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] overflow-visible" ref={dialogRef}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Radio className="w-5 h-5 text-red-500" />
@@ -195,7 +196,7 @@ export const AdminLive = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um modelo" />
                 </SelectTrigger>
-                <SelectContent className="z-[9999] bg-popover max-h-[200px]" position="popper" sideOffset={4}>
+                <SelectContent className="z-[10002] bg-popover max-h-[200px]" position="popper" sideOffset={4} container={dialogRef.current}>
                   {models.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
                       <div className="flex items-center gap-2">

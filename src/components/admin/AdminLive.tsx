@@ -195,7 +195,7 @@ export const AdminLive = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um modelo" />
                 </SelectTrigger>
-                <SelectContent className="z-[9999] bg-popover">
+                <SelectContent className="z-[9999] bg-popover max-h-[200px]" position="popper" sideOffset={4}>
                   {models.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
                       <div className="flex items-center gap-2">

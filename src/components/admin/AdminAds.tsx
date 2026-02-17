@@ -231,11 +231,11 @@ export const AdminAds = () => {
                         </Badge>
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => setEditingAd({ ...ad })}
-                          className="text-blue-400 hover:text-blue-300"
+                          className="border-blue-500 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4 mr-1" /> Editar
                         </Button>
                         <Button
                           size="sm"

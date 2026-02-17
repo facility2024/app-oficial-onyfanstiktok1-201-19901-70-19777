@@ -1,14 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Radio, Eye, Users, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { Radio, Users, Plus, Trash2, ExternalLink, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Model {
   id: string;
@@ -32,10 +31,11 @@ export const AdminLive = () => {
   const [models, setModels] = useState<Model[]>([]);
   const [lives, setLives] = useState<LiveEntry[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showModelPicker, setShowModelPicker] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState('');
   const [liveUrl, setLiveUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const [modelSearch, setModelSearch] = useState('');
 
   useEffect(() => {
     loadModels();
@@ -181,7 +181,7 @@ export const AdminLive = () => {
 
       {/* Modal criar live */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[500px] overflow-visible" ref={dialogRef}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Radio className="w-5 h-5 text-red-500" />
@@ -192,44 +192,26 @@ export const AdminLive = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Escolher Modelo do App</Label>
-              <Select value={selectedModelId} onValueChange={setSelectedModelId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um modelo" />
-                </SelectTrigger>
-                <SelectContent className="z-[10002] bg-popover max-h-[200px]" position="popper" sideOffset={4} container={dialogRef.current}>
-                  {models.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                          alt={model.name}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                        <span>{model.name}</span>
-                        <span className="text-muted-foreground text-xs">@{model.username}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowModelPicker(true)}
+              >
+                {selectedModel ? (
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={selectedModel.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                      alt={selectedModel.name}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                    <span>{selectedModel.name}</span>
+                    <span className="text-muted-foreground text-xs">@{selectedModel.username}</span>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">Clique para selecionar um modelo</span>
+                )}
+              </Button>
             </div>
-
-            {selectedModel && (
-              <div className="p-3 bg-muted rounded-lg flex items-center gap-3">
-                <img
-                  src={selectedModel.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
-                  alt={selectedModel.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <h4 className="font-semibold">{selectedModel.name}</h4>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    {selectedModel.followers_count?.toLocaleString()} seguidores
-                  </p>
-                </div>
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="liveUrl">URL da Live</Label>
@@ -246,6 +228,60 @@ export const AdminLive = () => {
               <Radio className="w-4 h-4" />
               Criar Live
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Popup para escolher modelo */}
+      <Dialog open={showModelPicker} onOpenChange={setShowModelPicker}>
+        <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Escolher Modelo</DialogTitle>
+          </DialogHeader>
+
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar modelo..."
+              value={modelSearch}
+              onChange={(e) => setModelSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-1 max-h-[50vh]">
+            {models
+              .filter(m => 
+                m.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
+                m.username.toLowerCase().includes(modelSearch.toLowerCase())
+              )
+              .map((model) => (
+                <button
+                  key={model.id}
+                  onClick={() => {
+                    setSelectedModelId(model.id);
+                    setShowModelPicker(false);
+                    setModelSearch('');
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-accent ${
+                    selectedModelId === model.id ? 'bg-accent ring-2 ring-primary' : ''
+                  }`}
+                >
+                  <img
+                    src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                    alt={model.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">{model.name}</p>
+                    <p className="text-sm text-muted-foreground">@{model.username}</p>
+                  </div>
+                  <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {model.followers_count?.toLocaleString()}
+                  </span>
+                </button>
+              ))}
           </div>
         </DialogContent>
       </Dialog>

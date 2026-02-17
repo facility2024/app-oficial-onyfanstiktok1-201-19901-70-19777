@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ad1 from '@/assets/ads/ad1.png';
@@ -38,20 +38,27 @@ export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [filteredAds, setFilteredAds] = useState<StoredAd[]>(defaultAds);
 
-  const filteredAds = useMemo(() => {
-    try {
-      const stored = localStorage.getItem('admin_ads');
-      const allAds: StoredAd[] = stored ? JSON.parse(stored) : defaultAds;
-      const active = allAds.filter(ad => ad.active && ad.locations[location]);
-      // Resolve image: use imageMap for default ads, otherwise use the stored URL
-      return active.map(ad => ({
-        ...ad,
-        image: imageMap[ad.id] || ad.image,
-      }));
-    } catch {
-      return defaultAds;
-    }
+  // Reload ads from localStorage periodically to pick up admin edits
+  useEffect(() => {
+    const loadAds = () => {
+      try {
+        const stored = localStorage.getItem('admin_ads');
+        const allAds: StoredAd[] = stored ? JSON.parse(stored) : defaultAds;
+        const active = allAds.filter(ad => ad.active && ad.locations[location]);
+        setFilteredAds(active.map(ad => ({
+          ...ad,
+          image: imageMap[ad.id] || ad.image,
+        })));
+      } catch {
+        setFilteredAds(defaultAds);
+      }
+    };
+    loadAds();
+    const interval = setInterval(loadAds, 2000);
+    window.addEventListener('storage', loadAds);
+    return () => { clearInterval(interval); window.removeEventListener('storage', loadAds); };
   }, [location]);
 
   useEffect(() => {

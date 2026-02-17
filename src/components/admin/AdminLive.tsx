@@ -189,7 +189,7 @@ export const AdminLive = () => {
 
       {/* Modal criar live */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Radio className="w-5 h-5 text-red-500" />

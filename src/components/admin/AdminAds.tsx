@@ -203,8 +203,11 @@ export const AdminAds = () => {
               <div key={ad.id} className="bg-gray-800 rounded-lg border border-gray-700 p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Preview da imagem */}
-                  <div className="w-full md:w-48 h-28 rounded overflow-hidden flex-shrink-0">
+                  <div className="relative w-full md:w-48 h-28 rounded overflow-hidden flex-shrink-0">
                     <img src={ad.image} alt={ad.title} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-1 left-1 bg-black/70 text-[10px] text-gray-300 px-1.5 py-0.5 rounded font-mono">
+                      600×300px
+                    </div>
                   </div>
 
                   {/* Info */}

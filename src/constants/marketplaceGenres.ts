@@ -1,0 +1,17 @@
+export const MARKETPLACE_GENRES = [
+  { name: "Gays", icon: "🏳️‍🌈" },
+  { name: "Travesti", icon: "🌈" },
+  { name: "Bunda", icon: "🍑" },
+  { name: "Dupla", icon: "👥" },
+  { name: "Grupo", icon: "👫" },
+  { name: "Swing", icon: "🔄" },
+  { name: "Lésbica", icon: "👩‍❤️‍👩" },
+  { name: "Hétero", icon: "💑" },
+  { name: "Peitos GG", icon: "🍈" },
+  { name: "Cornos", icon: "🐂" },
+  { name: "Novinas", icon: "🌸" },
+  { name: "Coroas", icon: "👑" },
+  { name: "Gordinhas", icon: "🍒" },
+  { name: "Bombadas", icon: "💪" },
+  { name: "Trisal", icon: "💞" },
+];

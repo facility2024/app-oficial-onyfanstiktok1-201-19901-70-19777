@@ -26,6 +26,12 @@ const VIDEO_GENRES = [
   { name: "Lésbica", icon: "👩‍❤️‍👩" },
   { name: "Hétero", icon: "💑" },
   { name: "Peitos GG", icon: "🍈" },
+  { name: "Cornos", icon: "🐂" },
+  { name: "Novinas", icon: "🌸" },
+  { name: "Coroas", icon: "👑" },
+  { name: "Gordinhas", icon: "🍒" },
+  { name: "Bombadas", icon: "💪" },
+  { name: "Trisal", icon: "💞" },
 ];
 interface Product {
   id: string;

@@ -100,7 +100,14 @@ INSERT INTO public.marketplace_categories (name, description, icon, order_index)
   ('Calçados', 'Sapatos e tênis', '👟', 5),
   ('Joias', 'Bijuterias e joalheria', '💍', 6),
   ('Esportes', 'Fitness e atividades físicas', '⚽', 7),
-  ('Casa', 'Decoração e utilidades', '🏠', 8)
+  ('Casa', 'Decoração e utilidades', '🏠', 8),
+  ('Cornos', 'Conteúdo de cornos', '🐂', 9),
+  ('Novinas', 'Conteúdo de novinas', '🌸', 10),
+  ('Coroas', 'Conteúdo de coroas', '👑', 11),
+  ('Gordinhas', 'Conteúdo de gordinhas', '🍒', 12),
+  ('Bombadas', 'Conteúdo de bombadas', '💪', 13),
+  ('Trisal', 'Conteúdo de trisal', '💞', 14),
+  ('Swing', 'Conteúdo de swing', '🔄', 15)
 ON CONFLICT (name) DO NOTHING;
 
 -- Mensagem de sucesso

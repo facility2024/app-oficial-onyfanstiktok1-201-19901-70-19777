@@ -354,10 +354,18 @@ export default function MarketplacePage() {
     align: "start",
     slidesToScroll: 3
   });
+  // Ler gênero da URL ao montar
+  const genreFromUrl = searchParams.get('genre');
+  
   useEffect(() => {
     fetchProducts();
     fetchAllModels();
     fetchFeaturedVideos();
+    // Auto-selecionar gênero da URL
+    if (genreFromUrl && !selectedGenre) {
+      setSelectedGenre(genreFromUrl);
+      fetchGenreVideos(genreFromUrl);
+    }
   }, []);
 
   const fetchFeaturedVideos = async () => {
@@ -393,13 +401,31 @@ export default function MarketplacePage() {
   const fetchGenreVideos = async (genre: string) => {
     setLoadingVideos(true);
     try {
-      // A tabela videos NÃO tem coluna genres - não buscar vídeos por gênero
-      setGenreVideos([]);
+      // Buscar vídeos pela coluna category (case-insensitive match)
+      const { data: allVideos, error: videoError } = await (supabase
+        .from("videos")
+        .select("*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false }) as any);
+
+      if (videoError) {
+        console.error('❌ Erro ao buscar vídeos:', videoError);
+        setGenreVideos([]);
+      } else if (allVideos) {
+        const filtered = allVideos.filter((v: any) => {
+          const cat = (v.category || '').toLowerCase();
+          const g = genre.toLowerCase();
+          return cat.includes(g) || g.includes(cat);
+        });
+        console.log(`🎬 Vídeos filtrados para "${genre}": ${filtered.length}`);
+        setGenreVideos(filtered);
+      } else {
+        setGenreVideos([]);
+      }
 
       // Buscar marketplace_products cuja categoria corresponde ao gênero
       console.log('🔍 Buscando produtos para gênero:', genre);
       
-      // Buscar todos os produtos ativos e filtrar no client para máxima flexibilidade
       const { data: allProds, error: prodError } = await (supabase
         .from("marketplace_products" as any)
         .select("*")

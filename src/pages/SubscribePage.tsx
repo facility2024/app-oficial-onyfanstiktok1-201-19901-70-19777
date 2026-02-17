@@ -29,6 +29,7 @@ const defaultVIPPlans: VIPPlans = {
   mensal: {
     price: 19.99,
     features: [
+      'Acesso às Lives',
       'Acesso a conteúdo premium',
       'Sem anúncios',
       'Chat exclusivo com modelos',

@@ -401,10 +401,10 @@ export default function MarketplacePage() {
   const fetchGenreVideos = async (genre: string) => {
     setLoadingVideos(true);
     try {
-      // Buscar vídeos pela coluna category (case-insensitive match)
+      // Buscar vídeos filtrando por category OU genres (array)
       const { data: allVideos, error: videoError } = await (supabase
         .from("videos")
-        .select("*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)")
+        .select("*, models(name, profile_image_url)")
         .eq("is_active", true)
         .order("created_at", { ascending: false }) as any);
 
@@ -412,10 +412,16 @@ export default function MarketplacePage() {
         console.error('❌ Erro ao buscar vídeos:', videoError);
         setGenreVideos([]);
       } else if (allVideos) {
+        const g = genre.toLowerCase();
         const filtered = allVideos.filter((v: any) => {
+          // Verificar coluna category
           const cat = (v.category || '').toLowerCase();
-          const g = genre.toLowerCase();
-          return cat.includes(g) || g.includes(cat);
+          const matchCategory = cat.includes(g) || g.includes(cat);
+          // Verificar coluna genres (array)
+          const matchGenres = Array.isArray(v.genres) && v.genres.some(
+            (genreName: string) => genreName.toLowerCase().includes(g) || g.includes(genreName.toLowerCase())
+          );
+          return matchCategory || matchGenres;
         });
         console.log(`🎬 Vídeos filtrados para "${genre}": ${filtered.length}`);
         setGenreVideos(filtered);

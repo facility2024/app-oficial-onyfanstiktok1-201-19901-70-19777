@@ -264,7 +264,12 @@ export const CategoryMenu = ({
           <div className="px-4 py-2 border-b border-white/10">
             <p className="text-xs text-gray-400 mb-2 px-2">Filtrar por Gênero</p>
             <GenreSelector 
-              onGenreSelect={() => setOpen(false)} 
+              onGenreSelect={(genre) => {
+                setOpen(false);
+                if (genre && genre !== 'Todos') {
+                  setTimeout(() => navigate(`/marketplace?genre=${encodeURIComponent(genre)}`), 150);
+                }
+              }} 
               showLabel={true}
             />
           </div>

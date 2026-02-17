@@ -38,6 +38,7 @@ export const AdminLive = () => {
   const [loading, setLoading] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
   const [livePrice, setLivePrice] = useState('');
+  const [priceEnabled, setPriceEnabled] = useState(false);
 
   useEffect(() => {
     loadModels();
@@ -233,13 +234,30 @@ export const AdminLive = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="livePrice">Valor da Live (R$)</Label>
-              <Input
-                id="livePrice"
-                value={livePrice}
-                onChange={(e) => setLivePrice(e.target.value)}
-                placeholder="Ex: 29,90"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="livePrice">Valor da Live (R$)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{priceEnabled ? 'Ativado' : 'Desativado'}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPriceEnabled(!priceEnabled);
+                      if (priceEnabled) setLivePrice('');
+                    }}
+                    className={`relative w-10 h-5 rounded-full transition-colors ${priceEnabled ? 'bg-green-500' : 'bg-muted'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${priceEnabled ? 'translate-x-5' : ''}`} />
+                  </button>
+                </div>
+              </div>
+              {priceEnabled && (
+                <Input
+                  id="livePrice"
+                  value={livePrice}
+                  onChange={(e) => setLivePrice(e.target.value)}
+                  placeholder="Ex: 29,90"
+                />
+              )}
             </div>
 
             <Button onClick={handleCreateLive} disabled={!selectedModelId || !liveUrl} className="w-full gap-2">

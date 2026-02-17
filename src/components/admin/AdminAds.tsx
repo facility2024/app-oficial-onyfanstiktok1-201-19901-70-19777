@@ -102,6 +102,14 @@ export const AdminAds = () => {
     toast.success('Anúncio criado com sucesso!');
   };
 
+  const updateAd = () => {
+    if (!editingAd) return;
+    const updated = ads.map(ad => ad.id === editingAd.id ? editingAd : ad);
+    saveAds(updated);
+    setEditingAd(null);
+    toast.success('Anúncio atualizado com sucesso!');
+  };
+
   const activeCount = ads.filter(a => a.active).length;
 
   return (
@@ -224,6 +232,14 @@ export const AdminAds = () => {
                         <Button
                           size="sm"
                           variant="ghost"
+                          onClick={() => setEditingAd({ ...ad })}
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => toggleAdActive(ad.id)}
                           className="text-gray-400 hover:text-white"
                         >
@@ -277,6 +293,49 @@ export const AdminAds = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Edição */}
+      <Dialog open={!!editingAd} onOpenChange={(open) => !open && setEditingAd(null)}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Editar Anúncio</DialogTitle>
+          </DialogHeader>
+          {editingAd && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label className="text-gray-300">Título *</Label>
+                <Input
+                  value={editingAd.title}
+                  onChange={e => setEditingAd({ ...editingAd, title: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Link (URL)</Label>
+                <Input
+                  value={editingAd.link}
+                  onChange={e => setEditingAd({ ...editingAd, link: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">URL da Imagem</Label>
+                <Input
+                  value={editingAd.image}
+                  onChange={e => setEditingAd({ ...editingAd, image: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div className="w-full h-32 rounded overflow-hidden border border-gray-700">
+                <img src={editingAd.image} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+              <Button onClick={updateAd} className="w-full bg-blue-600 hover:bg-blue-700">
+                Salvar Alterações
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

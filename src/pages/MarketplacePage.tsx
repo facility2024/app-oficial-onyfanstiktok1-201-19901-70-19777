@@ -16,23 +16,9 @@ import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
 
-const VIDEO_GENRES = [
-  { name: "Gays", icon: "🏳️‍🌈" },
-  { name: "Travesti", icon: "🌈" },
-  { name: "Bunda", icon: "🍑" },
-  { name: "Dupla", icon: "👥" },
-  { name: "Grupo", icon: "👫" },
-  { name: "Swing", icon: "🔄" },
-  { name: "Lésbica", icon: "👩‍❤️‍👩" },
-  { name: "Hétero", icon: "💑" },
-  { name: "Peitos GG", icon: "🍈" },
-  { name: "Cornos", icon: "🐂" },
-  { name: "Novinas", icon: "🌸" },
-  { name: "Coroas", icon: "👑" },
-  { name: "Gordinhas", icon: "🍒" },
-  { name: "Bombadas", icon: "💪" },
-  { name: "Trisal", icon: "💞" },
-];
+import { MARKETPLACE_GENRES } from '@/constants/marketplaceGenres';
+
+const VIDEO_GENRES = MARKETPLACE_GENRES;
 interface Product {
   id: string;
   name: string;

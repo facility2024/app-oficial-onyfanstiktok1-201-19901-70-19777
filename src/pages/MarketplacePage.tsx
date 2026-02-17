@@ -373,7 +373,7 @@ export default function MarketplacePage() {
     try {
       const { data, error } = await (supabase
         .from("videos")
-        .select("*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)")
+        .select("*, models(name, profile_image_url)")
         .eq("is_active", true)
         .eq("is_featured", true)
         .order("created_at", { ascending: false })

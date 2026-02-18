@@ -368,10 +368,8 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       uploadMode
     };
 
-    // Se for conteúdo VIP (Top 10), salvar também como modelo na tabela models
-    if (contentType === 'vip') {
-      await saveModelToDatabase(newContent);
-    }
+    // Salvar modelo e vídeo(s) no banco de dados (tanto normal quanto VIP)
+    await saveModelToDatabase(newContent);
 
     // Salvar plano e descrição se estiver editando
     if (editingContent?.id) {
@@ -434,16 +432,17 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         username = `${baseUsername}_${Date.now()}_${attempts}`;
       }
 
+      const isPremium = contentType === 'vip';
       const modelData = {
         name: contentData.displayName,
         username: username,
         avatar_url: contentData.avatarUrl,
-        bio: `Modelo VIP criado via painel - ${contentData.displayName}`,
-        followers_count: Math.floor(Math.random() * 50000) + 10000, // Seguidores aleatórios entre 10k-60k
-        is_premium: true,
-        is_verified: true,
+        bio: isPremium ? `Modelo VIP criado via painel - ${contentData.displayName}` : `Modelo criado via painel - ${contentData.displayName}`,
+        followers_count: Math.floor(Math.random() * 50000) + 10000,
+        is_premium: isPremium,
+        is_verified: isPremium,
         is_active: true,
-        category: 'premium',
+        category: isPremium ? 'premium' : 'standard',
         posting_panel_url: contentData.videoUrl || (contentData.videoList && contentData.videoList[0]) || null
       };
 
@@ -469,13 +468,14 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       if (contentData.videoList && contentData.videoList.length > 0) {
         console.log(`📹 Criando ${contentData.videoList.length} vídeos para modelo ${contentData.displayName}`);
         
+        const videoVisibility = isPremium ? 'premium' : 'public';
         const videoRecords = contentData.videoList.map((videoUrl: string, index: number) => ({
           title: contentData.displayName ? `${contentData.displayName} - Vídeo ${index + 1}` : `Vídeo ${index + 1}`,
-          description: `Conteúdo premium de ${contentData.displayName}`,
+          description: `Conteúdo de ${contentData.displayName}`,
           video_url: videoUrl,
           thumbnail_url: contentData.avatarUrl,
           model_id: data.id,
-          visibility: 'premium',
+          visibility: videoVisibility,
           is_active: true,
           music_name: 'Som Original'
         }));
@@ -496,11 +496,11 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
           .from('videos')
           .insert([{
             title: contentData.displayName ? `${contentData.displayName} - Vídeo Principal` : 'Vídeo Principal',
-            description: `Conteúdo premium de ${contentData.displayName}`,
+            description: `Conteúdo de ${contentData.displayName}`,
             video_url: contentData.videoUrl,
             thumbnail_url: contentData.avatarUrl,
             model_id: data.id,
-            visibility: 'premium',
+            visibility: isPremium ? 'premium' : 'public',
             is_active: true,
             music_name: 'Som Original'
           }] as any);

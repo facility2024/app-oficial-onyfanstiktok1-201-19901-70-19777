@@ -798,7 +798,9 @@ export const TikTokApp = () => {
         ascending: false
       });
       if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
+      else console.log('📋 Posts agendados carregados:', postsAgendados?.length || 0, postsAgendados?.map((p: any) => ({ id: p.id, titulo: p.titulo, status: p.status, modelo_id: p.modelo_id })));
       if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
+      else console.log('📋 Posts principais carregados:', postsPrincipais?.length || 0);
 
       // Carregar todos os vídeos disponíveis
       console.log('📋 Carregando catálogo de vídeos...');

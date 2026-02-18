@@ -3,9 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Users, Search, Filter, Wifi } from 'lucide-react';
+import { MapPin, Users, Search, Filter, Wifi, Monitor, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import brazilMapImg from '@/assets/brazil-map-regions.png';
+
+interface DeviceStats {
+  desktop: number;
+  mobile: number;
+}
 
 interface StatePosition {
   code: string;
@@ -17,6 +22,8 @@ interface StatePosition {
 
 interface BrazilInteractiveMapProps {
   onlineUsersByState: { [state: string]: number };
+  deviceStatsByState?: { [state: string]: DeviceStats };
+  totalDeviceStats?: DeviceStats;
 }
 
 const STATE_POSITIONS: StatePosition[] = [
@@ -64,7 +71,7 @@ const REGION_COLORS: Record<string, { dot: string; text: string; bg: string }> =
 
 const REGIONS = ['Todas', 'Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
 
-export const BrazilInteractiveMap = ({ onlineUsersByState }: BrazilInteractiveMapProps) => {
+export const BrazilInteractiveMap = ({ onlineUsersByState, deviceStatsByState = {}, totalDeviceStats = { desktop: 0, mobile: 0 } }: BrazilInteractiveMapProps) => {
   const [hoveredState, setHoveredState] = useState<StatePosition | null>(null);
   const [selectedRegion, setSelectedRegion] = useState('Todas');
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +119,14 @@ export const BrazilInteractiveMap = ({ onlineUsersByState }: BrazilInteractiveMa
         <Badge variant="outline" className="border-primary/40 text-primary gap-1.5 px-3 py-1">
           <MapPin className="w-3 h-3" />
           {activeStates} estados ativos
+        </Badge>
+        <Badge variant="outline" className="border-blue-400/40 text-blue-400 gap-1.5 px-3 py-1">
+          <Monitor className="w-3 h-3" />
+          {totalDeviceStats.desktop} desktop
+        </Badge>
+        <Badge variant="outline" className="border-orange-400/40 text-orange-400 gap-1.5 px-3 py-1">
+          <Smartphone className="w-3 h-3" />
+          {totalDeviceStats.mobile} mobile
         </Badge>
       </div>
 
@@ -191,9 +206,19 @@ export const BrazilInteractiveMap = ({ onlineUsersByState }: BrazilInteractiveMa
                           <div className="font-bold">{state.name} ({state.code})</div>
                           <div className="text-gray-400 text-[10px]">{state.region}</div>
                           {hasUsers ? (
-                            <div className={`${colors.text} font-semibold mt-0.5`}>
-                              🟢 {count} usuário{count > 1 ? 's' : ''} online
-                            </div>
+                            <>
+                              <div className={`${colors.text} font-semibold mt-0.5`}>
+                                🟢 {count} usuário{count > 1 ? 's' : ''} online
+                              </div>
+                              <div className="flex gap-2 mt-0.5 text-[10px]">
+                                {(deviceStatsByState[state.name]?.desktop || 0) > 0 && (
+                                  <span className="text-blue-300">🖥️ {deviceStatsByState[state.name].desktop}</span>
+                                )}
+                                {(deviceStatsByState[state.name]?.mobile || 0) > 0 && (
+                                  <span className="text-orange-300">📱 {deviceStatsByState[state.name].mobile}</span>
+                                )}
+                              </div>
+                            </>
                           ) : (
                             <div className="text-gray-500 mt-0.5">Nenhum usuário</div>
                           )}
@@ -251,12 +276,30 @@ export const BrazilInteractiveMap = ({ onlineUsersByState }: BrazilInteractiveMa
                         <div className="text-[10px] text-muted-foreground">{state.region}</div>
                       </div>
                     </div>
-                    <Badge
-                      variant={state.count > 0 ? 'default' : 'secondary'}
-                      className={`text-[10px] px-1.5 py-0 h-5 ${state.count > 0 ? 'bg-emerald-600 text-white' : ''}`}
-                    >
-                      {state.count}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      {state.count > 0 && (
+                        <>
+                          {(deviceStatsByState[state.name]?.desktop || 0) > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-blue-400">
+                              <Monitor className="w-3 h-3" />
+                              {deviceStatsByState[state.name].desktop}
+                            </span>
+                          )}
+                          {(deviceStatsByState[state.name]?.mobile || 0) > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-orange-400">
+                              <Smartphone className="w-3 h-3" />
+                              {deviceStatsByState[state.name].mobile}
+                            </span>
+                          )}
+                        </>
+                      )}
+                      <Badge
+                        variant={state.count > 0 ? 'default' : 'secondary'}
+                        className={`text-[10px] px-1.5 py-0 h-5 ${state.count > 0 ? 'bg-emerald-600 text-white' : ''}`}
+                      >
+                        {state.count}
+                      </Badge>
+                    </div>
                   </motion.div>
                 );
               })}

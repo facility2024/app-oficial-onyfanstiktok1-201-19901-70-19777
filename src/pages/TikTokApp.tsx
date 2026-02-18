@@ -281,9 +281,11 @@ export const TikTokApp = () => {
   } = usePremiumStatus();
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  // Verifica se um vídeo é novo (criado nas últimas 2 horas)
+  // Verifica se um vídeo é novo (criado nas últimas 2 horas ou de modelo nova)
   const isVideoNew = (video: Video): boolean => {
     try {
+      // 🆕 Vídeos de modelos novas (criadas nas últimas 48h) sempre são "novos"
+      if ((video as any).isNewModel) return true;
       const videoDate = new Date(video.created_at).getTime();
       const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
       // Vídeos criados nas últimas 2 horas são considerados "novos"
@@ -1173,12 +1175,41 @@ export const TikTokApp = () => {
         const recentPosts = [...processedScheduledPosts, ...processedMainPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         console.log(`🌟 ${recentPosts.length} posts agendados/principais serão destacados no início`);
 
+        // 🆕 DETECTAR MODELOS NOVOS (criados nas últimas 48h pelo admin) e marcar como destaque
+        const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+        const newModelIds = new Set<string>();
+        (modelsData || []).forEach((m: any) => {
+          const createdAt = new Date(m.created_at).getTime();
+          if (createdAt > fortyEightHoursAgo) {
+            newModelIds.add(m.id);
+            console.log(`🌟 Modelo nova detectada: ${m.name || m.username} (criada ${new Date(m.created_at).toLocaleString()})`);
+          }
+        });
+
+        // 🆕 CARREGAR MEMÓRIA DE VÍDEOS JÁ ASSISTIDOS (persistente entre sessões)
+        let watchedVideoIds = new Set<string>();
+        try {
+          const memoryRaw = localStorage.getItem('intelligent_feed_memory');
+          if (memoryRaw) {
+            const memory = JSON.parse(memoryRaw);
+            watchedVideoIds = new Set(memory.videos_vistos || []);
+          }
+        } catch {}
+        console.log(`👁️ ${watchedVideoIds.size} vídeos já assistidos pelo usuário`);
+
         // 1) Organizar vídeos do catálogo por modelo e preparar filas internas
         const videosByModel: Record<string, any[]> = {};
         validVideos.forEach((v: any) => {
           const mid = v.creator_id || v.model_id || v.user?.id || '';
           if (!mid) return;
           if (!videosByModel[mid]) videosByModel[mid] = [];
+          
+          // 🆕 Marcar vídeos de modelos novos como destaque
+          if (newModelIds.has(mid)) {
+            v.isHighlighted = true;
+            v.isNewModel = true;
+          }
+          
           videosByModel[mid].push(v);
         });
 
@@ -1194,16 +1225,18 @@ export const TikTokApp = () => {
           });
         });
 
-        // 2) Definir ordem dos modelos e criadores (prioriza quem tem vídeos de hoje e com interação)
+        // 2) Definir ordem dos modelos e criadores (prioriza novos, hoje, interação)
         const modelIdsWithVideos = Object.keys(videosByModel);
         const modelScores: Record<string, number> = {};
         modelIdsWithVideos.forEach(mid => {
           const queue = videosByModel[mid] || [];
           const hasToday = queue.some(v => isToday(v.created_at));
           const interacted = interactedModelIds.has(mid);
-          // Buscar em modelos OU criadores
+          const isNewModel = newModelIds.has(mid);
           const modelInfo = modelsData?.find((m: any) => m.id === mid) || creatorsData?.find((c: any) => c.id === mid);
           let score = 0;
+          // 🆕 Modelos novos têm prioridade máxima no feed
+          if (isNewModel) score += 2000;
           if (hasToday) score += 1000;
           if (interacted) score += 500;
           score += (modelInfo?.followers_count || 0) * 0.001;
@@ -1226,10 +1259,35 @@ export const TikTokApp = () => {
           }
         }
 
-        // 🎯 SEQUÊNCIA FINAL: Posts recentes primeiro + vídeos rotativos + repetir quando acabar
-        const ordered: any[] = [...recentPosts,
-        // Posts agendados recentes sempre no topo
-        ...catalogVideos // Vídeos do catálogo em rotação
+        // 🆕 SEPARAR VÍDEOS EM NÃO-ASSISTIDOS E ASSISTIDOS
+        const unwatchedCatalog: any[] = [];
+        const watchedCatalog: any[] = [];
+        catalogVideos.forEach(v => {
+          if (watchedVideoIds.has(v.id)) {
+            watchedCatalog.push(v);
+          } else {
+            unwatchedCatalog.push(v);
+          }
+        });
+        console.log(`📊 Feed: ${unwatchedCatalog.length} não-assistidos + ${watchedCatalog.length} já assistidos`);
+
+        // 🆕 VÍDEOS DE MODELOS NOVAS sempre no início (mesmo se já assistidos)
+        const newModelVideos: any[] = [];
+        const regularUnwatched: any[] = [];
+        unwatchedCatalog.forEach(v => {
+          if (v.isNewModel) {
+            newModelVideos.push(v);
+          } else {
+            regularUnwatched.push(v);
+          }
+        });
+
+        // 🎯 SEQUÊNCIA FINAL: Posts recentes → Modelos novas → Não-assistidos → Já assistidos
+        const ordered: any[] = [
+          ...recentPosts,           // Posts agendados recentes sempre no topo
+          ...newModelVideos,        // 🆕 Vídeos de modelos novas em destaque
+          ...regularUnwatched,      // 🆕 Vídeos ainda não assistidos
+          ...watchedCatalog         // 🆕 Vídeos já assistidos por último
         ];
 
         // 4) Definir estados (carregamento em blocos)

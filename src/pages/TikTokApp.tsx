@@ -2328,8 +2328,40 @@ export const TikTokApp = () => {
           return;
         }
 
-        // Continuar sem exibir erro se não encontrar conteúdo
-        console.log('ℹ️ Nenhum conteúdo adicional encontrado para a modelo');
+        // Mesmo sem vídeo, abrir perfil da modelo com vídeo placeholder
+        console.log('ℹ️ Nenhum vídeo encontrado, abrindo perfil da modelo sem vídeo');
+        const placeholderVideo = {
+          id: `placeholder-${modelId}`,
+          video_url: '',
+          title: modelData?.name || modelData?.username || 'Modelo',
+          description: '',
+          user_id: modelId,
+          model_id: modelId,
+          music_name: `${modelData?.username || 'Modelo'}`,
+          visibility: 'public' as const,
+          likes_count: 0,
+          comments_count: 0,
+          shares_count: 0,
+          views_count: 0,
+          is_active: true,
+          created_at: modelData?.created_at || new Date().toISOString(),
+          user: {
+            id: modelData.id,
+            username: modelData.username,
+            avatar_url: modelData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            followers_count: modelData.followers_count || 0,
+            following_count: 0,
+            is_online: modelData.is_live || false,
+            created_at: modelData.created_at || new Date().toISOString(),
+            bio: modelData.bio || ''
+          }
+        };
+        const newVideos = [placeholderVideo, ...videos];
+        setVideos(newVideos as Video[]);
+        setCurrentVideoIndex(0);
+        emblaApi?.scrollTo(0);
+        setShowProfile(true);
+        console.log('✅ Perfil da modelo aberto (sem vídeo)');
         return;
       }
 

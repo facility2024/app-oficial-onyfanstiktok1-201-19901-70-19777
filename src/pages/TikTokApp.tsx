@@ -691,6 +691,12 @@ export const TikTokApp = () => {
           if (userId) {
             await trackView(currentVideo.id, userId, isCreator);
             ensureInteractedModel(userId);
+            
+            // 🆕 MARCAR VÍDEO COMO ASSISTIDO na memória persistente
+            // Isso garante que ao recarregar/voltar, este vídeo não repita
+            if (markVideoAsWatched) {
+              markVideoAsWatched(currentVideo.id, userId);
+            }
 
             // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO
             if ((currentVideo as any).isHighlighted) {
@@ -726,20 +732,21 @@ export const TikTokApp = () => {
     console.log('🎬 Inicializando app...');
 
     // Salvar timestamp da sessão atual para marcar vídeos novos
-    const now = new Date().toISOString();
     const lastSession = localStorage.getItem('last_app_session');
     if (!lastSession) {
-      // Primeira vez no app - marca timestamp de 24h atrás para mostrar vídeos recentes
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       localStorage.setItem('last_app_session', oneDayAgo);
     }
+    
+    // 🆕 Marcar o PRIMEIRO vídeo da sessão anterior como assistido
+    // Isso garante que ao recarregar, o vídeo atual não repita
     initializeFeed();
 
-    // Atualizar timestamp ao fechar/sair
+    // Atualizar timestamp e salvar vídeo atual ao fechar/sair
     return () => {
       localStorage.setItem('last_app_session', new Date().toISOString());
     };
-  }, []); // Executar apenas uma vez na montagem
+  }, []);
 
   const createExampleData = (): Video[] => {
     return [];
@@ -754,22 +761,14 @@ export const TikTokApp = () => {
       setLoading(true);
 
       // Check cache first for faster initial load
-      const CACHE_VERSION = 'v2'; // Incrementar quando houver mudanças na estrutura
+      const CACHE_VERSION = 'v2';
       const cacheKey = `initial_feed_${CACHE_VERSION}`;
-      const cached = sessionStorage.getItem(cacheKey);
-      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
-      if (cached && cacheTime) {
-        const age = Date.now() - parseInt(cacheTime);
-        if (age < 60000) {
-          // Cache valid for 1 minute
-          const cachedData = JSON.parse(cached);
-          console.log(`✅ Feed carregado do cache (${cachedData.length} vídeos)`);
-          setVideos(cachedData);
-          setCurrentVideoIndex(0);
-          setLoading(false);
-          return;
-        }
-      }
+      
+      // 🆕 DESABILITAR CACHE para garantir que vídeos assistidos nunca repitam
+      // O cache de sessionStorage causava repetição ao recarregar a página
+      // pois ignorava a memória persistente de vídeos já assistidos
+      sessionStorage.removeItem(cacheKey);
+      sessionStorage.removeItem(`${cacheKey}_time`);
 
       // 🎯 PRIORIDADE 1: Carregar posts agendados recentes (publicados hoje)
       console.log('🌟 Carregando posts agendados recentes...');
@@ -1301,11 +1300,8 @@ export const TikTokApp = () => {
         setCycleSize(orderedModels.length);
         console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
 
-        // Cache the results for faster subsequent loads
-        console.log('💾 Salvando cache no sessionStorage...');
-        sessionStorage.setItem('initial_feed', JSON.stringify(firstBlock));
-        sessionStorage.setItem('initial_feed_time', Date.now().toString());
-        console.log('✅ Cache salvo com sucesso');
+        // 🆕 NÃO usar cache de sessionStorage para evitar repetição de vídeos
+        // A memória persistente (localStorage) é a fonte de verdade
       } else {
         console.warn('⚠️ Nenhum conteúdo válido encontrado - criando exemplo');
         const exampleData = createExampleData();

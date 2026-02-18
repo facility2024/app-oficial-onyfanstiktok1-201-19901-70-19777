@@ -297,11 +297,11 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       }
 
       if (videosError) {
-        throw videosError;
+        console.warn('⚠️ Erro ao carregar vídeos do perfil:', videosError);
       }
 
       // Transformar vídeos para o formato de conteúdo
-      const transformedVideos = videosData?.map(item => ({
+      let transformedVideos = (videosData || []).map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,
         thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
@@ -311,7 +311,24 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         views_count: item.views_count || 0,
         created_at: item.created_at,
         visibility: (item.visibility as 'public' | 'premium' | 'private') || 'public'
-      })) || [];
+      }));
+
+      // 🔧 FALLBACK: Se modelo não tem vídeos mas tem posting_panel_url, criar entrada virtual
+      const modelPanelUrl = modelData?.posting_panel_url;
+      if (transformedVideos.length === 0 && modelPanelUrl) {
+        console.log('🔧 Modelo sem vídeos na tabela videos, usando posting_panel_url como fallback');
+        transformedVideos = [{
+          id: `fallback-${user.id}`,
+          title: `${user.username} - Vídeo Principal`,
+          thumbnail_url: user.avatar_url || '/placeholder.svg',
+          video_url: modelPanelUrl,
+          type: 'video' as const,
+          likes_count: 0,
+          views_count: 0,
+          created_at: user.created_at || new Date().toISOString(),
+          visibility: 'public' as 'public' | 'premium' | 'private'
+        }];
+      }
 
       // Buscar imagens específicas da modelo (usando localStorage como cache temporário)
       const modelImages = getModelImages(user.id);

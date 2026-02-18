@@ -24,6 +24,9 @@ interface ContentModalProps {
 export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpenLiveManagement }: ContentModalProps) => {
   const [contentType, setContentType] = useState('normal');
   const [uploadMode, setUploadMode] = useState<'single' | 'list'>('single');
+  const [sendNow, setSendNow] = useState(true);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   
   // Formulários separados para cada aba
   const [normalFormData, setNormalFormData] = useState({
@@ -354,6 +357,18 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       }
     }
 
+    // Validar agendamento
+    if (!sendNow) {
+      if (!scheduleDate || !scheduleTime) {
+        toast({
+          title: "❌ Data e hora obrigatórios",
+          description: "Selecione a data e hora para o agendamento",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const newContent = {
       ...currentFormData,
       videoUrl: uploadMode === 'single' ? currentFormData.videoUrl : '',
@@ -368,20 +383,66 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       uploadMode
     };
 
-    // Salvar modelo e vídeo(s) no banco de dados (tanto normal quanto VIP)
-    await saveModelToDatabase(newContent);
+    if (sendNow) {
+      // Publicação imediata - fluxo existente
+      await saveModelToDatabase(newContent);
 
-    // Salvar plano e descrição se estiver editando
-    if (editingContent?.id) {
-      await saveSubscriptionAndDescription(editingContent.id);
+      if (editingContent?.id) {
+        await saveSubscriptionAndDescription(editingContent.id);
+      }
+
+      onSubmit(newContent);
+      
+      toast({
+        title: editingContent ? "✅ Conteúdo atualizado!" : "✅ Conteúdo publicado!",
+        description: `${currentFormData.displayName} foi publicado imediatamente`,
+      });
+    } else {
+      // Agendamento - salvar modelo + criar post agendado
+      const savedModel = await saveModelToDatabase(newContent);
+
+      const scheduledDateTime = `${scheduleDate}T${scheduleTime}:00`;
+      const videoUrls = uploadMode === 'list' ? parsedList : [currentFormData.videoUrl];
+      
+      // Criar posts agendados para cada vídeo
+      for (const videoUrl of videoUrls) {
+        const { error } = await supabase
+          .from('posts_agendados' as any)
+          .insert({
+            modelo_id: savedModel?.id || currentFormData.id,
+            modelo_username: currentFormData.displayName?.toLowerCase().replace(/\s+/g, '_') || 'modelo',
+            titulo: `${currentFormData.displayName} - Vídeo Agendado`,
+            descricao: '',
+            conteudo_url: videoUrl,
+            tipo_conteudo: 'video',
+            data_agendamento: scheduledDateTime,
+            status: 'agendado',
+            enviar_tela_principal: true,
+            imagens: [],
+          } as any);
+
+        if (error) {
+          console.error('Erro ao agendar:', error);
+          toast({
+            title: "❌ Erro ao agendar",
+            description: "Não foi possível criar o agendamento",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      if (editingContent?.id) {
+        await saveSubscriptionAndDescription(editingContent.id);
+      }
+
+      onSubmit(newContent);
+      
+      toast({
+        title: "📅 Conteúdo agendado!",
+        description: `${currentFormData.displayName} será publicado em ${scheduleDate} às ${scheduleTime}`,
+      });
     }
-
-    onSubmit(newContent);
-    
-    toast({
-      title: editingContent ? "✅ Conteúdo atualizado!" : "✅ Conteúdo criado com sucesso!",
-      description: `${currentFormData.displayName} foi ${editingContent ? 'atualizado' : 'adicionado'} como ${contentType === 'vip' ? 'Top 10' : contentType === 'ad' ? 'Anúncio' : 'Normal'}`,
-    });
 
     // Reset forms
     setNormalFormData({
@@ -402,12 +463,15 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
       videoList: '',
       imageList: ''
     });
+    setSendNow(true);
+    setScheduleDate('');
+    setScheduleTime('');
     
     onClose();
   };
 
   // Função para salvar modelo na tabela models
-  const saveModelToDatabase = async (contentData: any) => {
+  const saveModelToDatabase = async (contentData: any): Promise<{ id: string } | null> => {
     try {
       // Gerar username base
       let baseUsername = contentData.name.toLowerCase().replace(/\s+/g, '_');
@@ -461,7 +525,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
           description: "Conteúdo criado, mas houve erro ao registrar como modelo",
           variant: "destructive",
         });
-        return;
+        return null;
       }
 
       // Se tem vídeos, criar registros na tabela videos
@@ -518,8 +582,10 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         description: `${contentData.displayName} foi adicionado aos dados reais do sistema`,
       });
 
+      return data;
     } catch (error) {
       console.error('Erro inesperado ao salvar modelo:', error);
+      return null;
     }
   };
 
@@ -797,6 +863,48 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                   </div>
                 )}
 
+                {/* Agendamento */}
+                <div className="mt-4 p-4 rounded-lg border border-yellow-400/30 bg-yellow-950/20 space-y-3">
+                  <Label className="text-sm font-bold flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Agendamento de Publicação
+                  </Label>
+                  
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={sendNow}
+                      onCheckedChange={setSendNow}
+                    />
+                    <Label className="text-sm cursor-pointer" onClick={() => setSendNow(!sendNow)}>
+                      {sendNow ? '⚡ Enviar agora (publicação imediata)' : '📅 Agendar para data/hora específica'}
+                    </Label>
+                  </div>
+
+                  {!sendNow && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Data *</Label>
+                        <Input
+                          type="date"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Hora *</Label>
+                        <Input
+                          type="time"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="mt-6 space-y-3">
                   <Label className="text-sm font-medium">Oferta do dia</Label>
                   <Input placeholder="Nome da oferta" value={offerForm.title} onChange={(e)=>setOfferForm(p=>({...p,title:e.target.value}))} />
@@ -1006,8 +1114,49 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                   />
                 </div>
 
+                {/* Agendamento VIP */}
+                <div className="mt-4 p-4 rounded-lg border border-yellow-600/30 bg-yellow-900/20 space-y-3">
+                  <Label className="text-sm font-bold flex items-center gap-2 text-black">
+                    <Calendar className="w-4 h-4" />
+                    Agendamento de Publicação
+                  </Label>
+                  
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={sendNow}
+                      onCheckedChange={setSendNow}
+                    />
+                    <Label className="text-sm cursor-pointer text-black" onClick={() => setSendNow(!sendNow)}>
+                      {sendNow ? '⚡ Enviar agora (publicação imediata)' : '📅 Agendar para data/hora específica'}
+                    </Label>
+                  </div>
+
+                  {!sendNow && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-black">Data *</Label>
+                        <Input
+                          type="date"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-black">Hora *</Label>
+                        <Input
+                          type="time"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="mt-6 space-y-3">
-                  <Label className="text-sm font-medium text-black">Oferta do dia</Label>
                   <Input placeholder="Nome da oferta" value={offerForm.title} onChange={(e)=>setOfferForm(p=>({...p,title:e.target.value}))} />
                   <Textarea placeholder="Descrição" value={offerForm.description} onChange={(e)=>setOfferForm(p=>({...p,description:e.target.value}))} rows={2} />
                   <Input placeholder="Imagem da oferta (300x300)" value={offerForm.image_url} onChange={(e)=>setOfferForm(p=>({...p,image_url:e.target.value}))} />
@@ -1776,8 +1925,8 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                onClick={handleSubmit}
                className="bg-gradient-primary hover:shadow-glow text-primary-foreground"
              >
-               <Send className="w-4 h-4 mr-2" />
-               {editingContent ? 'Atualizar Conteúdo' : 'Enviar Conteúdo'}
+                {sendNow ? <Send className="w-4 h-4 mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
+                {editingContent ? 'Atualizar Conteúdo' : sendNow ? 'Enviar Agora' : 'Agendar Publicação'}
              </Button>
            </div>
          </Tabs>

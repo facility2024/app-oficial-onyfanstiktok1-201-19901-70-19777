@@ -38,18 +38,18 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       const stored = localStorage.getItem('intelligent_feed_memory');
       if (stored) {
         const memory = JSON.parse(stored);
-        // Verificar se é uma nova sessão
-        const lastSession = memory.sessao_atual;
+        // 🆕 PRESERVAR videos_vistos entre sessões para evitar repetição
+        // Apenas resetar modelos_vistas para variar a ordem, mas NUNCA limpar videos_vistos
         const timeSinceLastUpdate = Date.now() - new Date(memory.ultima_atualizacao).getTime();
         const isNewSession = timeSinceLastUpdate > 30 * 60 * 1000; // 30 minutos
         
         if (isNewSession) {
-          // Nova sessão - limpar modelos vistas mas manter histórico
           return {
             ...memory,
-            modelos_vistas: [],
+            modelos_vistas: [], // Reset para variar ordem
             sessao_atual: sessionId.current,
             ultima_atualizacao: new Date().toISOString()
+            // 🆕 videos_vistos PRESERVADO - não limpa mais
           };
         }
         return memory;
@@ -311,9 +311,10 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     memory.ultimo_video_modelo[modeloId] = videoId;
     memory.ultima_atualizacao = new Date().toISOString();
     
-    // Limitar tamanho do histórico
-    if (memory.videos_vistos.length > 1000) {
-      memory.videos_vistos = memory.videos_vistos.slice(-500);
+    // 🆕 Aumentar limite para suportar catálogos grandes (3000+ vídeos)
+    // Só limpa quando TODOS os vídeos foram vistos (reset automático acontece no feed)
+    if (memory.videos_vistos.length > 5000) {
+      memory.videos_vistos = memory.videos_vistos.slice(-3000);
     }
     
     saveUserMemory(memory);

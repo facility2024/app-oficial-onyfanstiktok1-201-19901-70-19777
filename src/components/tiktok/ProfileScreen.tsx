@@ -812,31 +812,7 @@ if (!isOpen) return null;
               </button>
             </div>
 
-            {/* Links do Painel */}
-            {(user.posting_panel_url || panelUrl) && (
-              <div className="px-4 pb-4 flex flex-wrap gap-2 justify-center">
-                {user.posting_panel_url && (
-                  <a 
-                    href={user.posting_panel_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-1.5 rounded-full text-white hover:from-blue-600 hover:to-purple-600 transition-colors shadow-lg"
-                  >
-                    📊 Painel de Postagem
-                  </a>
-                )}
-                {panelUrl && (
-                  <a 
-                    href={panelUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1.5 rounded-full text-white hover:from-purple-600 hover:to-pink-600 transition-colors shadow-lg"
-                  >
-                    🔗 Link Enviado
-                  </a>
-                )}
-              </div>
-            )}
+            {/* Links do Painel removidos - não exibir para usuários finais */}
 
             {/* Seção Meus Conteúdos */}
             {panelUrl && (

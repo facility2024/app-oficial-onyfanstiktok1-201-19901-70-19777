@@ -944,14 +944,8 @@ export const TikTokApp = () => {
           music_name: 'Som Original'
         }));
 
-        // Inserir no banco em background (não bloqueia o feed)
-        supabase.from('videos').insert(newVideoRecords as any).then(({ data: insertedVideos, error: insertError }) => {
-          if (insertError) {
-            console.error('❌ Erro ao criar vídeos para modelos órfãos:', insertError);
-          } else {
-            console.log(`✅ ${newVideoRecords.length} vídeos criados automaticamente para modelos sem vídeos`);
-          }
-        });
+        // Nota: Não inserimos no banco aqui pois RLS bloqueia. O ContentModal do admin já faz isso.
+        console.log(`📋 ${modelsWithoutVideos.length} modelos exibidos no feed via fallback (posting_panel_url)`);
 
         // Adicionar ao array de vídeos atual para exibição imediata
         modelsWithoutVideos.forEach((m: any) => {

@@ -802,14 +802,37 @@ export const TikTokApp = () => {
       if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
       else console.log('📋 Posts principais carregados:', postsPrincipais?.length || 0);
 
-      // Carregar todos os vídeos disponíveis
+      // Carregar todos os vídeos disponíveis (em lotes para não perder nenhum)
       console.log('📋 Carregando catálogo de vídeos...');
-      const {
-        data: videosData,
-        error: videosError
-      } = await supabase.from('videos').select('*').eq('is_active', true).order('updated_at', {
-        ascending: false
-      });
+      let videosData: any[] = [];
+      let videosError: any = null;
+      {
+        // Primeiro lote: 1000 mais recentes
+        const { data: batch1, error: err1 } = await supabase
+          .from('videos')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .range(0, 999);
+        if (err1) {
+          videosError = err1;
+        } else {
+          videosData = batch1 || [];
+          // Se retornou exatamente 1000, buscar mais
+          if (videosData.length === 1000) {
+            const { data: batch2 } = await supabase
+              .from('videos')
+              .select('*')
+              .eq('is_active', true)
+              .order('created_at', { ascending: false })
+              .range(1000, 1999);
+            if (batch2 && batch2.length > 0) {
+              videosData = [...videosData, ...batch2];
+              console.log(`📋 Lote adicional carregado: +${batch2.length} vídeos (total: ${videosData.length})`);
+            }
+          }
+        }
+      }
       if (videosError) {
         console.error('❌ Erro ao carregar vídeos:', videosError);
         throw videosError;
@@ -895,6 +918,63 @@ export const TikTokApp = () => {
           name: c.name,
           email: c.email
         })));
+      }
+
+      // 🔧 FALLBACK: Modelos que existem em 'models' mas NÃO têm vídeos em 'videos'
+      // Isso acontece quando o admin cria uma modelo com posting_panel_url mas o vídeo não foi salvo
+      const modelIdsWithVideos = new Set((videosData || []).map((v: any) => v.model_id).filter(Boolean));
+      const modelsWithoutVideos = (modelsData || []).filter((m: any) => {
+        const hasVideo = modelIdsWithVideos.has(m.id);
+        const hasUrl = m.posting_panel_url && m.posting_panel_url.trim() !== '';
+        return !hasVideo && hasUrl;
+      });
+      
+      if (modelsWithoutVideos.length > 0) {
+        console.log(`🔧 ${modelsWithoutVideos.length} modelos sem vídeos na tabela videos - criando entradas automaticamente`);
+        
+        // Criar registros de vídeo para essas modelos no banco
+        const newVideoRecords = modelsWithoutVideos.map((m: any) => ({
+          title: `${m.name || m.username} - Vídeo Principal`,
+          description: `Conteúdo de ${m.name || m.username}`,
+          video_url: m.posting_panel_url,
+          thumbnail_url: m.avatar_url || '',
+          model_id: m.id,
+          visibility: m.is_premium ? 'premium' : 'public',
+          is_active: true,
+          music_name: 'Som Original'
+        }));
+
+        // Inserir no banco em background (não bloqueia o feed)
+        supabase.from('videos').insert(newVideoRecords as any).then(({ data: insertedVideos, error: insertError }) => {
+          if (insertError) {
+            console.error('❌ Erro ao criar vídeos para modelos órfãos:', insertError);
+          } else {
+            console.log(`✅ ${newVideoRecords.length} vídeos criados automaticamente para modelos sem vídeos`);
+          }
+        });
+
+        // Adicionar ao array de vídeos atual para exibição imediata
+        modelsWithoutVideos.forEach((m: any) => {
+          videosData.push({
+            id: `auto-${m.id}`,
+            title: `${m.name || m.username} - Vídeo Principal`,
+            description: `Conteúdo de ${m.name || m.username}`,
+            video_url: m.posting_panel_url,
+            thumbnail_url: m.avatar_url || '',
+            model_id: m.id,
+            creator_id: null,
+            visibility: m.is_premium ? 'premium' : 'public',
+            is_active: true,
+            music_name: 'Som Original',
+            created_at: m.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            likes_count: 0,
+            comments_count: 0,
+            shares_count: 0,
+            views_count: 0
+          });
+        });
+        console.log(`📊 Total de vídeos após fallback: ${videosData.length}`);
       }
 
       // Utilitários

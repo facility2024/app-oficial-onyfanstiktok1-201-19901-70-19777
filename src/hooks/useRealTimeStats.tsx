@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface DeviceStats {
+  desktop: number;
+  mobile: number;
+}
+
 interface RealTimeStats {
   totalContent: number;
   totalLikes: number;
@@ -10,6 +15,8 @@ interface RealTimeStats {
   totalFollowers: number;
   activeUsers: number;
   onlineUsersByState: { [state: string]: number };
+  deviceStatsByState: { [state: string]: DeviceStats };
+  totalDeviceStats: DeviceStats;
   totalOnlineUsers: number;
   totalViews: number;
   activeViews: number;
@@ -25,6 +32,8 @@ export const useRealTimeStats = () => {
     totalFollowers: 0,
     activeUsers: 0,
     onlineUsersByState: {},
+    deviceStatsByState: {},
+    totalDeviceStats: { desktop: 0, mobile: 0 },
     totalOnlineUsers: 0,
     totalViews: 0,
     activeViews: 0
@@ -93,7 +102,7 @@ export const useRealTimeStats = () => {
         supabase.from('user_sessions').select('*', { count: 'exact', head: true })
           .eq('is_active', true).gte('last_activity_at', twoMinutesAgo),
         // Usuários online por estado
-        supabase.from('online_users').select('location_state')
+        supabase.from('online_users').select('location_state, device_type')
           .eq('is_online', true).gte('last_seen_at', twoMinutesAgo)
           .not('location_state', 'is', null),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
@@ -104,14 +113,30 @@ export const useRealTimeStats = () => {
         supabase.from('videos').select('comments_count')
       ]);
 
-      // Processar dados de usuários online por estado
+      // Processar dados de usuários online por estado + tipo de dispositivo
       let onlineUsersByState: { [state: string]: number } = {};
+      let deviceStatsByState: { [state: string]: DeviceStats } = {};
+      let totalDeviceStats: DeviceStats = { desktop: 0, mobile: 0 };
       let totalOnlineUsers = 0;
 
       if (onlineUsersResult.data && onlineUsersResult.data.length > 0) {
         onlineUsersResult.data.forEach((row: any) => {
           if (row.location_state) {
             onlineUsersByState[row.location_state] = (onlineUsersByState[row.location_state] || 0) + 1;
+            
+            // Agregar por tipo de dispositivo
+            if (!deviceStatsByState[row.location_state]) {
+              deviceStatsByState[row.location_state] = { desktop: 0, mobile: 0 };
+            }
+            const deviceType = (row.device_type || '').toLowerCase();
+            if (deviceType === 'desktop') {
+              deviceStatsByState[row.location_state].desktop += 1;
+              totalDeviceStats.desktop += 1;
+            } else {
+              // mobile + tablet = mobile
+              deviceStatsByState[row.location_state].mobile += 1;
+              totalDeviceStats.mobile += 1;
+            }
           }
         });
         totalOnlineUsers = Object.values(onlineUsersByState).reduce((sum, count) => sum + count, 0);
@@ -138,7 +163,7 @@ export const useRealTimeStats = () => {
       // Views hoje: usar tabela ou fallback 
       const viewsTodayCount = viewsTodayResult.count || 0;
 
-      const newStats = {
+      const newStats: RealTimeStats = {
         totalContent: contentResult.count || 0,
         totalLikes: finalLikes,
         totalComments: finalComments,
@@ -147,6 +172,8 @@ export const useRealTimeStats = () => {
         totalFollowers: followersResult.count || 0,
         activeUsers: totalOnlineUsers || 0,
         onlineUsersByState,
+        deviceStatsByState,
+        totalDeviceStats,
         totalOnlineUsers,
         totalViews: finalTotalViews,
         activeViews: activeUsersResult.count || 0

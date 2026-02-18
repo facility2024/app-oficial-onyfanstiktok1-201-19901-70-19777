@@ -785,9 +785,9 @@ export const TikTokApp = () => {
       } = await supabase.from('posts_agendados').select(`
           *,
           modelo:models(*)
-        `).eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', {
+        `).eq('status', 'publicado').order('data_publicacao', {
         ascending: false
-      });
+      }).limit(50);
       const {
         data: postsPrincipais,
         error: principaisError

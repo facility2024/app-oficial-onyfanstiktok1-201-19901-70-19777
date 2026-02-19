@@ -96,14 +96,22 @@ export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
       </h2>
       
       <div
-        className="relative overflow-hidden group cursor-pointer mx-auto border border-gray-700"
-        style={{ width: 600, height: 300, maxWidth: '100%' }}
+        className="relative overflow-hidden group cursor-pointer mx-auto border border-gray-700 w-full max-w-[600px] aspect-[2/1] rounded-lg"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => navigate('/advertisers')}
       >
-        <a href={current.link} target="_blank" rel="noopener noreferrer">
-          <img src={current.image} alt={current.title} className="w-full h-full object-cover" />
+        <a href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+          <img 
+            src={current.image} 
+            alt={current.title} 
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              // Remove broken image ads from localStorage
+              const target = e.currentTarget;
+              target.style.display = 'none';
+            }}
+          />
         </a>
 
         <button

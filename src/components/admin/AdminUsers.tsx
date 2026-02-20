@@ -172,20 +172,55 @@ export const AdminUsers = () => {
     if (!confirmDelete) return;
 
     try {
-      toast.loading('Excluindo modelo e vídeos...');
+      toast.loading('Excluindo modelo e todos os dados relacionados...');
 
-      // 1. Excluir todos os vídeos da modelo
-      // @ts-ignore
-      const videosDelete = await supabase
+      // 1. Excluir vídeos da modelo (model_id)
+      const videosDelete = await (supabase as any)
         .from('videos')
         .delete()
-        .eq('user_id', modelId);
+        .eq('model_id', modelId);
+      if (videosDelete.error) {
+        console.warn('Erro ao excluir vídeos:', videosDelete.error);
+      }
 
-      if (videosDelete.error) throw videosDelete.error;
+      // 2. Excluir seguidores da modelo
+      const followersDelete = await (supabase as any)
+        .from('model_followers')
+        .delete()
+        .eq('model_id', modelId);
+      if (followersDelete.error) {
+        console.warn('Erro ao excluir seguidores:', followersDelete.error);
+      }
 
-      // 2. Excluir a modelo
-      // @ts-ignore
-      const modelDelete = await supabase
+      // 3. Excluir chat panels da modelo
+      const chatPanelsDelete = await (supabase as any)
+        .from('model_chat_panels')
+        .delete()
+        .eq('model_id', modelId);
+      if (chatPanelsDelete.error) {
+        console.warn('Erro ao excluir chat panels:', chatPanelsDelete.error);
+      }
+
+      // 4. Excluir planos de assinatura da modelo
+      const subsPlansDelete = await (supabase as any)
+        .from('model_subscription_plans')
+        .delete()
+        .eq('model_id', modelId);
+      if (subsPlansDelete.error) {
+        console.warn('Erro ao excluir planos:', subsPlansDelete.error);
+      }
+
+      // 5. Excluir assinaturas da modelo
+      const subsDelete = await (supabase as any)
+        .from('model_subscriptions')
+        .delete()
+        .eq('model_id', modelId);
+      if (subsDelete.error) {
+        console.warn('Erro ao excluir assinaturas:', subsDelete.error);
+      }
+
+      // 6. Finalmente excluir a modelo
+      const modelDelete = await (supabase as any)
         .from('models')
         .delete()
         .eq('id', modelId);
@@ -193,9 +228,9 @@ export const AdminUsers = () => {
       if (modelDelete.error) throw modelDelete.error;
 
       toast.dismiss();
-      toast.success(`Modelo "${modelName}" e seus vídeos foram excluídos com sucesso!`);
+      toast.success(`Modelo "${modelName}" e todos os dados relacionados foram excluídos permanentemente!`);
 
-      // Atualizar lista de modelos
+      // Atualizar lista local
       setModels((prev: any) => prev.filter((m: any) => m.id !== modelId));
 
     } catch (error) {

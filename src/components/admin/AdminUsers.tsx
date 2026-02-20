@@ -172,71 +172,35 @@ export const AdminUsers = () => {
     if (!confirmDelete) return;
 
     try {
-      toast.loading('Excluindo modelo e todos os dados relacionados...');
+      toast.loading('Excluindo modelo permanentemente...');
 
-      // Verificar se o usuário está autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.dismiss();
-        toast.error('Você precisa estar logado como admin para excluir modelos.');
-        return;
-      }
-      console.log('🔑 Usuário autenticado:', user.email);
+      // Usar função RPC com SECURITY DEFINER (bypassa RLS)
+      const { error } = await (supabase as any).rpc('admin_delete_model', {
+        p_model_id: modelId
+      });
 
-      // Limpar todas as tabelas relacionadas
-      const relatedTables = [
-        'likes', 'comments', 'video_views', 'videos',
-        'model_followers', 'model_chat_panels',
-        'model_subscription_plans', 'model_subscriptions',
-      ];
-
-      for (const table of relatedTables) {
-        const result = await (supabase as any)
-          .from(table)
-          .delete()
-          .eq('model_id', modelId);
-        console.log(`🗑️ ${table}:`, result.error ? `ERRO: ${result.error.message}` : 'OK');
-      }
-
-      // Excluir a modelo (sem .select() para evitar conflito de RLS)
-      const modelDelete = await (supabase as any)
-        .from('models')
-        .delete()
-        .eq('id', modelId);
-
-      console.log('🗑️ DELETE models resultado:', JSON.stringify(modelDelete));
-
-      if (modelDelete.error) {
-        console.error('❌ Erro no DELETE:', modelDelete.error);
-        throw modelDelete.error;
-      }
-
-      // Verificar se realmente foi excluída com query separada
-      const { data: stillExists } = await (supabase as any)
-        .from('models')
-        .select('id')
-        .eq('id', modelId)
-        .maybeSingle();
-
-      if (stillExists) {
-        console.error('❌ MODELO AINDA EXISTE! ID:', modelId, 'User:', user.email);
-        console.error('❌ Isso significa que a política RLS de DELETE não está funcionando.');
-        console.error('❌ Execute no SQL do Supabase:');
-        console.error('DROP POLICY IF EXISTS "models_delete_admin" ON public.models;');
-        console.error('CREATE POLICY "models_delete_admin" ON public.models FOR DELETE USING (true);');
-        toast.dismiss();
-        toast.error('A modelo NÃO foi excluída. RLS está bloqueando. Veja o console (F12) para o SQL correto.');
-        return;
+      if (error) {
+        console.error('❌ Erro ao excluir modelo via RPC:', error);
+        
+        // Fallback: se a função RPC não existir, informar o usuário
+        if (error.message?.includes('function') || error.code === '42883') {
+          toast.dismiss();
+          toast.error('Função admin_delete_model não encontrada. Execute o SQL no Supabase SQL Editor. Veja o console (F12).');
+          console.error('⚠️ Execute este SQL no Supabase SQL Editor:\n\nCREATE OR REPLACE FUNCTION public.admin_delete_model(p_model_id UUID)\nRETURNS void AS $$\nBEGIN\n  IF NOT public.has_role(auth.uid(), \'admin\') THEN\n    RAISE EXCEPTION \'Permissão negada\';\n  END IF;\n  DELETE FROM public.likes WHERE model_id = p_model_id;\n  DELETE FROM public.comments WHERE model_id = p_model_id;\n  DELETE FROM public.video_views WHERE model_id = p_model_id;\n  DELETE FROM public.videos WHERE model_id = p_model_id;\n  DELETE FROM public.model_followers WHERE model_id = p_model_id;\n  DELETE FROM public.model_chat_panels WHERE model_id = p_model_id;\n  DELETE FROM public.model_subscription_plans WHERE model_id = p_model_id;\n  DELETE FROM public.model_subscriptions WHERE model_id = p_model_id;\n  DELETE FROM public.models WHERE id = p_model_id;\nEND;\n$$ LANGUAGE plpgsql SECURITY DEFINER;\n\nGRANT EXECUTE ON FUNCTION public.admin_delete_model(UUID) TO authenticated;');
+          return;
+        }
+        
+        throw error;
       }
 
       toast.dismiss();
-      toast.success(`✅ Modelo "${modelName}" excluída permanentemente!`);
+      toast.success(`✅ Modelo "${modelName}" excluída permanentemente do banco!`);
       setModels((prev: any) => prev.filter((m: any) => m.id !== modelId));
 
     } catch (error: any) {
       toast.dismiss();
       console.error('❌ Erro ao excluir modelo:', error);
-      toast.error('Erro ao excluir modelo. Verifique o console para mais detalhes.');
+      toast.error(`Erro: ${error.message || 'Verifique o console (F12)'}`);
     }
   };
 

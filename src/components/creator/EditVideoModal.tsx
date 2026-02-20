@@ -57,7 +57,7 @@ export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) =>
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-2xl">
+      <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-2xl z-[9999]">
         <DialogHeader>
           <DialogTitle>Editar Vídeo</DialogTitle>
         </DialogHeader>

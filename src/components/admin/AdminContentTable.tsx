@@ -250,22 +250,63 @@ export const AdminContentTable = () => {
   };
 
   const deleteContent = async (id: string) => {
-    try {
-      // Primeiro deletar todos os vídeos do modelo
-      await supabase
-        .from('videos')
-        .delete()
-        .eq('model_id', id);
-      
-      // Depois deletar o modelo
-      await supabase
-        .from('models')
-        .delete()
-        .eq('id', id);
+    const content = contents.find(c => c.id === id);
+    if (!content) return;
 
-      setContents(prev => prev.filter(content => content.id !== id));
+    const confirmMsg = content.isCreator
+      ? `⚠️ Excluir a CRIADORA "${content.name}"?\nIsso removerá a role de creator e todos os vídeos dela.\n\nDeseja continuar?`
+      : `⚠️ Excluir a modelo "${content.name}" e todos os seus dados?\n\nEsta ação é IRREVERSÍVEL!`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      toast.loading('Excluindo...');
+
+      if (content.isCreator) {
+        // Para criadoras: deletar vídeos com creator_id e remover role
+        await (supabase as any)
+          .from('videos')
+          .delete()
+          .eq('creator_id', id);
+
+        await (supabase as any)
+          .from('user_follows')
+          .delete()
+          .eq('following_id', id);
+
+        // Remover role de creator
+        await (supabase as any)
+          .from('user_roles')
+          .delete()
+          .eq('user_id', id)
+          .eq('role', 'creator');
+
+        toast.dismiss();
+        toast.success(`✅ Criadora "${content.name}" removida com sucesso!`);
+      } else {
+        // Para modelos: usar a função RPC
+        const { error } = await (supabase as any).rpc('admin_delete_model', {
+          p_model_id: id
+        });
+
+        if (error) {
+          console.error('❌ Erro RPC:', error);
+          // Fallback manual
+          await (supabase as any).from('videos').delete().eq('model_id', id);
+          await (supabase as any).from('model_followers').delete().eq('model_id', id);
+          await (supabase as any).from('model_chat_panels').delete().eq('model_id', id);
+          await (supabase as any).from('models').delete().eq('id', id);
+        }
+
+        toast.dismiss();
+        toast.success(`✅ Modelo "${content.name}" excluída permanentemente!`);
+      }
+
+      setContents(prev => prev.filter(c => c.id !== id));
     } catch (error) {
+      toast.dismiss();
       console.error('Erro ao deletar conteúdo:', error);
+      toast.error('Erro ao excluir. Verifique o console.');
     }
   };
 

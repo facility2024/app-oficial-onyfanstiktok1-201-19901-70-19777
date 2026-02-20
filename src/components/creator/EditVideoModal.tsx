@@ -116,7 +116,7 @@ export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) =>
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[100003] bg-gray-800 border-gray-700">
                 <SelectItem value="public">🌐 Público</SelectItem>
                 <SelectItem value="premium">👑 Premium VIP</SelectItem>
                 <SelectItem value="private">🔒 Privado (Meus Assinantes)</SelectItem>

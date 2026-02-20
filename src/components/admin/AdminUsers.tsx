@@ -174,60 +174,59 @@ export const AdminUsers = () => {
     try {
       toast.loading('Excluindo modelo e todos os dados relacionados...');
 
-      // Limpar todas as tabelas relacionadas (ignorar erros de tabelas que podem não existir)
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.dismiss();
+        toast.error('Você precisa estar logado como admin para excluir modelos.');
+        return;
+      }
+      console.log('🔑 Usuário autenticado:', user.email);
+
+      // Limpar todas as tabelas relacionadas
       const relatedTables = [
-        { table: 'likes', column: 'model_id' },
-        { table: 'comments', column: 'model_id' },
-        { table: 'video_views', column: 'model_id' },
-        { table: 'videos', column: 'model_id' },
-        { table: 'model_followers', column: 'model_id' },
-        { table: 'model_chat_panels', column: 'model_id' },
-        { table: 'model_subscription_plans', column: 'model_id' },
-        { table: 'model_subscriptions', column: 'model_id' },
+        'likes', 'comments', 'video_views', 'videos',
+        'model_followers', 'model_chat_panels',
+        'model_subscription_plans', 'model_subscriptions',
       ];
 
-      for (const { table, column } of relatedTables) {
+      for (const table of relatedTables) {
         const result = await (supabase as any)
           .from(table)
           .delete()
-          .eq(column, modelId);
-        if (result.error) {
-          console.warn(`Aviso ao limpar ${table}:`, result.error.message);
-        }
+          .eq('model_id', modelId);
+        console.log(`🗑️ ${table}:`, result.error ? `ERRO: ${result.error.message}` : 'OK');
       }
 
-      // Excluir a modelo com .select() para confirmar que foi realmente deletada
+      // Excluir a modelo
       const modelDelete = await (supabase as any)
         .from('models')
         .delete()
         .eq('id', modelId)
         .select();
 
-      if (modelDelete.error) throw modelDelete.error;
+      console.log('🗑️ DELETE models resultado:', JSON.stringify(modelDelete));
 
-      // Verificar se realmente foi excluída
-      const verification = await (supabase as any)
-        .from('models')
-        .select('id')
-        .eq('id', modelId)
-        .maybeSingle();
+      if (modelDelete.error) {
+        console.error('❌ Erro no DELETE:', modelDelete.error);
+        throw modelDelete.error;
+      }
 
-      if (verification.data) {
-        console.error('ERRO: Modelo ainda existe após tentativa de exclusão! Possível bloqueio por RLS.');
+      // Se retornou array vazio, RLS bloqueou
+      if (!modelDelete.data || modelDelete.data.length === 0) {
         toast.dismiss();
-        toast.error('Erro: A modelo não foi excluída. Verifique as permissões RLS no Supabase para a tabela "models".');
+        toast.error('❌ RLS bloqueou a exclusão! Execute no SQL Editor do Supabase:\n\nCREATE POLICY "models_delete_admin" ON public.models FOR DELETE TO authenticated USING (public.has_role(auth.uid(), \'admin\'));');
+        console.error('❌ DELETE retornou 0 linhas - RLS está bloqueando. Execute este SQL no Supabase:\n\nCREATE POLICY "models_delete_admin" ON public.models FOR DELETE TO authenticated USING (public.has_role(auth.uid(), \'admin\'));');
         return;
       }
 
       toast.dismiss();
-      toast.success(`Modelo "${modelName}" excluída permanentemente do banco de dados!`);
-
-      // Atualizar lista local
+      toast.success(`✅ Modelo "${modelName}" excluída permanentemente!`);
       setModels((prev: any) => prev.filter((m: any) => m.id !== modelId));
 
-    } catch (error) {
+    } catch (error: any) {
       toast.dismiss();
-      console.error('Erro ao excluir modelo:', error);
+      console.error('❌ Erro ao excluir modelo:', error);
       toast.error('Erro ao excluir modelo. Verifique o console para mais detalhes.');
     }
   };

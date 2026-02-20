@@ -840,7 +840,7 @@ if (!isOpen) return null;
                     {myContentImages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 text-white/60">
                         <div className="text-3xl mb-2">💖</div>
-                        <p className="text-sm">Nenhum conteúdo exclusivo disponível</p>
+                        <p className="text-sm">Nenhum conteúdo privado disponível</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-3 gap-1">
@@ -907,7 +907,7 @@ if (!isOpen) return null;
                       : 'text-white/60 hover:text-purple-400 hover:bg-purple-500/10'
                   }`}
                 >
-                  🔒 Exclusivo ({privateContents.length})
+                  🔒 Privado ({privateContents.length})
                 </button>
               </div>
 
@@ -933,7 +933,7 @@ if (!isOpen) return null;
                         {activeTab === 'premium' && '👑'}
                         {activeTab === 'private' && '🔒'}
                       </div>
-                      <p className="text-sm">Nenhum conteúdo {activeTab === 'public' ? 'público' : activeTab === 'premium' ? 'VIP' : 'exclusivo'}</p>
+                      <p className="text-sm">Nenhum conteúdo {activeTab === 'public' ? 'público' : activeTab === 'premium' ? 'VIP' : 'privado'}</p>
                     </div>
                   );
                 }
@@ -970,8 +970,8 @@ if (!isOpen) return null;
                             }
                             
                             if (content.visibility === 'private' && !canAccessPrivate) {
-                              toast.info(`Conteúdo exclusivo para assinantes de @${user.username}`, {
-                                description: 'Assine para desbloquear conteúdo exclusivo'
+                              toast.info(`Conteúdo privado para assinantes de @${user.username}`, {
+                                description: 'Assine para desbloquear conteúdo privado'
                               });
                               // Scroll para seção de assinatura
                               const subscriptionSection = document.querySelector('[data-subscription-section]');
@@ -1037,7 +1037,7 @@ if (!isOpen) return null;
                                 {content.visibility === 'premium' ? '👑' : '🔒'}
                               </span>
                               <span className="text-white/80 text-[10px] font-semibold">
-                                {content.visibility === 'premium' ? 'VIP' : 'EXCLUSIVO'}
+                                {content.visibility === 'premium' ? 'VIP' : 'PRIVADO'}
                               </span>
                             </div>
                           )}

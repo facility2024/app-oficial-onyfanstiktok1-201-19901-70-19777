@@ -198,12 +198,11 @@ export const AdminUsers = () => {
         console.log(`🗑️ ${table}:`, result.error ? `ERRO: ${result.error.message}` : 'OK');
       }
 
-      // Excluir a modelo
+      // Excluir a modelo (sem .select() para evitar conflito de RLS)
       const modelDelete = await (supabase as any)
         .from('models')
         .delete()
-        .eq('id', modelId)
-        .select();
+        .eq('id', modelId);
 
       console.log('🗑️ DELETE models resultado:', JSON.stringify(modelDelete));
 
@@ -212,11 +211,21 @@ export const AdminUsers = () => {
         throw modelDelete.error;
       }
 
-      // Se retornou array vazio, RLS bloqueou
-      if (!modelDelete.data || modelDelete.data.length === 0) {
+      // Verificar se realmente foi excluída com query separada
+      const { data: stillExists } = await (supabase as any)
+        .from('models')
+        .select('id')
+        .eq('id', modelId)
+        .maybeSingle();
+
+      if (stillExists) {
+        console.error('❌ MODELO AINDA EXISTE! ID:', modelId, 'User:', user.email);
+        console.error('❌ Isso significa que a política RLS de DELETE não está funcionando.');
+        console.error('❌ Execute no SQL do Supabase:');
+        console.error('DROP POLICY IF EXISTS "models_delete_admin" ON public.models;');
+        console.error('CREATE POLICY "models_delete_admin" ON public.models FOR DELETE USING (true);');
         toast.dismiss();
-        toast.error('❌ RLS bloqueou a exclusão! Execute no SQL Editor do Supabase:\n\nCREATE POLICY "models_delete_admin" ON public.models FOR DELETE TO authenticated USING (public.has_role(auth.uid(), \'admin\'));');
-        console.error('❌ DELETE retornou 0 linhas - RLS está bloqueando. Execute este SQL no Supabase:\n\nCREATE POLICY "models_delete_admin" ON public.models FOR DELETE TO authenticated USING (public.has_role(auth.uid(), \'admin\'));');
+        toast.error('A modelo NÃO foi excluída. RLS está bloqueando. Veja o console (F12) para o SQL correto.');
         return;
       }
 

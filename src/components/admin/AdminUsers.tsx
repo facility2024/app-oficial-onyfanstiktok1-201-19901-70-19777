@@ -174,61 +174,53 @@ export const AdminUsers = () => {
     try {
       toast.loading('Excluindo modelo e todos os dados relacionados...');
 
-      // 1. Excluir vídeos da modelo (model_id)
-      const videosDelete = await (supabase as any)
-        .from('videos')
-        .delete()
-        .eq('model_id', modelId);
-      if (videosDelete.error) {
-        console.warn('Erro ao excluir vídeos:', videosDelete.error);
+      // Limpar todas as tabelas relacionadas (ignorar erros de tabelas que podem não existir)
+      const relatedTables = [
+        { table: 'likes', column: 'model_id' },
+        { table: 'comments', column: 'model_id' },
+        { table: 'video_views', column: 'model_id' },
+        { table: 'videos', column: 'model_id' },
+        { table: 'model_followers', column: 'model_id' },
+        { table: 'model_chat_panels', column: 'model_id' },
+        { table: 'model_subscription_plans', column: 'model_id' },
+        { table: 'model_subscriptions', column: 'model_id' },
+      ];
+
+      for (const { table, column } of relatedTables) {
+        const result = await (supabase as any)
+          .from(table)
+          .delete()
+          .eq(column, modelId);
+        if (result.error) {
+          console.warn(`Aviso ao limpar ${table}:`, result.error.message);
+        }
       }
 
-      // 2. Excluir seguidores da modelo
-      const followersDelete = await (supabase as any)
-        .from('model_followers')
-        .delete()
-        .eq('model_id', modelId);
-      if (followersDelete.error) {
-        console.warn('Erro ao excluir seguidores:', followersDelete.error);
-      }
-
-      // 3. Excluir chat panels da modelo
-      const chatPanelsDelete = await (supabase as any)
-        .from('model_chat_panels')
-        .delete()
-        .eq('model_id', modelId);
-      if (chatPanelsDelete.error) {
-        console.warn('Erro ao excluir chat panels:', chatPanelsDelete.error);
-      }
-
-      // 4. Excluir planos de assinatura da modelo
-      const subsPlansDelete = await (supabase as any)
-        .from('model_subscription_plans')
-        .delete()
-        .eq('model_id', modelId);
-      if (subsPlansDelete.error) {
-        console.warn('Erro ao excluir planos:', subsPlansDelete.error);
-      }
-
-      // 5. Excluir assinaturas da modelo
-      const subsDelete = await (supabase as any)
-        .from('model_subscriptions')
-        .delete()
-        .eq('model_id', modelId);
-      if (subsDelete.error) {
-        console.warn('Erro ao excluir assinaturas:', subsDelete.error);
-      }
-
-      // 6. Finalmente excluir a modelo
+      // Excluir a modelo com .select() para confirmar que foi realmente deletada
       const modelDelete = await (supabase as any)
         .from('models')
         .delete()
-        .eq('id', modelId);
+        .eq('id', modelId)
+        .select();
 
       if (modelDelete.error) throw modelDelete.error;
 
+      // Verificar se realmente foi excluída
+      const verification = await (supabase as any)
+        .from('models')
+        .select('id')
+        .eq('id', modelId)
+        .maybeSingle();
+
+      if (verification.data) {
+        console.error('ERRO: Modelo ainda existe após tentativa de exclusão! Possível bloqueio por RLS.');
+        toast.dismiss();
+        toast.error('Erro: A modelo não foi excluída. Verifique as permissões RLS no Supabase para a tabela "models".');
+        return;
+      }
+
       toast.dismiss();
-      toast.success(`Modelo "${modelName}" e todos os dados relacionados foram excluídos permanentemente!`);
+      toast.success(`Modelo "${modelName}" excluída permanentemente do banco de dados!`);
 
       // Atualizar lista local
       setModels((prev: any) => prev.filter((m: any) => m.id !== modelId));

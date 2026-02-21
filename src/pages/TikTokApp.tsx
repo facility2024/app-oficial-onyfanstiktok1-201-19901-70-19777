@@ -47,6 +47,7 @@ import headerBackground from '@/assets/header-background.png';
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
+import { PromoPopup } from '@/components/tiktok/PromoPopup';
 interface Video {
   id: string;
   title: string;
@@ -2859,6 +2860,9 @@ export const TikTokApp = () => {
         <ActionTracker onActionAttempt={async (actionType, userName) => {
         return await handleActionAttempt(actionType, userName);
       }} />
+
+        {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
+        <PromoPopup />
       </div>;
   }
 
@@ -3298,5 +3302,8 @@ export const TikTokApp = () => {
           checkPremiumStatus();
         }}
       />
+
+      {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
+      <PromoPopup />
     </div>;
 };

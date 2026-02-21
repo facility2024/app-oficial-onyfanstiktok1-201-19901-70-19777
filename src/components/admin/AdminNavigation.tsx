@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone } from 'lucide-react';
+import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -23,6 +23,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'marketplace', label: 'Marketplace', icon: Settings, shortLabel: '🛒' },
     { id: 'local-businesses', label: 'Comércios', icon: MapPin, shortLabel: '📍' },
     { id: 'ads', label: 'Anúncios', icon: Megaphone, shortLabel: '📢' },
+    { id: 'promo-ads', label: 'Promo Live', icon: Radio, shortLabel: '📺' },
     { id: 'chat-panels', label: 'Chat IA', icon: Bot, shortLabel: '🤖' },
     { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
     { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },

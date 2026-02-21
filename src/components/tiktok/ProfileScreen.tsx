@@ -582,8 +582,8 @@ if (!isOpen) return null;
                 </div>
               </div>
 
-            {/* Seção de Assinatura Individual da Modelo */}
-            {!hideSubscriptionSection && (
+            {/* Seção de Assinatura Individual - Apenas para Criadoras de Conteúdo */}
+            {isCreator && !hideSubscriptionSection && (
             <div className="px-4 pb-6" data-subscription-section>
               {/* Status de assinatura da modelo */}
               {modelSubscription ? (

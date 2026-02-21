@@ -86,6 +86,7 @@ const navigationGroups = [
       { id: 'ads', label: 'Anúncios', icon: Megaphone },
       { id: 'video-call', label: 'Vídeo Chamada', icon: Phone },
       { id: 'live', label: 'Live', icon: Radio },
+      { id: 'promo-ads', label: 'Promo Live/Chamada', icon: Radio },
     ]
   },
   {

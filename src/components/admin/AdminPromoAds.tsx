@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Radio, Phone, Plus, Trash2, Eye, Calendar, Clock, Send } from 'lucide-react';
+import { Radio, Phone, Plus, Trash2, Eye, Calendar, Clock, Send, Search, Check } from 'lucide-react';
 
 interface Model {
   id: string;
@@ -58,6 +58,8 @@ export const AdminPromoAds = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   useEffect(() => {
     loadModels();
@@ -166,23 +168,50 @@ export const AdminPromoAds = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Modelo */}
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label className="text-gray-300">Modelo</Label>
-              <Select value={selectedModelId} onValueChange={setSelectedModelId}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-                  <SelectValue placeholder="Selecione uma modelo" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
-                  {models.map(m => (
-                    <SelectItem key={m.id} value={m.id} className="text-white">
-                      <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Input
+                  value={selectedModelId ? models.find(m => m.id === selectedModelId)?.name || modelSearch : modelSearch}
+                  onChange={e => {
+                    setModelSearch(e.target.value);
+                    setSelectedModelId('');
+                    setShowModelDropdown(true);
+                  }}
+                  onFocus={() => setShowModelDropdown(true)}
+                  placeholder="Buscar modelo..."
+                  className="bg-gray-800 border-gray-600 text-white pl-9"
+                />
+                {selectedModelId && (
+                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400" />
+                )}
+              </div>
+              {showModelDropdown && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-md max-h-48 overflow-y-auto shadow-lg">
+                  {models
+                    .filter(m => !modelSearch || m.name.toLowerCase().includes(modelSearch.toLowerCase()) || m.username.toLowerCase().includes(modelSearch.toLowerCase()))
+                    .map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-gray-700 ${selectedModelId === m.id ? 'bg-gray-700' : ''}`}
+                        onClick={() => {
+                          setSelectedModelId(m.id);
+                          setModelSearch(m.name);
+                          setShowModelDropdown(false);
+                        }}
+                      >
                         <img src={m.avatar_url || '/placeholder.svg'} alt="" className="w-6 h-6 rounded-full object-cover" />
-                        {m.name} (@{m.username})
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                        {m.name} <span className="text-gray-400">@{m.username}</span>
+                        {selectedModelId === m.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
+                      </button>
+                    ))}
+                  {models.filter(m => !modelSearch || m.name.toLowerCase().includes(modelSearch.toLowerCase()) || m.username.toLowerCase().includes(modelSearch.toLowerCase())).length === 0 && (
+                    <p className="text-gray-400 text-sm text-center py-3">Nenhuma modelo encontrada</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Tipo */}

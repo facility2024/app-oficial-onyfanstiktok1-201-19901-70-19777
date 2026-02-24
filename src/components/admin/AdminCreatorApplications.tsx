@@ -41,7 +41,7 @@ interface AdminCreatorApplicationsProps {
 
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
-  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean; phone?: string; bio?: string; avatar_url?: string}[]>([]);
+  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean; phone?: string; bio?: string; avatar_url?: string; created_at?: string; whatsapp?: string; full_name?: string}[]>([]);
   const [externalCadastros, setExternalCadastros] = useState<{id: string; nome: string; email: string; whatsapp: string; status: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
@@ -152,12 +152,13 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       // Fetch creators from user_roles who don't have a creator_application
       const { data: creatorRoles } = await (supabase as any)
         .from('user_roles')
-        .select('user_id')
+        .select('user_id, granted_at')
         .eq('role', 'creator');
       
       if (!creatorRoles?.length) return;
       
       const creatorIds = creatorRoles.map((r: any) => r.user_id);
+      const grantedMap = new Map(creatorRoles.map((r: any) => [r.user_id, r.granted_at]));
       
       const { data: apps } = await (supabase as any)
         .from('creator_applications')
@@ -173,10 +174,32 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       
       const { data: profiles } = await (supabase as any)
         .from('profiles')
-        .select('id, email, name, username, phone, bio, avatar_url')
+        .select('id, email, name, username, phone, bio, avatar_url, created_at')
         .in('id', directIds);
       
-      setDirectCreators((profiles || []).map((p: any) => ({ ...p, is_active: true })));
+      // Also check cadastro_modelos for extra data (whatsapp, nome)
+      const emails = (profiles || []).map((p: any) => p.email).filter(Boolean);
+      let cadastroMap = new Map<string, any>();
+      if (emails.length) {
+        const { data: cadastros } = await (supabase as any)
+          .from('cadastro_modelos')
+          .select('email, nome, whatsapp, created_at')
+          .in('email', emails);
+        (cadastros || []).forEach((c: any) => {
+          if (c.email) cadastroMap.set(c.email.toLowerCase(), c);
+        });
+      }
+      
+      setDirectCreators((profiles || []).map((p: any) => {
+        const cadastro = p.email ? cadastroMap.get(p.email.toLowerCase()) : null;
+        return {
+          ...p,
+          is_active: true,
+          whatsapp: p.phone || cadastro?.whatsapp || '',
+          full_name: p.name || cadastro?.nome || p.username || '',
+          created_at: p.created_at || grantedMap.get(p.id) || '',
+        };
+      }));
     } catch (error) {
       console.error('Erro ao buscar criadores diretos:', error);
     }
@@ -548,14 +571,20 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold">{creator.name || creator.username || 'Sem nome'}</p>
+                          <p className="font-semibold">{creator.full_name || creator.name || creator.username || 'Sem nome'}</p>
                           <p className="text-sm text-muted-foreground">📧 {creator.email}</p>
-                          {creator.phone && (
+                          {creator.username && creator.username !== creator.email && (
+                            <p className="text-sm text-muted-foreground">🎭 {creator.username}</p>
+                          )}
+                          {creator.whatsapp && (
                             <p className="text-sm text-muted-foreground">📱{' '}
-                              <button onClick={() => openWhatsApp(creator.phone!)} className="text-primary hover:underline inline-flex items-center gap-1">
-                                {creator.phone}<ExternalLink className="w-3 h-3" />
+                              <button onClick={() => openWhatsApp(creator.whatsapp!)} className="text-primary hover:underline inline-flex items-center gap-1">
+                                {creator.whatsapp}<ExternalLink className="w-3 h-3" />
                               </button>
                             </p>
+                          )}
+                          {creator.created_at && (
+                            <p className="text-sm text-muted-foreground">📅 {new Date(creator.created_at).toLocaleDateString('pt-BR')}</p>
                           )}
                           {creator.bio && (
                             <p className="text-xs text-muted-foreground mt-1">📝 {creator.bio.substring(0, 80)}{creator.bio.length > 80 ? '...' : ''}</p>
@@ -565,7 +594,7 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => handleResetPassword(creator.email, creator.name || creator.username, '')}
+                          onClick={() => handleResetPassword(creator.email, creator.full_name || creator.name || creator.username, creator.whatsapp || '')}
                           disabled={processing}
                           className="bg-primary hover:bg-primary/90"
                         >

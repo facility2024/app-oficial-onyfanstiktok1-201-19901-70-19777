@@ -202,6 +202,52 @@ Deno.serve(async (req) => {
         .eq('id', application_id)
     }
 
+    // Send approval email with credentials
+    if (tempPassword) {
+      try {
+        const appUrl = 'https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app'
+        const emailBody = `
+<div style="text-align:center;">
+  <div style="background: linear-gradient(135deg, #8B5CF6, #EC4899); padding: 30px; border-radius: 12px; margin-bottom: 20px;">
+    <h1 style="color: white; margin: 0; font-size: 22px;">SEJA BEM VINDO(A) À FAMÍLIA COCONUDI</h1>
+  </div>
+</div>
+
+<p>Olá ${fullName}! 🎉</p>
+<p>Sua candidatura foi <strong>APROVADA!</strong></p>
+<p>Aqui estão seus dados de acesso:</p>
+
+<div style="background: #f3f4f6; padding: 16px; border-radius: 8px; border-left: 4px solid #8B5CF6; margin: 16px 0;">
+  <p style="margin: 4px 0;">📧 <strong>Email:</strong> ${email}</p>
+  <p style="margin: 4px 0;">🔑 <strong>Senha provisória:</strong> ${tempPassword}</p>
+</div>
+
+<p style="color: #dc2626;">⚠️ <strong>IMPORTANTE:</strong> Troque sua senha no primeiro acesso!</p>
+<p>Acesse nosso aplicativo: <a href="${appUrl}/auth">${appUrl.replace('https://', '')}</a></p>
+
+<p style="margin-top: 24px;">Equipe COCONUDI</p>
+`
+
+        // Try to send email via send-email function
+        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            recipient: email,
+            subject: '🎉 Bem-vindo(a) à família COCONUDI! Seus dados de acesso',
+            body: emailBody,
+          }),
+        })
+        const emailResult = await emailRes.json()
+        console.log('Email sent result:', emailResult)
+      } catch (emailError: any) {
+        console.error('Failed to send email (non-blocking):', emailError.message)
+      }
+    }
+
     console.log(`Success! email=${email}, accountCreated=${accountCreated}, tempPassword=${tempPassword ? 'SET' : 'NULL'}`)
 
     return new Response(JSON.stringify({

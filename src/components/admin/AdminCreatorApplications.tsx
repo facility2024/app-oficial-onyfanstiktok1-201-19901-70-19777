@@ -219,7 +219,12 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       });
       setSelectedApp(null);
       setShowCredentialsModal(true);
-      toast.success('Aplicação aprovada com sucesso!');
+      
+      if (data.email_sent) {
+        toast.success('✅ Aprovado! Email com credenciais enviado com sucesso!');
+      } else {
+        toast.warning(`⚠️ Aprovado, mas o email NÃO foi enviado. ${data.email_error || 'Envie as credenciais manualmente via WhatsApp ou copie abaixo.'}`, { duration: 15000 });
+      }
     } catch (error: any) {
       console.error('Erro ao aprovar aplicação:', error);
       toast.error('Erro ao aprovar: ' + (error.message || 'Erro desconhecido'));
@@ -296,7 +301,12 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         whatsapp: data.whatsapp,
       });
       setShowCredentialsModal(true);
-      toast.success('Credenciais geradas com sucesso!');
+      
+      if (data.email_sent) {
+        toast.success('✅ Credenciais geradas e email enviado!');
+      } else {
+        toast.warning(`⚠️ Credenciais geradas, mas email NÃO enviado. ${data.email_error || 'Envie via WhatsApp.'}`, { duration: 15000 });
+      }
     } catch (error: any) {
       console.error('Erro ao resetar senha:', error);
       toast.error('Erro: ' + (error.message || 'Erro desconhecido'));

@@ -329,7 +329,7 @@ export const AdminSettings = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {(Object.keys(currentPlans) as Array<keyof VIPPlans>).map((planKey) => {
+            {(Object.keys(currentPlans) as Array<keyof VIPPlans>).filter((k) => k === 'mensal').map((planKey) => {
               const plan = currentPlans[planKey];
               return (
                 <div 

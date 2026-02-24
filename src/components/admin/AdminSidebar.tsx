@@ -15,6 +15,7 @@ import {
   Brain, 
   Crown, 
   FileText,
+  ClipboardList,
   Store,
   Calendar,
   UserPlus,
@@ -75,6 +76,7 @@ const navigationGroups = [
     items: [
       { id: 'users', label: 'Usuários', icon: Users },
       { id: 'creators', label: 'Criadores', icon: Sparkles },
+      { id: 'cadastros', label: 'Cadastros', icon: ClipboardList },
       { id: 'roles', label: 'Permissões', icon: Shield },
     ]
   },

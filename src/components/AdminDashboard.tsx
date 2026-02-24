@@ -45,6 +45,7 @@ import { AdminVideoCall } from './admin/AdminVideoCall';
 import { AdminAds } from './admin/AdminAds';
 import { AdminLive } from './admin/AdminLive';
 import { AdminPromoAds } from './admin/AdminPromoAds';
+import { AdminCadastros } from './admin/AdminCadastros';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -150,7 +151,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','gamification','marketplace','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','settings','documentation','video-call','live','ads','promo-ads'];
+    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','settings','documentation','video-call','live','ads','promo-ads'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -193,6 +194,8 @@ export const AdminDashboard = () => {
         return <AdminRoles currentUserId={user?.id} />;
       case 'creators':
         return <AdminCreatorApplications currentUserId={user?.id} />;
+      case 'cadastros':
+        return <AdminCadastros />;
       case 'gamification':
         return <AdminGamification />;
       case 'marketplace':

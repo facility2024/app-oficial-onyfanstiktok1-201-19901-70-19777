@@ -221,6 +221,11 @@ Deno.serve(async (req) => {
 <p style="color: #dc2626;">⚠️ <strong>IMPORTANTE:</strong> Troque sua senha no primeiro acesso!</p>
 <p>Acesse nosso aplicativo: <a href="${appUrl}/auth">${appUrl.replace('https://', '')}</a></p>
 
+<p style="margin-top: 24px; font-weight: bold; font-size: 14px; color: #333;">
+  SE NÃO CONSEGUIR ACESSAR, ENTRE EM CONTATO COM O SUPORTE COCONUDI RESPONDENDO ESTE EMAIL OU, SE PREFERIR, NO WHATSAPP 
+  <a href="https://wa.me/5511982969676?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20meu%20acesso%20COCONUDI" style="color: #25D366; text-decoration: underline; font-weight: bold;">11 98296-9676</a>
+</p>
+
 <p style="margin-top: 24px;">Equipe COCONUDI</p>
 `
 

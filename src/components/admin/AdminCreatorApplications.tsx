@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Clock, Eye, MessageSquare, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CreatorApplication {
@@ -25,6 +25,14 @@ interface CreatorApplication {
   rejection_reason?: string;
 }
 
+interface ApprovalCredentials {
+  email: string;
+  temp_password: string | null;
+  account_created: boolean;
+  full_name: string;
+  whatsapp: string;
+}
+
 interface AdminCreatorApplicationsProps {
   currentUserId?: string;
 }
@@ -34,31 +42,18 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentials, setCredentials] = useState<ApprovalCredentials | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     fetchApplications();
-    
-    // Real-time subscription
     const channel = supabase
       .channel('creator_applications_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'creator_applications'
-        },
-        () => {
-          fetchApplications();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const fetchApplications = async () => {
@@ -67,7 +62,6 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         .from('creator_applications')
         .select('*')
         .order('submitted_at', { ascending: false });
-
       if (error) throw error;
       setApplications(data || []);
     } catch (error) {
@@ -87,45 +81,26 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     try {
       setProcessing(true);
 
-      // Add creator role
-      const { error: roleError } = await (supabase as any)
-        .from('user_roles')
-        .insert({
-          user_id: application.user_id,
-          role: 'creator',
-          granted_by: currentUserId
-        });
-
-      if (roleError && roleError.code !== '23505') throw roleError;
-
-      // Update application status
-      const { error: updateError } = await (supabase as any)
-        .from('creator_applications')
-        .update({
-          status: 'approved',
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: currentUserId
-        })
-        .eq('id', application.id);
-
-      if (updateError) throw updateError;
-
-      // Track event
-      await supabase.from('analytics_events').insert({
-        event_name: 'creator_application_approved',
-        event_category: 'admin',
-        user_id: currentUserId,
-        event_data: {
-          creator_id: application.user_id,
-          timestamp: new Date().toISOString()
-        }
+      const { data, error } = await supabase.functions.invoke('approve-creator', {
+        body: { application_id: application.id }
       });
 
-      toast.success('Aplicação aprovada! O usuário agora é um criador.');
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+
+      setCredentials({
+        email: data.email,
+        temp_password: data.temp_password,
+        account_created: data.account_created,
+        full_name: data.full_name,
+        whatsapp: data.whatsapp,
+      });
       setSelectedApp(null);
+      setShowCredentialsModal(true);
+      toast.success('Aplicação aprovada com sucesso!');
     } catch (error: any) {
       console.error('Erro ao aprovar aplicação:', error);
-      toast.error('Erro ao aprovar aplicação');
+      toast.error('Erro ao aprovar: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setProcessing(false);
     }
@@ -133,15 +108,12 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
 
   const handleReject = async () => {
     if (!selectedApp || !currentUserId) return;
-
     if (!rejectionReason.trim()) {
       toast.error('Por favor, informe o motivo da rejeição');
       return;
     }
-
     try {
       setProcessing(true);
-
       const { error } = await (supabase as any)
         .from('creator_applications')
         .update({
@@ -151,9 +123,7 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
           rejection_reason: rejectionReason
         })
         .eq('id', selectedApp.id);
-
       if (error) throw error;
-
       toast.success('Aplicação rejeitada');
       setShowRejectModal(false);
       setSelectedApp(null);
@@ -164,6 +134,24 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     } finally {
       setProcessing(false);
     }
+  };
+
+  const copyCredentials = () => {
+    if (!credentials) return;
+    const text = credentials.temp_password
+      ? `🎉 Parabéns! Você foi aprovada como criadora no COCONUDI!\n\n📧 Email: ${credentials.email}\n🔑 Senha: ${credentials.temp_password}\n\n🔗 Acesse: https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/auth\n\n⚠️ Troque sua senha após o primeiro login!`
+      : `🎉 Parabéns! Você foi aprovada como criadora no COCONUDI!\n\n📧 Acesse com seu email: ${credentials.email}\n🔗 Link: https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/auth`;
+    navigator.clipboard.writeText(text);
+    toast.success('Credenciais copiadas!');
+  };
+
+  const sendViaWhatsApp = () => {
+    if (!credentials) return;
+    const number = credentials.whatsapp.replace(/\D/g, '');
+    const text = credentials.temp_password
+      ? encodeURIComponent(`🎉 Parabéns ${credentials.full_name}! Você foi aprovada como criadora no COCONUDI!\n\n📧 Email: ${credentials.email}\n🔑 Senha: ${credentials.temp_password}\n\n🔗 Acesse: https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/auth\n\n⚠️ Troque sua senha após o primeiro login!`)
+      : encodeURIComponent(`🎉 Parabéns ${credentials.full_name}! Você foi aprovada como criadora no COCONUDI!\n\n📧 Acesse com seu email: ${credentials.email}\n🔗 Link: https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/auth`);
+    window.open(`https://wa.me/55${number}?text=${text}`, '_blank');
   };
 
   const getStatusBadge = (status: string) => {
@@ -184,9 +172,7 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     window.open(`https://wa.me/55${number}`, '_blank');
   };
 
-  const filteredApplications = (status: string) => {
-    return applications.filter(app => app.status === status);
-  };
+  const filteredApplications = (status: string) => applications.filter(app => app.status === status);
 
   if (loading) {
     return (
@@ -202,23 +188,15 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             👥 Aplicações de Criadores
-            <Badge variant="secondary">
-              {filteredApplications('pending').length} pendentes
-            </Badge>
+            <Badge variant="secondary">{filteredApplications('pending').length} pendentes</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pending">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="pending">
-                Pendentes ({filteredApplications('pending').length})
-              </TabsTrigger>
-              <TabsTrigger value="approved">
-                Aprovadas ({filteredApplications('approved').length})
-              </TabsTrigger>
-              <TabsTrigger value="rejected">
-                Rejeitadas ({filteredApplications('rejected').length})
-              </TabsTrigger>
+              <TabsTrigger value="pending">Pendentes ({filteredApplications('pending').length})</TabsTrigger>
+              <TabsTrigger value="approved">Aprovadas ({filteredApplications('approved').length})</TabsTrigger>
+              <TabsTrigger value="rejected">Rejeitadas ({filteredApplications('rejected').length})</TabsTrigger>
             </TabsList>
 
             {['pending', 'approved', 'rejected'].map(status => (
@@ -241,50 +219,25 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                               <div className="text-sm text-muted-foreground space-y-1">
                                 <p>📧 {app.email}</p>
                                 <p>🎭 {app.nickname}</p>
-                                <p>
-                                  📱{' '}
-                                  <button
-                                    onClick={() => openWhatsApp(app.whatsapp)}
-                                    className="text-primary hover:underline inline-flex items-center gap-1"
-                                  >
-                                    {app.whatsapp}
-                                    <ExternalLink className="w-3 h-3" />
+                                <p>📱{' '}
+                                  <button onClick={() => openWhatsApp(app.whatsapp)} className="text-primary hover:underline inline-flex items-center gap-1">
+                                    {app.whatsapp}<ExternalLink className="w-3 h-3" />
                                   </button>
                                 </p>
                                 <p>📅 {new Date(app.submitted_at).toLocaleDateString('pt-BR')}</p>
                               </div>
                             </div>
                             <div className="flex flex-col gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedApp(app)}
-                              >
-                                <Eye className="w-4 h-4 mr-1" />
-                                Ver Detalhes
+                              <Button size="sm" variant="outline" onClick={() => setSelectedApp(app)}>
+                                <Eye className="w-4 h-4 mr-1" />Ver Detalhes
                               </Button>
                               {app.status === 'pending' && (
                                 <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleApprove(app)}
-                                    disabled={processing}
-                                    className="bg-green-500 hover:bg-green-600"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    Aprovar
+                                  <Button size="sm" onClick={() => handleApprove(app)} disabled={processing} className="bg-green-500 hover:bg-green-600">
+                                    <CheckCircle className="w-4 h-4 mr-1" />Aprovar
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => {
-                                      setSelectedApp(app);
-                                      setShowRejectModal(true);
-                                    }}
-                                    disabled={processing}
-                                  >
-                                    <XCircle className="w-4 h-4 mr-1" />
-                                    Rejeitar
+                                  <Button size="sm" variant="destructive" onClick={() => { setSelectedApp(app); setShowRejectModal(true); }} disabled={processing}>
+                                    <XCircle className="w-4 h-4 mr-1" />Rejeitar
                                   </Button>
                                 </>
                               )}
@@ -304,77 +257,33 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       {/* Details Modal */}
       <Dialog open={!!selectedApp && !showRejectModal} onOpenChange={() => setSelectedApp(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Aplicação</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Detalhes da Aplicação</DialogTitle></DialogHeader>
           {selectedApp && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Nome Completo</Label>
-                  <p className="font-medium">{selectedApp.full_name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Apelido</Label>
-                  <p className="font-medium">{selectedApp.nickname}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Email</Label>
-                  <p className="font-medium">{selectedApp.email}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">WhatsApp</Label>
-                  <button
-                    onClick={() => openWhatsApp(selectedApp.whatsapp)}
-                    className="font-medium text-primary hover:underline flex items-center gap-1"
-                  >
-                    {selectedApp.whatsapp}
-                    <ExternalLink className="w-3 h-3" />
+                <div><Label className="text-muted-foreground">Nome Completo</Label><p className="font-medium">{selectedApp.full_name}</p></div>
+                <div><Label className="text-muted-foreground">Apelido</Label><p className="font-medium">{selectedApp.nickname}</p></div>
+                <div><Label className="text-muted-foreground">Email</Label><p className="font-medium">{selectedApp.email}</p></div>
+                <div><Label className="text-muted-foreground">WhatsApp</Label>
+                  <button onClick={() => openWhatsApp(selectedApp.whatsapp)} className="font-medium text-primary hover:underline flex items-center gap-1">
+                    {selectedApp.whatsapp}<ExternalLink className="w-3 h-3" />
                   </button>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">Sexo</Label>
-                  <p className="font-medium capitalize">{selectedApp.gender.replace('-', ' ')}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Status</Label>
-                  <div className="mt-1">{getStatusBadge(selectedApp.status)}</div>
-                </div>
+                <div><Label className="text-muted-foreground">Sexo</Label><p className="font-medium capitalize">{selectedApp.gender.replace('-', ' ')}</p></div>
+                <div><Label className="text-muted-foreground">Status</Label><div className="mt-1">{getStatusBadge(selectedApp.status)}</div></div>
               </div>
-
-              <div>
-                <Label className="text-muted-foreground">Biografia</Label>
-                <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedApp.bio}</p>
-              </div>
-
+              <div><Label className="text-muted-foreground">Biografia</Label><p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedApp.bio}</p></div>
               {selectedApp.rejection_reason && (
-                <div>
-                  <Label className="text-red-500">Motivo da Rejeição</Label>
-                  <p className="mt-1 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm">
-                    {selectedApp.rejection_reason}
-                  </p>
-                </div>
+                <div><Label className="text-red-500">Motivo da Rejeição</Label><p className="mt-1 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm">{selectedApp.rejection_reason}</p></div>
               )}
-
               <div className="flex gap-2 pt-4">
                 {selectedApp.status === 'pending' && (
                   <>
-                    <Button
-                      onClick={() => handleApprove(selectedApp)}
-                      disabled={processing}
-                      className="flex-1 bg-green-500 hover:bg-green-600"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Aprovar Aplicação
+                    <Button onClick={() => handleApprove(selectedApp)} disabled={processing} className="flex-1 bg-green-500 hover:bg-green-600">
+                      <CheckCircle className="w-4 h-4 mr-2" />Aprovar Aplicação
                     </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => setShowRejectModal(true)}
-                      disabled={processing}
-                      className="flex-1"
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Rejeitar Aplicação
+                    <Button variant="destructive" onClick={() => setShowRejectModal(true)} disabled={processing} className="flex-1">
+                      <XCircle className="w-4 h-4 mr-2" />Rejeitar Aplicação
                     </Button>
                   </>
                 )}
@@ -389,42 +298,54 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rejeitar Aplicação</DialogTitle>
-            <DialogDescription>
-              Por favor, informe o motivo da rejeição. O usuário receberá esta mensagem.
-            </DialogDescription>
+            <DialogDescription>Por favor, informe o motivo da rejeição. O usuário receberá esta mensagem.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="rejection_reason">Motivo *</Label>
-              <Textarea
-                id="rejection_reason"
-                placeholder="Ex: As informações fornecidas não atendem aos requisitos mínimos..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                className="min-h-[120px] mt-2"
-              />
+              <Textarea id="rejection_reason" placeholder="Ex: As informações fornecidas não atendem aos requisitos mínimos..." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="min-h-[120px] mt-2" />
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setRejectionReason('');
-                }}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleReject}
-                disabled={processing || !rejectionReason.trim()}
-                className="flex-1"
-              >
-                Confirmar Rejeição
-              </Button>
+              <Button variant="outline" onClick={() => { setShowRejectModal(false); setRejectionReason(''); }} className="flex-1">Cancelar</Button>
+              <Button variant="destructive" onClick={handleReject} disabled={processing || !rejectionReason.trim()} className="flex-1">Confirmar Rejeição</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credentials Modal */}
+      <Dialog open={showCredentialsModal} onOpenChange={setShowCredentialsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>✅ Criador(a) Aprovado(a)!</DialogTitle>
+            <DialogDescription>
+              {credentials?.account_created
+                ? 'Uma conta foi criada automaticamente. Envie as credenciais abaixo para o(a) modelo.'
+                : 'O(a) modelo já possuía conta. A role de criador foi adicionada.'}
+            </DialogDescription>
+          </DialogHeader>
+          {credentials && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div><Label className="text-muted-foreground text-xs">Nome</Label><p className="font-medium">{credentials.full_name}</p></div>
+                <div><Label className="text-muted-foreground text-xs">Email</Label><p className="font-mono text-sm">{credentials.email}</p></div>
+                {credentials.temp_password && (
+                  <div><Label className="text-muted-foreground text-xs">Senha temporária</Label><p className="font-mono text-sm font-bold text-primary">{credentials.temp_password}</p></div>
+                )}
+              </div>
+              {credentials.temp_password && (
+                <p className="text-xs text-muted-foreground">⚠️ A modelo deve trocar a senha após o primeiro login.</p>
+              )}
+              <div className="flex gap-2">
+                <Button onClick={copyCredentials} variant="outline" className="flex-1">
+                  <Copy className="w-4 h-4 mr-2" />Copiar
+                </Button>
+                <Button onClick={sendViaWhatsApp} className="flex-1 bg-green-500 hover:bg-green-600">
+                  <Send className="w-4 h-4 mr-2" />WhatsApp
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

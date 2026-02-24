@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Building2, Sparkles, Clock, CalendarDays, Search, Download, MoreHorizontal } from 'lucide-react';
+import { Users, Building2, Sparkles, Clock, CalendarDays, Search, Download, MoreHorizontal, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -42,6 +43,9 @@ export const AdminCadastros = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [activeTab, setActiveTab] = useState('modelos');
+  const [processing, setProcessing] = useState(false);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentials, setCredentials] = useState<{email: string; temp_password: string | null; full_name: string; whatsapp: string} | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -68,6 +72,63 @@ export const AdminCadastros = () => {
       toast.success('Status atualizado!');
       fetchAll();
     }
+  };
+
+  // Aprovação via edge function (cria conta, envia e-mail)
+  const handleApproveCreator = async (table: string, id: string, email: string, fullName: string, whatsapp: string, applicationId?: string) => {
+    try {
+      setProcessing(true);
+      const body = applicationId
+        ? { application_id: applicationId }
+        : { email, full_name: fullName, whatsapp };
+
+      const { data, error } = await supabase.functions.invoke('approve-creator', { body });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+
+      // Update status in the originating table
+      if (table !== 'creator_applications') {
+        await (supabase as any).from(table).update({ status: 'aprovado', updated_at: new Date().toISOString() }).eq('id', id);
+      }
+
+      setCredentials({
+        email: data.email,
+        temp_password: data.temp_password,
+        full_name: data.full_name,
+        whatsapp: data.whatsapp,
+      });
+      setShowCredentialsModal(true);
+
+      if (data.email_sent) {
+        toast.success('✅ Aprovado! Email com credenciais enviado!');
+      } else {
+        toast.warning(`⚠️ Aprovado, mas email NÃO enviado. ${data.email_error || 'Envie via WhatsApp.'}`, { duration: 15000 });
+      }
+      fetchAll();
+    } catch (error: any) {
+      console.error('Erro ao aprovar:', error);
+      toast.error('Erro ao aprovar: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const copyCredentials = () => {
+    if (!credentials) return;
+    const text = credentials.temp_password
+      ? `🎉 Parabéns! Você foi aprovada como criadora no COCONUDI!\n\n📧 Email: ${credentials.email}\n🔑 Senha: ${credentials.temp_password}\n\n🔗 Acesse: https://coconudi.com/auth\n\n⚠️ Troque sua senha após o primeiro login!`
+      : `🎉 Parabéns! Acesse com seu email: ${credentials.email}\n🔗 Link: https://coconudi.com/auth`;
+    navigator.clipboard.writeText(text);
+    toast.success('Credenciais copiadas!');
+  };
+
+  const sendViaWhatsApp = () => {
+    if (!credentials) return;
+    const number = credentials.whatsapp?.replace(/\D/g, '') || '';
+    const text = credentials.temp_password
+      ? encodeURIComponent(`🎉 Parabéns ${credentials.full_name}! Você foi aprovada como criadora no COCONUDI!\n\n📧 Email: ${credentials.email}\n🔑 Senha: ${credentials.temp_password}\n\n🔗 Acesse: https://coconudi.com/auth\n\n⚠️ Troque sua senha após o primeiro login!`)
+      : encodeURIComponent(`🎉 Parabéns ${credentials.full_name}! Acesse com seu email: ${credentials.email}`);
+    window.open(`https://wa.me/55${number}?text=${text}`, '_blank');
   };
 
   const formatDate = (d: string) => {
@@ -204,7 +265,7 @@ export const AdminCadastros = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => updateStatus('cadastro_modelos', m.id, 'aprovado')}>✅ Aprovar</DropdownMenuItem>
+                          <DropdownMenuItem disabled={processing} onClick={() => handleApproveCreator('cadastro_modelos', m.id, m.email, m.nome, m.whatsapp)}>✅ Aprovar (criar conta + email)</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateStatus('cadastro_modelos', m.id, 'rejeitado')}>❌ Rejeitar</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateStatus('cadastro_modelos', m.id, 'pendente')}>⏳ Pendente</DropdownMenuItem>
                         </DropdownMenuContent>
@@ -288,7 +349,7 @@ export const AdminCadastros = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => updateStatus('creator_applications', c.id, 'aprovado')}>✅ Aprovar</DropdownMenuItem>
+                          <DropdownMenuItem disabled={processing} onClick={() => handleApproveCreator('creator_applications', c.id, c.email, c.full_name || c.nickname, c.whatsapp, c.id)}>✅ Aprovar (criar conta + email)</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateStatus('creator_applications', c.id, 'rejeitado')}>❌ Rejeitar</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateStatus('creator_applications', c.id, 'pendente')}>⏳ Pendente</DropdownMenuItem>
                         </DropdownMenuContent>
@@ -304,6 +365,34 @@ export const AdminCadastros = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Credenciais */}
+      <Dialog open={showCredentialsModal} onOpenChange={setShowCredentialsModal}>
+        <DialogContent className="bg-gray-900 border-gray-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-green-400">✅ Criadora Aprovada!</DialogTitle>
+          </DialogHeader>
+          {credentials && (
+            <div className="space-y-4">
+              <p className="text-gray-300">Credenciais de acesso para <strong className="text-white">{credentials.full_name}</strong>:</p>
+              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 space-y-2">
+                <p className="text-sm text-gray-300">📧 <strong>Email:</strong> {credentials.email}</p>
+                {credentials.temp_password && (
+                  <p className="text-sm text-gray-300">🔑 <strong>Senha:</strong> <code className="bg-gray-700 px-2 py-0.5 rounded">{credentials.temp_password}</code></p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={copyCredentials} variant="outline" size="sm" className="flex-1 gap-1.5">
+                  <Copy className="w-4 h-4" /> Copiar
+                </Button>
+                <Button onClick={sendViaWhatsApp} size="sm" className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700">
+                  📲 WhatsApp
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -87,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div style="padding: 40px 30px; color: #333; background-color: white;">
                 <div style="font-size: 16px; line-height: 1.8;">
-                  ${body.replace(/\n/g, '<br>')}
+                  ${body}
                 </div>
               </div>
               <div style="background: #f8f9fa; padding: 25px 20px; text-align: center; border-top: 1px solid #e9ecef;">

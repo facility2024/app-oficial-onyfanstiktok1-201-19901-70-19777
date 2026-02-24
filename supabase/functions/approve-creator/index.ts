@@ -208,6 +208,8 @@ Deno.serve(async (req) => {
     if (tempPassword) {
       try {
         const appUrl = 'https://coconudi.com'
+        const encodedEmail = encodeURIComponent(email)
+        const whatsappText = encodeURIComponent(`Olá, preciso de ajuda com meu acesso COCONUDI. Meu email: ${email}`)
         const emailBody = `
 <p>Olá ${fullName}! 🎉</p>
 <p>Sua candidatura foi <strong>APROVADA!</strong></p>
@@ -223,20 +225,16 @@ Deno.serve(async (req) => {
 
 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0 24px;" />
 
-<p style="font-size: 14px; color: #333; line-height: 1.6;">
-  SE NÃO CONSEGUIR ACESSAR, ENTRE EM CONTATO COM O SUPORTE COCONUDI RESPONDENDO ESTE EMAIL OU, SE PREFERIR, CLIQUE NO BOTÃO ABAIXO PARA FALAR CONOSCO NO WHATSAPP:
+<p style="font-size: 14px; color: #333; font-weight: bold; line-height: 1.6;">
+  SE NÃO CONSEGUIR ACESSAR, ENTRE EM CONTATO COM O SUPORTE COCONUDI RESPONDENDO ESTE EMAIL OU SE PREFERIR NO WHATSAPP 11 98296-9676
 </p>
 
 <div style="text-align: center; margin: 24px 0;">
-  <a href="https://wa.me/5511982969676?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20meu%20acesso%20COCONUDI.%20Meu%20email%3A%20${encodeURIComponent(email)}" 
+  <a href="https://wa.me/5511982969676?text=${whatsappText}" 
      style="display: inline-block; background-color: #25D366; color: #ffffff; font-weight: bold; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none;">
     📲 Falar no WhatsApp (11) 98296-9676
   </a>
 </div>
-
-<p style="text-align: center; font-size: 12px; color: #999; margin-top: 8px;">
-  Horário de atendimento: Segunda a Sexta, 9h às 18h
-</p>
 
 <p style="margin-top: 24px; text-align: center; font-weight: bold;">Equipe COCONUDI 🌴</p>
 `

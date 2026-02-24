@@ -1,126 +1,73 @@
 
-# Plano: Marketplace Inteligente + "Cocoa Live" Branding
 
-## Resumo
+## Correcao: Criar Conta de Autenticacao ao Aprovar Criador
 
-Reestruturar o Marketplace para que conteudos aparecam exclusivamente dentro das abas de genero, e a tela inicial exiba apenas itens marcados como "PRODUTOS EM ALTA". Adicionar toggle no Creator Studio para essa marcacao. Substituir "Music" por "Cocoa" no branding Live.
+### Problema Identificado
+Quando um modelo/criador e aprovado pelo painel admin, o sistema apenas adiciona a role "creator" na tabela `user_roles` e atualiza o status da aplicacao. Porem, se o modelo foi cadastrado por um sistema externo (como o painel marketing.coconudi.com), ele **nao possui uma conta no Supabase Auth** -- por isso ao tentar fazer login, recebe "Email ou senha incorretos".
 
----
+### Solucao
+Criar uma **Edge Function** chamada `approve-creator` que sera chamada pelo painel admin ao aprovar uma aplicacao. Essa funcao ira:
 
-## Parte 1: Branding "Cocoa Live"
+1. Verificar se o email ja tem conta no `auth.users`
+2. Se NAO tiver, criar a conta usando `supabase.auth.admin.createUser()` com uma senha temporaria
+3. Adicionar a role `creator` na tabela `user_roles`
+4. Atualizar o status da aplicacao para `approved`
+5. Retornar os dados incluindo a senha temporaria para o admin enviar ao modelo
 
-Substituir qualquer referencia a "Music" por "Cocoa" nos componentes relacionados a Live. Manter nome "Live", cores vermelhas e todos os efeitos visuais (pulsing, vibrating) ja implementados.
+### Etapas de Implementacao
 
-**Arquivos afetados:**
-- Busca global por "Music" nos componentes Live/tiktok para substituir por "Cocoa"
+**1. Criar Edge Function `approve-creator`**
+- Arquivo: `supabase/functions/approve-creator/index.ts`
+- Usa o `SUPABASE_SERVICE_ROLE_KEY` (ja configurado) para criar usuarios via Admin API
+- Recebe: `application_id`, `admin_user_id`
+- Gera senha aleatoria segura
+- Cria usuario no auth.users (se nao existir)
+- Adiciona role creator
+- Atualiza application status
+- Retorna email + senha temporaria
 
----
+**2. Atualizar `AdminCreatorApplications.tsx`**
+- Modificar `handleApprove()` para chamar a Edge Function em vez de fazer insert direto
+- Apos aprovacao bem-sucedida, mostrar um modal com as credenciais (email + senha) para o admin copiar e enviar ao modelo
+- Adicionar botao de copiar credenciais e enviar via WhatsApp
 
-## Parte 2: Banco de Dados - Campo `is_featured`
+**3. Configurar `supabase/config.toml`**
+- Adicionar configuracao da nova Edge Function com `verify_jwt = false` (validacao manual no codigo)
 
-Adicionar coluna `is_featured` (boolean, default false) na tabela `videos` via migration SQL.
+### Detalhes Tecnicos
 
 ```text
-ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
-CREATE INDEX IF NOT EXISTS idx_videos_is_featured ON public.videos (is_featured) WHERE is_featured = true;
+Fluxo de Aprovacao:
+  Admin clica "Aprovar"
+       |
+       v
+  Edge Function "approve-creator"
+       |
+       +-- Busca dados da aplicacao (email, nome)
+       |
+       +-- Verifica se email existe em auth.users
+       |      |
+       |      +-- SIM: Apenas adiciona role "creator"
+       |      |
+       |      +-- NAO: Cria conta com senha temporaria
+       |              e adiciona role "creator"
+       |
+       +-- Atualiza status da aplicacao
+       |
+       v
+  Retorna credenciais ao admin
+       |
+       v
+  Modal com email + senha + botao WhatsApp
 ```
 
-Isso permite que criadoras marquem seus videos como "PRODUTOS EM ALTA".
+### Arquivos a Criar/Modificar
+- **Criar**: `supabase/functions/approve-creator/index.ts`
+- **Modificar**: `src/components/admin/AdminCreatorApplications.tsx`
+- **Modificar**: `supabase/config.toml`
 
----
+### Seguranca
+- A Edge Function valida que o chamador e admin verificando o JWT
+- Senha temporaria gerada com caracteres alfanumericos (12 chars)
+- O `SUPABASE_SERVICE_ROLE_KEY` ja esta configurado nos secrets
 
-## Parte 3: Creator Studio - Toggle "Produtos em Alta"
-
-**Arquivo:** `src/pages/CreatorStudio.tsx`
-
-No formulario de upload, adicionar um novo toggle abaixo da selecao de visibilidade:
-
-```text
-[ ] Marcar como PRODUTOS EM ALTA
-```
-
-- Novo campo `is_featured` no `formData` (boolean, default false)
-- Ao publicar, enviar `is_featured` junto com os outros dados do video
-- Icone de fogo/estrela para destaque visual
-
-**Arquivo:** `src/components/creator/VideoManagementTable.tsx`
-
-- Adicionar badge "Em Alta" nos videos marcados
-- Adicionar botao para alternar `is_featured` em videos ja publicados
-
-**Arquivo:** `src/hooks/useCreatorVideos.tsx`
-
-- Adicionar funcao `toggleVideoFeatured` para alternar o campo `is_featured`
-
----
-
-## Parte 4: Marketplace - Logica de Exibicao
-
-**Arquivo:** `src/pages/MarketplacePage.tsx`
-
-Reestruturar a logica de exibicao:
-
-1. **Tela inicial (home):** Buscar videos onde `is_featured = true` e exibir na secao "PRODUTOS EM ALTA"
-2. **Abas de genero:** Ao clicar num genero, buscar videos com `.contains('genres', [genre])` - isso ja funciona
-3. **Remover:** A listagem de `marketplace_products` da tela principal (ou mover para aba propria)
-
-Fluxo de dados:
-```text
-Tela Home Marketplace:
-  - TOP 10 MODELOS (carousel - mantido)
-  - Banner Promocional (mantido)
-  - CATEGORIAS - GENERO (botoes - mantido)
-  - PRODUTOS EM ALTA = videos WHERE is_featured = true
-  
-Ao clicar num genero:
-  - Exibe videos WHERE genres @> [genero_selecionado]
-  - Nao mistura com a home
-```
-
-Mudancas especificas:
-- Nova query `fetchFeaturedVideos` que busca `videos` com `is_featured = true`
-- A secao "PRODUTOS EM ALTA" exibe apenas esses videos destacados
-- Videos de genero continuam aparecendo apenas ao clicar na aba
-
----
-
-## Parte 5: Botao "Voltar" nos Generos
-
-Quando um genero esta selecionado, exibir botao "Voltar" claro para retornar a tela principal do Marketplace, limpando a selecao de genero.
-
----
-
-## Secao Tecnica - Detalhes de Implementacao
-
-### Migration SQL
-```text
-ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
-```
-
-### Query para Home do Marketplace
-```text
-supabase.from('videos')
-  .select('*, models(name, profile_image_url), profiles:creator_id(username, avatar_url)')
-  .eq('is_active', true)
-  .eq('is_featured', true)
-  .order('created_at', { ascending: false })
-  .limit(20)
-```
-
-### Toggle no Creator Studio (formData)
-```text
-formData.is_featured: boolean (default: false)
-```
-
-### Toggle na Tabela de Videos (VideoManagementTable)
-Novo botao "Em Alta" / "Remover Destaque" por video, chamando:
-```text
-supabase.from('videos').update({ is_featured: !current }).eq('id', videoId)
-```
-
-### Arquivos modificados
-1. `src/pages/CreatorStudio.tsx` - toggle no upload
-2. `src/components/creator/VideoManagementTable.tsx` - badge + botao toggle
-3. `src/hooks/useCreatorVideos.tsx` - funcao toggleVideoFeatured
-4. `src/pages/MarketplacePage.tsx` - logica de exibicao reestruturada
-5. Migration SQL para `is_featured`

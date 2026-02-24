@@ -203,16 +203,12 @@ Deno.serve(async (req) => {
     }
 
     // Send approval email with credentials
+    let emailSent = false
+    let emailError = ''
     if (tempPassword) {
       try {
-        const appUrl = 'https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app'
+        const appUrl = 'https://coconudi.com'
         const emailBody = `
-<div style="text-align:center;">
-  <div style="background: linear-gradient(135deg, #8B5CF6, #EC4899); padding: 30px; border-radius: 12px; margin-bottom: 20px;">
-    <h1 style="color: white; margin: 0; font-size: 22px;">SEJA BEM VINDO(A) À FAMÍLIA COCONUDI</h1>
-  </div>
-</div>
-
 <p>Olá ${fullName}! 🎉</p>
 <p>Sua candidatura foi <strong>APROVADA!</strong></p>
 <p>Aqui estão seus dados de acesso:</p>
@@ -228,7 +224,6 @@ Deno.serve(async (req) => {
 <p style="margin-top: 24px;">Equipe COCONUDI</p>
 `
 
-        // Try to send email via send-email function
         const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: 'POST',
           headers: {
@@ -242,13 +237,24 @@ Deno.serve(async (req) => {
           }),
         })
         const emailResult = await emailRes.json()
-        console.log('Email sent result:', emailResult)
-      } catch (emailError: any) {
-        console.error('Failed to send email (non-blocking):', emailError.message)
+        console.log('Email result:', emailResult)
+        
+        if (emailResult.success) {
+          emailSent = true
+          console.log('✅ Email enviado com sucesso para', email)
+        } else {
+          emailSent = false
+          emailError = emailResult.message || emailResult.error || 'Falha ao enviar email'
+          console.error('❌ Falha ao enviar email:', emailError)
+        }
+      } catch (emailErr: any) {
+        emailSent = false
+        emailError = emailErr.message || 'Erro ao enviar email'
+        console.error('❌ Exceção ao enviar email:', emailErr.message)
       }
     }
 
-    console.log(`Success! email=${email}, accountCreated=${accountCreated}, tempPassword=${tempPassword ? 'SET' : 'NULL'}`)
+    console.log(`Success! email=${email}, accountCreated=${accountCreated}, tempPassword=${tempPassword ? 'SET' : 'NULL'}, emailSent=${emailSent}`)
 
     return new Response(JSON.stringify({
       success: true,
@@ -258,6 +264,8 @@ Deno.serve(async (req) => {
       user_id: userId,
       full_name: fullName,
       whatsapp: whatsapp,
+      email_sent: emailSent,
+      email_error: emailError || undefined,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

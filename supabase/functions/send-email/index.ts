@@ -7,11 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
-
 interface SendEmailRequest {
   recipient: string;
   subject: string;
@@ -21,8 +16,9 @@ interface SendEmailRequest {
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -35,166 +31,188 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { recipient, subject, body, provider = 'resend' }: SendEmailRequest = await req.json();
-    const normalizedRecipient = normalizeEmail(recipient);
+    const { recipient, subject, body }: SendEmailRequest = await req.json();
 
-    if (!normalizedRecipient || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedRecipient)) {
-      throw new Error('Recipient email inválido');
+    // 1. Validate recipient
+    if (!recipient || typeof recipient !== "string") {
+      throw new Error("Campo 'recipient' é obrigatório");
+    }
+    const normalizedRecipient = normalizeEmail(recipient);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedRecipient)) {
+      throw new Error(`Email inválido: ${normalizedRecipient}`);
     }
 
-    console.log(`Sending email via ${provider}:`, { recipient: normalizedRecipient, subject });
+    // 2. Validate subject & body
+    if (!subject || typeof subject !== "string" || !subject.trim()) {
+      throw new Error("Campo 'subject' é obrigatório");
+    }
+    if (!body || typeof body !== "string" || !body.trim()) {
+      throw new Error("Campo 'body' é obrigatório");
+    }
 
-    // Get RESEND_API_KEY from environment variables
+    console.log(`[send-email] Preparando envio para: ${normalizedRecipient} | Assunto: ${subject}`);
+
+    // 3. Get API key — fail fast with clear message
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY not configured in environment variables');
+      throw new Error("RESEND_API_KEY não configurada nas secrets do projeto");
     }
 
-    // Get email integration configuration for sender email (get the most recent active one)
-    const { data: integration } = await supabase
-      .from('integrations')
-      .select('*')
-      .eq('integration_type', 'gmail')
-      .eq('is_active', true)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!integration) {
-      throw new Error('Email integration not configured or inactive');
-    }
-
-    const config = integration.configuration;
-    if (!config.email) {
-      throw new Error('Sender email not configured in integration');
-    }
-
-    // Initialize Resend with API key from environment
     const resend = new Resend(resendApiKey);
-    
-    try {
-      const plainTextBody = body
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
 
-      // Send email using Resend with anti-spam best practices
-      const emailResponse = await resend.emails.send({
-        from: "COCONUDI <contato@coconudi.com>",
-        to: [normalizedRecipient],
-        reply_to: "noreply@coconudi.com",
-        subject: subject,
-        html: `
-          <!DOCTYPE html>
-          <html lang="pt-BR">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${subject}</title>
-          </head>
-          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; line-height: 1.6;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: white; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-              <div style="background: linear-gradient(135deg, #8B5CF6, #EC4899); padding: 30px 20px; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">${subject}</h1>
-              </div>
-              <div style="padding: 40px 30px; color: #333; background-color: white;">
-                <div style="font-size: 16px; line-height: 1.8;">
-                  ${body}
-                </div>
-              </div>
-              <div style="background: #f8f9fa; padding: 25px 20px; text-align: center; border-top: 1px solid #e9ecef;">
-                <p style="margin: 0; font-size: 13px; color: #6c757d;">
-                  Este email foi enviado por <strong>COCONUDI</strong>
-                </p>
-                <p style="margin: 8px 0 0 0; font-size: 11px; color: #868e96;">
-                  © ${new Date().getFullYear()} COCONUDI. Todos os direitos reservados.
-                </p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-        text: `${subject}\n\n${plainTextBody}`,
-        headers: {
-          'X-Entity-Ref-ID': `coconudi-${Date.now()}`,
-        },
-      });
+    // 4. Build plain-text fallback (strip HTML)
+    const plainTextBody = body
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
 
-      console.log("Resend email response:", emailResponse);
+    // 5. Build HTML template
+    const htmlContent = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f4f4f4;line-height:1.6;">
+<div style="max-width:600px;margin:0 auto;background-color:#ffffff;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div style="background:linear-gradient(135deg,#8B5CF6,#EC4899);padding:30px 20px;text-align:center;">
+<h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">${subject}</h1>
+</div>
+<div style="padding:40px 30px;color:#333333;background-color:#ffffff;">
+<div style="font-size:16px;line-height:1.8;">
+${body}
+</div>
+</div>
+<div style="background:#f8f9fa;padding:25px 20px;text-align:center;border-top:1px solid #e9ecef;">
+<p style="margin:0;font-size:13px;color:#6c757d;">Este email foi enviado por <strong>COCONUDI</strong></p>
+<p style="margin:8px 0 0 0;font-size:11px;color:#868e96;">&copy; ${new Date().getFullYear()} COCONUDI. Todos os direitos reservados.</p>
+</div>
+</div>
+</body>
+</html>`;
 
-      // CRITICAL: Check for Resend errors before reporting success
-      if (emailResponse.error) {
-        console.error("Resend send error:", emailResponse.error);
-        throw new Error(`Resend error: ${emailResponse.error.message || JSON.stringify(emailResponse.error)}`);
-      }
+    // 6. Send with retry (3 attempts, exponential backoff)
+    const MAX_RETRIES = 3;
+    let lastError: any = null;
+    let resendId: string | null = null;
 
-      // Log email attempt
-      const { data: emailLog, error: logError } = await supabase
-        .from('email_logs')
-        .insert({
-          integration_id: integration.id,
-          recipient_email: normalizedRecipient,
-          subject,
-          body,
-          status: 'sent',
-          provider: 'resend',
-          external_id: emailResponse.data?.id || `email_${Date.now()}`,
-          sent_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (logError) {
-        console.error("Error logging email:", logError);
-        // Don't throw here - email was sent successfully, just logging failed
-      }
-
-      // Update integration last used
-      await supabase
-        .from('integrations')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('id', integration.id);
-
-      console.log("Email sent successfully:", emailLog?.id);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Email sent successfully",
-          email_log_id: emailLog?.id,
-          external_id: emailResponse.data?.id,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-
-    } catch (resendError: any) {
-      console.error("Resend error:", resendError);
-      
-      // Log failed attempt
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        await supabase.from('email_logs').insert({
-          integration_id: integration.id,
+        console.log(`[send-email] Tentativa ${attempt}/${MAX_RETRIES} para ${normalizedRecipient}`);
+
+        const emailResponse = await resend.emails.send({
+          from: "COCONUDI <contato@coconudi.com>",
+          to: [normalizedRecipient],
+          reply_to: "noreply@coconudi.com",
+          subject: subject,
+          html: htmlContent,
+          text: `${subject}\n\n${plainTextBody}`,
+          headers: {
+            "X-Entity-Ref-ID": `coconudi-${Date.now()}-${attempt}`,
+          },
+        });
+
+        // Check for Resend-level errors
+        if (emailResponse.error) {
+          throw new Error(
+            `Resend API error: ${emailResponse.error.message || JSON.stringify(emailResponse.error)}`
+          );
+        }
+
+        resendId = emailResponse.data?.id || null;
+        console.log(`[send-email] ✅ Enviado com sucesso na tentativa ${attempt}! ID: ${resendId}`);
+        lastError = null;
+        break; // Success — exit retry loop
+      } catch (retryErr: any) {
+        lastError = retryErr;
+        console.error(`[send-email] ❌ Tentativa ${attempt} falhou: ${retryErr.message}`);
+
+        // Don't retry on validation errors (4xx)
+        if (
+          retryErr.message?.includes("validation") ||
+          retryErr.message?.includes("invalid") ||
+          retryErr.message?.includes("not authorized") ||
+          retryErr.message?.includes("Missing")
+        ) {
+          console.error(`[send-email] Erro de validação — não faz sentido retry`);
+          break;
+        }
+
+        if (attempt < MAX_RETRIES) {
+          const delay = attempt * 2000; // 2s, 4s
+          console.log(`[send-email] Aguardando ${delay}ms antes do retry...`);
+          await sleep(delay);
+        }
+      }
+    }
+
+    // 7. If all retries failed, throw
+    if (lastError) {
+      // Log the failure
+      try {
+        const supabase = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+        await supabase.from("email_logs").insert({
           recipient_email: normalizedRecipient,
           subject,
           body,
-          status: 'failed',
-          provider: 'resend',
+          status: "failed",
+          provider: "resend",
           external_id: `failed_${Date.now()}`,
           sent_at: new Date().toISOString(),
         });
-      } catch (_) { /* ignore logging errors */ }
-
-      throw new Error(`Failed to send email via Resend: ${resendError.message}`);
+      } catch (_) {
+        /* ignore log errors */
+      }
+      throw new Error(`Falha após ${MAX_RETRIES} tentativas: ${lastError.message}`);
     }
 
+    // 8. Log success (non-blocking)
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      await supabase.from("email_logs").insert({
+        recipient_email: normalizedRecipient,
+        subject,
+        body,
+        status: "sent",
+        provider: "resend",
+        external_id: resendId || `email_${Date.now()}`,
+        sent_at: new Date().toISOString(),
+      });
+    } catch (logErr) {
+      console.warn("[send-email] Falha ao registrar log (email foi enviado):", logErr);
+    }
+
+    console.log(`[send-email] ✅ Concluído com sucesso para ${normalizedRecipient}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Email sent successfully",
+        external_id: resendId,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error: any) {
-    console.error("Error sending email:", error);
-    
+    console.error("[send-email] ❌ ERRO FINAL:", error.message);
+
     return new Response(
       JSON.stringify({
         success: false,

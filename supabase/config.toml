@@ -1,1 +1,4 @@
 project_id = "tnzvhwapfhkhqjgyiomk"
+
+[functions.approve-creator]
+verify_jwt = false

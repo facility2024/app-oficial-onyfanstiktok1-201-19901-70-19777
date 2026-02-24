@@ -21,7 +21,8 @@ import {
   UserPlus,
   Phone,
   Megaphone,
-  Radio
+  Radio,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -106,6 +107,7 @@ const navigationGroups = [
       { id: 'vip', label: 'Usuários VIP', icon: Crown },
       { id: 'model-subscriptions', label: 'Assinaturas Modelos', icon: Crown },
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },
+      { id: 'email-events', label: 'E-mails', icon: Mail },
     ]
   },
   {

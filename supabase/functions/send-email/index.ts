@@ -19,6 +19,8 @@ interface SendEmailRequest {
   provider?: string;
 }
 
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -34,8 +36,13 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { recipient, subject, body, provider = 'resend' }: SendEmailRequest = await req.json();
+    const normalizedRecipient = normalizeEmail(recipient);
 
-    console.log(`Sending email via ${provider}:`, { recipient, subject });
+    if (!normalizedRecipient || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedRecipient)) {
+      throw new Error('Recipient email inválido');
+    }
+
+    console.log(`Sending email via ${provider}:`, { recipient: normalizedRecipient, subject });
 
     // Get RESEND_API_KEY from environment variables
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -66,10 +73,17 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     
     try {
+      const plainTextBody = body
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
       // Send email using Resend with anti-spam best practices
       const emailResponse = await resend.emails.send({
         from: "COCONUDI <contato@coconudi.com>",
-        to: [recipient],
+        to: [normalizedRecipient],
         reply_to: "noreply@coconudi.com",
         subject: subject,
         html: `
@@ -102,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
           </body>
           </html>
         `,
-        text: `${subject}\n\n${body}`,
+        text: `${subject}\n\n${plainTextBody}`,
         headers: {
           'X-Entity-Ref-ID': `coconudi-${Date.now()}`,
         },
@@ -121,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from('email_logs')
         .insert({
           integration_id: integration.id,
-          recipient_email: recipient,
+          recipient_email: normalizedRecipient,
           subject,
           body,
           status: 'sent',
@@ -165,7 +179,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         await supabase.from('email_logs').insert({
           integration_id: integration.id,
-          recipient_email: recipient,
+          recipient_email: normalizedRecipient,
           subject,
           body,
           status: 'failed',

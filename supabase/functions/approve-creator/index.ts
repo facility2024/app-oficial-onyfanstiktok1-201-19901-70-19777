@@ -140,6 +140,25 @@ Deno.serve(async (req) => {
         })
       }
 
+      // IDEMPOTENCY: if already approved, return success without resending email
+      if (application.status === 'approved') {
+        console.log(`[approve-creator] Aplicação ${application_id} já aprovada. Retornando sem reenviar.`)
+        return new Response(JSON.stringify({
+          success: true,
+          email: normalizeEmail(application.email),
+          temp_password: null,
+          account_created: false,
+          user_id: application.user_id,
+          full_name: application.full_name,
+          whatsapp: application.whatsapp,
+          email_sent: false,
+          already_approved: true,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
       email = normalizeEmail(application.email)
       fullName = application.full_name
       nickname = application.nickname

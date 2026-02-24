@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -113,8 +113,15 @@ export const AdminCadastros = () => {
   };
 
   // Aprovação via edge function (cria conta, envia e-mail)
+  const approvalInProgress = useRef(false);
+
   const handleApproveCreator = async (table: string, id: string, email: string, fullName: string, whatsapp: string, applicationId?: string) => {
+    if (approvalInProgress.current) {
+      console.warn('Aprovação já em andamento, ignorando clique duplicado');
+      return;
+    }
     try {
+      approvalInProgress.current = true;
       setProcessing(true);
       const body = applicationId
         ? { application_id: applicationId }
@@ -148,6 +155,7 @@ export const AdminCadastros = () => {
       toast.error('Erro ao aprovar: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setProcessing(false);
+      approvalInProgress.current = false;
     }
   };
 

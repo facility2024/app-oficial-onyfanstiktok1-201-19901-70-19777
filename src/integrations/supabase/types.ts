@@ -1789,6 +1789,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_events: {
+        Row: {
+          bounce_type: string | null
+          click_url: string | null
+          created_at: string | null
+          error_message: string | null
+          event_data: Json | null
+          event_type: string
+          from_email: string | null
+          id: string
+          recipient_email: string | null
+          resend_email_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          bounce_type?: string | null
+          click_url?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type: string
+          from_email?: string | null
+          id?: string
+          recipient_email?: string | null
+          resend_email_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          bounce_type?: string | null
+          click_url?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string
+          from_email?: string | null
+          id?: string
+          recipient_email?: string | null
+          resend_email_id?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           body: string | null

@@ -30,6 +30,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'money', label: 'Financeiro', icon: DollarSign, shortLabel: '💰' },
     { id: 'vip', label: 'VIP', icon: Crown, shortLabel: '👑' },
     { id: 'webhook-logs', label: 'Webhooks', icon: FileText, shortLabel: '📋' },
+    { id: 'email-events', label: 'E-mails', icon: FileText, shortLabel: '📧' },
     { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },
     { id: 'app', label: 'App', icon: Play, shortLabel: '🎵' },
     { id: 'documentation', label: 'Documentação', icon: BookOpen, shortLabel: '📘' },

@@ -34,7 +34,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get user from token
     const adminClient2 = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } }
     })
@@ -65,45 +64,79 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Parse request body
-    const { application_id } = await req.json()
-    if (!application_id) {
-      return new Response(JSON.stringify({ error: 'application_id is required' }), {
+    // Parse request body - support both application_id and direct email
+    const body = await req.json()
+    const { application_id, email: directEmail, full_name: directName, whatsapp: directWhatsapp } = body
+
+    let email: string
+    let fullName: string
+    let nickname: string
+    let whatsapp: string
+    let userId: string | null = null
+
+    if (application_id) {
+      // Flow 1: Via creator_applications table
+      const { data: application, error: appError } = await adminClient
+        .from('creator_applications')
+        .select('*')
+        .eq('id', application_id)
+        .single()
+
+      if (appError || !application) {
+        return new Response(JSON.stringify({ error: 'Application not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      email = application.email
+      fullName = application.full_name
+      nickname = application.nickname
+      whatsapp = application.whatsapp
+      userId = application.user_id
+    } else if (directEmail) {
+      // Flow 2: Direct email (for creators added manually)
+      email = directEmail
+      fullName = directName || directEmail.split('@')[0]
+      nickname = directEmail.split('@')[0]
+      whatsapp = directWhatsapp || ''
+      
+      // Try to find existing profile
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('id, name, username')
+        .eq('email', email)
+        .single()
+      
+      if (profile) {
+        userId = profile.id
+        fullName = profile.name || fullName
+        nickname = profile.username || nickname
+      }
+    } else {
+      return new Response(JSON.stringify({ error: 'application_id or email is required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Fetch application
-    const { data: application, error: appError } = await adminClient
-      .from('creator_applications')
-      .select('*')
-      .eq('id', application_id)
-      .single()
-
-    if (appError || !application) {
-      return new Response(JSON.stringify({ error: 'Application not found' }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
-    }
-
-    const email = application.email
-    let userId = application.user_id
     let tempPassword: string | null = null
     let accountCreated = false
 
     // Try to create user - handle if already exists
     tempPassword = generatePassword()
+    console.log(`Attempting to create/update user for email: ${email}`)
+    
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email: email,
       password: tempPassword,
       email_confirm: true,
       user_metadata: {
-        full_name: application.full_name,
-        nickname: application.nickname,
+        full_name: fullName,
+        nickname: nickname,
       }
     })
 
     if (createError) {
+      console.log(`Create error: ${createError.message}`)
       // User already exists - find them and update password
       if (createError.message?.includes('already been registered')) {
         const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
@@ -113,6 +146,7 @@ Deno.serve(async (req) => {
         
         if (existingUser) {
           userId = existingUser.id
+          console.log(`Found existing user: ${userId}, updating password`)
           // Update password so the temp password works
           const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
             password: tempPassword,
@@ -120,13 +154,13 @@ Deno.serve(async (req) => {
           })
           if (updateError) {
             console.error('Failed to update password:', updateError)
-            // Still continue - user exists, just password not updated
             tempPassword = null
           } else {
             accountCreated = false
+            console.log(`Password updated successfully for ${email}`)
           }
         } else {
-          return new Response(JSON.stringify({ error: 'User exists but could not be found' }), {
+          return new Response(JSON.stringify({ error: 'User exists but could not be found in listing' }), {
             status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           })
         }
@@ -138,12 +172,14 @@ Deno.serve(async (req) => {
     } else {
       userId = newUser.user!.id
       accountCreated = true
+      console.log(`New user created: ${userId}`)
 
       // Create profile for the new user
       await adminClient.from('profiles').upsert({
         id: userId,
-        username: application.nickname,
-        display_name: application.full_name,
+        email: email,
+        username: nickname,
+        name: fullName,
       }, { onConflict: 'id' })
     }
 
@@ -153,16 +189,20 @@ Deno.serve(async (req) => {
       role: 'creator',
     }, { onConflict: 'user_id,role' })
 
-    // Update application status
-    await adminClient
-      .from('creator_applications')
-      .update({
-        status: 'approved',
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: adminUserId,
-        user_id: userId,
-      })
-      .eq('id', application_id)
+    // Update application status if applicable
+    if (application_id) {
+      await adminClient
+        .from('creator_applications')
+        .update({
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: adminUserId,
+          user_id: userId,
+        })
+        .eq('id', application_id)
+    }
+
+    console.log(`Success! email=${email}, accountCreated=${accountCreated}, tempPassword=${tempPassword ? 'SET' : 'NULL'}`)
 
     return new Response(JSON.stringify({
       success: true,
@@ -170,8 +210,8 @@ Deno.serve(async (req) => {
       temp_password: tempPassword,
       account_created: accountCreated,
       user_id: userId,
-      full_name: application.full_name,
-      whatsapp: application.whatsapp,
+      full_name: fullName,
+      whatsapp: whatsapp,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

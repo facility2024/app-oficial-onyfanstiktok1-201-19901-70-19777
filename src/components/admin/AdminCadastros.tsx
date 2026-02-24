@@ -47,8 +47,46 @@ export const AdminCadastros = () => {
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
   const [credentials, setCredentials] = useState<{email: string; temp_password: string | null; full_name: string; whatsapp: string} | null>(null);
 
+  const playNotificationSound = () => {
+    try {
+      const audio = new Audio('https://tiktokonyfans.b-cdn.net/material%20coconudi/som%20para%20admin.mp3');
+      audio.volume = 0.6;
+      audio.play().catch((err) => console.warn('Som não reproduzido:', err));
+    } catch (e) {
+      console.warn('Erro ao tocar som:', e);
+    }
+  };
+
   useEffect(() => {
     fetchAll();
+
+    const channel = supabase
+      .channel('admin-cadastros-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cadastro_modelos' }, (payload) => {
+        console.log('🔔 Novo cadastro modelo detectado!', payload);
+        playNotificationSound();
+        toast.success('🔔 Novo cadastro de modelo recebido!', { duration: 10000 });
+        fetchAll();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cadastro_empresas' }, (payload) => {
+        console.log('🔔 Novo cadastro empresa detectado!', payload);
+        playNotificationSound();
+        toast.success('🔔 Novo cadastro de empresa recebido!', { duration: 10000 });
+        fetchAll();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, (payload) => {
+        console.log('🔔 Nova aplicação de criador detectada!', payload);
+        playNotificationSound();
+        toast.success('🔔 Nova aplicação de criador recebida!', { duration: 10000 });
+        fetchAll();
+      })
+      .subscribe((status) => {
+        console.log('📡 Cadastros realtime status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchAll = async () => {

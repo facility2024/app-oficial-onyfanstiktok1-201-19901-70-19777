@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 interface CreatorApplication {
@@ -217,6 +218,25 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     }
   };
 
+  const handleDeleteCreator = async (creatorId: string, email: string) => {
+    try {
+      setProcessing(true);
+      // Remove creator role
+      await (supabase as any).from('user_roles').delete().eq('user_id', creatorId).eq('role', 'creator');
+      // Remove related data
+      await (supabase as any).from('videos').delete().eq('creator_id', creatorId);
+      await (supabase as any).from('user_follows').delete().eq('following_id', creatorId);
+      await (supabase as any).from('model_chat_panels').delete().eq('creator_id', creatorId);
+      toast.success(`Criador ${email} removido do banco de dados`);
+      fetchDirectCreators();
+    } catch (error: any) {
+      console.error('Erro ao excluir criador:', error);
+      toast.error('Erro ao excluir: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -339,19 +359,42 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
               {directCreators.map(creator => (
                 <Card key={creator.id} className="bg-card/50">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="font-semibold">{creator.name || creator.username}</p>
                         <p className="text-sm text-muted-foreground">📧 {creator.email}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleResetPassword(creator.email, creator.name || creator.username, '')}
-                        disabled={processing}
-                        className="bg-primary hover:bg-primary/90"
-                      >
-                        <KeyRound className="w-4 h-4 mr-1" />Gerar Credenciais
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleResetPassword(creator.email, creator.name || creator.username, '')}
+                          disabled={processing}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <KeyRound className="w-4 h-4 mr-1" />Gerar Credenciais
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" disabled={processing}>
+                              <Trash2 className="w-4 h-4 mr-1" />Excluir
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Criador</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir <strong>{creator.email}</strong> do banco de dados? Isso removerá a role de criador, vídeos, seguidores e painéis de chat associados. Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteCreator(creator.id, creator.email)} className="bg-destructive hover:bg-destructive/90">
+                                Confirmar Exclusão
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

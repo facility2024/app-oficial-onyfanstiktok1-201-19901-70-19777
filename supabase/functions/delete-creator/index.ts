@@ -32,6 +32,10 @@ serve(async (req) => {
 
     console.log(`Deleting creator ${creator_id} completely...`)
 
+    // Get creator email before deletion for cadastro_modelos cleanup
+    const { data: profile } = await adminClient.from('profiles').select('email').eq('id', creator_id).maybeSingle()
+    const creatorEmail = profile?.email
+
     // Clean up related data first
     await adminClient.from('likes').delete().eq('user_id', creator_id)
     await adminClient.from('comments').delete().eq('user_id', creator_id)
@@ -42,6 +46,16 @@ serve(async (req) => {
     await adminClient.from('model_chat_panels').delete().eq('creator_id', creator_id)
     await adminClient.from('user_roles').delete().eq('user_id', creator_id)
     await adminClient.from('creator_applications').delete().eq('user_id', creator_id)
+    await adminClient.from('user_wallets').delete().eq('user_id', creator_id)
+    await adminClient.from('wallet_transactions').delete().eq('user_id', creator_id)
+    await adminClient.from('referrals').delete().eq('referrer_id', creator_id)
+    await adminClient.from('gamification_actions').delete().eq('user_id', creator_id)
+    
+    // Clean cadastro_modelos by email if exists
+    if (creatorEmail) {
+      await adminClient.from('cadastro_modelos').delete().eq('email', creatorEmail)
+    }
+    
     await adminClient.from('profiles').delete().eq('id', creator_id)
 
     // Delete auth user (this invalidates all sessions automatically)

@@ -323,11 +323,33 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
-      toast.success(`Criador ${email} excluído completamente do banco de dados`);
+      toast.success(`Criador ${email} excluído completamente — acesso revogado e sessão invalidada`);
       fetchDirectCreators();
       fetchApplications();
+      fetchExternalCadastros();
     } catch (error: any) {
       console.error('Erro ao excluir criador:', error);
+      toast.error('Erro ao excluir: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeleteExternalCadastro = async (cadastroId: string, email: string) => {
+    try {
+      setProcessing(true);
+      // Check if there's an auth user with this email to also delete their access
+      const { data: authUsers } = await supabase.functions.invoke('approve-creator', {
+        body: { email, action: 'find_user' }
+      });
+      
+      // Delete from cadastro_modelos
+      await (supabase as any).from('cadastro_modelos').delete().eq('id', cadastroId);
+      
+      toast.success(`Cadastro ${email} excluído com sucesso`);
+      fetchExternalCadastros();
+    } catch (error: any) {
+      console.error('Erro ao excluir cadastro:', error);
       toast.error('Erro ao excluir: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setProcessing(false);
@@ -528,14 +550,37 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                         <p className="text-sm text-muted-foreground">📱 {cadastro.whatsapp}</p>
                         <p className="text-xs text-muted-foreground">📅 {new Date(cadastro.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleResetPassword(cadastro.email, cadastro.nome, cadastro.whatsapp)}
-                        disabled={processing}
-                        className="bg-orange-500 hover:bg-orange-600"
-                      >
-                        <KeyRound className="w-4 h-4 mr-1" />Gerar Credenciais
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleResetPassword(cadastro.email, cadastro.nome, cadastro.whatsapp)}
+                          disabled={processing}
+                          className="bg-orange-500 hover:bg-orange-600"
+                        >
+                          <KeyRound className="w-4 h-4 mr-1" />Gerar Credenciais
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" disabled={processing}>
+                              <Trash2 className="w-4 h-4 mr-1" />Excluir
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Cadastro</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir <strong>{cadastro.email}</strong>? O cadastro será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteExternalCadastro(cadastro.id, cadastro.email)} className="bg-destructive hover:bg-destructive/90">
+                                Confirmar Exclusão
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

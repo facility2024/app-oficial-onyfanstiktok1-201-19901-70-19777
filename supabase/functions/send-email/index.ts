@@ -68,9 +68,9 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Send email using Resend with anti-spam best practices
       const emailResponse = await resend.emails.send({
-        from: "COCONUDI <contato@onyfans.com.br>",
+        from: "COCONUDI <contato@coconudi.com>",
         to: [recipient],
-        reply_to: "noreply@onyfans.com.br",
+        reply_to: "noreply@coconudi.com",
         subject: subject,
         html: `
           <!DOCTYPE html>

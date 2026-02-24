@@ -241,6 +241,11 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                                   </Button>
                                 </>
                               )}
+                              {app.status === 'approved' && (
+                                <Button size="sm" variant="outline" onClick={() => handleApprove(app)} disabled={processing} className="text-primary border-primary">
+                                  <Send className="w-4 h-4 mr-1" />Reenviar Credenciais
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </CardContent>

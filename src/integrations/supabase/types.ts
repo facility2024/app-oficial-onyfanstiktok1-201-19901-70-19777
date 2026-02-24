@@ -322,6 +322,7 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string | null
+          creator_id: string | null
           device_type: string | null
           event_category: string | null
           event_data: Json | null
@@ -344,6 +345,7 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string | null
+          creator_id?: string | null
           device_type?: string | null
           event_category?: string | null
           event_data?: Json | null
@@ -366,6 +368,7 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string | null
+          creator_id?: string | null
           device_type?: string | null
           event_category?: string | null
           event_data?: Json | null
@@ -384,6 +387,13 @@ export type Database = {
           video_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "analytics_events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "analytics_events_model_id_fkey"
             columns: ["model_id"]
@@ -568,44 +578,74 @@ export type Database = {
         }
         Relationships: []
       }
-      bonus_users: {
+      cadastro_empresas: {
         Row: {
-          created_at: string | null
+          cnpj: string | null
+          created_at: string
           email: string
           id: string
-          is_verified: boolean | null
-          location: string | null
-          name: string
-          points: number | null
-          status: string | null
-          total_spent: number | null
-          updated_at: string | null
+          nome_negocio: string
+          nome_responsavel: string
+          notas: string | null
+          status: string
+          updated_at: string
           whatsapp: string
         }
         Insert: {
-          created_at?: string | null
+          cnpj?: string | null
+          created_at?: string
           email: string
           id?: string
-          is_verified?: boolean | null
-          location?: string | null
-          name: string
-          points?: number | null
-          status?: string | null
-          total_spent?: number | null
-          updated_at?: string | null
+          nome_negocio: string
+          nome_responsavel: string
+          notas?: string | null
+          status?: string
+          updated_at?: string
           whatsapp: string
         }
         Update: {
-          created_at?: string | null
+          cnpj?: string | null
+          created_at?: string
           email?: string
           id?: string
-          is_verified?: boolean | null
-          location?: string | null
-          name?: string
-          points?: number | null
-          status?: string | null
-          total_spent?: number | null
-          updated_at?: string | null
+          nome_negocio?: string
+          nome_responsavel?: string
+          notas?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      cadastro_modelos: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          notas: string | null
+          status: string
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          notas?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          notas?: string | null
+          status?: string
+          updated_at?: string
           whatsapp?: string
         }
         Relationships: []
@@ -1298,6 +1338,108 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          contract_content: string
+          created_at: string | null
+          fields: Json
+          id: string
+          signature_data: Json | null
+          signed_at: string | null
+          signer_name: string
+          signer_slug: string
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contract_content: string
+          created_at?: string | null
+          fields?: Json
+          id?: string
+          signature_data?: Json | null
+          signed_at?: string | null
+          signer_name: string
+          signer_slug: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contract_content?: string
+          created_at?: string | null
+          fields?: Json
+          id?: string
+          signature_data?: Json | null
+          signed_at?: string | null
+          signer_name?: string
+          signer_slug?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      creator_applications: {
+        Row: {
+          accepted_image_rights: boolean
+          accepted_terms: boolean
+          bio: string
+          created_at: string
+          email: string
+          full_name: string
+          gender: string
+          id: string
+          nickname: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          accepted_image_rights?: boolean
+          accepted_terms?: boolean
+          bio: string
+          created_at?: string
+          email: string
+          full_name: string
+          gender: string
+          id?: string
+          nickname: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          accepted_image_rights?: boolean
+          accepted_terms?: boolean
+          bio?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          gender?: string
+          id?: string
+          nickname?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       curtidas_reacoes: {
         Row: {
           comentario_id: string | null
@@ -1608,6 +1750,42 @@ export type Database = {
           tipo_movimento?: string
           usuario_id?: string | null
           velocidade_media?: number | null
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          status: string | null
+          storage_path: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          status?: string | null
+          storage_path: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          status?: string | null
+          storage_path?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2273,6 +2451,78 @@ export type Database = {
           },
         ]
       }
+      linktree_profiles: {
+        Row: {
+          created_at: string | null
+          custom_slug: string | null
+          expires_at: string | null
+          id: string
+          links_data: Json
+          profile_data: Json
+          profile_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_slug?: string | null
+          expires_at?: string | null
+          id?: string
+          links_data?: Json
+          profile_data: Json
+          profile_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_slug?: string | null
+          expires_at?: string | null
+          id?: string
+          links_data?: Json
+          profile_data?: Json
+          profile_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      live_streams: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string
+          stream_key: string
+          stream_url: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          stream_key: string
+          stream_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          stream_key?: string
+          stream_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       locais_favoritos: {
         Row: {
           cor_marcador: string | null
@@ -2345,6 +2595,66 @@ export type Database = {
         }
         Relationships: []
       }
+      local_businesses: {
+        Row: {
+          address: string
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          google_maps_url: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_sponsored: boolean
+          latitude: number
+          longitude: number
+          name: string
+          phone: string | null
+          rating: number | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          address: string
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          google_maps_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_sponsored?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          google_maps_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_sponsored?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       localizacao_usuarios: {
         Row: {
           altitude: number | null
@@ -2360,7 +2670,7 @@ export type Database = {
           fonte_localizacao: string | null
           historico_ativo: boolean | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           latitude: number | null
           longitude: number | null
           navegador: string | null
@@ -2395,7 +2705,7 @@ export type Database = {
           fonte_localizacao?: string | null
           historico_ativo?: boolean | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           latitude?: number | null
           longitude?: number | null
           navegador?: string | null
@@ -2430,7 +2740,7 @@ export type Database = {
           fonte_localizacao?: string | null
           historico_ativo?: boolean | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           latitude?: number | null
           longitude?: number | null
           navegador?: string | null
@@ -2664,6 +2974,193 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+        }
+        Relationships: []
+      }
+      marketplace_orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          payment_id: string | null
+          product_id: string | null
+          quantity: number
+          shipping_address: Json | null
+          status: string
+          total_price: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payment_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          shipping_address?: Json | null
+          status?: string
+          total_price: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payment_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          shipping_address?: Json | null
+          status?: string
+          total_price?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_products: {
+        Row: {
+          average_rating: number | null
+          category: string
+          created_at: string | null
+          description: string | null
+          hoopay_sales_url: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          name: string
+          price: number
+          stock: number
+          total_reviews: number | null
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          average_rating?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          hoopay_sales_url?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          stock?: number
+          total_reviews?: number | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          average_rating?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          hoopay_sales_url?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          stock?: number
+          total_reviews?: number | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      marketplace_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          order_id: string | null
+          product_id: string | null
+          rating: number
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          rating: number
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          rating?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mirrored_files: {
         Row: {
           chat_message_id: string | null
@@ -2774,6 +3271,99 @@ export type Database = {
           titulo_missao?: string
         }
         Relationships: []
+      }
+      model_chat_panels: {
+        Row: {
+          ai_provider: string | null
+          api_key_encrypted: string | null
+          audio_url: string | null
+          can_read_images: boolean | null
+          can_send_audio: boolean | null
+          can_send_images: boolean | null
+          can_send_links: boolean | null
+          created_at: string | null
+          creator_id: string | null
+          custom_link: string | null
+          greeting_description: string | null
+          greeting_image_url: string | null
+          greeting_link: string | null
+          greeting_message: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_online: boolean | null
+          message_delay_seconds: number | null
+          model_id: string | null
+          prompt: string | null
+          updated_at: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          ai_provider?: string | null
+          api_key_encrypted?: string | null
+          audio_url?: string | null
+          can_read_images?: boolean | null
+          can_send_audio?: boolean | null
+          can_send_images?: boolean | null
+          can_send_links?: boolean | null
+          created_at?: string | null
+          creator_id?: string | null
+          custom_link?: string | null
+          greeting_description?: string | null
+          greeting_image_url?: string | null
+          greeting_link?: string | null
+          greeting_message?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_online?: boolean | null
+          message_delay_seconds?: number | null
+          model_id?: string | null
+          prompt?: string | null
+          updated_at?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          ai_provider?: string | null
+          api_key_encrypted?: string | null
+          audio_url?: string | null
+          can_read_images?: boolean | null
+          can_send_audio?: boolean | null
+          can_send_images?: boolean | null
+          can_send_links?: boolean | null
+          created_at?: string | null
+          creator_id?: string | null
+          custom_link?: string | null
+          greeting_description?: string | null
+          greeting_image_url?: string | null
+          greeting_link?: string | null
+          greeting_message?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_online?: boolean | null
+          message_delay_seconds?: number | null
+          model_id?: string | null
+          prompt?: string | null
+          updated_at?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_chat_panels_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_chat_panels_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "popular_models"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       model_followers: {
         Row: {
@@ -2895,6 +3485,99 @@ export type Database = {
           },
         ]
       }
+      model_subscription_plans: {
+        Row: {
+          benefits: string[] | null
+          created_at: string | null
+          discount_label: string | null
+          id: string
+          is_active: boolean | null
+          model_id: string
+          model_type: string
+          payment_url: string | null
+          plan_type: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: string[] | null
+          created_at?: string | null
+          discount_label?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_id: string
+          model_type?: string
+          payment_url?: string | null
+          plan_type: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: string[] | null
+          created_at?: string | null
+          discount_label?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_id?: string
+          model_type?: string
+          payment_url?: string | null
+          plan_type?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      model_subscriptions: {
+        Row: {
+          created_at: string | null
+          id: string
+          model_id: string
+          model_type: string
+          payment_id: string | null
+          price_paid: number | null
+          subscriber_email: string
+          subscriber_id: string | null
+          subscriber_phone: string | null
+          subscription_end: string
+          subscription_start: string | null
+          subscription_status: string
+          subscription_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          model_id: string
+          model_type?: string
+          payment_id?: string | null
+          price_paid?: number | null
+          subscriber_email: string
+          subscriber_id?: string | null
+          subscriber_phone?: string | null
+          subscription_end: string
+          subscription_start?: string | null
+          subscription_status?: string
+          subscription_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          model_id?: string
+          model_type?: string
+          payment_id?: string | null
+          price_paid?: number | null
+          subscriber_email?: string
+          subscriber_id?: string | null
+          subscriber_phone?: string | null
+          subscription_end?: string
+          subscription_start?: string | null
+          subscription_status?: string
+          subscription_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       models: {
         Row: {
           access_code: string | null
@@ -2902,8 +3585,10 @@ export type Database = {
           bio: string | null
           category: string
           created_at: string | null
+          custom_link: string | null
           display_order: number
           followers_count: number
+          hide_subscription_button: boolean | null
           id: string
           is_active: boolean
           is_live: boolean
@@ -2931,8 +3616,10 @@ export type Database = {
           bio?: string | null
           category?: string
           created_at?: string | null
+          custom_link?: string | null
           display_order?: number
           followers_count?: number
+          hide_subscription_button?: boolean | null
           id?: string
           is_active?: boolean
           is_live?: boolean
@@ -2960,8 +3647,10 @@ export type Database = {
           bio?: string | null
           category?: string
           created_at?: string | null
+          custom_link?: string | null
           display_order?: number
           followers_count?: number
+          hide_subscription_button?: boolean | null
           id?: string
           is_active?: boolean
           is_live?: boolean
@@ -3326,6 +4015,7 @@ export type Database = {
           ip_address: string | null
           is_online: boolean | null
           last_seen_at: string | null
+          linktree_profile_id: string | null
           location_city: string | null
           location_country: string | null
           location_state: string | null
@@ -3344,6 +4034,7 @@ export type Database = {
           ip_address?: string | null
           is_online?: boolean | null
           last_seen_at?: string | null
+          linktree_profile_id?: string | null
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
@@ -3362,6 +4053,7 @@ export type Database = {
           ip_address?: string | null
           is_online?: boolean | null
           last_seen_at?: string | null
+          linktree_profile_id?: string | null
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
@@ -3377,6 +4069,99 @@ export type Database = {
             columns: ["current_video_id"]
             isOneToOne: false
             referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onlyfans_content: {
+        Row: {
+          ad_text: string | null
+          avatar_url: string | null
+          button_color: string | null
+          button_link: string | null
+          button_text: string | null
+          created_at: string | null
+          display_name: string
+          effect: string | null
+          end_date: string | null
+          id: string
+          link_text: string | null
+          model_id: string | null
+          name: string
+          offer_description: string | null
+          offer_image_url: string | null
+          offer_title: string | null
+          seconds: number | null
+          start_date: string | null
+          times: number | null
+          unique_id: string
+          updated_at: string | null
+          user_id: string | null
+          video_url: string
+        }
+        Insert: {
+          ad_text?: string | null
+          avatar_url?: string | null
+          button_color?: string | null
+          button_link?: string | null
+          button_text?: string | null
+          created_at?: string | null
+          display_name: string
+          effect?: string | null
+          end_date?: string | null
+          id?: string
+          link_text?: string | null
+          model_id?: string | null
+          name: string
+          offer_description?: string | null
+          offer_image_url?: string | null
+          offer_title?: string | null
+          seconds?: number | null
+          start_date?: string | null
+          times?: number | null
+          unique_id: string
+          updated_at?: string | null
+          user_id?: string | null
+          video_url: string
+        }
+        Update: {
+          ad_text?: string | null
+          avatar_url?: string | null
+          button_color?: string | null
+          button_link?: string | null
+          button_text?: string | null
+          created_at?: string | null
+          display_name?: string
+          effect?: string | null
+          end_date?: string | null
+          id?: string
+          link_text?: string | null
+          model_id?: string | null
+          name?: string
+          offer_description?: string | null
+          offer_image_url?: string | null
+          offer_title?: string | null
+          seconds?: number | null
+          start_date?: string | null
+          times?: number | null
+          unique_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onlyfans_content_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onlyfans_content_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "popular_models"
             referencedColumns: ["id"]
           },
         ]
@@ -3571,6 +4356,36 @@ export type Database = {
           },
         ]
       }
+      payment_config: {
+        Row: {
+          api_url: string | null
+          config: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_url?: string | null
+          config: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_url?: string | null
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payment_events: {
         Row: {
           amount: number | null
@@ -3622,10 +4437,18 @@ export type Database = {
           created_at: string
           email: string
           expires_at: string
+          hoopay_charge_uuid: string | null
+          hoopay_order_uuid: string | null
           id: string
           name: string
           paid_at: string | null
+          payment_method: string | null
           pix_code: string
+          plan_days: number | null
+          plan_id: string | null
+          plan_type: string | null
+          qr_code: string | null
+          qr_code_base64: string | null
           status: string
           txid: string
           updated_at: string
@@ -3637,10 +4460,18 @@ export type Database = {
           created_at?: string
           email: string
           expires_at?: string
+          hoopay_charge_uuid?: string | null
+          hoopay_order_uuid?: string | null
           id?: string
           name: string
           paid_at?: string | null
+          payment_method?: string | null
           pix_code: string
+          plan_days?: number | null
+          plan_id?: string | null
+          plan_type?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
           status?: string
           txid: string
           updated_at?: string
@@ -3652,15 +4483,122 @@ export type Database = {
           created_at?: string
           email?: string
           expires_at?: string
+          hoopay_charge_uuid?: string | null
+          hoopay_order_uuid?: string | null
           id?: string
           name?: string
           paid_at?: string | null
+          payment_method?: string | null
           pix_code?: string
+          plan_days?: number | null
+          plan_id?: string | null
+          plan_type?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
           status?: string
           txid?: string
           updated_at?: string
           user_id?: string | null
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      pix_transactions: {
+        Row: {
+          created_at: string | null
+          customer_country: string | null
+          customer_cpf: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          lxpay_response: Json | null
+          paid_at: string | null
+          pix_code: string | null
+          pix_expiration: string | null
+          pix_qr_code: string | null
+          product_name: string
+          product_value: number
+          status: string | null
+          transaction_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_country?: string | null
+          customer_cpf: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id?: string
+          lxpay_response?: Json | null
+          paid_at?: string | null
+          pix_code?: string | null
+          pix_expiration?: string | null
+          pix_qr_code?: string | null
+          product_name: string
+          product_value: number
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_country?: string | null
+          customer_cpf?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          lxpay_response?: Json | null
+          paid_at?: string | null
+          pix_code?: string | null
+          pix_expiration?: string | null
+          pix_qr_code?: string | null
+          product_name?: string
+          product_value?: number
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          has_premium_features: boolean | null
+          id: string
+          is_active: boolean | null
+          max_linktrees: number | null
+          name: string
+          price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          has_premium_features?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          max_linktrees?: number | null
+          name: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          has_premium_features?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          max_linktrees?: number | null
+          name?: string
+          price?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3715,6 +4653,36 @@ export type Database = {
           total_users?: number | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      platform_terms: {
+        Row: {
+          content: string
+          created_at: string | null
+          effective_date: string
+          id: string
+          is_active: boolean | null
+          title: string
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          effective_date: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          version: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          version?: string
         }
         Relationships: []
       }
@@ -3927,6 +4895,7 @@ export type Database = {
           imagens: string[] | null
           modelo_id: string
           modelo_username: string
+          profile_link: string | null
           status: string
           tipo_conteudo: string
           titulo: string
@@ -3943,6 +4912,7 @@ export type Database = {
           imagens?: string[] | null
           modelo_id: string
           modelo_username: string
+          profile_link?: string | null
           status?: string
           tipo_conteudo?: string
           titulo: string
@@ -3959,6 +4929,7 @@ export type Database = {
           imagens?: string[] | null
           modelo_id?: string
           modelo_username?: string
+          profile_link?: string | null
           status?: string
           tipo_conteudo?: string
           titulo?: string
@@ -4254,46 +5225,52 @@ export type Database = {
       }
       premium_users: {
         Row: {
+          cpf: string | null
           created_at: string
           email: string
           id: string
           name: string
           payment_id: string | null
+          plan_id: string | null
           subscription_end: string
           subscription_start: string
           subscription_status: string
           subscription_type: string
           updated_at: string
           user_id: string | null
-          whatsapp: string
+          whatsapp: string | null
         }
         Insert: {
+          cpf?: string | null
           created_at?: string
           email: string
           id?: string
           name: string
           payment_id?: string | null
+          plan_id?: string | null
           subscription_end?: string
           subscription_start?: string
           subscription_status?: string
           subscription_type?: string
           updated_at?: string
           user_id?: string | null
-          whatsapp: string
+          whatsapp?: string | null
         }
         Update: {
+          cpf?: string | null
           created_at?: string
           email?: string
           id?: string
           name?: string
           payment_id?: string | null
+          plan_id?: string | null
           subscription_end?: string
           subscription_start?: string
           subscription_status?: string
           subscription_type?: string
           updated_at?: string
           user_id?: string | null
-          whatsapp?: string
+          whatsapp?: string | null
         }
         Relationships: [
           {
@@ -4307,28 +5284,67 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           created_at: string | null
           email: string | null
+          first_name: string | null
+          followers_count: number | null
           id: string
+          last_name: string | null
+          live_active: boolean | null
+          live_url: string | null
           name: string | null
+          phone: string | null
+          referral_code: string | null
+          referred_by: string | null
           role: string | null
           updated_at: string | null
+          username: string | null
+          video_call_active: boolean | null
+          video_call_url: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           email?: string | null
+          first_name?: string | null
+          followers_count?: number | null
           id: string
+          last_name?: string | null
+          live_active?: boolean | null
+          live_url?: string | null
           name?: string | null
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           role?: string | null
           updated_at?: string | null
+          username?: string | null
+          video_call_active?: boolean | null
+          video_call_url?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           email?: string | null
+          first_name?: string | null
+          followers_count?: number | null
           id?: string
+          last_name?: string | null
+          live_active?: boolean | null
+          live_url?: string | null
           name?: string | null
+          phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           role?: string | null
           updated_at?: string | null
+          username?: string | null
+          video_call_active?: boolean | null
+          video_call_url?: string | null
         }
         Relationships: []
       }
@@ -4498,6 +5514,69 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          bonus_amount: number | null
+          bonus_paid: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          referral_code: string | null
+          referred_email: string | null
+          referred_id: string | null
+          referrer_id: string
+          status: string | null
+        }
+        Insert: {
+          bonus_amount?: number | null
+          bonus_paid?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string | null
+          referred_email?: string | null
+          referred_id?: string | null
+          referrer_id: string
+          status?: string | null
+        }
+        Update: {
+          bonus_amount?: number | null
+          bonus_paid?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string | null
+          referred_email?: string | null
+          referred_id?: string | null
+          referrer_id?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      registration_limits: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          profile_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address: unknown
+          profile_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          profile_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           created_at: string | null
@@ -4528,6 +5607,54 @@ export type Database = {
           location_state?: string | null
           name?: string
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      registrations_data: {
+        Row: {
+          address: string
+          agreement: boolean
+          cpf: string
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          ip_address: unknown
+          notes: string | null
+          phone: string
+          selfie_data_url: string | null
+          signature_data_url: string
+          user_agent: string | null
+        }
+        Insert: {
+          address: string
+          agreement?: boolean
+          cpf: string
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          ip_address?: unknown
+          notes?: string | null
+          phone: string
+          selfie_data_url?: string | null
+          signature_data_url: string
+          user_agent?: string | null
+        }
+        Update: {
+          address?: string
+          agreement?: boolean
+          cpf?: string
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          ip_address?: unknown
+          notes?: string | null
+          phone?: string
+          selfie_data_url?: string | null
+          signature_data_url?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -4696,7 +5823,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           model_id: string | null
           platform: string
           shared_at: string
@@ -4708,7 +5835,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           model_id?: string | null
           platform?: string
           shared_at?: string
@@ -4720,7 +5847,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           model_id?: string | null
           platform?: string
           shared_at?: string
@@ -5112,7 +6239,7 @@ export type Database = {
           created_at: string | null
           date_performed: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           model_id: string | null
           points_earned: number | null
           session_id: string | null
@@ -5125,7 +6252,7 @@ export type Database = {
           created_at?: string | null
           date_performed?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           model_id?: string | null
           points_earned?: number | null
           session_id?: string | null
@@ -5138,7 +6265,7 @@ export type Database = {
           created_at?: string | null
           date_performed?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           model_id?: string | null
           points_earned?: number | null
           session_id?: string | null
@@ -5169,6 +6296,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
+      user_follow_models: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_follows: {
+        Row: {
+          followed_at: string
+          follower_email: string
+          follower_id: string
+          follower_name: string
+          following_id: string
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          followed_at?: string
+          follower_email: string
+          follower_id: string
+          follower_name: string
+          following_id: string
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          followed_at?: string
+          follower_email?: string
+          follower_id?: string
+          follower_name?: string
+          following_id?: string
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: []
       }
       user_mission_progress: {
         Row: {
@@ -5286,6 +6485,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           browser_info: Json | null
@@ -5355,6 +6581,77 @@ export type Database = {
           updated_at?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          plan_id: string
+          start_date: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          plan_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          plan_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_wallets: {
+        Row: {
+          created_at: string | null
+          id: string
+          nudix_balance: number | null
+          total_earned: number | null
+          total_spent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nudix_balance?: number | null
+          total_earned?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nudix_balance?: number | null
+          total_earned?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -5511,13 +6808,103 @@ export type Database = {
         }
         Relationships: []
       }
+      video_call_models: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          model_avatar: string | null
+          model_name: string
+          preview_video_url: string | null
+          price: string | null
+          redirect_url: string
+          selected_model_id: string | null
+          show_in_menu: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_avatar?: string | null
+          model_name: string
+          preview_video_url?: string | null
+          price?: string | null
+          redirect_url: string
+          selected_model_id?: string | null
+          show_in_menu?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_avatar?: string | null
+          model_name?: string
+          preview_video_url?: string | null
+          price?: string | null
+          redirect_url?: string
+          selected_model_id?: string | null
+          show_in_menu?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_call_models_selected_model_id_fkey"
+            columns: ["selected_model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_call_models_selected_model_id_fkey"
+            columns: ["selected_model_id"]
+            isOneToOne: false
+            referencedRelation: "popular_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_genres: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       video_shares: {
         Row: {
           created_at: string | null
           device_type: string | null
           error_message: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean | null
           model_id: string | null
           platform: string
@@ -5535,7 +6922,7 @@ export type Database = {
           device_type?: string | null
           error_message?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           model_id?: string | null
           platform?: string
@@ -5553,7 +6940,7 @@ export type Database = {
           device_type?: string | null
           error_message?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           model_id?: string | null
           platform?: string
@@ -5680,10 +7067,12 @@ export type Database = {
           category: string | null
           comments_count: number | null
           created_at: string | null
+          creator_id: string | null
           description: string | null
           display_order: number
           duration: string
           file_size: number | null
+          genres: string[] | null
           id: string
           is_active: boolean | null
           is_blocked: boolean | null
@@ -5715,10 +7104,12 @@ export type Database = {
           category?: string | null
           comments_count?: number | null
           created_at?: string | null
+          creator_id?: string | null
           description?: string | null
           display_order?: number
           duration: string
           file_size?: number | null
+          genres?: string[] | null
           id?: string
           is_active?: boolean | null
           is_blocked?: boolean | null
@@ -5750,10 +7141,12 @@ export type Database = {
           category?: string | null
           comments_count?: number | null
           created_at?: string | null
+          creator_id?: string | null
           description?: string | null
           display_order?: number
           duration?: string
           file_size?: number | null
+          genres?: string[] | null
           id?: string
           is_active?: boolean | null
           is_blocked?: boolean | null
@@ -5800,7 +7193,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          model_id: string | null
+          published_at: string | null
           scheduled_at: string | null
+          status: string
           title: string
           video_url: string
         }
@@ -5808,7 +7204,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          model_id?: string | null
+          published_at?: string | null
           scheduled_at?: string | null
+          status?: string
           title: string
           video_url: string
         }
@@ -5816,9 +7215,42 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          model_id?: string | null
+          published_at?: string | null
           scheduled_at?: string | null
+          status?: string
           title?: string
           video_url?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          reference_id: string | null
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          type?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -5864,27 +7296,45 @@ export type Database = {
       webhook_logs: {
         Row: {
           created_at: string | null
+          email: string | null
+          error_message: string | null
           event_type: string | null
           id: string
+          ip_address: string | null
           payload: Json | null
+          plan_type: string | null
+          processed: boolean | null
           processed_at: string | null
           source: string
+          webhook_type: string | null
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
+          error_message?: string | null
           event_type?: string | null
           id?: string
+          ip_address?: string | null
           payload?: Json | null
+          plan_type?: string | null
+          processed?: boolean | null
           processed_at?: string | null
           source: string
+          webhook_type?: string | null
         }
         Update: {
           created_at?: string | null
+          email?: string | null
+          error_message?: string | null
           event_type?: string | null
           id?: string
+          ip_address?: string | null
           payload?: Json | null
+          plan_type?: string | null
+          processed?: boolean | null
           processed_at?: string | null
           source?: string
+          webhook_type?: string | null
         }
         Relationships: []
       }
@@ -6253,10 +7703,11 @@ export type Database = {
       }
     }
     Functions: {
-      admin_delete_model: {
-        Args: { p_model_id: string }
-        Returns: boolean
+      add_creator_role_safe: {
+        Args: { p_granted_by: string; p_user_email: string }
+        Returns: string
       }
+      admin_delete_model: { Args: { p_model_id: string }; Returns: undefined }
       atualizar_localizacao_usuario: {
         Args: {
           endereco?: string
@@ -6277,21 +7728,20 @@ export type Database = {
         }
         Returns: boolean
       }
-      auto_cleanup_chat_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      auto_cleanup_sensitive_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      auto_confirm_payment: {
-        Args: { p_whatsapp: string }
-        Returns: Json
-      }
+      auto_cleanup_chat_data: { Args: never; Returns: undefined }
+      auto_cleanup_sensitive_data: { Args: never; Returns: undefined }
+      auto_confirm_payment: { Args: { p_whatsapp: string }; Returns: Json }
       calcular_distancia: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
+      }
+      check_empresa_exists: {
+        Args: { check_email: string; check_whatsapp: string }
+        Returns: Json
+      }
+      check_modelo_exists: {
+        Args: { check_email: string; check_whatsapp: string }
+        Returns: Json
       }
       check_rate_limit: {
         Args: {
@@ -6302,52 +7752,45 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_security_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      check_security_status: { Args: never; Returns: Json }
       check_whatsapp_registration_status: {
         Args: { p_pix_code?: string; p_whatsapp: string }
         Returns: Json
       }
-      cleanup_expired_model_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      cleanup_expired_model_sessions: { Args: never; Returns: undefined }
+      cleanup_offline_users: { Args: never; Returns: undefined }
+      cleanup_old_comments: { Args: never; Returns: undefined }
+      cleanup_old_sessions: { Args: never; Returns: undefined }
+      cleanup_registration_limits: { Args: never; Returns: undefined }
+      cleanup_security_data: { Args: never; Returns: undefined }
+      cleanup_sensitive_data: { Args: never; Returns: undefined }
+      cleanup_sensitive_data_auto: { Args: never; Returns: undefined }
+      cleanup_sensitive_data_enhanced: { Args: never; Returns: undefined }
+      cleanup_user_sessions: { Args: never; Returns: string }
+      create_lxpay_pix: {
+        Args: {
+          p_amount: number
+          p_client_email: string
+          p_client_name: string
+          p_identifier: string
+          p_product_title: string
+        }
+        Returns: Json
       }
-      cleanup_offline_users: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_comments: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_security_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_sensitive_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_sensitive_data_auto: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_sensitive_data_enhanced: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_user_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: string
+      create_pix_charge: {
+        Args: {
+          p_amount: number
+          p_email: string
+          p_name: string
+          p_plan_days: number
+          p_plan_type: string
+          p_user_id: string
+          p_whatsapp: string
+        }
+        Returns: Json
       }
       debug_admin_status: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           current_user_id: string
           has_admin_role: boolean
@@ -6359,14 +7802,12 @@ export type Database = {
         Args: { coordenadas: Json; id_usuario: string; velocidade: number }
         Returns: string
       }
-      emergency_security_lockdown: {
-        Args: Record<PropertyKey, never>
+      emergency_security_lockdown: { Args: never; Returns: string }
+      ensure_admin_user: {
+        Args: { p_email: string; p_password: string }
         Returns: string
       }
-      ensure_guest_user: {
-        Args: { guest_user_id: string }
-        Returns: string
-      }
+      ensure_guest_user: { Args: { guest_user_id: string }; Returns: string }
       fazer_checkin_automatico: {
         Args: {
           id_usuario: string
@@ -6376,14 +7817,18 @@ export type Database = {
         }
         Returns: string
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
+      follow_model_anonymous: {
+        Args: { p_is_active?: boolean; p_model_id: string; p_user_id: string }
+        Returns: Json
       }
+      generate_unique_referral_code: { Args: never; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
       get_daily_points_status: {
         Args: { p_action_type: string; p_user_id: string }
         Returns: Json
       }
+      get_payment_credentials: { Args: { p_provider: string }; Returns: Json }
+      get_referrer_by_code: { Args: { p_code: string }; Returns: string }
       get_user_by_email: {
         Args: { email_input: string }
         Returns: {
@@ -6393,37 +7838,43 @@ export type Database = {
           name: string
         }[]
       }
-      hash_sensitive_data: {
-        Args: { data: string }
-        Returns: string
+      has_model_subscription: {
+        Args: { _model_id: string; _user_id: string }
+        Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      hash_sensitive_data: { Args: { data: string }; Returns: string }
       increment_agent_messages: {
         Args: { agent_id: string }
         Returns: undefined
       }
-      increment_video_views: {
-        Args: { video_id: string }
-        Returns: undefined
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      increment_video_views: { Args: { video_id: string }; Returns: undefined }
+      is_admin: { Args: never; Returns: boolean }
       log_security_event: {
         Args: { event_type: string; metadata?: Json }
         Returns: undefined
       }
-      monitor_suspicious_activity: {
-        Args: Record<PropertyKey, never>
+      monitor_suspicious_activity: { Args: never; Returns: undefined }
+      normalize_phone: { Args: { phone_input: string }; Returns: string }
+      process_referral_completion: {
+        Args: {
+          p_referred_email?: string
+          p_referred_id: string
+          p_referrer_id: string
+        }
+        Returns: boolean
+      }
+      processar_posts_agendados: { Args: never; Returns: string }
+      processar_posts_agendados_manual: { Args: never; Returns: string }
+      register_anonymous_creation: {
+        Args: { p_profile_id: string; p_user_id?: string }
         Returns: undefined
-      }
-      processar_posts_agendados: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      processar_posts_agendados_manual: {
-        Args: Record<PropertyKey, never>
-        Returns: string
       }
       register_daily_action: {
         Args: {
@@ -6469,26 +7920,14 @@ export type Database = {
         Args: { p_txid?: string; p_whatsapp: string }
         Returns: Json
       }
-      sync_real_time_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      testar_sistema: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      track_user_activity: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      sync_real_time_data: { Args: never; Returns: undefined }
+      testar_sistema: { Args: never; Returns: string }
+      track_user_activity: { Args: never; Returns: undefined }
       update_mission_progress: {
         Args: { p_action_type: string; p_increment?: number; p_user_id: string }
         Returns: Json
       }
-      validate_gmail: {
-        Args: { email_input: string }
-        Returns: boolean
-      }
+      validate_gmail: { Args: { email_input: string }; Returns: boolean }
       validate_model_access: {
         Args: { p_access_code: string; p_username: string }
         Returns: Json
@@ -6501,9 +7940,15 @@ export type Database = {
         Args: { id_usuario: string; lat: number; lng: number }
         Returns: number
       }
+      verify_lxpay_payment: {
+        Args: { p_external_id?: string; p_transaction_id?: string }
+        Returns: Json
+      }
+      verify_pix_payment: { Args: { p_payment_id: string }; Returns: Json }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "user" | "admin" | "moderator" | "creator"
+      payment_frequency: "monthly" | "quarterly" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6630,6 +8075,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["user", "admin", "moderator", "creator"],
+      payment_frequency: ["monthly", "quarterly", "yearly"],
+    },
   },
 } as const

@@ -1,13 +1,1 @@
 project_id = "tnzvhwapfhkhqjgyiomk"
-
-[functions.follow-model]
-verify_jwt = false
-
-[functions.ai-chat]
-verify_jwt = false
-
-[functions.bunny-video-upload]
-verify_jwt = false
-
-[functions.trigger-webhook]
-verify_jwt = false

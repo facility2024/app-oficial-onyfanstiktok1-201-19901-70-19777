@@ -53,25 +53,39 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
   const playNotificationSound = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const duration = 4;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
       const now = audioCtx.currentTime;
 
-      // Create a pleasant chime sequence
-      const notes = [880, 1108.73, 1318.51, 1567.98, 1318.51, 1567.98];
-      notes.forEach((freq, i) => {
+      // Sequência melódica de 4 segundos - som de alerta agradável
+      const melody = [
+        { freq: 523.25, start: 0, dur: 0.3 },    // C5
+        { freq: 659.25, start: 0.35, dur: 0.3 },  // E5
+        { freq: 783.99, start: 0.7, dur: 0.3 },   // G5
+        { freq: 1046.50, start: 1.05, dur: 0.5 },  // C6
+        { freq: 783.99, start: 1.7, dur: 0.3 },   // G5
+        { freq: 1046.50, start: 2.1, dur: 0.5 },  // C6
+        { freq: 1318.51, start: 2.7, dur: 0.6 },  // E6
+        { freq: 1567.98, start: 3.4, dur: 0.6 },  // G6
+      ];
+
+      melody.forEach(({ freq, start, dur }) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.3, now + i * 0.6);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.6 + 0.5);
+        gain.gain.setValueAtTime(0, now + start);
+        gain.gain.linearRampToValueAtTime(0.35, now + start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.start(now + i * 0.6);
-        osc.stop(now + i * 0.6 + 0.5);
+        osc.start(now + start);
+        osc.stop(now + start + dur);
       });
 
-      setTimeout(() => audioCtx.close(), duration * 1000);
+      setTimeout(() => audioCtx.close(), 5000);
+      console.log('🔔 Som de notificação reproduzido com sucesso');
     } catch (e) {
       console.warn('Não foi possível tocar som de notificação:', e);
     }
@@ -362,9 +376,12 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 flex-wrap">
             👥 Aplicações de Criadores
             <Badge variant="secondary">{filteredApplications('pending').length} pendentes</Badge>
+            <Button size="sm" variant="outline" onClick={() => { playNotificationSound(); toast.info('🔔 Testando som de notificação...'); }} className="ml-auto text-xs">
+              🔊 Testar Som
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>

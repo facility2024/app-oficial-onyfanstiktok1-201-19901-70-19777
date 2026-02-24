@@ -49,12 +49,45 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const playNotificationSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const duration = 4;
+      const now = audioCtx.currentTime;
+
+      // Create a pleasant chime sequence
+      const notes = [880, 1108.73, 1318.51, 1567.98, 1318.51, 1567.98];
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3, now + i * 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.6 + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.6);
+        osc.stop(now + i * 0.6 + 0.5);
+      });
+
+      setTimeout(() => audioCtx.close(), duration * 1000);
+    } catch (e) {
+      console.warn('Não foi possível tocar som de notificação:', e);
+    }
+  };
+
   useEffect(() => {
     fetchApplications();
     fetchDirectCreators();
     const channel = supabase
       .channel('creator_applications_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, () => {
+        playNotificationSound();
+        toast.info('🔔 Nova aplicação de criador recebida!');
+        fetchApplications();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);

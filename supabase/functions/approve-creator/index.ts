@@ -90,33 +90,51 @@ Deno.serve(async (req) => {
     let tempPassword: string | null = null
     let accountCreated = false
 
-    // Check if user exists in auth.users
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(
-      (u: any) => u.email?.toLowerCase() === email.toLowerCase()
-    )
+    // Try to create user - handle if already exists
+    tempPassword = generatePassword()
+    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+      email: email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
+        full_name: application.full_name,
+        nickname: application.nickname,
+      }
+    })
 
-    if (existingUser) {
-      userId = existingUser.id
-    } else {
-      // Create new auth account with temporary password
-      tempPassword = generatePassword()
-      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-        email: email,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: application.full_name,
-          nickname: application.nickname,
+    if (createError) {
+      // User already exists - find them and update password
+      if (createError.message?.includes('already been registered')) {
+        const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+        const existingUser = listData?.users?.find(
+          (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+        )
+        
+        if (existingUser) {
+          userId = existingUser.id
+          // Update password so the temp password works
+          const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
+            password: tempPassword,
+            email_confirm: true,
+          })
+          if (updateError) {
+            console.error('Failed to update password:', updateError)
+            // Still continue - user exists, just password not updated
+            tempPassword = null
+          } else {
+            accountCreated = false
+          }
+        } else {
+          return new Response(JSON.stringify({ error: 'User exists but could not be found' }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
         }
-      })
-
-      if (createError) {
+      } else {
         return new Response(JSON.stringify({ error: 'Failed to create user: ' + createError.message }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
-
+    } else {
       userId = newUser.user!.id
       accountCreated = true
 

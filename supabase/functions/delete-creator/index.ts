@@ -43,18 +43,24 @@ serve(async (req) => {
       throw new Error('creator_id ou email é obrigatório')
     }
 
-    // Resolve user/email pair
+    // Resolve user/email pair — always try all methods
     if (creatorId && !creatorEmail) {
       const { data: profile } = await adminClient
         .from('profiles')
         .select('email')
         .eq('id', creatorId)
         .maybeSingle()
-
       creatorEmail = profile?.email ? String(profile.email).toLowerCase() : null
+
+      if (!creatorEmail) {
+        // Try auth.users directly
+        const { data: { user: authUser } } = await adminClient.auth.admin.getUserById(creatorId)
+        if (authUser?.email) creatorEmail = authUser.email.toLowerCase()
+      }
     }
 
     if (!creatorId && creatorEmail) {
+      // Try profiles first
       const { data: profile } = await adminClient
         .from('profiles')
         .select('id, email')
@@ -64,11 +70,17 @@ serve(async (req) => {
       if (profile?.id) creatorId = profile.id
       if (profile?.email) creatorEmail = String(profile.email).toLowerCase()
 
+      // If no profile found, search auth.users
       if (!creatorId) {
         const { data: usersList } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
         const authUser = usersList?.users?.find((u: any) => u.email?.toLowerCase() === creatorEmail)
         if (authUser?.id) creatorId = authUser.id
       }
+    }
+
+    // Also resolve creatorId from email if we have both but want to ensure auth deletion
+    if (!creatorId && creatorEmail) {
+      console.log('Could not resolve creatorId for email:', creatorEmail)
     }
 
     console.log(`Deleting creator. creator_id=${creatorId || 'N/A'} email=${creatorEmail || 'N/A'}`)

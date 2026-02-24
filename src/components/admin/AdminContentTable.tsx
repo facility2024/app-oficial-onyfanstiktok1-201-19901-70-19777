@@ -263,26 +263,16 @@ export const AdminContentTable = () => {
       toast.loading('Excluindo...');
 
       if (content.isCreator) {
-        // Para criadoras: deletar vídeos com creator_id e remover role
-        await (supabase as any)
-          .from('videos')
-          .delete()
-          .eq('creator_id', id);
+        // Para criadoras: usar edge function para limpeza completa (Auth + tabelas)
+        const { data, error } = await supabase.functions.invoke('delete-creator', {
+          body: { creator_id: id, email: content.email }
+        });
 
-        await (supabase as any)
-          .from('user_follows')
-          .delete()
-          .eq('following_id', id);
-
-        // Remover role de creator
-        await (supabase as any)
-          .from('user_roles')
-          .delete()
-          .eq('user_id', id)
-          .eq('role', 'creator');
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erro ao excluir criadora');
 
         toast.dismiss();
-        toast.success(`✅ Criadora "${content.name}" removida com sucesso!`);
+        toast.success(`✅ Criadora "${content.name}" removida completamente!`);
       } else {
         // Para modelos: usar a função RPC
         const { error } = await (supabase as any).rpc('admin_delete_model', {

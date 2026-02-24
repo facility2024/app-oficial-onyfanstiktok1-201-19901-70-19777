@@ -376,16 +376,22 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
   const handleDeleteExternalCadastro = async (cadastroId: string, email: string) => {
     try {
       setProcessing(true);
-      // Check if there's an auth user with this email to also delete their access
-      const { data: authUsers } = await supabase.functions.invoke('approve-creator', {
-        body: { email, action: 'find_user' }
+
+      // Limpeza completa: remove cadastro, perfil e conta auth vinculados ao email
+      const { data, error } = await supabase.functions.invoke('delete-creator', {
+        body: { email }
       });
-      
-      // Delete from cadastro_modelos
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+
+      // Segurança extra caso exista registro pendente com outro id
       await (supabase as any).from('cadastro_modelos').delete().eq('id', cadastroId);
-      
-      toast.success(`Cadastro ${email} excluído com sucesso`);
+
+      toast.success(`Cadastro ${email} excluído completamente — nome/email removidos e acesso revogado`);
       fetchExternalCadastros();
+      fetchDirectCreators();
+      fetchApplications();
     } catch (error: any) {
       console.error('Erro ao excluir cadastro:', error);
       toast.error('Erro ao excluir: ' + (error.message || 'Erro desconhecido'));

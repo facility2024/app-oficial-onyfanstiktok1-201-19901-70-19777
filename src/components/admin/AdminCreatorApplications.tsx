@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound, Trash2 } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound, Trash2, Power } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
@@ -40,7 +41,7 @@ interface AdminCreatorApplicationsProps {
 
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
-  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string}[]>([]);
+  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean}[]>([]);
   const [externalCadastros, setExternalCadastros] = useState<{id: string; nome: string; email: string; whatsapp: string; status: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
@@ -165,14 +166,17 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       const appUserIds = new Set((apps || []).map((a: any) => a.user_id));
       const directIds = creatorIds.filter((id: string) => !appUserIds.has(id));
       
-      if (!directIds.length) return;
+      if (!directIds.length) {
+        setDirectCreators([]);
+        return;
+      }
       
       const { data: profiles } = await (supabase as any)
         .from('profiles')
         .select('id, email, name, username')
         .in('id', directIds);
       
-      setDirectCreators(profiles || []);
+      setDirectCreators((profiles || []).map((p: any) => ({ ...p, is_active: true })));
     } catch (error) {
       console.error('Erro ao buscar criadores diretos:', error);
     }
@@ -335,6 +339,40 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     }
   };
 
+  const handleToggleCreator = async (creatorId: string, email: string, activate: boolean) => {
+    try {
+      setProcessing(true);
+      if (activate) {
+        // Add creator role back
+        const { error } = await (supabase as any)
+          .from('user_roles')
+          .insert({ user_id: creatorId, role: 'creator' });
+        if (error && !error.message?.includes('duplicate')) throw error;
+        toast.success(`✅ Criador ${email} ativado com sucesso`);
+      } else {
+        // Remove creator role - user loses access immediately
+        const { error } = await (supabase as any)
+          .from('user_roles')
+          .delete()
+          .eq('user_id', creatorId)
+          .eq('role', 'creator');
+        if (error) throw error;
+        toast.success(`⛔ Criador ${email} desativado — acesso ao Creator Studio revogado`);
+      }
+      // Update local state immediately
+      setDirectCreators(prev => prev.map(c => c.id === creatorId ? { ...c, is_active: activate } : c));
+      if (!activate) {
+        // If deactivated, they'll disappear from directCreators on next fetch since they won't have the role
+        fetchDirectCreators();
+      }
+    } catch (error: any) {
+      console.error('Erro ao alternar criador:', error);
+      toast.error('Erro: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleDeleteExternalCadastro = async (cadastroId: string, email: string) => {
     try {
       setProcessing(true);
@@ -479,12 +517,24 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
             </p>
             <div className="space-y-3">
               {directCreators.map(creator => (
-                <Card key={creator.id} className="bg-card/50">
+                <Card key={creator.id} className={`bg-card/50 ${!creator.is_active ? 'opacity-60' : ''}`}>
                   <CardContent className="p-4">
                       <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-semibold">{creator.name || creator.username}</p>
-                        <p className="text-sm text-muted-foreground">📧 {creator.email}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <Switch
+                            checked={creator.is_active}
+                            onCheckedChange={(checked) => handleToggleCreator(creator.id, creator.email, checked)}
+                            disabled={processing}
+                          />
+                          <span className={`text-[10px] font-medium ${creator.is_active ? 'text-green-500' : 'text-red-500'}`}>
+                            {creator.is_active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold">{creator.name || creator.username}</p>
+                          <p className="text-sm text-muted-foreground">📧 {creator.email}</p>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button

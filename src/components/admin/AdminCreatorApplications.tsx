@@ -221,14 +221,14 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
   const handleDeleteCreator = async (creatorId: string, email: string) => {
     try {
       setProcessing(true);
-      // Remove creator role
-      await (supabase as any).from('user_roles').delete().eq('user_id', creatorId).eq('role', 'creator');
-      // Remove related data
-      await (supabase as any).from('videos').delete().eq('creator_id', creatorId);
-      await (supabase as any).from('user_follows').delete().eq('following_id', creatorId);
-      await (supabase as any).from('model_chat_panels').delete().eq('creator_id', creatorId);
-      toast.success(`Criador ${email} removido do banco de dados`);
+      const { data, error } = await supabase.functions.invoke('delete-creator', {
+        body: { creator_id: creatorId }
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+      toast.success(`Criador ${email} excluído completamente do banco de dados`);
       fetchDirectCreators();
+      fetchApplications();
     } catch (error: any) {
       console.error('Erro ao excluir criador:', error);
       toast.error('Erro ao excluir: ' + (error.message || 'Erro desconhecido'));

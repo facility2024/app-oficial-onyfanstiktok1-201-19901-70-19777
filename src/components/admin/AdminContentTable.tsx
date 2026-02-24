@@ -157,6 +157,16 @@ export const AdminContentTable = () => {
   useEffect(() => {
     fetchContents();
     
+    const playNotificationSound = () => {
+      try {
+        const audio = new Audio('https://tiktokonyfans.b-cdn.net/material%20coconudi/som%20para%20admin.mp3');
+        audio.volume = 0.6;
+        audio.play().catch((err) => console.warn('Som não reproduzido:', err));
+      } catch (e) {
+        console.warn('Erro ao tocar som:', e);
+      }
+    };
+
     // Configurar realtime subscription para AdminContentTable
     const channel = supabase
       .channel('admin-content-changes')
@@ -169,6 +179,7 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('🎬 AdminContentTable - Novo vídeo adicionado:', payload.new);
+          playNotificationSound();
           fetchContents();
         }
       )
@@ -193,6 +204,7 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('👤 AdminContentTable - Novo modelo adicionado:', payload.new);
+          playNotificationSound();
           fetchContents();
         }
       )
@@ -218,6 +230,7 @@ export const AdminContentTable = () => {
         },
         (payload) => {
           console.log('✨ AdminContentTable - Novo criador aprovado:', payload.new);
+          playNotificationSound();
           fetchContents();
         }
       )

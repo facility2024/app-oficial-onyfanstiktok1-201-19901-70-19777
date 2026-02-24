@@ -52,40 +52,13 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
 
   const playNotificationSound = () => {
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      const now = audioCtx.currentTime;
-
-      // Sequência melódica de 4 segundos - som de alerta agradável
-      const melody = [
-        { freq: 523.25, start: 0, dur: 0.3 },    // C5
-        { freq: 659.25, start: 0.35, dur: 0.3 },  // E5
-        { freq: 783.99, start: 0.7, dur: 0.3 },   // G5
-        { freq: 1046.50, start: 1.05, dur: 0.5 },  // C6
-        { freq: 783.99, start: 1.7, dur: 0.3 },   // G5
-        { freq: 1046.50, start: 2.1, dur: 0.5 },  // C6
-        { freq: 1318.51, start: 2.7, dur: 0.6 },  // E6
-        { freq: 1567.98, start: 3.4, dur: 0.6 },  // G6
-      ];
-
-      melody.forEach(({ freq, start, dur }) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, now + start);
-        gain.gain.linearRampToValueAtTime(0.35, now + start + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now + start);
-        osc.stop(now + start + dur);
+      const audio = new Audio('https://tiktokonyfans.b-cdn.net/material%20coconudi/som%20para%20admin.mp3');
+      audio.volume = 0.6;
+      audio.play().then(() => {
+        console.log('🔔 Som de notificação reproduzido com sucesso');
+      }).catch((err) => {
+        console.warn('Não foi possível tocar som de notificação:', err);
       });
-
-      setTimeout(() => audioCtx.close(), 5000);
-      console.log('🔔 Som de notificação reproduzido com sucesso');
     } catch (e) {
       console.warn('Não foi possível tocar som de notificação:', e);
     }

@@ -34,19 +34,20 @@ Deno.serve(async (req) => {
       })
     }
 
-    const callerClient = createClient(supabaseUrl, anonKey, {
+    // Get user from token
+    const adminClient2 = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } }
     })
 
-    const token = authHeader.replace('Bearer ', '')
-    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token)
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    const { data: { user: callerUser }, error: userError } = await adminClient2.auth.getUser()
+    if (userError || !callerUser) {
+      console.error('Auth error:', userError)
+      return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    const adminUserId = claimsData.claims.sub
+    const adminUserId = callerUser.id
 
     // Verify admin role using service role client
     const adminClient = createClient(supabaseUrl, serviceRoleKey)

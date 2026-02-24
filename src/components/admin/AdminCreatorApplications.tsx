@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CreatorApplication {
@@ -39,6 +39,7 @@ interface AdminCreatorApplicationsProps {
 
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
+  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -49,12 +50,45 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
 
   useEffect(() => {
     fetchApplications();
+    fetchDirectCreators();
     const channel = supabase
       .channel('creator_applications_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const fetchDirectCreators = async () => {
+    try {
+      // Fetch creators from user_roles who don't have a creator_application
+      const { data: creatorRoles } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'creator');
+      
+      if (!creatorRoles?.length) return;
+      
+      const creatorIds = creatorRoles.map((r: any) => r.user_id);
+      
+      const { data: apps } = await (supabase as any)
+        .from('creator_applications')
+        .select('user_id');
+      
+      const appUserIds = new Set((apps || []).map((a: any) => a.user_id));
+      const directIds = creatorIds.filter((id: string) => !appUserIds.has(id));
+      
+      if (!directIds.length) return;
+      
+      const { data: profiles } = await (supabase as any)
+        .from('profiles')
+        .select('id, email, name, username')
+        .in('id', directIds);
+      
+      setDirectCreators(profiles || []);
+    } catch (error) {
+      console.error('Erro ao buscar criadores diretos:', error);
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -152,6 +186,35 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       ? encodeURIComponent(`🎉 Parabéns ${credentials.full_name}! Você foi aprovada como criadora no COCONUDI!\n\n📧 Email: ${credentials.email}\n🔑 Senha: ${credentials.temp_password}\n\n🔗 Acesse: https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/auth\n\n⚠️ Troque sua senha após o primeiro login!`)
       : encodeURIComponent(`🎉 Parabéns ${credentials.full_name}! Você foi aprovada como criadora no COCONUDI!\n\n📧 Acesse com seu email: ${credentials.email}\n🔗 Link: https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/auth`);
     window.open(`https://wa.me/55${number}?text=${text}`, '_blank');
+  };
+
+  const handleResetPassword = async (email: string, name: string, whatsapp: string) => {
+    if (!currentUserId) {
+      toast.error('Usuário não identificado');
+      return;
+    }
+    try {
+      setProcessing(true);
+      const { data, error } = await supabase.functions.invoke('approve-creator', {
+        body: { email, full_name: name, whatsapp }
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+      setCredentials({
+        email: data.email,
+        temp_password: data.temp_password,
+        account_created: data.account_created,
+        full_name: data.full_name,
+        whatsapp: data.whatsapp,
+      });
+      setShowCredentialsModal(true);
+      toast.success('Credenciais geradas com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao resetar senha:', error);
+      toast.error('Erro: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -259,7 +322,45 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         </CardContent>
       </Card>
 
-      {/* Details Modal */}
+      {/* Direct Creators (not from applications) */}
+      {directCreators.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5" /> Criadores Diretos (sem aplicação)
+              <Badge variant="secondary">{directCreators.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Criadores adicionados diretamente que podem precisar de credenciais de acesso.
+            </p>
+            <div className="space-y-3">
+              {directCreators.map(creator => (
+                <Card key={creator.id} className="bg-card/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-semibold">{creator.name || creator.username}</p>
+                        <p className="text-sm text-muted-foreground">📧 {creator.email}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleResetPassword(creator.email, creator.name || creator.username, '')}
+                        disabled={processing}
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <KeyRound className="w-4 h-4 mr-1" />Gerar Credenciais
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Dialog open={!!selectedApp && !showRejectModal} onOpenChange={() => setSelectedApp(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Detalhes da Aplicação</DialogTitle></DialogHeader>

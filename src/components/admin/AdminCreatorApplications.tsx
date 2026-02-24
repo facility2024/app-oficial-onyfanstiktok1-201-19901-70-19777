@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound, Trash2, Power } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, ExternalLink, Copy, Send, KeyRound, Trash2, Power, RefreshCw } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -41,7 +41,7 @@ interface AdminCreatorApplicationsProps {
 
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
-  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean}[]>([]);
+  const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean; phone?: string; bio?: string; avatar_url?: string}[]>([]);
   const [externalCadastros, setExternalCadastros] = useState<{id: string; nome: string; email: string; whatsapp: string; status: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
@@ -173,7 +173,7 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       
       const { data: profiles } = await (supabase as any)
         .from('profiles')
-        .select('id, email, name, username')
+        .select('id, email, name, username, phone, bio, avatar_url')
         .in('id', directIds);
       
       setDirectCreators((profiles || []).map((p: any) => ({ ...p, is_active: true })));
@@ -435,9 +435,19 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
           <CardTitle className="flex items-center gap-2 flex-wrap">
             👥 Aplicações de Criadores
             <Badge variant="secondary">{filteredApplications('pending').length} pendentes</Badge>
-            <Button size="sm" variant="outline" onClick={() => { playNotificationSound(); toast.info('🔔 Testando som de notificação...'); }} className="ml-auto text-xs">
-              🔊 Testar Som
-            </Button>
+            <div className="ml-auto flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => {
+                fetchApplications();
+                fetchDirectCreators();
+                fetchExternalCadastros();
+                toast.success('🔄 Página atualizada!');
+              }} className="text-xs">
+                <RefreshCw className="w-4 h-4 mr-1" />Atualizar
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { playNotificationSound(); toast.info('🔔 Testando som de notificação...'); }} className="text-xs">
+                🔊 Testar Som
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -538,8 +548,18 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold">{creator.name || creator.username}</p>
+                          <p className="font-semibold">{creator.name || creator.username || 'Sem nome'}</p>
                           <p className="text-sm text-muted-foreground">📧 {creator.email}</p>
+                          {creator.phone && (
+                            <p className="text-sm text-muted-foreground">📱{' '}
+                              <button onClick={() => openWhatsApp(creator.phone!)} className="text-primary hover:underline inline-flex items-center gap-1">
+                                {creator.phone}<ExternalLink className="w-3 h-3" />
+                              </button>
+                            </p>
+                          )}
+                          {creator.bio && (
+                            <p className="text-xs text-muted-foreground mt-1">📝 {creator.bio.substring(0, 80)}{creator.bio.length > 80 ? '...' : ''}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">

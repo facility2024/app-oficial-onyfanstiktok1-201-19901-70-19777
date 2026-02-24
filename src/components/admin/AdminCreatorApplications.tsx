@@ -122,20 +122,27 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     fetchExternalCadastros();
     const channel = supabase
       .channel('creator_applications_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, (payload) => {
+        console.log('🔔 REALTIME: Nova aplicação de criador detectada!', payload);
         playNotificationSound();
-        toast.info('🔔 Nova aplicação de criador recebida!');
+        toast.info('🔔 Nova aplicação de criador recebida!', { duration: 10000 });
         fetchApplications();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cadastro_modelos' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cadastro_modelos' }, (payload) => {
+        console.log('🔔 REALTIME: Novo cadastro externo detectado!', payload);
         playNotificationSound();
-        toast.info('🔔 Novo cadastro externo recebido!');
+        toast.info('🔔 Novo cadastro externo recebido!', { duration: 10000 });
         fetchExternalCadastros();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cadastro_modelos' }, () => fetchExternalCadastros())
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime conectado - escutando creator_applications e cadastro_modelos');
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, []);
 

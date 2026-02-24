@@ -41,6 +41,7 @@ interface AdminCreatorApplicationsProps {
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
   const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string}[]>([]);
+  const [externalCadastros, setExternalCadastros] = useState<{id: string; nome: string; email: string; whatsapp: string; status: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -76,9 +77,62 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     }
   };
 
+  const fetchExternalCadastros = async () => {
+    try {
+      // Buscar cadastros aprovados na tabela cadastro_modelos
+      const { data: cadastros, error } = await (supabase as any)
+        .from('cadastro_modelos')
+        .select('id, nome, email, whatsapp, status, created_at')
+        .eq('status', 'aprovado')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar cadastro_modelos:', error);
+        return;
+      }
+
+      if (!cadastros?.length) {
+        setExternalCadastros([]);
+        return;
+      }
+
+      // Filtrar: remover os que já têm role de creator
+      const { data: creatorRoles } = await (supabase as any)
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'creator');
+
+      const creatorEmails = new Set<string>();
+      if (creatorRoles?.length) {
+        const creatorIds = creatorRoles.map((r: any) => r.user_id);
+        const { data: profiles } = await (supabase as any)
+          .from('profiles')
+          .select('id, email')
+          .in('id', creatorIds);
+        (profiles || []).forEach((p: any) => {
+          if (p.email) creatorEmails.add(p.email.toLowerCase());
+        });
+      }
+
+      // Também filtrar os que já estão em creator_applications
+      const { data: apps } = await (supabase as any)
+        .from('creator_applications')
+        .select('email');
+      (apps || []).forEach((a: any) => {
+        if (a.email) creatorEmails.add(a.email.toLowerCase());
+      });
+
+      const pendingCadastros = cadastros.filter((c: any) => !creatorEmails.has(c.email.toLowerCase()));
+      setExternalCadastros(pendingCadastros);
+    } catch (error) {
+      console.error('Erro ao buscar cadastros externos:', error);
+    }
+  };
+
   useEffect(() => {
     fetchApplications();
     fetchDirectCreators();
+    fetchExternalCadastros();
     const channel = supabase
       .channel('creator_applications_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, () => {
@@ -88,6 +142,12 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'creator_applications' }, () => fetchApplications())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cadastro_modelos' }, () => {
+        playNotificationSound();
+        toast.info('🔔 Novo cadastro externo recebido!');
+        fetchExternalCadastros();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cadastro_modelos' }, () => fetchExternalCadastros())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -428,6 +488,47 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* External Cadastros (from cadastro_modelos table) */}
+      {externalCadastros.length > 0 && (
+        <Card className="border-orange-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              📋 Cadastros Externos (Painel Admin)
+              <Badge variant="secondary" className="bg-orange-500/10 text-orange-500">{externalCadastros.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Criadores aprovados no painel externo que ainda precisam de credenciais de acesso geradas aqui.
+            </p>
+            <div className="space-y-3">
+              {externalCadastros.map(cadastro => (
+                <Card key={cadastro.id} className="bg-card/50 border-orange-500/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-semibold">{cadastro.nome}</p>
+                        <p className="text-sm text-muted-foreground">📧 {cadastro.email}</p>
+                        <p className="text-sm text-muted-foreground">📱 {cadastro.whatsapp}</p>
+                        <p className="text-xs text-muted-foreground">📅 {new Date(cadastro.created_at).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleResetPassword(cadastro.email, cadastro.nome, cadastro.whatsapp)}
+                        disabled={processing}
+                        className="bg-orange-500 hover:bg-orange-600"
+                      >
+                        <KeyRound className="w-4 h-4 mr-1" />Gerar Credenciais
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

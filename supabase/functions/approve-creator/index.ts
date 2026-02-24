@@ -16,6 +16,8 @@ function generatePassword(length = 12): string {
   return password
 }
 
+const normalizeEmail = (value: string) => value.trim().toLowerCase()
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -88,16 +90,16 @@ Deno.serve(async (req) => {
         })
       }
 
-      email = application.email
+      email = normalizeEmail(application.email)
       fullName = application.full_name
       nickname = application.nickname
       whatsapp = application.whatsapp
       userId = application.user_id
     } else if (directEmail) {
       // Flow 2: Direct email (for creators added manually)
-      email = directEmail
-      fullName = directName || directEmail.split('@')[0]
-      nickname = directEmail.split('@')[0]
+      email = normalizeEmail(directEmail)
+      fullName = directName || email.split('@')[0]
+      nickname = email.split('@')[0]
       whatsapp = directWhatsapp || ''
       
       // Try to find existing profile

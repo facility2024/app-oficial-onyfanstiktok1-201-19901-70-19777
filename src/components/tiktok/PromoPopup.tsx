@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Radio, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -18,68 +18,115 @@ interface PromoAd {
 }
 
 const STORAGE_KEY = 'admin_promo_ads';
+const LAST_SHOWN_KEY = 'promo_ads_last_shown';
 
 export const PromoPopup = () => {
   const [currentAd, setCurrentAd] = useState<PromoAd | null>(null);
   const [visible, setVisible] = useState(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const readLastShown = useCallback((): Record<string, number> => {
+    try {
+      const raw = localStorage.getItem(LAST_SHOWN_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'object' && parsed ? parsed : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const writeLastShown = useCallback((data: Record<string, number>) => {
+    localStorage.setItem(LAST_SHOWN_KEY, JSON.stringify(data));
+  }, []);
 
   const getActiveAds = useCallback((): PromoAd[] => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return [];
+
+      const nowMs = Date.now();
       const ads: PromoAd[] = JSON.parse(stored);
-      const now = new Date();
-      return ads.filter(ad => ad.active && new Date(ad.startDate) <= now && now <= new Date(ad.endDate));
+
+      return ads.filter((ad) => {
+        const startMs = new Date(ad.startDate).getTime();
+        const endMs = new Date(ad.endDate).getTime();
+        const timer = Number(ad.timerMinutes);
+
+        if (!ad.active) return false;
+        if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
+        if (!Number.isFinite(timer) || timer <= 0) return false;
+
+        return startMs <= nowMs && nowMs <= endMs;
+      });
     } catch {
       return [];
     }
   }, []);
 
+  const tryShowDueAd = useCallback(() => {
+    if (visible) return;
+
+    const activeAds = getActiveAds();
+    if (activeAds.length === 0) return;
+
+    const nowMs = Date.now();
+    const lastShown = readLastShown();
+
+    const dueAd = activeAds.find((ad) => {
+      const startMs = new Date(ad.startDate).getTime();
+      const intervalMs = Number(ad.timerMinutes) * 60 * 1000;
+      const lastShownMs = Number(lastShown[ad.id] ?? 0);
+
+      if (!Number.isFinite(startMs) || !Number.isFinite(intervalMs) || intervalMs <= 0) return false;
+
+      if (lastShownMs > 0) {
+        return nowMs - lastShownMs >= intervalMs;
+      }
+
+      return nowMs - startMs >= intervalMs;
+    });
+
+    if (!dueAd) return;
+
+    setCurrentAd(dueAd);
+    setVisible(true);
+
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+    }
+    hideTimerRef.current = setTimeout(() => {
+      setVisible(false);
+    }, 15000);
+
+    const updatedLastShown = {
+      ...lastShown,
+      [dueAd.id]: nowMs,
+    };
+    writeLastShown(updatedLastShown);
+  }, [getActiveAds, readLastShown, visible, writeLastShown]);
+
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
-    const scheduleAds = () => {
-      // Clear existing timers
-      timers.forEach(clearTimeout);
-      timers.length = 0;
-
-      const activeAds = getActiveAds();
-      if (activeAds.length === 0) return;
-
-      activeAds.forEach(ad => {
-        const ms = ad.timerMinutes * 60 * 1000;
-        const scheduleNext = () => {
-          const timer = setTimeout(() => {
-            // Re-check if still active
-            const current = getActiveAds();
-            const stillActive = current.find(a => a.id === ad.id);
-            if (stillActive) {
-              setCurrentAd(stillActive);
-              setVisible(true);
-              // Auto-hide after 15 seconds
-              setTimeout(() => setVisible(false), 15000);
-              scheduleNext(); // Schedule next occurrence
-            }
-          }, ms);
-          timers.push(timer);
-        };
-        scheduleNext();
-      });
+    const runScheduleCheck = () => {
+      tryShowDueAd();
     };
 
-    scheduleAds();
+    runScheduleCheck();
+    const interval = setInterval(runScheduleCheck, 1000);
 
-    // Listen for admin updates
-    const handleUpdate = () => scheduleAds();
+    const handleUpdate = () => runScheduleCheck();
     window.addEventListener('promo_ads_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 
     return () => {
-      timers.forEach(clearTimeout);
+      clearInterval(interval);
       window.removeEventListener('promo_ads_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
     };
-  }, [getActiveAds]);
+  }, [tryShowDueAd]);
 
   const handleParticipate = () => {
     if (currentAd?.url) {

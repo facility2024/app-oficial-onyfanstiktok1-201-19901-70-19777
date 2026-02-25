@@ -46,7 +46,7 @@ export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
       try {
         const stored = localStorage.getItem('admin_ads');
         const allAds: StoredAd[] = stored ? JSON.parse(stored) : defaultAds;
-        const active = allAds.filter(ad => ad.active && ad.locations[location]);
+        const active = allAds.filter(ad => ad.active);
         setFilteredAds(active.map(ad => {
           // Only use bundled image if ad image matches default or is empty
           const defaultImg = imageMap[ad.id];

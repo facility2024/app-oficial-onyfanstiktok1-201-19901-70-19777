@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Radio, Phone, Plus, Trash2, Eye, Calendar, Clock, Send, Search, Check } from 'lucide-react';
+import { Radio, Phone, Plus, Trash2, Eye, Calendar, Clock, Send, Search, Check, Timer, Hash } from 'lucide-react';
 
 interface Model {
   id: string;
@@ -30,21 +30,12 @@ interface PromoAd {
   timer_minutes: number;
   start_date: string;
   end_date: string;
+  daily_start_time: string;
+  daily_end_time: string;
+  shows_per_day: number;
   active: boolean;
   created_at: string;
 }
-
-const TIMER_OPTIONS = [
-  { value: 1, label: '1 minuto' },
-  { value: 5, label: '5 minutos' },
-  { value: 10, label: '10 minutos' },
-  { value: 20, label: '20 minutos' },
-  { value: 30, label: '30 minutos' },
-  { value: 60, label: '1 hora' },
-  { value: 120, label: '2 horas' },
-  { value: 180, label: '3 horas' },
-  { value: 240, label: '4 horas' },
-];
 
 export const AdminPromoAds = () => {
   const [models, setModels] = useState<Model[]>([]);
@@ -56,6 +47,9 @@ export const AdminPromoAds = () => {
   const [timerMinutes, setTimerMinutes] = useState(5);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [dailyStartTime, setDailyStartTime] = useState('08:00');
+  const [dailyEndTime, setDailyEndTime] = useState('23:00');
+  const [showsPerDay, setShowsPerDay] = useState(10);
   const [loading, setLoading] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -109,7 +103,6 @@ export const AdminPromoAds = () => {
 
   const loadPromoAds = async () => {
     try {
-      // Admin policy allows seeing ALL ads (not just active ones)
       const { data, error } = await (supabase as any)
         .from('promo_ads')
         .select('*')
@@ -136,10 +129,22 @@ export const AdminPromoAds = () => {
     const endMs = new Date(endDate).getTime();
     if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) { toast.error('Data inválida'); return; }
     if (endMs <= startMs) { toast.error('Data final deve ser maior que a inicial'); return; }
-    if (timerMinutes <= 0) { toast.error('Intervalo inválido'); return; }
+    if (showsPerDay < 1) { toast.error('Quantidade de exibições deve ser pelo menos 1'); return; }
+
+    // Validate time range
+    if (dailyStartTime >= dailyEndTime) {
+      toast.error('Horário de início deve ser antes do horário de fim');
+      return;
+    }
 
     const model = models.find(m => m.id === selectedModelId);
     if (!model) return;
+
+    // Calculate timer_minutes from shows_per_day and daily time window
+    const [startH, startM] = dailyStartTime.split(':').map(Number);
+    const [endH, endM] = dailyEndTime.split(':').map(Number);
+    const dailyWindowMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+    const calculatedTimerMinutes = showsPerDay > 1 ? Math.max(1, Math.floor(dailyWindowMinutes / showsPerDay)) : dailyWindowMinutes;
 
     setLoading(true);
     const { error } = await (supabase as any).from('promo_ads').insert({
@@ -150,9 +155,12 @@ export const AdminPromoAds = () => {
       type,
       url,
       description: description || (type === 'live' ? `${model.name} está AO VIVO agora!` : `Faça uma vídeo chamada com ${model.name}!`),
-      timer_minutes: timerMinutes,
+      timer_minutes: calculatedTimerMinutes,
       start_date: new Date(startDate).toISOString(),
       end_date: new Date(endDate).toISOString(),
+      daily_start_time: dailyStartTime + ':00',
+      daily_end_time: dailyEndTime + ':00',
+      shows_per_day: showsPerDay,
       active: true,
     });
     setLoading(false);
@@ -163,7 +171,7 @@ export const AdminPromoAds = () => {
       return;
     }
 
-    toast.success('Anúncio promocional criado com sucesso!');
+    toast.success(`Anúncio criado! Aparecerá ${showsPerDay}x/dia entre ${dailyStartTime} e ${dailyEndTime} (a cada ~${calculatedTimerMinutes}min)`);
     window.dispatchEvent(new Event('promo_ads_updated'));
     await loadPromoAds();
 
@@ -171,7 +179,9 @@ export const AdminPromoAds = () => {
     setSelectedModelId('');
     setUrl('');
     setDescription('');
-    setTimerMinutes(5);
+    setShowsPerDay(10);
+    setDailyStartTime('08:00');
+    setDailyEndTime('23:00');
     setStartDate('');
     setEndDate('');
   };
@@ -197,6 +207,11 @@ export const AdminPromoAds = () => {
     if (!ad.active) return false;
     const now = new Date();
     return new Date(ad.start_date) <= now && now <= new Date(ad.end_date);
+  };
+
+  const formatTime = (t: string | null) => {
+    if (!t) return '--:--';
+    return t.substring(0, 5);
   };
 
   return (
@@ -271,19 +286,48 @@ export const AdminPromoAds = () => {
               <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." className="bg-gray-800 border-gray-600 text-white" />
             </div>
 
-            {/* Timer */}
+            {/* Exibições por dia */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Intervalo de Exibição</Label>
-              <Select value={String(timerMinutes)} onValueChange={v => setTimerMinutes(Number(v))}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
-                  {TIMER_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={String(o.value)} className="text-white">
-                      <div className="flex items-center gap-2"><Clock className="w-4 h-4" /> {o.label}</div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-gray-300 flex items-center gap-1">
+                <Hash className="w-3.5 h-3.5" />
+                Quantas vezes por dia
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={showsPerDay}
+                onChange={e => setShowsPerDay(Math.max(1, parseInt(e.target.value) || 1))}
+                className="bg-gray-800 border-gray-600 text-white"
+              />
+            </div>
+
+            {/* Horário diário início */}
+            <div className="space-y-2">
+              <Label className="text-gray-300 flex items-center gap-1">
+                <Timer className="w-3.5 h-3.5" />
+                Horário Início (diário)
+              </Label>
+              <Input
+                type="time"
+                value={dailyStartTime}
+                onChange={e => setDailyStartTime(e.target.value)}
+                className="bg-gray-800 border-gray-600 text-white"
+              />
+            </div>
+
+            {/* Horário diário fim */}
+            <div className="space-y-2">
+              <Label className="text-gray-300 flex items-center gap-1">
+                <Timer className="w-3.5 h-3.5" />
+                Horário Fim (diário)
+              </Label>
+              <Input
+                type="time"
+                value={dailyEndTime}
+                onChange={e => setDailyEndTime(e.target.value)}
+                className="bg-gray-800 border-gray-600 text-white"
+              />
             </div>
 
             {/* Data início */}
@@ -298,6 +342,25 @@ export const AdminPromoAds = () => {
               <Input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
             </div>
           </div>
+
+          {/* Preview do cálculo */}
+          {dailyStartTime && dailyEndTime && showsPerDay > 0 && (
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+              <p className="text-sm text-gray-300">
+                📊 <strong>Resumo:</strong> O anúncio aparecerá <strong className="text-green-400">{showsPerDay}x por dia</strong> entre{' '}
+                <strong className="text-blue-400">{dailyStartTime}</strong> e{' '}
+                <strong className="text-blue-400">{dailyEndTime}</strong>
+                {(() => {
+                  const [sH, sM] = dailyStartTime.split(':').map(Number);
+                  const [eH, eM] = dailyEndTime.split(':').map(Number);
+                  const windowMin = (eH * 60 + eM) - (sH * 60 + sM);
+                  if (windowMin <= 0) return null;
+                  const interval = Math.max(1, Math.floor(windowMin / showsPerDay));
+                  return <> — intervalo de ~<strong className="text-yellow-400">{interval >= 60 ? `${Math.floor(interval / 60)}h${interval % 60 > 0 ? `${interval % 60}min` : ''}` : `${interval}min`}</strong></>;
+                })()}
+              </p>
+            </div>
+          )}
 
           {/* Descrição */}
           <div className="space-y-2">
@@ -326,7 +389,7 @@ export const AdminPromoAds = () => {
                 <div key={ad.id} className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
                   <img src={ad.model_avatar || '/placeholder.svg'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-gray-600" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-white font-semibold">{ad.model_name}</span>
                       <Badge variant={ad.type === 'live' ? 'destructive' : 'default'} className={ad.type === 'live' ? '' : 'bg-green-600'}>
                         {ad.type === 'live' ? '🔴 Live' : '📞 Vídeo Chamada'}
@@ -340,9 +403,23 @@ export const AdminPromoAds = () => {
                       )}
                     </div>
                     <p className="text-gray-400 text-sm truncate">{ad.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> A cada {TIMER_OPTIONS.find(o => o.value === ad.timer_minutes)?.label || ad.timer_minutes + 'min'}</span>
-                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(ad.start_date).toLocaleDateString('pt-BR')} - {new Date(ad.end_date).toLocaleDateString('pt-BR')}</span>
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-1 flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <Hash className="w-3 h-3" />
+                        {ad.shows_per_day || '∞'}x/dia
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Timer className="w-3 h-3" />
+                        {formatTime(ad.daily_start_time)} - {formatTime(ad.daily_end_time)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        ~{ad.timer_minutes}min intervalo
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(ad.start_date).toLocaleDateString('pt-BR')} - {new Date(ad.end_date).toLocaleDateString('pt-BR')}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

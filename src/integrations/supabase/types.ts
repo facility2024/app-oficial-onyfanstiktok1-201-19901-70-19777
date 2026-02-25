@@ -5444,6 +5444,8 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          daily_end_time: string | null
+          daily_start_time: string | null
           description: string
           end_date: string
           id: string
@@ -5451,6 +5453,7 @@ export type Database = {
           model_id: string
           model_name: string
           model_username: string
+          shows_per_day: number | null
           start_date: string
           timer_minutes: number
           type: string
@@ -5460,6 +5463,8 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          daily_end_time?: string | null
+          daily_start_time?: string | null
           description: string
           end_date: string
           id?: string
@@ -5467,6 +5472,7 @@ export type Database = {
           model_id: string
           model_name: string
           model_username: string
+          shows_per_day?: number | null
           start_date: string
           timer_minutes: number
           type: string
@@ -5476,6 +5482,8 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          daily_end_time?: string | null
+          daily_start_time?: string | null
           description?: string
           end_date?: string
           id?: string
@@ -5483,6 +5491,7 @@ export type Database = {
           model_id?: string
           model_name?: string
           model_username?: string
+          shows_per_day?: number | null
           start_date?: string
           timer_minutes?: number
           type?: string

@@ -12,9 +12,13 @@ interface PromoAd {
   url: string;
   description: string;
   timer_minutes: number;
+  daily_start_time: string | null;
+  daily_end_time: string | null;
+  shows_per_day: number;
 }
 
 const LAST_SHOWN_KEY = 'promo_ads_last_shown';
+const DAILY_COUNT_KEY = 'promo_ads_daily_count';
 
 export const PromoPopup = () => {
   const [currentAd, setCurrentAd] = useState<PromoAd | null>(null);
@@ -39,46 +43,76 @@ export const PromoPopup = () => {
     localStorage.setItem(LAST_SHOWN_KEY, JSON.stringify(data));
   }, []);
 
+  // Track how many times each ad has been shown today
+  const readDailyCounts = useCallback((): Record<string, { date: string; count: number }> => {
+    try {
+      const raw = localStorage.getItem(DAILY_COUNT_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const writeDailyCounts = useCallback((data: Record<string, { date: string; count: number }>) => {
+    localStorage.setItem(DAILY_COUNT_KEY, JSON.stringify(data));
+  }, []);
+
+  const isWithinDailyTimeWindow = useCallback((ad: PromoAd): boolean => {
+    const startTime = ad.daily_start_time;
+    const endTime = ad.daily_end_time;
+    if (!startTime || !endTime) return true; // No time restriction
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const [sH, sM] = startTime.split(':').map(Number);
+    const [eH, eM] = endTime.split(':').map(Number);
+    const startMinutes = sH * 60 + (sM || 0);
+    const endMinutes = eH * 60 + (eM || 0);
+
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }, []);
+
   const tryShowDueAd = useCallback(async () => {
     if (visibleRef.current) return;
 
     try {
-      // Buscar anúncios ativos do Supabase (RLS já filtra por active + datas)
       const { data: activeAds, error } = await (supabase as any)
         .from('promo_ads')
-        .select('id, model_name, model_username, model_avatar, type, url, description, timer_minutes')
+        .select('id, model_name, model_username, model_avatar, type, url, description, timer_minutes, daily_start_time, daily_end_time, shows_per_day')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('[PromoPopup] Erro ao buscar anúncios:', error.message);
-        return;
-      }
-
-      if (!activeAds || activeAds.length === 0) {
-        return;
-      }
-
-      console.log('[PromoPopup] Anúncios ativos do Supabase:', activeAds.length);
+      if (error || !activeAds?.length) return;
 
       const nowMs = Date.now();
+      const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
       const lastShown = readLastShown();
+      const dailyCounts = readDailyCounts();
 
       const dueAd = activeAds.find((ad: PromoAd) => {
+        // 1. Check daily time window
+        if (!isWithinDailyTimeWindow(ad)) return false;
+
+        // 2. Check daily show limit
+        const adCount = dailyCounts[ad.id];
+        if (adCount && adCount.date === todayStr) {
+          if (ad.shows_per_day > 0 && adCount.count >= ad.shows_per_day) {
+            return false; // Already shown max times today
+          }
+        }
+
+        // 3. Check interval since last shown
         const intervalMs = Number(ad.timer_minutes) * 60 * 1000;
         const lastShownMs = Number(lastShown[ad.id] ?? 0);
 
         if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
 
-        // Nunca exibido → mostrar imediatamente
-        if (lastShownMs <= 0) {
-          console.log(`[PromoPopup] Ad "${ad.model_name}" nunca exibido, mostrando agora`);
-          return true;
-        }
+        // Never shown → show immediately
+        if (lastShownMs <= 0) return true;
 
-        // Já exibido → respeitar intervalo
-        const elapsed = nowMs - lastShownMs;
-        console.log(`[PromoPopup] Ad "${ad.model_name}" último há ${Math.round(elapsed / 1000)}s, intervalo ${ad.timer_minutes}min`);
-        return elapsed >= intervalMs;
+        // Respect interval
+        return (nowMs - lastShownMs) >= intervalMs;
       });
 
       if (!dueAd) return;
@@ -89,19 +123,22 @@ export const PromoPopup = () => {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       hideTimerRef.current = setTimeout(() => setVisible(false), 15000);
 
+      // Update last shown timestamp
       writeLastShown({ ...lastShown, [dueAd.id]: nowMs });
+
+      // Update daily count
+      const currentCount = dailyCounts[dueAd.id];
+      const newCount = (currentCount && currentCount.date === todayStr) ? currentCount.count + 1 : 1;
+      writeDailyCounts({ ...dailyCounts, [dueAd.id]: { date: todayStr, count: newCount } });
+
     } catch (err) {
       console.error('[PromoPopup] Erro inesperado:', err);
     }
-  }, [readLastShown, writeLastShown]);
+  }, [readLastShown, writeLastShown, readDailyCounts, writeDailyCounts, isWithinDailyTimeWindow]);
 
   useEffect(() => {
-    // Verificação inicial
     tryShowDueAd();
-
-    // Verificar a cada 10 segundos
     const interval = setInterval(tryShowDueAd, 10_000);
-
     const handleUpdate = () => tryShowDueAd();
     window.addEventListener('promo_ads_updated', handleUpdate);
 

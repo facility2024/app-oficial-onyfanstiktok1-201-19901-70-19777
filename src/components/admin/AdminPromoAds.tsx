@@ -69,41 +69,96 @@ export const AdminPromoAds = () => {
 
   const loadModels = async () => {
     try {
-      // Load models
-      const { data: modelsData, error: modelsError } = await supabase
-        .from('models')
-        .select('id, name, username, avatar_url')
-        .eq('is_active', true)
-        .order('name');
+      const [
+        { data: modelsData, error: modelsError },
+        { data: creatorRoles, error: rolesError },
+        { data: approvedApps, error: appsError },
+      ] = await Promise.all([
+        supabase
+          .from('models')
+          .select('id, name, username, avatar_url')
+          .eq('is_active', true)
+          .order('name'),
+        (supabase as any)
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'creator'),
+        (supabase as any)
+          .from('creator_applications')
+          .select('user_id, nickname, full_name')
+          .eq('status', 'approved'),
+      ]);
+
       if (modelsError) throw modelsError;
+      if (rolesError) {
+        console.error('Erro ao carregar roles de criadores:', rolesError);
+      }
+      if (appsError) {
+        console.warn('Aviso ao carregar creator_applications:', appsError);
+      }
 
-      // Load creators from user_roles + profiles
-      const { data: creatorRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'creator');
+      const creatorIds = Array.from(
+        new Set((creatorRoles || []).map((r: any) => r.user_id).filter(Boolean))
+      ) as string[];
 
-      let creatorsData: Model[] = [];
-      if (creatorRoles && creatorRoles.length > 0) {
-        const creatorIds = creatorRoles.map(r => r.user_id);
-        const { data: profiles } = await supabase
+      const appsByUserId = new Map<string, { nickname?: string; full_name?: string }>();
+      (approvedApps || []).forEach((app: any) => {
+        if (app?.user_id) {
+          appsByUserId.set(app.user_id, {
+            nickname: app.nickname,
+            full_name: app.full_name,
+          });
+        }
+      });
+
+      const profilesById = new Map<string, { id: string; name: string | null; username: string | null; avatar_url: string | null }>();
+      if (creatorIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, name, username, avatar_url')
           .in('id', creatorIds);
-        if (profiles) {
-          creatorsData = profiles.map(p => ({
-            id: p.id,
-            name: p.name || p.username || 'Criador',
-            username: p.username || p.id.slice(0, 8),
-            avatar_url: p.avatar_url || '',
-            isCreator: true,
-          }));
+
+        if (profilesError) {
+          console.warn('Aviso ao carregar profiles dos criadores:', profilesError);
         }
+
+        (profilesData || []).forEach((profile) => {
+          profilesById.set(profile.id, profile);
+        });
       }
 
-      // Merge and sort
-      const all = [...(modelsData || []).map(m => ({ ...m, isCreator: false })), ...creatorsData];
-      all.sort((a, b) => a.name.localeCompare(b.name));
+      const creatorsData: Model[] = creatorIds.map((creatorId) => {
+        const profile = profilesById.get(creatorId);
+        const app = appsByUserId.get(creatorId);
+
+        const fallbackName =
+          app?.nickname ||
+          app?.full_name ||
+          profile?.username ||
+          `creator_${creatorId.slice(0, 6)}`;
+
+        return {
+          id: creatorId,
+          name: profile?.name || fallbackName,
+          username: profile?.username || app?.nickname || fallbackName,
+          avatar_url: profile?.avatar_url || '',
+          isCreator: true,
+        };
+      });
+
+      const normalizedModels: Model[] = (modelsData || []).map((model) => ({
+        ...model,
+        isCreator: false,
+      }));
+
+      const mergedById = new Map<string, Model>();
+      [...normalizedModels, ...creatorsData].forEach((item) => {
+        if (!mergedById.has(item.id)) {
+          mergedById.set(item.id, item);
+        }
+      });
+
+      const all = Array.from(mergedById.values()).sort((a, b) => a.name.localeCompare(b.name));
       setModels(all);
     } catch (err) {
       console.error('Error loading models/creators:', err);

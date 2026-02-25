@@ -15,6 +15,7 @@ interface Model {
   name: string;
   username: string;
   avatar_url: string;
+  isCreator?: boolean;
 }
 
 interface PromoAd {
@@ -68,15 +69,44 @@ export const AdminPromoAds = () => {
 
   const loadModels = async () => {
     try {
-      const { data, error } = await supabase
+      // Load models
+      const { data: modelsData, error: modelsError } = await supabase
         .from('models')
         .select('id, name, username, avatar_url')
         .eq('is_active', true)
         .order('name');
-      if (error) throw error;
-      setModels(data || []);
+      if (modelsError) throw modelsError;
+
+      // Load creators from user_roles + profiles
+      const { data: creatorRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'creator');
+
+      let creatorsData: Model[] = [];
+      if (creatorRoles && creatorRoles.length > 0) {
+        const creatorIds = creatorRoles.map(r => r.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, username, avatar_url')
+          .in('id', creatorIds);
+        if (profiles) {
+          creatorsData = profiles.map(p => ({
+            id: p.id,
+            name: p.name || p.username || 'Criador',
+            username: p.username || p.id.slice(0, 8),
+            avatar_url: p.avatar_url || '',
+            isCreator: true,
+          }));
+        }
+      }
+
+      // Merge and sort
+      const all = [...(modelsData || []).map(m => ({ ...m, isCreator: false })), ...creatorsData];
+      all.sort((a, b) => a.name.localeCompare(b.name));
+      setModels(all);
     } catch (err) {
-      console.error('Error loading models:', err);
+      console.error('Error loading models/creators:', err);
     }
   };
 
@@ -204,6 +234,7 @@ export const AdminPromoAds = () => {
                       >
                         <img src={m.avatar_url || '/placeholder.svg'} alt="" className="w-6 h-6 rounded-full object-cover" />
                         {m.name} <span className="text-gray-400">@{m.username}</span>
+                        {m.isCreator && <Badge variant="outline" className="text-xs px-1 py-0 text-blue-400 border-blue-400 ml-1">Criador</Badge>}
                         {selectedModelId === m.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                       </button>
                     ))}

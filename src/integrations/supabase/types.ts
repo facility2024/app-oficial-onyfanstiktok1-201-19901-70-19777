@@ -5440,6 +5440,57 @@ export type Database = {
           },
         ]
       }
+      promo_ads: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          end_date: string
+          id: string
+          model_avatar: string | null
+          model_id: string
+          model_name: string
+          model_username: string
+          start_date: string
+          timer_minutes: number
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description: string
+          end_date: string
+          id?: string
+          model_avatar?: string | null
+          model_id: string
+          model_name: string
+          model_username: string
+          start_date: string
+          timer_minutes: number
+          type: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          model_avatar?: string | null
+          model_id?: string
+          model_name?: string
+          model_username?: string
+          start_date?: string
+          timer_minutes?: number
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       ranking_usuarios: {
         Row: {
           categoria_ranking: string | null

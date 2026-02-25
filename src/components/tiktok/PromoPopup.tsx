@@ -1,23 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Radio, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PromoAd {
   id: string;
-  modelId: string;
-  modelName: string;
-  modelUsername: string;
-  modelAvatar: string;
-  type: 'live' | 'video_call';
+  model_name: string;
+  model_username: string;
+  model_avatar: string | null;
+  type: string;
   url: string;
   description: string;
-  timerMinutes: number;
-  startDate: string;
-  endDate: string;
-  active: boolean;
+  timer_minutes: number;
 }
 
-const STORAGE_KEY = 'admin_promo_ads';
 const LAST_SHOWN_KEY = 'promo_ads_last_shown';
 
 export const PromoPopup = () => {
@@ -26,7 +22,6 @@ export const PromoPopup = () => {
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const visibleRef = useRef(false);
 
-  // Keep ref in sync to avoid stale closures
   useEffect(() => { visibleRef.current = visible; }, [visible]);
 
   const readLastShown = useCallback((): Record<string, number> => {
@@ -44,107 +39,81 @@ export const PromoPopup = () => {
     localStorage.setItem(LAST_SHOWN_KEY, JSON.stringify(data));
   }, []);
 
-  const getActiveAds = useCallback((): PromoAd[] => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return [];
-
-      const nowMs = Date.now();
-      const ads: PromoAd[] = JSON.parse(stored);
-
-      return ads.filter((ad) => {
-        const startMs = new Date(ad.startDate).getTime();
-        const endMs = new Date(ad.endDate).getTime();
-        const timer = Number(ad.timerMinutes);
-
-        if (!ad.active) return false;
-        if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
-        if (!Number.isFinite(timer) || timer <= 0) return false;
-
-        return startMs <= nowMs && nowMs <= endMs;
-      });
-    } catch {
-      return [];
-    }
-  }, []);
-
-  const tryShowDueAd = useCallback(() => {
-    // Use ref to avoid re-creating this callback when visible changes
+  const tryShowDueAd = useCallback(async () => {
     if (visibleRef.current) return;
 
-    const activeAds = getActiveAds();
-    if (activeAds.length === 0) {
-      console.log('[PromoPopup] Nenhum anúncio ativo encontrado no localStorage');
-      return;
-    }
+    try {
+      // Buscar anúncios ativos do Supabase (RLS já filtra por active + datas)
+      const { data: activeAds, error } = await (supabase as any)
+        .from('promo_ads')
+        .select('id, model_name, model_username, model_avatar, type, url, description, timer_minutes')
+        .order('created_at', { ascending: false });
 
-    console.log('[PromoPopup] Anúncios ativos:', activeAds.length);
-
-    const nowMs = Date.now();
-    const lastShown = readLastShown();
-
-    const dueAd = activeAds.find((ad) => {
-      const intervalMs = Number(ad.timerMinutes) * 60 * 1000;
-      const lastShownMs = Number(lastShown[ad.id] ?? 0);
-
-      if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
-
-      // Never shown before → show immediately
-      if (lastShownMs <= 0) {
-        console.log(`[PromoPopup] Ad "${ad.modelName}" nunca exibido, mostrando agora`);
-        return true;
+      if (error) {
+        console.error('[PromoPopup] Erro ao buscar anúncios:', error.message);
+        return;
       }
 
-      // Already shown before → respect interval
-      const elapsed = nowMs - lastShownMs;
-      console.log(`[PromoPopup] Ad "${ad.modelName}" último há ${Math.round(elapsed / 1000)}s, intervalo ${ad.timerMinutes}min`);
-      return elapsed >= intervalMs;
-    });
+      if (!activeAds || activeAds.length === 0) {
+        return;
+      }
 
-    if (!dueAd) return;
+      console.log('[PromoPopup] Anúncios ativos do Supabase:', activeAds.length);
 
-    setCurrentAd(dueAd);
-    setVisible(true);
+      const nowMs = Date.now();
+      const lastShown = readLastShown();
 
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
+      const dueAd = activeAds.find((ad: PromoAd) => {
+        const intervalMs = Number(ad.timer_minutes) * 60 * 1000;
+        const lastShownMs = Number(lastShown[ad.id] ?? 0);
+
+        if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
+
+        // Nunca exibido → mostrar imediatamente
+        if (lastShownMs <= 0) {
+          console.log(`[PromoPopup] Ad "${ad.model_name}" nunca exibido, mostrando agora`);
+          return true;
+        }
+
+        // Já exibido → respeitar intervalo
+        const elapsed = nowMs - lastShownMs;
+        console.log(`[PromoPopup] Ad "${ad.model_name}" último há ${Math.round(elapsed / 1000)}s, intervalo ${ad.timer_minutes}min`);
+        return elapsed >= intervalMs;
+      });
+
+      if (!dueAd) return;
+
+      setCurrentAd(dueAd);
+      setVisible(true);
+
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = setTimeout(() => setVisible(false), 15000);
+
+      writeLastShown({ ...lastShown, [dueAd.id]: nowMs });
+    } catch (err) {
+      console.error('[PromoPopup] Erro inesperado:', err);
     }
-    hideTimerRef.current = setTimeout(() => {
-      setVisible(false);
-    }, 15000);
-
-    const updatedLastShown = {
-      ...lastShown,
-      [dueAd.id]: nowMs,
-    };
-    writeLastShown(updatedLastShown);
-  }, [getActiveAds, readLastShown, writeLastShown]);
+  }, [readLastShown, writeLastShown]);
 
   useEffect(() => {
-    // Initial check
+    // Verificação inicial
     tryShowDueAd();
 
-    // Check every 10 seconds instead of every 1 second — much lighter on performance
+    // Verificar a cada 10 segundos
     const interval = setInterval(tryShowDueAd, 10_000);
 
     const handleUpdate = () => tryShowDueAd();
     window.addEventListener('promo_ads_updated', handleUpdate);
-    window.addEventListener('storage', handleUpdate);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('promo_ads_updated', handleUpdate);
-      window.removeEventListener('storage', handleUpdate);
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-      }
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, [tryShowDueAd]);
 
   const handleParticipate = () => {
-    if (currentAd?.url) {
-      window.open(currentAd.url, '_blank');
-    }
+    if (currentAd?.url) window.open(currentAd.url, '_blank');
     setVisible(false);
   };
 
@@ -161,7 +130,6 @@ export const PromoPopup = () => {
             : 'linear-gradient(135deg, #001a00 0%, #003300 50%, #001a00 100%)',
         }}
       >
-        {/* Close button */}
         <button
           onClick={() => setVisible(false)}
           className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white/70 hover:text-white transition-colors"
@@ -169,7 +137,6 @@ export const PromoPopup = () => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Badge */}
         <div className="absolute top-3 left-3 z-10">
           <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white ${isLive ? 'bg-red-600' : 'bg-green-600'}`}>
             {isLive ? <Radio className="w-3.5 h-3.5 animate-pulse" /> : <Phone className="w-3.5 h-3.5 animate-pulse" />}
@@ -177,12 +144,11 @@ export const PromoPopup = () => {
           </div>
         </div>
 
-        {/* Avatar */}
         <div className="flex flex-col items-center pt-14 pb-4 px-6">
           <div className={`relative w-24 h-24 rounded-full border-4 ${isLive ? 'border-red-500' : 'border-green-500'} shadow-lg`}>
             <img
-              src={currentAd.modelAvatar || '/placeholder.svg'}
-              alt={currentAd.modelName}
+              src={currentAd.model_avatar || '/placeholder.svg'}
+              alt={currentAd.model_name}
               className="w-full h-full rounded-full object-cover"
             />
             <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center ${isLive ? 'bg-red-500' : 'bg-green-500'}`}>
@@ -190,15 +156,14 @@ export const PromoPopup = () => {
             </div>
           </div>
 
-          <h3 className="text-white font-bold text-xl mt-4">{currentAd.modelName}</h3>
-          <p className="text-gray-400 text-sm">@{currentAd.modelUsername}</p>
+          <h3 className="text-white font-bold text-xl mt-4">{currentAd.model_name}</h3>
+          <p className="text-gray-400 text-sm">@{currentAd.model_username}</p>
 
           <p className="text-gray-300 text-center text-sm mt-3 leading-relaxed">
             {currentAd.description}
           </p>
         </div>
 
-        {/* Action */}
         <div className="px-6 pb-6 space-y-3">
           <Button
             onClick={handleParticipate}

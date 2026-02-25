@@ -20,18 +20,18 @@ interface Model {
 
 interface PromoAd {
   id: string;
-  modelId: string;
-  modelName: string;
-  modelUsername: string;
-  modelAvatar: string;
-  type: 'live' | 'video_call';
+  model_id: string;
+  model_name: string;
+  model_username: string;
+  model_avatar: string | null;
+  type: string;
   url: string;
   description: string;
-  timerMinutes: number;
-  startDate: string;
-  endDate: string;
+  timer_minutes: number;
+  start_date: string;
+  end_date: string;
   active: boolean;
-  createdAt: string;
+  created_at: string;
 }
 
 const TIMER_OPTIONS = [
@@ -45,8 +45,6 @@ const TIMER_OPTIONS = [
   { value: 180, label: '3 horas' },
   { value: 240, label: '4 horas' },
 ];
-
-const STORAGE_KEY = 'admin_promo_ads';
 
 export const AdminPromoAds = () => {
   const [models, setModels] = useState<Model[]>([]);
@@ -74,113 +72,61 @@ export const AdminPromoAds = () => {
         { data: creatorRoles, error: rolesError },
         { data: approvedApps, error: appsError },
       ] = await Promise.all([
-        supabase
-          .from('models')
-          .select('id, name, username, avatar_url')
-          .eq('is_active', true)
-          .order('name'),
-        (supabase as any)
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'creator'),
-        (supabase as any)
-          .from('creator_applications')
-          .select('user_id, nickname, full_name')
-          .eq('status', 'approved'),
+        supabase.from('models').select('id, name, username, avatar_url').eq('is_active', true).order('name'),
+        (supabase as any).from('user_roles').select('user_id').eq('role', 'creator'),
+        (supabase as any).from('creator_applications').select('user_id, nickname, full_name').eq('status', 'approved'),
       ]);
 
       if (modelsError) throw modelsError;
-      if (rolesError) {
-        console.error('Erro ao carregar roles de criadores:', rolesError);
-      }
-      if (appsError) {
-        console.warn('Aviso ao carregar creator_applications:', appsError);
-      }
 
-      const creatorIds = Array.from(
-        new Set((creatorRoles || []).map((r: any) => r.user_id).filter(Boolean))
-      ) as string[];
-
+      const creatorIds = Array.from(new Set((creatorRoles || []).map((r: any) => r.user_id).filter(Boolean))) as string[];
       const appsByUserId = new Map<string, { nickname?: string; full_name?: string }>();
       (approvedApps || []).forEach((app: any) => {
-        if (app?.user_id) {
-          appsByUserId.set(app.user_id, {
-            nickname: app.nickname,
-            full_name: app.full_name,
-          });
-        }
+        if (app?.user_id) appsByUserId.set(app.user_id, { nickname: app.nickname, full_name: app.full_name });
       });
 
-      const profilesById = new Map<string, { id: string; name: string | null; username: string | null; avatar_url: string | null }>();
+      const profilesById = new Map<string, any>();
       if (creatorIds.length > 0) {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, name, username, avatar_url')
-          .in('id', creatorIds);
-
-        if (profilesError) {
-          console.warn('Aviso ao carregar profiles dos criadores:', profilesError);
-        }
-
-        (profilesData || []).forEach((profile) => {
-          profilesById.set(profile.id, profile);
-        });
+        const { data: profilesData } = await supabase.from('profiles').select('id, name, username, avatar_url').in('id', creatorIds);
+        (profilesData || []).forEach((p) => profilesById.set(p.id, p));
       }
 
-      const creatorsData: Model[] = creatorIds.map((creatorId) => {
-        const profile = profilesById.get(creatorId);
-        const app = appsByUserId.get(creatorId);
-
-        const fallbackName =
-          app?.nickname ||
-          app?.full_name ||
-          profile?.username ||
-          `creator_${creatorId.slice(0, 6)}`;
-
-        return {
-          id: creatorId,
-          name: profile?.name || fallbackName,
-          username: profile?.username || app?.nickname || fallbackName,
-          avatar_url: profile?.avatar_url || '',
-          isCreator: true,
-        };
+      const creatorsData: Model[] = creatorIds.map((cid) => {
+        const profile = profilesById.get(cid);
+        const app = appsByUserId.get(cid);
+        const fallbackName = app?.nickname || app?.full_name || profile?.username || `creator_${cid.slice(0, 6)}`;
+        return { id: cid, name: profile?.name || fallbackName, username: profile?.username || app?.nickname || fallbackName, avatar_url: profile?.avatar_url || '', isCreator: true };
       });
 
-      const normalizedModels: Model[] = (modelsData || []).map((model) => ({
-        ...model,
-        isCreator: false,
-      }));
-
+      const normalizedModels: Model[] = (modelsData || []).map((m) => ({ ...m, isCreator: false }));
       const mergedById = new Map<string, Model>();
-      [...normalizedModels, ...creatorsData].forEach((item) => {
-        if (!mergedById.has(item.id)) {
-          mergedById.set(item.id, item);
-        }
-      });
-
-      const all = Array.from(mergedById.values()).sort((a, b) => a.name.localeCompare(b.name));
-      setModels(all);
+      [...normalizedModels, ...creatorsData].forEach((item) => { if (!mergedById.has(item.id)) mergedById.set(item.id, item); });
+      setModels(Array.from(mergedById.values()).sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
       console.error('Error loading models/creators:', err);
     }
   };
 
-  const loadPromoAds = () => {
+  const loadPromoAds = async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setPromoAds(JSON.parse(stored));
+      // Admin policy allows seeing ALL ads (not just active ones)
+      const { data, error } = await (supabase as any)
+        .from('promo_ads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar promo_ads:', error);
+        setPromoAds([]);
+        return;
+      }
+      setPromoAds(data || []);
     } catch {
       setPromoAds([]);
     }
   };
 
-  const savePromoAds = (ads: PromoAd[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ads));
-    setPromoAds(ads);
-    window.dispatchEvent(new Event('promo_ads_updated'));
-  };
-
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!selectedModelId || !url || !startDate || !endDate) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
@@ -188,44 +134,38 @@ export const AdminPromoAds = () => {
 
     const startMs = new Date(startDate).getTime();
     const endMs = new Date(endDate).getTime();
-
-    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) {
-      toast.error('Data de início/final inválida');
-      return;
-    }
-
-    if (endMs <= startMs) {
-      toast.error('A data final precisa ser maior que a data inicial');
-      return;
-    }
-
-    if (timerMinutes <= 0) {
-      toast.error('Intervalo de exibição inválido');
-      return;
-    }
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) { toast.error('Data inválida'); return; }
+    if (endMs <= startMs) { toast.error('Data final deve ser maior que a inicial'); return; }
+    if (timerMinutes <= 0) { toast.error('Intervalo inválido'); return; }
 
     const model = models.find(m => m.id === selectedModelId);
     if (!model) return;
 
-    const newAd: PromoAd = {
-      id: crypto.randomUUID(),
-      modelId: model.id,
-      modelName: model.name,
-      modelUsername: model.username,
-      modelAvatar: model.avatar_url,
+    setLoading(true);
+    const { error } = await (supabase as any).from('promo_ads').insert({
+      model_id: model.id,
+      model_name: model.name,
+      model_username: model.username,
+      model_avatar: model.avatar_url || null,
       type,
       url,
       description: description || (type === 'live' ? `${model.name} está AO VIVO agora!` : `Faça uma vídeo chamada com ${model.name}!`),
-      timerMinutes,
-      startDate,
-      endDate,
+      timer_minutes: timerMinutes,
+      start_date: new Date(startDate).toISOString(),
+      end_date: new Date(endDate).toISOString(),
       active: true,
-      createdAt: new Date().toISOString(),
-    };
+    });
+    setLoading(false);
 
-    const updated = [...promoAds, newAd];
-    savePromoAds(updated);
+    if (error) {
+      console.error('Erro ao criar promo ad:', error);
+      toast.error('Erro ao criar anúncio: ' + error.message);
+      return;
+    }
+
     toast.success('Anúncio promocional criado com sucesso!');
+    window.dispatchEvent(new Event('promo_ads_updated'));
+    await loadPromoAds();
 
     // Reset form
     setSelectedModelId('');
@@ -236,19 +176,27 @@ export const AdminPromoAds = () => {
     setEndDate('');
   };
 
-  const handleDelete = (id: string) => {
-    savePromoAds(promoAds.filter(a => a.id !== id));
+  const handleDelete = async (id: string) => {
+    const { error } = await (supabase as any).from('promo_ads').delete().eq('id', id);
+    if (error) { toast.error('Erro ao remover: ' + error.message); return; }
     toast.success('Anúncio removido');
+    window.dispatchEvent(new Event('promo_ads_updated'));
+    await loadPromoAds();
   };
 
-  const handleToggle = (id: string) => {
-    savePromoAds(promoAds.map(a => a.id === id ? { ...a, active: !a.active } : a));
+  const handleToggle = async (id: string) => {
+    const ad = promoAds.find(a => a.id === id);
+    if (!ad) return;
+    const { error } = await (supabase as any).from('promo_ads').update({ active: !ad.active }).eq('id', id);
+    if (error) { toast.error('Erro ao atualizar: ' + error.message); return; }
+    window.dispatchEvent(new Event('promo_ads_updated'));
+    await loadPromoAds();
   };
 
   const isAdActive = (ad: PromoAd) => {
     if (!ad.active) return false;
     const now = new Date();
-    return new Date(ad.startDate) <= now && now <= new Date(ad.endDate);
+    return new Date(ad.start_date) <= now && now <= new Date(ad.end_date);
   };
 
   return (
@@ -277,34 +225,21 @@ export const AdminPromoAds = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Input
                   value={selectedModelId ? models.find(m => m.id === selectedModelId)?.name || modelSearch : modelSearch}
-                  onChange={e => {
-                    setModelSearch(e.target.value);
-                    setSelectedModelId('');
-                    setShowModelDropdown(true);
-                  }}
+                  onChange={e => { setModelSearch(e.target.value); setSelectedModelId(''); setShowModelDropdown(true); }}
                   onFocus={() => setShowModelDropdown(true)}
                   placeholder="Buscar modelo..."
                   className="bg-gray-800 border-gray-600 text-white pl-9"
                 />
-                {selectedModelId && (
-                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400" />
-                )}
+                {selectedModelId && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400" />}
               </div>
               {showModelDropdown && (
                 <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-md max-h-48 overflow-y-auto shadow-lg">
                   {models
                     .filter(m => !modelSearch || m.name.toLowerCase().includes(modelSearch.toLowerCase()) || m.username.toLowerCase().includes(modelSearch.toLowerCase()))
                     .map(m => (
-                      <button
-                        key={m.id}
-                        type="button"
+                      <button key={m.id} type="button"
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-gray-700 ${selectedModelId === m.id ? 'bg-gray-700' : ''}`}
-                        onClick={() => {
-                          setSelectedModelId(m.id);
-                          setModelSearch(m.name);
-                          setShowModelDropdown(false);
-                        }}
-                      >
+                        onClick={() => { setSelectedModelId(m.id); setModelSearch(m.name); setShowModelDropdown(false); }}>
                         <img src={m.avatar_url || '/placeholder.svg'} alt="" className="w-6 h-6 rounded-full object-cover" />
                         {m.name} <span className="text-gray-400">@{m.username}</span>
                         {m.isCreator && <Badge variant="outline" className="text-xs px-1 py-0 text-blue-400 border-blue-400 ml-1">Criador</Badge>}
@@ -322,16 +257,10 @@ export const AdminPromoAds = () => {
             <div className="space-y-2">
               <Label className="text-gray-300">Tipo</Label>
               <Select value={type} onValueChange={(v) => setType(v as 'live' | 'video_call')}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-600">
-                  <SelectItem value="live" className="text-white">
-                    <div className="flex items-center gap-2"><Radio className="w-4 h-4 text-red-500" /> Live</div>
-                  </SelectItem>
-                  <SelectItem value="video_call" className="text-white">
-                    <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-green-500" /> Vídeo Chamada</div>
-                  </SelectItem>
+                  <SelectItem value="live" className="text-white"><div className="flex items-center gap-2"><Radio className="w-4 h-4 text-red-500" /> Live</div></SelectItem>
+                  <SelectItem value="video_call" className="text-white"><div className="flex items-center gap-2"><Phone className="w-4 h-4 text-green-500" /> Vídeo Chamada</div></SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -339,21 +268,14 @@ export const AdminPromoAds = () => {
             {/* URL */}
             <div className="space-y-2">
               <Label className="text-gray-300">URL do Link</Label>
-              <Input
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                placeholder="https://..."
-                className="bg-gray-800 border-gray-600 text-white"
-              />
+              <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." className="bg-gray-800 border-gray-600 text-white" />
             </div>
 
             {/* Timer */}
             <div className="space-y-2">
               <Label className="text-gray-300">Intervalo de Exibição</Label>
               <Select value={String(timerMinutes)} onValueChange={v => setTimerMinutes(Number(v))}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-600">
                   {TIMER_OPTIONS.map(o => (
                     <SelectItem key={o.value} value={String(o.value)} className="text-white">
@@ -367,41 +289,25 @@ export const AdminPromoAds = () => {
             {/* Data início */}
             <div className="space-y-2">
               <Label className="text-gray-300">Data de Início</Label>
-              <Input
-                type="datetime-local"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white"
-              />
+              <Input type="datetime-local" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
             </div>
 
             {/* Data fim */}
             <div className="space-y-2">
               <Label className="text-gray-300">Data de Finalização</Label>
-              <Input
-                type="datetime-local"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white"
-              />
+              <Input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
             </div>
           </div>
 
           {/* Descrição */}
           <div className="space-y-2">
             <Label className="text-gray-300">Descrição (opcional)</Label>
-            <Textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Deixe vazio para descrição automática..."
-              className="bg-gray-800 border-gray-600 text-white"
-              rows={2}
-            />
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Deixe vazio para descrição automática..." className="bg-gray-800 border-gray-600 text-white" rows={2} />
           </div>
 
-          <Button onClick={handleCreate} className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700">
+          <Button onClick={handleCreate} disabled={loading} className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700">
             <Send className="w-4 h-4 mr-2" />
-            Criar Anúncio Promocional
+            {loading ? 'Criando...' : 'Criar Anúncio Promocional'}
           </Button>
         </CardContent>
       </Card>
@@ -418,10 +324,10 @@ export const AdminPromoAds = () => {
             <div className="space-y-3">
               {promoAds.map(ad => (
                 <div key={ad.id} className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                  <img src={ad.modelAvatar || '/placeholder.svg'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-gray-600" />
+                  <img src={ad.model_avatar || '/placeholder.svg'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-gray-600" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-semibold">{ad.modelName}</span>
+                      <span className="text-white font-semibold">{ad.model_name}</span>
                       <Badge variant={ad.type === 'live' ? 'destructive' : 'default'} className={ad.type === 'live' ? '' : 'bg-green-600'}>
                         {ad.type === 'live' ? '🔴 Live' : '📞 Vídeo Chamada'}
                       </Badge>
@@ -435,13 +341,13 @@ export const AdminPromoAds = () => {
                     </div>
                     <p className="text-gray-400 text-sm truncate">{ad.description}</p>
                     <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> A cada {TIMER_OPTIONS.find(o => o.value === ad.timerMinutes)?.label}</span>
-                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(ad.startDate).toLocaleDateString('pt-BR')} - {new Date(ad.endDate).toLocaleDateString('pt-BR')}</span>
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> A cada {TIMER_OPTIONS.find(o => o.value === ad.timer_minutes)?.label || ad.timer_minutes + 'min'}</span>
+                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(ad.start_date).toLocaleDateString('pt-BR')} - {new Date(ad.end_date).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant={ad.active ? 'outline' : 'default'} onClick={() => handleToggle(ad.id)}>
-                      {ad.active ? <Eye className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <Eye className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(ad.id)}>
                       <Trash2 className="w-4 h-4" />

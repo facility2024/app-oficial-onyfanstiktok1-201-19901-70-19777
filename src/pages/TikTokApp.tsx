@@ -329,7 +329,8 @@ export const TikTokApp = () => {
     loop: false,
     dragFree: false,
     containScroll: 'trimSnaps',
-    duration: 20
+    duration: 25,
+    skipSnaps: false
   });
 
   // Debug do emblaApi

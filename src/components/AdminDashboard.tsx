@@ -129,15 +129,7 @@ export const AdminDashboard = () => {
     validateAdminRole();
   }, [user]);
 
-  // Simular notificações em tempo real
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNotifications(prev => prev + 1);
-      setShowSaleNotification(true);
-    }, 300000); // 5 minutos = 300000ms
-
-    return () => clearInterval(interval);
-  }, []);
+  // Notificações agora são gerenciadas pelo hook useAdminNotifications no AdminHeader
 
   // Atualizar último sync
   useEffect(() => {

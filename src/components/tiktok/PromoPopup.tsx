@@ -196,7 +196,7 @@ export const PromoPopup = () => {
           <h3 className="text-white font-bold text-xl mt-4">{currentAd.model_name}</h3>
           <p className="text-gray-400 text-sm">@{currentAd.model_username}</p>
 
-          <p className="text-gray-300 text-center text-sm mt-3 leading-relaxed">
+          <p className="text-white text-center text-sm mt-3 leading-relaxed">
             {currentAd.description}
           </p>
         </div>

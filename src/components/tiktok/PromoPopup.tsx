@@ -73,23 +73,32 @@ export const PromoPopup = () => {
     if (visibleRef.current) return;
 
     const activeAds = getActiveAds();
-    if (activeAds.length === 0) return;
+    if (activeAds.length === 0) {
+      console.log('[PromoPopup] Nenhum anúncio ativo encontrado no localStorage');
+      return;
+    }
+
+    console.log('[PromoPopup] Anúncios ativos:', activeAds.length);
 
     const nowMs = Date.now();
     const lastShown = readLastShown();
 
     const dueAd = activeAds.find((ad) => {
-      const startMs = new Date(ad.startDate).getTime();
       const intervalMs = Number(ad.timerMinutes) * 60 * 1000;
       const lastShownMs = Number(lastShown[ad.id] ?? 0);
 
-      if (!Number.isFinite(startMs) || !Number.isFinite(intervalMs) || intervalMs <= 0) return false;
+      if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
 
-      if (lastShownMs > 0) {
-        return nowMs - lastShownMs >= intervalMs;
+      // Never shown before → show immediately
+      if (lastShownMs <= 0) {
+        console.log(`[PromoPopup] Ad "${ad.modelName}" nunca exibido, mostrando agora`);
+        return true;
       }
 
-      return nowMs - startMs >= intervalMs;
+      // Already shown before → respect interval
+      const elapsed = nowMs - lastShownMs;
+      console.log(`[PromoPopup] Ad "${ad.modelName}" último há ${Math.round(elapsed / 1000)}s, intervalo ${ad.timerMinutes}min`);
+      return elapsed >= intervalMs;
     });
 
     if (!dueAd) return;

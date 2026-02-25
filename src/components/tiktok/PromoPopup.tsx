@@ -80,7 +80,8 @@ export const PromoPopup = () => {
     try {
       const { data: activeAds, error } = await (supabase as any)
         .from('promo_ads')
-        .select('id, model_name, model_username, model_avatar, type, url, description, timer_minutes, daily_start_time, daily_end_time, shows_per_day')
+        .select('id, model_name, model_username, model_avatar, type, url, description, timer_minutes, daily_start_time, daily_end_time, shows_per_day, start_date, end_date')
+        .eq('active', true)
         .order('created_at', { ascending: false });
 
       if (error || !activeAds?.length) return;
@@ -90,7 +91,12 @@ export const PromoPopup = () => {
       const lastShown = readLastShown();
       const dailyCounts = readDailyCounts();
 
-      const dueAd = activeAds.find((ad: PromoAd) => {
+      const dueAd = activeAds.find((ad: any) => {
+        // 0. Check date range
+        const now = new Date();
+        if (ad.start_date && new Date(ad.start_date) > now) return false;
+        if (ad.end_date && new Date(ad.end_date) < now) return false;
+
         // 1. Check daily time window
         if (!isWithinDailyTimeWindow(ad)) return false;
 

@@ -186,6 +186,24 @@ export const AdminPromoAds = () => {
       return;
     }
 
+    const startMs = new Date(startDate).getTime();
+    const endMs = new Date(endDate).getTime();
+
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) {
+      toast.error('Data de início/final inválida');
+      return;
+    }
+
+    if (endMs <= startMs) {
+      toast.error('A data final precisa ser maior que a data inicial');
+      return;
+    }
+
+    if (timerMinutes <= 0) {
+      toast.error('Intervalo de exibição inválido');
+      return;
+    }
+
     const model = models.find(m => m.id === selectedModelId);
     if (!model) return;
 

@@ -24,6 +24,10 @@ export const PromoPopup = () => {
   const [currentAd, setCurrentAd] = useState<PromoAd | null>(null);
   const [visible, setVisible] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visibleRef = useRef(false);
+
+  // Keep ref in sync to avoid stale closures
+  useEffect(() => { visibleRef.current = visible; }, [visible]);
 
   const readLastShown = useCallback((): Record<string, number> => {
     try {
@@ -65,7 +69,8 @@ export const PromoPopup = () => {
   }, []);
 
   const tryShowDueAd = useCallback(() => {
-    if (visible) return;
+    // Use ref to avoid re-creating this callback when visible changes
+    if (visibleRef.current) return;
 
     const activeAds = getActiveAds();
     if (activeAds.length === 0) return;
@@ -104,17 +109,16 @@ export const PromoPopup = () => {
       [dueAd.id]: nowMs,
     };
     writeLastShown(updatedLastShown);
-  }, [getActiveAds, readLastShown, visible, writeLastShown]);
+  }, [getActiveAds, readLastShown, writeLastShown]);
 
   useEffect(() => {
-    const runScheduleCheck = () => {
-      tryShowDueAd();
-    };
+    // Initial check
+    tryShowDueAd();
 
-    runScheduleCheck();
-    const interval = setInterval(runScheduleCheck, 1000);
+    // Check every 10 seconds instead of every 1 second — much lighter on performance
+    const interval = setInterval(tryShowDueAd, 10_000);
 
-    const handleUpdate = () => runScheduleCheck();
+    const handleUpdate = () => tryShowDueAd();
     window.addEventListener('promo_ads_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 

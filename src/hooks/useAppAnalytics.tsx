@@ -19,9 +19,14 @@ export const useAppAnalytics = () => {
         return newId;
       })();
 
-      console.log(`🎯 REGISTRANDO AÇÃO: ${action.toUpperCase()} - Video: ${videoId} - Modelo: ${modelId}`);
+      // Ignorar IDs auto-gerados (não são UUIDs válidos)
+      const isAutoId = (id?: string) => id?.startsWith('auto-') || id?.startsWith('scheduled-') || id?.startsWith('main-');
+      if (isAutoId(videoId)) {
+        console.log(`⏭️ Ignorando analytics para ID auto-gerado: ${videoId}`);
+        return;
+      }
 
-      // 1. Registrar no analytics_events para o painel admin (apenas se for ação válida)
+      // 1. Registrar no analytics_events para o painel admin
       try {
         const analyticsData: any = {
           event_name: `video_${action}`,

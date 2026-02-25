@@ -39,7 +39,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
   }, ref) => {
     const [isBuffering, setIsBuffering] = useState(false);
     const [hasError, setHasError] = useState(false);
-    const [needsUserInteraction, setNeedsUserInteraction] = useState(true);
+    const [needsUserInteraction, setNeedsUserInteraction] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [userStarted, setUserStarted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -47,6 +47,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const maxRetries = 5;
     const autoRetryTimerRef = useRef<NodeJS.Timeout | null>(null);
     const playLockRef = useRef(false);
+    const abortRetryCountRef = useRef(0);
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -71,8 +72,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.setAttribute('x5-playsinline', 'true'); // Android WebView/QQ
       video.setAttribute('x5-video-player-type', 'h5'); // Android WebView
       
-      // Apenas definir muted se isMuted for true (para permitir autoplay quando necessário)
-      if (isMuted) {
+      // iOS/Android: Iniciar SEMPRE muted para permitir autoplay
+      // O usuário pode desmutar depois de interagir
+      if (isMobile || isMuted) {
         video.setAttribute('muted', 'true');
         video.muted = true;
       } else {
@@ -169,14 +171,17 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           msg.includes('notallowed');
 
         if (isAbort) {
-          console.warn('⏸️ play() interrompido por pause() — ignorando e tentando novamente em 200ms');
-          setHasError(false);
-          setIsBuffering(false);
+          abortRetryCountRef.current++;
+          if (abortRetryCountRef.current <= 3) {
+            console.warn(`⏸️ play() interrompido por pause() — retry ${abortRetryCountRef.current}/3`);
+            setHasError(false);
+            setIsBuffering(false);
+            playLockRef.current = false;
+            setTimeout(() => attemptPlay(), 300);
+            return false;
+          }
+          console.warn('⏸️ play() interrompido demais vezes — parando retries');
           playLockRef.current = false;
-          // Não contar como retry e não exigir interação; apenas tentar novamente
-          setTimeout(() => {
-            attemptPlay();
-          }, 200);
           return false;
         }
 
@@ -231,14 +236,10 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         clearTimeout(autoRetryTimerRef.current);
         autoRetryTimerRef.current = null;
       }
-      // Em mobile, sempre mostra o botão no primeiro vídeo. Após primeira interação, mantém desbloqueio.
-      if (isMobile) {
-        setNeedsUserInteraction(!userStarted);
-      } else {
-        // Desktop: só precisa de interação se autoPlayOnReady for false
-        setNeedsUserInteraction(!autoPlayOnReady);
-      }
+      // Com autoPlayOnReady, nunca exige interação manual (start muted em mobile)
+      setNeedsUserInteraction(false);
       retryCountRef.current = 0;
+      abortRetryCountRef.current = 0;
       // Forçar commit do src no iOS/Android
       if (internalRef && 'current' in internalRef && internalRef.current) {
         try { internalRef.current.load(); } catch {}
@@ -260,47 +261,15 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
 
       const video = internalRef.current;
-      const shouldPlay = isPlaying || userStarted || (autoPlayOnReady && isReady);
+      const shouldPlay = isPlaying || (autoPlayOnReady && isReady);
 
-      console.log('🎮 useEffect reprodução:', {
-        isPlaying,
-        userStarted,
-        shouldPlay,
-        isReady,
-        needsUserInteraction,
-        paused: video.paused,
-        readyState: video.readyState,
-        autoPlayOnReady
-      });
-
-      if (shouldPlay) {
-        if (!isReady) {
-          console.log('⏳ Vídeo ainda não está pronto, aguardando...');
-          return;
-        }
-        
-        // Se autoPlayOnReady está ativado, não espera interação
-        if (autoPlayOnReady && needsUserInteraction) {
-          console.log('🎬 AutoPlay ativado, pulando necessidade de interação');
-          setNeedsUserInteraction(false);
-        }
-        
-        if (needsUserInteraction && !autoPlayOnReady) {
-          console.log('👆 Aguardando interação do usuário...');
-          return;
-        }
-        
-        if (video.paused) {
-          console.log('▶️ Iniciando reprodução do vídeo...');
-          attemptPlay();
-        }
-      } else if (!shouldPlay && !video.paused && !userStarted) {
-        // Só pausa se o usuário não iniciou manualmente
-        console.log('⏸️ Pausando vídeo...');
+      if (shouldPlay && isReady && video.paused) {
+        attemptPlay();
+      } else if (!shouldPlay && !video.paused) {
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, userStarted, needsUserInteraction, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
+    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
 
     // Controlar mute e volume
     useEffect(() => {
@@ -312,14 +281,10 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Event handlers
     const handleLoadedData = useCallback(() => {
-      console.log('✅ Vídeo carregado (loadeddata)', { autoPlayOnReady, isPlaying });
       setIsBuffering(false);
       setIsReady(true);
-      
-      // AutoPlay controlado pelo efeito principal para evitar chamadas duplicadas
-      
       if (onLoadedData) onLoadedData();
-    }, [onLoadedData, autoPlayOnReady, isPlaying, attemptPlay]);
+    }, [onLoadedData]);
 
     const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
       const video = e.currentTarget;
@@ -444,8 +409,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           preload="auto"
           controls={false}
            onClick={handleUserClick}
-           onTouchStart={needsUserInteraction ? handleUserClick : undefined}
-           onPointerDown={needsUserInteraction ? handleUserClick : undefined}
           onLoadedData={handleLoadedData}
           onError={handleError}
           onWaiting={handleWaiting}
@@ -459,8 +422,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none">
             <button
               onClick={handleUserClick}
-              onTouchStart={handleUserClick}
-              onPointerDown={handleUserClick}
               className="w-16 h-16 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/30 pointer-events-auto"
               aria-label="Reproduzir vídeo"
             >

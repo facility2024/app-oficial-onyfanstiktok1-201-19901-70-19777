@@ -163,8 +163,8 @@ export const PromoPopup = () => {
       <div className="relative w-[90%] max-w-sm mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10"
         style={{
           background: isLive
-            ? 'linear-gradient(135deg, #1a0000 0%, #330000 50%, #1a0000 100%)'
-            : 'linear-gradient(135deg, #001a00 0%, #003300 50%, #001a00 100%)',
+            ? 'linear-gradient(135deg, #1a0800 0%, #8B4513 30%, #A0522D 60%, #5a2d0a 100%)'
+            : 'linear-gradient(135deg, #0a1f00 0%, #2d5016 30%, #558B2F 60%, #1a3a0a 100%)',
         }}
       >
         <button
@@ -175,20 +175,20 @@ export const PromoPopup = () => {
         </button>
 
         <div className="absolute top-3 left-3 z-10">
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white ${isLive ? 'bg-red-600' : 'bg-green-600'}`}>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: isLive ? '#8B4513' : '#558B2F' }}>
             {isLive ? <Radio className="w-3.5 h-3.5 animate-pulse" /> : <Phone className="w-3.5 h-3.5 animate-pulse" />}
             {isLive ? 'AO VIVO' : 'VÍDEO CHAMADA'}
           </div>
         </div>
 
         <div className="flex flex-col items-center pt-14 pb-4 px-6">
-          <div className={`relative w-24 h-24 rounded-full border-4 ${isLive ? 'border-red-500' : 'border-green-500'} shadow-lg`}>
+          <div className="relative w-24 h-24 rounded-full border-4 shadow-lg" style={{ borderColor: isLive ? '#C4842E' : '#7CB342' }}>
             <img
               src={currentAd.model_avatar || '/placeholder.svg'}
               alt={currentAd.model_name}
               className="w-full h-full rounded-full object-cover"
             />
-            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center ${isLive ? 'bg-red-500' : 'bg-green-500'}`}>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: isLive ? '#C4842E' : '#7CB342' }}>
               <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
             </div>
           </div>
@@ -204,11 +204,12 @@ export const PromoPopup = () => {
         <div className="px-6 pb-6 space-y-3">
           <Button
             onClick={handleParticipate}
-            className={`w-full py-6 text-lg font-bold rounded-xl ${
-              isLive
-                ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700'
-                : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-            }`}
+            className="w-full py-6 text-lg font-bold rounded-xl text-white"
+            style={{
+              background: isLive
+                ? 'linear-gradient(to right, #8B4513, #C4842E)'
+                : 'linear-gradient(to right, #558B2F, #7CB342)',
+            }}
           >
             {isLive ? '🔴 Quero Participar da Live' : '📞 Quero Participar'}
           </Button>

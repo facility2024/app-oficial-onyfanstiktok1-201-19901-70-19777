@@ -308,12 +308,15 @@ export const AdminPromoAds = () => {
                 <Timer className="w-3.5 h-3.5" />
                 Horário Início (diário)
               </Label>
-              <Input
-                type="time"
-                value={dailyStartTime}
-                onChange={e => setDailyStartTime(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white"
-              />
+              <Select value={dailyStartTime} onValueChange={setDailyStartTime}>
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600 max-h-60">
+                  {Array.from({ length: 24 }, (_, i) => {
+                    const h = String(i).padStart(2, '0') + ':00';
+                    return <SelectItem key={h} value={h} className="text-white">{h}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Horário diário fim */}
@@ -322,24 +325,27 @@ export const AdminPromoAds = () => {
                 <Timer className="w-3.5 h-3.5" />
                 Horário Fim (diário)
               </Label>
-              <Input
-                type="time"
-                value={dailyEndTime}
-                onChange={e => setDailyEndTime(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white"
-              />
+              <Select value={dailyEndTime} onValueChange={setDailyEndTime}>
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600 max-h-60">
+                  {Array.from({ length: 24 }, (_, i) => {
+                    const h = String(i).padStart(2, '0') + ':00';
+                    return <SelectItem key={h} value={h} className="text-white">{h}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Data início */}
             <div className="space-y-2">
               <Label className="text-gray-300">Data de Início</Label>
-              <Input type="datetime-local" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
+              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
             </div>
 
             {/* Data fim */}
             <div className="space-y-2">
               <Label className="text-gray-300">Data de Finalização</Label>
-              <Input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
+              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-gray-800 border-gray-600 text-white" />
             </div>
           </div>
 

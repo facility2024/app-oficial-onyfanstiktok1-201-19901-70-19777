@@ -50,7 +50,7 @@ interface VideoStats {
   creators: number;
   recentVideos: number;
   byGenre: { name: string; count: number }[];
-  topVideos: { id: string; title: string; views: number; likes: number }[];
+  topVideos: { id: string; title: string; owner: string; views: number; likes: number }[];
 }
 
 export const AdminIntelligentFeed: React.FC = () => {
@@ -118,20 +118,27 @@ export const AdminIntelligentFeed: React.FC = () => {
       // Vídeos por gênero - deixar vazio por enquanto (tabela não está no schema)
       const byGenre: { name: string; count: number }[] = [];
 
-      // Top 5 vídeos
+      // Top 5 vídeos com nome do modelo/criador
       const { data: topData } = await supabase
         .from('videos')
-        .select('id, title, views_count, likes_count')
+        .select('id, title, views_count, likes_count, model_id, creator_id, models(display_name), profiles!videos_creator_id_fkey(display_name)')
         .eq('is_active', true)
         .order('views_count', { ascending: false })
         .limit(5);
 
-      const topVideos = topData?.map(v => ({
-        id: v.id,
-        title: v.title || 'Sem título',
-        views: v.views_count || 0,
-        likes: v.likes_count || 0,
-      })) || [];
+      const topVideos = topData?.map(v => {
+        const modelName = (v.models as any)?.display_name;
+        const creatorName = (v.profiles as any)?.display_name;
+        const owner = modelName || creatorName || 'Desconhecido';
+        const displayTitle = v.title && v.title.trim() !== '' ? v.title : owner;
+        return {
+          id: v.id,
+          title: displayTitle,
+          owner,
+          views: v.views_count || 0,
+          likes: v.likes_count || 0,
+        };
+      }) || [];
 
       setVideoStats({
         total: total || 0,
@@ -605,7 +612,7 @@ export const AdminIntelligentFeed: React.FC = () => {
                 </Badge>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm truncate">{video.title}</p>
-                  <p className="text-gray-400 text-xs">ID: {video.id.slice(0, 8)}...</p>
+                  <p className="text-gray-400 text-xs">👤 {video.owner} · ID: {video.id.slice(0, 8)}...</p>
                 </div>
                 <div className="flex gap-4 text-sm">
                   <span className="text-cyan-400">{video.views.toLocaleString()} views</span>

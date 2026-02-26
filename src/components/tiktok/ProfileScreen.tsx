@@ -113,6 +113,69 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     }
   };
 
+  // Sync em tempo real das curtidas dentro do perfil (grid)
+  useEffect(() => {
+    if (!isOpen || !user?.id) return;
+
+    const applyLikeDelta = (videoId: string, delta: number) => {
+      if (!videoId || !delta) return;
+
+      const patch = (items: ModelContent[]) =>
+        items.map((item) =>
+          item.id === videoId
+            ? { ...item, likes_count: Math.max(0, (item.likes_count || 0) + delta) }
+            : item
+        );
+
+      setContents((prev) => patch(prev));
+      setPublicContents((prev) => patch(prev));
+      setPremiumContents((prev) => patch(prev));
+      setPrivateContents((prev) => patch(prev));
+    };
+
+    const likesChannel = supabase
+      .channel(`profile-likes-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'likes' },
+        (payload) => {
+          const like = payload.new as any;
+          if (!like?.video_id || like?.is_active === false) return;
+          applyLikeDelta(like.video_id, 1);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'likes' },
+        (payload) => {
+          const newLike = payload.new as any;
+          const oldLike = payload.old as any;
+          const targetVideoId = newLike?.video_id || oldLike?.video_id;
+          if (!targetVideoId) return;
+
+          if (oldLike?.is_active === false && newLike?.is_active === true) {
+            applyLikeDelta(targetVideoId, 1);
+          } else if (oldLike?.is_active === true && newLike?.is_active === false) {
+            applyLikeDelta(targetVideoId, -1);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'likes' },
+        (payload) => {
+          const oldLike = payload.old as any;
+          if (!oldLike?.video_id || oldLike?.is_active === false) return;
+          applyLikeDelta(oldLike.video_id, -1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(likesChannel);
+    };
+  }, [isOpen, user?.id]);
+
   // Carregar status de Vídeo Chamada e Live do perfil
   const loadServiceStatus = async () => {
     try {

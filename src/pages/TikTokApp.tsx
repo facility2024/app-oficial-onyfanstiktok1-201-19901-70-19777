@@ -1791,44 +1791,57 @@ export const TikTokApp = () => {
     })();
     console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
     try {
-      // Primeiro, verificar se já existe um like ativo
+      // Primeiro, verificar se já existe like para este usuário/vídeo
       const {
         data: existingLike,
         error: checkError
-      } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', currentVideo.id).maybeSingle();
+      } = await supabase
+        .from('likes')
+        .select('id, is_active')
+        .eq('user_id', currentUserId)
+        .eq('video_id', currentVideo.id)
+        .maybeSingle();
+
       if (checkError && checkError.code !== 'PGRST116') {
         console.error('❌ Erro ao verificar like existente:', checkError);
         throw checkError;
       }
+
       console.log('🔍 VERIFICAÇÃO: Like existente:', existingLike);
-      let newLikedState = false;
-      let likeAction = '';
-      if (existingLike) {
-        // Se existe, toggle do estado is_active
-        newLikedState = !existingLike.is_active;
-        likeAction = newLikedState ? 'REATIVAR' : 'DESATIVAR';
+      let newLikedState = true;
+      let didPersistNewLike = false;
+
+      if (existingLike?.is_active) {
+        // ✅ Regra de negócio: curtida não pode ser removida no segundo clique
+        newLikedState = true;
+      } else if (existingLike && !existingLike.is_active) {
+        // Reativar curtida antiga
         const {
           error: updateError
-        } = await supabase.from('likes').update({
-          is_active: newLikedState
-        }).eq('id', existingLike.id);
+        } = await supabase
+          .from('likes')
+          .update({ is_active: true })
+          .eq('id', existingLike.id);
+
         if (updateError) throw updateError;
-        console.log(`✅ LIKE ${likeAction} - ID: ${existingLike.id}`);
+        didPersistNewLike = true;
+        console.log(`✅ LIKE REATIVADO - ID: ${existingLike.id}`);
       } else {
-        // Se não existe, criar novo like
-        newLikedState = true;
-        likeAction = 'CRIAR';
+        // Criar nova curtida
         const {
           error: insertError
-        } = await supabase.from('likes').insert({
-          user_id: currentUserId,
-          video_id: currentVideo.id,
-          // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
-          model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
-          is_active: true,
-          ip_address: null,
-          user_agent: navigator.userAgent
-        });
+        } = await supabase
+          .from('likes')
+          .insert({
+            user_id: currentUserId,
+            video_id: currentVideo.id,
+            // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
+            model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
+            is_active: true,
+            ip_address: null,
+            user_agent: navigator.userAgent
+          });
+
         if (insertError) {
           console.error('❌ Error inserting like:', insertError);
           // Se erro for de coluna não existir, tentar inserção mais simples
@@ -1836,46 +1849,60 @@ export const TikTokApp = () => {
             console.log('🔧 Tentando inserção simplificada...');
             const {
               error: simpleError
-            } = await supabase.from('likes').insert({
-              user_id: currentUserId,
-              video_id: currentVideo.id,
-              is_active: true
-            });
+            } = await supabase
+              .from('likes')
+              .insert({
+                user_id: currentUserId,
+                video_id: currentVideo.id,
+                is_active: true
+              });
+
             if (simpleError) throw simpleError;
           } else {
             throw insertError;
           }
         }
+
+        didPersistNewLike = true;
         console.log('✅ LIKE CRIADO com sucesso');
       }
 
-      // Atualizar estado local
+      // Atualizar estado local (sempre curtido)
       setIsLiked(newLikedState);
       if (currentVideo.id) {
-        localStorage.setItem(`liked_${currentVideo.id}`, String(newLikedState));
+        localStorage.setItem(`liked_${currentVideo.id}`, 'true');
       }
 
-      // ✨ IMPORTANTE: Registrar no sistema de analytics
+      // Registrar analytics apenas quando houve nova persistência de curtida
       const userId = currentVideo.user?.id || currentVideo.model_id || '';
       const modelId = currentVideo.model_id || userId;
-      if (userId) {
-        await trackLike(currentVideo.id, userId, newLikedState);
+      if (didPersistNewLike && userId) {
+        await trackLike(currentVideo.id, userId, true);
         ensureInteractedModel(userId);
         await checkAndTrackAction('like', currentVideo.id, userId);
 
         // 🧠 FEED INTELIGENTE: Marcar modelo/criador como favorito ao dar like
-        if (newLikedState && markModelAsFavorite) {
+        if (markModelAsFavorite) {
           markModelAsFavorite(userId);
         }
       }
 
-      // Update video likes count
-      const newCount = Math.max(0, currentVideo.likes_count + (newLikedState ? 1 : -1));
-      const {
-        error
-      } = await supabase.from('videos').update({
-        likes_count: newCount
-      }).eq('id', currentVideo.id);
+      // Fonte da verdade: total de likes ativos no banco
+      const { count: liveLikesCount, error: countError } = await supabase
+        .from('likes')
+        .select('id', { count: 'exact', head: true })
+        .eq('video_id', currentVideo.id)
+        .eq('is_active', true);
+
+      if (countError) throw countError;
+
+      const newCount = Math.max(0, liveLikesCount || 0);
+
+      const { error } = await supabase
+        .from('videos')
+        .update({ likes_count: newCount })
+        .eq('id', currentVideo.id);
+
       if (error) throw error;
 
       // Update local state
@@ -1883,11 +1910,13 @@ export const TikTokApp = () => {
         ...video,
         likes_count: newCount
       } : video));
-      if (newLikedState) {
-        // Add like explosion animation
+
+      if (didPersistNewLike) {
+        // Add like explosion animation apenas quando a curtida foi gravada agora
         createLikeExplosion();
       }
-      console.log('✅ TOGGLE LIKE - Ação completa! Novo count:', newCount);
+
+      console.log('✅ LIKE processado! Count atual:', newCount);
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);
       // Silenciar erro de like para o usuário

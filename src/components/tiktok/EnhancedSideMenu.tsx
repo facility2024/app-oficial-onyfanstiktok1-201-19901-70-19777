@@ -110,16 +110,24 @@ export const EnhancedSideMenu = ({
       toast.error('Faça login para curtir vídeos');
       return;
     }
+
+    // ✅ Regra de negócio: não descurtir e não duplicar contador local no segundo clique
+    if (isLiked) {
+      return;
+    }
     
     const newLikedState = await toggleLike(
-      video.id, 
-      video.user?.id || '', 
-      userId, 
+      video.id,
+      video.user?.id || '',
+      userId,
       isLiked
     );
-    
+
+    if (!isLiked && newLikedState) {
+      setLikesCount(prev => prev + 1);
+    }
+
     setIsLiked(newLikedState);
-    setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
   };
 
   const handleShare = async () => {

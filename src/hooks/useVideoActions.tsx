@@ -8,79 +8,58 @@ export const useVideoActions = () => {
   const { trackVideoAction } = useAnalytics();
 
   const toggleLike = useCallback(async (
-    videoId: string, 
-    modelId: string, 
+    videoId: string,
+    modelId: string,
     userId: string,
     isCurrentlyLiked: boolean
   ) => {
     try {
       setLoading(true);
 
+      // ✅ Regra de negócio: não permitir descurtir no segundo clique
       if (isCurrentlyLiked) {
-        // Remove like
-        const { error } = await supabase
-          .from('likes')
-          .update({ is_active: false })
-          .eq('video_id', videoId)
-          .eq('user_id', userId);
-
-        if (error) throw error;
-        
-        // Decrementar likes_count na tabela videos
-        const { data: videoData } = await supabase
-          .from('videos')
-          .select('likes_count')
-          .eq('id', videoId)
-          .single();
-        
-        if (videoData) {
-          await supabase
-            .from('videos')
-            .update({ likes_count: Math.max(0, (videoData.likes_count || 0) - 1) })
-            .eq('id', videoId);
-        }
-        
-        await trackVideoAction('like', videoId, modelId, userId, { action: 'unlike' });
-        toast.success('Like removido!');
-        return false;
-      } else {
-        // Use upsert to handle conflicts automatically
-        const { error: upsertError } = await supabase
-          .from('likes')
-          .upsert({
-            video_id: videoId,
-            model_id: modelId,
-            user_id: userId,
-            is_active: true,
-            ip_address: null,
-            user_agent: navigator.userAgent
-          }, {
-            onConflict: 'user_id,video_id'
-          });
-
-        if (upsertError && upsertError.code !== '23505') {
-          console.error('Upsert failed:', upsertError);
-          throw upsertError;
-        }
-        
-        // Incrementar likes_count na tabela videos
-        const { data: videoData } = await supabase
-          .from('videos')
-          .select('likes_count')
-          .eq('id', videoId)
-          .single();
-        
-        if (videoData) {
-          await supabase
-            .from('videos')
-            .update({ likes_count: (videoData.likes_count || 0) + 1 })
-            .eq('id', videoId);
-        }
-        
-        await trackVideoAction('like', videoId, modelId, userId, { action: 'like' });
-        toast.success('Vídeo curtido!');
         return true;
       }
+
+      // Criar/reativar curtida com upsert
+      const { error: upsertError } = await supabase
+        .from('likes')
+        .upsert({
+          video_id: videoId,
+          model_id: modelId,
+          user_id: userId,
+          is_active: true,
+          ip_address: null,
+          user_agent: navigator.userAgent
+        }, {
+          onConflict: 'user_id,video_id'
+        });
+
+      if (upsertError && upsertError.code !== '23505') {
+        console.error('Upsert failed:', upsertError);
+        throw upsertError;
+      }
+
+      // Fonte da verdade: contar likes ativos
+      const { count: liveLikesCount, error: countError } = await supabase
+        .from('likes')
+        .select('id', { count: 'exact', head: true })
+        .eq('video_id', videoId)
+        .eq('is_active', true);
+
+      if (countError) throw countError;
+
+      const safeLikeCount = Math.max(0, liveLikesCount || 0);
+
+      // Sincronizar agregador na tabela videos
+      await supabase
+        .from('videos')
+        .update({ likes_count: safeLikeCount })
+        .eq('id', videoId);
+
+      await trackVideoAction('like', videoId, modelId, userId, { action: 'like' });
+      toast.success('Vídeo curtido!');
+      return true;
     } catch (error) {
       console.error('Erro ao curtir vídeo:', error);
       // Silenciar todos os erros de like para o usuário

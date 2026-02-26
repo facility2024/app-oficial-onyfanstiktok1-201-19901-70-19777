@@ -119,26 +119,53 @@ export const AdminIntelligentFeed: React.FC = () => {
       const byGenre: { name: string; count: number }[] = [];
 
       // Top 5 vídeos com nome do modelo/criador
-      const { data: topData } = await supabase
+      const { data: topData, error: topErr } = await supabase
         .from('videos')
-        .select('id, title, views_count, likes_count, model_id, creator_id, models(display_name), profiles!videos_creator_id_fkey(display_name)')
+        .select('id, title, views_count, likes_count, model_id, creator_id')
         .eq('is_active', true)
         .order('views_count', { ascending: false })
         .limit(5);
 
-      const topVideos = topData?.map(v => {
-        const modelName = (v.models as any)?.display_name;
-        const creatorName = (v.profiles as any)?.display_name;
-        const owner = modelName || creatorName || 'Desconhecido';
-        const displayTitle = v.title && v.title.trim() !== '' ? v.title : owner;
-        return {
-          id: v.id,
-          title: displayTitle,
-          owner,
-          views: v.views_count || 0,
-          likes: v.likes_count || 0,
-        };
-      }) || [];
+      console.log('Top videos data:', topData, 'error:', topErr);
+
+      let topVideos: { id: string; title: string; owner: string; views: number; likes: number }[] = [];
+
+      if (topData && topData.length > 0) {
+        // Buscar nomes dos modelos
+        const modelIds = topData.filter(v => v.model_id).map(v => v.model_id!);
+        const creatorIds = topData.filter(v => v.creator_id).map(v => v.creator_id!);
+
+        let modelsMap: Record<string, string> = {};
+        let creatorsMap: Record<string, string> = {};
+
+        if (modelIds.length > 0) {
+          const { data: modelsData } = await supabase
+            .from('models')
+            .select('id, name')
+            .in('id', modelIds);
+          modelsData?.forEach((m: any) => { modelsMap[m.id] = m.name || 'Modelo'; });
+        }
+
+        if (creatorIds.length > 0) {
+          const { data: creatorsData } = await supabase
+            .from('profiles')
+            .select('id, name, username')
+            .in('id', creatorIds);
+          creatorsData?.forEach((c: any) => { creatorsMap[c.id] = c.name || c.username || 'Criador'; });
+        }
+
+        topVideos = topData.map(v => {
+          const owner = v.model_id ? (modelsMap[v.model_id] || 'Modelo') : (v.creator_id ? (creatorsMap[v.creator_id] || 'Criador') : 'Desconhecido');
+          const displayTitle = v.title && v.title.trim() !== '' ? v.title : owner;
+          return {
+            id: v.id,
+            title: displayTitle,
+            owner,
+            views: v.views_count || 0,
+            likes: v.likes_count || 0,
+          };
+        });
+      }
 
       setVideoStats({
         total: total || 0,

@@ -131,38 +131,53 @@ export const AdminIntelligentFeed: React.FC = () => {
       let topVideos: { id: string; title: string; owner: string; views: number; likes: number }[] = [];
 
       if (topData && topData.length > 0) {
-        // Buscar nomes dos modelos
         const modelIds = topData.filter(v => v.model_id).map(v => v.model_id!);
         const creatorIds = topData.filter(v => v.creator_id).map(v => v.creator_id!);
+        const videoIds = topData.map(v => v.id);
 
-        let modelsMap: Record<string, string> = {};
-        let creatorsMap: Record<string, string> = {};
+        const [modelsRes, creatorsRes, likesRes] = await Promise.all([
+          modelIds.length > 0
+            ? supabase.from('models').select('id, name').in('id', modelIds)
+            : Promise.resolve({ data: [], error: null } as any),
+          creatorIds.length > 0
+            ? supabase.from('profiles').select('id, name, username').in('id', creatorIds)
+            : Promise.resolve({ data: [], error: null } as any),
+          videoIds.length > 0
+            ? supabase.from('likes').select('video_id').in('video_id', videoIds)
+            : Promise.resolve({ data: [], error: null } as any),
+        ]);
 
-        if (modelIds.length > 0) {
-          const { data: modelsData } = await supabase
-            .from('models')
-            .select('id, name')
-            .in('id', modelIds);
-          modelsData?.forEach((m: any) => { modelsMap[m.id] = m.name || 'Modelo'; });
-        }
+        const modelsMap: Record<string, string> = {};
+        const creatorsMap: Record<string, string> = {};
+        const likesMap: Record<string, number> = {};
 
-        if (creatorIds.length > 0) {
-          const { data: creatorsData } = await supabase
-            .from('profiles')
-            .select('id, name, username')
-            .in('id', creatorIds);
-          creatorsData?.forEach((c: any) => { creatorsMap[c.id] = c.name || c.username || 'Criador'; });
-        }
+        modelsRes.data?.forEach((m: any) => {
+          modelsMap[m.id] = m.name || 'Modelo';
+        });
+
+        creatorsRes.data?.forEach((c: any) => {
+          creatorsMap[c.id] = c.name || c.username || 'Criador';
+        });
+
+        likesRes.data?.forEach((like: any) => {
+          if (!like.video_id) return;
+          likesMap[like.video_id] = (likesMap[like.video_id] || 0) + 1;
+        });
 
         topVideos = topData.map(v => {
-          const owner = v.model_id ? (modelsMap[v.model_id] || 'Modelo') : (v.creator_id ? (creatorsMap[v.creator_id] || 'Criador') : 'Desconhecido');
+          const owner = v.model_id
+            ? (modelsMap[v.model_id] || 'Modelo')
+            : (v.creator_id ? (creatorsMap[v.creator_id] || 'Criador') : 'Desconhecido');
+
           const displayTitle = v.title && v.title.trim() !== '' ? v.title : owner;
+          const liveLikes = likesMap[v.id] ?? v.likes_count ?? 0;
+
           return {
             id: v.id,
             title: displayTitle,
             owner,
-            views: v.views_count || 0,
-            likes: v.likes_count || 0,
+            views: Math.max(0, v.views_count || 0),
+            likes: Math.max(0, liveLikes),
           };
         });
       }

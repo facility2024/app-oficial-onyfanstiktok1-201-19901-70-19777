@@ -217,8 +217,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
           const cachedData = JSON.parse(cached);
           setContents(cachedData.contents);
           setPanelUrl(cachedData.panelUrl);
-          setLoading(false);
-          return;
+          // mantém dados em tela, mas continua buscando do banco para atualizar likes em tempo real
         }
       }
       
@@ -300,6 +299,23 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         console.warn('⚠️ Erro ao carregar vídeos do perfil:', videosError);
       }
 
+      // Buscar likes reais por vídeo (fonte da verdade), para não depender de likes_count defasado
+      const videoIds = (videosData || []).map((item: any) => item.id).filter(Boolean);
+      const likesMap: Record<string, number> = {};
+
+      if (videoIds.length > 0) {
+        const { data: likesData } = await supabase
+          .from('likes')
+          .select('video_id')
+          .in('video_id', videoIds)
+          .eq('is_active', true);
+
+        likesData?.forEach((like: any) => {
+          if (!like.video_id) return;
+          likesMap[like.video_id] = (likesMap[like.video_id] || 0) + 1;
+        });
+      }
+
       // Transformar vídeos para o formato de conteúdo
       let transformedVideos = (videosData || []).map(item => ({
         id: item.id,
@@ -307,7 +323,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
         video_url: item.video_url,
         type: 'video' as const,
-        likes_count: item.likes_count || 0,
+        likes_count: likesMap[item.id] ?? item.likes_count ?? 0,
         views_count: item.views_count || 0,
         created_at: item.created_at,
         visibility: (item.visibility as 'public' | 'premium' | 'private') || 'public'

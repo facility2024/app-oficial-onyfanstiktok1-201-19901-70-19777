@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import coconudiLogo from '@/assets/coconudi-splash-logo.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 export const SplashScreen = () => {
   const navigate = useNavigate();

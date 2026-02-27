@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import coconudiLogo from '@/assets/coconudi-logo-header.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 interface VIPPlan {
   price: number;

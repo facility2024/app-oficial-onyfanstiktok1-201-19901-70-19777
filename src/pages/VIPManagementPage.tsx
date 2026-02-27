@@ -7,7 +7,7 @@ import { ArrowLeft, Crown, Calendar, Clock, CreditCard, Shield, Sparkles } from 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
-import coconudiLogo from '@/assets/coconudi-logo-white.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 interface PaymentHistory {
   id: string;

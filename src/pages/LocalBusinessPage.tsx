@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { useBusinessFavorites } from '@/hooks/useBusinessFavorites';
-import coconudiLogo from '@/assets/coconudi-logo-white.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 interface LocalBusiness {
   id: string;

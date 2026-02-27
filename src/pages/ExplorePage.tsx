@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CategoryMenu } from "@/components/tiktok/CategoryMenu";
 import { FullscreenVideoModal } from "@/components/tiktok/FullscreenVideoModal";
 import { toast } from "sonner";
-import coconudiLogo from '@/assets/coconudi-logo-white.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 interface ExploreVideo {
   id: string;

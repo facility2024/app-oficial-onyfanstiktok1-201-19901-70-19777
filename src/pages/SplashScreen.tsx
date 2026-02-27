@@ -1,60 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import splashLogo from '@/assets/coconudi-splash.png';
 
 export const SplashScreen = () => {
   const navigate = useNavigate();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [phase, setPhase] = useState<'start' | 'zoom' | 'done'>('start');
 
   useEffect(() => {
-    // Marca logo como carregada após um delay
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 500);
+    // Inicia zoom após breve delay
+    const zoomTimer = setTimeout(() => setPhase('zoom'), 200);
 
-    // Redireciona para o app após a animação completa
+    // Redireciona após 3 segundos
     const redirectTimer = setTimeout(() => {
+      setPhase('done');
       navigate('/app');
-    }, 2500);
+    }, 3000);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(zoomTimer);
       clearTimeout(redirectTimer);
     };
   }, [navigate]);
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black overflow-hidden">
-      {/* Fundo desfocado */}
-      <div 
-        className="absolute inset-0 w-full h-full"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1579546929518-9e396f3cc809)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(20px)',
-          transform: 'scale(1.1)'
-        }}
-      />
-      
-      {/* Overlay escuro */}
-      <div className="absolute inset-0 bg-black/50" />
-      
-      {/* Logo com animação de abertura */}
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-gray-900 via-black to-gray-950 overflow-hidden">
+      {/* Logo com efeito de zoom */}
       <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
-        <div
-          className={`transition-all duration-1000 ease-out ${
-            isLoaded 
-              ? 'scale-100 opacity-100 rotate-0' 
-              : 'scale-50 opacity-0 rotate-180'
-          }`}
-        >
-          <img 
-            src={coconudiLogo}
-            alt="CocoNudi"
-            className="w-64 h-64 object-contain drop-shadow-2xl"
-          />
-        </div>
+        <img 
+          src={splashLogo}
+          alt="CocoNudi"
+          className="w-52 h-52 md:w-72 md:h-72 object-contain drop-shadow-[0_0_40px_rgba(128,0,255,0.3)] transition-all duration-[2500ms] ease-out"
+          style={{
+            transform: phase === 'start' ? 'scale(0.3)' : 'scale(1)',
+            opacity: phase === 'start' ? 0 : 1,
+          }}
+        />
       </div>
     </div>
   );

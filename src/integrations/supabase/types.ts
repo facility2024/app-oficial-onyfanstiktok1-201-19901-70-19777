@@ -4473,6 +4473,51 @@ export type Database = {
         }
         Relationships: []
       }
+      physical_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_urls: string[]
+          is_active: boolean
+          name: string
+          order_index: number
+          price: number | null
+          purchase_url: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          name: string
+          order_index?: number
+          price?: number | null
+          purchase_url?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          name?: string
+          order_index?: number
+          price?: number | null
+          purchase_url?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       pix_payments: {
         Row: {
           amount: number

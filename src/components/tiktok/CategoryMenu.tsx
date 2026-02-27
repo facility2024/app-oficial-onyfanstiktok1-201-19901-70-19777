@@ -11,7 +11,7 @@ import { ModelCarousel } from "./ModelCarousel";
 import { MarketplaceCarousel } from "./MarketplaceCarousel";
 import { LocalBusinessCarousel } from "./LocalBusinessCarousel";
 import { GenreSelector } from "./GenreSelector";
-import { MARKETPLACE_GENRES } from '@/constants/marketplaceGenres';
+
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
@@ -274,25 +274,6 @@ export const CategoryMenu = ({
             />
           </div>
 
-          {/* Gêneros do Marketplace */}
-          <div className="px-4 py-3 border-b border-white/10">
-            <p className="text-xs text-gray-400 mb-2 px-2">📂 Categorias Marketplace</p>
-            <div className="grid grid-cols-2 gap-2 px-2">
-              {MARKETPLACE_GENRES.map((genre) => (
-                <button
-                  key={genre.name}
-                  onClick={() => {
-                    setOpen(false);
-                    navigate(`/marketplace?genre=${encodeURIComponent(genre.name)}`);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/15 transition-colors text-sm text-white/80"
-                >
-                  <span className="text-base">{genre.icon}</span>
-                  <span className="truncate">{genre.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Menu de Navegação */}
           <div className="pb-24">

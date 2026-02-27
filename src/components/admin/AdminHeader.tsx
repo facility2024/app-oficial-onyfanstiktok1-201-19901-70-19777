@@ -9,7 +9,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAdminNotifications } from '@/hooks/useAdminNotifications';
-import coconudiLogo from '@/assets/coconudi-logo-header.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 interface AdminHeaderProps {
   notifications: number;

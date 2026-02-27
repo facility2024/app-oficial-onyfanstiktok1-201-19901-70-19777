@@ -23,7 +23,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import coconudiLogo from '@/assets/coconudi-logo-white.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import { ReferralSection } from '@/components/profile/ReferralSection';
 import { TransactionHistory } from '@/components/profile/TransactionHistory';
 

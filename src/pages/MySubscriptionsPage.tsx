@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAllSubscriptions } from '@/hooks/useAllSubscriptions';
-import coconudiLogo from '@/assets/coconudi-logo-white.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 const MySubscriptionsPage = () => {
   const navigate = useNavigate();

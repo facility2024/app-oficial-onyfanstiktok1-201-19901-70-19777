@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Crown, CheckCircle, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import coconudiLogo from '@/assets/coconudi-logo-header.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
 
 const PaymentConfirmation = () => {
   const navigate = useNavigate();

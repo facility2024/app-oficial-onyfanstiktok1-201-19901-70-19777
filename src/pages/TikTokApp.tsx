@@ -40,8 +40,8 @@ import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';
 import iconMarketplace from '@/assets/icon-marketplace.png';
 import iconShare from '@/assets/icon-share.png';
-import coconudiLogo from '@/assets/coconudi-logo-header.png';
-import coconudiHeaderLogo from '@/assets/coconudi-header-logo.png';
+import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import coconudiHeaderLogo from '@/assets/coconudi-logo-new.png';
 import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';

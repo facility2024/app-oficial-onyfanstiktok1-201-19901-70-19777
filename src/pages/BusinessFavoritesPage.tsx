@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBusinessFavorites } from "@/hooks/useBusinessFavorites";
-import coconudiLogo from "@/assets/coconudi-logo-white.png";
+import coconudiLogo from "@/assets/coconudi-logo-new.png";
 
 const BusinessFavoritesPage = () => {
   const navigate = useNavigate();

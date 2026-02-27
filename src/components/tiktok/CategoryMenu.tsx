@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown, Radio } from "lucide-react";
 import { useState } from "react";
-import coconutIcon from "@/assets/coconut-icon.png";
+import coconutIcon from "@/assets/coconudi-logo-new.png";
 import { UserMenuHeader } from "./UserMenuHeader";
 import { useNavigate } from "react-router-dom";
 

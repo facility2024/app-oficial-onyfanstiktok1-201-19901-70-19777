@@ -13,7 +13,7 @@ import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import { BannerCarousel } from "@/components/tiktok/BannerCarousel";
 import { PhysicalProductsSection } from "@/components/tiktok/PhysicalProductsSection";
-import logoWhite from "@/assets/coconudi-logo-white.png";
+import logoWhite from "@/assets/coconudi-logo-new.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
 

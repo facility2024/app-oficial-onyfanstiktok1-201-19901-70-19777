@@ -527,6 +527,24 @@ export default function MarketplacePage() {
   };
   const categories = ["all", ...new Set(products.map(p => p.category))];
   const filteredProducts = selectedCategory === "all" ? products : products.filter(p => p.category === selectedCategory);
+
+  // Lista de nomes de gêneros (exceto Hétero) para filtrar da tela principal
+  const nonHeteroGenres = MARKETPLACE_GENRES
+    .filter(g => g.name !== 'Hétero')
+    .map(g => g.name.toLowerCase());
+
+  // Função para verificar se um item pertence a um gênero não-Hétero
+  const belongsToNonHeteroGenre = (item: any) => {
+    const cat = (item.category || '').toLowerCase();
+    const genres = Array.isArray(item.genres) ? item.genres.map((g: string) => g.toLowerCase()) : [];
+    return nonHeteroGenres.some(g => 
+      cat.includes(g) || g.includes(cat) || genres.some((ig: string) => ig.includes(g) || g.includes(ig))
+    );
+  };
+
+  // Produtos filtrados para a home (apenas Hétero ou sem gênero específico)
+  const homeProducts = products.filter(p => !belongsToNonHeteroGenre(p));
+  const homeFeaturedVideos = featuredVideos.filter(v => !belongsToNonHeteroGenre(v));
   if (loading) {
     return <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="text-gray-400">Carregando produtos...</p>
@@ -743,12 +761,12 @@ export default function MarketplacePage() {
             🛍️ PRODUTOS POR MODELO
           </h2>
 
-          {products.length === 0 ? (
+          {homeProducts.length === 0 ? (
             <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {products.slice(0, productsToShow).map(product => (
+                {homeProducts.slice(0, productsToShow).map(product => (
                   <div
                     key={product.id}
                     className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-colors"
@@ -777,7 +795,7 @@ export default function MarketplacePage() {
                   </div>
                 ))}
               </div>
-              {products.length > productsToShow && (
+              {homeProducts.length > productsToShow && (
                 <div className="flex justify-center mt-4">
                   <Button
                     onClick={() => setProductsToShow(prev => prev + 15)}
@@ -793,14 +811,14 @@ export default function MarketplacePage() {
       )}
 
       {/* PRODUTOS EM ALTA - Apenas vídeos com is_featured = true */}
-      {!selectedGenre && featuredVideos.length > 0 && (
+      {!selectedGenre && homeFeaturedVideos.length > 0 && (
         <div className="container mx-auto px-4 pb-8">
           <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
             🔥 PRODUTOS EM ALTA
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {featuredVideos.map(video => (
+            {homeFeaturedVideos.map(video => (
               <div 
                 key={video.id} 
                 className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900"

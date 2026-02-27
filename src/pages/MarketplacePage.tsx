@@ -597,19 +597,20 @@ export default function MarketplacePage() {
           <h2 className="text-white font-bold text-xl">CATEGORIAS - GÊNERO</h2>
         </div>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
           {VIDEO_GENRES.map(genre => (
             <Button 
               key={genre.name} 
               variant={selectedGenre === genre.name ? "default" : "outline"} 
               onClick={() => handleGenreClick(genre.name)} 
-              className={`whitespace-nowrap px-4 py-2 ${
+              className={`w-full px-2 py-2.5 text-sm flex items-center justify-center gap-1.5 ${
                 selectedGenre === genre.name 
                   ? "bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white border-none" 
                   : "bg-gray-800 text-white border-white/20 hover:bg-gray-700"
               }`}
             >
-              {genre.icon} {genre.name}
+              <span>{genre.icon}</span>
+              <span className="truncate">{genre.name}</span>
             </Button>
           ))}
         </div>

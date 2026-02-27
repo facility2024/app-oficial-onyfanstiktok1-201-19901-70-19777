@@ -176,35 +176,35 @@ export const AdminPhysicalProducts = () => {
           <div className="space-y-4">
             <div>
               <Label>Nome do Produto *</Label>
-              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-gray-800 border-white/10" />
+              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-gray-800 border-white/10 text-white" />
             </div>
             <div>
               <Label>Descrição</Label>
-              <Textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="bg-gray-800 border-white/10" rows={3} />
+              <Textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="bg-gray-800 border-white/10 text-white" rows={3} />
             </div>
             <div>
               <Label>Categoria</Label>
-              <Input value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="bg-gray-800 border-white/10" placeholder="Ex: sex shop, masculino, feminino" />
+              <Input value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="bg-gray-800 border-white/10 text-white" placeholder="Ex: sex shop, masculino, feminino" />
             </div>
             <div>
               <Label>URLs das Imagens * (separadas por vírgula)</Label>
-              <Textarea value={form.image_urls} onChange={e => setForm({...form, image_urls: e.target.value})} className="bg-gray-800 border-white/10" rows={2} placeholder="https://img1.jpg, https://img2.jpg" />
+              <Textarea value={form.image_urls} onChange={e => setForm({...form, image_urls: e.target.value})} className="bg-gray-800 border-white/10 text-white" rows={2} placeholder="https://img1.jpg, https://img2.jpg" />
             </div>
             <div>
               <Label>URL do Vídeo (YouTube ou MP4)</Label>
-              <Input value={form.video_url} onChange={e => setForm({...form, video_url: e.target.value})} className="bg-gray-800 border-white/10" placeholder="https://youtube.com/... ou https://cdn.../video.mp4" />
+              <Input value={form.video_url} onChange={e => setForm({...form, video_url: e.target.value})} className="bg-gray-800 border-white/10 text-white" placeholder="https://youtube.com/... ou https://cdn.../video.mp4" />
             </div>
             <div>
               <Label>Preço (R$)</Label>
-              <Input type="number" step="0.01" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="bg-gray-800 border-white/10" placeholder="29.90" />
+              <Input type="number" step="0.01" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="bg-gray-800 border-white/10 text-white" placeholder="29.90" />
             </div>
             <div>
               <Label>Link de Compra (CTA)</Label>
-              <Input value={form.purchase_url} onChange={e => setForm({...form, purchase_url: e.target.value})} className="bg-gray-800 border-white/10" placeholder="https://pagamento.com/produto" />
+              <Input value={form.purchase_url} onChange={e => setForm({...form, purchase_url: e.target.value})} className="bg-gray-800 border-white/10 text-white" placeholder="https://pagamento.com/produto" />
             </div>
             <div>
               <Label>Ordem de exibição</Label>
-              <Input type="number" value={form.order_index} onChange={e => setForm({...form, order_index: parseInt(e.target.value) || 0})} className="bg-gray-800 border-white/10" />
+              <Input type="number" value={form.order_index} onChange={e => setForm({...form, order_index: parseInt(e.target.value) || 0})} className="bg-gray-800 border-white/10 text-white" />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.is_active} onCheckedChange={v => setForm({...form, is_active: v})} />

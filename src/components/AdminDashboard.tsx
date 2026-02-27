@@ -44,6 +44,7 @@ import { AdminModelSubscriptions } from './admin/AdminModelSubscriptions';
 import { AdminAffiliates } from './admin/AdminAffiliates';
 import { AdminVideoCall } from './admin/AdminVideoCall';
 import { AdminAds } from './admin/AdminAds';
+import { AdminPhysicalProducts } from './admin/AdminPhysicalProducts';
 import { AdminLive } from './admin/AdminLive';
 import { AdminPromoAds } from './admin/AdminPromoAds';
 import { AdminCadastros } from './admin/AdminCadastros';
@@ -144,7 +145,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads'];
+    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -193,6 +194,8 @@ export const AdminDashboard = () => {
         return <AdminGamification />;
       case 'marketplace':
         return <AdminMarketplace />;
+      case 'physical-products':
+        return <AdminPhysicalProducts />;
       case 'local-businesses':
         return <AdminLocalBusinesses />;
       case 'chat-panels':

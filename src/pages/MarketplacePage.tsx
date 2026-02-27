@@ -12,6 +12,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import { BannerCarousel } from "@/components/tiktok/BannerCarousel";
+import { PhysicalProductsSection } from "@/components/tiktok/PhysicalProductsSection";
 import logoWhite from "@/assets/coconudi-logo-white.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
@@ -753,6 +754,9 @@ export default function MarketplacePage() {
           )}
         </div>
       )}
+
+      {/* PRODUTOS FÍSICOS - Seção da lojinha */}
+      {!selectedGenre && <PhysicalProductsSection />}
 
       {/* PRODUTOS POR MODELO (marketplace_products por categoria) */}
       {!selectedGenre && (

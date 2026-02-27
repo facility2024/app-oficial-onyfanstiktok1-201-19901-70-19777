@@ -155,10 +155,10 @@ export const AdminPhysicalProducts = () => {
                   {p.video_url && <><Video className="w-3 h-3 ml-2" /> Vídeo</>}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(p)} className="flex-1 text-white border-white/20">
+                  <Button size="sm" onClick={() => openEdit(p)} className="flex-1 bg-amber-600 hover:bg-amber-500 text-white">
                     <Edit className="w-3 h-3 mr-1" /> Editar
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(p.id)}>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(p.id)} className="hover:bg-red-500">
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>

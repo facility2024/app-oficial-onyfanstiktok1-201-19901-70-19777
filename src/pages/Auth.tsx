@@ -496,7 +496,7 @@ const Auth = () => {
   );
 
   const renderCard = () => (
-    <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0">
+    <Card className="w-full max-w-[95vw] md:w-[467px] bg-gradient-to-b from-gray-900 to-black shadow-2xl border border-white/10">
       <CardHeader className="space-y-2 pb-3">
         <div className="flex flex-col items-center justify-center space-y-2">
           <img 
@@ -508,13 +508,13 @@ const Auth = () => {
           />
         </div>
         <div className="text-center space-y-1">
-          <CardTitle className="text-lg md:text-xl font-bold text-foreground">
+          <CardTitle className="text-lg md:text-xl font-bold text-white">
             {mode === 'login' && 'Bem-vindo de volta'}
             {mode === 'signup' && 'Criar conta'}
             {mode === 'forgot-password' && 'Recuperar senha'}
             {mode === 'reset-password' && 'Redefinir senha'}
           </CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
+          <CardDescription className="text-sm text-white/60">
             {mode === 'login' && 'Entre para acessar conteúdo exclusivo'}
             {mode === 'signup' && 'Cadastre-se para começar'}
             {mode === 'forgot-password' && 'Enviaremos um link para seu email'}
@@ -533,43 +533,43 @@ const Auth = () => {
           {mode === 'signup' && (
             <>
               <div className="space-y-1">
-                <Label htmlFor="name" className="text-xs md:text-sm text-foreground">Nome Completo</Label>
+                <Label htmlFor="name" className="text-xs md:text-sm text-white">Nome Completo</Label>
                 <Input 
                   id="name" 
                   type="text" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="bg-background border-border text-foreground"
+                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   placeholder="Seu nome"
                   required
                   disabled={loading}
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="phone" className="text-xs md:text-sm text-foreground">Telefone (WhatsApp)</Label>
+                <Label htmlFor="phone" className="text-xs md:text-sm text-white">Telefone (WhatsApp)</Label>
                 <Input 
                   id="phone" 
                   type="tel" 
                   value={phone}
                   onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-                  className="bg-background border-border text-foreground"
+                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   placeholder="(00) 00000-0000"
                   required
                   disabled={loading}
                 />
-                <p className="text-[10px] text-muted-foreground">Use o mesmo número para pagamentos VIP</p>
+                <p className="text-[10px] text-white/40">Use o mesmo número para pagamentos VIP</p>
               </div>
             </>
           )}
           
           <div className="space-y-1">
-            <Label htmlFor="email" className="text-xs md:text-sm text-foreground">Email</Label>
+            <Label htmlFor="email" className="text-xs md:text-sm text-white">Email</Label>
             <Input 
               id="email" 
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-background border-border text-foreground"
+               className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
               placeholder="seu@email.com"
               required
               disabled={loading}
@@ -579,13 +579,13 @@ const Auth = () => {
           {mode === 'login' && (
             <>
               <div className="space-y-1">
-                <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
+                 <Label htmlFor="password" className="text-xs md:text-sm text-white">Senha</Label>
                 <Input 
                   id="password" 
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-background border-border text-foreground"
+                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   placeholder="••••••••"
                   required
                   disabled={loading}
@@ -599,7 +599,7 @@ const Auth = () => {
                     setMode('forgot-password');
                     setPassword('');
                   }}
-                  className="text-sm text-primary hover:underline transition-colors"
+                  className="text-sm text-purple-400 hover:text-purple-300 hover:underline transition-colors"
                   disabled={loading}
                 >
                   Esqueci minha senha
@@ -610,13 +610,13 @@ const Auth = () => {
 
           {mode === 'signup' && (
             <div className="space-y-1">
-              <Label htmlFor="password" className="text-xs md:text-sm text-foreground">Senha</Label>
+              <Label htmlFor="password" className="text-xs md:text-sm text-white">Senha</Label>
               <Input 
                 id="password" 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-background border-border text-foreground"
+                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 placeholder="••••••••"
                 required
                 disabled={loading}
@@ -625,21 +625,21 @@ const Auth = () => {
           )}
 
           {mode === 'forgot-password' && (
-            <p className="text-xs text-muted-foreground">
-              Enviaremos um link de recuperação para este email.
-            </p>
+             <p className="text-xs text-white/40">
+               Enviaremos um link de recuperação para este email.
+             </p>
           )}
 
           {mode === 'reset-password' && (
             <>
               <div className="space-y-1">
-                <Label htmlFor="newPassword" className="text-xs md:text-sm text-foreground">Nova Senha</Label>
+                <Label htmlFor="newPassword" className="text-xs md:text-sm text-white">Nova Senha</Label>
                 <Input 
                   id="newPassword" 
                   type="password" 
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="bg-background border-border text-foreground"
+                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   placeholder="••••••••"
                   required
                   disabled={loading}
@@ -647,13 +647,13 @@ const Auth = () => {
               </div>
               
               <div className="space-y-1">
-                <Label htmlFor="confirmPassword" className="text-xs md:text-sm text-foreground">Confirmar Senha</Label>
+                <Label htmlFor="confirmPassword" className="text-xs md:text-sm text-white">Confirmar Senha</Label>
                 <Input 
                   id="confirmPassword" 
                   type="password" 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-background border-border text-foreground"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   placeholder="••••••••"
                   required
                   disabled={loading}
@@ -662,9 +662,9 @@ const Auth = () => {
             </>
           )}
           
-          <Button 
-            type="submit" 
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+           <Button 
+             type="submit" 
+             className="w-full bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 to-purple-600 text-white font-bold hover:opacity-90 border-0"
             disabled={loading}
           >
             {loading ? (
@@ -710,7 +710,7 @@ const Auth = () => {
                 setName('');
                 setPhone('');
               }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+               className="text-sm text-white/60 hover:text-white transition-colors"
               disabled={loading}
             >
               {mode === 'login' 

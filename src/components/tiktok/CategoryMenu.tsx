@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown, Radio } from "lucide-react";
 import { useState } from "react";
-import coconutIcon from "@/assets/coconudi-logo-new.png";
+import coconutIcon from "@/assets/coconudi-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
 import { useNavigate } from "react-router-dom";
 
@@ -215,17 +215,14 @@ export const CategoryMenu = ({
         {/* Header Fixo */}
         <div className="flex-shrink-0">
           <SheetHeader className="p-6 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+            <div className="flex items-center justify-center">
+              <div className="w-14 h-14 shrink-0">
                 <img 
                   src={coconutIcon} 
                   alt="Coconudi" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
-              <SheetTitle className="text-white text-2xl font-bold tracking-tight">
-                coconudi
-              </SheetTitle>
             </div>
           </SheetHeader>
           

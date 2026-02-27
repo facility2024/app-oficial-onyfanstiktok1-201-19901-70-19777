@@ -498,15 +498,14 @@ const Auth = () => {
   const renderCard = () => (
     <Card className="w-full max-w-[95vw] md:w-[467px] bg-card shadow-2xl border-0">
       <CardHeader className="space-y-2 pb-3">
-        <div className="flex flex-col items-center justify-center space-y-1">
+        <div className="flex flex-col items-center justify-center space-y-2">
           <img 
             src={coconudiLogo} 
             alt="COCONUDI" 
-            className="h-10 md:h-12 object-contain animate-float" 
+            className="h-16 md:h-20 object-contain" 
             loading="eager"
             fetchPriority="high"
           />
-          <h1 className="text-lg md:text-xl font-bold text-foreground tracking-wide">CocoNudi</h1>
         </div>
         <div className="text-center space-y-1">
           <CardTitle className="text-lg md:text-xl font-bold text-foreground">

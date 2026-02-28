@@ -1992,6 +1992,66 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_promotions: {
+        Row: {
+          avatar_url: string | null
+          banner_url: string | null
+          clicks_count: number | null
+          created_at: string | null
+          cta_link: string | null
+          cta_text: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          media_type: string
+          media_url: string
+          position_interval: number | null
+          priority: number | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          clicks_count?: number | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url: string
+          position_interval?: number | null
+          priority?: number | null
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          clicks_count?: number | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url?: string
+          position_interval?: number | null
+          priority?: number | null
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       gamification_actions: {
         Row: {
           action_type: string

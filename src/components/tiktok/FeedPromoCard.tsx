@@ -30,8 +30,10 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [localMuted, setLocalMuted] = useState(isMuted);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
+
   const handleMediaClick = () => {
-    if (promo.media_type === 'video' && videoRef.current) {
+    if (isVideoMedia && videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
       } else {
@@ -72,7 +74,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
       {/* Center: Media (Video or Image) */}
       <div className="flex-1 flex items-center justify-center relative" onClick={handleMediaClick}>
-        {promo.media_type === 'video' ? (
+        {isVideoMedia ? (
           <>
             <video
               ref={videoRef}
@@ -138,7 +140,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         </div>
 
         {/* Mute/Unmute (se vídeo) */}
-        {promo.media_type === 'video' && (
+        {isVideoMedia && (
           <div className="flex flex-col items-center cursor-pointer" onClick={(e) => { e.stopPropagation(); setLocalMuted(!localMuted); }}>
             {localMuted ? (
               <VolumeX className="w-7 h-7 text-white drop-shadow-lg" />

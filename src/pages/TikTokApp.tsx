@@ -126,13 +126,12 @@ export const TikTokApp = () => {
   } = useIntelligentFeed();
 
   // 📢 PROMOÇÕES NO FEED
-  const { promotions, getPromoForPosition, videoToSlideIndex, slideToVideoIndex } = useFeedPromotions();
+  const { promotions } = useFeedPromotions();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [desktopSlideIndex, setDesktopSlideIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -348,27 +347,61 @@ export const TikTokApp = () => {
     });
   }, [emblaApi]);
 
-  // 📢 Reinicializar embla quando promoções carregam (slides dinâmicos)
+  // 📢 Injetar promoções como vídeos falsos no feed
+  const promoInjectedRef = useRef(false);
   useEffect(() => {
-    if (emblaApi && promotions.length > 0) {
-      console.log('📢 Promoções carregadas, reinicializando embla com', promotions.length, 'promos');
-      // Small delay to let React render the new slides first
-      const timer = setTimeout(() => {
-        emblaApi.reInit();
-      }, 100);
-      return () => clearTimeout(timer);
+    if (promoInjectedRef.current) return;
+    if (videos.length === 0 || promotions.length === 0) return;
+    // Não injetar se já tem promos
+    if (videos.some(v => v.id.startsWith('promo-'))) {
+      promoInjectedRef.current = true;
+      return;
     }
-  }, [emblaApi, promotions.length]);
-  useEffect(() => {
-    if (emblaApi || isMobile) return;
-    setDesktopSlideIndex(videoToSlideIndex(currentVideoIndex));
-  }, [emblaApi, isMobile, currentVideoIndex, videoToSlideIndex]);
 
-  const promoSlotsCount = videos.reduce((count, _video, idx) => count + (getPromoForPosition(idx) ? 1 : 0), 0);
-  const totalFeedSlides = videos.length + promoSlotsCount;
-  const desktopSlideInfo = slideToVideoIndex(desktopSlideIndex);
-  const desktopPromo = desktopSlideInfo.isPromo ? getPromoForPosition(desktopSlideInfo.videoIndex) : null;
-  const isDesktopPromoSlide = !isMobile && !!desktopPromo;
+    promoInjectedRef.current = true;
+    const interval = promotions[0]?.position_interval || 5;
+    const newVideos = [...videos];
+    let inserted = 0;
+
+    for (let i = 0; i < promotions.length; i++) {
+      const pos = (i + 1) * interval + inserted;
+      if (pos > newVideos.length) break;
+
+      const promo = promotions[i];
+      const fakeVideo: Video = {
+        id: `promo-${promo.id}`,
+        title: promo.title || promo.display_name,
+        description: promo.description || '',
+        video_url: promo.media_url,
+        thumbnail_url: promo.banner_url || '',
+        user_id: `promo-${promo.id}`,
+        likes_count: 0,
+        comments_count: 0,
+        shares_count: 0,
+        views_count: promo.views_count || 0,
+        music_name: `${promo.display_name} • Patrocinado`,
+        is_active: true,
+        visibility: 'public',
+        created_at: new Date().toISOString(),
+        user: {
+          id: `promo-${promo.id}`,
+          username: promo.display_name,
+          avatar_url: promo.avatar_url || '/placeholder.svg',
+          followers_count: 0,
+          following_count: 0,
+          is_online: false,
+          created_at: new Date().toISOString(),
+          bio: promo.description || '',
+          posting_panel_url: promo.cta_link || undefined,
+        },
+      };
+      newVideos.splice(pos, 0, fakeVideo);
+      inserted++;
+    }
+
+    console.log('📢 Promos injetadas no feed:', inserted, 'promos em', newVideos.length, 'itens');
+    setVideos(newVideos);
+  }, [videos.length, promotions]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
@@ -415,23 +448,7 @@ export const TikTokApp = () => {
     });
     if (!emblaApi) return;
     const onSelect = () => {
-      console.log('🎪 ON SELECT DISPARADO!');
-      const slideIdx = emblaApi.selectedScrollSnap();
-      const { isPromo, videoIndex: newIndex } = slideToVideoIndex(slideIdx);
-      console.log('📊 DEBUG LOGIN:', {
-        slideIdx,
-        newIndex,
-        isPromo,
-        currentVideoIndex,
-        currentUser: !!currentUser,
-        videosWatched,
-        isForward: newIndex > currentVideoIndex
-      });
-      // Se é um slide de promo, não atualizar o índice do vídeo
-      if (isPromo) {
-        console.log('📢 Slide de promoção - mantendo índice do vídeo');
-        return;
-      }
+      const newIndex = emblaApi.selectedScrollSnap();
       if (newIndex !== currentVideoIndex) {
         console.log('📹 Mudando de vídeo:', currentVideoIndex, '→', newIndex);
         setCurrentVideoIndex(newIndex);
@@ -481,7 +498,7 @@ export const TikTokApp = () => {
       console.log('🎪 Removendo listener onSelect');
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate, slideToVideoIndex]);
+  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate]);
 
   // 🔐 Bloqueia interações do Embla quando redirecionado para login
   useEffect(() => {
@@ -1437,7 +1454,7 @@ export const TikTokApp = () => {
       setCurrentVideoIndex(videoIndex);
       // Scroll do carousel para o vídeo específico
       if (emblaApi) {
-        emblaApi.scrollTo(videoToSlideIndex(videoIndex));
+        emblaApi.scrollTo(videoIndex);
       }
       // Limpar parâmetro da URL após posicionar
       setSearchParams({});
@@ -1607,7 +1624,7 @@ export const TikTokApp = () => {
         const arr = [...videos];
         arr[idx] = enrichedVideo;
         setVideos(arr);
-        emblaApi?.scrollTo(videoToSlideIndex(idx));
+        emblaApi?.scrollTo(idx);
         setCurrentVideoIndex(idx);
       } else {
         const arr = [enrichedVideo, ...videos];
@@ -2273,51 +2290,32 @@ export const TikTokApp = () => {
     }
   };
   const nextVideo = useCallback(() => {
-    console.log('⬇️ NAVEGAÇÃO: Próximo vídeo solicitado');
-    console.log(`⬇️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
     if (emblaApi) {
       if (emblaApi.canScrollNext()) {
         emblaApi.scrollNext();
       } else {
-        console.log('🔁 FIM DA LISTA → Voltando ao topo');
         emblaApi.scrollTo(0);
         setCurrentVideoIndex(0);
       }
     } else {
-      if (totalFeedSlides === 0) return;
-      const nextSlide = desktopSlideIndex + 1;
-      if (nextSlide >= totalFeedSlides) {
-        setDesktopSlideIndex(0);
+      if (currentVideoIndex < videos.length - 1) {
+        setCurrentVideoIndex(currentVideoIndex + 1);
+      } else {
         setCurrentVideoIndex(0);
-        return;
-      }
-
-      setDesktopSlideIndex(nextSlide);
-      const mapped = slideToVideoIndex(nextSlide);
-      if (!mapped.isPromo && mapped.videoIndex >= 0 && mapped.videoIndex < videos.length) {
-        setCurrentVideoIndex(mapped.videoIndex);
       }
     }
-  }, [emblaApi, currentVideoIndex, desktopSlideIndex, totalFeedSlides, slideToVideoIndex, videos.length]);
+  }, [emblaApi, currentVideoIndex, videos.length]);
   const prevVideo = useCallback(() => {
-    console.log('⬆️ NAVEGAÇÃO: Vídeo anterior solicitado');
-    console.log(`⬆️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
     if (emblaApi) {
       if (emblaApi.canScrollPrev()) {
         emblaApi.scrollPrev();
       }
     } else {
-      if (totalFeedSlides === 0) return;
-      const prevSlide = desktopSlideIndex - 1;
-      if (prevSlide < 0) return;
-
-      setDesktopSlideIndex(prevSlide);
-      const mapped = slideToVideoIndex(prevSlide);
-      if (!mapped.isPromo && mapped.videoIndex >= 0 && mapped.videoIndex < videos.length) {
-        setCurrentVideoIndex(mapped.videoIndex);
+      if (currentVideoIndex > 0) {
+        setCurrentVideoIndex(currentVideoIndex - 1);
       }
     }
-  }, [emblaApi, currentVideoIndex, desktopSlideIndex, totalFeedSlides, slideToVideoIndex, videos.length]);
+  }, [emblaApi, currentVideoIndex]);
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
 
@@ -2326,7 +2324,7 @@ export const TikTokApp = () => {
     if (modelVideoIndex !== -1) {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
-      emblaApi?.scrollTo(videoToSlideIndex(modelVideoIndex));
+      emblaApi?.scrollTo(modelVideoIndex);
       setShowProfile(true);
       return;
     }
@@ -2631,19 +2629,7 @@ export const TikTokApp = () => {
     console.log('📺 showFullscreen definido como false');
   };
 
-  // Embla carousel event listeners
-  useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => {
-      setCurrentVideoIndex(emblaApi.selectedScrollSnap());
-    };
-    emblaApi.on('select', onSelect);
-    onSelect(); // Set initial index
-
-    return () => {
-      emblaApi.off('select', onSelect);
-    };
-  }, [emblaApi]);
+  // (onSelect handler already registered above)
 
   // Keyboard navigation for desktop
   useEffect(() => {
@@ -2873,32 +2859,14 @@ export const TikTokApp = () => {
         {/* Vertical Carousel Container */}
         <div className="embla h-screen" ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
-            {videos.map((video, index) => {
-              const promoForThisPosition = getPromoForPosition(index);
-              const promoSlideIndex = promoForThisPosition ? videoToSlideIndex(index) - 1 : -1;
-              const currentSlideIndex = emblaApi?.selectedScrollSnap() ?? 0;
-              return (
-                <React.Fragment key={video.id}>
-                  {/* Card promocional antes do vídeo se a posição bater */}
-                  {promoForThisPosition && (
-                    <div className="embla__slide flex-shrink-0 w-full h-screen relative">
-                      <FeedPromoCard 
-                        promo={promoForThisPosition} 
-                        isMuted={isMuted} 
-                        isCurrentSlide={promoSlideIndex === currentSlideIndex}
-                      />
-                    </div>
-                  )}
-                  <div className="embla__slide flex-shrink-0 w-full h-screen relative">
-                    {/* Um vídeo por modelo em sequência linear */}
-                    <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
-                    
-                    {/* Bottom Info - only show for current video */}
-                    {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
-                  </div>
-                </React.Fragment>
-              );
-            })}
+            {videos.map((video, index) => (
+              <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
+                <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
+                
+                {/* Bottom Info - only show for current video */}
+                {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -3119,49 +3087,42 @@ export const TikTokApp = () => {
           {/* Video Container */}
           <div className="flex-1 max-w-md mx-auto relative pr-24 md:pr-28 lg:pr-32 xl:pr-36">
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
-              {isDesktopPromoSlide && desktopPromo ? (
-                <FeedPromoCard promo={desktopPromo} isMuted={isMuted} isCurrentSlide={true} />
-              ) : (
-                <>
-                  {/* Um vídeo por modelo em sequência linear */}
-                  <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
+              <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
 
-                  {/* Desktop Footer - Avatar e Nome da modelo */}
-                  <div className="absolute bottom-4 left-4 right-4 z-20">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                        <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
-                      </div>
-                      <p className="text-white font-semibold text-lg drop-shadow-lg">
-                        {currentVideo?.user?.username || 'Modelo'}
-                      </p>
-                    </div>
+              {/* Desktop Footer - Avatar e Nome da modelo */}
+              <div className="absolute bottom-4 left-4 right-4 z-20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
+                    <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
                   </div>
-                </>
-              )}
+                  <p className="text-white font-semibold text-lg drop-shadow-lg">
+                    {currentVideo?.user?.username || 'Modelo'}
+                  </p>
+                </div>
+              </div>
 
-              {/* Desktop Navigation Arrows - movidos mais para dentro */}
+              {/* Desktop Navigation Arrows */}
               <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={isDesktopPromoSlide ? desktopSlideIndex === 0 : currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
                   <ChevronUp className="h-4 w-4" />
                 </Button>
               </div>
 
               <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={isDesktopPromoSlide ? desktopSlideIndex >= totalFeedSlides - 1 : currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
               {/* 🆕 Badge "Novo" para vídeos recém-adicionados */}
-              {!isDesktopPromoSlide && isVideoNew(currentVideo) && <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
+              {isVideoNew(currentVideo) && <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
                   <span className="text-base">✨</span>
                   <span>NOVO</span>
                 </div>}
 
               {/* Desktop Side Menu - Só aparece na tela principal */}
-              {!showProfile && !showChat && !isDesktopPromoSlide && <div className="absolute top-2 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col space-y-4 z-30 overflow-visible">
+              {!showProfile && !showChat && <div className="absolute top-2 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col space-y-4 z-30 overflow-visible">
                   <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
                 console.log('Desktop like clicked');
                 toggleLike();

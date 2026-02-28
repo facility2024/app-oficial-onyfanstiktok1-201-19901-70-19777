@@ -132,6 +132,7 @@ export const TikTokApp = () => {
   const isRefreshingFeed = useRef(false);
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [desktopSlideIndex, setDesktopSlideIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -358,8 +359,23 @@ export const TikTokApp = () => {
       return () => clearTimeout(timer);
     }
   }, [emblaApi, promotions.length]);
+  useEffect(() => {
+    if (emblaApi || isMobile) return;
+    setDesktopSlideIndex(videoToSlideIndex(currentVideoIndex));
+  }, [emblaApi, isMobile, currentVideoIndex, videoToSlideIndex]);
+
+  const promoSlotsCount = videos.reduce((count, _video, idx) => count + (getPromoForPosition(idx) ? 1 : 0), 0);
+  const totalFeedSlides = videos.length + promoSlotsCount;
+  const desktopSlideInfo = slideToVideoIndex(desktopSlideIndex);
+  const desktopPromo = desktopSlideInfo.isPromo ? getPromoForPosition(desktopSlideInfo.videoIndex) : null;
+  const isDesktopPromoSlide = !isMobile && !!desktopPromo;
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
   console.log('✅ RENDER: Renderizando vídeo');
+  console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
+  console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
+  console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
+  console.log('✅ RENDER: videos.length:', videos.length);
+  console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
   console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
   console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
   console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
@@ -2268,14 +2284,21 @@ export const TikTokApp = () => {
         setCurrentVideoIndex(0);
       }
     } else {
-      const nextIndex = currentVideoIndex + 1;
-      if (nextIndex < videos.length) {
-        setCurrentVideoIndex(nextIndex);
-      } else if (videos.length > 0) {
+      if (totalFeedSlides === 0) return;
+      const nextSlide = desktopSlideIndex + 1;
+      if (nextSlide >= totalFeedSlides) {
+        setDesktopSlideIndex(0);
         setCurrentVideoIndex(0);
+        return;
+      }
+
+      setDesktopSlideIndex(nextSlide);
+      const mapped = slideToVideoIndex(nextSlide);
+      if (!mapped.isPromo && mapped.videoIndex >= 0 && mapped.videoIndex < videos.length) {
+        setCurrentVideoIndex(mapped.videoIndex);
       }
     }
-  }, [emblaApi, currentVideoIndex, videos.length]);
+  }, [emblaApi, currentVideoIndex, desktopSlideIndex, totalFeedSlides, slideToVideoIndex, videos.length]);
   const prevVideo = useCallback(() => {
     console.log('⬆️ NAVEGAÇÃO: Vídeo anterior solicitado');
     console.log(`⬆️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
@@ -2284,11 +2307,17 @@ export const TikTokApp = () => {
         emblaApi.scrollPrev();
       }
     } else {
-      if (currentVideoIndex > 0) {
-        setCurrentVideoIndex(currentVideoIndex - 1);
+      if (totalFeedSlides === 0) return;
+      const prevSlide = desktopSlideIndex - 1;
+      if (prevSlide < 0) return;
+
+      setDesktopSlideIndex(prevSlide);
+      const mapped = slideToVideoIndex(prevSlide);
+      if (!mapped.isPromo && mapped.videoIndex >= 0 && mapped.videoIndex < videos.length) {
+        setCurrentVideoIndex(mapped.videoIndex);
       }
     }
-  }, [emblaApi, currentVideoIndex, videos.length]);
+  }, [emblaApi, currentVideoIndex, desktopSlideIndex, totalFeedSlides, slideToVideoIndex, videos.length]);
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
 
@@ -3090,44 +3119,49 @@ export const TikTokApp = () => {
           {/* Video Container */}
           <div className="flex-1 max-w-md mx-auto relative pr-24 md:pr-28 lg:pr-32 xl:pr-36">
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
-              {/* Um vídeo por modelo em sequência linear */}
-              <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
+              {isDesktopPromoSlide && desktopPromo ? (
+                <FeedPromoCard promo={desktopPromo} isMuted={isMuted} isCurrentSlide={true} />
+              ) : (
+                <>
+                  {/* Um vídeo por modelo em sequência linear */}
+                  <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
 
+                  {/* Desktop Footer - Avatar e Nome da modelo */}
+                  <div className="absolute bottom-4 left-4 right-4 z-20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
+                        <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
+                      </div>
+                      <p className="text-white font-semibold text-lg drop-shadow-lg">
+                        {currentVideo?.user?.username || 'Modelo'}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Desktop Navigation Arrows - movidos mais para dentro */}
               <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={isDesktopPromoSlide ? desktopSlideIndex === 0 : currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
                   <ChevronUp className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={isDesktopPromoSlide ? desktopSlideIndex >= totalFeedSlides - 1 : currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
                   <ChevronDown className="h-4 w-4" />
                 </Button>
-              </div>
-
-              {/* Desktop Footer - Avatar e Nome da modelo */}
-              <div className="absolute bottom-4 left-4 right-4 z-20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
-                  </div>
-                  <p className="text-white font-semibold text-lg drop-shadow-lg">
-                    {currentVideo?.user?.username || 'Modelo'}
-                  </p>
-                </div>
               </div>
             </div>
 
               {/* 🆕 Badge "Novo" para vídeos recém-adicionados */}
-              {isVideoNew(currentVideo) && <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
+              {!isDesktopPromoSlide && isVideoNew(currentVideo) && <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
                   <span className="text-base">✨</span>
                   <span>NOVO</span>
                 </div>}
 
               {/* Desktop Side Menu - Só aparece na tela principal */}
-              {!showProfile && !showChat && <div className="absolute top-2 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col space-y-4 z-30 overflow-visible">
+              {!showProfile && !showChat && !isDesktopPromoSlide && <div className="absolute top-2 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col space-y-4 z-30 overflow-visible">
                   <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
                 console.log('Desktop like clicked');
                 toggleLike();

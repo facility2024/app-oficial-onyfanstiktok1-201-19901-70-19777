@@ -36,7 +36,13 @@ export const useFeedPromotions = () => {
         console.error('Erro ao buscar promoções do feed:', error);
         return [];
       }
-      return data as FeedPromotion[];
+
+      const isVideoUrl = (url?: string | null) => /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(url || '');
+
+      return (data as FeedPromotion[]).map((promo) => ({
+        ...promo,
+        media_type: (promo.media_type || '').toLowerCase() === 'video' || isVideoUrl(promo.media_url) ? 'video' : 'image',
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });

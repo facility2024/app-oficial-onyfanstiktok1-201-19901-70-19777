@@ -48,6 +48,7 @@ import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
+import { useVideoTracking } from '@/hooks/useVideoTracking';
 
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
@@ -125,6 +126,11 @@ export const TikTokApp = () => {
     markModelAsFavorite,
     getUserMemory
   } = useIntelligentFeed();
+
+  // 🎯 TRACKING DE ENGAJAMENTO (Pilar 1 e 2 - sem alterar layout)
+  const { trackView: trackVideoEngagement, trackStrongInterest, trackSkip, updateWatchDuration } = useVideoTracking();
+  const videoWatchStartRef = useRef<number>(0);
+  const lastTrackedVideoRef = useRef<string>('');
 
   // 📢 PROMOÇÕES NO FEED
   const { promotions } = useFeedPromotions();
@@ -433,7 +439,23 @@ export const TikTokApp = () => {
     const onSelect = () => {
       const newIndex = emblaApi.selectedScrollSnap();
       if (newIndex !== currentVideoIndex) {
+        // 🎯 TRACKING: Calcular duração do vídeo anterior e registrar skip/interesse
+        if (currentUser?.id && lastTrackedVideoRef.current) {
+          const watchDuration = Math.floor((Date.now() - videoWatchStartRef.current) / 1000);
+          const prevVideo = videos[currentVideoIndex];
+          if (prevVideo) {
+            const prevEntityId = prevVideo.creator_id || prevVideo.model_id || '';
+            updateWatchDuration(lastTrackedVideoRef.current, currentUser.id, watchDuration);
+            if (watchDuration >= 20 && prevEntityId) {
+              trackStrongInterest(currentUser.id, prevEntityId, 'watch_long', (prevVideo as any).tags);
+            } else if (watchDuration < 3 && (prevVideo as any).tags?.length > 0) {
+              trackSkip(currentUser.id, (prevVideo as any).tags);
+            }
+          }
+        }
+
         setCurrentVideoIndex(newIndex);
+        videoWatchStartRef.current = Date.now();
 
         // 🧠 FEED INTELIGENTE: Marcar vídeo como assistido
         const watchedVideo = videos[newIndex];
@@ -442,6 +464,16 @@ export const TikTokApp = () => {
           if (entityId) {
             markVideoAsWatched(watchedVideo.id, entityId);
           }
+        }
+
+        // 🎯 TRACKING: Registrar visualização no DB após 3s (via timer)
+        if (currentUser?.id && watchedVideo) {
+          lastTrackedVideoRef.current = watchedVideo.id;
+          setTimeout(() => {
+            if (lastTrackedVideoRef.current === watchedVideo.id) {
+              trackVideoEngagement(watchedVideo.id, currentUser.id);
+            }
+          }, 3000);
         }
 
         // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
@@ -1905,6 +1937,12 @@ export const TikTokApp = () => {
         // 🧠 FEED INTELIGENTE: Marcar modelo/criador como favorito ao dar like
         if (markModelAsFavorite) {
           markModelAsFavorite(userId);
+        }
+
+        // 🎯 TRACKING: Registrar interesse forte por like
+        if (currentUser?.id) {
+          const entityId = currentVideo.creator_id || currentVideo.model_id || userId;
+          trackStrongInterest(currentUser.id, entityId, 'like', (currentVideo as any).tags);
         }
       }
 

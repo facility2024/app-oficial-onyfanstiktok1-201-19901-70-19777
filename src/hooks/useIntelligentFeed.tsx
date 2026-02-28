@@ -11,18 +11,21 @@ import {
 const DEFAULT_CONFIG: FeedConfig = {
   maxVideos: 30,
   mixRatio: {
-    novos: 0.4,      // 40% vídeos novos
-    favoritos: 0.3,  // 30% modelos favoritas
-    aleatorios: 0.3  // 30% aleatórios
+    novos: 0.4,
+    favoritos: 0.3,
+    aleatorios: 0.3
   },
   scoreWeights: {
-    novidade: 0.4,
+    novidade: 0.3,
     afinidade: 0.3,
-    popularidade: 0.2,
-    aleatoriedade: 0.1
+    popularidade: 0.15,
+    aleatoriedade: 0.25
   },
   novidadeDays: 7
 };
+
+// Porcentagem de vídeos aleatórios para "exploração" (evitar bolha)
+const EXPLORATION_RATIO = 0.12; // 12%
 
 export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
   const finalConfig: FeedConfig = { ...DEFAULT_CONFIG, ...config };
@@ -38,27 +41,23 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       const stored = localStorage.getItem('intelligent_feed_memory');
       if (stored) {
         const memory = JSON.parse(stored);
-        // 🆕 PRESERVAR videos_vistos entre sessões para evitar repetição
-        // Apenas resetar modelos_vistas para variar a ordem, mas NUNCA limpar videos_vistos
         const timeSinceLastUpdate = Date.now() - new Date(memory.ultima_atualizacao).getTime();
-        const isNewSession = timeSinceLastUpdate > 30 * 60 * 1000; // 30 minutos
+        const isNewSession = timeSinceLastUpdate > 30 * 60 * 1000;
         
         if (isNewSession) {
           return {
             ...memory,
-            modelos_vistas: [], // Reset para variar ordem
+            modelos_vistas: [],
             sessao_atual: sessionId.current,
             ultima_atualizacao: new Date().toISOString()
-            // 🆕 videos_vistos PRESERVADO - não limpa mais
           };
         }
         return memory;
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar memória:', error);
+      // Silencioso
     }
     
-    // Memória inicial
     return {
       videos_vistos: [],
       modelos_vistas: [],
@@ -73,37 +72,58 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     try {
       localStorage.setItem('intelligent_feed_memory', JSON.stringify(memory));
     } catch (error) {
-      console.error('❌ Erro ao salvar memória:', error);
+      // Silencioso
     }
   }, []);
 
-  // ============= CARREGAR VÍDEOS DA BUNNY.NET =============
+  // ============= BUSCAR DADOS DO SUPABASE (Interesses + Preferências) =============
+  const fetchUserRecommendationData = useCallback(async (userId: string | null) => {
+    if (!userId) return { watchedVideoIds: [] as string[], strongInterests: [] as string[], tagPreferences: [] as { tag: string; score: number }[] };
+
+    try {
+      const [historyRes, interestsRes, prefsRes] = await Promise.all([
+        supabase
+          .from('historico_visualizacao')
+          .select('video_id')
+          .eq('user_id', userId)
+          .order('watched_at', { ascending: false })
+          .limit(1000),
+        supabase
+          .from('interesses_fortes')
+          .select('modelo_id, score')
+          .eq('user_id', userId)
+          .order('score', { ascending: false })
+          .limit(50),
+        supabase
+          .from('perfil_preferencias')
+          .select('tag, score')
+          .eq('user_id', userId)
+          .order('score', { ascending: false })
+          .limit(30),
+      ]);
+
+      return {
+        watchedVideoIds: (historyRes.data || []).map((r: any) => r.video_id),
+        strongInterests: (interestsRes.data || []).map((r: any) => r.modelo_id),
+        tagPreferences: (prefsRes.data || []).map((r: any) => ({ tag: r.tag, score: r.score })),
+      };
+    } catch {
+      return { watchedVideoIds: [], strongInterests: [], tagPreferences: [] };
+    }
+  }, []);
+
+  // ============= CARREGAR VÍDEOS =============
   const loadVideosFromBunny = useCallback(async (): Promise<VideoFeedItem[]> => {
     try {
-      console.log('📦 Carregando vídeos da Bunny.net...');
-      
-      // Carregar vídeos do banco (TODOS os vídeos ativos, de modelos E criadores)
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (videosError) {
-        console.error('❌ Erro ao buscar vídeos:', videosError);
-        throw videosError;
-      }
-      
-      console.log(`✅ ${videosData?.length || 0} vídeos encontrados no banco`);
-      console.log('📊 Vídeos por tipo:', {
-        comModelId: videosData?.filter((v: any) => v.model_id).length || 0,
-        comCreatorId: videosData?.filter((v: any) => v.creator_id).length || 0,
-        semDono: videosData?.filter((v: any) => !v.model_id && !v.creator_id).length || 0
-      });
+      if (videosError) throw videosError;
 
-      // Transformar para formato VideoFeedItem
       const feedItems: VideoFeedItem[] = (videosData || []).map((video: any) => {
-        // Priorizar creator_id sobre model_id para identificação
         const ownerId = video.creator_id || video.model_id || 'unknown';
         
         return {
@@ -117,28 +137,23 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
           description: video.description,
           likes_count: video.likes_count || 0,
           views_count: video.views_count || 0,
-          comments_count: video.comments_count || 0
+          comments_count: video.comments_count || 0,
+          tags: video.tags || [],
         };
       });
 
-      console.log(`✅ ${feedItems.length} vídeos transformados para o feed`);
-      console.log('🎬 Primeiros 3 vídeos:', feedItems.slice(0, 3).map(v => ({
-        id: v.video_id,
-        owner: v.modelo_id,
-        title: v.title
-      })));
-      
       return feedItems;
     } catch (error) {
-      console.error('❌ Erro ao carregar vídeos:', error);
       return [];
     }
   }, []);
 
-  // ============= CÁLCULO DE SCORE =============
+  // ============= CÁLCULO DE SCORE EVOLUÍDO =============
   const calculateScore = useCallback((
-    video: VideoFeedItem,
-    memory: UserMemory
+    video: VideoFeedItem & { tags?: string[] },
+    memory: UserMemory,
+    strongInterests: string[],
+    tagPreferences: { tag: string; score: number }[]
   ): VideoScore => {
     const now = Date.now();
     const videoDate = new Date(video.data_postagem).getTime();
@@ -149,13 +164,31 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       ? Math.max(0, 100 - (daysSincePost / finalConfig.novidadeDays * 100))
       : 0;
     
-    // 2. AFINIDADE (0-100)
+    // 2. AFINIDADE (0-100) - Agora usa interesses fortes do DB
+    const isStrongInterest = strongInterests.includes(video.modelo_id);
     const isFavorite = memory.modelos_favoritas.includes(video.modelo_id);
     const wasViewed = memory.modelos_vistas.includes(video.modelo_id);
-    const afinidade = isFavorite ? 100 : (wasViewed ? 50 : 0);
+    let afinidade = 0;
+    if (isStrongInterest) afinidade = 100;
+    else if (isFavorite) afinidade = 80;
+    else if (wasViewed) afinidade = 30;
+
+    // 2b. BONUS POR TAGS - Verificar se as tags do vídeo combinam com preferências
+    const videoTags = (video as any).tags || [];
+    let tagBonus = 0;
+    if (videoTags.length > 0 && tagPreferences.length > 0) {
+      for (const vTag of videoTags) {
+        const pref = tagPreferences.find(p => p.tag === vTag.toLowerCase());
+        if (pref) {
+          tagBonus += Math.min(20, pref.score / 2); // Max 20 pontos por tag
+        }
+      }
+      tagBonus = Math.min(50, tagBonus); // Cap total de tags
+    }
+    afinidade = Math.min(100, afinidade + tagBonus);
     
     // 3. POPULARIDADE (0-100)
-    const maxLikes = 1000; // Normalizar baseado em máximo esperado
+    const maxLikes = 1000;
     const maxViews = 10000;
     const popularidade = Math.min(100, 
       ((video.likes_count / maxLikes) * 50) + 
@@ -176,7 +209,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     let reason: 'novo' | 'favorito' | 'aleatorio' = 'aleatorio';
     if (daysSincePost <= finalConfig.novidadeDays) {
       reason = 'novo';
-    } else if (isFavorite) {
+    } else if (isStrongInterest || isFavorite) {
       reason = 'favorito';
     }
     
@@ -190,56 +223,68 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
 
   // ============= GERAR FEED INTELIGENTE =============
   const generateFeed = useCallback(async (): Promise<FeedResponse> => {
-    console.log('🧠 Gerando feed inteligente...');
-    
     const allVideos = await loadVideosFromBunny();
     const memory = getUserMemory();
     
+    // Buscar dados de recomendação do Supabase
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id || null;
+    const { watchedVideoIds, strongInterests, tagPreferences } = await fetchUserRecommendationData(userId);
+    
+    // Combinar vídeos vistos: localStorage + Supabase DB
+    const allWatchedIds = new Set([
+      ...memory.videos_vistos,
+      ...watchedVideoIds
+    ]);
+    
     // Filtrar vídeos já vistos
-    const unseenVideos = allVideos.filter(v => 
-      !memory.videos_vistos.includes(v.video_id)
-    );
+    let unseenVideos = allVideos.filter(v => !allWatchedIds.has(v.video_id));
     
     if (unseenVideos.length === 0) {
-      console.log('⚠️ Todos os vídeos foram vistos, resetando memória...');
       memory.videos_vistos = [];
       saveUserMemory(memory);
-      return generateFeed();
+      unseenVideos = allVideos; // Usar todos se acabaram
     }
     
-    // Calcular scores
-    const scoredVideos = unseenVideos.map(v => calculateScore(v, memory));
+    // Calcular scores com dados de recomendação
+    const scoredVideos = unseenVideos.map(v => calculateScore(v, memory, strongInterests, tagPreferences));
     
-    // Separar por categoria
-    const novos = scoredVideos.filter(v => v.reason === 'novo');
-    const favoritos = scoredVideos.filter(v => v.reason === 'favorito');
-    const aleatorios = scoredVideos.filter(v => v.reason === 'aleatorio');
+    // ============= PILAR 1: Prioridade por Interesse Forte =============
+    // Separar: vídeos de modelos com interesse forte vs outros
+    const interestVideos = scoredVideos.filter(v => strongInterests.includes(v.video.modelo_id));
+    const otherVideos = scoredVideos.filter(v => !strongInterests.includes(v.video.modelo_id));
     
-    // Ordenar por score
-    novos.sort((a, b) => b.score - a.score);
-    favoritos.sort((a, b) => b.score - a.score);
-    aleatorios.sort((a, b) => b.score - a.score);
+    // Ordenar ambos por score
+    interestVideos.sort((a, b) => b.score - a.score);
+    otherVideos.sort((a, b) => b.score - a.score);
     
-    // Calcular quantidade por categoria
+    // ============= PILAR 2: Regra de Exploração (12% aleatórios) =============
     const totalSlots = Math.min(finalConfig.maxVideos, unseenVideos.length);
-    const novosCount = Math.floor(totalSlots * finalConfig.mixRatio.novos);
-    const favoritosCount = Math.floor(totalSlots * finalConfig.mixRatio.favoritos);
-    const aleatoriosCount = totalSlots - novosCount - favoritosCount;
+    const explorationCount = Math.max(2, Math.floor(totalSlots * EXPLORATION_RATIO));
+    const interestCount = Math.min(interestVideos.length, Math.floor(totalSlots * 0.4));
+    const remainingCount = totalSlots - interestCount - explorationCount;
     
-    // Selecionar vídeos
-    const selectedNovos = novos.slice(0, novosCount);
-    const selectedFavoritos = favoritos.slice(0, favoritosCount);
-    const selectedAleatorios = aleatorios.slice(0, aleatoriosCount);
+    // Selecionar vídeos de exploração (totalmente aleatórios, não vistos)
+    const shuffledOthers = [...otherVideos].sort(() => Math.random() - 0.5);
+    const explorationVideos = shuffledOthers.slice(0, explorationCount);
+    const fillerVideos = otherVideos
+      .filter(v => !explorationVideos.includes(v))
+      .slice(0, remainingCount);
     
-    // Combinar e embaralhar respeitando rotatividade de modelos
+    // Combinar
     let finalSelection = [
-      ...selectedNovos,
-      ...selectedFavoritos,
-      ...selectedAleatorios
+      ...interestVideos.slice(0, interestCount),
+      ...fillerVideos,
+      ...explorationVideos,
     ];
     
     // Reorganizar para evitar modelos consecutivas
-    finalSelection = avoidConsecutiveModels(finalSelection, memory);
+    finalSelection = avoidConsecutiveModels(finalSelection, memory, finalConfig.maxVideos);
+    
+    // Categorizar para o indicador
+    const novos = finalSelection.filter(v => v.reason === 'novo').length;
+    const favoritos = finalSelection.filter(v => v.reason === 'favorito').length;
+    const aleatorios = finalSelection.filter(v => v.reason === 'aleatorio').length;
     
     const response: FeedResponse = {
       videos: finalSelection.map(sv => ({
@@ -249,34 +294,28 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
         reason: sv.reason,
         score: Math.round(sv.score)
       })),
-      mix: {
-        novos: selectedNovos.length,
-        favoritos: selectedFavoritos.length,
-        aleatorios: selectedAleatorios.length
-      }
+      mix: { novos, favoritos, aleatorios }
     };
     
-    console.log('✅ Feed gerado:', response.mix);
     return response;
-  }, [loadVideosFromBunny, getUserMemory, calculateScore, saveUserMemory, finalConfig]);
+  }, [loadVideosFromBunny, getUserMemory, calculateScore, saveUserMemory, finalConfig, fetchUserRecommendationData]);
 
   // ============= EVITAR MODELOS CONSECUTIVAS =============
   const avoidConsecutiveModels = (
     videos: VideoScore[],
-    memory: UserMemory
+    memory: UserMemory,
+    maxVideos: number
   ): VideoScore[] => {
     const result: VideoScore[] = [];
     const available = [...videos];
     const recentModels = new Set<string>();
     
-    while (available.length > 0 && result.length < finalConfig.maxVideos) {
-      // Encontrar próximo vídeo de modelo diferente
+    while (available.length > 0 && result.length < maxVideos) {
       const nextIndex = available.findIndex(v => 
         !recentModels.has(v.video.modelo_id)
       );
       
       if (nextIndex === -1) {
-        // Todos os vídeos restantes são de modelos recentes
         recentModels.clear();
         continue;
       }
@@ -284,7 +323,6 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       const selected = available.splice(nextIndex, 1)[0];
       result.push(selected);
       
-      // Adicionar à lista de recentes (manter últimas 3)
       recentModels.add(selected.video.modelo_id);
       if (recentModels.size > 3) {
         const firstModel = Array.from(recentModels)[0];
@@ -299,7 +337,6 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
   const markVideoAsWatched = useCallback((videoId: string, modeloId: string) => {
     const memory = getUserMemory();
     
-    // Adicionar às listas
     if (!memory.videos_vistos.includes(videoId)) {
       memory.videos_vistos.push(videoId);
     }
@@ -311,8 +348,6 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     memory.ultimo_video_modelo[modeloId] = videoId;
     memory.ultima_atualizacao = new Date().toISOString();
     
-    // 🆕 Aumentar limite para suportar catálogos grandes (3000+ vídeos)
-    // Só limpa quando TODOS os vídeos foram vistos (reset automático acontece no feed)
     if (memory.videos_vistos.length > 5000) {
       memory.videos_vistos = memory.videos_vistos.slice(-3000);
     }
@@ -328,20 +363,17 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       memory.modelos_favoritas.push(modeloId);
       memory.ultima_atualizacao = new Date().toISOString();
       saveUserMemory(memory);
-      console.log(`⭐ Modelo ${modeloId} adicionada aos favoritos`);
     }
   }, [getUserMemory, saveUserMemory]);
 
   // ============= ATUALIZAR FEED =============
   const refreshFeed = useCallback(async () => {
-    console.log('🔄 Atualizando feed...');
     setLoading(true);
     
     try {
       const newFeed = await generateFeed();
       setCurrentFeed(newFeed);
       
-      // Carregar vídeos completos APENAS UMA VEZ
       const videoIds = newFeed.videos.map(v => v.video_id);
       const { data: fullVideos } = await supabase
         .from('videos')
@@ -349,7 +381,6 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
         .in('id', videoIds);
       
       if (fullVideos) {
-        // Ordenar conforme o feed
         const orderedVideos = videoIds
           .map(id => fullVideos.find((v: any) => v.id === id))
           .filter(Boolean);
@@ -357,7 +388,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
         setVideos(orderedVideos as any);
       }
     } catch (error) {
-      console.error('❌ Erro ao atualizar feed:', error);
+      // Silencioso
     } finally {
       setLoading(false);
     }
@@ -375,14 +406,12 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     
     init();
     
-    // Monitorar mudanças em tempo real (sem auto-refresh para evitar loops)
     const channel = supabase
       .channel('feed-updates')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'videos' },
         () => {
-          console.log('🔔 Novos vídeos detectados');
-          // Não atualizar automaticamente para evitar loops
+          // Novos vídeos detectados - não auto-refresh para evitar loops
         }
       )
       .subscribe();
@@ -391,7 +420,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       mounted = false;
       supabase.removeChannel(channel);
     };
-  }, []); // REMOVIDO refreshFeed das dependências para evitar loop
+  }, []);
 
   return {
     videos,

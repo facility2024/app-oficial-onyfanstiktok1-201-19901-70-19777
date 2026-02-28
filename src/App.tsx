@@ -35,6 +35,7 @@ import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
 import ProfilePage from "./pages/ProfilePage";
 import { VideoCallPage } from "./pages/VideoCallPage";
+import AtualizacoesPage from "./pages/AtualizacoesPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -154,6 +155,9 @@ const App = () => (
           
           {/* Vídeo Chamada */}
           <Route path="/video-chamada" element={<VideoCallPage />} />
+          
+          {/* Atualizações Recentes - Changelog */}
+          <Route path="/atualizacoes" element={<AtualizacoesPage />} />
           
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={

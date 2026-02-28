@@ -48,7 +48,7 @@ import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
-import { FeedPromoCard } from '@/components/tiktok/FeedPromoCard';
+
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 interface Video {
   id: string;
@@ -348,17 +348,12 @@ export const TikTokApp = () => {
   }, [emblaApi]);
 
   // 📢 Injetar promoções como vídeos falsos no feed
-  const promoInjectedRef = useRef(false);
   useEffect(() => {
-    if (promoInjectedRef.current) return;
     if (videos.length === 0 || promotions.length === 0) return;
-    // Não injetar se já tem promos
-    if (videos.some(v => v.id.startsWith('promo-'))) {
-      promoInjectedRef.current = true;
-      return;
-    }
 
-    promoInjectedRef.current = true;
+    // Não injetar se já tem promo nesse bloco atual
+    if (videos.some(v => v.id.startsWith('promo-'))) return;
+
     const interval = promotions[0]?.position_interval || 5;
     const newVideos = [...videos];
     let inserted = 0;
@@ -395,13 +390,16 @@ export const TikTokApp = () => {
           posting_panel_url: promo.cta_link || undefined,
         },
       };
+
       newVideos.splice(pos, 0, fakeVideo);
       inserted++;
     }
 
-    console.log('📢 Promos injetadas no feed:', inserted, 'promos em', newVideos.length, 'itens');
-    setVideos(newVideos);
-  }, [videos.length, promotions]);
+    if (inserted > 0) {
+      console.log('📢 Promos injetadas no feed:', inserted, 'promos em', newVideos.length, 'itens');
+      setVideos(newVideos);
+    }
+  }, [videos, promotions]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');

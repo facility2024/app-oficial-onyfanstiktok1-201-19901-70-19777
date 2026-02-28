@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Direct imports to avoid dynamic import issues in production
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineHandler } from "@/components/OfflineHandler";
 import { UserLocationTracker } from "@/components/UserLocationTracker";
 import Index from "./pages/Index";
@@ -54,7 +53,6 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <PWAInstallPrompt />
       <OfflineHandler />
       <UserLocationTracker />
       <BrowserRouter>

@@ -3178,62 +3178,6 @@ export const TikTokApp = () => {
                 )}
               </div>
 
-              {/* Desktop Side Menu - Só aparece na tela principal */}
-              {!showProfile && !showChat && <div className="absolute top-2 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col space-y-4 z-30 overflow-visible">
-                  <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
-                console.log('Desktop like clicked');
-                toggleLike();
-              }} onToggleSound={() => {
-                console.log('Desktop sound toggle clicked');
-                setIsMuted(!isMuted);
-              }} onVolumeChange={setVolume} onTogglePlay={() => {
-                console.log('Desktop play toggle clicked');
-                setIsPlaying(!isPlaying);
-              }} onToggleFollow={() => {
-                console.log('Desktop follow clicked');
-                followModel();
-              }} onOpenComments={async () => {
-                console.log('Desktop comments clicked');
-                await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
-                await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
-                setShowComments(true);
-              }} onOpenProfile={async () => {
-                console.log('Desktop profile clicked');
-                await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-                await trackFollow(currentVideo?.user?.id || '');
-                setShowProfile(true);
-              }} onOpenLive={() => {
-                console.log('Desktop live clicked');
-                setShowVideoCallList(true);
-              }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
-                console.log('Desktop chat clicked');
-                setChatEntity({
-                  name: currentVideo.user.username,
-                  avatar: currentVideo.user.avatar_url,
-                  id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
-                  isCreator: !!currentVideo.creator_id
-                });
-                setShowChat(true);
-              } : undefined} isChatOnline={currentVideo ? chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] || false : false} onExit={async () => {
-                try {
-                  sessionStorage.setItem('logging_out', 'true');
-                  await supabase.auth.signOut();
-                  navigate('/auth', {
-                    replace: true
-                  });
-                  setTimeout(() => {
-                    sessionStorage.removeItem('logging_out');
-                  }, 500);
-                } catch (error) {
-                  console.error('Erro ao fazer logout:', error);
-                  sessionStorage.removeItem('logging_out');
-                  navigate('/auth', {
-                    replace: true
-                  });
-                }
-              }} onShare={shareVideo} />
-                </div>}
-
               {/* Desktop Footer - Avatar e Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">
                 {/* Promo overlay for desktop */}
@@ -3292,6 +3236,58 @@ export const TikTokApp = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Desktop Side Menu - FORA do overflow-hidden, posicionado à direita */}
+            {!showProfile && !showChat && (
+              <div className="absolute top-4 -right-2 md:right-0 flex flex-col space-y-4 z-30">
+                <SideMenu video={currentVideo} isLiked={isLiked} isMuted={isMuted} isPlaying={isPlaying} volume={volume} isFollowing={followingModels[currentVideo?.user?.id] || false} onToggleLike={() => {
+                  console.log('Desktop like clicked');
+                  toggleLike();
+                }} onToggleSound={() => {
+                  console.log('Desktop sound toggle clicked');
+                  setIsMuted(!isMuted);
+                }} onVolumeChange={setVolume} onTogglePlay={() => {
+                  console.log('Desktop play toggle clicked');
+                  setIsPlaying(!isPlaying);
+                }} onToggleFollow={() => {
+                  console.log('Desktop follow clicked');
+                  followModel();
+                }} onOpenComments={async () => {
+                  console.log('Desktop comments clicked');
+                  await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
+                  await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
+                  setShowComments(true);
+                }} onOpenProfile={async () => {
+                  console.log('Desktop profile clicked');
+                  await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
+                  await trackFollow(currentVideo?.user?.id || '');
+                  setShowProfile(true);
+                }} onOpenLive={() => {
+                  console.log('Desktop live clicked');
+                  setShowVideoCallList(true);
+                }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
+                  console.log('Desktop chat clicked');
+                  setChatEntity({
+                    name: currentVideo.user.username,
+                    avatar: currentVideo.user.avatar_url,
+                    id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
+                    isCreator: !!currentVideo.creator_id
+                  });
+                  setShowChat(true);
+                } : undefined} isChatOnline={currentVideo ? chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] || false : false} onExit={async () => {
+                  try {
+                    sessionStorage.setItem('logging_out', 'true');
+                    await supabase.auth.signOut();
+                    navigate('/auth', { replace: true });
+                    setTimeout(() => { sessionStorage.removeItem('logging_out'); }, 500);
+                  } catch (error) {
+                    console.error('Erro ao fazer logout:', error);
+                    sessionStorage.removeItem('logging_out');
+                    navigate('/auth', { replace: true });
+                  }
+                }} onShare={shareVideo} />
+              </div>
+            )}
 
             {/* Desktop Video Info Below */}
             <div className="mt-4 px-2">

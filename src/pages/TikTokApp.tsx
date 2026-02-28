@@ -126,7 +126,7 @@ export const TikTokApp = () => {
   } = useIntelligentFeed();
 
   // 📢 PROMOÇÕES NO FEED
-  const { getPromoForPosition, videoToSlideIndex, slideToVideoIndex } = useFeedPromotions();
+  const { promotions, getPromoForPosition, videoToSlideIndex, slideToVideoIndex } = useFeedPromotions();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
@@ -346,6 +346,18 @@ export const TikTokApp = () => {
       selectedSnap: emblaApi?.selectedScrollSnap()
     });
   }, [emblaApi]);
+
+  // 📢 Reinicializar embla quando promoções carregam (slides dinâmicos)
+  useEffect(() => {
+    if (emblaApi && promotions.length > 0) {
+      console.log('📢 Promoções carregadas, reinicializando embla com', promotions.length, 'promos');
+      // Small delay to let React render the new slides first
+      const timer = setTimeout(() => {
+        emblaApi.reInit();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [emblaApi, promotions.length]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
   console.log('✅ RENDER: Renderizando vídeo');
   console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');

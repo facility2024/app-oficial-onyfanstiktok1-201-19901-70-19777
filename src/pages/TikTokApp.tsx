@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -48,6 +48,8 @@ import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
+import { FeedPromoCard } from '@/components/tiktok/FeedPromoCard';
+import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 interface Video {
   id: string;
   title: string;
@@ -122,6 +124,9 @@ export const TikTokApp = () => {
     markModelAsFavorite,
     getUserMemory
   } = useIntelligentFeed();
+
+  // 📢 PROMOÇÕES NO FEED
+  const { getPromoForPosition } = useFeedPromotions();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
@@ -2844,13 +2849,30 @@ export const TikTokApp = () => {
         {/* Vertical Carousel Container */}
         <div className="embla h-screen" ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
-            {videos.map((video, index) => <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
-                {/* Um vídeo por modelo em sequência linear */}
-                <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
-                
-                {/* Bottom Info - only show for current video */}
-                {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
-              </div>)}
+            {videos.map((video, index) => {
+              const promoForThisPosition = getPromoForPosition(index);
+              return (
+                <React.Fragment key={video.id}>
+                  {/* Card promocional antes do vídeo se a posição bater */}
+                  {promoForThisPosition && (
+                    <div className="embla__slide flex-shrink-0 w-full h-screen relative">
+                      <FeedPromoCard 
+                        promo={promoForThisPosition} 
+                        isMuted={isMuted} 
+                        isCurrentSlide={index === currentVideoIndex}
+                      />
+                    </div>
+                  )}
+                  <div className="embla__slide flex-shrink-0 w-full h-screen relative">
+                    {/* Um vídeo por modelo em sequência linear */}
+                    <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
+                    
+                    {/* Bottom Info - only show for current video */}
+                    {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
+                  </div>
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
 

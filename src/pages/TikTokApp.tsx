@@ -126,7 +126,7 @@ export const TikTokApp = () => {
   } = useIntelligentFeed();
 
   // 📢 PROMOÇÕES NO FEED
-  const { getPromoForPosition } = useFeedPromotions();
+  const { getPromoForPosition, videoToSlideIndex, slideToVideoIndex } = useFeedPromotions();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
@@ -388,14 +388,22 @@ export const TikTokApp = () => {
     if (!emblaApi) return;
     const onSelect = () => {
       console.log('🎪 ON SELECT DISPARADO!');
-      const newIndex = emblaApi.selectedScrollSnap();
+      const slideIdx = emblaApi.selectedScrollSnap();
+      const { isPromo, videoIndex: newIndex } = slideToVideoIndex(slideIdx);
       console.log('📊 DEBUG LOGIN:', {
+        slideIdx,
         newIndex,
+        isPromo,
         currentVideoIndex,
         currentUser: !!currentUser,
         videosWatched,
         isForward: newIndex > currentVideoIndex
       });
+      // Se é um slide de promo, não atualizar o índice do vídeo
+      if (isPromo) {
+        console.log('📢 Slide de promoção - mantendo índice do vídeo');
+        return;
+      }
       if (newIndex !== currentVideoIndex) {
         console.log('📹 Mudando de vídeo:', currentVideoIndex, '→', newIndex);
         setCurrentVideoIndex(newIndex);
@@ -445,7 +453,7 @@ export const TikTokApp = () => {
       console.log('🎪 Removendo listener onSelect');
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate]);
+  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate, slideToVideoIndex]);
 
   // 🔐 Bloqueia interações do Embla quando redirecionado para login
   useEffect(() => {
@@ -1401,7 +1409,7 @@ export const TikTokApp = () => {
       setCurrentVideoIndex(videoIndex);
       // Scroll do carousel para o vídeo específico
       if (emblaApi) {
-        emblaApi.scrollTo(videoIndex);
+        emblaApi.scrollTo(videoToSlideIndex(videoIndex));
       }
       // Limpar parâmetro da URL após posicionar
       setSearchParams({});
@@ -1571,7 +1579,7 @@ export const TikTokApp = () => {
         const arr = [...videos];
         arr[idx] = enrichedVideo;
         setVideos(arr);
-        emblaApi?.scrollTo(idx);
+        emblaApi?.scrollTo(videoToSlideIndex(idx));
         setCurrentVideoIndex(idx);
       } else {
         const arr = [enrichedVideo, ...videos];
@@ -2239,61 +2247,36 @@ export const TikTokApp = () => {
   const nextVideo = useCallback(() => {
     console.log('⬇️ NAVEGAÇÃO: Próximo vídeo solicitado');
     console.log(`⬇️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
-    if (emblaApi && isMobile) {
-      console.log('⬇️ NAVEGAÇÃO: Usando Embla (mobile)');
+    if (emblaApi) {
       if (emblaApi.canScrollNext()) {
         emblaApi.scrollNext();
       } else {
-        console.log('🔁 FIM DA LISTA (mobile) → Voltando ao topo');
+        console.log('🔁 FIM DA LISTA → Voltando ao topo');
         emblaApi.scrollTo(0);
+        setCurrentVideoIndex(0);
       }
     } else {
       const nextIndex = currentVideoIndex + 1;
       if (nextIndex < videos.length) {
-        console.log(`⬇️ NAVEGAÇÃO: Indo para vídeo ${nextIndex + 1}/${videos.length} (desktop)`);
         setCurrentVideoIndex(nextIndex);
-
-        // 🔐 INCREMENTA CONTADOR NO DESKTOP TAMBÉM
-        if (!currentUser) {
-          const newCount = videosWatched + 1;
-          console.log('🔐 DESKTOP - INCREMENTANDO CONTADOR:', {
-            anterior: videosWatched,
-            novo: newCount,
-            deveRedirecionar: newCount >= 10
-          });
-          setVideosWatched(newCount);
-          localStorage.setItem('videosWatched', newCount.toString());
-
-          // Redireciona para /auth após 10 vídeos
-          if (newCount >= 10) {
-            console.log('🚨 DESKTOP - REDIRECIONANDO PARA /AUTH!');
-            localStorage.setItem('requiresLogin', 'true');
-            localStorage.setItem('returnTo', '/app');
-            navigate('/auth');
-          }
-        }
       } else if (videos.length > 0) {
-        console.log('🔁 FIM DA LISTA (desktop) → Voltando ao topo');
         setCurrentVideoIndex(0);
       }
     }
-  }, [emblaApi, isMobile, currentVideoIndex, videos.length, currentUser, videosWatched, navigate]);
+  }, [emblaApi, currentVideoIndex, videos.length]);
   const prevVideo = useCallback(() => {
     console.log('⬆️ NAVEGAÇÃO: Vídeo anterior solicitado');
     console.log(`⬆️ NAVEGAÇÃO: Vídeo atual: ${currentVideoIndex + 1}/${videos.length}`);
-    if (emblaApi && isMobile) {
-      console.log('⬆️ NAVEGAÇÃO: Usando Embla (mobile)');
+    if (emblaApi) {
       if (emblaApi.canScrollPrev()) {
         emblaApi.scrollPrev();
       }
     } else {
       if (currentVideoIndex > 0) {
-        const prevIndex = currentVideoIndex - 1;
-        console.log(`⬆️ NAVEGAÇÃO: Indo para vídeo ${prevIndex + 1}/${videos.length} (desktop)`);
-        setCurrentVideoIndex(prevIndex);
+        setCurrentVideoIndex(currentVideoIndex - 1);
       }
     }
-  }, [emblaApi, isMobile, currentVideoIndex, videos.length]);
+  }, [emblaApi, currentVideoIndex, videos.length]);
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
 
@@ -2302,7 +2285,7 @@ export const TikTokApp = () => {
     if (modelVideoIndex !== -1) {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
-      emblaApi?.scrollTo(modelVideoIndex);
+      emblaApi?.scrollTo(videoToSlideIndex(modelVideoIndex));
       setShowProfile(true);
       return;
     }
@@ -2851,6 +2834,8 @@ export const TikTokApp = () => {
           <div className="embla__container h-full flex flex-col">
             {videos.map((video, index) => {
               const promoForThisPosition = getPromoForPosition(index);
+              const promoSlideIndex = promoForThisPosition ? videoToSlideIndex(index) - 1 : -1;
+              const currentSlideIndex = emblaApi?.selectedScrollSnap() ?? 0;
               return (
                 <React.Fragment key={video.id}>
                   {/* Card promocional antes do vídeo se a posição bater */}
@@ -2859,7 +2844,7 @@ export const TikTokApp = () => {
                       <FeedPromoCard 
                         promo={promoForThisPosition} 
                         isMuted={isMuted} 
-                        isCurrentSlide={index === currentVideoIndex}
+                        isCurrentSlide={promoSlideIndex === currentSlideIndex}
                       />
                     </div>
                   )}

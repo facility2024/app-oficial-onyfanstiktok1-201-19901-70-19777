@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useCallback } from 'react';
 
 export interface FeedPromotion {
   id: string;
@@ -40,12 +41,12 @@ export const useFeedPromotions = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const interval = promotions.length > 0 ? (promotions[0]?.position_interval || 5) : 0;
+  const hasPromos = promotions.length > 0 && interval > 0;
+
   // Retorna a promo que deve aparecer em determinada posição do feed
-  const getPromoForPosition = (videoIndex: number): FeedPromotion | null => {
-    if (!promotions.length) return null;
-    
-    // Usa a primeira promo como referência de intervalo (default 5)
-    const interval = promotions[0]?.position_interval || 5;
+  const getPromoForPosition = useCallback((videoIndex: number): FeedPromotion | null => {
+    if (!hasPromos) return null;
     
     // Verifica se esta posição deve ter uma promo
     if (videoIndex > 0 && videoIndex % interval === 0) {
@@ -55,7 +56,31 @@ export const useFeedPromotions = () => {
     }
     
     return null;
-  };
+  }, [hasPromos, interval, promotions]);
 
-  return { promotions, isLoading, getPromoForPosition };
+  // Convert video array index → embla slide index (accounting for promo slides)
+  const videoToSlideIndex = useCallback((videoIndex: number): number => {
+    if (!hasPromos) return videoIndex;
+    const promoCount = videoIndex > 0 ? Math.floor(videoIndex / interval) : 0;
+    return videoIndex + promoCount;
+  }, [hasPromos, interval]);
+
+  // Convert embla slide index → video array index (or -1 if it's a promo slide)
+  const slideToVideoIndex = useCallback((slideIndex: number): { isPromo: boolean; videoIndex: number } => {
+    if (!hasPromos) return { isPromo: false, videoIndex: slideIndex };
+    if (slideIndex < interval) return { isPromo: false, videoIndex: slideIndex };
+    
+    const adjusted = slideIndex - interval;
+    const blockSize = interval + 1; // interval videos + 1 promo per block
+    const block = Math.floor(adjusted / blockSize);
+    const offset = adjusted % blockSize;
+    
+    if (offset === 0) {
+      // This is a promo slide - return the video index that follows it
+      return { isPromo: true, videoIndex: interval + block * interval };
+    }
+    return { isPromo: false, videoIndex: interval + block * interval + offset - 1 };
+  }, [hasPromos, interval]);
+
+  return { promotions, isLoading, getPromoForPosition, videoToSlideIndex, slideToVideoIndex };
 };

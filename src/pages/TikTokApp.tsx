@@ -50,6 +50,7 @@ import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerific
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
 
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
+import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
 interface Video {
   id: string;
   title: string;
@@ -2871,12 +2872,15 @@ export const TikTokApp = () => {
                   {/* Bottom Info - only show for current video */}
                   {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
 
-                   {/* Promo badge top-right - abaixo do header e afastado da lupa */}
-                   {index === currentVideoIndex && isPromoVideo && (
-                     <div className="absolute top-14 right-14 z-30">
-                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                         Patrocinado
-                       </span>
+                   {/* Marca d'água COCONUDI - aparece em todos os vídeos */}
+                   {index === currentVideoIndex && (
+                     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5">
+                       <img src={coconudiWatermark} alt="COCONUDI" className="w-7 h-7 object-contain opacity-60 drop-shadow-lg" />
+                       {isPromoVideo && (
+                         <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                           Patrocinado
+                         </span>
+                       )}
                      </div>
                    )}
 
@@ -3139,17 +3143,21 @@ export const TikTokApp = () => {
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
               <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
 
+              {/* Marca d'água COCONUDI desktop */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5">
+                <img src={coconudiWatermark} alt="COCONUDI" className="w-7 h-7 object-contain opacity-60 drop-shadow-lg" />
+                {currentVideo?.id.startsWith('promo-') && (
+                  <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                    Patrocinado
+                  </span>
+                )}
+              </div>
+
               {/* Desktop Footer - Avatar e Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">
                 {/* Promo overlay for desktop */}
                 {currentVideo?.id.startsWith('promo-') && (
                    <>
-                     {/* Badge top-right desktop */}
-                     <div className="absolute -top-[calc(100%-2rem)] right-3 z-30">
-                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                         Patrocinado
-                       </span>
-                     </div>
                      <div className="space-y-2 mb-3">
                        {/* Description */}
                        {(currentVideo as any)._promoDescription && (

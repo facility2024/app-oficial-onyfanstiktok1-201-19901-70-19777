@@ -64,8 +64,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       
       const video = internalRef.current;
       
-      console.log('🎬 Configurando vídeo:', { src, isIOS, isAndroid, isMobile });
-      
+      // Configurando vídeo
       // Configurações básicas para todos os dispositivos
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
@@ -93,12 +92,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         video.style.webkitBackfaceVisibility = 'hidden';
       }
       
-      // Configurações de CSS para hardware acceleration
+      // Hardware acceleration
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
-      video.style.willChange = 'transform';
-      
-      console.log('✅ Vídeo configurado');
     }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted, userStarted]);
 
     // Pausar outros vídeos quando este for reproduzido
@@ -130,12 +126,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
       playLockRef.current = true;
       
-      console.log('▶️ Tentando reproduzir vídeo:', {
-        paused: video.paused,
-        currentTime: video.currentTime,
-        readyState: video.readyState,
-        src: video.src.substring(0, 50) + '...'
-      });
+      
       
       try {
         pauseOtherVideos();
@@ -146,7 +137,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           video.muted = false;
         }
         await video.play();
-        console.log('✅ Vídeo reproduzindo com sucesso');
+        
         setNeedsUserInteraction(false);
         setUserStarted(true);
         setHasError(false);
@@ -155,12 +146,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         playLockRef.current = false;
         return true;
       } catch (error: any) {
-        console.error('❌ Erro ao reproduzir vídeo:', {
-          error: error?.message,
-          name: error?.name,
-          readyState: video.readyState,
-          networkState: video.networkState
-        });
 
         // Tratar AbortError (play interrompido por pause) sem virar erro
         const rawMsg = String(error?.message || '');
@@ -177,20 +162,17 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         if (isAbort) {
           abortRetryCountRef.current++;
           if (abortRetryCountRef.current <= 3) {
-            console.warn(`⏸️ play() interrompido por pause() — retry ${abortRetryCountRef.current}/3`);
             setHasError(false);
             setIsBuffering(false);
             playLockRef.current = false;
             setTimeout(() => attemptPlay(), 300);
             return false;
           }
-          console.warn('⏸️ play() interrompido demais vezes — parando retries');
           playLockRef.current = false;
           return false;
         }
 
         if (isAutoplayBlocked) {
-          console.warn('⛔ Autoplay bloqueado pelo navegador — exibindo botão de play');
           setNeedsUserInteraction(true);
           setHasError(false); // Não é erro de mídia
           playLockRef.current = false;
@@ -200,11 +182,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         // Tentar novamente com estratégias diferentes
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current++;
-          console.log(`🔄 Tentativa ${retryCountRef.current} de ${maxRetries}`);
           
-          // Estratégia 1: Recarregar vídeo
-           if (retryCountRef.current === 1) {
-             console.log('🔄 Estratégia 1: Recarregando vídeo...');
+          if (retryCountRef.current === 1) {
              video.load();
              playLockRef.current = false;
              setTimeout(() => attemptPlay(), 100);
@@ -213,7 +192,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           
           // Estratégia 2: Forçar mute e tentar novamente
            if (retryCountRef.current === 2) {
-             console.log('🔄 Estratégia 2: Forçando mute...');
+             video.muted = true;
              video.muted = true;
              playLockRef.current = false;
              setTimeout(() => attemptPlay(), 100);
@@ -221,7 +200,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
            }
         }
         
-        console.error('❌ Todas as tentativas de reprodução falharam');
+        
         setNeedsUserInteraction(true);
         setHasError(true);
         if (onError) onError(error);
@@ -259,10 +238,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Controlar reprodução
     useEffect(() => {
-      if (!internalRef || !('current' in internalRef) || !internalRef.current) {
-        console.warn('⚠️ useEffect reprodução: Ref não disponível');
-        return;
-      }
+      if (!internalRef || !('current' in internalRef) || !internalRef.current) return;
 
       const video = internalRef.current;
       const shouldPlay = isPlaying || (autoPlayOnReady && isReady);
@@ -294,22 +270,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = e.currentTarget;
       const isBunnyVideo = video.src?.includes('b-cdn.net') || video.src?.includes('bunnycdn');
       
-      console.error('❌ Erro no vídeo:', {
-        error: video.error,
-        errorCode: video.error?.code,
-        errorMessage: video.error?.message,
-        src: video.src.substring(0, 80) + '...',
-        networkState: video.networkState,
-        readyState: video.readyState,
-        isBunnyVideo,
-        retryCount: retryCountRef.current
-      });
-      
       // Auto-retry for Bunny videos (likely still processing)
       if (isBunnyVideo && retryCountRef.current < maxRetries) {
         retryCountRef.current++;
-        const delay = retryCountRef.current * 5000; // 5s, 10s, 15s, 20s, 25s
-        console.log(`🔄 Bunny video may still be processing. Auto-retry ${retryCountRef.current}/${maxRetries} in ${delay / 1000}s`);
+        const delay = retryCountRef.current * 5000;
+        setIsBuffering(true);
         setIsBuffering(true);
         setHasError(false);
         
@@ -351,25 +316,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         event.stopPropagation();
       }
       
-      console.log('👆 Clique no vídeo detectado:', {
-        needsUserInteraction,
-        isPlaying,
-        isReady
-      });
-      
-      // 1) Desbloqueio inicial de autoplay
       if (needsUserInteraction) {
-        console.log('🎬 Primeira interação - tentando reproduzir...');
         const success = await attemptPlay();
         if (success) {
-          console.log('✅ Primeira reprodução bem-sucedida');
           setNeedsUserInteraction(false);
           setUserStarted(true);
-        } else {
-          console.error('❌ Primeira reprodução falhou');
         }
       } else {
-        // 2) Se já está pronto e parado, toque deve iniciar reprodução (sem bloquear rolagem)
         const video = internalRef && 'current' in internalRef ? internalRef.current : null;
         if (video && isReady && video.paused) {
           await attemptPlay();
@@ -410,7 +363,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           loop={true}
           muted={isMuted}
           playsInline={true}
-          preload="auto"
+          preload="metadata"
           controls={false}
            onClick={handleUserClick}
           onLoadedData={handleLoadedData}

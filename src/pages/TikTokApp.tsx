@@ -363,7 +363,7 @@ export const TikTokApp = () => {
       if (pos > newVideos.length) break;
 
       const promo = promotions[i];
-      const fakeVideo: Video = {
+      const fakeVideo: any = {
         id: `promo-${promo.id}`,
         title: promo.title || promo.display_name,
         description: promo.description || '',
@@ -378,6 +378,10 @@ export const TikTokApp = () => {
         is_active: true,
         visibility: 'public',
         created_at: new Date().toISOString(),
+        // Extra promo data
+        _promoCtaText: promo.cta_text || null,
+        _promoCtaLink: promo.cta_link || null,
+        _promoBannerUrl: promo.banner_url || null,
         user: {
           id: `promo-${promo.id}`,
           username: promo.display_name,
@@ -2857,14 +2861,50 @@ export const TikTokApp = () => {
         {/* Vertical Carousel Container */}
         <div className="embla h-screen" ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
-            {videos.map((video, index) => (
-              <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
-                <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
-                
-                {/* Bottom Info - only show for current video */}
-                {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
-              </div>
-            ))}
+            {videos.map((video, index) => {
+              const isPromoVideo = video.id.startsWith('promo-');
+              return (
+                <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
+                  <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
+                  
+                  {/* Bottom Info - only show for current video */}
+                  {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
+
+                  {/* Promo overlay: banner + CTA */}
+                  {index === currentVideoIndex && isPromoVideo && (
+                    <div className="absolute bottom-20 left-0 right-20 z-20 px-4 space-y-2">
+                      {/* Badge Patrocinado */}
+                      <span className="inline-block bg-black/50 backdrop-blur-sm text-white/80 text-[10px] px-2 py-0.5 rounded-full mb-1">
+                        Patrocinado
+                      </span>
+                      {/* CTA Button */}
+                      {(video as any)._promoCtaText && (video as any)._promoCtaLink && (
+                        <button
+                          onClick={() => window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                          className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm"
+                        >
+                          {(video as any)._promoCtaText}
+                        </button>
+                      )}
+                      {/* Banner */}
+                      {(video as any)._promoBannerUrl && (
+                        <div 
+                          className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
+                          onClick={() => (video as any)._promoCtaLink && window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                        >
+                          <img
+                            src={(video as any)._promoBannerUrl}
+                            alt="Banner"
+                            className="w-full h-auto object-cover max-h-20"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -3089,6 +3129,35 @@ export const TikTokApp = () => {
 
               {/* Desktop Footer - Avatar e Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">
+                {/* Promo overlay for desktop */}
+                {currentVideo?.id.startsWith('promo-') && (
+                  <div className="space-y-2 mb-3">
+                    <span className="inline-block bg-black/50 backdrop-blur-sm text-white/80 text-[10px] px-2 py-0.5 rounded-full">
+                      Patrocinado
+                    </span>
+                    {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
+                      <button
+                        onClick={() => window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                        className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
+                      >
+                        {(currentVideo as any)._promoCtaText}
+                      </button>
+                    )}
+                    {(currentVideo as any)._promoBannerUrl && (
+                      <div 
+                        className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
+                        onClick={() => (currentVideo as any)._promoCtaLink && window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                      >
+                        <img
+                          src={(currentVideo as any)._promoBannerUrl}
+                          alt="Banner"
+                          className="w-full h-auto object-cover max-h-20"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
                     <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />

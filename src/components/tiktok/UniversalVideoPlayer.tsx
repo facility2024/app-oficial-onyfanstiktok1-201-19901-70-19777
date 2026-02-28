@@ -72,14 +72,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.setAttribute('x5-playsinline', 'true'); // Android WebView/QQ
       video.setAttribute('x5-video-player-type', 'h5'); // Android WebView
       
-      // iOS/Android: Iniciar SEMPRE muted para permitir autoplay
-      // O usuário pode desmutar depois de interagir
-      if (isMobile || isMuted) {
+      // Respeitar a preferência do usuário para mute
+      // No mobile, só forçar mute se o usuário ainda não interagiu (autoplay policy)
+      const shouldMute = isMuted || (isMobile && !userStarted);
+      video.muted = shouldMute;
+      if (shouldMute) {
         video.setAttribute('muted', 'true');
-        video.muted = true;
       } else {
         video.removeAttribute('muted');
-        video.muted = false;
       }
       
       video.autoplay = false;
@@ -99,7 +99,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.willChange = 'transform';
       
       console.log('✅ Vídeo configurado');
-    }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted]);
+    }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted, userStarted]);
 
     // Pausar outros vídeos quando este for reproduzido
     const pauseOtherVideos = useCallback(() => {
@@ -141,6 +141,10 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         pauseOtherVideos();
         
         // iOS/Android: não resetar currentTime para evitar bloqueios
+        // Após interação bem-sucedida, desmutar se o usuário não quer mute
+        if (!isMuted) {
+          video.muted = false;
+        }
         await video.play();
         console.log('✅ Vídeo reproduzindo com sucesso');
         setNeedsUserInteraction(false);
@@ -224,7 +228,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         playLockRef.current = false;
         return false;
       }
-    }, [internalRef, pauseOtherVideos, onPlay, onError, maxRetries]);
+    }, [internalRef, pauseOtherVideos, onPlay, onError, maxRetries, isMuted]);
 
     // Configurar vídeo quando o src mudar
     useEffect(() => {

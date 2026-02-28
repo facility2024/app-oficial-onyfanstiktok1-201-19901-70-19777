@@ -2871,10 +2871,10 @@ export const TikTokApp = () => {
                   {/* Bottom Info - only show for current video */}
                   {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
 
-                   {/* Promo badge top-right */}
+                   {/* Promo badge top-right - abaixo do header e afastado da lupa */}
                    {index === currentVideoIndex && isPromoVideo && (
-                     <div className="absolute top-3 right-3 z-30">
-                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                     <div className="absolute top-14 right-14 z-30">
+                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
                          Patrocinado
                        </span>
                      </div>
@@ -2882,7 +2882,7 @@ export const TikTokApp = () => {
 
                    {/* Promo overlay: description + CTA + banner */}
                    {index === currentVideoIndex && isPromoVideo && (
-                     <div className="absolute bottom-20 left-0 right-20 z-20 px-4 space-y-2">
+                     <div className="absolute bottom-36 left-0 right-16 z-20 px-4 space-y-2">
                        {/* Description */}
                        {(video as any)._promoDescription && (
                          <p className="text-white/90 text-sm drop-shadow-lg line-clamp-2">
@@ -3145,8 +3145,8 @@ export const TikTokApp = () => {
                 {currentVideo?.id.startsWith('promo-') && (
                    <>
                      {/* Badge top-right desktop */}
-                     <div className="absolute top-3 right-3 z-30">
-                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                     <div className="absolute -top-[calc(100%-2rem)] right-3 z-30">
+                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
                          Patrocinado
                        </span>
                      </div>

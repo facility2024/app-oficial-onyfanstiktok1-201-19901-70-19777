@@ -341,14 +341,7 @@ export const TikTokApp = () => {
     startIndex: 0,
   });
 
-  // Debug do emblaApi
-  useEffect(() => {
-    console.log('🎪 EMBLA API:', {
-      exists: !!emblaApi,
-      canScrollNext: emblaApi?.canScrollNext(),
-      selectedSnap: emblaApi?.selectedScrollSnap()
-    });
-  }, [emblaApi]);
+  // Embla API ready
 
   // 📢 Injetar promoções como vídeos falsos no feed
   useEffect(() => {
@@ -409,17 +402,6 @@ export const TikTokApp = () => {
     }
   }, [videos, promotions]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
-  console.log('✅ RENDER: Renderizando vídeo');
-  console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
-  console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
-  console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
-  console.log('✅ RENDER: videos.length:', videos.length);
-  console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
-  console.log('✅ RENDER: currentVideo:', currentVideo?.id || 'null');
-  console.log('🔍 DEBUG PREMIUM: posting_panel_url:', currentVideo?.user?.posting_panel_url || 'NÃO CONFIGURADO');
-  console.log('✅ RENDER: currentVideoIndex:', currentVideoIndex);
-  console.log('✅ RENDER: videos.length:', videos.length);
-  console.log('✅ RENDER: videos[currentVideoIndex]:', videos[currentVideoIndex]?.id || 'undefined');
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {
@@ -447,16 +429,10 @@ export const TikTokApp = () => {
 
   // Update video when carousel slides
   useEffect(() => {
-    console.log('🎪 SETUP: Configurando listener do emblaApi', {
-      emblaApiExists: !!emblaApi,
-      videosWatched,
-      currentUser: !!currentUser
-    });
     if (!emblaApi) return;
     const onSelect = () => {
       const newIndex = emblaApi.selectedScrollSnap();
       if (newIndex !== currentVideoIndex) {
-        console.log('📹 Mudando de vídeo:', currentVideoIndex, '→', newIndex);
         setCurrentVideoIndex(newIndex);
 
         // 🧠 FEED INTELIGENTE: Marcar vídeo como assistido
@@ -471,37 +447,20 @@ export const TikTokApp = () => {
         // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
         if (!currentUser && newIndex > currentVideoIndex) {
           const newCount = videosWatched + 1;
-          console.log('🔐 INCREMENTANDO CONTADOR:', {
-            anterior: videosWatched,
-            novo: newCount,
-            deveRedirecionar: newCount >= 10
-          });
           setVideosWatched(newCount);
           localStorage.setItem('videosWatched', newCount.toString());
 
           // Redireciona para /auth após 10 vídeos
           if (newCount >= 10) {
-            console.log('🚨 REDIRECIONANDO PARA /AUTH!');
             localStorage.setItem('requiresLogin', 'true');
             localStorage.setItem('returnTo', '/app');
             navigate('/auth');
           }
-        } else {
-          console.log('⏭️ NÃO INCREMENTOU:', {
-            motivo: currentUser ? 'usuário logado' : 'navegação para trás',
-            currentUser: !!currentUser,
-            newIndex,
-            currentVideoIndex
-          });
         }
-      } else {
-        console.log('📹 Mesmo vídeo, não mudou');
       }
     };
-    console.log('🎪 Registrando listener onSelect');
     emblaApi.on('select', onSelect);
     return () => {
-      console.log('🎪 Removendo listener onSelect');
       emblaApi.off('select', onSelect);
     };
   }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate]);
@@ -513,11 +472,9 @@ export const TikTokApp = () => {
       // Verifica se o contador realmente atingiu 10 vídeos
       const savedCount = parseInt(localStorage.getItem('videosWatched') || '0', 10);
       if (savedCount >= 10) {
-        console.log('🚫 Login obrigatório - redirecionando para /auth');
         navigate('/auth');
       } else {
-        // Limpa flag antiga (regra anterior de 5 vídeos)
-        console.log('🔄 Limpando flag requiresLogin obsoleta, contador:', savedCount);
+        localStorage.removeItem('requiresLogin');
         localStorage.removeItem('requiresLogin');
       }
     }

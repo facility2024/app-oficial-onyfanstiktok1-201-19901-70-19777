@@ -284,21 +284,12 @@ export const AdminFeedPromotions = () => {
             </div>
 
             <div>
-              <Label>Tipo de Mídia</Label>
-              <Select value={form.media_type} onValueChange={(v) => setForm({ ...form, media_type: v })}>
-                <SelectTrigger className="bg-gray-800 border-gray-600">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="image">Imagem</SelectItem>
-                  <SelectItem value="video">Vídeo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
               <Label>URL da Mídia (Imagem/Vídeo) *</Label>
-              <Input value={form.media_url} onChange={(e) => setForm({ ...form, media_url: e.target.value })} placeholder="https://cdn.example.com/media.mp4" className="bg-gray-800 border-gray-600" />
+              <Input value={form.media_url} onChange={(e) => {
+                const url = e.target.value;
+                const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
+              }} placeholder="https://cdn.example.com/media.mp4" className="bg-gray-800 border-gray-600" />
               <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
             </div>
 

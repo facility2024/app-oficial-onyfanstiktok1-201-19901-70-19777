@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
@@ -11,40 +11,92 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const isLoggingOut = useRef(false);
+  const sessionChecked = useRef(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Listener de estado de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        // Durante logout, apenas atualizar sessão, não redirecionar
-        if (sessionStorage.getItem('logging_out')) {
-          setSession(session);
+      (event, newSession) => {
+        console.log('[ProtectedRoute] Auth event:', event);
+
+        // Se estiver fazendo logout explícito, deixar acontecer
+        if (isLoggingOut.current || sessionStorage.getItem('logging_out')) {
+          if (event === 'SIGNED_OUT') {
+            setSession(null);
+            isLoggingOut.current = false;
+            sessionStorage.removeItem('logging_out');
+            navigate('/', { replace: true });
+          }
           return;
         }
 
-        setSession(session);
-        
-        // Não redirecionar automaticamente - deixar o fluxo natural
-        if (!session && !sessionStorage.getItem('logging_out')) {
-          // Não fazer nada - usuário vai para onde precisa naturalmente
+        if (event === 'SIGNED_OUT') {
+          // Verificar se foi um logout real ou uma falha de refresh
+          // Em mobile (iOS), o token pode falhar ao renovar quando volta do background
+          // Tentar recuperar sessão antes de deslogar
+          supabase.auth.getSession().then(({ data: { session: recoveredSession } }) => {
+            if (recoveredSession) {
+              console.log('[ProtectedRoute] Sessão recuperada após SIGNED_OUT falso');
+              setSession(recoveredSession);
+            } else {
+              // Logout real - verificar se tem token no storage
+              const storedSession = localStorage.getItem('sb-tnzvhwapfhkhqjgyiomk-auth-token');
+              if (storedSession) {
+                try {
+                  const parsed = JSON.parse(storedSession);
+                  if (parsed?.refresh_token) {
+                    console.log('[ProtectedRoute] Tentando refresh com token armazenado...');
+                    supabase.auth.refreshSession({ refresh_token: parsed.refresh_token }).then(({ data }) => {
+                      if (data.session) {
+                        console.log('[ProtectedRoute] Sessão restaurada via refresh!');
+                        setSession(data.session);
+                      } else {
+                        console.log('[ProtectedRoute] Refresh falhou, redirecionando...');
+                        setSession(null);
+                        navigate('/', { replace: true });
+                      }
+                    });
+                    return;
+                  }
+                } catch (e) {
+                  // ignore parse error
+                }
+              }
+              setSession(null);
+              navigate('/', { replace: true });
+            }
+          });
+          return;
+        }
+
+        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          setSession(newSession);
+        }
+
+        // Para qualquer outro evento, atualizar sessão se existir
+        if (newSession) {
+          setSession(newSession);
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      
-      if (!session) {
-        navigate('/', { replace: true }); // Redirecionar para splash screen
-      }
-    });
+    // Verificar sessão existente
+    if (!sessionChecked.current) {
+      sessionChecked.current = true;
+      supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+        if (existingSession) {
+          setSession(existingSession);
+        } else {
+          navigate('/', { replace: true });
+        }
+        setLoading(false);
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Mostrar loading enquanto verifica
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -53,11 +105,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Não renderizar nada se não autenticado
   if (!session) {
     return null;
   }
 
-  // Renderizar app se autenticado
   return <>{children}</>;
 };

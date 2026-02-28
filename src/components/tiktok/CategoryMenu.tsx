@@ -53,6 +53,9 @@ export const CategoryMenu = ({
 
   const handleLogout = async () => {
     try {
+      // Marcar como logout explícito para o ProtectedRoute não tentar recuperar
+      sessionStorage.setItem('logging_out', 'true');
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
@@ -61,6 +64,7 @@ export const CategoryMenu = ({
       toast.success('Você saiu da conta com sucesso!');
       navigate('/auth');
     } catch (error) {
+      sessionStorage.removeItem('logging_out');
       console.error('Erro ao sair:', error);
       toast.error('Erro ao sair da conta');
     }

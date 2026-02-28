@@ -2872,15 +2872,29 @@ export const TikTokApp = () => {
                   {/* Bottom Info - only show for current video */}
                   {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
 
-                   {/* Marca d'água COCONUDI - aparece em todos os vídeos */}
+                   {/* Logo COCONUDI centralizada (mobile) */}
                    {index === currentVideoIndex && (
-                     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5">
+                     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30">
                        <img src={coconudiWatermark} alt="COCONUDI" className="w-7 h-7 object-contain opacity-60 drop-shadow-lg" />
-                       {isPromoVideo && (
-                         <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                           Patrocinado
-                         </span>
-                       )}
+                     </div>
+                   )}
+
+                   {/* Badge "Patrocinado" alinhado à ESQUERDA (mobile) */}
+                   {index === currentVideoIndex && isPromoVideo && (
+                     <div className="absolute top-2 left-3 z-30">
+                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                         Patrocinado
+                       </span>
+                     </div>
+                   )}
+
+                   {/* Badge "NOVO" alinhado à ESQUERDA (mobile) */}
+                   {index === currentVideoIndex && isVideoNew(video) && (
+                     <div className="absolute top-2 left-3 z-30" style={{ top: isPromoVideo ? '2.2rem' : '0.5rem' }}>
+                       <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg animate-pulse flex items-center gap-1">
+                         <span className="text-xs">✨</span>
+                         <span>NOVO</span>
+                       </span>
                      </div>
                    )}
 
@@ -3143,81 +3157,26 @@ export const TikTokApp = () => {
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
               <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
 
-              {/* Marca d'água COCONUDI desktop */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5">
+              {/* Desktop: Logo + NOVO + Patrocinado na MESMA LINHA */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+                {/* Badge NOVO à esquerda */}
+                {isVideoNew(currentVideo) && (
+                  <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg animate-pulse flex items-center gap-1">
+                    <span className="text-xs">✨</span>
+                    <span>NOVO</span>
+                  </span>
+                )}
+
+                {/* Logo centralizada */}
                 <img src={coconudiWatermark} alt="COCONUDI" className="w-7 h-7 object-contain opacity-60 drop-shadow-lg" />
+
+                {/* Badge Patrocinado à direita */}
                 {currentVideo?.id.startsWith('promo-') && (
                   <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
                     Patrocinado
                   </span>
                 )}
               </div>
-
-              {/* Desktop Footer - Avatar e Nome da modelo */}
-              <div className="absolute bottom-4 left-4 right-4 z-20">
-                {/* Promo overlay for desktop */}
-                {currentVideo?.id.startsWith('promo-') && (
-                   <>
-                     <div className="space-y-2 mb-3">
-                       {/* Description */}
-                       {(currentVideo as any)._promoDescription && (
-                         <p className="text-white/90 text-sm drop-shadow-lg line-clamp-2">
-                           {(currentVideo as any)._promoDescription}
-                         </p>
-                       )}
-                       {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
-                         <button
-                           onClick={() => window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
-                           className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
-                         >
-                           {(currentVideo as any)._promoCtaText}
-                         </button>
-                       )}
-                       {(currentVideo as any)._promoBannerUrl && (
-                         <div 
-                           className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                           onClick={() => (currentVideo as any)._promoCtaLink && window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
-                         >
-                           <img
-                             src={(currentVideo as any)._promoBannerUrl}
-                             alt="Banner"
-                             className="w-full h-auto object-cover max-h-20"
-                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                           />
-                         </div>
-                       )}
-                     </div>
-                   </>
-                 )}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
-                  </div>
-                  <p className="text-white font-semibold text-lg drop-shadow-lg">
-                    {currentVideo?.user?.username || 'Modelo'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Desktop Navigation Arrows */}
-              <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-              {/* 🆕 Badge "Novo" para vídeos recém-adicionados */}
-              {isVideoNew(currentVideo) && <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1.5">
-                  <span className="text-base">✨</span>
-                  <span>NOVO</span>
-                </div>}
 
               {/* Desktop Side Menu - Só aparece na tela principal */}
               {!showProfile && !showChat && <div className="absolute top-2 right-1 md:right-3 lg:right-5 xl:right-6 flex flex-col space-y-4 z-30 overflow-visible">
@@ -3274,6 +3233,65 @@ export const TikTokApp = () => {
                 }
               }} onShare={shareVideo} />
                 </div>}
+
+              {/* Desktop Footer - Avatar e Nome da modelo */}
+              <div className="absolute bottom-4 left-4 right-4 z-20">
+                {/* Promo overlay for desktop */}
+                {currentVideo?.id.startsWith('promo-') && (
+                   <>
+                     <div className="space-y-2 mb-3">
+                       {(currentVideo as any)._promoDescription && (
+                         <p className="text-white/90 text-sm drop-shadow-lg line-clamp-2">
+                           {(currentVideo as any)._promoDescription}
+                         </p>
+                       )}
+                       {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
+                         <button
+                           onClick={() => window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                           className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
+                         >
+                           {(currentVideo as any)._promoCtaText}
+                         </button>
+                       )}
+                       {(currentVideo as any)._promoBannerUrl && (
+                         <div 
+                           className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
+                           onClick={() => (currentVideo as any)._promoCtaLink && window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                         >
+                           <img
+                             src={(currentVideo as any)._promoBannerUrl}
+                             alt="Banner"
+                             className="w-full h-auto object-cover max-h-20"
+                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                           />
+                         </div>
+                       )}
+                     </div>
+                   </>
+                 )}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
+                    <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
+                  </div>
+                  <p className="text-white font-semibold text-lg drop-shadow-lg">
+                    {currentVideo?.user?.username || 'Modelo'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Desktop Navigation Arrows */}
+              <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
+                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
+                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
             {/* Desktop Video Info Below */}
             <div className="mt-4 px-2">

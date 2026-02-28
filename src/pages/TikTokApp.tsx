@@ -2873,7 +2873,7 @@ export const TikTokApp = () => {
 
                    {/* Promo badge top-right */}
                    {index === currentVideoIndex && isPromoVideo && (
-                     <div className="absolute top-16 right-3 z-30">
+                     <div className="absolute top-3 right-3 z-30">
                        <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
                          Patrocinado
                        </span>

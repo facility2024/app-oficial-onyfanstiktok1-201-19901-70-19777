@@ -18,29 +18,34 @@
 .embla {
   overflow: hidden;
   height: 100vh;
+  height: 100dvh;
 }
 
 .embla__container {
   display: flex;
   flex-direction: column;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   height: 100%;
   will-change: transform;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .embla__slide {
   flex: 0 0 100%;
   min-width: 0;
+  min-height: 0;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
+  position: relative;
 }
 
 /* iOS Performance Optimizations */

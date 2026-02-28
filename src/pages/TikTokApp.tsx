@@ -329,14 +329,16 @@ export const TikTokApp = () => {
     return await checkAndTrackAction(actionType, currentVideo?.id, currentVideo?.user_id);
   };
 
-  // Carousel otimizado para todas as plataformas
+  // Carousel otimizado para todas as plataformas (iOS fix: duration maior para evitar pulos)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     axis: 'y',
     loop: false,
     dragFree: false,
     containScroll: 'trimSnaps',
-    duration: 25,
-    skipSnaps: false
+    duration: isIOS ? 30 : 25,
+    skipSnaps: false,
+    startIndex: 0,
   });
 
   // Debug do emblaApi
@@ -2866,7 +2868,7 @@ export const TikTokApp = () => {
             {videos.map((video, index) => {
               const isPromoVideo = video.id.startsWith('promo-');
               return (
-                <div key={video.id} className="embla__slide flex-shrink-0 w-full h-screen relative">
+                <div key={video.id} className="embla__slide flex-shrink-0 w-full relative" style={{ height: '100dvh' }}>
                   <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
                   
                   {/* Bottom Info - only show for current video */}

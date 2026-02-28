@@ -36,7 +36,7 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-white md:text-gray-800 font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
+        <span className="text-white font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>
         {isPremium && (
           <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black px-2.5 py-1 rounded-full text-xs font-bold shadow-lg shadow-amber-500/30 animate-pulse">
             <Crown className="w-3 h-3" />
@@ -52,14 +52,14 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
       </div>
 
       {/* Video Description */}
-      <div className="text-white md:text-gray-800 text-sm mb-2 leading-relaxed drop-shadow-lg line-clamp-2">
+      <div className="text-white text-sm mb-2 leading-relaxed drop-shadow-lg line-clamp-2">
         {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
       </div>
 
       {/* Cocoa Info - Clicável */}
       <div 
         onClick={handleMusicClick}
-        className="flex items-center gap-2 text-white md:text-gray-800 text-xs drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
+        className="flex items-center gap-2 text-white text-xs drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
       >
         <VinylRecord isPlaying={isPlaying} hasMusic={true} />
         <div className="flex items-center gap-1 truncate">

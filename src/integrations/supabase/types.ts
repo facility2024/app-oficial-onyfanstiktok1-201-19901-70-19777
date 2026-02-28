@@ -2340,6 +2340,38 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_visualizacao: {
+        Row: {
+          id: string
+          user_id: string
+          video_id: string
+          watch_duration_seconds: number | null
+          watched_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          video_id: string
+          watch_duration_seconds?: number | null
+          watched_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          video_id?: string
+          watch_duration_seconds?: number | null
+          watched_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_visualizacao_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           configuration: Json
@@ -2370,6 +2402,36 @@ export type Database = {
           last_used_at?: string | null
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      interesses_fortes: {
+        Row: {
+          created_at: string
+          id: string
+          interest_type: string
+          modelo_id: string
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interest_type?: string
+          modelo_id: string
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interest_type?: string
+          modelo_id?: string
+          score?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -4530,6 +4592,36 @@ export type Database = {
           provider?: string
           raw_payload?: Json
           status?: string
+        }
+        Relationships: []
+      }
+      perfil_preferencias: {
+        Row: {
+          created_at: string
+          id: string
+          interactions_count: number
+          score: number
+          tag: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interactions_count?: number
+          score?: number
+          tag: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interactions_count?: number
+          score?: number
+          tag?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

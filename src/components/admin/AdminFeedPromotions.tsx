@@ -299,11 +299,13 @@ export const AdminFeedPromotions = () => {
             <div>
               <Label>URL da Mídia (Imagem/Vídeo) *</Label>
               <Input value={form.media_url} onChange={(e) => setForm({ ...form, media_url: e.target.value })} placeholder="https://cdn.example.com/media.mp4" className="bg-gray-800 border-gray-600" />
+              <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
             </div>
 
             <div>
               <Label>URL do Banner (rodapé do card)</Label>
-              <Input value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} placeholder="https://..." className="bg-gray-800 border-gray-600" />
+              <Input value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} placeholder="https://... (780x390px)" className="bg-gray-800 border-gray-600" />
+              <p className="text-xs text-gray-500 mt-1">Recomendado: 780x390px (proporção 2:1)</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

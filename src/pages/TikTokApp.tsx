@@ -382,6 +382,7 @@ export const TikTokApp = () => {
         _promoCtaText: promo.cta_text || null,
         _promoCtaLink: promo.cta_link || null,
         _promoBannerUrl: promo.banner_url || null,
+        _promoDescription: promo.description || null,
         user: {
           id: `promo-${promo.id}`,
           username: promo.display_name,
@@ -2870,38 +2871,49 @@ export const TikTokApp = () => {
                   {/* Bottom Info - only show for current video */}
                   {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
 
-                  {/* Promo overlay: banner + CTA */}
-                  {index === currentVideoIndex && isPromoVideo && (
-                    <div className="absolute bottom-20 left-0 right-20 z-20 px-4 space-y-2">
-                      {/* Badge Patrocinado */}
-                      <span className="inline-block bg-black/50 backdrop-blur-sm text-white/80 text-[10px] px-2 py-0.5 rounded-full mb-1">
-                        Patrocinado
-                      </span>
-                      {/* CTA Button */}
-                      {(video as any)._promoCtaText && (video as any)._promoCtaLink && (
-                        <button
-                          onClick={() => window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
-                          className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm"
-                        >
-                          {(video as any)._promoCtaText}
-                        </button>
-                      )}
-                      {/* Banner */}
-                      {(video as any)._promoBannerUrl && (
-                        <div 
-                          className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                          onClick={() => (video as any)._promoCtaLink && window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
-                        >
-                          <img
-                            src={(video as any)._promoBannerUrl}
-                            alt="Banner"
-                            className="w-full h-auto object-cover max-h-20"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
+                   {/* Promo badge top-right */}
+                   {index === currentVideoIndex && isPromoVideo && (
+                     <div className="absolute top-16 right-3 z-30">
+                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                         Patrocinado
+                       </span>
+                     </div>
+                   )}
+
+                   {/* Promo overlay: description + CTA + banner */}
+                   {index === currentVideoIndex && isPromoVideo && (
+                     <div className="absolute bottom-20 left-0 right-20 z-20 px-4 space-y-2">
+                       {/* Description */}
+                       {(video as any)._promoDescription && (
+                         <p className="text-white/90 text-sm drop-shadow-lg line-clamp-2">
+                           {(video as any)._promoDescription}
+                         </p>
+                       )}
+                       {/* CTA Button */}
+                       {(video as any)._promoCtaText && (video as any)._promoCtaLink && (
+                         <button
+                           onClick={() => window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                           className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm"
+                         >
+                           {(video as any)._promoCtaText}
+                         </button>
+                       )}
+                       {/* Banner */}
+                       {(video as any)._promoBannerUrl && (
+                         <div 
+                           className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
+                           onClick={() => (video as any)._promoCtaLink && window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                         >
+                           <img
+                             src={(video as any)._promoBannerUrl}
+                             alt="Banner"
+                             className="w-full h-auto object-cover max-h-20"
+                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                           />
+                         </div>
+                       )}
+                     </div>
+                   )}
                 </div>
               );
             })}
@@ -3131,33 +3143,44 @@ export const TikTokApp = () => {
               <div className="absolute bottom-4 left-4 right-4 z-20">
                 {/* Promo overlay for desktop */}
                 {currentVideo?.id.startsWith('promo-') && (
-                  <div className="space-y-2 mb-3">
-                    <span className="inline-block bg-black/50 backdrop-blur-sm text-white/80 text-[10px] px-2 py-0.5 rounded-full">
-                      Patrocinado
-                    </span>
-                    {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
-                      <button
-                        onClick={() => window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
-                        className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
-                      >
-                        {(currentVideo as any)._promoCtaText}
-                      </button>
-                    )}
-                    {(currentVideo as any)._promoBannerUrl && (
-                      <div 
-                        className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                        onClick={() => (currentVideo as any)._promoCtaLink && window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
-                      >
-                        <img
-                          src={(currentVideo as any)._promoBannerUrl}
-                          alt="Banner"
-                          className="w-full h-auto object-cover max-h-20"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                   <>
+                     {/* Badge top-right desktop */}
+                     <div className="absolute top-3 right-3 z-30">
+                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                         Patrocinado
+                       </span>
+                     </div>
+                     <div className="space-y-2 mb-3">
+                       {/* Description */}
+                       {(currentVideo as any)._promoDescription && (
+                         <p className="text-white/90 text-sm drop-shadow-lg line-clamp-2">
+                           {(currentVideo as any)._promoDescription}
+                         </p>
+                       )}
+                       {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
+                         <button
+                           onClick={() => window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                           className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
+                         >
+                           {(currentVideo as any)._promoCtaText}
+                         </button>
+                       )}
+                       {(currentVideo as any)._promoBannerUrl && (
+                         <div 
+                           className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
+                           onClick={() => (currentVideo as any)._promoCtaLink && window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                         >
+                           <img
+                             src={(currentVideo as any)._promoBannerUrl}
+                             alt="Banner"
+                             className="w-full h-auto object-cover max-h-20"
+                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                           />
+                         </div>
+                       )}
+                     </div>
+                   </>
+                 )}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
                     <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />

@@ -2879,18 +2879,18 @@ export const TikTokApp = () => {
                      </div>
                    )}
 
-                   {/* Badge "Patrocinado" alinhado à ESQUERDA (mobile) */}
+                   {/* Badge "Patrocinado" alinhado à ESQUERDA (mobile) - abaixo da top bar */}
                    {index === currentVideoIndex && isPromoVideo && (
-                     <div className="absolute top-2 left-3 z-30">
+                     <div className="absolute top-16 left-3 z-30">
                        <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
                          Patrocinado
                        </span>
                      </div>
                    )}
 
-                   {/* Badge "NOVO" alinhado à ESQUERDA (mobile) */}
+                   {/* Badge "NOVO" alinhado à ESQUERDA (mobile) - abaixo da top bar */}
                    {index === currentVideoIndex && isVideoNew(video) && (
-                     <div className="absolute top-2 left-3 z-30" style={{ top: isPromoVideo ? '2.2rem' : '0.5rem' }}>
+                     <div className="absolute left-3 z-30" style={{ top: isPromoVideo ? '5.5rem' : '4rem' }}>
                        <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg animate-pulse flex items-center gap-1">
                          <span className="text-xs">✨</span>
                          <span>NOVO</span>

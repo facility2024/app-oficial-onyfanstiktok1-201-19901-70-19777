@@ -52,6 +52,7 @@ export const AdminFeedPromotions = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
   const { data: promotions = [], isLoading } = useQuery({
     queryKey: ['admin-feed-promotions'],
@@ -265,22 +266,22 @@ export const AdminFeedPromotions = () => {
           <div className="space-y-4">
             <div>
               <Label>Nome de Exibição *</Label>
-              <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="Ex: mia_saaoud" className="bg-gray-800 border-gray-600" />
+              <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="Ex: mia_saaoud" className={modalInputClass} />
             </div>
 
             <div>
               <Label>Título</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título da promoção" className="bg-gray-800 border-gray-600" />
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título da promoção" className={modalInputClass} />
             </div>
 
             <div>
               <Label>Descrição</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição que aparece no card" className="bg-gray-800 border-gray-600" rows={2} />
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição que aparece no card" className={modalInputClass} rows={2} />
             </div>
 
             <div>
               <Label>URL do Avatar</Label>
-              <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://..." className="bg-gray-800 border-gray-600" />
+              <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://..." className={modalInputClass} />
             </div>
 
             <div>
@@ -289,35 +290,35 @@ export const AdminFeedPromotions = () => {
                 const url = e.target.value;
                 const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
                 setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
-              }} placeholder="https://cdn.example.com/media.mp4" className="bg-gray-800 border-gray-600" />
+              }} placeholder="https://cdn.example.com/media.mp4" className={modalInputClass} />
               <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
             </div>
 
             <div>
               <Label>URL do Banner (rodapé do card)</Label>
-              <Input value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} placeholder="https://... (780x390px)" className="bg-gray-800 border-gray-600" />
+              <Input value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} placeholder="https://... (780x390px)" className={modalInputClass} />
               <p className="text-xs text-gray-500 mt-1">Recomendado: 780x390px (proporção 2:1)</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Texto do CTA</Label>
-                <Input value={form.cta_text} onChange={(e) => setForm({ ...form, cta_text: e.target.value })} placeholder="Ver Mais" className="bg-gray-800 border-gray-600" />
+                <Input value={form.cta_text} onChange={(e) => setForm({ ...form, cta_text: e.target.value })} placeholder="Ver Mais" className={modalInputClass} />
               </div>
               <div>
                 <Label>Link do CTA</Label>
-                <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://..." className="bg-gray-800 border-gray-600" />
+                <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://..." className={modalInputClass} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Intervalo (a cada X vídeos)</Label>
-                <Input type="number" value={form.position_interval} onChange={(e) => setForm({ ...form, position_interval: parseInt(e.target.value) || 5 })} className="bg-gray-800 border-gray-600" />
+                <Input type="number" value={form.position_interval} onChange={(e) => setForm({ ...form, position_interval: parseInt(e.target.value) || 5 })} className={modalInputClass} />
               </div>
               <div>
                 <Label>Prioridade</Label>
-                <Input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} className="bg-gray-800 border-gray-600" />
+                <Input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} className={modalInputClass} />
               </div>
             </div>
 

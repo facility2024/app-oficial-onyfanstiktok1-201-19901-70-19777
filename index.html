@@ -30,7 +30,7 @@ E o melhor: 100% GRATUITO! 🆓🚀">
     <link rel="apple-touch-icon" sizes="144x144" href="/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png">
     <link rel="apple-touch-icon" sizes="152x152" href="/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/lovable-uploads/2955b0a9-b6b4-486b-9318-e326c29ab668.png">
-    <link rel="manifest" href="/manifest.json">
+    <!-- Manifest desativado para impedir prompt de instalação PWA/APK -->
 
     
     
@@ -82,15 +82,10 @@ E o melhor: 100% GRATUITO! 🆓🚀">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Service Worker desativado para evitar comportamento de app instalável e cache agressivo no mobile
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
         });
       }
     </script>

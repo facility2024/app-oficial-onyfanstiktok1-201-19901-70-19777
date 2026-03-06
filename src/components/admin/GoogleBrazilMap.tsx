@@ -341,7 +341,13 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
           {hasGoogleMapError ? (
             <div className="space-y-3">
               <MapAuthFallback currentOrigin={currentOrigin} keyPreview={keyPreview} />
-              <MapLeafletFallback states={filteredStates} getCount={getCount} />
+              <MapLeafletFallback
+                states={filteredStates}
+                getCount={getCount}
+                showHeatmap={showHeatmap}
+                showClusters={showClusters}
+                showBusinesses={showBusinesses}
+              />
             </div>
           ) : (
             <GoogleMap

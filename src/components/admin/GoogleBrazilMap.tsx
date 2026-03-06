@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Users, Search, Filter, Wifi, Monitor, Smartphone, Flame, Layers, Store, Clock } from 'lucide-react';
+import { MapPin, Users, Search, Filter, Wifi, Monitor, Smartphone, Flame, Layers, Store, Clock, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeatmapOverlay } from './map/MapHeatmapLayer';
 import { MapClustererLayer } from './map/MapClusterer';

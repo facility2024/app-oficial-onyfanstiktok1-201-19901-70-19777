@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BrazilInteractiveMap } from './BrazilInteractiveMap';
+import { GoogleBrazilMap } from './GoogleBrazilMap';
 import { LiveUserIndicator } from './LiveUserIndicator';
 import { Eye, TrendingUp, Activity, MapPin, Users } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -318,7 +318,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <BrazilInteractiveMap 
+          <GoogleBrazilMap 
             onlineUsersByState={realTimeStats.onlineUsersByState} 
             deviceStatsByState={realTimeStats.deviceStatsByState}
             totalDeviceStats={realTimeStats.totalDeviceStats}

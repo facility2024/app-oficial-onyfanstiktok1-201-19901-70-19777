@@ -484,20 +484,23 @@ export const AdminVideoScheduler = () => {
             <CardTitle>Novo Agendamento</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Link MP4 */}
-            <div className="space-y-2">
-              <Label>Link MP4 *</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
-                  placeholder="https://example.com/video.mp4"
-                  type="url"
-                />
-                <Button onClick={testVideoLink} disabled={loading} variant="outline">
-                  <Search className="w-4 h-4" />
-                </Button>
+            {/* Link MP4 (modo único) */}
+            {formData.sendType === 'single' && (
+              <div className="space-y-2">
+                <Label>Link MP4 *</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.videoUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    placeholder="https://example.com/video.mp4"
+                    type="url"
+                  />
+                  <Button onClick={testVideoLink} disabled={loading} variant="outline">
+                    <Search className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
+            )
             </div>
 
             {/* Tipo de ID */}

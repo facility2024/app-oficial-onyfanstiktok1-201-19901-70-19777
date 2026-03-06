@@ -14,6 +14,7 @@ import { MapClustererLayer } from './map/MapClusterer';
 import { MapBusinessPins } from './map/MapBusinessPins';
 import { MapTimeline } from './map/MapTimeline';
 import { MapAuthFallback } from './map/MapAuthFallback';
+import { MapLeafletFallback } from './map/MapLeafletFallback';
 
 
 // --- Types ---
@@ -338,7 +339,10 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
       <Card className="bg-gradient-card border-border/50 overflow-hidden">
         <CardContent className="p-0">
           {hasGoogleMapError ? (
-            <MapAuthFallback currentOrigin={currentOrigin} keyPreview={keyPreview} />
+            <div className="space-y-3">
+              <MapAuthFallback currentOrigin={currentOrigin} keyPreview={keyPreview} />
+              <MapLeafletFallback states={filteredStates} getCount={getCount} />
+            </div>
           ) : (
             <GoogleMap
               mapContainerStyle={{ width: '100%', height: '520px' }}

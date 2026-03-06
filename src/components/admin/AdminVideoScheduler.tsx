@@ -46,6 +46,7 @@ const defaultFormData = {
   profileLink: '',
   sendType: 'single' as const,
   listInterval: 5,
+  dailyFrequency: 3, // Quantas vezes aparece no feed por dia
 };
 
 export const AdminVideoScheduler = () => {

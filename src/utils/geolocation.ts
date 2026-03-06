@@ -1,6 +1,6 @@
 /**
  * Robust geolocation detection for Brazil
- * Priority: Browser GPS → Edge Function → HTTPS IP APIs → Fallback
+ * Priority: Browser GPS → HTTPS IP APIs → Edge Function → Fallback
  */
 
 export interface LocationResult {
@@ -27,6 +27,10 @@ Object.entries(BRAZILIAN_STATES).forEach(([abbr, name]) => {
   STATE_NAME_TO_ABBR[name.toLowerCase()] = abbr;
   STATE_NAME_TO_ABBR[abbr.toLowerCase()] = abbr;
 });
+
+const BRAZILIAN_STATE_NAMES = new Set(
+  Object.values(BRAZILIAN_STATES).map((stateName) => stateName.toLowerCase())
+);
 
 // Also map common variations like "State of ..." returned by some APIs
 const STATE_ALIASES: Record<string, string> = {
@@ -72,6 +76,11 @@ export function normalizeStateName(input: string): string {
   }
   
   return trimmed;
+}
+
+function isValidBrazilState(state: string): boolean {
+  if (!state) return false;
+  return BRAZILIAN_STATE_NAMES.has(normalizeStateName(state).toLowerCase());
 }
 
 /**
@@ -140,10 +149,18 @@ async function getLocationByEdgeFunction(): Promise<LocationResult> {
   
   if (error) throw new Error(`Edge function error: ${error.message}`);
   if (!data || !data.region) throw new Error('No region returned');
+
+  const normalizedState = normalizeStateName(data.region);
+  const method = String(data.method || 'unknown').toLowerCase();
+
+  // geojs/fallback podem refletir IP de proxy/servidor e gerar estado errado
+  if (!isValidBrazilState(normalizedState) || method === 'geojs' || method === 'fallback') {
+    throw new Error(`Unreliable edge location: state=${data.region}, method=${method}`);
+  }
   
   console.log('📍 Edge function geolocate retornou:', data);
   return {
-    state: normalizeStateName(data.region),
+    state: normalizedState,
     city: data.city || 'Desconhecida',
     country: 'BR',
     lat: data.lat || -23.5505,
@@ -162,14 +179,17 @@ async function getLocationByIP(): Promise<LocationResult> {
     if (res.ok) {
       const data = await res.json();
       if (!data.error) {
-        return {
-          state: normalizeStateName(data.region || ''),
-          city: data.city || 'Desconhecida',
-          country: data.country_code || 'BR',
-          lat: data.latitude || -23.5505,
-          lng: data.longitude || -46.6333,
-          method: 'ip',
-        };
+        const normalizedState = normalizeStateName(data.region || '');
+        if (isValidBrazilState(normalizedState)) {
+          return {
+            state: normalizedState,
+            city: data.city || 'Desconhecida',
+            country: data.country_code || 'BR',
+            lat: data.latitude || -23.5505,
+            lng: data.longitude || -46.6333,
+            method: 'ip',
+          };
+        }
       }
     }
   } catch {
@@ -182,25 +202,28 @@ async function getLocationByIP(): Promise<LocationResult> {
     if (res.ok) {
       const data = await res.json();
       if (data.success) {
-        return {
-          state: normalizeStateName(data.region || ''),
-          city: data.city || 'Desconhecida',
-          country: data.country_code || 'BR',
-          lat: data.latitude || -23.5505,
-          lng: data.longitude || -46.6333,
-          method: 'ip',
-        };
+        const normalizedState = normalizeStateName(data.region || '');
+        if (isValidBrazilState(normalizedState)) {
+          return {
+            state: normalizedState,
+            city: data.city || 'Desconhecida',
+            country: data.country_code || 'BR',
+            lat: data.latitude || -23.5505,
+            lng: data.longitude || -46.6333,
+            method: 'ip',
+          };
+        }
       }
     }
   } catch {
     console.warn('⚠️ ipwho.is failed');
   }
 
-  throw new Error('All HTTPS IP geolocation APIs failed');
+  throw new Error('All HTTPS IP geolocation APIs failed or returned non-BR state');
 }
 
 /**
- * Main detection - GPS → Edge Function → HTTPS IP → Fallback
+ * Main detection - GPS → HTTPS IP (client-side) → Edge Function → Fallback
  */
 export async function detectLocation(): Promise<LocationResult> {
   // Method 1: Browser GPS + reverse geocoding
@@ -224,17 +247,7 @@ export async function detectLocation(): Promise<LocationResult> {
     console.warn('⚠️ GPS falhou:', (gpsError as Error).message);
   }
 
-  // Method 2: Edge Function (server-side, sees real user IP)
-  try {
-    console.log('📍 Tentando Edge Function geolocate (server-side)...');
-    const edgeLocation = await getLocationByEdgeFunction();
-    console.log('📍 Localização via Edge Function:', edgeLocation);
-    return edgeLocation;
-  } catch (edgeError) {
-    console.warn('⚠️ Edge Function falhou:', (edgeError as Error).message);
-  }
-
-  // Method 3: HTTPS IP APIs (client-side)
+  // Method 2: HTTPS IP APIs (client-side, reflete a rede real do dispositivo)
   try {
     console.log('📍 Tentando HTTPS IP APIs...');
     const ipLocation = await getLocationByIP();
@@ -242,6 +255,16 @@ export async function detectLocation(): Promise<LocationResult> {
     return ipLocation;
   } catch (ipError) {
     console.warn('⚠️ IP geolocation falhou:', (ipError as Error).message);
+  }
+
+  // Method 3: Edge Function (fallback)
+  try {
+    console.log('📍 Tentando Edge Function geolocate (fallback)...');
+    const edgeLocation = await getLocationByEdgeFunction();
+    console.log('📍 Localização via Edge Function:', edgeLocation);
+    return edgeLocation;
+  } catch (edgeError) {
+    console.warn('⚠️ Edge Function falhou:', (edgeError as Error).message);
   }
 
   // Fallback

@@ -514,7 +514,7 @@ export const AdminFeedPromotions = () => {
                   Ao salvar, uma modelo será criada automaticamente com ID único usando o nome de exibição. Ela aparecerá no painel de modelos.
                 </p>
               </div>
-            )
+            )}
 
             <div className="flex items-center gap-3">
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />

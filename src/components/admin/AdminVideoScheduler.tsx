@@ -260,9 +260,12 @@ export const AdminVideoScheduler = () => {
     // Criar novo modelo se necessário
     if (!formData.useExistingId) {
       const newUsername = modelSearch.trim() || `modelo_${Date.now()}`;
-      const createdId = await createNewModel(newUsername);
-      if (!createdId) return;
-      modelId = createdId;
+      // If no pending confirmation yet, show dialog
+      if (!createdModelInfo) {
+        initiateCreateModel();
+        return;
+      }
+      modelId = createdModelInfo.id;
     } else {
       // Validar modelo existente
       if (!modelId) {

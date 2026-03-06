@@ -36,6 +36,18 @@ interface ScheduledPost {
   };
 }
 
+const defaultFormData = {
+  useExistingId: true,
+  videoUrl: '',
+  videoUrls: '',
+  modelId: '',
+  scheduleDate: '',
+  scheduleTime: '',
+  profileLink: '',
+  sendType: 'single' as const,
+  listInterval: 5,
+};
+
 export const AdminVideoScheduler = () => {
   const [models, setModels] = useState<Model[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);

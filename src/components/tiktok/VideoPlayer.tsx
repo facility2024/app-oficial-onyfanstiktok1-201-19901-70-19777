@@ -152,9 +152,11 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           let deviceType: string = 'desktop';
           if (/Mobile|Android|iPhone|iPad|iPod/i.test(ua)) deviceType = /iPad/i.test(ua) ? 'tablet' : 'mobile';
 
+          // Only pass model_id if video actually belongs to a model (not creator)
+          const actualModelId = (video as any)?.model_id || null;
           await supabase.from('video_views').insert({
             video_id: (video as any).id,
-            model_id: (modelId as any) || null,
+            model_id: actualModelId,
             user_id: userId,
             session_id: sessionId,
             device_type: deviceType,

@@ -204,151 +204,135 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Google Map */}
-        <Card className="lg:col-span-2 bg-gradient-card border-border/50 overflow-hidden">
-          <CardContent className="p-0">
-            {!isLoaded ? (
-              <div className="flex items-center justify-center" style={{ height: 500 }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-              </div>
-            ) : (
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={center}
-                zoom={4}
-                options={mapOptions}
-              >
-                {filteredStates.map((state) => {
-                  const count = getCount(state.name);
-                  const hasUsers = count > 0;
-                  const colors = REGION_COLORS[state.region];
-
-                  return (
-                    <MarkerF
-                      key={state.code}
-                      position={{ lat: state.lat, lng: state.lng }}
-                      icon={{
-                        url: createPinSvg(colors.hex, hasUsers, count),
-                        scaledSize: new google.maps.Size(
-                          hasUsers ? (count > 5 ? 32 : 24) : 14,
-                          hasUsers ? (count > 5 ? 32 : 24) : 14
-                        ),
-                        anchor: new google.maps.Point(
-                          (hasUsers ? (count > 5 ? 16 : 12) : 7),
-                          (hasUsers ? (count > 5 ? 16 : 12) : 7)
-                        ),
-                      }}
-                      onClick={() => setSelectedState(state)}
-                    />
-                  );
-                })}
-
-                {selectedState && (
-                  <InfoWindowF
-                    position={{ lat: selectedState.lat, lng: selectedState.lng }}
-                    onCloseClick={() => setSelectedState(null)}
-                  >
-                    <div className="p-1 min-w-[150px]">
-                      <div className="font-bold text-sm text-gray-900">
-                        {selectedState.name} ({selectedState.code})
-                      </div>
-                      <div className="text-xs text-gray-500">{selectedState.region}</div>
-                      {getCount(selectedState.name) > 0 ? (
-                        <>
-                          <div className="font-semibold text-emerald-600 mt-1">
-                            🟢 {getCount(selectedState.name)} usuário{getCount(selectedState.name) > 1 ? 's' : ''} online
-                          </div>
-                          <div className="flex gap-3 mt-1 text-xs">
-                            {(deviceStatsByState[selectedState.name]?.desktop || 0) > 0 && (
-                              <span className="text-blue-600">🖥️ {deviceStatsByState[selectedState.name].desktop} desktop</span>
-                            )}
-                            {(deviceStatsByState[selectedState.name]?.mobile || 0) > 0 && (
-                              <span className="text-orange-600">📱 {deviceStatsByState[selectedState.name].mobile} mobile</span>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-gray-400 mt-1 text-xs">Nenhum usuário online</div>
-                      )}
-                    </div>
-                  </InfoWindowF>
-                )}
-              </GoogleMap>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Sidebar: online user list */}
-        <Card className="bg-gradient-card border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              Usuários por Estado
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="max-h-[440px] overflow-y-auto space-y-1 pr-1">
-            <AnimatePresence mode="popLayout">
-              {sortedOnlineStates.map((state) => {
+      {/* Google Map - Full Width */}
+      <Card className="bg-gradient-card border-border/50 overflow-hidden">
+        <CardContent className="p-0">
+          {!isLoaded ? (
+            <div className="flex items-center justify-center" style={{ height: 500 }}>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : (
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '520px' }}
+              center={center}
+              zoom={4}
+              options={mapOptions}
+            >
+              {filteredStates.map((state) => {
+                const count = getCount(state.name);
+                const hasUsers = count > 0;
                 const colors = REGION_COLORS[state.region];
+
                 return (
-                  <motion.div
+                  <MarkerF
                     key={state.code}
-                    layout
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className={`flex items-center justify-between p-2 rounded-md transition-colors cursor-pointer
-                      ${hoveredState?.code === state.code ? 'bg-primary/10' : 'hover:bg-muted/40'}
-                      ${state.count > 0 ? '' : 'opacity-50'}`}
-                    onMouseEnter={() => setHoveredState(state)}
-                    onMouseLeave={() => setHoveredState(null)}
+                    position={{ lat: state.lat, lng: state.lng }}
+                    icon={{
+                      url: createPinSvg(colors.hex, hasUsers, count),
+                      scaledSize: new google.maps.Size(
+                        hasUsers ? (count > 5 ? 32 : 24) : 14,
+                        hasUsers ? (count > 5 ? 32 : 24) : 14
+                      ),
+                      anchor: new google.maps.Point(
+                        (hasUsers ? (count > 5 ? 16 : 12) : 7),
+                        (hasUsers ? (count > 5 ? 16 : 12) : 7)
+                      ),
+                    }}
                     onClick={() => setSelectedState(state)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${state.count > 0 ? colors.dot : 'bg-gray-500'}`} />
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium truncate">{state.name}</div>
-                        <div className="text-[10px] text-muted-foreground">{state.region}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {state.count > 0 && (
-                        <>
-                          {(deviceStatsByState[state.name]?.desktop || 0) > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] text-blue-400">
-                              <Monitor className="w-3 h-3" />
-                              {deviceStatsByState[state.name].desktop}
-                            </span>
-                          )}
-                          {(deviceStatsByState[state.name]?.mobile || 0) > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] text-orange-400">
-                              <Smartphone className="w-3 h-3" />
-                              {deviceStatsByState[state.name].mobile}
-                            </span>
-                          )}
-                        </>
-                      )}
-                      <Badge
-                        variant={state.count > 0 ? 'default' : 'secondary'}
-                        className={`text-[10px] px-1.5 py-0 h-5 ${state.count > 0 ? 'bg-emerald-600 text-white' : ''}`}
-                      >
-                        {state.count}
-                      </Badge>
-                    </div>
-                  </motion.div>
+                  />
                 );
               })}
-            </AnimatePresence>
 
-            {sortedOnlineStates.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-xs">
-                Nenhum estado encontrado
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {selectedState && (
+                <InfoWindowF
+                  position={{ lat: selectedState.lat, lng: selectedState.lng }}
+                  onCloseClick={() => setSelectedState(null)}
+                >
+                  <div className="p-1 min-w-[150px]">
+                    <div className="font-bold text-sm text-gray-900">
+                      {selectedState.name} ({selectedState.code})
+                    </div>
+                    <div className="text-xs text-gray-500">{selectedState.region}</div>
+                    {getCount(selectedState.name) > 0 ? (
+                      <>
+                        <div className="font-semibold text-emerald-600 mt-1">
+                          🟢 {getCount(selectedState.name)} usuário{getCount(selectedState.name) > 1 ? 's' : ''} online
+                        </div>
+                        <div className="flex gap-3 mt-1 text-xs">
+                          {(deviceStatsByState[selectedState.name]?.desktop || 0) > 0 && (
+                            <span className="text-blue-600">🖥️ {deviceStatsByState[selectedState.name].desktop} desktop</span>
+                          )}
+                          {(deviceStatsByState[selectedState.name]?.mobile || 0) > 0 && (
+                            <span className="text-orange-600">📱 {deviceStatsByState[selectedState.name].mobile} mobile</span>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-gray-400 mt-1 text-xs">Nenhum usuário online</div>
+                    )}
+                  </div>
+                </InfoWindowF>
+              )}
+            </GoogleMap>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bottom horizontal banner - States */}
+      <div className="overflow-x-auto pb-2">
+        <div className="flex gap-2 min-w-max px-1">
+          <AnimatePresence mode="popLayout">
+            {sortedOnlineStates.map((state) => {
+              const colors = REGION_COLORS[state.region];
+              return (
+                <motion.div
+                  key={state.code}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border border-border/50 bg-card min-w-[80px] cursor-pointer transition-colors
+                    ${hoveredState?.code === state.code ? 'bg-primary/10 border-primary/40' : 'hover:bg-muted/40'}
+                    ${state.count > 0 ? '' : 'opacity-40'}`}
+                  onMouseEnter={() => setHoveredState(state)}
+                  onMouseLeave={() => setHoveredState(null)}
+                  onClick={() => setSelectedState(state)}
+                >
+                  <div className={`w-3 h-3 rounded-full ${state.count > 0 ? colors.dot : 'bg-muted-foreground/40'}`} />
+                  <span className="text-[11px] font-semibold">{state.code}</span>
+                  <span className="text-[9px] text-muted-foreground">{state.region}</span>
+                  <Badge
+                    variant={state.count > 0 ? 'default' : 'secondary'}
+                    className={`text-[10px] px-1.5 py-0 h-5 ${state.count > 0 ? 'bg-emerald-600 text-white' : ''}`}
+                  >
+                    {state.count}
+                  </Badge>
+                  {state.count > 0 && (
+                    <div className="flex gap-1">
+                      {(deviceStatsByState[state.name]?.desktop || 0) > 0 && (
+                        <span className="flex items-center gap-0.5 text-[9px] text-blue-400">
+                          <Monitor className="w-2.5 h-2.5" />{deviceStatsByState[state.name].desktop}
+                        </span>
+                      )}
+                      {(deviceStatsByState[state.name]?.mobile || 0) > 0 && (
+                        <span className="flex items-center gap-0.5 text-[9px] text-orange-400">
+                          <Smartphone className="w-2.5 h-2.5" />{deviceStatsByState[state.name].mobile}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+
+          {sortedOnlineStates.length === 0 && (
+            <div className="text-center py-4 text-muted-foreground text-xs w-full">
+              Nenhum estado encontrado
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -58,7 +58,7 @@ export const useAdminNotifications = () => {
           id: `sale-${s.id}`,
           type: 'sale',
           title: '💰 Nova Venda VIP',
-          description: `${s.email || 'Usuário'} assinou ${s.plan_name || 'plano VIP'}`,
+          description: `${s.email || 'Usuário'} assinou ${s.subscription_type || 'plano VIP'}`,
           timestamp: new Date(s.created_at),
           read: false,
         });

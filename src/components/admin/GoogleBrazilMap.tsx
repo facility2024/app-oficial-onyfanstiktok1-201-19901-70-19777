@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
@@ -13,6 +13,7 @@ import { HeatmapOverlay } from './map/MapHeatmapLayer';
 import { MapClustererLayer } from './map/MapClusterer';
 import { MapBusinessPins } from './map/MapBusinessPins';
 import { MapTimeline } from './map/MapTimeline';
+import { BrazilStaticMap } from './BrazilStaticMap';
 
 // --- Types ---
 interface DeviceStats { desktop: number; mobile: number; }
@@ -116,9 +117,24 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
   const [showBusinesses, setShowBusinesses] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [googleAuthFailed, setGoogleAuthFailed] = useState(false);
 
   // Timeline state
   const [timelineHour, setTimelineHour] = useState(new Date().getHours());
+
+  useEffect(() => {
+    const mapsWindow = window as Window & { gm_authFailure?: () => void };
+    const previousAuthFailureHandler = mapsWindow.gm_authFailure;
+
+    mapsWindow.gm_authFailure = () => {
+      setGoogleAuthFailed(true);
+      previousAuthFailureHandler?.();
+    };
+
+    return () => {
+      mapsWindow.gm_authFailure = previousAuthFailureHandler;
+    };
+  }, []);
 
   const handleGeocodeBusinesses = useCallback(async () => {
     setIsGeocoding(true);
@@ -177,41 +193,22 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
       .sort((a, b) => b.count - a.count);
   }, [onlineUsersByState, selectedRegion, searchQuery, getCount]);
 
-  // Heatmap data points
-  const heatmapPoints = useMemo(() => {
-    return STATE_POSITIONS
-      .filter(s => getCount(s.name) > 0)
-      .map(s => ({ lat: s.lat, lng: s.lng, weight: getCount(s.name) }));
-  }, [onlineUsersByState, getCount]);
+  const fallbackStatesData = useMemo(() => {
+    return STATE_POSITIONS.map((state) => {
+      const count = getCount(state.name);
+      const percentage = totalOnline > 0 ? ((count / totalOnline) * 100).toFixed(1) : '0';
 
-  // Cluster points
-  const clusterPoints = useMemo(() => {
-    return STATE_POSITIONS
-      .map(s => ({ lat: s.lat, lng: s.lng, label: s.name, count: getCount(s.name) }));
-  }, [onlineUsersByState, getCount]);
+      return {
+        state: state.code,
+        count,
+        percentage,
+      };
+    });
+  }, [getCount, totalOnline]);
 
-  const handleTimelineChange = useCallback((hour: number, events: any[]) => {
-    setTimelineHour(hour);
-  }, []);
+  const hasGoogleMapError = Boolean(loadError) || googleAuthFailed;
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    setMapRef(map);
-  }, []);
-
-  if (loadError) {
-    return (
-      <div className="text-center py-8 space-y-2">
-        <p className="text-destructive font-medium">Erro ao carregar Google Maps</p>
-        <p className="text-xs text-muted-foreground">
-          Verifique se a API Key está correta e se a "Maps JavaScript API" está habilitada no Google Cloud Console.
-          Também adicione os domínios *.lovableproject.com/* e *.lovable.app/* nas restrições HTTP da chave.
-        </p>
-        <p className="text-xs text-muted-foreground/70">Erro: {loadError.message}</p>
-      </div>
-    );
-  }
-
-  if (!isLoaded) {
+  if (!isLoaded && !hasGoogleMapError) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3" />
@@ -319,9 +316,18 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
       {/* Google Map */}
       <Card className="bg-gradient-card border-border/50 overflow-hidden">
         <CardContent className="p-0">
-          {!isLoaded ? (
-            <div className="flex items-center justify-center" style={{ height: 520 }}>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          {hasGoogleMapError ? (
+            <div className="p-4 space-y-3">
+              <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                Google Maps indisponível no momento. Exibindo mapa alternativo enquanto as permissões da chave são propagadas.
+              </div>
+              <div style={{ height: 520 }}>
+                <BrazilStaticMap
+                  statesData={fallbackStatesData}
+                  currentLocation={null}
+                  totalUsers={totalOnline}
+                />
+              </div>
             </div>
           ) : (
             <GoogleMap
@@ -397,7 +403,7 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
           )}
 
           {/* Clusterer (rendered outside GoogleMap children to avoid re-render issues) */}
-          {isLoaded && (
+          {!hasGoogleMapError && isLoaded && (
             <MapClustererLayer
               map={mapRef}
               points={clusterPoints}

@@ -275,10 +275,22 @@ export const AdminVideoScheduler = () => {
   };
 
   const handleSchedule = async () => {
-    // Validações
-    if (!formData.videoUrl.trim()) {
-      toast.error('Digite a URL do vídeo MP4');
-      return;
+    const isList = formData.sendType === 'list';
+
+    // Obter lista de URLs
+    let videoUrls: string[] = [];
+    if (isList) {
+      videoUrls = formData.videoUrls.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+      if (videoUrls.length === 0) {
+        toast.error('Cole pelo menos um link MP4 na lista');
+        return;
+      }
+    } else {
+      if (!formData.videoUrl.trim()) {
+        toast.error('Digite a URL do vídeo MP4');
+        return;
+      }
+      videoUrls = [formData.videoUrl.trim()];
     }
 
     if (!formData.scheduleDate || !formData.scheduleTime) {
@@ -291,14 +303,12 @@ export const AdminVideoScheduler = () => {
     // Criar novo modelo se necessário
     if (!formData.useExistingId) {
       const newUsername = modelSearch.trim() || `modelo_${Date.now()}`;
-      // If no pending confirmation yet, show dialog
       if (!createdModelInfo) {
         initiateCreateModel();
         return;
       }
       modelId = createdModelInfo.id;
     } else {
-      // Validar modelo existente
       if (!modelId) {
         toast.error('Busque e selecione uma modelo existente');
         return;
@@ -320,35 +330,65 @@ export const AdminVideoScheduler = () => {
 
     setLoading(true);
 
-    // Criar post agendado
-    const scheduledDateTime = `${formData.scheduleDate}T${formData.scheduleTime}:00`;
-    
-    const { data, error } = await supabase
-      .from('posts_agendados')
-      .insert({
-        modelo_id: modelId,
-        modelo_username: selectedModel?.username || modelSearch.trim() || 'nova_modelo',
-        titulo: 'Novo vídeo agendado',
-        descricao: '',
-        conteudo_url: formData.videoUrl.trim(),
-        tipo_conteudo: 'video',
-        data_agendamento: scheduledDateTime,
-        status: 'agendado',
-        enviar_tela_principal: true,
-        imagens: [],
-      })
-      .select()
-      .single();
+    const baseDate = new Date(`${formData.scheduleDate}T${formData.scheduleTime}:00`);
+    const username = selectedModel?.username || modelSearch.trim() || 'nova_modelo';
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < videoUrls.length; i++) {
+      const url = videoUrls[i];
+      // Para lista, cada vídeo é agendado com intervalo de X minutos
+      const scheduleTime = new Date(baseDate.getTime() + i * formData.listInterval * 60 * 1000);
+
+      // 1. Inserir na tabela videos para aparecer no feed (registrar como criadora)
+      const videoPayload: any = {
+        video_url: url,
+        model_id: modelId,
+        is_active: false, // Fica inativo até publicar
+        title: `Vídeo agendado ${i + 1}`,
+        likes_count: 0,
+        views_count: 0,
+        comments_count: 0,
+        shares_count: 0,
+      };
+
+      const { data: videoData } = await (supabase as any)
+        .from('videos')
+        .insert(videoPayload)
+        .select('id')
+        .single();
+
+      // 2. Criar post agendado
+      const { error } = await supabase
+        .from('posts_agendados')
+        .insert({
+          modelo_id: modelId,
+          modelo_username: username,
+          titulo: isList ? `Vídeo ${i + 1} de ${videoUrls.length}` : 'Novo vídeo agendado',
+          descricao: '',
+          conteudo_url: url,
+          tipo_conteudo: 'video',
+          data_agendamento: scheduleTime.toISOString(),
+          status: 'agendado',
+          enviar_tela_principal: true,
+          imagens: [],
+        });
+
+      if (error) {
+        console.error('Erro ao agendar:', error);
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
 
     setLoading(false);
 
-    if (error) {
-      console.error('Erro ao agendar:', error);
-      toast.error('Erro ao criar agendamento');
-      return;
+    if (successCount > 0) {
+      toast.success(`🎥 ${successCount} vídeo(s) agendado(s) com sucesso!${errorCount > 0 ? ` (${errorCount} erro(s))` : ''}`);
+    } else {
+      toast.error('Erro ao criar agendamentos');
     }
-
-    toast.success('🎥 Vídeo agendado com sucesso!');
     
     // Limpar formulário
     setFormData({ ...defaultFormData });

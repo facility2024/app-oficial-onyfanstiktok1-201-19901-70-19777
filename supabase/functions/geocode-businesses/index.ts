@@ -12,15 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-    if (!GOOGLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'GOOGLE_MAPS_API_KEY not set' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -33,7 +26,7 @@ serve(async (req) => {
 
     if (error) throw error;
     if (!businesses || businesses.length === 0) {
-      return new Response(JSON.stringify({ message: 'No businesses need geocoding', updated: 0 }), {
+      return new Response(JSON.stringify({ message: 'No businesses need geocoding', updated: 0, total: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -46,31 +39,39 @@ serve(async (req) => {
 
       try {
         const encoded = encodeURIComponent(biz.address);
+        // Use Nominatim (OpenStreetMap) - FREE, no API key needed
         const res = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encoded}&language=pt-BR&key=${GOOGLE_API_KEY}`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&countrycodes=br`,
+          {
+            headers: {
+              'User-Agent': 'CoconudiApp/1.0 (contact@coconudi.com)',
+              'Accept-Language': 'pt-BR',
+            },
+          }
         );
         const data = await res.json();
 
-        if (data.status === 'OK' && data.results.length > 0) {
-          const loc = data.results[0].geometry.location;
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
 
           const { error: updateError } = await supabase
             .from('local_businesses')
-            .update({ latitude: loc.lat, longitude: loc.lng })
+            .update({ latitude: lat, longitude: lon })
             .eq('id', biz.id);
 
           if (!updateError) {
             updated++;
-            results.push({ id: biz.id, name: biz.name, lat: loc.lat, lng: loc.lng, status: 'ok' });
+            results.push({ id: biz.id, name: biz.name, lat, lng: lon, status: 'ok' });
           } else {
             results.push({ id: biz.id, name: biz.name, status: 'update_error', error: updateError.message });
           }
         } else {
-          results.push({ id: biz.id, name: biz.name, status: 'geocode_failed', googleStatus: data.status });
+          results.push({ id: biz.id, name: biz.name, status: 'not_found' });
         }
 
-        // Small delay to respect rate limits
-        await new Promise(r => setTimeout(r, 200));
+        // Nominatim requires 1 request per second
+        await new Promise(r => setTimeout(r, 1100));
       } catch (err) {
         results.push({ id: biz.id, name: biz.name, status: 'error', error: String(err) });
       }

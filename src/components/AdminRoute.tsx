@@ -24,9 +24,6 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
         }
 
         // Buscar role na tabela user_roles
-        console.log('🔍 Verificando role admin para user_id:', user.id);
-        console.log('📧 Email do usuário:', user.email);
-        
         const { data: roleData, error } = await (supabase as any)
           .from('user_roles')
           .select('role')
@@ -34,24 +31,11 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
           .eq('role', 'admin')
           .maybeSingle();
 
-        console.log('📊 Resultado da verificação admin:', {
-          roleData,
-          error,
-          isAdmin: !!roleData,
-          errorDetails: error ? {
-            message: error.message,
-            code: error.code,
-            details: error.details
-          } : null
-        });
-
         if (error) {
-          console.error('❌ Erro ao verificar role:', error);
-          toast.error(`Erro RLS ao verificar admin: ${error.message}`);
+          toast.error(`Erro ao verificar permissões de admin.`);
           setIsAdmin(false);
         } else {
           const isAdminUser = !!roleData;
-          console.log(isAdminUser ? '✅ Usuário é admin!' : '⚠️ Usuário NÃO é admin');
           setIsAdmin(isAdminUser);
         }
 
@@ -69,14 +53,14 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
               }
             });
           } catch (logError) {
-            console.error('Erro ao registrar tentativa não autorizada:', logError);
+            // silently fail - don't log security details
           }
 
           toast.error('Acesso negado. Você não tem permissão para acessar o painel administrativo.');
           setTimeout(() => navigate('/app'), 1000);
         }
       } catch (error) {
-        console.error('Erro na verificação de admin:', error);
+        // silently handle auth check failure
         setIsAdmin(false);
       } finally {
         setIsChecking(false);

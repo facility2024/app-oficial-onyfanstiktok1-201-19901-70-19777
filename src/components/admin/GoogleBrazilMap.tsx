@@ -13,6 +13,7 @@ import { HeatmapOverlay } from './map/MapHeatmapLayer';
 import { MapClustererLayer } from './map/MapClusterer';
 import { MapBusinessPins } from './map/MapBusinessPins';
 import { MapTimeline } from './map/MapTimeline';
+import { MapAuthFallback } from './map/MapAuthFallback';
 
 
 // --- Types ---
@@ -336,88 +337,83 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
       {/* Google Map */}
       <Card className="bg-gradient-card border-border/50 overflow-hidden">
         <CardContent className="p-0">
-          {hasGoogleMapError && (
-            <div className="m-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">
-              <p className="font-medium text-destructive">Google Maps bloqueado por configuração da chave</p>
-              <p className="text-muted-foreground">Origem atual: {currentOrigin}</p>
-              <p className="text-muted-foreground">Chave ativa: {keyPreview}</p>
-              <p className="text-muted-foreground">Configure essa mesma chave no Google Cloud e libere este domínio como HTTP referrer.</p>
-            </div>
+          {hasGoogleMapError ? (
+            <MapAuthFallback currentOrigin={currentOrigin} keyPreview={keyPreview} />
+          ) : (
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '520px' }}
+              center={center}
+              zoom={4}
+              options={mapOptions}
+              onLoad={onMapLoad}
+            >
+              {/* Default markers (hidden when clusters active) */}
+              {!showClusters && filteredStates.map((state) => {
+                const count = getCount(state.name);
+                const hasUsers = count > 0;
+                const colors = REGION_COLORS[state.region];
+                return (
+                  <MarkerF
+                    key={state.code}
+                    position={{ lat: state.lat, lng: state.lng }}
+                    icon={{
+                      url: createPinSvg(colors.hex, hasUsers, count),
+                      scaledSize: new google.maps.Size(
+                        hasUsers ? (count > 5 ? 32 : 24) : 14,
+                        hasUsers ? (count > 5 ? 32 : 24) : 14
+                      ),
+                      anchor: new google.maps.Point(
+                        (hasUsers ? (count > 5 ? 16 : 12) : 7),
+                        (hasUsers ? (count > 5 ? 16 : 12) : 7)
+                      ),
+                    }}
+                    onClick={() => setSelectedState(state)}
+                  />
+                );
+              })}
+
+              {/* InfoWindow */}
+              {selectedState && (
+                <InfoWindowF
+                  position={{ lat: selectedState.lat, lng: selectedState.lng }}
+                  onCloseClick={() => setSelectedState(null)}
+                >
+                  <div className="p-1 min-w-[150px]">
+                    <div className="font-bold text-sm" style={{ color: '#111' }}>
+                      {selectedState.name} ({selectedState.code})
+                    </div>
+                    <div className="text-xs" style={{ color: '#666' }}>{selectedState.region}</div>
+                    {getCount(selectedState.name) > 0 ? (
+                      <>
+                        <div className="font-semibold mt-1" style={{ color: '#059669' }}>
+                          🟢 {getCount(selectedState.name)} usuário{getCount(selectedState.name) > 1 ? 's' : ''} online
+                        </div>
+                        <div className="flex gap-3 mt-1 text-xs">
+                          {(deviceStatsByState[selectedState.name]?.desktop || 0) > 0 && (
+                            <span style={{ color: '#2563eb' }}>🖥️ {deviceStatsByState[selectedState.name].desktop} desktop</span>
+                          )}
+                          {(deviceStatsByState[selectedState.name]?.mobile || 0) > 0 && (
+                            <span style={{ color: '#ea580c' }}>📱 {deviceStatsByState[selectedState.name].mobile} mobile</span>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-1 text-xs" style={{ color: '#999' }}>Nenhum usuário online</div>
+                    )}
+                  </div>
+                </InfoWindowF>
+              )}
+
+              {/* Heatmap Layer */}
+              <HeatmapOverlay map={mapRef} points={heatmapPoints} visible={showHeatmap} />
+
+              {/* Business Pins */}
+              <MapBusinessPins visible={showBusinesses} />
+            </GoogleMap>
           )}
 
-          <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '520px' }}
-            center={center}
-            zoom={4}
-            options={mapOptions}
-            onLoad={onMapLoad}
-          >
-            {/* Default markers (hidden when clusters active) */}
-            {!showClusters && filteredStates.map((state) => {
-              const count = getCount(state.name);
-              const hasUsers = count > 0;
-              const colors = REGION_COLORS[state.region];
-              return (
-                <MarkerF
-                  key={state.code}
-                  position={{ lat: state.lat, lng: state.lng }}
-                  icon={{
-                    url: createPinSvg(colors.hex, hasUsers, count),
-                    scaledSize: new google.maps.Size(
-                      hasUsers ? (count > 5 ? 32 : 24) : 14,
-                      hasUsers ? (count > 5 ? 32 : 24) : 14
-                    ),
-                    anchor: new google.maps.Point(
-                      (hasUsers ? (count > 5 ? 16 : 12) : 7),
-                      (hasUsers ? (count > 5 ? 16 : 12) : 7)
-                    ),
-                  }}
-                  onClick={() => setSelectedState(state)}
-                />
-              );
-            })}
-
-            {/* InfoWindow */}
-            {selectedState && (
-              <InfoWindowF
-                position={{ lat: selectedState.lat, lng: selectedState.lng }}
-                onCloseClick={() => setSelectedState(null)}
-              >
-                <div className="p-1 min-w-[150px]">
-                  <div className="font-bold text-sm" style={{ color: '#111' }}>
-                    {selectedState.name} ({selectedState.code})
-                  </div>
-                  <div className="text-xs" style={{ color: '#666' }}>{selectedState.region}</div>
-                  {getCount(selectedState.name) > 0 ? (
-                    <>
-                      <div className="font-semibold mt-1" style={{ color: '#059669' }}>
-                        🟢 {getCount(selectedState.name)} usuário{getCount(selectedState.name) > 1 ? 's' : ''} online
-                      </div>
-                      <div className="flex gap-3 mt-1 text-xs">
-                        {(deviceStatsByState[selectedState.name]?.desktop || 0) > 0 && (
-                          <span style={{ color: '#2563eb' }}>🖥️ {deviceStatsByState[selectedState.name].desktop} desktop</span>
-                        )}
-                        {(deviceStatsByState[selectedState.name]?.mobile || 0) > 0 && (
-                          <span style={{ color: '#ea580c' }}>📱 {deviceStatsByState[selectedState.name].mobile} mobile</span>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="mt-1 text-xs" style={{ color: '#999' }}>Nenhum usuário online</div>
-                  )}
-                </div>
-              </InfoWindowF>
-            )}
-
-            {/* Heatmap Layer */}
-            <HeatmapOverlay map={mapRef} points={heatmapPoints} visible={showHeatmap} />
-
-            {/* Business Pins */}
-            <MapBusinessPins visible={showBusinesses} />
-          </GoogleMap>
-
           {/* Clusterer (rendered outside GoogleMap children to avoid re-render issues) */}
-          {isLoaded && (
+          {!hasGoogleMapError && isLoaded && (
             <MapClustererLayer
               map={mapRef}
               points={clusterPoints}

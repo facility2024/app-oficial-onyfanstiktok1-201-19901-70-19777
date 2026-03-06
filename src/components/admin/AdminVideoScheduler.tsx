@@ -46,6 +46,7 @@ const defaultFormData = {
   profileLink: '',
   sendType: 'single' as const,
   listInterval: 5,
+  dailyFrequency: 3, // Quantas vezes aparece no feed por dia
 };
 
 export const AdminVideoScheduler = () => {
@@ -68,6 +69,7 @@ export const AdminVideoScheduler = () => {
     profileLink: '',
     sendType: 'single' as 'single' | 'list',
     listInterval: 5, // Intervalo em minutos entre cada envio da lista
+    dailyFrequency: 3, // Quantas vezes aparece no feed por dia
   });
 
   useEffect(() => {
@@ -294,10 +296,41 @@ export const AdminVideoScheduler = () => {
     if (!formData.useExistingId) {
       const newUsername = modelSearch.trim() || `modelo_${Date.now()}`;
       if (!createdModelInfo) {
-        initiateCreateModel();
-        return;
+        // Auto-criar modelo inline sem dialog
+        const generatedId = crypto.randomUUID();
+        setLoading(true);
+        
+        const { data: newModel, error: createError } = await supabase
+          .from('models')
+          .insert({
+            id: generatedId,
+            username: newUsername,
+            name: newUsername,
+            avatar_url: 'https://via.placeholder.com/150',
+            is_active: true,
+            posting_panel_url: formData.profileLink.trim() || null,
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Erro ao criar modelo:', createError);
+          toast.error('Erro ao criar modelo automaticamente');
+          setLoading(false);
+          return;
+        }
+
+        modelId = newModel.id;
+        toast.success(`✅ Modelo "@${newUsername}" criada com ID: ${newModel.id}`);
+        setCreatedModelInfo({
+          id: newModel.id,
+          username: newUsername,
+          shareableLink: `${window.location.origin}/chat/${newModel.id}`,
+        });
+        await loadModels();
+      } else {
+        modelId = createdModelInfo.id;
       }
-      modelId = createdModelInfo.id;
     } else {
       if (!modelId) {
         toast.error('Busque e selecione uma modelo existente');
@@ -330,23 +363,29 @@ export const AdminVideoScheduler = () => {
       // Para lista, cada vídeo é agendado com intervalo de X minutos
       const scheduleTime = new Date(baseDate.getTime() + i * formData.listInterval * 60 * 1000);
 
-      // 1. Inserir na tabela videos para aparecer no feed (registrar como criadora)
+      // 1. Inserir na tabela videos para aparecer no feed
       const videoPayload: any = {
         video_url: url,
         model_id: modelId,
         is_active: false, // Fica inativo até publicar
         title: `Vídeo agendado ${i + 1}`,
+        thumbnail_url: url, // Usa o próprio link como fallback
+        duration: '0:00',
         likes_count: 0,
         views_count: 0,
         comments_count: 0,
         shares_count: 0,
       };
 
-      const { data: videoData } = await (supabase as any)
+      const { data: videoData, error: videoError } = await (supabase as any)
         .from('videos')
         .insert(videoPayload)
         .select('id')
         .single();
+      
+      if (videoError) {
+        console.error('Erro ao inserir vídeo:', videoError);
+      }
 
       // 2. Criar post agendado
       const { error } = await supabase
@@ -626,7 +665,21 @@ export const AdminVideoScheduler = () => {
               </p>
             </div>
 
-            {/* Created Model Info */}
+            {/* Frequência diária no feed */}
+            <div className="space-y-2">
+              <Label>Quantas vezes por dia aparece no feed</Label>
+              <Input
+                type="number"
+                min={0}
+                max={50}
+                value={formData.dailyFrequency}
+                onChange={(e) => setFormData(prev => ({ ...prev, dailyFrequency: parseInt(e.target.value) || 0 }))}
+                placeholder="3"
+              />
+              <p className="text-xs text-muted-foreground">
+                0 = ilimitado. Define quantas vezes o vídeo aparece no feed por dia.
+              </p>
+            </div>
             {createdModelInfo && !formData.useExistingId && (
               <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3">
                 <h4 className="font-semibold text-green-400 flex items-center gap-2">

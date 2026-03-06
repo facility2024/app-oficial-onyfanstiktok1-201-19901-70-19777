@@ -13,7 +13,7 @@ import { HeatmapOverlay } from './map/MapHeatmapLayer';
 import { MapClustererLayer } from './map/MapClusterer';
 import { MapBusinessPins } from './map/MapBusinessPins';
 import { MapTimeline } from './map/MapTimeline';
-import { BrazilStaticMap } from './BrazilStaticMap';
+
 
 // --- Types ---
 interface DeviceStats { desktop: number; mobile: number; }
@@ -213,22 +213,22 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
     setMapRef(map);
   }, []);
 
-  const fallbackStatesData = useMemo(() => {
-    return STATE_POSITIONS.map((state) => {
-      const count = getCount(state.name);
-      const percentage = totalOnline > 0 ? ((count / totalOnline) * 100).toFixed(1) : '0';
-
-      return {
-        state: state.code,
-        count,
-        percentage,
-      };
-    });
-  }, [getCount, totalOnline]);
-
   const hasGoogleMapError = Boolean(loadError) || googleAuthFailed;
+  const keyPreview = apiKey ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : 'chave ausente';
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'origem desconhecida';
 
-  if (!isLoaded && !hasGoogleMapError) {
+  if (loadError) {
+    return (
+      <div className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">
+        <p className="font-medium text-destructive">Erro ao carregar Google Maps</p>
+        <p className="text-muted-foreground">Origem atual: {currentOrigin}</p>
+        <p className="text-muted-foreground">Chave ativa: {keyPreview}</p>
+        <p className="text-muted-foreground">Detalhe: {loadError.message}</p>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3" />

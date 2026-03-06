@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface Model {
   id: string;
@@ -41,6 +42,9 @@ export const AdminVideoScheduler = () => {
   const [loading, setLoading] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
+  const [createdModelInfo, setCreatedModelInfo] = useState<{ id: string; username: string; shareableLink: string } | null>(null);
   
   const [formData, setFormData] = useState({
     useExistingId: true,
@@ -181,12 +185,30 @@ export const AdminVideoScheduler = () => {
     }
   };
 
-  const createNewModel = async (username: string): Promise<string | null> => {
+  // Show confirmation dialog before creating model
+  const initiateCreateModel = () => {
+    const username = modelSearch.trim();
+    if (!username) {
+      toast.error('Digite um username para a nova modelo');
+      return;
+    }
+    const generatedId = crypto.randomUUID();
+    setPendingModelData({ username, generatedId });
+    setShowConfirmDialog(true);
+  };
+
+  const confirmCreateModel = async (): Promise<string | null> => {
+    if (!pendingModelData) return null;
+    
+    setShowConfirmDialog(false);
+    setLoading(true);
+
     const { data, error } = await supabase
       .from('models')
       .insert({
-        username: username || `modelo_${Date.now()}`,
-        name: username || 'Nova Modelo',
+        id: pendingModelData.generatedId,
+        username: pendingModelData.username,
+        name: pendingModelData.username,
         avatar_url: 'https://via.placeholder.com/150',
         is_active: true,
         posting_panel_url: formData.profileLink.trim() || null,
@@ -194,15 +216,31 @@ export const AdminVideoScheduler = () => {
       .select('id')
       .single();
 
+    setLoading(false);
+
     if (error) {
       console.error('Erro ao criar modelo:', error);
       toast.error('Erro ao criar nova modelo');
+      setPendingModelData(null);
       return null;
     }
 
-    toast.success(`✅ Nova modelo criada: ${username}`);
+    const shareableLink = `${window.location.origin}/chat/${data.id}`;
+    setCreatedModelInfo({
+      id: data.id,
+      username: pendingModelData.username,
+      shareableLink,
+    });
+
+    toast.success(`✅ Modelo "${pendingModelData.username}" criada com ID: ${data.id}`);
     await loadModels();
+    setPendingModelData(null);
     return data.id;
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
   };
 
   const handleSchedule = async () => {
@@ -222,9 +260,12 @@ export const AdminVideoScheduler = () => {
     // Criar novo modelo se necessário
     if (!formData.useExistingId) {
       const newUsername = modelSearch.trim() || `modelo_${Date.now()}`;
-      const createdId = await createNewModel(newUsername);
-      if (!createdId) return;
-      modelId = createdId;
+      // If no pending confirmation yet, show dialog
+      if (!createdModelInfo) {
+        initiateCreateModel();
+        return;
+      }
+      modelId = createdModelInfo.id;
     } else {
       // Validar modelo existente
       if (!modelId) {
@@ -290,6 +331,7 @@ export const AdminVideoScheduler = () => {
     });
     setModelSearch('');
     setSelectedModel(null);
+    setCreatedModelInfo(null);
     
     await loadScheduledPosts();
   };
@@ -457,6 +499,12 @@ export const AdminVideoScheduler = () => {
                   </div>
                 </div>
               )}
+              {!formData.useExistingId && modelSearch.trim() && !createdModelInfo && (
+                <Button onClick={initiateCreateModel} variant="outline" size="sm" className="w-full">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Criar Modelo "@{modelSearch.trim()}"
+                </Button>
+              )}
             </div>
 
             {/* Data e Hora */}
@@ -493,6 +541,53 @@ export const AdminVideoScheduler = () => {
               </p>
             </div>
 
+            {/* Created Model Info */}
+            {createdModelInfo && !formData.useExistingId && (
+              <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3">
+                <h4 className="font-semibold text-green-400 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Modelo Criada com Sucesso
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">ID:</span>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-muted px-2 py-1 rounded">{createdModelInfo.id}</code>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdModelInfo.id, 'ID')}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Username:</span>
+                    <span className="font-medium">@{createdModelInfo.username}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Link:</span>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-muted px-2 py-1 rounded max-w-[180px] truncate">{createdModelInfo.shareableLink}</code>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdModelInfo.shareableLink, 'Link')}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                    const msg = `Confira o perfil: ${createdModelInfo.shareableLink}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                  }}>
+                    <Share2 className="w-3 h-3 mr-1" />
+                    WhatsApp
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => copyToClipboard(createdModelInfo.shareableLink, 'Link')}>
+                    <Link className="w-3 h-3 mr-1" />
+                    Copiar Link
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Botões */}
             <div className="flex gap-2">
               <Button onClick={handleSchedule} disabled={loading} className="flex-1">
@@ -512,6 +607,8 @@ export const AdminVideoScheduler = () => {
                   });
                   setModelSearch('');
                   setSelectedModel(null);
+                  setCreatedModelInfo(null);
+                  setPendingModelData(null);
                 }}
                 variant="outline"
               >
@@ -593,6 +690,59 @@ export const AdminVideoScheduler = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Confirmar Criação de Modelo
+            </DialogTitle>
+          </DialogHeader>
+          
+          {pendingModelData && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border bg-muted/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Username:</span>
+                  <span className="font-semibold">@{pendingModelData.username}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">ID gerado:</span>
+                  <code className="text-xs bg-background px-2 py-1 rounded border">{pendingModelData.generatedId.slice(0, 8)}...</code>
+                </div>
+                {formData.profileLink && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Link perfil:</span>
+                    <span className="text-xs truncate max-w-[200px]">{formData.profileLink}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Link compartilhável:</span>
+                  <code className="text-xs bg-background px-2 py-1 rounded border truncate max-w-[200px]">
+                    {window.location.origin}/chat/{pendingModelData.generatedId.slice(0, 8)}...
+                  </code>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Após confirmar, a modelo será criada e você receberá o ID, os botões de agendamento e o link compartilhável.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => { setShowConfirmDialog(false); setPendingModelData(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmCreateModel} disabled={loading}>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Confirmar e Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

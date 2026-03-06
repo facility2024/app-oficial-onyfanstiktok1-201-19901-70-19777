@@ -36,6 +36,18 @@ interface ScheduledPost {
   };
 }
 
+const defaultFormData = {
+  useExistingId: true,
+  videoUrl: '',
+  videoUrls: '',
+  modelId: '',
+  scheduleDate: '',
+  scheduleTime: '',
+  profileLink: '',
+  sendType: 'single' as const,
+  listInterval: 5,
+};
+
 export const AdminVideoScheduler = () => {
   const [models, setModels] = useState<Model[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
@@ -49,11 +61,13 @@ export const AdminVideoScheduler = () => {
   const [formData, setFormData] = useState({
     useExistingId: true,
     videoUrl: '',
+    videoUrls: '', // Para envio em lista (múltiplos links, um por linha)
     modelId: '',
     scheduleDate: '',
     scheduleTime: '',
     profileLink: '',
-    sendType: 'single',
+    sendType: 'single' as 'single' | 'list',
+    listInterval: 5, // Intervalo em minutos entre cada envio da lista
   });
 
   useEffect(() => {
@@ -203,6 +217,7 @@ export const AdminVideoScheduler = () => {
     setShowConfirmDialog(false);
     setLoading(true);
 
+    // 1. Criar o modelo
     const { data, error } = await supabase
       .from('models')
       .insert({
@@ -216,14 +231,30 @@ export const AdminVideoScheduler = () => {
       .select('id')
       .single();
 
-    setLoading(false);
-
     if (error) {
       console.error('Erro ao criar modelo:', error);
       toast.error('Erro ao criar nova modelo');
       setPendingModelData(null);
+      setLoading(false);
       return null;
     }
+
+    // 2. Registrar automaticamente como criadora (creator role)
+    const { error: roleError } = await (supabase as any)
+      .from('user_roles')
+      .insert({
+        user_id: data.id,
+        role: 'creator',
+      });
+
+    if (roleError) {
+      console.warn('Aviso: Não foi possível registrar role de criadora automaticamente:', roleError.message);
+      // Não bloqueia o fluxo
+    } else {
+      toast.success('✅ Registrada automaticamente como criadora');
+    }
+
+    setLoading(false);
 
     const shareableLink = `${window.location.origin}/chat/${data.id}`;
     setCreatedModelInfo({
@@ -244,10 +275,22 @@ export const AdminVideoScheduler = () => {
   };
 
   const handleSchedule = async () => {
-    // Validações
-    if (!formData.videoUrl.trim()) {
-      toast.error('Digite a URL do vídeo MP4');
-      return;
+    const isList = formData.sendType === 'list';
+
+    // Obter lista de URLs
+    let videoUrls: string[] = [];
+    if (isList) {
+      videoUrls = formData.videoUrls.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+      if (videoUrls.length === 0) {
+        toast.error('Cole pelo menos um link MP4 na lista');
+        return;
+      }
+    } else {
+      if (!formData.videoUrl.trim()) {
+        toast.error('Digite a URL do vídeo MP4');
+        return;
+      }
+      videoUrls = [formData.videoUrl.trim()];
     }
 
     if (!formData.scheduleDate || !formData.scheduleTime) {
@@ -260,14 +303,12 @@ export const AdminVideoScheduler = () => {
     // Criar novo modelo se necessário
     if (!formData.useExistingId) {
       const newUsername = modelSearch.trim() || `modelo_${Date.now()}`;
-      // If no pending confirmation yet, show dialog
       if (!createdModelInfo) {
         initiateCreateModel();
         return;
       }
       modelId = createdModelInfo.id;
     } else {
-      // Validar modelo existente
       if (!modelId) {
         toast.error('Busque e selecione uma modelo existente');
         return;
@@ -289,46 +330,68 @@ export const AdminVideoScheduler = () => {
 
     setLoading(true);
 
-    // Criar post agendado
-    const scheduledDateTime = `${formData.scheduleDate}T${formData.scheduleTime}:00`;
-    
-    const { data, error } = await supabase
-      .from('posts_agendados')
-      .insert({
-        modelo_id: modelId,
-        modelo_username: selectedModel?.username || modelSearch.trim() || 'nova_modelo',
-        titulo: 'Novo vídeo agendado',
-        descricao: '',
-        conteudo_url: formData.videoUrl.trim(),
-        tipo_conteudo: 'video',
-        data_agendamento: scheduledDateTime,
-        status: 'agendado',
-        enviar_tela_principal: true,
-        imagens: [],
-      })
-      .select()
-      .single();
+    const baseDate = new Date(`${formData.scheduleDate}T${formData.scheduleTime}:00`);
+    const username = selectedModel?.username || modelSearch.trim() || 'nova_modelo';
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < videoUrls.length; i++) {
+      const url = videoUrls[i];
+      // Para lista, cada vídeo é agendado com intervalo de X minutos
+      const scheduleTime = new Date(baseDate.getTime() + i * formData.listInterval * 60 * 1000);
+
+      // 1. Inserir na tabela videos para aparecer no feed (registrar como criadora)
+      const videoPayload: any = {
+        video_url: url,
+        model_id: modelId,
+        is_active: false, // Fica inativo até publicar
+        title: `Vídeo agendado ${i + 1}`,
+        likes_count: 0,
+        views_count: 0,
+        comments_count: 0,
+        shares_count: 0,
+      };
+
+      const { data: videoData } = await (supabase as any)
+        .from('videos')
+        .insert(videoPayload)
+        .select('id')
+        .single();
+
+      // 2. Criar post agendado
+      const { error } = await supabase
+        .from('posts_agendados')
+        .insert({
+          modelo_id: modelId,
+          modelo_username: username,
+          titulo: isList ? `Vídeo ${i + 1} de ${videoUrls.length}` : 'Novo vídeo agendado',
+          descricao: '',
+          conteudo_url: url,
+          tipo_conteudo: 'video',
+          data_agendamento: scheduleTime.toISOString(),
+          status: 'agendado',
+          enviar_tela_principal: true,
+          imagens: [],
+        });
+
+      if (error) {
+        console.error('Erro ao agendar:', error);
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
 
     setLoading(false);
 
-    if (error) {
-      console.error('Erro ao agendar:', error);
-      toast.error('Erro ao criar agendamento');
-      return;
+    if (successCount > 0) {
+      toast.success(`🎥 ${successCount} vídeo(s) agendado(s) com sucesso!${errorCount > 0 ? ` (${errorCount} erro(s))` : ''}`);
+    } else {
+      toast.error('Erro ao criar agendamentos');
     }
-
-    toast.success('🎥 Vídeo agendado com sucesso!');
     
     // Limpar formulário
-    setFormData({
-      useExistingId: true,
-      videoUrl: '',
-      modelId: '',
-      scheduleDate: '',
-      scheduleTime: '',
-      profileLink: '',
-      sendType: 'single',
-    });
+    setFormData({ ...defaultFormData });
     setModelSearch('');
     setSelectedModel(null);
     setCreatedModelInfo(null);
@@ -421,21 +484,23 @@ export const AdminVideoScheduler = () => {
             <CardTitle>Novo Agendamento</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Link MP4 */}
-            <div className="space-y-2">
-              <Label>Link MP4 *</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
-                  placeholder="https://example.com/video.mp4"
-                  type="url"
-                />
-                <Button onClick={testVideoLink} disabled={loading} variant="outline">
-                  <Search className="w-4 h-4" />
-                </Button>
+            {/* Link MP4 (modo único) */}
+            {formData.sendType === 'single' && (
+              <div className="space-y-2">
+                <Label>Link MP4 *</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.videoUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    placeholder="https://example.com/video.mp4"
+                    type="url"
+                  />
+                  <Button onClick={testVideoLink} disabled={loading} variant="outline">
+                    <Search className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Tipo de ID */}
             <div className="space-y-3">
@@ -460,7 +525,7 @@ export const AdminVideoScheduler = () => {
               <Label>Tipo de Envio</Label>
               <RadioGroup
                 value={formData.sendType}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, sendType: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, sendType: value as 'single' | 'list' }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="single" id="single" />
@@ -468,10 +533,40 @@ export const AdminVideoScheduler = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="list" id="list" />
-                  <Label htmlFor="list" className="cursor-pointer">Enviar em Lista (em breve)</Label>
+                  <Label htmlFor="list" className="cursor-pointer">Enviar em Lista</Label>
                 </div>
               </RadioGroup>
             </div>
+
+            {/* Textarea para lista de links */}
+            {formData.sendType === 'list' && (
+              <div className="space-y-2">
+                <Label>Links MP4 (um por linha) *</Label>
+                <textarea
+                  value={formData.videoUrls}
+                  onChange={(e) => setFormData(prev => ({ ...prev, videoUrls: e.target.value }))}
+                  placeholder={"https://cdn.example.com/video1.mp4\nhttps://cdn.example.com/video2.mp4\nhttps://cdn.example.com/video3.mp4"}
+                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formData.videoUrls.split('\n').filter(u => u.trim()).length} link(s) detectado(s)
+                </p>
+                <div className="space-y-2">
+                  <Label>Intervalo entre envios (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={formData.listInterval}
+                    onChange={(e) => setFormData(prev => ({ ...prev, listInterval: parseInt(e.target.value) || 5 }))}
+                    placeholder="5"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cada vídeo será agendado com {formData.listInterval} minuto(s) de diferença
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* ID da Modelo */}
             <div className="space-y-2">
@@ -592,19 +687,13 @@ export const AdminVideoScheduler = () => {
             <div className="flex gap-2">
               <Button onClick={handleSchedule} disabled={loading} className="flex-1">
                 <Plus className="w-4 h-4 mr-2" />
-                Agendar
+                {formData.sendType === 'list'
+                  ? `Agendar ${formData.videoUrls.split('\n').filter(u => u.trim()).length} vídeo(s)`
+                  : 'Agendar'}
               </Button>
               <Button 
                 onClick={() => {
-                  setFormData({
-                    useExistingId: true,
-                    videoUrl: '',
-                    modelId: '',
-                    scheduleDate: '',
-                    scheduleTime: '',
-                    profileLink: '',
-                    sendType: 'single',
-                  });
+                  setFormData({ ...defaultFormData });
                   setModelSearch('');
                   setSelectedModel(null);
                   setCreatedModelInfo(null);

@@ -33,6 +33,7 @@ interface FeedPromotion {
   schedule_status: string | null;
   model_id: string | null;
   shareable_link: string | null;
+  daily_frequency: number;
 }
 
 const emptyForm = {

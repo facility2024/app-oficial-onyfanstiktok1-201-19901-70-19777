@@ -600,6 +600,8 @@ export const AdminVideoScheduler = () => {
                   });
                   setModelSearch('');
                   setSelectedModel(null);
+                  setCreatedModelInfo(null);
+                  setPendingModelData(null);
                 }}
                 variant="outline"
               >

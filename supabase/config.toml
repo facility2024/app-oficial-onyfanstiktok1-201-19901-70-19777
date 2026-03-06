@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.geolocate]
 verify_jwt = false
+
+[functions.geocode-businesses]
+verify_jwt = false

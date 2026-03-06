@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Users, Search, Filter, Wifi, Monitor, Smartphone, Flame, Layers, Store, Clock } from 'lucide-react';
+import { MapPin, Users, Search, Filter, Wifi, Monitor, Smartphone, Flame, Layers, Store, Clock, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeatmapOverlay } from './map/MapHeatmapLayer';
 import { MapClustererLayer } from './map/MapClusterer';
@@ -113,9 +115,29 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
   const [showClusters, setShowClusters] = useState(false);
   const [showBusinesses, setShowBusinesses] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   // Timeline state
   const [timelineHour, setTimelineHour] = useState(new Date().getHours());
+
+  const handleGeocodeBusinesses = useCallback(async () => {
+    setIsGeocoding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-businesses');
+      if (error) throw error;
+      toast({
+        title: '📍 Geocodificação concluída',
+        description: `${data.updated} de ${data.total} comércios atualizados com coordenadas.`,
+      });
+      // Toggle businesses off/on to refresh pins
+      setShowBusinesses(false);
+      setTimeout(() => setShowBusinesses(true), 500);
+    } catch (err) {
+      toast({ title: '❌ Erro na geocodificação', description: String(err), variant: 'destructive' });
+    } finally {
+      setIsGeocoding(false);
+    }
+  }, []);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
@@ -258,6 +280,16 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
         >
           <Store className="w-3 h-3" />
           Comércios
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className={`h-7 text-[11px] gap-1 ${isGeocoding ? 'animate-pulse' : ''}`}
+          onClick={handleGeocodeBusinesses}
+          disabled={isGeocoding}
+        >
+          <Navigation className="w-3 h-3" />
+          {isGeocoding ? 'Geocodificando...' : 'Geocodificar'}
         </Button>
         <Button
           size="sm"

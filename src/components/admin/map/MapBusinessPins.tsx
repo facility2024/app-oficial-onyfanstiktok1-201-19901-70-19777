@@ -26,10 +26,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   restaurante: '#ef4444',
   loja: '#3b82f6',
   bar: '#f59e0b',
-  salão: '#ec4899',
+  'salão': '#ec4899',
   academia: '#8b5cf6',
   mercado: '#10b981',
   farmacia: '#06b6d4',
+  boate: '#7c3aed',
+  'casa noturna': '#be185d',
+  'casa de swing': '#e11d48',
+  'casa de swing ': '#e11d48',
+  balada: '#a21caf',
+  club: '#7c3aed',
   default: '#6366f1',
 };
 
@@ -54,14 +60,16 @@ export const MapBusinessPins = ({ visible }: MapBusinessPinsProps) => {
   useEffect(() => {
     if (!visible) return;
 
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data } = await (supabase as any)
         .from('local_businesses')
         .select('id, name, category, address, latitude, longitude, phone, rating, is_sponsored, description, website, image_url')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .neq('latitude', 0)
+        .neq('longitude', 0);
       if (data) setBusinesses(data);
     };
-    fetch();
+    fetchData();
   }, [visible]);
 
   if (!visible || businesses.length === 0) return null;

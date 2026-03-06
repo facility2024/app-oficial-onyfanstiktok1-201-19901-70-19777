@@ -115,9 +115,29 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
   const [showClusters, setShowClusters] = useState(false);
   const [showBusinesses, setShowBusinesses] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   // Timeline state
   const [timelineHour, setTimelineHour] = useState(new Date().getHours());
+
+  const handleGeocodeBusinesses = useCallback(async () => {
+    setIsGeocoding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-businesses');
+      if (error) throw error;
+      toast({
+        title: '📍 Geocodificação concluída',
+        description: `${data.updated} de ${data.total} comércios atualizados com coordenadas.`,
+      });
+      // Toggle businesses off/on to refresh pins
+      setShowBusinesses(false);
+      setTimeout(() => setShowBusinesses(true), 500);
+    } catch (err) {
+      toast({ title: '❌ Erro na geocodificação', description: String(err), variant: 'destructive' });
+    } finally {
+      setIsGeocoding(false);
+    }
+  }, []);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 

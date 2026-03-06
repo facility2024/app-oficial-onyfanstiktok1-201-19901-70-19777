@@ -210,13 +210,26 @@ export const useRealTimeStats = () => {
       const now = new Date().toISOString();
       const clientIP = await getClientIP();
 
+      // IDs persistentes para permitir múltiplas sessões simultâneas
+
+      let onlineSessionId = localStorage.getItem('online_session_id');
+      if (!onlineSessionId) {
+        onlineSessionId = crypto.randomUUID();
+        localStorage.setItem('online_session_id', onlineSessionId);
+      }
+
+      let persistentSessionToken = localStorage.getItem('user_session_token');
+      if (!persistentSessionToken) {
+        persistentSessionToken = crypto.randomUUID();
+        localStorage.setItem('user_session_token', persistentSessionToken);
+      }
+
       // 1. Registrar/atualizar sessão do usuário
-      const sessionToken = crypto.randomUUID();
       const { error: sessionError } = await supabase
         .from('user_sessions')
         .upsert({
           user_id: userId,
-          session_token: sessionToken,
+          session_token: persistentSessionToken,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           is_active: true,
           last_activity_at: now,
@@ -229,10 +242,10 @@ export const useRealTimeStats = () => {
           started_at: now,
           device_info: { type: deviceType, userAgent }
         }, {
-          onConflict: 'user_id'
+          onConflict: 'session_token'
         });
 
-      if (sessionError && sessionError.code !== '42P10') {
+      if (sessionError) {
         console.error('❌ Erro ao registrar sessão:', sessionError);
       }
 
@@ -241,6 +254,7 @@ export const useRealTimeStats = () => {
         .from('online_users')
         .upsert({
           user_id: userId,
+          session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
           location_state: location?.state || 'São Paulo',
@@ -250,7 +264,7 @@ export const useRealTimeStats = () => {
           device_type: deviceType,
           user_agent: userAgent
         }, {
-          onConflict: 'user_id'
+          onConflict: 'session_id'
         });
 
       if (onlineError && onlineError.code !== '42P10') {

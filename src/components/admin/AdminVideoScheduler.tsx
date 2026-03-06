@@ -483,7 +483,7 @@ export const AdminVideoScheduler = () => {
               <Label>Tipo de Envio</Label>
               <RadioGroup
                 value={formData.sendType}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, sendType: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, sendType: value as 'single' | 'list' }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="single" id="single" />
@@ -619,15 +619,7 @@ export const AdminVideoScheduler = () => {
               </Button>
               <Button 
                 onClick={() => {
-                  setFormData({
-                    useExistingId: true,
-                    videoUrl: '',
-                    modelId: '',
-                    scheduleDate: '',
-                    scheduleTime: '',
-                    profileLink: '',
-                    sendType: 'single',
-                  });
+                  setFormData({ ...defaultFormData });
                   setModelSearch('');
                   setSelectedModel(null);
                   setCreatedModelInfo(null);

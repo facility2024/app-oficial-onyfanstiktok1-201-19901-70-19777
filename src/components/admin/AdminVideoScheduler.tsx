@@ -185,12 +185,30 @@ export const AdminVideoScheduler = () => {
     }
   };
 
-  const createNewModel = async (username: string): Promise<string | null> => {
+  // Show confirmation dialog before creating model
+  const initiateCreateModel = () => {
+    const username = modelSearch.trim();
+    if (!username) {
+      toast.error('Digite um username para a nova modelo');
+      return;
+    }
+    const generatedId = crypto.randomUUID();
+    setPendingModelData({ username, generatedId });
+    setShowConfirmDialog(true);
+  };
+
+  const confirmCreateModel = async (): Promise<string | null> => {
+    if (!pendingModelData) return null;
+    
+    setShowConfirmDialog(false);
+    setLoading(true);
+
     const { data, error } = await supabase
       .from('models')
       .insert({
-        username: username || `modelo_${Date.now()}`,
-        name: username || 'Nova Modelo',
+        id: pendingModelData.generatedId,
+        username: pendingModelData.username,
+        name: pendingModelData.username,
         avatar_url: 'https://via.placeholder.com/150',
         is_active: true,
         posting_panel_url: formData.profileLink.trim() || null,
@@ -198,15 +216,31 @@ export const AdminVideoScheduler = () => {
       .select('id')
       .single();
 
+    setLoading(false);
+
     if (error) {
       console.error('Erro ao criar modelo:', error);
       toast.error('Erro ao criar nova modelo');
+      setPendingModelData(null);
       return null;
     }
 
-    toast.success(`✅ Nova modelo criada: ${username}`);
+    const shareableLink = `${window.location.origin}/chat/${data.id}`;
+    setCreatedModelInfo({
+      id: data.id,
+      username: pendingModelData.username,
+      shareableLink,
+    });
+
+    toast.success(`✅ Modelo "${pendingModelData.username}" criada com ID: ${data.id}`);
     await loadModels();
+    setPendingModelData(null);
     return data.id;
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
   };
 
   const handleSchedule = async () => {

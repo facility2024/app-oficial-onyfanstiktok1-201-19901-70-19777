@@ -205,6 +205,7 @@ export const AdminVideoScheduler = () => {
     setShowConfirmDialog(false);
     setLoading(true);
 
+    // 1. Criar o modelo
     const { data, error } = await supabase
       .from('models')
       .insert({
@@ -218,14 +219,30 @@ export const AdminVideoScheduler = () => {
       .select('id')
       .single();
 
-    setLoading(false);
-
     if (error) {
       console.error('Erro ao criar modelo:', error);
       toast.error('Erro ao criar nova modelo');
       setPendingModelData(null);
+      setLoading(false);
       return null;
     }
+
+    // 2. Registrar automaticamente como criadora (creator role)
+    const { error: roleError } = await (supabase as any)
+      .from('user_roles')
+      .insert({
+        user_id: data.id,
+        role: 'creator',
+      });
+
+    if (roleError) {
+      console.warn('Aviso: Não foi possível registrar role de criadora automaticamente:', roleError.message);
+      // Não bloqueia o fluxo
+    } else {
+      toast.success('✅ Registrada automaticamente como criadora');
+    }
+
+    setLoading(false);
 
     const shareableLink = `${window.location.origin}/chat/${data.id}`;
     setCreatedModelInfo({

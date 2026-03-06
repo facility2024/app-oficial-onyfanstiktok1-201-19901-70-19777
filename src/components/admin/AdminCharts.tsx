@@ -171,133 +171,8 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
   const totalConnectedUsers = realTimeStats.totalOnlineUsers || Object.values(stateStats).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-      {/* Views Chart */}
-      <Card className="bg-gradient-card border-border/50">
-        <CardHeader className="pb-2">
-          <div className="flex items-center space-x-2">
-            <Eye className="w-5 h-5 text-primary" />
-            <CardTitle className="text-sm sm:text-base">
-              <span className="hidden md:inline">Views por Dia</span>
-              <span className="hidden sm:inline md:hidden">Views/Dia</span>
-              <span className="sm:hidden">Views</span>
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div 
-            className="h-32 sm:h-40 lg:h-48 w-full rounded-lg bg-cover bg-center bg-no-repeat flex items-center justify-center"
-            style={{
-              backgroundImage: 'url("/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png")',
-              backgroundColor: 'rgba(0, 0, 0, 0.9)'
-            }}
-          >
-            <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 text-center">
-              <h3 className="text-white font-bold text-lg animate-pulse-forward">FACILITY SOFTWARE</h3>
-              <p className="text-white/80 text-sm animate-pulse-forward-delayed">Views Analytics</p>
-            </div>
-          </div>
-          
-          {/* Financial Section */}
-          <div className="mt-6 pt-4 border-t border-border">
-            <div className="flex items-center mb-4">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-success mr-2" />
-              <div>
-                <h4 className="text-sm sm:text-base font-semibold">
-                  <span className="hidden sm:inline">Vendas Financeiras - Janeiro 2025</span>
-                  <span className="sm:hidden">Vendas/Semana</span>
-                </h4>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  Atualizado automaticamente todo mês • Valores em R$
-                </p>
-              </div>
-            </div>
-            
-            <div className="h-32 sm:h-40 lg:h-48 w-full mb-4">
-              <Bar data={financialData} options={chartOptions} />
-            </div>
-            
-            {/* ✅ DADOS REAIS: Resumo Financeiro do Supabase */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
-              <div className="bg-success/10 border border-success/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-success">
-                  {salesLoading ? '...' : formatCurrency(salesSummary.currentWeek)}
-                </div>
-                <div className="text-xs text-success/80">
-                  <span className="hidden sm:inline">Semana Atual</span>
-                  <span className="sm:hidden">Atual</span>
-                </div>
-              </div>
-              <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-primary">
-                  {salesLoading ? '...' : formatCurrency(salesSummary.totalMonth)}
-                </div>
-                <div className="text-xs text-primary/80">
-                  <span className="hidden sm:inline">Total Mês</span>
-                  <span className="sm:hidden">Mês</span>
-                </div>
-              </div>
-              <div className="bg-warning/10 border border-warning/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-warning">
-                  {salesLoading ? '...' : `${salesSummary.growth > 0 ? '+' : ''}${salesSummary.growth.toFixed(1)}%`}
-                </div>
-                <div className="text-xs text-warning/80">
-                  <span className="hidden sm:inline">Crescimento</span>
-                  <span className="sm:hidden">Cresc.</span>
-                </div>
-              </div>
-              <div className="bg-accent/10 border border-accent/20 rounded-lg p-2 sm:p-3 text-center">
-                <div className="text-lg sm:text-xl font-bold text-accent">
-                  {salesLoading ? '...' : formatCurrency(salesSummary.weeklyGoal)}
-                </div>
-                <div className="text-xs text-accent/80">
-                  <span className="hidden sm:inline">Meta Semanal</span>
-                  <span className="sm:hidden">Meta</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Webhook Status */}
-            <div className="bg-muted/50 border border-border rounded-lg p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  <div className="flex items-center space-x-1">
-                    <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${webhookStatus ? 'bg-success animate-pulse' : 'bg-destructive animate-pulse opacity-30'}`}></div>
-                    <span className={`text-xs font-medium ${webhookStatus ? 'text-success' : 'text-destructive'}`}>
-                      <span className="hidden sm:inline">{webhookStatus ? 'Conectado 100%' : 'Desconectado'}</span>
-                      <span className="sm:hidden">{webhookStatus ? 'ON' : 'OFF'}</span>
-                    </span>
-                  </div>
-                </div>
-                
-                <Button size="sm" className="bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513] text-white">
-                  <Activity className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Webhook</span>
-                  <span className="sm:hidden">API</span>
-                </Button>
-              </div>
-              
-              <div className="mt-2 sm:mt-3 text-center">
-                <p className={`text-xs sm:text-sm font-medium leading-tight ${webhookStatus ? 'text-success' : 'text-destructive'}`}>
-                  <span className="hidden sm:inline">
-                    {webhookStatus ? '🟢 Sistema conectado • Webhook ativo • Dados sincronizados' : '🔴 Sistema desconectado • Verifique a conexão'}
-                  </span>
-                  <span className="sm:hidden">
-                    {webhookStatus ? '🟢 Online' : '🔴 Offline'}
-                  </span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  <span className="hidden md:inline">Última sincronização: </span>
-                  <span className="hidden sm:inline md:hidden">Sync: </span>
-                  {formatLastSync(lastSync)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* States Chart - Interactive Map */}
+    <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
+      {/* Map - Full Width */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -325,6 +200,86 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
           />
         </CardContent>
       </Card>
+
+      {/* Banner horizontal - Views + Financial + Webhook */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ maxHeight: '250px' }}>
+        {/* Views Banner */}
+        <Card className="bg-gradient-card border-border/50 overflow-hidden">
+          <CardContent className="p-3 h-[250px] flex flex-col">
+            <div className="flex items-center space-x-2 mb-2">
+              <Eye className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold">Views por Dia</span>
+            </div>
+            <div 
+              className="h-20 w-full rounded-lg bg-cover bg-center bg-no-repeat flex items-center justify-center flex-shrink-0"
+              style={{
+                backgroundImage: 'url("/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png")',
+                backgroundColor: 'rgba(0, 0, 0, 0.9)'
+              }}
+            >
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg p-2 text-center">
+                <h3 className="text-white font-bold text-sm">FACILITY SOFTWARE</h3>
+                <p className="text-white/80 text-[10px]">Views Analytics</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Financial Banner */}
+        <Card className="bg-gradient-card border-border/50 overflow-hidden">
+          <CardContent className="p-3 h-[250px] flex flex-col">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-success" />
+              <span className="text-xs font-semibold">Vendas Financeiras</span>
+            </div>
+            <div className="flex-1 min-h-0 mb-2">
+              <Bar data={financialData} options={chartOptions} />
+            </div>
+            <div className="grid grid-cols-4 gap-1 flex-shrink-0">
+              <div className="bg-success/10 border border-success/20 rounded p-1 text-center">
+                <div className="text-xs font-bold text-success">{salesLoading ? '...' : formatCurrency(salesSummary.currentWeek)}</div>
+                <div className="text-[8px] text-success/80">Semana</div>
+              </div>
+              <div className="bg-primary/10 border border-primary/20 rounded p-1 text-center">
+                <div className="text-xs font-bold text-primary">{salesLoading ? '...' : formatCurrency(salesSummary.totalMonth)}</div>
+                <div className="text-[8px] text-primary/80">Mês</div>
+              </div>
+              <div className="bg-warning/10 border border-warning/20 rounded p-1 text-center">
+                <div className="text-xs font-bold text-warning">{salesLoading ? '...' : `${salesSummary.growth > 0 ? '+' : ''}${salesSummary.growth.toFixed(1)}%`}</div>
+                <div className="text-[8px] text-warning/80">Cresc.</div>
+              </div>
+              <div className="bg-accent/10 border border-accent/20 rounded p-1 text-center">
+                <div className="text-xs font-bold text-accent">{salesLoading ? '...' : formatCurrency(salesSummary.weeklyGoal)}</div>
+                <div className="text-[8px] text-accent/80">Meta</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Webhook Status Banner */}
+        <Card className="bg-gradient-card border-border/50 overflow-hidden">
+          <CardContent className="p-3 h-[250px] flex flex-col items-center justify-center">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className={`w-3 h-3 rounded-full ${webhookStatus ? 'bg-success animate-pulse' : 'bg-destructive animate-pulse opacity-30'}`}></div>
+              <span className={`text-sm font-medium ${webhookStatus ? 'text-success' : 'text-destructive'}`}>
+                {webhookStatus ? 'Conectado 100%' : 'Desconectado'}
+              </span>
+            </div>
+            
+            <Button size="sm" className="bg-gradient-to-r from-[#7CB342] to-[#C4842E] hover:from-[#558B2F] hover:to-[#8B4513] text-white mb-3">
+              <Activity className="w-3 h-3 mr-1" />
+              Webhook
+            </Button>
+            
+            <p className={`text-xs font-medium text-center ${webhookStatus ? 'text-success' : 'text-destructive'}`}>
+              {webhookStatus ? '🟢 Sistema conectado • Webhook ativo • Dados sincronizados' : '🔴 Sistema desconectado'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Última sincronização: {formatLastSync(lastSync)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

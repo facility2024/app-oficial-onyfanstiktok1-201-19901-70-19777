@@ -4195,8 +4195,10 @@ export type Database = {
           is_online: boolean | null
           last_seen_at: string | null
           linktree_profile_id: string | null
+          location_address: string | null
           location_city: string | null
           location_country: string | null
+          location_neighborhood: string | null
           location_state: string | null
           session_id: string | null
           socket_id: string | null
@@ -4214,8 +4216,10 @@ export type Database = {
           is_online?: boolean | null
           last_seen_at?: string | null
           linktree_profile_id?: string | null
+          location_address?: string | null
           location_city?: string | null
           location_country?: string | null
+          location_neighborhood?: string | null
           location_state?: string | null
           session_id?: string | null
           socket_id?: string | null
@@ -4233,8 +4237,10 @@ export type Database = {
           is_online?: boolean | null
           last_seen_at?: string | null
           linktree_profile_id?: string | null
+          location_address?: string | null
           location_city?: string | null
           location_country?: string | null
+          location_neighborhood?: string | null
           location_state?: string | null
           session_id?: string | null
           socket_id?: string | null
@@ -8074,6 +8080,7 @@ export type Database = {
       cleanup_expired_model_sessions: { Args: never; Returns: undefined }
       cleanup_offline_users: { Args: never; Returns: undefined }
       cleanup_old_comments: { Args: never; Returns: undefined }
+      cleanup_old_online_users: { Args: never; Returns: undefined }
       cleanup_old_sessions: { Args: never; Returns: undefined }
       cleanup_registration_limits: { Args: never; Returns: undefined }
       cleanup_security_data: { Args: never; Returns: undefined }

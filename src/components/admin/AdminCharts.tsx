@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GoogleBrazilMap } from './GoogleBrazilMap';
 import { LiveUserIndicator } from './LiveUserIndicator';
+import { UserAddressLog } from './UserAddressLog';
 import { Eye, TrendingUp, Activity, MapPin, Users } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
@@ -200,6 +201,9 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
           />
         </CardContent>
       </Card>
+
+      {/* Address Log below map */}
+      <UserAddressLog />
 
       {/* Banner horizontal - Views + Financial + Webhook */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ maxHeight: '250px' }}>

@@ -33,13 +33,28 @@ export const UserLocationTracker = () => {
         const location = await detectLocation();
         console.log(`📍 Location detected [${location.method}]:`, location.state, location.city);
 
+        // Try to get full address via Google geocoding edge function
+        let fullAddress = '';
+        let neighborhood = '';
+        try {
+          const { data: geoData } = await supabase.functions.invoke('geolocate', {
+            body: { lat: location.lat, lng: location.lng },
+          });
+          if (geoData) {
+            fullAddress = geoData.address || '';
+            neighborhood = geoData.neighborhood || '';
+          }
+        } catch (geoErr) {
+          console.warn('⚠️ Google geocoding failed, using basic location');
+        }
+
         const now = new Date().toISOString();
 
         // Use auth.uid if logged in, otherwise anonymous UUID
         const { data: sessionData } = await supabase.auth.getSession();
         const finalUserId = sessionData?.session?.user?.id || userId;
 
-        const upsertData = {
+        const upsertData: Record<string, any> = {
           user_id: finalUserId,
           is_online: true,
           last_seen_at: now,
@@ -48,6 +63,8 @@ export const UserLocationTracker = () => {
           location_country: location.country,
           device_type: deviceType,
           user_agent: ua,
+          location_address: fullAddress || null,
+          location_neighborhood: neighborhood || null,
         };
 
         const { error } = await supabase
@@ -57,7 +74,7 @@ export const UserLocationTracker = () => {
         if (error) {
           console.error('❌ Error tracking online user:', error);
         } else {
-          console.log('✅ User tracked:', { state: location.state, city: location.city, method: location.method });
+          console.log('✅ User tracked:', { state: location.state, city: location.city, address: fullAddress, method: location.method });
         }
 
         // Heartbeat every 60s

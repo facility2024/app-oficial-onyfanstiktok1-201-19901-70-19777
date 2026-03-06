@@ -2006,8 +2006,12 @@ export type Database = {
           is_active: boolean | null
           media_type: string
           media_url: string
+          model_id: string | null
           position_interval: number | null
           priority: number | null
+          schedule_date: string | null
+          schedule_status: string | null
+          shareable_link: string | null
           title: string
           updated_at: string | null
           views_count: number | null
@@ -2025,8 +2029,12 @@ export type Database = {
           is_active?: boolean | null
           media_type?: string
           media_url: string
+          model_id?: string | null
           position_interval?: number | null
           priority?: number | null
+          schedule_date?: string | null
+          schedule_status?: string | null
+          shareable_link?: string | null
           title: string
           updated_at?: string | null
           views_count?: number | null
@@ -2044,8 +2052,12 @@ export type Database = {
           is_active?: boolean | null
           media_type?: string
           media_url?: string
+          model_id?: string | null
           position_interval?: number | null
           priority?: number | null
+          schedule_date?: string | null
+          schedule_status?: string | null
+          shareable_link?: string | null
           title?: string
           updated_at?: string | null
           views_count?: number | null

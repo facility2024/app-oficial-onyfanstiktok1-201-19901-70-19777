@@ -500,7 +500,7 @@ export const AdminVideoScheduler = () => {
                   </Button>
                 </div>
               </div>
-            )
+            )}
 
             {/* Tipo de ID */}
             <div className="space-y-3">

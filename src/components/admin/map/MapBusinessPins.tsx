@@ -26,10 +26,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   restaurante: '#ef4444',
   loja: '#3b82f6',
   bar: '#f59e0b',
-  salão: '#ec4899',
+  'salão': '#ec4899',
   academia: '#8b5cf6',
   mercado: '#10b981',
   farmacia: '#06b6d4',
+  boate: '#7c3aed',
+  'casa noturna': '#be185d',
+  'casa de swing': '#e11d48',
+  'casa de swing ': '#e11d48',
+  balada: '#a21caf',
+  club: '#7c3aed',
   default: '#6366f1',
 };
 

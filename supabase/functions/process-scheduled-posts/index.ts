@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,16 +19,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Buscar posts agendados que já deveriam ter sido publicados
-    // Usar horário UTC para comparação direta
+    // Check if a specific post_id was sent (for "Enviar agora")
+    let specificPostId: string | null = null;
+    try {
+      const body = await req.json();
+      specificPostId = body?.post_id || null;
+      console.log('📦 Body recebido:', JSON.stringify(body));
+    } catch {
+      // No body or invalid JSON - process all pending
+    }
+
     const now = new Date();
     console.log(`⏰ Hora atual UTC: ${now.toISOString()}`);
-    
-    // Converter para horário do Brasil para debug
-    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-    console.log(`⏰ Hora atual do Brasil: ${brazilTime.toISOString()}`);
 
-    const { data: postsToPublish, error: fetchError } = await supabase
+    let query = supabase
       .from('posts_agendados')
       .select(`
         *,
@@ -40,9 +43,18 @@ serve(async (req) => {
           avatar_url
         )
       `)
-      .eq('status', 'agendado')
-      .lte('data_agendamento', now.toISOString())
-      .order('data_agendamento', { ascending: true });
+      .eq('status', 'agendado');
+
+    if (specificPostId) {
+      // Force-publish a specific post regardless of schedule time
+      console.log(`🎯 Publicação forçada do post: ${specificPostId}`);
+      query = query.eq('id', specificPostId);
+    } else {
+      // Only publish posts whose schedule time has passed
+      query = query.lte('data_agendamento', now.toISOString());
+    }
+
+    const { data: postsToPublish, error: fetchError } = await query.order('data_agendamento', { ascending: true });
 
     if (fetchError) {
       console.error('❌ Erro ao buscar posts:', fetchError);
@@ -57,36 +69,60 @@ serve(async (req) => {
       try {
         console.log(`📤 Publicando post: ${post.titulo} de @${post.modelo_username}`);
         
-        // Se for vídeo, criar na tabela videos
         if (post.tipo_conteudo === 'video') {
-          console.log(`🎥 Criando vídeo na tabela videos...`);
-          
-          const { error: videoError } = await supabase
+          // Try to activate existing inactive video for this model + URL
+          const { data: existingVideo, error: findError } = await supabase
             .from('videos')
-            .insert({
-              user_id: post.modelo_id,
-              title: post.titulo || 'Novo vídeo',
-              description: post.descricao || '',
-              video_url: post.conteudo_url,
-              thumbnail_url: post.imagens?.[0] || 'https://via.placeholder.com/300x400',
-              music_name: 'Som Original',
-              is_active: true,
-              visibility: 'public',
-              likes_count: 0,
-              comments_count: 0,
-              shares_count: 0,
-              views_count: 0
-            });
+            .select('id')
+            .eq('model_id', post.modelo_id)
+            .eq('video_url', post.conteudo_url)
+            .eq('is_active', false)
+            .limit(1)
+            .maybeSingle();
 
-          if (videoError) {
-            console.error('❌ Erro ao criar vídeo:', videoError);
-            throw videoError;
+          if (existingVideo) {
+            // Activate the existing video
+            console.log(`🔓 Ativando vídeo existente: ${existingVideo.id}`);
+            const { error: activateError } = await supabase
+              .from('videos')
+              .update({ is_active: true, visibility: 'public' })
+              .eq('id', existingVideo.id);
+
+            if (activateError) {
+              console.error('❌ Erro ao ativar vídeo:', activateError);
+            } else {
+              console.log('✅ Vídeo ativado com sucesso');
+            }
+          } else {
+            // No existing video found, create a new one with model_id
+            console.log(`🎥 Criando novo vídeo na tabela videos...`);
+            const { error: videoError } = await supabase
+              .from('videos')
+              .insert({
+                model_id: post.modelo_id,
+                title: post.titulo || 'Novo vídeo',
+                description: post.descricao || '',
+                video_url: post.conteudo_url,
+                thumbnail_url: post.imagens?.[0] || post.conteudo_url,
+                music_name: 'Som Original',
+                is_active: true,
+                visibility: 'public',
+                duration: '0:00',
+                likes_count: 0,
+                comments_count: 0,
+                shares_count: 0,
+                views_count: 0
+              });
+
+            if (videoError) {
+              console.error('❌ Erro ao criar vídeo:', videoError);
+              throw videoError;
+            }
+            console.log('✅ Vídeo criado na tabela videos');
           }
-          
-          console.log('✅ Vídeo criado na tabela videos');
         }
         
-        // Atualizar status para publicado
+        // Update status to published
         const { error: updateError } = await supabase
           .from('posts_agendados')
           .update({ 
@@ -100,8 +136,8 @@ serve(async (req) => {
           continue;
         }
 
-        // Registrar execução
-        const { error: execError } = await supabase
+        // Record execution
+        await supabase
           .from('agendamento_execucoes')
           .insert({
             post_agendado_id: post.id,
@@ -109,15 +145,10 @@ serve(async (req) => {
             data_execucao: new Date().toISOString()
           });
 
-        if (execError) {
-          console.warn(`⚠️ Erro ao registrar execução:`, execError);
-        }
-
-        // Se for para enviar para tela principal, adicionar à tabela posts_principais
+        // Send to main screen if configured
         if (post.enviar_tela_principal) {
           console.log(`🏠 Enviando para tela principal: ${post.titulo}`);
-          
-          const { error: mainPostError } = await supabase
+          await supabase
             .from('posts_principais')
             .insert({
               modelo_id: post.modelo_id,
@@ -129,10 +160,6 @@ serve(async (req) => {
               post_agendado_id: post.id,
               is_active: true
             });
-
-          if (mainPostError) {
-            console.error(`❌ Erro ao adicionar à tela principal:`, mainPostError);
-          }
         }
 
         publishedPosts.push({
@@ -146,8 +173,6 @@ serve(async (req) => {
         
       } catch (error) {
         console.error(`❌ Erro ao processar post ${post.id}:`, error);
-        
-        // Registrar erro na execução
         await supabase
           .from('agendamento_execucoes')
           .insert({
@@ -163,38 +188,24 @@ serve(async (req) => {
       success: true,
       message: `Processamento concluído. ${publishedPosts.length} posts publicados.`,
       publishedPosts,
-      processedAt: new Date().toISOString(),
-      brazilTime: brazilTime.toISOString()
+      processedAt: new Date().toISOString()
     };
 
     console.log('📊 Resultado:', result);
 
     return new Response(
       JSON.stringify(result),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('❌ Erro no processamento:', error);
-    
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Erro desconhecido',
-        success: false,
-        processedAt: new Date().toISOString()
+        success: false
       }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

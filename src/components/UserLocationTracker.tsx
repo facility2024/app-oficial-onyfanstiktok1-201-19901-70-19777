@@ -16,11 +16,18 @@ export const UserLocationTracker = () => {
 
     const track = async () => {
       try {
-        // Get or create persistent user ID
+        // Get or create persistent anonymous user ID
         let userId = localStorage.getItem('user_session_id');
         if (!userId) {
           userId = crypto.randomUUID();
           localStorage.setItem('user_session_id', userId);
+        }
+
+        // Get or create persistent session ID (1 por dispositivo/navegador)
+        let onlineSessionId = localStorage.getItem('online_session_id');
+        if (!onlineSessionId) {
+          onlineSessionId = crypto.randomUUID();
+          localStorage.setItem('online_session_id', onlineSessionId);
         }
 
         // Detect device
@@ -56,6 +63,7 @@ export const UserLocationTracker = () => {
 
         const upsertData: Record<string, any> = {
           user_id: finalUserId,
+          session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
           location_state: location.state,
@@ -69,7 +77,7 @@ export const UserLocationTracker = () => {
 
         const { error } = await supabase
           .from('online_users')
-          .upsert(upsertData, { onConflict: 'user_id' });
+          .upsert(upsertData, { onConflict: 'session_id' });
 
         if (error) {
           console.error('❌ Error tracking online user:', error);

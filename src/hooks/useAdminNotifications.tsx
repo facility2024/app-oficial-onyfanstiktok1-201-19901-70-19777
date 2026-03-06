@@ -25,7 +25,7 @@ export const useAdminNotifications = () => {
       const [salesRes, appsRes, usersRes, securityRes] = await Promise.all([
         // Vendas recentes (premium_users)
         (supabase as any).from('premium_users')
-          .select('id, email, plan_name, created_at')
+          .select('id, email, subscription_type, created_at')
           .gte('created_at', sinceISO)
           .order('created_at', { ascending: false })
           .limit(10),
@@ -58,7 +58,7 @@ export const useAdminNotifications = () => {
           id: `sale-${s.id}`,
           type: 'sale',
           title: '💰 Nova Venda VIP',
-          description: `${s.email || 'Usuário'} assinou ${s.plan_name || 'plano VIP'}`,
+          description: `${s.email || 'Usuário'} assinou ${s.subscription_type || 'plano VIP'}`,
           timestamp: new Date(s.created_at),
           read: false,
         });

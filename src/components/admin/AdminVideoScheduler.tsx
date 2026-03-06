@@ -499,6 +499,12 @@ export const AdminVideoScheduler = () => {
                   </div>
                 </div>
               )}
+              {!formData.useExistingId && modelSearch.trim() && !createdModelInfo && (
+                <Button onClick={initiateCreateModel} variant="outline" size="sm" className="w-full">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Criar Modelo "@{modelSearch.trim()}"
+                </Button>
+              )}
             </div>
 
             {/* Data e Hora */}

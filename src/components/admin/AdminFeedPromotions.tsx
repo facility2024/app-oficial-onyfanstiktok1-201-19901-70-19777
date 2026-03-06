@@ -203,6 +203,7 @@ export const AdminFeedPromotions = () => {
       schedule_time: scheduleDate ? scheduleDate.toTimeString().slice(0, 5) : '',
       send_now: promo.schedule_status === 'active' || !promo.schedule_date,
       create_model: false,
+      daily_frequency: promo.daily_frequency || 0,
     });
     setShowModal(true);
   };

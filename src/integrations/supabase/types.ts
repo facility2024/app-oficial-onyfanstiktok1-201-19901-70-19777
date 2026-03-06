@@ -8143,6 +8143,10 @@ export type Database = {
         Returns: Json
       }
       generate_unique_referral_code: { Args: never; Returns: string }
+      get_chat_panel_config: {
+        Args: { p_entity_id: string; p_entity_type?: string }
+        Returns: Json
+      }
       get_current_user_role: { Args: never; Returns: string }
       get_daily_points_status: {
         Args: { p_action_type: string; p_user_id: string }

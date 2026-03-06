@@ -1,5 +1,5 @@
 # Multi-stage build para otimizar o tamanho da imagem
-FROM node:18-alpine as build
+FROM node:20-alpine AS build
 
 # Definir diretório de trabalho
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependências (incluindo dev dependencies para o build)
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Copiar código fonte
 COPY . .

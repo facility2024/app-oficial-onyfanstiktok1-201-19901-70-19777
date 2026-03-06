@@ -200,8 +200,22 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
 
   if (loadError) {
     return (
-      <div className="text-center py-8 text-destructive">
-        Erro ao carregar Google Maps. Verifique a API Key.
+      <div className="text-center py-8 space-y-2">
+        <p className="text-destructive font-medium">Erro ao carregar Google Maps</p>
+        <p className="text-xs text-muted-foreground">
+          Verifique se a API Key está correta e se a "Maps JavaScript API" está habilitada no Google Cloud Console.
+          Também adicione os domínios *.lovableproject.com/* e *.lovable.app/* nas restrições HTTP da chave.
+        </p>
+        <p className="text-xs text-muted-foreground/70">Erro: {loadError.message}</p>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground">Carregando Google Maps...</p>
       </div>
     );
   }

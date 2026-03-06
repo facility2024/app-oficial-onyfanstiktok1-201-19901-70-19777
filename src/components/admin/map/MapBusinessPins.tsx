@@ -54,14 +54,16 @@ export const MapBusinessPins = ({ visible }: MapBusinessPinsProps) => {
   useEffect(() => {
     if (!visible) return;
 
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data } = await (supabase as any)
         .from('local_businesses')
         .select('id, name, category, address, latitude, longitude, phone, rating, is_sponsored, description, website, image_url')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .neq('latitude', 0)
+        .neq('longitude', 0);
       if (data) setBusinesses(data);
     };
-    fetch();
+    fetchData();
   }, [visible]);
 
   if (!visible || businesses.length === 0) return null;

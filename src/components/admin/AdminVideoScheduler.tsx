@@ -239,20 +239,10 @@ export const AdminVideoScheduler = () => {
       return null;
     }
 
-    // 2. Registrar automaticamente como criadora (creator role)
-    const { error: roleError } = await (supabase as any)
-      .from('user_roles')
-      .insert({
-        user_id: data.id,
-        role: 'creator',
-      });
-
-    if (roleError) {
-      console.warn('Aviso: Não foi possível registrar role de criadora automaticamente:', roleError.message);
-      // Não bloqueia o fluxo
-    } else {
-      toast.success('✅ Registrada automaticamente como criadora');
-    }
+    // NOTA: Modelos criados via agendamento admin são entidades ESTÁTICAS (tabela models).
+    // NÃO são registrados em user_roles, pois não possuem conta auth.users real.
+    // A lógica de user_roles/creator é exclusiva para criadoras reais com cadastro autenticado.
+    console.log('✅ Modelo estático criado via agendamento admin (sem user_roles):', data.id);
 
     setLoading(false);
 

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { useMap } from '@react-google-maps/api';
 
 interface MapHeatmapLayerProps {
   points: { lat: number; lng: number; weight: number }[];

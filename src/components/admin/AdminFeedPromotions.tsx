@@ -53,6 +53,7 @@ const emptyForm = {
   schedule_time: '',
   send_now: true,
   create_model: false,
+  daily_frequency: 0,
 };
 
 export const AdminFeedPromotions = () => {

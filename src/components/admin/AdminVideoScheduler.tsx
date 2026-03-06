@@ -525,7 +525,6 @@ export const AdminVideoScheduler = () => {
                 </div>
               </div>
             )}
-            </div>
 
             {/* ID da Modelo */}
             <div className="space-y-2">

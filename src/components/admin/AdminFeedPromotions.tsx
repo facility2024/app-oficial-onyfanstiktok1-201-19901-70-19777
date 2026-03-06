@@ -33,6 +33,7 @@ interface FeedPromotion {
   schedule_status: string | null;
   model_id: string | null;
   shareable_link: string | null;
+  daily_frequency: number;
 }
 
 const emptyForm = {
@@ -52,6 +53,7 @@ const emptyForm = {
   schedule_time: '',
   send_now: true,
   create_model: false,
+  daily_frequency: 0,
 };
 
 export const AdminFeedPromotions = () => {
@@ -100,6 +102,7 @@ export const AdminFeedPromotions = () => {
         schedule_date: scheduleDateValue,
         schedule_status: formData.send_now ? 'active' : 'scheduled',
         model_id: formData.model_id || null,
+        daily_frequency: formData.daily_frequency || 0,
       };
 
       if (formData.id) {
@@ -201,6 +204,7 @@ export const AdminFeedPromotions = () => {
       schedule_time: scheduleDate ? scheduleDate.toTimeString().slice(0, 5) : '',
       send_now: promo.schedule_status === 'active' || !promo.schedule_date,
       create_model: false,
+      daily_frequency: promo.daily_frequency || 0,
     });
     setShowModal(true);
   };
@@ -243,7 +247,7 @@ export const AdminFeedPromotions = () => {
     setForm(prev => ({ ...prev, create_model: true }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.display_name || !form.media_url) {
       toast.error('Preencha nome e URL da mídia');
       return;
@@ -252,10 +256,39 @@ export const AdminFeedPromotions = () => {
       toast.error('Selecione data e hora do agendamento');
       return;
     }
+
+    let modelId = pendingModelData?.generatedId;
+
+    // Auto-criar modelo se não existir ainda
+    if (!editingId && !modelId && form.display_name.trim()) {
+      const generatedId = crypto.randomUUID();
+      const username = form.display_name.trim().toLowerCase().replace(/\s+/g, '_');
+
+      const { data, error } = await (supabase as any)
+        .from('models')
+        .insert({
+          id: generatedId,
+          username,
+          name: form.display_name.trim(),
+          avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.warn('Aviso: modelo não criada:', error.message);
+      } else {
+        modelId = data.id;
+        setPendingModelData({ username, generatedId });
+        toast.success(`✅ Modelo "${form.display_name}" criada com ID: ${data.id}`);
+      }
+    }
+
     saveMutation.mutate({
       ...form,
       id: editingId || undefined,
-      model_id: pendingModelData?.generatedId,
+      model_id: modelId,
     } as any);
   };
 
@@ -345,6 +378,11 @@ export const AdminFeedPromotions = () => {
                   <span>🖱 {promo.clicks_count} cliques</span>
                   <span>A cada {promo.position_interval} vídeos</span>
                 </div>
+                {promo.daily_frequency > 0 && (
+                  <div className="text-xs text-yellow-400">
+                    📊 {promo.daily_frequency}x por dia no feed
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 pt-2 border-t border-gray-700">
                   <Switch
@@ -420,10 +458,15 @@ export const AdminFeedPromotions = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Intervalo (a cada X vídeos)</Label>
                 <Input type="number" value={form.position_interval} onChange={(e) => setForm({ ...form, position_interval: parseInt(e.target.value) || 5 })} className={modalInputClass} />
+              </div>
+              <div>
+                <Label>Vezes por dia no feed</Label>
+                <Input type="number" min={0} value={form.daily_frequency} onChange={(e) => setForm({ ...form, daily_frequency: parseInt(e.target.value) || 0 })} className={modalInputClass} />
+                <p className="text-xs text-gray-500 mt-1">0 = ilimitado</p>
               </div>
               <div>
                 <Label>Prioridade</Label>
@@ -463,32 +506,13 @@ export const AdminFeedPromotions = () => {
               )}
             </div>
 
-            {/* Criar Modelo */}
+            {/* Info: Modelo será criada automaticamente */}
             {!editingId && (
-              <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-950/20 space-y-3">
-                <Label className="text-sm font-bold flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Criar Modelo Automaticamente
-                </Label>
-                <p className="text-xs text-gray-400">
-                  Ao criar, um modelo será gerado com o nome de exibição, ID automático e link compartilhável.
+              <div className="p-3 rounded-lg border border-purple-500/30 bg-purple-950/20">
+                <p className="text-xs text-purple-300 flex items-center gap-2">
+                  <CheckCircle className="w-3 h-3" />
+                  Ao salvar, uma modelo será criada automaticamente com ID único usando o nome de exibição. Ela aparecerá no painel de modelos.
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={initiateCreateModel}
-                  disabled={!form.display_name.trim()}
-                  className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Criar Modelo "@{form.display_name.trim() || '...'}"
-                </Button>
-                {pendingModelData && form.create_model && (
-                  <div className="text-xs text-green-400 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Modelo criada: ID {pendingModelData.generatedId.slice(0, 8)}...
-                  </div>
-                )}
               </div>
             )}
 

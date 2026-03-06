@@ -2000,6 +2000,7 @@ export type Database = {
           created_at: string | null
           cta_link: string | null
           cta_text: string | null
+          daily_frequency: number | null
           description: string | null
           display_name: string
           id: string
@@ -2023,6 +2024,7 @@ export type Database = {
           created_at?: string | null
           cta_link?: string | null
           cta_text?: string | null
+          daily_frequency?: number | null
           description?: string | null
           display_name: string
           id?: string
@@ -2046,6 +2048,7 @@ export type Database = {
           created_at?: string | null
           cta_link?: string | null
           cta_text?: string | null
+          daily_frequency?: number | null
           description?: string | null
           display_name?: string
           id?: string

@@ -534,6 +534,53 @@ export const AdminVideoScheduler = () => {
               </p>
             </div>
 
+            {/* Created Model Info */}
+            {createdModelInfo && !formData.useExistingId && (
+              <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3">
+                <h4 className="font-semibold text-green-400 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Modelo Criada com Sucesso
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">ID:</span>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-muted px-2 py-1 rounded">{createdModelInfo.id}</code>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdModelInfo.id, 'ID')}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Username:</span>
+                    <span className="font-medium">@{createdModelInfo.username}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Link:</span>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-muted px-2 py-1 rounded max-w-[180px] truncate">{createdModelInfo.shareableLink}</code>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdModelInfo.shareableLink, 'Link')}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                    const msg = `Confira o perfil: ${createdModelInfo.shareableLink}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                  }}>
+                    <Share2 className="w-3 h-3 mr-1" />
+                    WhatsApp
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => copyToClipboard(createdModelInfo.shareableLink, 'Link')}>
+                    <Link className="w-3 h-3 mr-1" />
+                    Copiar Link
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Botões */}
             <div className="flex gap-2">
               <Button onClick={handleSchedule} disabled={loading} className="flex-1">

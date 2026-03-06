@@ -7,10 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, Eye, Image, Video, ExternalLink } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Image, Video, ExternalLink, Calendar, Clock, Copy, Share2, Link, CheckCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FeedPromotion {
@@ -30,6 +29,10 @@ interface FeedPromotion {
   views_count: number;
   clicks_count: number;
   created_at: string;
+  schedule_date: string | null;
+  schedule_status: string | null;
+  model_id: string | null;
+  shareable_link: string | null;
 }
 
 const emptyForm = {
@@ -45,6 +48,10 @@ const emptyForm = {
   position_interval: 5,
   is_active: true,
   priority: 0,
+  schedule_date: '',
+  schedule_time: '',
+  send_now: true,
+  create_model: false,
 };
 
 export const AdminFeedPromotions = () => {
@@ -52,6 +59,9 @@ export const AdminFeedPromotions = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
+  const [createdInfo, setCreatedInfo] = useState<{ id: string; modelId?: string; shareableLink: string } | null>(null);
   const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
   const { data: promotions = [], isLoading } = useQuery({
@@ -67,8 +77,14 @@ export const AdminFeedPromotions = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (formData: typeof emptyForm & { id?: string }) => {
-      const payload = {
+    mutationFn: async (formData: typeof emptyForm & { id?: string; model_id?: string }) => {
+      // Build schedule_date from date + time
+      let scheduleDateValue: string | null = null;
+      if (!formData.send_now && formData.schedule_date && formData.schedule_time) {
+        scheduleDateValue = `${formData.schedule_date}T${formData.schedule_time}:00`;
+      }
+
+      const payload: any = {
         title: formData.title,
         description: formData.description || null,
         avatar_url: formData.avatar_url || null,
@@ -79,28 +95,49 @@ export const AdminFeedPromotions = () => {
         cta_text: formData.cta_text || null,
         cta_link: formData.cta_link || null,
         position_interval: formData.position_interval,
-        is_active: formData.is_active,
+        is_active: formData.send_now ? formData.is_active : false,
         priority: formData.priority,
+        schedule_date: scheduleDateValue,
+        schedule_status: formData.send_now ? 'active' : 'scheduled',
+        model_id: formData.model_id || null,
       };
 
       if (formData.id) {
-        const { error } = await (supabase as any)
+        const { data, error } = await (supabase as any)
           .from('feed_promotions')
           .update(payload)
-          .eq('id', formData.id);
+          .eq('id', formData.id)
+          .select('id')
+          .single();
         if (error) throw error;
+        return data;
       } else {
-        const { error } = await (supabase as any)
+        const shareableLink = `${window.location.origin}/app`;
+        payload.shareable_link = shareableLink;
+        const { data, error } = await (supabase as any)
           .from('feed_promotions')
-          .insert(payload);
+          .insert(payload)
+          .select('id')
+          .single();
         if (error) throw error;
+        return data;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-feed-promotions'] });
       queryClient.invalidateQueries({ queryKey: ['feed-promotions'] });
-      toast.success(editingId ? 'Promoção atualizada!' : 'Promoção criada!');
-      handleCloseModal();
+      
+      if (!editingId && data?.id) {
+        const shareableLink = `${window.location.origin}/app`;
+        setCreatedInfo({
+          id: data.id,
+          modelId: pendingModelData?.generatedId,
+          shareableLink,
+        });
+      }
+      
+      toast.success(editingId ? 'Promoção atualizada!' : 'Promoção criada com sucesso!');
+      if (editingId) handleCloseModal();
     },
     onError: (error: any) => {
       toast.error('Erro: ' + error.message);
@@ -126,7 +163,7 @@ export const AdminFeedPromotions = () => {
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await (supabase as any)
         .from('feed_promotions')
-        .update({ is_active })
+        .update({ is_active, schedule_status: is_active ? 'active' : 'scheduled' })
         .eq('id', id);
       if (error) throw error;
     },
@@ -140,10 +177,13 @@ export const AdminFeedPromotions = () => {
     setShowModal(false);
     setEditingId(null);
     setForm(emptyForm);
+    setCreatedInfo(null);
+    setPendingModelData(null);
   };
 
   const handleEdit = (promo: FeedPromotion) => {
     setEditingId(promo.id);
+    const scheduleDate = promo.schedule_date ? new Date(promo.schedule_date) : null;
     setForm({
       title: promo.title,
       description: promo.description || '',
@@ -157,8 +197,50 @@ export const AdminFeedPromotions = () => {
       position_interval: promo.position_interval,
       is_active: promo.is_active,
       priority: promo.priority,
+      schedule_date: scheduleDate ? scheduleDate.toISOString().split('T')[0] : '',
+      schedule_time: scheduleDate ? scheduleDate.toTimeString().slice(0, 5) : '',
+      send_now: promo.schedule_status === 'active' || !promo.schedule_date,
+      create_model: false,
     });
     setShowModal(true);
+  };
+
+  const initiateCreateModel = async () => {
+    const username = form.display_name.trim();
+    if (!username) {
+      toast.error('Digite o nome de exibição primeiro');
+      return;
+    }
+    const generatedId = crypto.randomUUID();
+    setPendingModelData({ username, generatedId });
+    setShowConfirmDialog(true);
+  };
+
+  const confirmCreateModel = async () => {
+    if (!pendingModelData) return;
+    setShowConfirmDialog(false);
+
+    const { data, error } = await (supabase as any)
+      .from('models')
+      .insert({
+        id: pendingModelData.generatedId,
+        username: pendingModelData.username.toLowerCase().replace(/\s+/g, '_'),
+        name: pendingModelData.username,
+        avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+        is_active: true,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar modelo:', error);
+      toast.error('Erro ao criar modelo');
+      setPendingModelData(null);
+      return;
+    }
+
+    toast.success(`✅ Modelo "${pendingModelData.username}" criada com ID: ${data.id}`);
+    setForm(prev => ({ ...prev, create_model: true }));
   };
 
   const handleSave = () => {
@@ -166,7 +248,30 @@ export const AdminFeedPromotions = () => {
       toast.error('Preencha nome e URL da mídia');
       return;
     }
-    saveMutation.mutate({ ...form, id: editingId || undefined });
+    if (!form.send_now && (!form.schedule_date || !form.schedule_time)) {
+      toast.error('Selecione data e hora do agendamento');
+      return;
+    }
+    saveMutation.mutate({
+      ...form,
+      id: editingId || undefined,
+      model_id: pendingModelData?.generatedId,
+    } as any);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
+  };
+
+  const getStatusBadge = (promo: FeedPromotion) => {
+    if (promo.schedule_status === 'scheduled') {
+      return <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20"><Clock className="w-3 h-3 mr-1" />Agendado</Badge>;
+    }
+    if (promo.is_active) {
+      return <Badge className="bg-green-600">Ativo</Badge>;
+    }
+    return <Badge variant="secondary">Inativo</Badge>;
   };
 
   return (
@@ -176,7 +281,7 @@ export const AdminFeedPromotions = () => {
           <h2 className="text-2xl font-bold text-white">Promoções no Feed</h2>
           <p className="text-gray-400 text-sm">Cards promocionais intercalados no feed de vídeos</p>
         </div>
-        <Button onClick={() => { setForm(emptyForm); setEditingId(null); setShowModal(true); }} className="bg-green-600 hover:bg-green-700">
+        <Button onClick={() => { setForm(emptyForm); setEditingId(null); setCreatedInfo(null); setPendingModelData(null); setShowModal(true); }} className="bg-green-600 hover:bg-green-700">
           <Plus className="w-4 h-4 mr-2" /> Nova Promoção
         </Button>
       </div>
@@ -195,7 +300,6 @@ export const AdminFeedPromotions = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {promotions.map((promo) => (
             <Card key={promo.id} className="bg-gray-900 border-gray-700 overflow-hidden">
-              {/* Preview da mídia */}
               <div className="aspect-video bg-gray-800 relative">
                 {promo.media_type === 'video' ? (
                   <video src={promo.media_url} className="w-full h-full object-cover" muted />
@@ -203,9 +307,7 @@ export const AdminFeedPromotions = () => {
                   <img src={promo.media_url} alt={promo.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
                 )}
                 <div className="absolute top-2 left-2 flex gap-1">
-                  <Badge variant={promo.is_active ? 'default' : 'secondary'} className={promo.is_active ? 'bg-green-600' : ''}>
-                    {promo.is_active ? 'Ativo' : 'Inativo'}
-                  </Badge>
+                  {getStatusBadge(promo)}
                   <Badge variant="outline" className="text-white border-white/30">
                     {promo.media_type === 'video' ? <Video className="w-3 h-3 mr-1" /> : <Image className="w-3 h-3 mr-1" />}
                     {promo.media_type}
@@ -228,6 +330,13 @@ export const AdminFeedPromotions = () => {
                   <div className="flex items-center gap-2 text-xs text-gray-400">
                     <ExternalLink className="w-3 h-3" />
                     <span>CTA: {promo.cta_text}</span>
+                  </div>
+                )}
+
+                {promo.schedule_date && promo.schedule_status === 'scheduled' && (
+                  <div className="flex items-center gap-2 text-xs text-blue-400">
+                    <Calendar className="w-3 h-3" />
+                    <span>Agendado: {new Date(promo.schedule_date).toLocaleString('pt-BR')}</span>
                   </div>
                 )}
 
@@ -322,16 +431,185 @@ export const AdminFeedPromotions = () => {
               </div>
             </div>
 
+            {/* Agendamento */}
+            <div className="p-4 rounded-lg border border-yellow-500/30 bg-yellow-950/20 space-y-3">
+              <Label className="text-sm font-bold flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Agendamento de Publicação
+              </Label>
+              
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.send_now} onChange={() => setForm({ ...form, send_now: true })} className="accent-green-500" />
+                  <span className="text-sm">Publicar Agora</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={!form.send_now} onChange={() => setForm({ ...form, send_now: false })} className="accent-blue-500" />
+                  <span className="text-sm">Agendar</span>
+                </label>
+              </div>
+
+              {!form.send_now && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Data</Label>
+                    <Input type="date" value={form.schedule_date} onChange={(e) => setForm({ ...form, schedule_date: e.target.value })} className={modalInputClass} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Hora</Label>
+                    <Input type="time" value={form.schedule_time} onChange={(e) => setForm({ ...form, schedule_time: e.target.value })} className={modalInputClass} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Criar Modelo */}
+            {!editingId && (
+              <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-950/20 space-y-3">
+                <Label className="text-sm font-bold flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Criar Modelo Automaticamente
+                </Label>
+                <p className="text-xs text-gray-400">
+                  Ao criar, um modelo será gerado com o nome de exibição, ID automático e link compartilhável.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={initiateCreateModel}
+                  disabled={!form.display_name.trim()}
+                  className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Criar Modelo "@{form.display_name.trim() || '...'}"
+                </Button>
+                {pendingModelData && form.create_model && (
+                  <div className="text-xs text-green-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Modelo criada: ID {pendingModelData.generatedId.slice(0, 8)}...
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center gap-3">
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
               <Label>Ativo</Label>
             </div>
           </div>
 
+          {/* Created Info Panel */}
+          {createdInfo && !editingId && (
+            <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3 mt-4">
+              <h4 className="font-semibold text-green-400 flex items-center gap-2 text-sm">
+                <CheckCircle className="w-4 h-4" />
+                Promoção Criada com Sucesso!
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">ID:</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs bg-gray-800 px-2 py-1 rounded">{createdInfo.id.slice(0, 12)}...</code>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdInfo.id, 'ID')}>
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+                {createdInfo.modelId && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Modelo ID:</span>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-gray-800 px-2 py-1 rounded">{createdInfo.modelId.slice(0, 12)}...</code>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdInfo.modelId!, 'Modelo ID')}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Link:</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs bg-gray-800 px-2 py-1 rounded truncate max-w-[180px]">{createdInfo.shareableLink}</code>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(createdInfo.shareableLink, 'Link')}>
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                  const msg = `Confira: ${createdInfo.shareableLink}`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                }}>
+                  <Share2 className="w-3 h-3 mr-1" />
+                  WhatsApp
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => copyToClipboard(createdInfo.shareableLink, 'Link')}>
+                  <Link className="w-3 h-3 mr-1" />
+                  Copiar Link
+                </Button>
+              </div>
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="ghost" onClick={handleCloseModal}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-              {saveMutation.isPending ? 'Salvando...' : (editingId ? 'Atualizar' : 'Criar')}
+              {saveMutation.isPending ? 'Salvando...' : form.send_now ? (
+                <><Send className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Publicar Agora'}</>
+              ) : (
+                <><Calendar className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Agendar'}</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for Model Creation */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Confirmar Criação de Modelo
+            </DialogTitle>
+          </DialogHeader>
+          
+          {pendingModelData && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Nome:</span>
+                  <span className="font-semibold">{pendingModelData.username}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Username:</span>
+                  <span className="font-mono text-xs">@{pendingModelData.username.toLowerCase().replace(/\s+/g, '_')}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">ID gerado:</span>
+                  <code className="text-xs bg-gray-900 px-2 py-1 rounded border border-gray-700">{pendingModelData.generatedId.slice(0, 8)}...</code>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Link:</span>
+                  <code className="text-xs bg-gray-900 px-2 py-1 rounded border border-gray-700 truncate max-w-[200px]">
+                    /chat/{pendingModelData.generatedId.slice(0, 8)}...
+                  </code>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400">
+                A modelo será criada e vinculada a esta promoção. O link compartilhável será gerado automaticamente.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="ghost" onClick={() => { setShowConfirmDialog(false); setPendingModelData(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmCreateModel} className="bg-purple-600 hover:bg-purple-700">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Confirmar e Criar
             </Button>
           </DialogFooter>
         </DialogContent>

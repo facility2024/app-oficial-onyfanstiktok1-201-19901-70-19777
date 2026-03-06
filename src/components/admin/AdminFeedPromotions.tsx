@@ -506,34 +506,15 @@ export const AdminFeedPromotions = () => {
               )}
             </div>
 
-            {/* Criar Modelo */}
+            {/* Info: Modelo será criada automaticamente */}
             {!editingId && (
-              <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-950/20 space-y-3">
-                <Label className="text-sm font-bold flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Criar Modelo Automaticamente
-                </Label>
-                <p className="text-xs text-gray-400">
-                  Ao criar, um modelo será gerado com o nome de exibição, ID automático e link compartilhável.
+              <div className="p-3 rounded-lg border border-purple-500/30 bg-purple-950/20">
+                <p className="text-xs text-purple-300 flex items-center gap-2">
+                  <CheckCircle className="w-3 h-3" />
+                  Ao salvar, uma modelo será criada automaticamente com ID único usando o nome de exibição. Ela aparecerá no painel de modelos.
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={initiateCreateModel}
-                  disabled={!form.display_name.trim()}
-                  className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Criar Modelo "@{form.display_name.trim() || '...'}"
-                </Button>
-                {pendingModelData && form.create_model && (
-                  <div className="text-xs text-green-400 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Modelo criada: ID {pendingModelData.generatedId.slice(0, 8)}...
-                  </div>
-                )}
               </div>
-            )}
+            )
 
             <div className="flex items-center gap-3">
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />

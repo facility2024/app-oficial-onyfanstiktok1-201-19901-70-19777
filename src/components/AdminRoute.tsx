@@ -53,14 +53,14 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
               }
             });
           } catch (logError) {
-            console.error('Erro ao registrar tentativa não autorizada:', logError);
+            // silently fail - don't log security details
           }
 
           toast.error('Acesso negado. Você não tem permissão para acessar o painel administrativo.');
           setTimeout(() => navigate('/app'), 1000);
         }
       } catch (error) {
-        console.error('Erro na verificação de admin:', error);
+        // silently handle auth check failure
         setIsAdmin(false);
       } finally {
         setIsChecking(false);

@@ -296,10 +296,41 @@ export const AdminVideoScheduler = () => {
     if (!formData.useExistingId) {
       const newUsername = modelSearch.trim() || `modelo_${Date.now()}`;
       if (!createdModelInfo) {
-        initiateCreateModel();
-        return;
+        // Auto-criar modelo inline sem dialog
+        const generatedId = crypto.randomUUID();
+        setLoading(true);
+        
+        const { data: newModel, error: createError } = await supabase
+          .from('models')
+          .insert({
+            id: generatedId,
+            username: newUsername,
+            name: newUsername,
+            avatar_url: 'https://via.placeholder.com/150',
+            is_active: true,
+            posting_panel_url: formData.profileLink.trim() || null,
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Erro ao criar modelo:', createError);
+          toast.error('Erro ao criar modelo automaticamente');
+          setLoading(false);
+          return;
+        }
+
+        modelId = newModel.id;
+        toast.success(`✅ Modelo "@${newUsername}" criada com ID: ${newModel.id}`);
+        setCreatedModelInfo({
+          id: newModel.id,
+          username: newUsername,
+          shareableLink: `${window.location.origin}/chat/${newModel.id}`,
+        });
+        await loadModels();
+      } else {
+        modelId = createdModelInfo.id;
       }
-      modelId = createdModelInfo.id;
     } else {
       if (!modelId) {
         toast.error('Busque e selecione uma modelo existente');

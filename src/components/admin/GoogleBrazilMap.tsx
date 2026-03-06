@@ -283,6 +283,16 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
         </Button>
         <Button
           size="sm"
+          variant="outline"
+          className={`h-7 text-[11px] gap-1 ${isGeocoding ? 'animate-pulse' : ''}`}
+          onClick={handleGeocodeBusinesses}
+          disabled={isGeocoding}
+        >
+          <Navigation className="w-3 h-3" />
+          {isGeocoding ? 'Geocodificando...' : 'Geocodificar'}
+        </Button>
+        <Button
+          size="sm"
           variant={showTimeline ? 'default' : 'outline'}
           className={`h-7 text-[11px] gap-1 ${showTimeline ? 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600' : ''}`}
           onClick={() => setShowTimeline(!showTimeline)}

@@ -1,6 +1,6 @@
 /**
  * Robust geolocation detection for Brazil
- * Priority: Browser GPS → Edge Function → HTTPS IP APIs → Fallback
+ * Priority: Browser GPS → HTTPS IP APIs → Edge Function → Fallback
  */
 
 export interface LocationResult {

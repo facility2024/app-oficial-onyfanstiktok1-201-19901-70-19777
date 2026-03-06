@@ -332,23 +332,29 @@ export const AdminVideoScheduler = () => {
       // Para lista, cada vídeo é agendado com intervalo de X minutos
       const scheduleTime = new Date(baseDate.getTime() + i * formData.listInterval * 60 * 1000);
 
-      // 1. Inserir na tabela videos para aparecer no feed (registrar como criadora)
+      // 1. Inserir na tabela videos para aparecer no feed
       const videoPayload: any = {
         video_url: url,
         model_id: modelId,
         is_active: false, // Fica inativo até publicar
         title: `Vídeo agendado ${i + 1}`,
+        thumbnail_url: url, // Usa o próprio link como fallback
+        duration: '0:00',
         likes_count: 0,
         views_count: 0,
         comments_count: 0,
         shares_count: 0,
       };
 
-      const { data: videoData } = await (supabase as any)
+      const { data: videoData, error: videoError } = await (supabase as any)
         .from('videos')
         .insert(videoPayload)
         .select('id')
         .single();
+      
+      if (videoError) {
+        console.error('Erro ao inserir vídeo:', videoError);
+      }
 
       // 2. Criar post agendado
       const { error } = await supabase

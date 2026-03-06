@@ -683,6 +683,59 @@ export const AdminVideoScheduler = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Confirmar Criação de Modelo
+            </DialogTitle>
+          </DialogHeader>
+          
+          {pendingModelData && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border bg-muted/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Username:</span>
+                  <span className="font-semibold">@{pendingModelData.username}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">ID gerado:</span>
+                  <code className="text-xs bg-background px-2 py-1 rounded border">{pendingModelData.generatedId.slice(0, 8)}...</code>
+                </div>
+                {formData.profileLink && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Link perfil:</span>
+                    <span className="text-xs truncate max-w-[200px]">{formData.profileLink}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Link compartilhável:</span>
+                  <code className="text-xs bg-background px-2 py-1 rounded border truncate max-w-[200px]">
+                    {window.location.origin}/chat/{pendingModelData.generatedId.slice(0, 8)}...
+                  </code>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Após confirmar, a modelo será criada e você receberá o ID, os botões de agendamento e o link compartilhável.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => { setShowConfirmDialog(false); setPendingModelData(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmCreateModel} disabled={loading}>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Confirmar e Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

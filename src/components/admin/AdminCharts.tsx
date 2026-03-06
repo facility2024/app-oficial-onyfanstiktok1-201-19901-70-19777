@@ -318,7 +318,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <BrazilInteractiveMap 
+          <GoogleBrazilMap 
             onlineUsersByState={realTimeStats.onlineUsersByState} 
             deviceStatsByState={realTimeStats.deviceStatsByState}
             totalDeviceStats={realTimeStats.totalDeviceStats}

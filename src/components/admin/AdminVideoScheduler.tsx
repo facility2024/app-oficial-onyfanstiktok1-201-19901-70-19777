@@ -634,7 +634,21 @@ export const AdminVideoScheduler = () => {
               </p>
             </div>
 
-            {/* Created Model Info */}
+            {/* Frequência diária no feed */}
+            <div className="space-y-2">
+              <Label>Quantas vezes por dia aparece no feed</Label>
+              <Input
+                type="number"
+                min={0}
+                max={50}
+                value={formData.dailyFrequency}
+                onChange={(e) => setFormData(prev => ({ ...prev, dailyFrequency: parseInt(e.target.value) || 0 }))}
+                placeholder="3"
+              />
+              <p className="text-xs text-muted-foreground">
+                0 = ilimitado. Define quantas vezes o vídeo aparece no feed por dia.
+              </p>
+            </div>
             {createdModelInfo && !formData.useExistingId && (
               <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3">
                 <h4 className="font-semibold text-green-400 flex items-center gap-2">

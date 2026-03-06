@@ -524,7 +524,7 @@ export const AdminVideoScheduler = () => {
                   </p>
                 </div>
               </div>
-            )
+            )}
             </div>
 
             {/* ID da Modelo */}

@@ -102,6 +102,7 @@ export const AdminFeedPromotions = () => {
         schedule_date: scheduleDateValue,
         schedule_status: formData.send_now ? 'active' : 'scheduled',
         model_id: formData.model_id || null,
+        daily_frequency: formData.daily_frequency || 0,
       };
 
       if (formData.id) {

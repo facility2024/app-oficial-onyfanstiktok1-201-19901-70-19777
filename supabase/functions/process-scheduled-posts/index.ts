@@ -104,7 +104,6 @@ serve(async (req) => {
                 description: post.descricao || '',
                 video_url: post.conteudo_url,
                 thumbnail_url: post.imagens?.[0] || post.conteudo_url,
-                music_name: 'Som Original',
                 is_active: true,
                 visibility: 'public',
                 duration: '0:00',

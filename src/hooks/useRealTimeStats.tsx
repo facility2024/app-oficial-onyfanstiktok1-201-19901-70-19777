@@ -211,11 +211,6 @@ export const useRealTimeStats = () => {
       const clientIP = await getClientIP();
 
       // IDs persistentes para permitir múltiplas sessões simultâneas
-      let localSessionUserId = localStorage.getItem('user_session_id');
-      if (!localSessionUserId) {
-        localSessionUserId = crypto.randomUUID();
-        localStorage.setItem('user_session_id', localSessionUserId);
-      }
 
       let onlineSessionId = localStorage.getItem('online_session_id');
       if (!onlineSessionId) {

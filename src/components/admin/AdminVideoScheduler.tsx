@@ -491,9 +491,40 @@ export const AdminVideoScheduler = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="list" id="list" />
-                  <Label htmlFor="list" className="cursor-pointer">Enviar em Lista (em breve)</Label>
+                  <Label htmlFor="list" className="cursor-pointer">Enviar em Lista</Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            {/* Textarea para lista de links */}
+            {formData.sendType === 'list' && (
+              <div className="space-y-2">
+                <Label>Links MP4 (um por linha) *</Label>
+                <textarea
+                  value={formData.videoUrls}
+                  onChange={(e) => setFormData(prev => ({ ...prev, videoUrls: e.target.value }))}
+                  placeholder={"https://cdn.example.com/video1.mp4\nhttps://cdn.example.com/video2.mp4\nhttps://cdn.example.com/video3.mp4"}
+                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formData.videoUrls.split('\n').filter(u => u.trim()).length} link(s) detectado(s)
+                </p>
+                <div className="space-y-2">
+                  <Label>Intervalo entre envios (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={formData.listInterval}
+                    onChange={(e) => setFormData(prev => ({ ...prev, listInterval: parseInt(e.target.value) || 5 }))}
+                    placeholder="5"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cada vídeo será agendado com {formData.listInterval} minuto(s) de diferença
+                  </p>
+                </div>
+              </div>
+            )
             </div>
 
             {/* ID da Modelo */}

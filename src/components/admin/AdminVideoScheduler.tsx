@@ -69,6 +69,7 @@ export const AdminVideoScheduler = () => {
     profileLink: '',
     sendType: 'single' as 'single' | 'list',
     listInterval: 5, // Intervalo em minutos entre cada envio da lista
+    dailyFrequency: 3, // Quantas vezes aparece no feed por dia
   });
 
   useEffect(() => {

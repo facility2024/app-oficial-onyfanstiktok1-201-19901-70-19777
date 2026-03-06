@@ -351,15 +351,7 @@ export const AdminVideoScheduler = () => {
     toast.success('🎥 Vídeo agendado com sucesso!');
     
     // Limpar formulário
-    setFormData({
-      useExistingId: true,
-      videoUrl: '',
-      modelId: '',
-      scheduleDate: '',
-      scheduleTime: '',
-      profileLink: '',
-      sendType: 'single',
-    });
+    setFormData({ ...defaultFormData });
     setModelSearch('');
     setSelectedModel(null);
     setCreatedModelInfo(null);

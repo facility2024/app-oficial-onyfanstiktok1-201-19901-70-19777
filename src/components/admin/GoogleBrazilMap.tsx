@@ -193,6 +193,26 @@ export const GoogleBrazilMap = ({ onlineUsersByState, deviceStatsByState = {}, t
       .sort((a, b) => b.count - a.count);
   }, [onlineUsersByState, selectedRegion, searchQuery, getCount]);
 
+  // Heatmap data points
+  const heatmapPoints = useMemo(() => {
+    return STATE_POSITIONS
+      .filter((s) => getCount(s.name) > 0)
+      .map((s) => ({ lat: s.lat, lng: s.lng, weight: getCount(s.name) }));
+  }, [getCount]);
+
+  // Cluster points
+  const clusterPoints = useMemo(() => {
+    return STATE_POSITIONS.map((s) => ({ lat: s.lat, lng: s.lng, label: s.name, count: getCount(s.name) }));
+  }, [getCount]);
+
+  const handleTimelineChange = useCallback((hour: number, events: any[]) => {
+    setTimelineHour(hour);
+  }, []);
+
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    setMapRef(map);
+  }, []);
+
   const fallbackStatesData = useMemo(() => {
     return STATE_POSITIONS.map((state) => {
       const count = getCount(state.name);

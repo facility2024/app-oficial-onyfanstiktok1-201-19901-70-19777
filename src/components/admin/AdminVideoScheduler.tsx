@@ -331,6 +331,7 @@ export const AdminVideoScheduler = () => {
     });
     setModelSearch('');
     setSelectedModel(null);
+    setCreatedModelInfo(null);
     
     await loadScheduledPosts();
   };

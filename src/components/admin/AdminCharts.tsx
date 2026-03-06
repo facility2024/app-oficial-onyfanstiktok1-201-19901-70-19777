@@ -202,6 +202,9 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
         </CardContent>
       </Card>
 
+      {/* Address Log below map */}
+      <UserAddressLog />
+
       {/* Banner horizontal - Views + Financial + Webhook */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ maxHeight: '250px' }}>
         {/* Views Banner */}

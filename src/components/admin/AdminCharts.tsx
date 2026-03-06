@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GoogleBrazilMap } from './GoogleBrazilMap';
 import { LiveUserIndicator } from './LiveUserIndicator';
+import { UserAddressLog } from './UserAddressLog';
 import { Eye, TrendingUp, Activity, MapPin, Users } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';

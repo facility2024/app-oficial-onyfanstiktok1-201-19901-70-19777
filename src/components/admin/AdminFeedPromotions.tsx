@@ -378,6 +378,11 @@ export const AdminFeedPromotions = () => {
                   <span>🖱 {promo.clicks_count} cliques</span>
                   <span>A cada {promo.position_interval} vídeos</span>
                 </div>
+                {promo.daily_frequency > 0 && (
+                  <div className="text-xs text-yellow-400">
+                    📊 {promo.daily_frequency}x por dia no feed
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 pt-2 border-t border-gray-700">
                   <Switch

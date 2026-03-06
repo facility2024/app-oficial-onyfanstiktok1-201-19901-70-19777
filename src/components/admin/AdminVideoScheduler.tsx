@@ -687,7 +687,9 @@ export const AdminVideoScheduler = () => {
             <div className="flex gap-2">
               <Button onClick={handleSchedule} disabled={loading} className="flex-1">
                 <Plus className="w-4 h-4 mr-2" />
-                Agendar
+                {formData.sendType === 'list'
+                  ? `Agendar ${formData.videoUrls.split('\n').filter(u => u.trim()).length} vídeo(s)`
+                  : 'Agendar'}
               </Button>
               <Button 
                 onClick={() => {

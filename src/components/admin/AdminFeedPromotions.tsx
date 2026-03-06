@@ -247,7 +247,7 @@ export const AdminFeedPromotions = () => {
     setForm(prev => ({ ...prev, create_model: true }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.display_name || !form.media_url) {
       toast.error('Preencha nome e URL da mídia');
       return;
@@ -256,10 +256,39 @@ export const AdminFeedPromotions = () => {
       toast.error('Selecione data e hora do agendamento');
       return;
     }
+
+    let modelId = pendingModelData?.generatedId;
+
+    // Auto-criar modelo se não existir ainda
+    if (!editingId && !modelId && form.display_name.trim()) {
+      const generatedId = crypto.randomUUID();
+      const username = form.display_name.trim().toLowerCase().replace(/\s+/g, '_');
+
+      const { data, error } = await (supabase as any)
+        .from('models')
+        .insert({
+          id: generatedId,
+          username,
+          name: form.display_name.trim(),
+          avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.warn('Aviso: modelo não criada:', error.message);
+      } else {
+        modelId = data.id;
+        setPendingModelData({ username, generatedId });
+        toast.success(`✅ Modelo "${form.display_name}" criada com ID: ${data.id}`);
+      }
+    }
+
     saveMutation.mutate({
       ...form,
       id: editingId || undefined,
-      model_id: pendingModelData?.generatedId,
+      model_id: modelId,
     } as any);
   };
 

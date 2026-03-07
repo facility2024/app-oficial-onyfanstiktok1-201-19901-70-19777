@@ -286,15 +286,15 @@ export const useRealTimeStats = () => {
           user_agent: userAgent,
           device_type: deviceType,
           ip_address: clientIP,
-          region: location?.state,
-          city: location?.city,
-          country: location?.country || 'BR'
+          region: resolvedLocation.state,
+          city: resolvedLocation.city,
+          country: resolvedLocation.country || 'BR'
         });
 
       console.log('✅ Atividade registrada:', {
         userId,
         deviceType,
-        location: location?.state || 'São Paulo',
+        location: resolvedLocation.state || 'São Paulo',
         ip: clientIP
       });
 

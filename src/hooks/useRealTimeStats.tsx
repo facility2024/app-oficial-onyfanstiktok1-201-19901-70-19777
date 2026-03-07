@@ -115,6 +115,7 @@ export const useRealTimeStats = () => {
       ]);
 
       // Processar dados de usuários online por estado + tipo de dispositivo
+      if (onlineUsersResult.data && onlineUsersResult.data.length > 0) {
         onlineUsersResult.data.forEach((row: any) => {
           const normalizedState = normalizeStateName(String(row.location_state || '').trim());
           const stateKey = normalizedState || 'Indefinido';

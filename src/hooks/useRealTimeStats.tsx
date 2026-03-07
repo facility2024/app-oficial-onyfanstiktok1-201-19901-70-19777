@@ -48,6 +48,8 @@ export const useRealTimeStats = () => {
   const isFetching = useRef(false);
   const lastFetchTime = useRef(0);
 
+  const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+
   const fetchRealTimeStats = async () => {
     // Evitar múltiplas chamadas simultâneas
     const now = Date.now();
@@ -64,7 +66,7 @@ export const useRealTimeStats = () => {
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const twoMinutesAgo = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
 
       // Usar Promise.all para executar queries em paralelo
       const [

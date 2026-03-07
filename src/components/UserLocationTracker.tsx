@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { detectLocation } from '@/utils/geolocation';
+import { detectLocation, normalizeStateName } from '@/utils/geolocation';
 
 /**
  * Invisible component that tracks user location and online status.

@@ -58,13 +58,15 @@ export const useGeolocation = () => {
         localStorage.setItem('user_session_id', userId);
       }
 
-      await trackUserActivity(userId, {
-        state: location.state,
-        city: location.city,
-        country: location.country,
-      });
+      if (location.state) {
+        await trackUserActivity(userId, {
+          state: location.state,
+          city: location.city,
+          country: location.country,
+        });
+      }
 
-      if (!hasShownToast.current) {
+      if (!hasShownToast.current && location.state) {
         const methodLabel = location.method === 'gps' ? 'GPS' : location.method === 'ip' ? 'IP' : 'padrão';
         
         await supabase.from('video_views').insert({
@@ -86,8 +88,8 @@ export const useGeolocation = () => {
     } catch (error) {
       console.error('❌ Erro na geolocalização:', error);
       const fallback: GeolocationData = {
-        state: 'São Paulo',
-        city: 'São Paulo',
+        state: '',
+        city: '',
         coordinates: { lat: -23.5505, lng: -46.6333 },
         method: 'fallback',
       };
@@ -125,7 +127,7 @@ export const useGeolocation = () => {
 
   // Setup heartbeat when location obtained
   useEffect(() => {
-    if (currentLocation && !heartbeatIntervalRef.current) {
+    if (currentLocation && currentLocation.state && !heartbeatIntervalRef.current) {
       const userId = localStorage.getItem('user_session_id');
       if (userId) setupHeartbeat(userId, currentLocation);
     }

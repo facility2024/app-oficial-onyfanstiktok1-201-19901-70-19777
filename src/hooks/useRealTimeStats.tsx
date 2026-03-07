@@ -106,8 +106,15 @@ export const useRealTimeStats = () => {
         // Usuários online por estado + device (inclui usuários sem estado para não perder contagem)
         supabase.from('online_users').select('location_state, device_type')
           .eq('is_online', true).gte('last_seen_at', twoMinutesAgo),
-...
-      if (onlineUsersResult.data && onlineUsersResult.data.length > 0) {
+        // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
+        supabase.from('videos').select('likes_count'),
+        // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
+        supabase.from('videos').select('views_count'),
+        // Somar comments_count diretamente dos vídeos
+        supabase.from('videos').select('comments_count')
+      ]);
+
+      // Processar dados de usuários online por estado + tipo de dispositivo
         onlineUsersResult.data.forEach((row: any) => {
           const normalizedState = normalizeStateName(String(row.location_state || '').trim());
           const stateKey = normalizedState || 'Indefinido';

@@ -278,7 +278,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
                       />
                     </div>
                   </div>
-                  <span className="font-medium">{state.users} <span className="text-muted-foreground">({state.percentage}%)</span></span>
+                  <span className="font-medium">{state.count} <span className="text-muted-foreground">({state.percentage}%)</span></span>
                 </div>
               ))}
             </div>

@@ -48,7 +48,7 @@ export const useRealTimeStats = () => {
   const isFetching = useRef(false);
   const lastFetchTime = useRef(0);
 
-  const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+  const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
   const fetchRealTimeStats = async () => {
     // Evitar múltiplas chamadas simultâneas

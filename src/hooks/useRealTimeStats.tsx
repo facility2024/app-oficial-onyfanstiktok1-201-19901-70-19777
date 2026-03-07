@@ -321,19 +321,19 @@ export const useRealTimeStats = () => {
   // Limpeza de usuários inativos
   const cleanupInactiveUsers = async () => {
     try {
-      const twoMinutesAgo = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
+      const onlineCutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
       
-      // Marcar usuários como offline se não tiveram atividade nos últimos 2 minutos
+      // Marcar usuários como offline usando updated_at (timestamp de servidor)
       await supabase
         .from('online_users')
         .update({ is_online: false })
-        .lt('last_seen_at', twoMinutesAgo);
+        .lt('updated_at', onlineCutoff);
 
-      // Marcar sessões como inativas
+      // Marcar sessões como inativas usando updated_at
       await supabase
         .from('user_sessions')
         .update({ is_active: false })
-        .lt('last_activity_at', twoMinutesAgo);
+        .lt('updated_at', onlineCutoff);
 
       console.log('🧹 Limpeza de usuários inativos executada');
     } catch (error) {

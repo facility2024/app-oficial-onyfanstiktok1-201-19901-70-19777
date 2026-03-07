@@ -173,36 +173,120 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
 
   return (
     <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
-      {/* Map - Full Width */}
-      <Card className="bg-gradient-card border-border/50">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+      {/* Painel de Gráficos - Substituindo o Mapa */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Gráfico de Views por Dia (Linha) */}
+        <Card className="bg-gradient-card border-border/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Eye className="w-5 h-5 text-primary" />
+                <CardTitle className="text-sm sm:text-base">Views por Dia</CardTitle>
+              </div>
+              <LiveUserIndicator />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <Line data={viewsData} options={chartOptions} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Usuários por Estado (Doughnut) */}
+        <Card className="bg-gradient-card border-border/50">
+          <CardHeader className="pb-2">
             <div className="flex items-center space-x-2">
-              <div className="text-lg">🇧🇷</div>
-              <div>
-                <CardTitle className="text-sm sm:text-base">
-                  Mapa em Tempo Real
-                </CardTitle>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  📍 Usuários online por estado
-                </p>
-                <div className="mt-1">
-                  <LiveUserIndicator />
+              <MapPin className="w-5 h-5 text-success" />
+              <CardTitle className="text-sm sm:text-base">Usuários por Estado</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              {topStates.length > 0 ? (
+                <Doughnut data={statesData} options={doughnutOptions} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Aguardando dados de geolocalização...
                 </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Vendas (Barras) */}
+        <Card className="bg-gradient-card border-border/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-warning" />
+                <CardTitle className="text-sm sm:text-base">Vendas Semanais</CardTitle>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {salesLoading ? '...' : formatCurrency(salesSummary.totalMonth)} /mês
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <Bar data={financialData} options={chartOptions} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card de Resumo em Tempo Real */}
+        <Card className="bg-gradient-card border-border/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-center space-x-2">
+              <Users className="w-5 h-5 text-accent" />
+              <CardTitle className="text-sm sm:text-base">Resumo em Tempo Real</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-primary">{totalConnectedUsers}</div>
+                <div className="text-xs text-muted-foreground">Online Agora</div>
+              </div>
+              <div className="bg-success/10 border border-success/20 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-success">{statesList.length}</div>
+                <div className="text-xs text-muted-foreground">Estados Ativos</div>
+              </div>
+              <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-warning">
+                  {salesLoading ? '...' : `${salesSummary.growth > 0 ? '+' : ''}${salesSummary.growth.toFixed(0)}%`}
+                </div>
+                <div className="text-xs text-muted-foreground">Crescimento</div>
+              </div>
+              <div className="bg-accent/10 border border-accent/20 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-accent">
+                  {salesLoading ? '...' : formatCurrency(salesSummary.weeklyGoal)}
+                </div>
+                <div className="text-xs text-muted-foreground">Meta Semanal</div>
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <GoogleBrazilMap 
-            onlineUsersByState={realTimeStats.onlineUsersByState} 
-            deviceStatsByState={realTimeStats.deviceStatsByState}
-            totalDeviceStats={realTimeStats.totalDeviceStats}
-          />
-        </CardContent>
-      </Card>
+            {/* Top 5 estados inline */}
+            <div className="space-y-1.5">
+              {topStates.slice(0, 5).map((state, i) => (
+                <div key={state.state} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{i + 1}. {state.state}</span>
+                  <div className="flex items-center gap-2 flex-1 mx-3">
+                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: `${Math.min(parseFloat(state.percentage), 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="font-medium">{state.count} <span className="text-muted-foreground">({state.percentage}%)</span></span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Address Log below map */}
+      {/* Address Log */}
       <UserAddressLog />
 
       {/* Banner horizontal - Views + Financial + Webhook */}

@@ -102,10 +102,10 @@ export const useRealTimeStats = () => {
         supabase.from('model_followers').select('*', { count: 'exact', head: true }).eq('is_active', true),
         // Sessões ativas
         supabase.from('user_sessions').select('*', { count: 'exact', head: true })
-          .eq('is_active', true).gte('last_activity_at', fiveMinutesAgo),
+          .eq('is_active', true).gte('last_activity_at', twoMinutesAgo),
         // Usuários online por estado
         supabase.from('online_users').select('location_state, device_type')
-          .eq('is_online', true).gte('last_seen_at', fiveMinutesAgo)
+          .eq('is_online', true).gte('last_seen_at', twoMinutesAgo)
           .not('location_state', 'is', null),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
         supabase.from('videos').select('likes_count'),

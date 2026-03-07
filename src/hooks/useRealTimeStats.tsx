@@ -103,10 +103,9 @@ export const useRealTimeStats = () => {
         // Sessões ativas
         supabase.from('user_sessions').select('*', { count: 'exact', head: true })
           .eq('is_active', true).gte('last_activity_at', twoMinutesAgo),
-        // Usuários online por estado
+        // Usuários online por estado + device (inclui usuários sem estado para não perder contagem)
         supabase.from('online_users').select('location_state, device_type')
-          .eq('is_online', true).gte('last_seen_at', twoMinutesAgo)
-          .not('location_state', 'is', null),
+          .eq('is_online', true).gte('last_seen_at', twoMinutesAgo),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
         supabase.from('videos').select('likes_count'),
         // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
@@ -123,25 +122,27 @@ export const useRealTimeStats = () => {
 
       if (onlineUsersResult.data && onlineUsersResult.data.length > 0) {
         onlineUsersResult.data.forEach((row: any) => {
-          if (row.location_state) {
-            onlineUsersByState[row.location_state] = (onlineUsersByState[row.location_state] || 0) + 1;
-            
-            // Agregar por tipo de dispositivo
-            if (!deviceStatsByState[row.location_state]) {
-              deviceStatsByState[row.location_state] = { desktop: 0, mobile: 0 };
-            }
-            const deviceType = (row.device_type || '').toLowerCase();
-            if (deviceType === 'desktop') {
-              deviceStatsByState[row.location_state].desktop += 1;
-              totalDeviceStats.desktop += 1;
-            } else {
-              // mobile + tablet = mobile
-              deviceStatsByState[row.location_state].mobile += 1;
-              totalDeviceStats.mobile += 1;
-            }
+          const normalizedState = normalizeStateName(String(row.location_state || '').trim());
+          const stateKey = normalizedState || 'Indefinido';
+
+          totalOnlineUsers += 1;
+          onlineUsersByState[stateKey] = (onlineUsersByState[stateKey] || 0) + 1;
+
+          // Agregar por tipo de dispositivo
+          if (!deviceStatsByState[stateKey]) {
+            deviceStatsByState[stateKey] = { desktop: 0, mobile: 0 };
+          }
+
+          const deviceType = (row.device_type || '').toLowerCase();
+          if (deviceType === 'desktop') {
+            deviceStatsByState[stateKey].desktop += 1;
+            totalDeviceStats.desktop += 1;
+          } else {
+            // mobile + tablet + desconhecido = mobile bucket
+            deviceStatsByState[stateKey].mobile += 1;
+            totalDeviceStats.mobile += 1;
           }
         });
-        totalOnlineUsers = Object.values(onlineUsersByState).reduce((sum, count) => sum + count, 0);
       }
 
       // Calculate total shares from videos table

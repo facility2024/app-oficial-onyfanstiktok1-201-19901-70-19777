@@ -132,6 +132,39 @@ serve(async (req) => {
       }
     }
 
+    // Strategy 1b: Nominatim reverse geocode fallback (quando Google falha/sem chave)
+    if (!result && hasClientCoords) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${clientLat}&lon=${clientLng}&format=json&addressdetails=1&accept-language=pt-BR`,
+          {
+            headers: { "User-Agent": "COCONUDI-Geolocate/1.0" },
+          },
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          const address = data?.address || {};
+          const normalizedState = normalizeStateName(address.state || address.region || "");
+          const countryCode = String(address.country_code || "").toUpperCase();
+
+          if (countryCode === "BR" && normalizedState) {
+            result = {
+              region: normalizedState,
+              city: String(address.city || address.town || address.municipality || ""),
+              neighborhood: String(address.suburb || address.neighbourhood || ""),
+              address: String(data.display_name || ""),
+              lat: clientLat,
+              lng: clientLng,
+              method: "nominatim",
+            };
+          }
+        }
+      } catch {
+        // continue
+      }
+    }
+
     // Strategy 2: ipwho.is via client IP (HTTPS)
     if (!result && clientIP) {
       try {

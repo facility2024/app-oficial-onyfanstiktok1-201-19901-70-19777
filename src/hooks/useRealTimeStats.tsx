@@ -66,7 +66,7 @@ export const useRealTimeStats = () => {
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
-      const twoMinutesAgo = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
+      const onlineCutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
 
       // Usar Promise.all para executar queries em paralelo
       const [
@@ -100,12 +100,12 @@ export const useRealTimeStats = () => {
         supabase.from('videos').select('shares_count'),
         // Seguidores
         supabase.from('model_followers').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        // Sessões ativas
+        // Sessões ativas (timestamp de servidor)
         supabase.from('user_sessions').select('*', { count: 'exact', head: true })
-          .eq('is_active', true).gte('last_activity_at', twoMinutesAgo),
-        // Usuários online por estado + device (inclui usuários sem estado para não perder contagem)
+          .eq('is_active', true).gte('updated_at', onlineCutoff),
+        // Usuários online por estado + device (timestamp de servidor)
         supabase.from('online_users').select('location_state, device_type')
-          .eq('is_online', true).gte('last_seen_at', twoMinutesAgo),
+          .eq('is_online', true).gte('updated_at', onlineCutoff),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
         supabase.from('videos').select('likes_count'),
         // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)

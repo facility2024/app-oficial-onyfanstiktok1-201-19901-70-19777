@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GoogleBrazilMap } from './GoogleBrazilMap';
+
 import { LiveUserIndicator } from './LiveUserIndicator';
 import { UserAddressLog } from './UserAddressLog';
 import { Eye, TrendingUp, Activity, MapPin, Users } from 'lucide-react';

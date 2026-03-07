@@ -213,7 +213,6 @@ export const useRealTimeStats = () => {
       const clientIP = await getClientIP();
 
       // IDs persistentes para permitir múltiplas sessões simultâneas
-
       let onlineSessionId = localStorage.getItem('online_session_id');
       if (!onlineSessionId) {
         onlineSessionId = crypto.randomUUID();
@@ -226,6 +225,9 @@ export const useRealTimeStats = () => {
         localStorage.setItem('user_session_token', persistentSessionToken);
       }
 
+      // Priorizar localização recebida; fallback para detecção robusta client-side
+      const resolvedLocation = location ?? await detectLocation();
+
       // 1. Registrar/atualizar sessão do usuário
       const { error: sessionError } = await supabase
         .from('user_sessions')
@@ -235,9 +237,9 @@ export const useRealTimeStats = () => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           is_active: true,
           last_activity_at: now,
-          location_state: location?.state || 'São Paulo',
-          location_city: location?.city || 'São Paulo',
-          location_country: location?.country || 'BR',
+          location_state: resolvedLocation.state || 'São Paulo',
+          location_city: resolvedLocation.city || 'São Paulo',
+          location_country: resolvedLocation.country || 'BR',
           user_agent: userAgent,
           ip_address: clientIP,
           device_type: deviceType,
@@ -259,9 +261,9 @@ export const useRealTimeStats = () => {
           session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
-          location_state: location?.state || 'São Paulo',
-          location_city: location?.city || 'São Paulo',
-          location_country: location?.country || 'BR',
+          location_state: resolvedLocation.state || 'São Paulo',
+          location_city: resolvedLocation.city || 'São Paulo',
+          location_country: resolvedLocation.country || 'BR',
           ip_address: clientIP,
           device_type: deviceType,
           user_agent: userAgent

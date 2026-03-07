@@ -100,12 +100,14 @@ export const useRealTimeStats = () => {
         supabase.from('videos').select('shares_count'),
         // Seguidores
         supabase.from('model_followers').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        // Sessões ativas (timestamp de servidor)
+        // Sessões ativas por heartbeat (não depender só de updated_at)
         supabase.from('user_sessions').select('*', { count: 'exact', head: true })
-          .eq('is_active', true).gte('updated_at', onlineCutoff),
-        // Usuários online por estado + device (timestamp de servidor)
+          .eq('is_active', true)
+          .or(`last_activity_at.gte.${onlineCutoff},last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
+        // Usuários online por estado + device (heartbeat)
         supabase.from('online_users').select('location_state, device_type')
-          .eq('is_online', true).gte('updated_at', onlineCutoff),
+          .eq('is_online', true)
+          .or(`last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
         supabase.from('videos').select('likes_count'),
         // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
@@ -242,6 +244,8 @@ export const useRealTimeStats = () => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           is_active: true,
           last_activity_at: now,
+          last_seen_at: now,
+          updated_at: now,
           location_state: safeState,
           location_city: safeCity,
           location_country: safeCountry,
@@ -266,6 +270,7 @@ export const useRealTimeStats = () => {
           session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
+          updated_at: now,
           location_state: safeState,
           location_city: safeCity,
           location_country: safeCountry,
@@ -323,17 +328,19 @@ export const useRealTimeStats = () => {
     try {
       const onlineCutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
       
-      // Marcar usuários como offline usando updated_at (timestamp de servidor)
+      // Marcar usuários como offline usando heartbeat (last_seen_at)
       await supabase
         .from('online_users')
         .update({ is_online: false })
-        .lt('updated_at', onlineCutoff);
+        .eq('is_online', true)
+        .lt('last_seen_at', onlineCutoff);
 
-      // Marcar sessões como inativas usando updated_at
+      // Marcar sessões como inativas usando atividade mais recente
       await supabase
         .from('user_sessions')
         .update({ is_active: false })
-        .lt('updated_at', onlineCutoff);
+        .eq('is_active', true)
+        .or(`last_activity_at.lt.${onlineCutoff},last_seen_at.lt.${onlineCutoff},updated_at.lt.${onlineCutoff}`);
 
       console.log('🧹 Limpeza de usuários inativos executada');
     } catch (error) {

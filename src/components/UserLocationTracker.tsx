@@ -140,6 +140,7 @@ export const UserLocationTracker = () => {
             location_country: stickyCountry,
             device_type: deviceType,
             user_agent: ua,
+            updated_at: timestamp,
           };
 
           const [onlineResult, sessionResult] = await Promise.all([
@@ -165,6 +166,7 @@ export const UserLocationTracker = () => {
                   is_active: true,
                   started_at: timestamp,
                   last_activity_at: timestamp,
+                  last_seen_at: timestamp,
                   expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
                   device_info: { type: deviceType, userAgent: ua },
                 },

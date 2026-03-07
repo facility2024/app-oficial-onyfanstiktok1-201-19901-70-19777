@@ -351,8 +351,8 @@ export const useRealTimeStats = () => {
       // Atualizar stats a cada 45 segundos (reduzido frequência para evitar sobrecarga)
       statsIntervalRef.current = setInterval(fetchRealTimeStats, 45000);
 
-      // Limpar usuários inativos a cada 5 minutos
-      cleanupIntervalRef.current = setInterval(cleanupInactiveUsers, 300000);
+      // Limpar usuários inativos a cada 2 minutos
+      cleanupIntervalRef.current = setInterval(cleanupInactiveUsers, ONLINE_WINDOW_MS);
 
       // REMOVER real-time subscriptions para evitar updates em cascata
       // As atualizações automáticas por intervalo são suficientes

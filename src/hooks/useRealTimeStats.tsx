@@ -115,6 +115,11 @@ export const useRealTimeStats = () => {
       ]);
 
       // Processar dados de usuários online por estado + tipo de dispositivo
+      let onlineUsersByState: { [state: string]: number } = {};
+      let deviceStatsByState: { [state: string]: DeviceStats } = {};
+      let totalDeviceStats: DeviceStats = { desktop: 0, mobile: 0 };
+      let totalOnlineUsers = 0;
+
       if (onlineUsersResult.data && onlineUsersResult.data.length > 0) {
         onlineUsersResult.data.forEach((row: any) => {
           const normalizedState = normalizeStateName(String(row.location_state || '').trim());

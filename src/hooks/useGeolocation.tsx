@@ -106,7 +106,7 @@ export const useGeolocation = () => {
         city: location.city,
         country: 'BR',
       });
-    }, 60000);
+    }, 30000);
   };
 
   // Init once

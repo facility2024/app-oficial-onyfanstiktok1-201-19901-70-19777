@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
+import { detectLocation } from '@/utils/geolocation';
 interface DeviceStats {
   desktop: number;
   mobile: number;
@@ -48,6 +48,8 @@ export const useRealTimeStats = () => {
   const isFetching = useRef(false);
   const lastFetchTime = useRef(0);
 
+  const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+
   const fetchRealTimeStats = async () => {
     // Evitar múltiplas chamadas simultâneas
     const now = Date.now();
@@ -64,7 +66,7 @@ export const useRealTimeStats = () => {
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const twoMinutesAgo = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
 
       // Usar Promise.all para executar queries em paralelo
       const [
@@ -100,10 +102,10 @@ export const useRealTimeStats = () => {
         supabase.from('model_followers').select('*', { count: 'exact', head: true }).eq('is_active', true),
         // Sessões ativas
         supabase.from('user_sessions').select('*', { count: 'exact', head: true })
-          .eq('is_active', true).gte('last_activity_at', fiveMinutesAgo),
+          .eq('is_active', true).gte('last_activity_at', twoMinutesAgo),
         // Usuários online por estado
         supabase.from('online_users').select('location_state, device_type')
-          .eq('is_online', true).gte('last_seen_at', fiveMinutesAgo)
+          .eq('is_online', true).gte('last_seen_at', twoMinutesAgo)
           .not('location_state', 'is', null),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
         supabase.from('videos').select('likes_count'),
@@ -211,7 +213,6 @@ export const useRealTimeStats = () => {
       const clientIP = await getClientIP();
 
       // IDs persistentes para permitir múltiplas sessões simultâneas
-
       let onlineSessionId = localStorage.getItem('online_session_id');
       if (!onlineSessionId) {
         onlineSessionId = crypto.randomUUID();
@@ -224,6 +225,9 @@ export const useRealTimeStats = () => {
         localStorage.setItem('user_session_token', persistentSessionToken);
       }
 
+      // Priorizar localização recebida; fallback para detecção robusta client-side
+      const resolvedLocation = location ?? await detectLocation();
+
       // 1. Registrar/atualizar sessão do usuário
       const { error: sessionError } = await supabase
         .from('user_sessions')
@@ -233,9 +237,9 @@ export const useRealTimeStats = () => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           is_active: true,
           last_activity_at: now,
-          location_state: location?.state || 'São Paulo',
-          location_city: location?.city || 'São Paulo',
-          location_country: location?.country || 'BR',
+          location_state: resolvedLocation.state || 'São Paulo',
+          location_city: resolvedLocation.city || 'São Paulo',
+          location_country: resolvedLocation.country || 'BR',
           user_agent: userAgent,
           ip_address: clientIP,
           device_type: deviceType,
@@ -257,9 +261,9 @@ export const useRealTimeStats = () => {
           session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
-          location_state: location?.state || 'São Paulo',
-          location_city: location?.city || 'São Paulo',
-          location_country: location?.country || 'BR',
+          location_state: resolvedLocation.state || 'São Paulo',
+          location_city: resolvedLocation.city || 'São Paulo',
+          location_country: resolvedLocation.country || 'BR',
           ip_address: clientIP,
           device_type: deviceType,
           user_agent: userAgent
@@ -282,15 +286,15 @@ export const useRealTimeStats = () => {
           user_agent: userAgent,
           device_type: deviceType,
           ip_address: clientIP,
-          region: location?.state,
-          city: location?.city,
-          country: location?.country || 'BR'
+          region: resolvedLocation.state,
+          city: resolvedLocation.city,
+          country: resolvedLocation.country || 'BR'
         });
 
       console.log('✅ Atividade registrada:', {
         userId,
         deviceType,
-        location: location?.state || 'São Paulo',
+        location: resolvedLocation.state || 'São Paulo',
         ip: clientIP
       });
 
@@ -312,19 +316,19 @@ export const useRealTimeStats = () => {
   // Limpeza de usuários inativos
   const cleanupInactiveUsers = async () => {
     try {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const twoMinutesAgo = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
       
-      // Marcar usuários como offline se não tiveram atividade nos últimos 5 minutos
+      // Marcar usuários como offline se não tiveram atividade nos últimos 2 minutos
       await supabase
         .from('online_users')
         .update({ is_online: false })
-        .lt('last_seen_at', fiveMinutesAgo);
+        .lt('last_seen_at', twoMinutesAgo);
 
       // Marcar sessões como inativas
       await supabase
         .from('user_sessions')
         .update({ is_active: false })
-        .lt('last_activity_at', fiveMinutesAgo);
+        .lt('last_activity_at', twoMinutesAgo);
 
       console.log('🧹 Limpeza de usuários inativos executada');
     } catch (error) {
@@ -347,8 +351,8 @@ export const useRealTimeStats = () => {
       // Atualizar stats a cada 45 segundos (reduzido frequência para evitar sobrecarga)
       statsIntervalRef.current = setInterval(fetchRealTimeStats, 45000);
 
-      // Limpar usuários inativos a cada 5 minutos
-      cleanupIntervalRef.current = setInterval(cleanupInactiveUsers, 300000);
+      // Limpar usuários inativos a cada 2 minutos
+      cleanupIntervalRef.current = setInterval(cleanupInactiveUsers, ONLINE_WINDOW_MS);
 
       // REMOVER real-time subscriptions para evitar updates em cascata
       // As atualizações automáticas por intervalo são suficientes

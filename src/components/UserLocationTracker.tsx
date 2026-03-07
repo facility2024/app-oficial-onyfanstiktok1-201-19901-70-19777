@@ -85,7 +85,7 @@ export const UserLocationTracker = () => {
           console.log('✅ User tracked:', { state: location.state, city: location.city, address: fullAddress, method: location.method });
         }
 
-        // Heartbeat every 60s (must keep same conflict key: session_id)
+        // Heartbeat every 30s (must keep same conflict key: session_id)
         heartbeatRef.current = setInterval(async () => {
           const { error: heartbeatError } = await supabase
             .from('online_users')
@@ -97,7 +97,7 @@ export const UserLocationTracker = () => {
           if (heartbeatError) {
             console.error('❌ Heartbeat error (online_users):', heartbeatError);
           }
-        }, 60000);
+        }, 30000);
       } catch (err) {
         console.error('❌ Location tracking error:', err);
       }

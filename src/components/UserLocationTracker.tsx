@@ -38,7 +38,16 @@ export const UserLocationTracker = () => {
 
         // Robust location detection (GPS → IP → fallback)
         const location = await detectLocation();
-        console.log(`📍 Location detected [${location.method}]:`, location.state, location.city);
+        const normalizedState = normalizeStateName(location.state || '');
+
+        if (!normalizedState) {
+          console.warn('⚠️ Estado não confiável detectado; ignorando atualização de online_users');
+          return;
+        }
+
+        let finalState = normalizedState;
+        let finalCity = location.city || '';
+        console.log(`📍 Location detected [${location.method}]:`, finalState, finalCity);
 
         // Try to get full address via Google geocoding edge function
         let fullAddress = '';
@@ -47,12 +56,16 @@ export const UserLocationTracker = () => {
           const { data: geoData } = await supabase.functions.invoke('geolocate', {
             body: { lat: location.lat, lng: location.lng },
           });
+
           if (geoData) {
+            const geocodeState = normalizeStateName(String(geoData.region || ''));
+            if (geocodeState) finalState = geocodeState;
+            if (geoData.city) finalCity = String(geoData.city);
             fullAddress = geoData.address || '';
             neighborhood = geoData.neighborhood || '';
           }
         } catch (geoErr) {
-          console.warn('⚠️ Google geocoding failed, using basic location');
+          console.warn('⚠️ Google geocoding failed, usando localização base');
         }
 
         const now = new Date().toISOString();
@@ -66,9 +79,9 @@ export const UserLocationTracker = () => {
           session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
-          location_state: location.state,
-          location_city: location.city,
-          location_country: location.country,
+          location_state: finalState,
+          location_city: finalCity || null,
+          location_country: location.country || 'BR',
           device_type: deviceType,
           user_agent: ua,
           location_address: fullAddress || null,

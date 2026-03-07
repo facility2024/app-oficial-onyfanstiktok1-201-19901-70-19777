@@ -12,7 +12,7 @@ export const UserLocationTracker = () => {
 
   const getDeviceType = () => {
     const ua = navigator.userAgent;
-    if (/Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'mobile';
+    if (/Mobi|Mobile|Android|iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'mobile';
     if (/iPad|Tablet/i.test(ua)) return 'tablet';
     return 'desktop';
   };
@@ -98,14 +98,46 @@ export const UserLocationTracker = () => {
         const finalUserId = sessionData?.session?.user?.id || anonymousUserId;
 
         const resolvedLocation = await resolveBestLocation();
+
+        // Evita sobrescrever localização válida com campos vazios em remount/falhas temporárias
+        let stickyState = resolvedLocation.state;
+        let stickyCity = resolvedLocation.city;
+        let stickyCountry = resolvedLocation.country;
+        let stickyAddress = resolvedLocation.address;
+        let stickyNeighborhood = resolvedLocation.neighborhood;
+
+        if (!stickyState || !stickyCity || !stickyAddress) {
+          const [existingOnline, existingSession] = await Promise.all([
+            supabase
+              .from('online_users')
+              .select('location_state, location_city, location_country, location_address, location_neighborhood')
+              .eq('session_id', onlineSessionId)
+              .maybeSingle(),
+            supabase
+              .from('user_sessions')
+              .select('location_state, location_city, location_country')
+              .eq('session_token', sessionToken)
+              .maybeSingle(),
+          ]);
+
+          const onlineData = existingOnline.data;
+          const sessionData = existingSession.data;
+
+          stickyState = stickyState || onlineData?.location_state || sessionData?.location_state || null;
+          stickyCity = stickyCity || onlineData?.location_city || sessionData?.location_city || null;
+          stickyCountry = stickyCountry || onlineData?.location_country || sessionData?.location_country || 'BR';
+          stickyAddress = stickyAddress || onlineData?.location_address || null;
+          stickyNeighborhood = stickyNeighborhood || onlineData?.location_neighborhood || null;
+        }
+
         const now = new Date().toISOString();
 
         const upsertPresence = async (timestamp: string) => {
           const payloadBase = {
             user_id: finalUserId,
-            location_state: resolvedLocation.state,
-            location_city: resolvedLocation.city,
-            location_country: resolvedLocation.country,
+            location_state: stickyState,
+            location_city: stickyCity,
+            location_country: stickyCountry,
             device_type: deviceType,
             user_agent: ua,
           };
@@ -119,8 +151,8 @@ export const UserLocationTracker = () => {
                   session_id: onlineSessionId,
                   is_online: true,
                   last_seen_at: timestamp,
-                  location_address: resolvedLocation.address,
-                  location_neighborhood: resolvedLocation.neighborhood,
+                  location_address: stickyAddress,
+                  location_neighborhood: stickyNeighborhood,
                 },
                 { onConflict: 'session_id' }
               ),

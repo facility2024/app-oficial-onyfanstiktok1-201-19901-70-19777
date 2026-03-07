@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_sessions: {
+        Row: {
+          address: string | null
+          city: string | null
+          config_id: string | null
+          created_at: string | null
+          device_type: string
+          id: string
+          last_seen_at: string | null
+          neighborhood: string | null
+          region: string | null
+          session_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          config_id?: string | null
+          created_at?: string | null
+          device_type?: string
+          id?: string
+          last_seen_at?: string | null
+          neighborhood?: string | null
+          region?: string | null
+          session_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          config_id?: string | null
+          created_at?: string | null
+          device_type?: string
+          id?: string
+          last_seen_at?: string | null
+          neighborhood?: string | null
+          region?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       admin_media: {
         Row: {
           created_at: string
@@ -485,6 +524,27 @@ export type Database = {
           maior_idade?: boolean
           nome?: string
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      audience_snapshots: {
+        Row: {
+          config_id: string
+          id: string
+          snapshot_at: string | null
+          viewer_count: number
+        }
+        Insert: {
+          config_id: string
+          id?: string
+          snapshot_at?: string | null
+          viewer_count?: number
+        }
+        Update: {
+          config_id?: string
+          id?: string
+          snapshot_at?: string | null
+          viewer_count?: number
         }
         Relationships: []
       }
@@ -1437,6 +1497,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      cta_clicks: {
+        Row: {
+          clicked_at: string | null
+          config_id: string
+          device_type: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          config_id: string
+          device_type?: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          config_id?: string
+          device_type?: string
+          id?: string
+          session_id?: string
         }
         Relationships: []
       }
@@ -8079,6 +8163,7 @@ export type Database = {
       }
       cleanup_expired_model_sessions: { Args: never; Returns: undefined }
       cleanup_offline_users: { Args: never; Returns: undefined }
+      cleanup_old_active_sessions: { Args: never; Returns: undefined }
       cleanup_old_comments: { Args: never; Returns: undefined }
       cleanup_old_online_users: { Args: never; Returns: undefined }
       cleanup_old_sessions: { Args: never; Returns: undefined }
@@ -8152,6 +8237,15 @@ export type Database = {
         Args: { p_action_type: string; p_user_id: string }
         Returns: Json
       }
+      get_live_online_counts: {
+        Args: { p_config_id: string }
+        Returns: {
+          desktop_count: number
+          mobile_count: number
+          total_count: number
+        }[]
+      }
+      get_live_views_48h: { Args: { p_config_id: string }; Returns: number }
       get_payment_credentials: { Args: { p_provider: string }; Returns: Json }
       get_referrer_by_code: { Args: { p_code: string }; Returns: string }
       get_user_by_email: {

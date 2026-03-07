@@ -64,7 +64,7 @@ export const UserLocationTracker = () => {
             fullAddress = geoData.address || '';
             neighborhood = geoData.neighborhood || '';
           }
-        } catch (geoErr) {
+        } catch {
           console.warn('⚠️ Google geocoding failed, usando localização base');
         }
 

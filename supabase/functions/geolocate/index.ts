@@ -166,6 +166,7 @@ serve(async (req) => {
     }
 
     // Strategy 2: ipwho.is via client IP (HTTPS)
+    if (!result && clientIP) {
       try {
         const res = await fetch(`https://ipwho.is/${clientIP}`);
         if (res.ok) {

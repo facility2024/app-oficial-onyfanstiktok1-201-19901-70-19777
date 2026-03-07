@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { detectLocation } from '@/utils/geolocation';
+import { detectLocation, normalizeStateName } from '@/utils/geolocation';
 interface DeviceStats {
   desktop: number;
   mobile: number;
@@ -227,6 +227,10 @@ export const useRealTimeStats = () => {
 
       // Priorizar localização recebida; fallback para detecção robusta client-side
       const resolvedLocation = location ?? await detectLocation();
+      const normalizedState = normalizeStateName(resolvedLocation.state || '');
+      const safeState = normalizedState || null;
+      const safeCity = resolvedLocation.city?.trim() || null;
+      const safeCountry = resolvedLocation.country?.trim() || 'BR';
 
       // 1. Registrar/atualizar sessão do usuário
       const { error: sessionError } = await supabase
@@ -237,9 +241,9 @@ export const useRealTimeStats = () => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           is_active: true,
           last_activity_at: now,
-          location_state: resolvedLocation.state || 'São Paulo',
-          location_city: resolvedLocation.city || 'São Paulo',
-          location_country: resolvedLocation.country || 'BR',
+          location_state: safeState,
+          location_city: safeCity,
+          location_country: safeCountry,
           user_agent: userAgent,
           ip_address: clientIP,
           device_type: deviceType,
@@ -261,9 +265,9 @@ export const useRealTimeStats = () => {
           session_id: onlineSessionId,
           is_online: true,
           last_seen_at: now,
-          location_state: resolvedLocation.state || 'São Paulo',
-          location_city: resolvedLocation.city || 'São Paulo',
-          location_country: resolvedLocation.country || 'BR',
+          location_state: safeState,
+          location_city: safeCity,
+          location_country: safeCountry,
           ip_address: clientIP,
           device_type: deviceType,
           user_agent: userAgent
@@ -286,15 +290,15 @@ export const useRealTimeStats = () => {
           user_agent: userAgent,
           device_type: deviceType,
           ip_address: clientIP,
-          region: resolvedLocation.state,
-          city: resolvedLocation.city,
-          country: resolvedLocation.country || 'BR'
+          region: safeState,
+          city: safeCity,
+          country: safeCountry
         });
 
       console.log('✅ Atividade registrada:', {
         userId,
         deviceType,
-        location: resolvedLocation.state || 'São Paulo',
+        location: safeState || 'indefinida',
         ip: clientIP
       });
 

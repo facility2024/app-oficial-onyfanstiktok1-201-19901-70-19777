@@ -54,28 +54,28 @@ const STATE_ALIASES: Record<string, string> = {
 };
 
 export function normalizeStateName(input: string): string {
-  if (!input) return 'São Paulo';
+  if (!input) return '';
   const trimmed = input.trim();
-  
+
   // Check if it's an abbreviation
   const upper = trimmed.toUpperCase();
   if (BRAZILIAN_STATES[upper]) return BRAZILIAN_STATES[upper];
-  
+
   // Check if it's already a full name
   const lower = trimmed.toLowerCase();
   if (STATE_NAME_TO_ABBR[lower]) return BRAZILIAN_STATES[STATE_NAME_TO_ABBR[lower]];
-  
+
   // Check aliases
   if (STATE_ALIASES[lower]) return BRAZILIAN_STATES[STATE_ALIASES[lower]];
-  
+
   // Fuzzy match
   for (const [name, abbr] of Object.entries(STATE_NAME_TO_ABBR)) {
     if (lower.includes(name) || name.includes(lower)) {
       return BRAZILIAN_STATES[abbr];
     }
   }
-  
-  return trimmed;
+
+  return '';
 }
 
 function isValidBrazilState(state: string): boolean {
@@ -178,18 +178,19 @@ async function getLocationByIP(): Promise<LocationResult> {
     const res = await fetch('https://ipapi.co/json/');
     if (res.ok) {
       const data = await res.json();
-      if (!data.error) {
-        const normalizedState = normalizeStateName(data.region || '');
-        if (isValidBrazilState(normalizedState)) {
-          return {
-            state: normalizedState,
-            city: data.city || 'Desconhecida',
-            country: data.country_code || 'BR',
-            lat: data.latitude || -23.5505,
-            lng: data.longitude || -46.6333,
-            method: 'ip',
-          };
-        }
+      const rawRegion = String(data.region || '').trim();
+      const countryCode = String(data.country_code || '').toUpperCase();
+      const normalizedState = normalizeStateName(rawRegion);
+
+      if (countryCode === 'BR' && rawRegion && isValidBrazilState(normalizedState)) {
+        return {
+          state: normalizedState,
+          city: data.city || 'Desconhecida',
+          country: countryCode,
+          lat: data.latitude || -23.5505,
+          lng: data.longitude || -46.6333,
+          method: 'ip',
+        };
       }
     }
   } catch {
@@ -201,18 +202,19 @@ async function getLocationByIP(): Promise<LocationResult> {
     const res = await fetch('https://ipwho.is/');
     if (res.ok) {
       const data = await res.json();
-      if (data.success) {
-        const normalizedState = normalizeStateName(data.region || '');
-        if (isValidBrazilState(normalizedState)) {
-          return {
-            state: normalizedState,
-            city: data.city || 'Desconhecida',
-            country: data.country_code || 'BR',
-            lat: data.latitude || -23.5505,
-            lng: data.longitude || -46.6333,
-            method: 'ip',
-          };
-        }
+      const rawRegion = String(data.region || '').trim();
+      const countryCode = String(data.country_code || '').toUpperCase();
+      const normalizedState = normalizeStateName(rawRegion);
+
+      if (data.success && countryCode === 'BR' && rawRegion && isValidBrazilState(normalizedState)) {
+        return {
+          state: normalizedState,
+          city: data.city || 'Desconhecida',
+          country: countryCode,
+          lat: data.latitude || -23.5505,
+          lng: data.longitude || -46.6333,
+          method: 'ip',
+        };
       }
     }
   } catch {
@@ -267,11 +269,11 @@ export async function detectLocation(): Promise<LocationResult> {
     console.warn('⚠️ Edge Function falhou:', (edgeError as Error).message);
   }
 
-  // Fallback
-  console.warn('⚠️ Todas as APIs falharam, usando fallback São Paulo');
+  // Fallback sem forçar São Paulo
+  console.warn('⚠️ Todas as APIs falharam, mantendo estado indefinido');
   return {
-    state: 'São Paulo',
-    city: 'São Paulo',
+    state: '',
+    city: '',
     country: 'BR',
     lat: -23.5505,
     lng: -46.6333,

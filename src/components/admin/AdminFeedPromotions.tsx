@@ -64,6 +64,9 @@ export const AdminFeedPromotions = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
   const [createdInfo, setCreatedInfo] = useState<{ id: string; modelId?: string; shareableLink: string } | null>(null);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchUrls, setBatchUrls] = useState('');
+  const [batchSaving, setBatchSaving] = useState(false);
   const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
   const { data: promotions = [], isLoading } = useQuery({
@@ -292,6 +295,78 @@ export const AdminFeedPromotions = () => {
     } as any);
   };
 
+  const handleBatchSave = async () => {
+    const urls = batchUrls.split('\n').map(u => u.trim()).filter(u => u.length > 0 && u.startsWith('http'));
+    if (urls.length === 0) {
+      toast.error('Cole pelo menos uma URL válida');
+      return;
+    }
+    if (!form.display_name) {
+      toast.error('Preencha o Nome de Exibição');
+      return;
+    }
+
+    setBatchSaving(true);
+    let successCount = 0;
+    let modelId: string | undefined;
+
+    // Criar modelo uma vez para todas
+    const generatedId = crypto.randomUUID();
+    const username = form.display_name.trim().toLowerCase().replace(/\s+/g, '_');
+    const { data: modelData } = await (supabase as any)
+      .from('models')
+      .insert({
+        id: generatedId,
+        username,
+        name: form.display_name.trim(),
+        avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+        is_active: true,
+      })
+      .select('id')
+      .single();
+
+    if (modelData) modelId = modelData.id;
+
+    for (const url of urls) {
+      const isVideo = /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(url);
+      let scheduleDateValue: string | null = null;
+      if (!form.send_now && form.schedule_date && form.schedule_time) {
+        scheduleDateValue = `${form.schedule_date}T${form.schedule_time}:00`;
+      }
+
+      const payload: any = {
+        title: form.title || '',
+        description: form.description || null,
+        avatar_url: form.avatar_url || null,
+        display_name: form.display_name,
+        media_url: url,
+        media_type: isVideo ? 'video' : 'image',
+        banner_url: form.banner_url || null,
+        cta_text: form.cta_text || null,
+        cta_link: form.cta_link || null,
+        position_interval: form.position_interval,
+        is_active: form.send_now ? form.is_active : false,
+        priority: form.priority,
+        schedule_date: scheduleDateValue,
+        schedule_status: form.send_now ? 'active' : 'scheduled',
+        model_id: modelId || null,
+        daily_frequency: form.daily_frequency || 0,
+        shareable_link: `${window.location.origin}/app`,
+      };
+
+      const { error } = await (supabase as any).from('feed_promotions').insert(payload);
+      if (!error) successCount++;
+    }
+
+    setBatchSaving(false);
+    queryClient.invalidateQueries({ queryKey: ['admin-feed-promotions'] });
+    queryClient.invalidateQueries({ queryKey: ['feed-promotions'] });
+    toast.success(`✅ ${successCount}/${urls.length} promoções criadas em lote!`);
+    if (successCount > 0) handleCloseModal();
+    setBatchUrls('');
+    setBatchMode(false);
+  };
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
@@ -431,15 +506,42 @@ export const AdminFeedPromotions = () => {
               <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://..." className={modalInputClass} />
             </div>
 
-            <div>
-              <Label>URL da Mídia (Imagem/Vídeo) *</Label>
-              <Input value={form.media_url} onChange={(e) => {
-                const url = e.target.value;
-                const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
-                setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
-              }} placeholder="https://cdn.example.com/media.mp4" className={modalInputClass} />
-              <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
-            </div>
+            {/* Batch mode toggle - only on create */}
+            {!editingId && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                <Switch checked={batchMode} onCheckedChange={setBatchMode} />
+                <div>
+                  <Label className="text-sm font-medium">Envio em Lote</Label>
+                  <p className="text-xs text-gray-500">Cole múltiplas URLs (uma por linha)</p>
+                </div>
+              </div>
+            )}
+
+            {batchMode && !editingId ? (
+              <div>
+                <Label>URLs da Mídia (uma por linha) *</Label>
+                <Textarea
+                  value={batchUrls}
+                  onChange={(e) => setBatchUrls(e.target.value)}
+                  placeholder={"https://cdn.example.com/video1.mp4\nhttps://cdn.example.com/video2.mp4\nhttps://cdn.example.com/image3.jpg"}
+                  className={modalInputClass}
+                  rows={6}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {batchUrls.split('\n').filter(u => u.trim().startsWith('http')).length} URLs detectadas • Tipo detectado automaticamente
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label>URL da Mídia (Imagem/Vídeo) *</Label>
+                <Input value={form.media_url} onChange={(e) => {
+                  const url = e.target.value;
+                  const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                  setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
+                }} placeholder="https://cdn.example.com/media.mp4" className={modalInputClass} />
+                <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
+              </div>
+            )}
 
             <div>
               <Label>URL do Banner (rodapé do card)</Label>
@@ -578,13 +680,21 @@ export const AdminFeedPromotions = () => {
 
           <DialogFooter>
             <Button variant="ghost" onClick={handleCloseModal}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-              {saveMutation.isPending ? 'Salvando...' : form.send_now ? (
-                <><Send className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Publicar Agora'}</>
-              ) : (
-                <><Calendar className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Agendar'}</>
-              )}
-            </Button>
+            {batchMode && !editingId ? (
+              <Button onClick={handleBatchSave} disabled={batchSaving} className="bg-green-600 hover:bg-green-700">
+                {batchSaving ? 'Criando em lote...' : (
+                  <><Send className="w-4 h-4 mr-1" />Criar {batchUrls.split('\n').filter(u => u.trim().startsWith('http')).length} Promoções</>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                {saveMutation.isPending ? 'Salvando...' : form.send_now ? (
+                  <><Send className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Publicar Agora'}</>
+                ) : (
+                  <><Calendar className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Agendar'}</>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

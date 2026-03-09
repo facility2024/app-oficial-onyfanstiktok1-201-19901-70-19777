@@ -41,6 +41,8 @@ export const AdminVideos = () => {
   const [showDisablePlansConfirm, setShowDisablePlansConfirm] = useState(false);
   const [showDisableModelsConfirm, setShowDisableModelsConfirm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const { genres, loading: genresLoading } = useGenres();
   
   // Upload form state
@@ -375,6 +377,17 @@ export const AdminVideos = () => {
     
     return true;
   });
+
+  const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
+  const paginatedVideos = filteredVideos.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, videoType, genreFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -817,8 +830,13 @@ export const AdminVideos = () => {
         </CardHeader>
         
         <CardContent>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredVideos.length)} de {filteredVideos.length} vídeos
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredVideos.map((video) => (
+            {paginatedVideos.map((video) => (
               <div key={video.id} className="border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200">
                 <div className="relative">
                   <div className="w-full h-32 bg-muted flex items-center justify-center">
@@ -907,6 +925,41 @@ export const AdminVideos = () => {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="border-border"
+              >
+                ← Anterior
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className={page === currentPage ? 'bg-primary text-primary-foreground' : 'border-border'}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="border-border"
+              >
+                Próxima →
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

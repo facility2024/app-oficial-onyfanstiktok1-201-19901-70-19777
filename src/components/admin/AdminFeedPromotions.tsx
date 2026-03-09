@@ -680,13 +680,21 @@ export const AdminFeedPromotions = () => {
 
           <DialogFooter>
             <Button variant="ghost" onClick={handleCloseModal}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-              {saveMutation.isPending ? 'Salvando...' : form.send_now ? (
-                <><Send className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Publicar Agora'}</>
-              ) : (
-                <><Calendar className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Agendar'}</>
-              )}
-            </Button>
+            {batchMode && !editingId ? (
+              <Button onClick={handleBatchSave} disabled={batchSaving} className="bg-green-600 hover:bg-green-700">
+                {batchSaving ? 'Criando em lote...' : (
+                  <><Send className="w-4 h-4 mr-1" />Criar {batchUrls.split('\n').filter(u => u.trim().startsWith('http')).length} Promoções</>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                {saveMutation.isPending ? 'Salvando...' : form.send_now ? (
+                  <><Send className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Publicar Agora'}</>
+                ) : (
+                  <><Calendar className="w-4 h-4 mr-1" />{editingId ? 'Atualizar' : 'Agendar'}</>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

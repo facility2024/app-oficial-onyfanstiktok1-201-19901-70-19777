@@ -55,6 +55,23 @@ interface VideoStats {
   topVideos: { id: string; title: string; owner: string; views: number; likes: number }[];
 }
 
+interface ClickMetric {
+  promo_id: string;
+  button_type: string;
+  region: string;
+  city: string;
+  device_type: string;
+  created_at: string;
+}
+
+interface ClickSummary {
+  totalClicks: number;
+  byButton: { name: string; count: number }[];
+  byRegion: { name: string; count: number }[];
+  byHour: { hour: string; count: number }[];
+  recentClicks: ClickMetric[];
+}
+
 export const AdminIntelligentFeed: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(DEFAULT_CONFIG);

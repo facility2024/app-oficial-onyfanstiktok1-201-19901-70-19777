@@ -172,7 +172,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         )}
 
         {/* Compartilhar */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" onClick={() => trackClick('compartilhar')}>
           <Share2 className="w-7 h-7 text-white drop-shadow-lg" />
           <span className="text-white text-[10px] mt-1">compartilhar</span>
         </div>

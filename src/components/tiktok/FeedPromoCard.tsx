@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FeedPromotion {
   id: string;

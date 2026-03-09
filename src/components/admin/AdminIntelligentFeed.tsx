@@ -95,6 +95,7 @@ export const AdminIntelligentFeed: React.FC = () => {
   // Carregar estatísticas do banco
   useEffect(() => {
     fetchVideoStats();
+    fetchClickMetrics();
     loadSavedConfig();
   }, []);
 

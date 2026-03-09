@@ -64,6 +64,9 @@ export const AdminFeedPromotions = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
   const [createdInfo, setCreatedInfo] = useState<{ id: string; modelId?: string; shareableLink: string } | null>(null);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchUrls, setBatchUrls] = useState('');
+  const [batchSaving, setBatchSaving] = useState(false);
   const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
   const { data: promotions = [], isLoading } = useQuery({

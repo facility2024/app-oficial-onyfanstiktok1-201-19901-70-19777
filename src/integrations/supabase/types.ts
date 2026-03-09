@@ -6722,6 +6722,55 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feed_progress: {
+        Row: {
+          id: string
+          last_seen_at: string
+          last_seen_video_id: string | null
+          model_id: string
+          user_id: string
+          videos_seen_count: number
+        }
+        Insert: {
+          id?: string
+          last_seen_at?: string
+          last_seen_video_id?: string | null
+          model_id: string
+          user_id: string
+          videos_seen_count?: number
+        }
+        Update: {
+          id?: string
+          last_seen_at?: string
+          last_seen_video_id?: string | null
+          model_id?: string
+          user_id?: string
+          videos_seen_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feed_progress_last_seen_video_id_fkey"
+            columns: ["last_seen_video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feed_progress_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feed_progress_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "popular_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_follow_models: {
         Row: {
           created_at: string
@@ -7491,6 +7540,7 @@ export type Database = {
           quality: string | null
           redirect_link: string | null
           shares_count: number | null
+          show_in_feed: boolean
           show_redirect_button: boolean
           tags: string[] | null
           thumbnail_url: string
@@ -7528,6 +7578,7 @@ export type Database = {
           quality?: string | null
           redirect_link?: string | null
           shares_count?: number | null
+          show_in_feed?: boolean
           show_redirect_button?: boolean
           tags?: string[] | null
           thumbnail_url: string
@@ -7565,6 +7616,7 @@ export type Database = {
           quality?: string | null
           redirect_link?: string | null
           shares_count?: number | null
+          show_in_feed?: boolean
           show_redirect_button?: boolean
           tags?: string[] | null
           thumbnail_url?: string
@@ -8257,6 +8309,23 @@ export type Database = {
           name: string
         }[]
       }
+      get_user_feed: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: {
+          created_at: string
+          duration: string
+          likes_count: number
+          model_avatar: string
+          model_id: string
+          model_name: string
+          model_username: string
+          thumbnail_url: string
+          title: string
+          video_id: string
+          video_url: string
+          views_count: number
+        }[]
+      }
       has_model_subscription: {
         Args: { _model_id: string; _user_id: string }
         Returns: boolean
@@ -8278,6 +8347,10 @@ export type Database = {
       log_security_event: {
         Args: { event_type: string; metadata?: Json }
         Returns: undefined
+      }
+      mark_feed_video_seen: {
+        Args: { p_model_id: string; p_user_id: string; p_video_id: string }
+        Returns: Json
       }
       monitor_suspicious_activity: { Args: never; Returns: undefined }
       normalize_phone: { Args: { phone_input: string }; Returns: string }
@@ -8344,6 +8417,17 @@ export type Database = {
       track_user_activity: { Args: never; Returns: undefined }
       update_mission_progress: {
         Args: { p_action_type: string; p_increment?: number; p_user_id: string }
+        Returns: Json
+      }
+      upsert_model_from_dashboard: {
+        Args: {
+          p_avatar_url: string
+          p_id: string
+          p_name: string
+          p_posting_panel_url?: string
+          p_profile_link?: string
+          p_username: string
+        }
         Returns: Json
       }
       validate_gmail: { Args: { email_input: string }; Returns: boolean }

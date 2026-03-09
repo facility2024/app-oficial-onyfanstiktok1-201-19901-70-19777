@@ -481,6 +481,18 @@ export const AdminFeedPromotions = () => {
               </CardContent>
             </Card>
           ))}
+          </div>
+
+          {/* Pagination */}
+          {Math.ceil(promotions.length / ITEMS_PER_PAGE) > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Anterior</Button>
+              {Array.from({ length: Math.ceil(promotions.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={page === currentPage ? 'bg-primary text-primary-foreground' : ''}>{page}</Button>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(Math.ceil(promotions.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(promotions.length / ITEMS_PER_PAGE)}>Próxima →</Button>
+            </div>
+          )}
         </div>
       )}
 

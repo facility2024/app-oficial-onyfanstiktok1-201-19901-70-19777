@@ -506,15 +506,42 @@ export const AdminFeedPromotions = () => {
               <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://..." className={modalInputClass} />
             </div>
 
-            <div>
-              <Label>URL da Mídia (Imagem/Vídeo) *</Label>
-              <Input value={form.media_url} onChange={(e) => {
-                const url = e.target.value;
-                const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
-                setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
-              }} placeholder="https://cdn.example.com/media.mp4" className={modalInputClass} />
-              <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
-            </div>
+            {/* Batch mode toggle - only on create */}
+            {!editingId && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                <Switch checked={batchMode} onCheckedChange={setBatchMode} />
+                <div>
+                  <Label className="text-sm font-medium">Envio em Lote</Label>
+                  <p className="text-xs text-gray-500">Cole múltiplas URLs (uma por linha)</p>
+                </div>
+              </div>
+            )}
+
+            {batchMode && !editingId ? (
+              <div>
+                <Label>URLs da Mídia (uma por linha) *</Label>
+                <Textarea
+                  value={batchUrls}
+                  onChange={(e) => setBatchUrls(e.target.value)}
+                  placeholder={"https://cdn.example.com/video1.mp4\nhttps://cdn.example.com/video2.mp4\nhttps://cdn.example.com/image3.jpg"}
+                  className={modalInputClass}
+                  rows={6}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {batchUrls.split('\n').filter(u => u.trim().startsWith('http')).length} URLs detectadas • Tipo detectado automaticamente
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label>URL da Mídia (Imagem/Vídeo) *</Label>
+                <Input value={form.media_url} onChange={(e) => {
+                  const url = e.target.value;
+                  const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                  setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
+                }} placeholder="https://cdn.example.com/media.mp4" className={modalInputClass} />
+                <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
+              </div>
+            )}
 
             <div>
               <Label>URL do Banner (rodapé do card)</Label>

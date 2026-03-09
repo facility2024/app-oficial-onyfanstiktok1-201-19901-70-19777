@@ -84,6 +84,13 @@ export const AdminIntelligentFeed: React.FC = () => {
     topVideos: [],
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [clickSummary, setClickSummary] = useState<ClickSummary>({
+    totalClicks: 0,
+    byButton: [],
+    byRegion: [],
+    byHour: [],
+    recentClicks: [],
+  });
 
   // Carregar estatísticas do banco
   useEffect(() => {

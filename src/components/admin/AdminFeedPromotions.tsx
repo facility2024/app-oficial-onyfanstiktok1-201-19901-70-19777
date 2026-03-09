@@ -67,6 +67,8 @@ export const AdminFeedPromotions = () => {
   const [batchMode, setBatchMode] = useState(false);
   const [batchUrls, setBatchUrls] = useState('');
   const [batchSaving, setBatchSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
   const { data: promotions = [], isLoading } = useQuery({

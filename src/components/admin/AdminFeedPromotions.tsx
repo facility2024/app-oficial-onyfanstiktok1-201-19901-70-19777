@@ -225,6 +225,11 @@ export const AdminFeedPromotions = () => {
       send_now: promo.schedule_status === 'active' || !promo.schedule_date,
       create_model: false,
       daily_frequency: promo.daily_frequency || 0,
+      cta_mode: promo.cta_mode || 'link',
+      popup_media_url: promo.popup_media_url || '',
+      popup_media_type: promo.popup_media_type || 'image',
+      popup_cta_text: promo.popup_cta_text || 'Comprar Agora',
+      popup_cta_link: promo.popup_cta_link || '',
     });
     setShowModal(true);
   };

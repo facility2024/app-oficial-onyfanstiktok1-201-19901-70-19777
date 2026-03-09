@@ -110,6 +110,52 @@ export const AdminIntelligentFeed: React.FC = () => {
     }
   };
 
+  const fetchClickMetrics = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('promo_click_tracking')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (error || !data) return;
+
+      const clicks = data as ClickMetric[];
+      
+      // By button type
+      const buttonMap: Record<string, number> = {};
+      clicks.forEach(c => { buttonMap[c.button_type] = (buttonMap[c.button_type] || 0) + 1; });
+      const byButton = Object.entries(buttonMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+      // By region
+      const regionMap: Record<string, number> = {};
+      clicks.forEach(c => { const r = c.region || 'Desconhecido'; regionMap[r] = (regionMap[r] || 0) + 1; });
+      const byRegion = Object.entries(regionMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+      // By hour (last 24h)
+      const hourMap: Record<string, number> = {};
+      const now = new Date();
+      clicks.forEach(c => {
+        const d = new Date(c.created_at);
+        if (now.getTime() - d.getTime() < 24 * 60 * 60 * 1000) {
+          const h = d.getHours().toString().padStart(2, '0') + ':00';
+          hourMap[h] = (hourMap[h] || 0) + 1;
+        }
+      });
+      const byHour = Object.entries(hourMap).map(([hour, count]) => ({ hour, count })).sort((a, b) => a.hour.localeCompare(b.hour));
+
+      setClickSummary({
+        totalClicks: clicks.length,
+        byButton,
+        byRegion,
+        byHour,
+        recentClicks: clicks.slice(0, 20),
+      });
+    } catch (e) {
+      console.error('Erro ao buscar métricas de cliques:', e);
+    }
+  };
+
   const fetchVideoStats = async () => {
     setLoading(true);
     try {

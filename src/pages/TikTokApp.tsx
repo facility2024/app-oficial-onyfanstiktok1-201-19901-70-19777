@@ -1508,55 +1508,49 @@ export const TikTokApp = () => {
 
   // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
   const loadMoreVideos = useCallback(async () => {
-    if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) {
-      console.log('🚫 Não pode carregar mais:', {
-        isLoadingMore,
-        hasMoreVideos,
-        allAvailableCount: allAvailableVideos.length
-      });
+    if (isLoadingMore || allAvailableVideos.length === 0) {
       return;
     }
     try {
       setIsLoadingMore(true);
-      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`, {
-        videosCarregados: videos.length,
-        videosDisponiveis: allAvailableVideos.length
+      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`);
+
+      // Pegar vídeos reais (sem promos) já no feed
+      const realVideosInFeed = videos.filter(v => !v.id.startsWith('promo-'));
+      const realCount = realVideosInFeed.length;
+
+      // Calcular próximo bloco do ciclo (volta ao início quando acabar)
+      const totalAvailable = allAvailableVideos.length;
+      const startIdx = realCount % totalAvailable;
+      
+      // Pegar próximo bloco, ciclando
+      const nextBlock: any[] = [];
+      for (let i = 0; i < VIDEOS_PER_BLOCK; i++) {
+        const idx = (startIdx + i) % totalAvailable;
+        const original = allAvailableVideos[idx];
+        // Criar cópia com ID único para evitar duplicatas no DOM
+        nextBlock.push({
+          ...original,
+          id: `${original.id}-cycle-${Math.floor((realCount + i) / totalAvailable)}`,
+          _originalId: original.id, // Manter ID original para tracking
+        });
+      }
+
+      // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
+      setVideos(prev => {
+        // Remover promos existentes, adicionar novos vídeos, promos serão reinjetadas
+        const withoutPromos = prev.filter(v => !v.id.startsWith('promo-'));
+        return [...withoutPromos, ...nextBlock];
       });
-
-      // Filtrar vídeos ainda não carregados
-      const unusedVideos = allAvailableVideos.filter(v => !videos.some(existing => existing.id === v.id));
-      console.log(`📊 Vídeos ainda não usados: ${unusedVideos.length}`);
-      if (unusedVideos.length === 0) {
-        console.log('🔄 Fim do conteúdo - recarregando com atualizações...');
-        setHasMoreVideos(false);
-        // Recarregar feed automaticamente para buscar novos posts agendados
-        setTimeout(() => {
-          console.log('🎬 Reiniciando ciclo com conteúdo atualizado...');
-          initializeFeed();
-        }, 2000);
-        return;
-      }
-
-      // Pegar próximo bloco
-      const nextBlock = unusedVideos.slice(0, VIDEOS_PER_BLOCK);
-      if (nextBlock.length === 0) {
-        console.log('⚠️ Bloco vazio - finalizando');
-        setHasMoreVideos(false);
-        return;
-      }
-
-      // Adicionar ao feed
-      setVideos(prev => [...prev, ...nextBlock]);
       setCurrentPage(prev => prev + 1);
-      setHasMoreVideos(unusedVideos.length > VIDEOS_PER_BLOCK);
-      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total agora: ${videos.length + nextBlock.length}/${allAvailableVideos.length}`);
+      setHasMoreVideos(true); // Sempre true — feed infinito
+      console.log(`✅ Bloco cíclico adicionado: ${nextBlock.length} vídeos a partir do índice ${startIdx}`);
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
-      setHasMoreVideos(false);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK, initializeFeed]);
+  }, [isLoadingMore, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
 
   // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
   useEffect(() => {

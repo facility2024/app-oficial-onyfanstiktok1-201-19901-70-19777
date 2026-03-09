@@ -5802,6 +5802,42 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_click_tracking: {
+        Row: {
+          button_type: string
+          city: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          promo_id: string
+          region: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          button_type: string
+          city?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          promo_id: string
+          region?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          button_type?: string
+          city?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          promo_id?: string
+          region?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ranking_usuarios: {
         Row: {
           categoria_ranking: string | null

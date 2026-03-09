@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FeedPromotion {
   id: string;
@@ -32,6 +33,25 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
 
+  const trackClick = useCallback((buttonType: string) => {
+    const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
+    if (!localStorage.getItem('session_id')) localStorage.setItem('session_id', sessionId);
+    
+    // Get region from active_sessions or localStorage
+    const region = localStorage.getItem('user_region') || 'Desconhecido';
+    const city = localStorage.getItem('user_city') || '';
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    (supabase as any).from('promo_click_tracking').insert({
+      promo_id: promo.id,
+      button_type: buttonType,
+      region,
+      city,
+      device_type: isMobile ? 'mobile' : 'desktop',
+      session_id: sessionId,
+    }).then(() => {});
+  }, [promo.id]);
+
   const handleMediaClick = () => {
     if (isVideoMedia && videoRef.current) {
       if (isPlaying) {
@@ -45,6 +65,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
   const handleCtaClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    trackClick('cta');
     if (promo.cta_link) {
       window.open(promo.cta_link, '_blank', 'noopener,noreferrer');
     }
@@ -122,19 +143,19 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         </div>
 
         {/* Seguir */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" onClick={() => trackClick('seguir')}>
           <UserPlus className="w-7 h-7 text-white drop-shadow-lg" />
           <span className="text-white text-[10px] mt-1">Seguir</span>
         </div>
 
         {/* Like */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" onClick={() => trackClick('like')}>
           <Heart className="w-7 h-7 text-white drop-shadow-lg" />
           <span className="text-white text-[10px] mt-1">0</span>
         </div>
 
         {/* Comentário */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" onClick={() => trackClick('comentario')}>
           <MessageCircle className="w-7 h-7 text-white drop-shadow-lg" />
           <span className="text-white text-[10px] mt-1">0</span>
         </div>
@@ -151,7 +172,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         )}
 
         {/* Compartilhar */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" onClick={() => trackClick('compartilhar')}>
           <Share2 className="w-7 h-7 text-white drop-shadow-lg" />
           <span className="text-white text-[10px] mt-1">compartilhar</span>
         </div>

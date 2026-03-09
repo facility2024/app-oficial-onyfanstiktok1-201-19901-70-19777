@@ -12,7 +12,9 @@ import {
   Zap,
   Trash2,
   Save,
-  RotateCcw
+  RotateCcw,
+  MousePointerClick,
+  MapPin
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +55,23 @@ interface VideoStats {
   topVideos: { id: string; title: string; owner: string; views: number; likes: number }[];
 }
 
+interface ClickMetric {
+  promo_id: string;
+  button_type: string;
+  region: string;
+  city: string;
+  device_type: string;
+  created_at: string;
+}
+
+interface ClickSummary {
+  totalClicks: number;
+  byButton: { name: string; count: number }[];
+  byRegion: { name: string; count: number }[];
+  byHour: { hour: string; count: number }[];
+  recentClicks: ClickMetric[];
+}
+
 export const AdminIntelligentFeed: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(DEFAULT_CONFIG);
@@ -65,10 +84,18 @@ export const AdminIntelligentFeed: React.FC = () => {
     topVideos: [],
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [clickSummary, setClickSummary] = useState<ClickSummary>({
+    totalClicks: 0,
+    byButton: [],
+    byRegion: [],
+    byHour: [],
+    recentClicks: [],
+  });
 
   // Carregar estatísticas do banco
   useEffect(() => {
     fetchVideoStats();
+    fetchClickMetrics();
     loadSavedConfig();
   }, []);
 
@@ -80,6 +107,52 @@ export const AdminIntelligentFeed: React.FC = () => {
       } catch (e) {
         console.error('Erro ao carregar config:', e);
       }
+    }
+  };
+
+  const fetchClickMetrics = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('promo_click_tracking')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (error || !data) return;
+
+      const clicks = data as ClickMetric[];
+      
+      // By button type
+      const buttonMap: Record<string, number> = {};
+      clicks.forEach(c => { buttonMap[c.button_type] = (buttonMap[c.button_type] || 0) + 1; });
+      const byButton = Object.entries(buttonMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+      // By region
+      const regionMap: Record<string, number> = {};
+      clicks.forEach(c => { const r = c.region || 'Desconhecido'; regionMap[r] = (regionMap[r] || 0) + 1; });
+      const byRegion = Object.entries(regionMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+      // By hour (last 24h)
+      const hourMap: Record<string, number> = {};
+      const now = new Date();
+      clicks.forEach(c => {
+        const d = new Date(c.created_at);
+        if (now.getTime() - d.getTime() < 24 * 60 * 60 * 1000) {
+          const h = d.getHours().toString().padStart(2, '0') + ':00';
+          hourMap[h] = (hourMap[h] || 0) + 1;
+        }
+      });
+      const byHour = Object.entries(hourMap).map(([hour, count]) => ({ hour, count })).sort((a, b) => a.hour.localeCompare(b.hour));
+
+      setClickSummary({
+        totalClicks: clicks.length,
+        byButton,
+        byRegion,
+        byHour,
+        recentClicks: clicks.slice(0, 20),
+      });
+    } catch (e) {
+      console.error('Erro ao buscar métricas de cliques:', e);
     }
   };
 
@@ -662,6 +735,95 @@ export const AdminIntelligentFeed: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Métricas de Cliques nas Promoções */}
+      <Card className="bg-gray-900/50 border-white/10">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2 text-lg">
+            <MousePointerClick className="w-5 h-5 text-pink-400" />
+            Rastreio de Cliques — Promoções
+          </CardTitle>
+          <CardDescription className="text-gray-400">
+            Total: {clickSummary.totalClicks} cliques registrados
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Por Botão */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div>
+              <h4 className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
+                <MousePointerClick className="w-4 h-4 text-primary" /> Por Botão
+              </h4>
+              <div className="space-y-2">
+                {clickSummary.byButton.map(b => (
+                  <div key={b.name} className="flex justify-between items-center p-2 rounded bg-gray-800/50">
+                    <span className="text-white text-sm capitalize">{b.name}</span>
+                    <Badge variant="outline" className="border-pink-500/50 text-pink-400">{b.count}</Badge>
+                  </div>
+                ))}
+                {clickSummary.byButton.length === 0 && <p className="text-gray-500 text-sm">Sem dados</p>}
+              </div>
+            </div>
+
+            {/* Por Estado/Região */}
+            <div>
+              <h4 className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-green-400" /> Por Estado
+              </h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {clickSummary.byRegion.map(r => (
+                  <div key={r.name} className="flex justify-between items-center p-2 rounded bg-gray-800/50">
+                    <span className="text-white text-sm">{r.name}</span>
+                    <Badge variant="outline" className="border-green-500/50 text-green-400">{r.count}</Badge>
+                  </div>
+                ))}
+                {clickSummary.byRegion.length === 0 && <p className="text-gray-500 text-sm">Sem dados</p>}
+              </div>
+            </div>
+
+            {/* Por Hora */}
+            <div>
+              <h4 className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-yellow-400" /> Últimas 24h por Hora
+              </h4>
+              {clickSummary.byHour.length > 0 ? (
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={clickSummary.byHour}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis dataKey="hour" stroke="#888" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#888" />
+                      <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none' }} />
+                      <Bar dataKey="count" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">Sem dados nas últimas 24h</p>
+              )}
+            </div>
+          </div>
+
+          {/* Últimos cliques */}
+          <div>
+            <h4 className="text-white text-sm font-semibold mb-3">Últimos Cliques</h4>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {clickSummary.recentClicks.map((c, i) => {
+                const d = new Date(c.created_at);
+                return (
+                  <div key={i} className="flex items-center gap-3 p-2 rounded bg-gray-800/30 text-xs">
+                    <Badge variant="outline" className="border-pink-500/40 text-pink-300 capitalize text-[10px]">{c.button_type}</Badge>
+                    <span className="text-gray-400">{c.region || '?'}</span>
+                    <span className="text-gray-500">{c.device_type}</span>
+                    <span className="ml-auto text-gray-500">{d.toLocaleString('pt-BR')}</span>
+                  </div>
+                );
+              })}
+              {clickSummary.recentClicks.length === 0 && <p className="text-gray-500 text-sm">Nenhum clique registrado</p>}
+            </div>
           </div>
         </CardContent>
       </Card>

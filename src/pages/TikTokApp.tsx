@@ -743,12 +743,14 @@ export const TikTokApp = () => {
     console.log('🔍 DEBUG: trackView disponível:', typeof trackView);
     const registerView = async () => {
       if (currentVideo && currentVideo.id) {
-        console.log('📹 REGISTRANDO VIEW para vídeo:', currentVideo.id);
+        // Usar ID original para vídeos cíclicos
+        const trackingId = (currentVideo as any)._originalId || currentVideo.id;
+        console.log('📹 REGISTRANDO VIEW para vídeo:', trackingId);
         try {
           const userId = currentVideo.user?.id || currentVideo.model_id || '';
           const isCreator = !!currentVideo.creator_id;
           if (userId) {
-            await trackView(currentVideo.id, userId, isCreator);
+            await trackView(trackingId, userId, isCreator);
             ensureInteractedModel(userId);
             
             // 🆕 MARCAR VÍDEO COMO ASSISTIDO na memória persistente

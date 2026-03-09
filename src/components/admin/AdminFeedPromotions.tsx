@@ -34,6 +34,11 @@ interface FeedPromotion {
   model_id: string | null;
   shareable_link: string | null;
   daily_frequency: number;
+  cta_mode: string;
+  popup_media_url: string | null;
+  popup_media_type: string | null;
+  popup_cta_text: string | null;
+  popup_cta_link: string | null;
 }
 
 const emptyForm = {
@@ -54,6 +59,11 @@ const emptyForm = {
   send_now: true,
   create_model: false,
   daily_frequency: 0,
+  cta_mode: 'link',
+  popup_media_url: '',
+  popup_media_type: 'image',
+  popup_cta_text: 'Comprar Agora',
+  popup_cta_link: '',
 };
 
 export const AdminFeedPromotions = () => {

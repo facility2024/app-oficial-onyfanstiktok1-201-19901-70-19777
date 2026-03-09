@@ -407,8 +407,12 @@ export const AdminFeedPromotions = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {promotions.map((promo) => (
+        <div>
+          <p className="text-sm text-gray-400 mb-4">
+            Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, promotions.length)} de {promotions.length} promoções
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {promotions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((promo) => (
             <Card key={promo.id} className="bg-gray-900 border-gray-700 overflow-hidden">
               <div className="aspect-video bg-gray-800 relative">
                 {promo.media_type === 'video' ? (

@@ -34,6 +34,11 @@ interface FeedPromotion {
   model_id: string | null;
   shareable_link: string | null;
   daily_frequency: number;
+  cta_mode: string;
+  popup_media_url: string | null;
+  popup_media_type: string | null;
+  popup_cta_text: string | null;
+  popup_cta_link: string | null;
 }
 
 const emptyForm = {
@@ -54,6 +59,11 @@ const emptyForm = {
   send_now: true,
   create_model: false,
   daily_frequency: 0,
+  cta_mode: 'link',
+  popup_media_url: '',
+  popup_media_type: 'image',
+  popup_cta_text: 'Comprar Agora',
+  popup_cta_link: '',
 };
 
 export const AdminFeedPromotions = () => {
@@ -101,6 +111,11 @@ export const AdminFeedPromotions = () => {
         banner_url: formData.banner_url || null,
         cta_text: formData.cta_text || null,
         cta_link: formData.cta_link || null,
+        cta_mode: formData.cta_mode || 'link',
+        popup_media_url: formData.popup_media_url || null,
+        popup_media_type: formData.popup_media_type || 'image',
+        popup_cta_text: formData.popup_cta_text || null,
+        popup_cta_link: formData.popup_cta_link || null,
         position_interval: formData.position_interval,
         is_active: formData.send_now ? formData.is_active : false,
         priority: formData.priority,
@@ -210,6 +225,11 @@ export const AdminFeedPromotions = () => {
       send_now: promo.schedule_status === 'active' || !promo.schedule_date,
       create_model: false,
       daily_frequency: promo.daily_frequency || 0,
+      cta_mode: promo.cta_mode || 'link',
+      popup_media_url: promo.popup_media_url || '',
+      popup_media_type: promo.popup_media_type || 'image',
+      popup_cta_text: promo.popup_cta_text || 'Comprar Agora',
+      popup_cta_link: promo.popup_cta_link || '',
     });
     setShowModal(true);
   };
@@ -346,6 +366,11 @@ export const AdminFeedPromotions = () => {
         banner_url: form.banner_url || null,
         cta_text: form.cta_text || null,
         cta_link: form.cta_link || null,
+        cta_mode: form.cta_mode || 'link',
+        popup_media_url: form.popup_media_url || null,
+        popup_media_type: form.popup_media_type || 'image',
+        popup_cta_text: form.popup_cta_text || null,
+        popup_cta_link: form.popup_cta_link || null,
         position_interval: form.position_interval,
         is_active: form.send_now ? form.is_active : false,
         priority: form.priority,
@@ -576,6 +601,47 @@ export const AdminFeedPromotions = () => {
                 <Label>Link do CTA</Label>
                 <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://..." className={modalInputClass} />
               </div>
+            </div>
+
+            {/* Modo do Botão CTA */}
+            <div className="p-4 rounded-lg border border-cyan-500/30 bg-cyan-950/20 space-y-3">
+              <Label className="text-sm font-bold flex items-center gap-2">
+                🖱️ Ação do Botão CTA
+              </Label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.cta_mode === 'link'} onChange={() => setForm({ ...form, cta_mode: 'link' })} className="accent-cyan-500" />
+                  <span className="text-sm">Redirecionar (Link)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.cta_mode === 'popup'} onChange={() => setForm({ ...form, cta_mode: 'popup' })} className="accent-pink-500" />
+                  <span className="text-sm">Abrir Pop-up</span>
+                </label>
+              </div>
+
+              {form.cta_mode === 'popup' && (
+                <div className="space-y-3 pt-2 border-t border-cyan-500/20">
+                  <p className="text-xs text-gray-400">Configure o conteúdo que aparecerá na tela pop-up ao clicar no botão</p>
+                  <div>
+                    <Label>URL da Mídia do Pop-up (Imagem/Vídeo)</Label>
+                    <Input value={form.popup_media_url} onChange={(e) => {
+                      const url = e.target.value;
+                      const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                      setForm({ ...form, popup_media_url: url, popup_media_type: isVideo ? 'video' : 'image' });
+                    }} placeholder="https://..." className={modalInputClass} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Texto do Botão (Pop-up)</Label>
+                      <Input value={form.popup_cta_text} onChange={(e) => setForm({ ...form, popup_cta_text: e.target.value })} placeholder="Comprar Agora" className={modalInputClass} />
+                    </div>
+                    <div>
+                      <Label>Link do Botão (Pop-up)</Label>
+                      <Input value={form.popup_cta_link} onChange={(e) => setForm({ ...form, popup_cta_link: e.target.value })} placeholder="https://..." className={modalInputClass} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-3 gap-3">

@@ -2083,6 +2083,7 @@ export type Database = {
           clicks_count: number | null
           created_at: string | null
           cta_link: string | null
+          cta_mode: string
           cta_text: string | null
           daily_frequency: number | null
           description: string | null
@@ -2092,6 +2093,10 @@ export type Database = {
           media_type: string
           media_url: string
           model_id: string | null
+          popup_cta_link: string | null
+          popup_cta_text: string | null
+          popup_media_type: string | null
+          popup_media_url: string | null
           position_interval: number | null
           priority: number | null
           schedule_date: string | null
@@ -2107,6 +2112,7 @@ export type Database = {
           clicks_count?: number | null
           created_at?: string | null
           cta_link?: string | null
+          cta_mode?: string
           cta_text?: string | null
           daily_frequency?: number | null
           description?: string | null
@@ -2116,6 +2122,10 @@ export type Database = {
           media_type?: string
           media_url: string
           model_id?: string | null
+          popup_cta_link?: string | null
+          popup_cta_text?: string | null
+          popup_media_type?: string | null
+          popup_media_url?: string | null
           position_interval?: number | null
           priority?: number | null
           schedule_date?: string | null
@@ -2131,6 +2141,7 @@ export type Database = {
           clicks_count?: number | null
           created_at?: string | null
           cta_link?: string | null
+          cta_mode?: string
           cta_text?: string | null
           daily_frequency?: number | null
           description?: string | null
@@ -2140,6 +2151,10 @@ export type Database = {
           media_type?: string
           media_url?: string
           model_id?: string | null
+          popup_cta_link?: string | null
+          popup_cta_text?: string | null
+          popup_media_type?: string | null
+          popup_media_url?: string | null
           position_interval?: number | null
           priority?: number | null
           schedule_date?: string | null

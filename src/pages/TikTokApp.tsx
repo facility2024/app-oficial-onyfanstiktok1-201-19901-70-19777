@@ -350,6 +350,7 @@ export const TikTokApp = () => {
   // Embla API ready
 
   // 📢 Injetar promoções como vídeos falsos no feed
+  const injectPromosRef = useRef(false);
   useEffect(() => {
     if (videos.length === 0 || promotions.length === 0) return;
 
@@ -359,47 +360,50 @@ export const TikTokApp = () => {
     const interval = promotions[0]?.position_interval || 5;
     const newVideos = [...videos];
     let inserted = 0;
+    let promoIdx = 0;
 
-    for (let i = 0; i < promotions.length; i++) {
-      const pos = (i + 1) * interval + inserted;
-      if (pos > newVideos.length) break;
-
-      const promo = promotions[i];
-      const fakeVideo: any = {
-        id: `promo-${promo.id}`,
-        title: promo.title || promo.display_name,
-        description: promo.description || '',
-        video_url: promo.media_url,
-        thumbnail_url: promo.banner_url || '',
-        user_id: `promo-${promo.id}`,
-        likes_count: 0,
-        comments_count: 0,
-        shares_count: 0,
-        views_count: promo.views_count || 0,
-        music_name: `${promo.display_name} • Patrocinado`,
-        is_active: true,
-        visibility: 'public',
-        created_at: new Date().toISOString(),
-        // Extra promo data
-        _promoCtaText: promo.cta_text || null,
-        _promoCtaLink: promo.cta_link || null,
-        _promoBannerUrl: promo.banner_url || null,
-        _promoDescription: promo.description || null,
-        user: {
-          id: `promo-${promo.id}`,
-          username: promo.display_name,
-          avatar_url: promo.avatar_url || '/placeholder.svg',
-          followers_count: 0,
-          following_count: 0,
-          is_online: false,
+    // Injetar promos a cada `interval` vídeos reais ao longo de TODO o feed
+    let realCount = 0;
+    for (let i = 0; i < newVideos.length + inserted; i++) {
+      // Calcular posição onde inserir a próxima promo
+      const insertPos = (promoIdx + 1) * interval + promoIdx;
+      if (i === insertPos && promoIdx < 500) { // Limite de segurança
+        const promo = promotions[promoIdx % promotions.length];
+        const fakeVideo: any = {
+          id: `promo-${promo.id}-${promoIdx}`,
+          title: promo.title || promo.display_name,
+          description: promo.description || '',
+          video_url: promo.media_url,
+          thumbnail_url: promo.banner_url || '',
+          user_id: `promo-${promo.id}`,
+          likes_count: 0,
+          comments_count: 0,
+          shares_count: 0,
+          views_count: promo.views_count || 0,
+          music_name: `${promo.display_name} • Patrocinado`,
+          is_active: true,
+          visibility: 'public',
           created_at: new Date().toISOString(),
-          bio: promo.description || '',
-          posting_panel_url: promo.cta_link || undefined,
-        },
-      };
-
-      newVideos.splice(pos, 0, fakeVideo);
-      inserted++;
+          _promoCtaText: promo.cta_text || null,
+          _promoCtaLink: promo.cta_link || null,
+          _promoBannerUrl: promo.banner_url || null,
+          _promoDescription: promo.description || null,
+          user: {
+            id: `promo-${promo.id}`,
+            username: promo.display_name,
+            avatar_url: promo.avatar_url || '/placeholder.svg',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            created_at: new Date().toISOString(),
+            bio: promo.description || '',
+            posting_panel_url: promo.cta_link || undefined,
+          },
+        };
+        newVideos.splice(i, 0, fakeVideo);
+        inserted++;
+        promoIdx++;
+      }
     }
 
     if (inserted > 0) {

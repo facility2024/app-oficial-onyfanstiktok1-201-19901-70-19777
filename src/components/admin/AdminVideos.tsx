@@ -378,6 +378,17 @@ export const AdminVideos = () => {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
+  const paginatedVideos = filteredVideos.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, videoType, genreFilter]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published': return 'bg-success text-success-foreground';

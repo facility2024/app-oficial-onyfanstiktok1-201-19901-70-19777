@@ -33,6 +33,25 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
 
+  const trackClick = useCallback((buttonType: string) => {
+    const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
+    if (!localStorage.getItem('session_id')) localStorage.setItem('session_id', sessionId);
+    
+    // Get region from active_sessions or localStorage
+    const region = localStorage.getItem('user_region') || 'Desconhecido';
+    const city = localStorage.getItem('user_city') || '';
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    (supabase as any).from('promo_click_tracking').insert({
+      promo_id: promo.id,
+      button_type: buttonType,
+      region,
+      city,
+      device_type: isMobile ? 'mobile' : 'desktop',
+      session_id: sessionId,
+    }).then(() => {});
+  }, [promo.id]);
+
   const handleMediaClick = () => {
     if (isVideoMedia && videoRef.current) {
       if (isPlaying) {

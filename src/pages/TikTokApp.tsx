@@ -350,6 +350,7 @@ export const TikTokApp = () => {
   // Embla API ready
 
   // 📢 Injetar promoções como vídeos falsos no feed
+  const injectPromosRef = useRef(false);
   useEffect(() => {
     if (videos.length === 0 || promotions.length === 0) return;
 
@@ -359,47 +360,50 @@ export const TikTokApp = () => {
     const interval = promotions[0]?.position_interval || 5;
     const newVideos = [...videos];
     let inserted = 0;
+    let promoIdx = 0;
 
-    for (let i = 0; i < promotions.length; i++) {
-      const pos = (i + 1) * interval + inserted;
-      if (pos > newVideos.length) break;
-
-      const promo = promotions[i];
-      const fakeVideo: any = {
-        id: `promo-${promo.id}`,
-        title: promo.title || promo.display_name,
-        description: promo.description || '',
-        video_url: promo.media_url,
-        thumbnail_url: promo.banner_url || '',
-        user_id: `promo-${promo.id}`,
-        likes_count: 0,
-        comments_count: 0,
-        shares_count: 0,
-        views_count: promo.views_count || 0,
-        music_name: `${promo.display_name} • Patrocinado`,
-        is_active: true,
-        visibility: 'public',
-        created_at: new Date().toISOString(),
-        // Extra promo data
-        _promoCtaText: promo.cta_text || null,
-        _promoCtaLink: promo.cta_link || null,
-        _promoBannerUrl: promo.banner_url || null,
-        _promoDescription: promo.description || null,
-        user: {
-          id: `promo-${promo.id}`,
-          username: promo.display_name,
-          avatar_url: promo.avatar_url || '/placeholder.svg',
-          followers_count: 0,
-          following_count: 0,
-          is_online: false,
+    // Injetar promos a cada `interval` vídeos reais ao longo de TODO o feed
+    let realCount = 0;
+    for (let i = 0; i < newVideos.length + inserted; i++) {
+      // Calcular posição onde inserir a próxima promo
+      const insertPos = (promoIdx + 1) * interval + promoIdx;
+      if (i === insertPos && promoIdx < 500) { // Limite de segurança
+        const promo = promotions[promoIdx % promotions.length];
+        const fakeVideo: any = {
+          id: `promo-${promo.id}-${promoIdx}`,
+          title: promo.title || promo.display_name,
+          description: promo.description || '',
+          video_url: promo.media_url,
+          thumbnail_url: promo.banner_url || '',
+          user_id: `promo-${promo.id}`,
+          likes_count: 0,
+          comments_count: 0,
+          shares_count: 0,
+          views_count: promo.views_count || 0,
+          music_name: `${promo.display_name} • Patrocinado`,
+          is_active: true,
+          visibility: 'public',
           created_at: new Date().toISOString(),
-          bio: promo.description || '',
-          posting_panel_url: promo.cta_link || undefined,
-        },
-      };
-
-      newVideos.splice(pos, 0, fakeVideo);
-      inserted++;
+          _promoCtaText: promo.cta_text || null,
+          _promoCtaLink: promo.cta_link || null,
+          _promoBannerUrl: promo.banner_url || null,
+          _promoDescription: promo.description || null,
+          user: {
+            id: `promo-${promo.id}`,
+            username: promo.display_name,
+            avatar_url: promo.avatar_url || '/placeholder.svg',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            created_at: new Date().toISOString(),
+            bio: promo.description || '',
+            posting_panel_url: promo.cta_link || undefined,
+          },
+        };
+        newVideos.splice(i, 0, fakeVideo);
+        inserted++;
+        promoIdx++;
+      }
     }
 
     if (inserted > 0) {
@@ -739,12 +743,14 @@ export const TikTokApp = () => {
     console.log('🔍 DEBUG: trackView disponível:', typeof trackView);
     const registerView = async () => {
       if (currentVideo && currentVideo.id) {
-        console.log('📹 REGISTRANDO VIEW para vídeo:', currentVideo.id);
+        // Usar ID original para vídeos cíclicos
+        const trackingId = (currentVideo as any)._originalId || currentVideo.id;
+        console.log('📹 REGISTRANDO VIEW para vídeo:', trackingId);
         try {
           const userId = currentVideo.user?.id || currentVideo.model_id || '';
           const isCreator = !!currentVideo.creator_id;
           if (userId) {
-            await trackView(currentVideo.id, userId, isCreator);
+            await trackView(trackingId, userId, isCreator);
             ensureInteractedModel(userId);
             
             // 🆕 MARCAR VÍDEO COMO ASSISTIDO na memória persistente
@@ -1350,7 +1356,7 @@ export const TikTokApp = () => {
         setVideos(firstBlock as any);
         setCurrentVideoIndex(0);
         setCurrentPage(1);
-        setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
+        setHasMoreVideos(true); // Sempre true — feed infinito
         setModelOrder(orderedModels);
         setCycleSize(orderedModels.length);
         console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
@@ -1475,99 +1481,82 @@ export const TikTokApp = () => {
     }
   }, [targetProfileId, stateProfileId, loading]);
 
-  // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
+  // 🔄 LÓGICA: Detectar fim do ciclo e aplicar refresh pendente (novos vídeos do admin)
   useEffect(() => {
-    if (!pendingRefresh || allAvailableVideos.length === 0) return;
-
-    // Quando chegar no último vídeo, reiniciar com conteúdo atualizado
-    const isLastVideo = currentVideoIndex >= allAvailableVideos.length - 1;
-    if (isLastVideo) {
-      console.log('🔄 Fim do ciclo detectado - recarregando com conteúdo atualizado...');
+    if (!pendingRefresh) return;
+    // Quando há refresh pendente (novo vídeo adicionado pelo admin),
+    // recarregar o feed completo ao chegar no fim dos vídeos atuais
+    const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
+    const isNearEnd = currentVideoIndex >= realVideos.length - 3;
+    if (isNearEnd) {
+      console.log('🔄 Aplicando refresh pendente - novos vídeos do admin detectados...');
       setTimeout(() => {
         initializeFeed();
         setPendingRefresh(false);
-      }, 1000); // Pequeno delay para não interromper a visualização
+      }, 1000);
     }
-  }, [pendingRefresh, currentVideoIndex, allAvailableVideos.length, initializeFeed]);
-
-  // Auto-reload quando acabar os vídeos (volta para o início com atualizações)
-  useEffect(() => {
-    if (videos.length === 0 || allAvailableVideos.length === 0) return;
-    const isEndOfContent = currentVideoIndex >= allAvailableVideos.length - 2;
-    if (isEndOfContent && !isLoadingMore) {
-      console.log('🎬 Chegando ao fim - preparando próximo ciclo com atualizações...');
-      setPendingRefresh(true);
-    }
-  }, [currentVideoIndex, allAvailableVideos.length, videos.length, isLoadingMore]);
+  }, [pendingRefresh, currentVideoIndex, videos, initializeFeed]);
 
   // Remover função de organização complexa - usar abordagem mais simples
 
   // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
   const loadMoreVideos = useCallback(async () => {
-    if (isLoadingMore || !hasMoreVideos || allAvailableVideos.length === 0) {
-      console.log('🚫 Não pode carregar mais:', {
-        isLoadingMore,
-        hasMoreVideos,
-        allAvailableCount: allAvailableVideos.length
-      });
+    if (isLoadingMore || allAvailableVideos.length === 0) {
       return;
     }
     try {
       setIsLoadingMore(true);
-      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`, {
-        videosCarregados: videos.length,
-        videosDisponiveis: allAvailableVideos.length
+      console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`);
+
+      // Pegar vídeos reais (sem promos) já no feed
+      const realVideosInFeed = videos.filter(v => !v.id.startsWith('promo-'));
+      const realCount = realVideosInFeed.length;
+
+      // Calcular próximo bloco do ciclo (volta ao início quando acabar)
+      const totalAvailable = allAvailableVideos.length;
+      const startIdx = realCount % totalAvailable;
+      
+      // Pegar próximo bloco, ciclando
+      const nextBlock: any[] = [];
+      for (let i = 0; i < VIDEOS_PER_BLOCK; i++) {
+        const idx = (startIdx + i) % totalAvailable;
+        const original = allAvailableVideos[idx];
+        // Criar cópia com ID único para evitar duplicatas no DOM
+        nextBlock.push({
+          ...original,
+          id: `${original.id}-cycle-${Math.floor((realCount + i) / totalAvailable)}`,
+          _originalId: original.id, // Manter ID original para tracking
+        });
+      }
+
+      // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
+      setVideos(prev => {
+        // Remover promos existentes, adicionar novos vídeos, promos serão reinjetadas
+        const withoutPromos = prev.filter(v => !v.id.startsWith('promo-'));
+        return [...withoutPromos, ...nextBlock];
       });
-
-      // Filtrar vídeos ainda não carregados
-      const unusedVideos = allAvailableVideos.filter(v => !videos.some(existing => existing.id === v.id));
-      console.log(`📊 Vídeos ainda não usados: ${unusedVideos.length}`);
-      if (unusedVideos.length === 0) {
-        console.log('🔄 Fim do conteúdo - recarregando com atualizações...');
-        setHasMoreVideos(false);
-        // Recarregar feed automaticamente para buscar novos posts agendados
-        setTimeout(() => {
-          console.log('🎬 Reiniciando ciclo com conteúdo atualizado...');
-          initializeFeed();
-        }, 2000);
-        return;
-      }
-
-      // Pegar próximo bloco
-      const nextBlock = unusedVideos.slice(0, VIDEOS_PER_BLOCK);
-      if (nextBlock.length === 0) {
-        console.log('⚠️ Bloco vazio - finalizando');
-        setHasMoreVideos(false);
-        return;
-      }
-
-      // Adicionar ao feed
-      setVideos(prev => [...prev, ...nextBlock]);
       setCurrentPage(prev => prev + 1);
-      setHasMoreVideos(unusedVideos.length > VIDEOS_PER_BLOCK);
-      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos. Total agora: ${videos.length + nextBlock.length}/${allAvailableVideos.length}`);
+      setHasMoreVideos(true); // Sempre true — feed infinito
+      console.log(`✅ Bloco cíclico adicionado: ${nextBlock.length} vídeos a partir do índice ${startIdx}`);
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
-      setHasMoreVideos(false);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMoreVideos, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK, initializeFeed]);
+  }, [isLoadingMore, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
 
-  // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
+  // 📱 Carregamento automático infinito quando próximo do fim
   useEffect(() => {
-    const shouldLoadMore = currentVideoIndex >= videos.length - 10; // Carrega quando faltam 10 vídeos
+    const shouldLoadMore = currentVideoIndex >= videos.length - 10;
 
-    if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
-      console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...', {
+    if (shouldLoadMore && !isLoadingMore && videos.length > 0 && allAvailableVideos.length > 0) {
+      console.log('🔄 AUTO-LOAD INFINITO: Carregando mais vídeos...', {
         currentVideoIndex,
         videosLength: videos.length,
-        allAvailableLength: allAvailableVideos.length,
-        hasMoreVideos
       });
       loadMoreVideos();
     }
-  }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos, allAvailableVideos.length, loadMoreVideos]);
+  }, [currentVideoIndex, videos.length, isLoadingMore, allAvailableVideos.length, loadMoreVideos]);
 
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {

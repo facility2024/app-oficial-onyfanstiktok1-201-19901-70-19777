@@ -603,6 +603,47 @@ export const AdminFeedPromotions = () => {
               </div>
             </div>
 
+            {/* Modo do Botão CTA */}
+            <div className="p-4 rounded-lg border border-cyan-500/30 bg-cyan-950/20 space-y-3">
+              <Label className="text-sm font-bold flex items-center gap-2">
+                🖱️ Ação do Botão CTA
+              </Label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.cta_mode === 'link'} onChange={() => setForm({ ...form, cta_mode: 'link' })} className="accent-cyan-500" />
+                  <span className="text-sm">Redirecionar (Link)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.cta_mode === 'popup'} onChange={() => setForm({ ...form, cta_mode: 'popup' })} className="accent-pink-500" />
+                  <span className="text-sm">Abrir Pop-up</span>
+                </label>
+              </div>
+
+              {form.cta_mode === 'popup' && (
+                <div className="space-y-3 pt-2 border-t border-cyan-500/20">
+                  <p className="text-xs text-gray-400">Configure o conteúdo que aparecerá na tela pop-up ao clicar no botão</p>
+                  <div>
+                    <Label>URL da Mídia do Pop-up (Imagem/Vídeo)</Label>
+                    <Input value={form.popup_media_url} onChange={(e) => {
+                      const url = e.target.value;
+                      const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                      setForm({ ...form, popup_media_url: url, popup_media_type: isVideo ? 'video' : 'image' });
+                    }} placeholder="https://..." className={modalInputClass} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Texto do Botão (Pop-up)</Label>
+                      <Input value={form.popup_cta_text} onChange={(e) => setForm({ ...form, popup_cta_text: e.target.value })} placeholder="Comprar Agora" className={modalInputClass} />
+                    </div>
+                    <div>
+                      <Label>Link do Botão (Pop-up)</Label>
+                      <Input value={form.popup_cta_link} onChange={(e) => setForm({ ...form, popup_cta_link: e.target.value })} placeholder="https://..." className={modalInputClass} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Intervalo (a cada X vídeos)</Label>

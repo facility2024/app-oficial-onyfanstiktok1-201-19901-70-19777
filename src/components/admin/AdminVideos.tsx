@@ -41,6 +41,8 @@ export const AdminVideos = () => {
   const [showDisablePlansConfirm, setShowDisablePlansConfirm] = useState(false);
   const [showDisableModelsConfirm, setShowDisableModelsConfirm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const { genres, loading: genresLoading } = useGenres();
   
   // Upload form state

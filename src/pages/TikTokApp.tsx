@@ -1354,7 +1354,7 @@ export const TikTokApp = () => {
         setVideos(firstBlock as any);
         setCurrentVideoIndex(0);
         setCurrentPage(1);
-        setHasMoreVideos(ordered.length > VIDEOS_PER_BLOCK);
+        setHasMoreVideos(true); // Sempre true — feed infinito
         setModelOrder(orderedModels);
         setCycleSize(orderedModels.length);
         console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);

@@ -65,6 +65,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
   const handleCtaClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    trackClick('cta');
     if (promo.cta_link) {
       window.open(promo.cta_link, '_blank', 'noopener,noreferrer');
     }

@@ -1543,20 +1543,18 @@ export const TikTokApp = () => {
     }
   }, [isLoadingMore, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
 
-  // 📱 NOVA LÓGICA: Carregamento automático quando próximo do fim
+  // 📱 Carregamento automático infinito quando próximo do fim
   useEffect(() => {
-    const shouldLoadMore = currentVideoIndex >= videos.length - 10; // Carrega quando faltam 10 vídeos
+    const shouldLoadMore = currentVideoIndex >= videos.length - 10;
 
-    if (shouldLoadMore && !isLoadingMore && hasMoreVideos && videos.length > 0) {
-      console.log('🔄 AUTO-LOAD: Carregando mais vídeos automaticamente...', {
+    if (shouldLoadMore && !isLoadingMore && videos.length > 0 && allAvailableVideos.length > 0) {
+      console.log('🔄 AUTO-LOAD INFINITO: Carregando mais vídeos...', {
         currentVideoIndex,
         videosLength: videos.length,
-        allAvailableLength: allAvailableVideos.length,
-        hasMoreVideos
       });
       loadMoreVideos();
     }
-  }, [currentVideoIndex, videos.length, isLoadingMore, hasMoreVideos, allAvailableVideos.length, loadMoreVideos]);
+  }, [currentVideoIndex, videos.length, isLoadingMore, allAvailableVideos.length, loadMoreVideos]);
 
   // Abrir vídeo selecionado de um perfil na tela principal
   const openSelectedVideo = async (videoId: string) => {

@@ -1479,30 +1479,21 @@ export const TikTokApp = () => {
     }
   }, [targetProfileId, stateProfileId, loading]);
 
-  // 🔄 LÓGICA ESPECIAL: Detectar fim do ciclo e recarregar com conteúdo atualizado
+  // 🔄 LÓGICA: Detectar fim do ciclo e aplicar refresh pendente (novos vídeos do admin)
   useEffect(() => {
-    if (!pendingRefresh || allAvailableVideos.length === 0) return;
-
-    // Quando chegar no último vídeo, reiniciar com conteúdo atualizado
-    const isLastVideo = currentVideoIndex >= allAvailableVideos.length - 1;
-    if (isLastVideo) {
-      console.log('🔄 Fim do ciclo detectado - recarregando com conteúdo atualizado...');
+    if (!pendingRefresh) return;
+    // Quando há refresh pendente (novo vídeo adicionado pelo admin),
+    // recarregar o feed completo ao chegar no fim dos vídeos atuais
+    const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
+    const isNearEnd = currentVideoIndex >= realVideos.length - 3;
+    if (isNearEnd) {
+      console.log('🔄 Aplicando refresh pendente - novos vídeos do admin detectados...');
       setTimeout(() => {
         initializeFeed();
         setPendingRefresh(false);
-      }, 1000); // Pequeno delay para não interromper a visualização
+      }, 1000);
     }
-  }, [pendingRefresh, currentVideoIndex, allAvailableVideos.length, initializeFeed]);
-
-  // Auto-reload quando acabar os vídeos (volta para o início com atualizações)
-  useEffect(() => {
-    if (videos.length === 0 || allAvailableVideos.length === 0) return;
-    const isEndOfContent = currentVideoIndex >= allAvailableVideos.length - 2;
-    if (isEndOfContent && !isLoadingMore) {
-      console.log('🎬 Chegando ao fim - preparando próximo ciclo com atualizações...');
-      setPendingRefresh(true);
-    }
-  }, [currentVideoIndex, allAvailableVideos.length, videos.length, isLoadingMore]);
+  }, [pendingRefresh, currentVideoIndex, videos, initializeFeed]);
 
   // Remover função de organização complexa - usar abordagem mais simples
 

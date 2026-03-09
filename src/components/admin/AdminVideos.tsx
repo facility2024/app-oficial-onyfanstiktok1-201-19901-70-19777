@@ -819,8 +819,13 @@ export const AdminVideos = () => {
         </CardHeader>
         
         <CardContent>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredVideos.length)} de {filteredVideos.length} vídeos
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredVideos.map((video) => (
+            {paginatedVideos.map((video) => (
               <div key={video.id} className="border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200">
                 <div className="relative">
                   <div className="w-full h-32 bg-muted flex items-center justify-center">

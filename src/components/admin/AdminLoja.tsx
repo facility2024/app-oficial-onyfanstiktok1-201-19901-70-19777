@@ -197,8 +197,7 @@ const AdminLoja = () => {
               </Badge>
               <Button
                 size="sm"
-                variant="outline"
-                className="ml-auto text-xs border-white/20 text-white"
+                className="ml-auto text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 onClick={() => window.open(`/loja/${selectedProduct}`, '_blank')}
               >
                 <ExternalLink className="w-3 h-3 mr-1" /> Ver Página
@@ -213,21 +212,20 @@ const AdminLoja = () => {
                   placeholder="URL do vídeo (Bunny CDN)"
                   value={newVideoUrl}
                   onChange={(e) => setNewVideoUrl(e.target.value)}
-                  className="flex-1 min-w-[200px] bg-white/5 border-white/20 text-white"
+                  className="flex-1 min-w-[200px] bg-white/10 border-white/30 text-white placeholder:text-white/40"
                 />
                 <Input
                   placeholder="Título (opcional)"
                   value={newVideoTitle}
                   onChange={(e) => setNewVideoTitle(e.target.value)}
-                  className="w-40 bg-white/5 border-white/20 text-white"
+                  className="w-40 bg-white/10 border-white/30 text-white placeholder:text-white/40"
                 />
-                <Button onClick={addVideo} className="bg-green-600 hover:bg-green-700 text-white">
+                <Button onClick={addVideo} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
                   <Plus className="w-4 h-4 mr-1" /> Adicionar
                 </Button>
                 <Button
-                  variant="outline"
                   onClick={() => setBulkMode(true)}
-                  className="border-white/20 text-white text-xs"
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs"
                 >
                   Lista em lote
                 </Button>

@@ -39,6 +39,8 @@ import { VideoCallPage } from "./pages/VideoCallPage";
 import AtualizacoesPage from "./pages/AtualizacoesPage";
 import ExclusividadeLogin from "./pages/ExclusividadeLogin";
 import ExclusividadeConteudo from "./pages/ExclusividadeConteudo";
+import LojaPage from "./pages/LojaPage";
+import LojaProdutoPage from "./pages/LojaProdutoPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -166,6 +168,10 @@ const App = () => (
           {/* Área Exclusiva */}
           <Route path="/exclusividade" element={<ExclusividadeLogin />} />
           <Route path="/exclusividade/conteudo" element={<ExclusividadeConteudo />} />
+          
+          {/* Loja */}
+          <Route path="/loja" element={<LojaPage />} />
+          <Route path="/loja/:id" element={<LojaProdutoPage />} />
           
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={

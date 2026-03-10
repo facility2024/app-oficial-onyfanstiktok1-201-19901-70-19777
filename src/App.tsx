@@ -37,6 +37,8 @@ import SplashScreen from "./pages/SplashScreen";
 import ProfilePage from "./pages/ProfilePage";
 import { VideoCallPage } from "./pages/VideoCallPage";
 import AtualizacoesPage from "./pages/AtualizacoesPage";
+import ExclusividadeLogin from "./pages/ExclusividadeLogin";
+import ExclusividadeConteudo from "./pages/ExclusividadeConteudo";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({

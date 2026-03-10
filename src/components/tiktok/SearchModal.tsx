@@ -38,7 +38,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
         .from('models')
         .select('*')
         .eq('is_active', true)
-        .order('followers_count', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (modelsError) throw modelsError;
 
@@ -59,7 +59,9 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       // Atualizar modelos com status online do chat panel
       const modelsWithChatStatus = (modelsData || []).map((m: any) => ({
         ...m,
-        is_live: chatPanelsMap[m.id] || false
+        followers_count: m.followers_count ?? 0,
+        is_live: chatPanelsMap[m.id] || false,
+        is_verified: m.is_verified ?? false,
       }));
 
       // Buscar criadores (via user_roles)
@@ -209,7 +211,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
                     </div>
                     <p className="text-white/60 text-sm">@{model.username}</p>
                     <p className="text-white/50 text-xs">
-                      {model.followers_count.toLocaleString()} seguidores
+                      {(model.followers_count || 0).toLocaleString()} seguidores
                     </p>
                   </div>
 

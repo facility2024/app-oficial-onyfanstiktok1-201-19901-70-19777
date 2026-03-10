@@ -42,6 +42,7 @@ interface AdminCreatorApplicationsProps {
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
   const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean; phone?: string; bio?: string; avatar_url?: string; created_at?: string; whatsapp?: string; full_name?: string}[]>([]);
+  const [promoCreators, setPromoCreators] = useState<{id: string; name: string; username: string; avatar_url: string; is_active: boolean; created_at: string}[]>([]);
   const [externalCadastros, setExternalCadastros] = useState<{id: string; nome: string; email: string; whatsapp: string; status: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);
@@ -117,10 +118,26 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     }
   };
 
+  const fetchPromoCreators = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('models')
+        .select('id, name, username, avatar_url, is_active, created_at')
+        .eq('is_promo_creator', true)
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setPromoCreators(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar criadoras de promoção:', err);
+    }
+  };
+
   useEffect(() => {
     fetchApplications();
     fetchDirectCreators();
     fetchExternalCadastros();
+    fetchPromoCreators();
     const channel = supabase
       .channel('creator_applications_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, (payload) => {
@@ -631,7 +648,48 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         </Card>
       )}
 
-      {/* External Cadastros (from cadastro_modelos table) */}
+      {/* Criadoras de Promoção (models com is_promo_creator) */}
+      {promoCreators.length > 0 && (
+        <Card className="border-pink-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              🎬 Criadoras de Promoção (Feed)
+              <Badge variant="secondary" className="bg-pink-500/10 text-pink-500">{promoCreators.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Criadoras registradas automaticamente ao criar promoções no feed. Já aprovadas e ativas.
+            </p>
+            <div className="space-y-3">
+              {promoCreators.map(creator => (
+                <Card key={creator.id} className={`bg-card/50 border-pink-500/20 ${!creator.is_active ? 'opacity-60' : ''}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        {creator.avatar_url && (
+                          <img src={creator.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        )}
+                        <div>
+                          <p className="font-semibold">{creator.name}</p>
+                          <p className="text-sm text-muted-foreground">🎭 @{creator.username}</p>
+                          <p className="text-xs text-muted-foreground">📅 {new Date(creator.created_at).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={creator.is_active ? 'bg-green-600' : 'bg-red-600'}>
+                          {creator.is_active ? '✅ Ativa' : '❌ Inativa'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {externalCadastros.length > 0 && (
         <Card className="border-orange-500/30">
           <CardHeader>

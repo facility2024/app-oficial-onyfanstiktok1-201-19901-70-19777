@@ -381,6 +381,7 @@ export const AdminFeedPromotions = () => {
           name: form.display_name.trim(),
           avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
           is_active: true,
+          is_promo_creator: true,
         })
         .select('id')
         .single();
@@ -390,7 +391,7 @@ export const AdminFeedPromotions = () => {
       } else {
         modelId = data.id;
         setPendingModelData({ username, generatedId });
-        toast.success(`✅ Modelo "${form.display_name}" criada com ID: ${data.id}`);
+        toast.success(`✅ Modelo "${form.display_name}" criada e aprovada como criadora!`);
       }
     }
 
@@ -430,6 +431,7 @@ export const AdminFeedPromotions = () => {
         name: form.display_name.trim(),
         avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
         is_active: true,
+        is_promo_creator: true,
       })
       .select('id')
       .single();

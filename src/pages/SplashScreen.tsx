@@ -36,7 +36,15 @@ export const SplashScreen = () => {
   }, [navigate]);
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-[#0d1117] via-[#010409] to-[#0d1117] overflow-hidden">
+    <div
+      className="fixed inset-0 w-full h-full overflow-hidden"
+      style={{
+        backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/material%20coconudi/destbard.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <div className="relative z-10 flex flex-col items-center justify-center w-full h-full gap-10">
         {/* Logo com efeito de zoom suave */}
         <img 

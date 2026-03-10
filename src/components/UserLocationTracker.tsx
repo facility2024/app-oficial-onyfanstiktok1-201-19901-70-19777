@@ -8,7 +8,7 @@ import { detectLocation, normalizeStateName, type LocationResult } from '@/utils
  */
 export const UserLocationTracker = () => {
   const isInitialized = useRef(false);
-  const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const getDeviceType = () => {
     const ua = navigator.userAgent;

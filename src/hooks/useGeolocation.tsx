@@ -24,7 +24,7 @@ export const useGeolocation = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isInitialized = useRef(false);
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasShownToast = useRef(false);
 
   // Sync state stats from realtime

@@ -81,6 +81,41 @@ export const AdminFeedPromotions = () => {
   const ITEMS_PER_PAGE = 10;
   const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
+  // Autocomplete state for display_name
+  const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; avatar_url: string | null; type: 'model' | 'creator' }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const searchEntities = useCallback(async (query: string) => {
+    if (query.length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
+    const q = `%${query}%`;
+    // Search models
+    const { data: models } = await supabase.from('models').select('id, name, avatar_url').ilike('name', q).limit(5);
+    // Search approved creators via user_roles + profiles
+    const { data: creatorRoles } = await (supabase as any).from('user_roles').select('user_id').eq('role', 'creator');
+    let creatorResults: Array<{ id: string; name: string; avatar_url: string | null; type: 'creator' }> = [];
+    if (creatorRoles && creatorRoles.length > 0) {
+      const ids = creatorRoles.map((r: any) => r.user_id);
+      const { data: profiles } = await supabase.from('profiles').select('id, name, avatar_url').in('id', ids).ilike('name', q).limit(5);
+      creatorResults = (profiles || []).map((p: any) => ({ id: p.id, name: p.name || 'Sem nome', avatar_url: p.avatar_url, type: 'creator' as const }));
+    }
+    const modelResults = (models || []).map((m: any) => ({ id: m.id, name: m.name, avatar_url: m.avatar_url, type: 'model' as const }));
+    const all = [...modelResults, ...creatorResults];
+    setSuggestions(all);
+    setShowSuggestions(all.length > 0);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) && inputRef.current !== e.target) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const { data: promotions = [], isLoading } = useQuery({
     queryKey: ['admin-feed-promotions'],
     queryFn: async () => {

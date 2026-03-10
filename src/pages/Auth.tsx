@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { saveSessionMeta } from '@/components/SessionManager';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -278,6 +279,7 @@ const Auth = () => {
       
       // Se confirmação de email está desabilitada, já vai ter sessão
       if (data.session) {
+        saveSessionMeta(data.user!.id);
         toast.success('Conta criada com sucesso!');
         const returnTo = localStorage.getItem('returnTo') || '/app';
         localStorage.removeItem('returnTo');
@@ -318,6 +320,9 @@ const Auth = () => {
       });
       
       if (error) throw error;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) saveSessionMeta(user.id);
       
       toast.success('Login realizado com sucesso!');
       const returnTo = localStorage.getItem('returnTo') || '/app';

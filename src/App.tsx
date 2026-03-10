@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Direct imports to avoid dynamic import issues in production
 import { OfflineHandler } from "@/components/OfflineHandler";
 import { UserLocationTracker } from "@/components/UserLocationTracker";
+import { SessionManager } from "@/components/SessionManager";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AdminDashboard } from "@/components/AdminDashboard";
@@ -56,6 +57,7 @@ const App = () => (
       <Sonner />
       <OfflineHandler />
       <UserLocationTracker />
+      <SessionManager />
       <BrowserRouter>
         <Routes>
           {/* Splash Screen como HOME */}

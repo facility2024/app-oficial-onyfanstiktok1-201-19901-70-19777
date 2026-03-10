@@ -42,6 +42,7 @@ interface AdminCreatorApplicationsProps {
 export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicationsProps) => {
   const [applications, setApplications] = useState<CreatorApplication[]>([]);
   const [directCreators, setDirectCreators] = useState<{id: string; email: string; name: string; username: string; is_active: boolean; phone?: string; bio?: string; avatar_url?: string; created_at?: string; whatsapp?: string; full_name?: string}[]>([]);
+  const [promoCreators, setPromoCreators] = useState<{id: string; name: string; username: string; avatar_url: string; is_active: boolean; created_at: string}[]>([]);
   const [externalCadastros, setExternalCadastros] = useState<{id: string; nome: string; email: string; whatsapp: string; status: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null);

@@ -431,6 +431,7 @@ export const AdminFeedPromotions = () => {
         name: form.display_name.trim(),
         avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
         is_active: true,
+        is_promo_creator: true,
       })
       .select('id')
       .single();

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BannerImage {
   src: string;
@@ -15,47 +16,38 @@ const defaultBannerImages: BannerImage[] = [
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/6.jpg', alt: 'Banner 6' },
 ];
 
-const STORAGE_KEY = 'marketplace_banners';
-const EVENT_KEY = 'marketplace_banners_updated';
-
-const loadBanners = (): BannerImage[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as Array<{ src: string; alt: string; active?: boolean }>;
-      return parsed.filter(b => b.active !== false);
-    }
-  } catch {}
-  return defaultBannerImages;
-};
+const SETTING_KEY = 'marketplace_banners';
 
 export const BannerCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [bannerImages, setBannerImages] = useState<BannerImage[]>(loadBanners);
-
-  // Force re-read localStorage on every mount
-  useEffect(() => {
-    setBannerImages(loadBanners());
-  }, []);
+  const [bannerImages, setBannerImages] = useState<BannerImage[]>(defaultBannerImages);
 
   useEffect(() => {
-    const handleUpdate = () => setBannerImages(loadBanners());
-    window.addEventListener(EVENT_KEY, handleUpdate);
-    window.addEventListener('storage', handleUpdate);
-    
-    // Re-read when tab becomes visible again
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        setBannerImages(loadBanners());
+    const loadBanners = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', SETTING_KEY)
+          .maybeSingle();
+
+        if (!error && data?.setting_value) {
+          const parsed = data.setting_value as unknown as Array<{ src: string; alt: string; active?: boolean }>;
+          if (Array.isArray(parsed)) {
+            const activeBanners = parsed.filter(b => b.active !== false);
+            if (activeBanners.length > 0) {
+              setBannerImages(activeBanners);
+              return;
+            }
+          }
+        }
+      } catch {
+        // fallback to defaults
       }
+      setBannerImages(defaultBannerImages);
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    
-    return () => {
-      window.removeEventListener(EVENT_KEY, handleUpdate);
-      window.removeEventListener('storage', handleUpdate);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
+
+    loadBanners();
   }, []);
 
   useEffect(() => {

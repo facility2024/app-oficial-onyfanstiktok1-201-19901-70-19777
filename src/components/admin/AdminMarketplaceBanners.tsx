@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Image, Plus, Trash2, Edit, Eye, EyeOff, List, GripVertical, Info } from 'lucide-react';
+import { Image, Plus, Trash2, Edit, Eye, EyeOff, List, Info, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MarketplaceBanner {
   id: number;
@@ -17,10 +17,8 @@ interface MarketplaceBanner {
   active: boolean;
 }
 
-const STORAGE_KEY = 'marketplace_banners';
-const EVENT_KEY = 'marketplace_banners_updated';
+const SETTING_KEY = 'marketplace_banners';
 
-// Dimensões exatas do banner
 const BANNER_WIDTH = 1200;
 const BANNER_HEIGHT = 400;
 const BANNER_RATIO = '3:1';
@@ -41,34 +39,84 @@ export const AdminMarketplaceBanners = () => {
   const [editingBanner, setEditingBanner] = useState<MarketplaceBanner | null>(null);
   const [newBanner, setNewBanner] = useState({ src: '', alt: '' });
   const [batchUrls, setBatchUrls] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Load banners from Supabase
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setBanners(JSON.parse(stored));
-    } else {
-      const defaults = getDefaultBanners();
-      setBanners(defaults);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
-    }
+    const loadBanners = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', SETTING_KEY)
+          .maybeSingle();
+
+        if (!error && data?.setting_value) {
+          const parsed = data.setting_value as unknown as MarketplaceBanner[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setBanners(parsed);
+            setIsLoading(false);
+            return;
+          }
+        }
+        // No data found, use defaults and save them
+        const defaults = getDefaultBanners();
+        setBanners(defaults);
+        await saveBannersToSupabase(defaults);
+      } catch {
+        setBanners(getDefaultBanners());
+      }
+      setIsLoading(false);
+    };
+
+    loadBanners();
   }, []);
+
+  const saveBannersToSupabase = async (updated: MarketplaceBanner[]) => {
+    const { data: existing } = await supabase
+      .from('admin_settings')
+      .select('id')
+      .eq('setting_key', SETTING_KEY)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from('admin_settings')
+        .update({ setting_value: updated as any, updated_at: new Date().toISOString() })
+        .eq('setting_key', SETTING_KEY);
+    } else {
+      await supabase
+        .from('admin_settings')
+        .insert({ setting_key: SETTING_KEY, setting_value: updated as any });
+    }
+  };
 
   const saveBanners = (updated: MarketplaceBanner[]) => {
     setBanners(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new Event(EVENT_KEY));
+  };
+
+  const publishBanners = async () => {
+    setIsSaving(true);
+    try {
+      await saveBannersToSupabase(banners);
+      toast.success('✅ Banners publicados com sucesso! Alterações visíveis no Marketplace.');
+    } catch {
+      toast.error('Erro ao publicar banners');
+    }
+    setIsSaving(false);
   };
 
   const toggleActive = (id: number) => {
     const updated = banners.map(b => b.id === id ? { ...b, active: !b.active } : b);
     saveBanners(updated);
-    toast.success('Status atualizado');
+    toast.success('Status atualizado — clique em Publicar para aplicar');
   };
 
   const deleteBanner = (id: number) => {
     const updated = banners.filter(b => b.id !== id);
     saveBanners(updated);
-    toast.success('Banner removido');
+    toast.success('Banner removido — clique em Publicar para aplicar');
   };
 
   const createBanner = () => {
@@ -82,7 +130,7 @@ export const AdminMarketplaceBanners = () => {
     saveBanners([...banners, banner]);
     setNewBanner({ src: '', alt: '' });
     setShowCreateModal(false);
-    toast.success('Banner criado!');
+    toast.success('Banner criado — clique em Publicar para aplicar');
   };
 
   const createBatchBanners = () => {
@@ -97,7 +145,7 @@ export const AdminMarketplaceBanners = () => {
     saveBanners([...banners, ...newBanners]);
     setBatchUrls('');
     setShowBatchModal(false);
-    toast.success(`${newBanners.length} banners criados!`);
+    toast.success(`${newBanners.length} banners criados — clique em Publicar para aplicar`);
   };
 
   const updateBanner = () => {
@@ -105,10 +153,19 @@ export const AdminMarketplaceBanners = () => {
     const updated = banners.map(b => b.id === editingBanner.id ? editingBanner : b);
     saveBanners(updated);
     setEditingBanner(null);
-    toast.success('Banner atualizado!');
+    toast.success('Banner atualizado — clique em Publicar para aplicar');
   };
 
   const activeCount = banners.filter(b => b.active).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+        <span className="ml-3 text-gray-400">Carregando banners...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -123,13 +180,11 @@ export const AdminMarketplaceBanners = () => {
         </div>
       <div className="flex gap-2">
           <Button
-            onClick={() => {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(banners));
-              window.dispatchEvent(new Event(EVENT_KEY));
-              toast.success('✅ Banners publicados com sucesso! Alterações visíveis no Marketplace.');
-            }}
+            onClick={publishBanners}
+            disabled={isSaving}
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold animate-pulse hover:animate-none"
           >
+            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             🚀 Publicar Banners
           </Button>
           <Dialog open={showBatchModal} onOpenChange={setShowBatchModal}>
@@ -250,7 +305,6 @@ export const AdminMarketplaceBanners = () => {
             {banners.map((banner, index) => (
               <div key={banner.id} className="bg-gray-800 rounded-lg border border-gray-700 p-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                  {/* Preview */}
                   <div className="relative w-full md:w-64 aspect-[3/1] rounded overflow-hidden flex-shrink-0 border border-gray-600">
                     <img src={banner.src} alt={banner.alt} className="w-full h-full object-contain bg-black" />
                     <div className="absolute bottom-1 left-1 bg-black/70 text-[10px] text-gray-300 px-1.5 py-0.5 rounded font-mono">
@@ -261,7 +315,6 @@ export const AdminMarketplaceBanners = () => {
                     </div>
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>

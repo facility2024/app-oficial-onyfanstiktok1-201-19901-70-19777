@@ -321,6 +321,9 @@ const Auth = () => {
       
       if (error) throw error;
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) saveSessionMeta(user.id);
+      
       toast.success('Login realizado com sucesso!');
       const returnTo = localStorage.getItem('returnTo') || '/app';
       localStorage.removeItem('returnTo');

@@ -34,7 +34,10 @@ const ExclusividadeLogin = () => {
     <div
       className="min-h-screen w-full flex items-center justify-center relative"
       style={{
-        background: 'linear-gradient(135deg, #7CB342 0%, #558B2F 35%, #C4842E 70%, #8B4513 100%)',
+        backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/material%20coconudi/destbard.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
       }}
     >
       <div className="absolute inset-0 bg-black/30" />

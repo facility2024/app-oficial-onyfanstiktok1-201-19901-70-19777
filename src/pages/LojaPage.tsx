@@ -19,31 +19,11 @@ const products = Array.from({ length: 29 }, (_, i) => {
 const LojaPage = () => {
   const navigate = useNavigate();
 
-  // Fix mobile scroll - override global body fixed position
+  // Fix mobile scroll - add allow-scroll class to html
   React.useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevHtmlHeight = html.style.height;
-    const prevBodyOverflow = body.style.overflow;
-    const prevBodyPosition = body.style.position;
-    const prevBodyHeight = body.style.height;
-    const prevBodyWidth = body.style.width;
-
-    html.style.overflow = 'auto';
-    html.style.height = 'auto';
-    body.style.overflow = 'auto';
-    body.style.position = 'relative';
-    body.style.height = 'auto';
-    body.style.width = '100%';
-
+    document.documentElement.classList.add('allow-scroll');
     return () => {
-      html.style.overflow = prevHtmlOverflow;
-      html.style.height = prevHtmlHeight;
-      body.style.overflow = prevBodyOverflow;
-      body.style.position = prevBodyPosition;
-      body.style.height = prevBodyHeight;
-      body.style.width = prevBodyWidth;
+      document.documentElement.classList.remove('allow-scroll');
     };
   }, []);
 

@@ -57,6 +57,7 @@ const App = () => (
       <Sonner />
       <OfflineHandler />
       <UserLocationTracker />
+      <SessionManager />
       <BrowserRouter>
         <Routes>
           {/* Splash Screen como HOME */}

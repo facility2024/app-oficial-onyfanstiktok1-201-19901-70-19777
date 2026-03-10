@@ -59,7 +59,9 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
       // Atualizar modelos com status online do chat panel
       const modelsWithChatStatus = (modelsData || []).map((m: any) => ({
         ...m,
-        is_live: chatPanelsMap[m.id] || false
+        followers_count: m.followers_count ?? 0,
+        is_live: chatPanelsMap[m.id] || false,
+        is_verified: m.is_verified ?? false,
       }));
 
       // Buscar criadores (via user_roles)

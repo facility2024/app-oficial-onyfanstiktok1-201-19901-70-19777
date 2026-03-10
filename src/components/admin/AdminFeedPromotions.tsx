@@ -564,9 +564,52 @@ export const AdminFeedPromotions = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
+            <div className="relative">
               <Label>Nome de Exibição *</Label>
-              <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="Ex: mia_saaoud" className={modalInputClass} />
+              <Input
+                ref={inputRef}
+                value={form.display_name}
+                onChange={(e) => {
+                  setForm({ ...form, display_name: e.target.value });
+                  searchEntities(e.target.value);
+                }}
+                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                placeholder="Digite para buscar modelo/criadora..."
+                className={modalInputClass}
+                autoComplete="off"
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div ref={suggestionsRef} className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {suggestions.map((s) => (
+                    <button
+                      key={`${s.type}-${s.id}`}
+                      type="button"
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 text-left transition-colors"
+                      onClick={() => {
+                        setForm({
+                          ...form,
+                          display_name: s.name,
+                          avatar_url: s.avatar_url || form.avatar_url,
+                          model_id: s.id,
+                        } as any);
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      {s.avatar_url ? (
+                        <img src={s.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs text-white">{s.name.charAt(0).toUpperCase()}</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white font-medium truncate">{s.name}</p>
+                      </div>
+                      <Badge variant="outline" className={s.type === 'creator' ? 'text-blue-400 border-blue-500/30 text-[10px]' : 'text-purple-400 border-purple-500/30 text-[10px]'}>
+                        {s.type === 'creator' ? 'Criador' : 'Modelo'}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>

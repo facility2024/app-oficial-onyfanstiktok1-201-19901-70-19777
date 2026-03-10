@@ -19,11 +19,30 @@ const products = Array.from({ length: 29 }, (_, i) => {
 const LojaPage = () => {
   const navigate = useNavigate();
 
-  // Fix mobile scroll - add allow-scroll class to html
+  // Fix mobile scroll - force scrollable on iOS/Android
   React.useEffect(() => {
     document.documentElement.classList.add('allow-scroll');
+    document.body.style.position = 'relative';
+    document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    document.body.style.minHeight = '100vh';
+    document.body.style.touchAction = 'auto';
+    (document.body.style as any).webkitOverflowScrolling = 'touch';
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    document.documentElement.style.position = 'relative';
+
     return () => {
       document.documentElement.classList.remove('allow-scroll');
+      document.body.style.position = '';
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.body.style.minHeight = '';
+      document.body.style.touchAction = '';
+      (document.body.style as any).webkitOverflowScrolling = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.documentElement.style.position = '';
     };
   }, []);
 

@@ -197,8 +197,7 @@ const AdminLoja = () => {
               </Badge>
               <Button
                 size="sm"
-                variant="outline"
-                className="ml-auto text-xs border-white/20 text-white"
+                className="ml-auto text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 onClick={() => window.open(`/loja/${selectedProduct}`, '_blank')}
               >
                 <ExternalLink className="w-3 h-3 mr-1" /> Ver Página

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio } from 'lucide-react';
+import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';

@@ -307,6 +307,55 @@ export const AdminFeedPromotions = () => {
     setForm(prev => ({ ...prev, create_model: true }));
   };
 
+  // Helper: auto-assign 'creator' role if a matching profile exists
+  const autoAssignCreatorRole = async (displayName: string) => {
+    try {
+      const nameLower = displayName.trim().toLowerCase();
+      // Search profiles matching the name
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .ilike('name', `%${nameLower}%`);
+
+      if (!profiles || profiles.length === 0) return;
+
+      // Find exact or closest match
+      const match = profiles.find(p => p.name?.toLowerCase() === nameLower) || profiles[0];
+      if (!match) return;
+
+      // Check if already has creator role
+      const { data: existingRole } = await (supabase as any)
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', match.id)
+        .eq('role', 'creator')
+        .maybeSingle();
+
+      if (existingRole) return; // Already a creator
+
+      // Get admin user_id for granted_by
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Insert creator role
+      const { error } = await (supabase as any)
+        .from('user_roles')
+        .insert({
+          user_id: match.id,
+          role: 'creator',
+          granted_by: user?.id || null,
+          granted_at: new Date().toISOString(),
+        });
+
+      if (!error) {
+        toast.success(`✅ "${match.name}" aprovada como criadora automaticamente!`);
+        queryClient.invalidateQueries({ queryKey: ['creator-applications'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-creators'] });
+      }
+    } catch (err) {
+      console.warn('Auto-assign creator role:', err);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.display_name || !form.media_url) {
       toast.error('Preencha nome e URL da mídia');
@@ -317,7 +366,7 @@ export const AdminFeedPromotions = () => {
       return;
     }
 
-    let modelId = pendingModelData?.generatedId;
+    let modelId = (form as any).model_id || pendingModelData?.generatedId;
 
     // Auto-criar modelo se não existir ainda
     if (!editingId && !modelId && form.display_name.trim()) {
@@ -344,6 +393,9 @@ export const AdminFeedPromotions = () => {
         toast.success(`✅ Modelo "${form.display_name}" criada com ID: ${data.id}`);
       }
     }
+
+    // Auto-assign creator role if matching profile exists
+    await autoAssignCreatorRole(form.display_name);
 
     saveMutation.mutate({
       ...form,

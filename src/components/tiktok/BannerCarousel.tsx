@@ -33,13 +33,28 @@ export const BannerCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [bannerImages, setBannerImages] = useState<BannerImage[]>(loadBanners);
 
+  // Force re-read localStorage on every mount
+  useEffect(() => {
+    setBannerImages(loadBanners());
+  }, []);
+
   useEffect(() => {
     const handleUpdate = () => setBannerImages(loadBanners());
     window.addEventListener(EVENT_KEY, handleUpdate);
     window.addEventListener('storage', handleUpdate);
+    
+    // Re-read when tab becomes visible again
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        setBannerImages(loadBanners());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    
     return () => {
       window.removeEventListener(EVENT_KEY, handleUpdate);
       window.removeEventListener('storage', handleUpdate);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 

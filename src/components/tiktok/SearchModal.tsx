@@ -211,7 +211,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
                     </div>
                     <p className="text-white/60 text-sm">@{model.username}</p>
                     <p className="text-white/50 text-xs">
-                      {model.followers_count.toLocaleString()} seguidores
+                      {(model.followers_count || 0).toLocaleString()} seguidores
                     </p>
                   </div>
 

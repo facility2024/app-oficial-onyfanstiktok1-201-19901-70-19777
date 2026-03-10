@@ -648,7 +648,48 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         </Card>
       )}
 
-      {/* External Cadastros (from cadastro_modelos table) */}
+      {/* Criadoras de Promoção (models com is_promo_creator) */}
+      {promoCreators.length > 0 && (
+        <Card className="border-pink-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              🎬 Criadoras de Promoção (Feed)
+              <Badge variant="secondary" className="bg-pink-500/10 text-pink-500">{promoCreators.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Criadoras registradas automaticamente ao criar promoções no feed. Já aprovadas e ativas.
+            </p>
+            <div className="space-y-3">
+              {promoCreators.map(creator => (
+                <Card key={creator.id} className={`bg-card/50 border-pink-500/20 ${!creator.is_active ? 'opacity-60' : ''}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        {creator.avatar_url && (
+                          <img src={creator.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        )}
+                        <div>
+                          <p className="font-semibold">{creator.name}</p>
+                          <p className="text-sm text-muted-foreground">🎭 @{creator.username}</p>
+                          <p className="text-xs text-muted-foreground">📅 {new Date(creator.created_at).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={creator.is_active ? 'bg-green-600' : 'bg-red-600'}>
+                          {creator.is_active ? '✅ Ativa' : '❌ Inativa'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {externalCadastros.length > 0 && (
         <Card className="border-orange-500/30">
           <CardHeader>

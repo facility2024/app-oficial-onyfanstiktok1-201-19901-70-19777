@@ -368,7 +368,7 @@ export const AdminFeedPromotions = () => {
 
     let modelId = (form as any).model_id || pendingModelData?.generatedId;
 
-    // Auto-criar modelo se não existir ainda
+    // Auto-criar modelo se não existir ainda (nova promoção)
     if (!editingId && !modelId && form.display_name.trim()) {
       const generatedId = crypto.randomUUID();
       const username = form.display_name.trim().toLowerCase().replace(/\s+/g, '_');
@@ -391,6 +391,43 @@ export const AdminFeedPromotions = () => {
       } else {
         modelId = data.id;
         setPendingModelData({ username, generatedId });
+        toast.success(`✅ Modelo "${form.display_name}" criada e aprovada como criadora!`);
+      }
+    }
+
+    // Ao EDITAR: atualizar modelo existente com is_promo_creator e novo nome
+    if (editingId && modelId && form.display_name.trim()) {
+      await (supabase as any)
+        .from('models')
+        .update({
+          name: form.display_name.trim(),
+          username: form.display_name.trim().toLowerCase().replace(/\s+/g, '_'),
+          avatar_url: form.avatar_url || undefined,
+          is_promo_creator: true,
+        })
+        .eq('id', modelId);
+    }
+
+    // Ao EDITAR sem model_id: criar modelo novo com is_promo_creator
+    if (editingId && !modelId && form.display_name.trim()) {
+      const generatedId = crypto.randomUUID();
+      const username = form.display_name.trim().toLowerCase().replace(/\s+/g, '_');
+
+      const { data, error } = await (supabase as any)
+        .from('models')
+        .insert({
+          id: generatedId,
+          username,
+          name: form.display_name.trim(),
+          avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+          is_active: true,
+          is_promo_creator: true,
+        })
+        .select('id')
+        .single();
+
+      if (!error && data) {
+        modelId = data.id;
         toast.success(`✅ Modelo "${form.display_name}" criada e aprovada como criadora!`);
       }
     }

@@ -205,6 +205,8 @@ export const AdminDashboard = () => {
         return <AdminModelChatPanels />;
       case 'ads':
         return <AdminAds />;
+      case 'marketplace-banners':
+        return <AdminMarketplaceBanners />;
       case 'promo-ads':
         return <AdminPromoAds />;
       case 'feed-promotions':

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { FileText, Search, CheckCircle, XCircle, Clock, RefreshCw, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,12 +61,33 @@ export const AdminWebhookLogs = () => {
         </div>
       </div>
 
-      {/* Info Card */}
-      <Card className="bg-blue-900/20 border-blue-500/30">
-        <CardContent className="p-4">
-          <p className="text-sm text-blue-300">
-            💡 O sistema de webhooks foi limpo. Para configurar uma nova integração de pagamento, 
-            configure um novo webhook ou use a ativação manual de VIPs no painel de usuários VIP.
+      {/* Webhook URL Card */}
+      <Card className="bg-green-900/20 border-green-500/30">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-400" />
+            <p className="text-sm font-semibold text-green-300">
+              🔗 URL do Webhook de Pagamento (cole no seu gateway)
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 bg-black/40 text-green-400 text-xs p-3 rounded-lg break-all select-all">
+              {`https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/payment-webhook`}
+            </code>
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white shrink-0"
+              onClick={() => {
+                navigator.clipboard.writeText('https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/payment-webhook');
+                toast.success('URL copiada!');
+              }}
+            >
+              Copiar
+            </Button>
+          </div>
+          <p className="text-xs text-gray-400">
+            Configure esta URL no seu gateway de pagamento (Hoopay, etc). Quando o pagamento for confirmado, 
+            o VIP será ativado automaticamente. O payload deve conter: <code className="text-green-400">email</code>, <code className="text-green-400">name</code> e opcionalmente <code className="text-green-400">plan_type</code> (mensal/trimestral/anual).
           </p>
         </CardContent>
       </Card>

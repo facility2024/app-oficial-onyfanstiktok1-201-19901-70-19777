@@ -39,6 +39,8 @@ import { VideoCallPage } from "./pages/VideoCallPage";
 import AtualizacoesPage from "./pages/AtualizacoesPage";
 import ExclusividadeLogin from "./pages/ExclusividadeLogin";
 import ExclusividadeConteudo from "./pages/ExclusividadeConteudo";
+import LojaPage from "./pages/LojaPage";
+import LojaProdutoPage from "./pages/LojaProdutoPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({

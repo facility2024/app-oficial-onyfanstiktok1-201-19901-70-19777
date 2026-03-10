@@ -25,24 +25,28 @@ export const BannerCarousel = () => {
   useEffect(() => {
     const loadBanners = async () => {
       try {
+        console.log('🎯 BannerCarousel: Loading banners from Supabase...');
         const { data, error } = await supabase
           .from('admin_settings')
           .select('setting_value')
           .eq('setting_key', SETTING_KEY)
           .maybeSingle();
 
+        console.log('🎯 BannerCarousel result:', { data, error });
+
         if (!error && data?.setting_value) {
           const parsed = data.setting_value as unknown as Array<{ src: string; alt: string; active?: boolean }>;
           if (Array.isArray(parsed)) {
             const activeBanners = parsed.filter(b => b.active !== false);
+            console.log('🎯 BannerCarousel: Active banners found:', activeBanners.length);
             if (activeBanners.length > 0) {
               setBannerImages(activeBanners);
               return;
             }
           }
         }
-      } catch {
-        // fallback to defaults
+      } catch (err) {
+        console.error('🎯 BannerCarousel error:', err);
       }
       setBannerImages(defaultBannerImages);
     };

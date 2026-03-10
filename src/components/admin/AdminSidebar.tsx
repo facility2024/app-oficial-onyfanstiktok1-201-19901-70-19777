@@ -84,6 +84,7 @@ const navigationGroups = [
   {
     label: 'Negócios',
     items: [
+      { id: 'loja', label: 'Nossa Loja', icon: Store },
       { id: 'marketplace', label: 'Marketplace', icon: Store },
       { id: 'physical-products', label: 'Produtos Físicos', icon: Store },
       { id: 'local-businesses', label: 'Comércios Locais', icon: MapPin },

@@ -21,6 +21,14 @@ const LojaProdutoPage = () => {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [videos, setVideos] = useState<ProductVideo[]>([]);
 
+  // Fix mobile scroll on iOS
+  useEffect(() => {
+    document.documentElement.classList.add('allow-scroll');
+    return () => {
+      document.documentElement.classList.remove('allow-scroll');
+    };
+  }, []);
+
   useEffect(() => {
     if (productId >= 1 && productId <= 29) {
       supabase

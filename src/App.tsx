@@ -37,6 +37,8 @@ import SplashScreen from "./pages/SplashScreen";
 import ProfilePage from "./pages/ProfilePage";
 import { VideoCallPage } from "./pages/VideoCallPage";
 import AtualizacoesPage from "./pages/AtualizacoesPage";
+import ExclusividadeLogin from "./pages/ExclusividadeLogin";
+import ExclusividadeConteudo from "./pages/ExclusividadeConteudo";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -160,6 +162,10 @@ const App = () => (
           
           {/* Atualizações Recentes - Changelog */}
           <Route path="/atualizacoes" element={<AtualizacoesPage />} />
+          
+          {/* Área Exclusiva */}
+          <Route path="/exclusividade" element={<ExclusividadeLogin />} />
+          <Route path="/exclusividade/conteudo" element={<ExclusividadeConteudo />} />
           
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={

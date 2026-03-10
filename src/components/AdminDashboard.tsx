@@ -49,6 +49,7 @@ import { AdminLive } from './admin/AdminLive';
 import { AdminPromoAds } from './admin/AdminPromoAds';
 import { AdminCadastros } from './admin/AdminCadastros';
 import { AdminFeedPromotions } from './admin/AdminFeedPromotions';
+import AdminLoja from './admin/AdminLoja';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -207,6 +208,8 @@ export const AdminDashboard = () => {
         return <AdminPromoAds />;
       case 'feed-promotions':
         return <AdminFeedPromotions />;
+      case 'loja':
+        return <AdminLoja />;
       case 'videos':
         return <AdminVideos />;
       case 'genres':

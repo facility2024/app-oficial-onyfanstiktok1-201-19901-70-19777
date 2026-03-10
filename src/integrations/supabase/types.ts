@@ -3041,6 +3041,39 @@ export type Database = {
         }
         Relationships: []
       }
+      loja_product_videos: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          product_id: number
+          sort_order: number | null
+          title: string | null
+          updated_at: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id: number
+          sort_order?: number | null
+          title?: string | null
+          updated_at?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id?: number
+          sort_order?: number | null
+          title?: string | null
+          updated_at?: string | null
+          video_url?: string
+        }
+        Relationships: []
+      }
       magazine_buttons: {
         Row: {
           color: string | null

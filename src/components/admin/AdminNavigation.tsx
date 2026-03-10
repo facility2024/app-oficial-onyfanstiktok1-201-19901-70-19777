@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio } from 'lucide-react';
+import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -21,6 +21,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'users', label: 'Usuários', icon: Users, shortLabel: '👥' },
     { id: 'creators', label: 'Criadores', icon: Sparkles, shortLabel: '✨' },
     { id: 'marketplace', label: 'Marketplace', icon: Settings, shortLabel: '🛒' },
+    { id: 'loja', label: 'Loja', icon: Store, shortLabel: '🏪' },
     { id: 'local-businesses', label: 'Comércios', icon: MapPin, shortLabel: '📍' },
     { id: 'ads', label: 'Anúncios', icon: Megaphone, shortLabel: '📢' },
     { id: 'promo-ads', label: 'Promo Live', icon: Radio, shortLabel: '📺' },

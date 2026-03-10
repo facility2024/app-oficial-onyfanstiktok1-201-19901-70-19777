@@ -9,10 +9,15 @@ import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
-const exclusiveImages = Array.from({ length: 30 }, (_, i) => ({
-  id: `img-${i + 1}`,
-  title: `Conteúdo Exclusivo ${i + 1}`,
-  url: `${CDN_BASE}/${i + 1}.jpg`,
+const availableImageNumbers = [
+  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+  20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+];
+
+const exclusiveImages = availableImageNumbers.map((imageNumber) => ({
+  id: `img-${imageNumber}`,
+  title: `Conteúdo Exclusivo ${imageNumber}`,
+  url: `${CDN_BASE}/${imageNumber}.jpg`,
 }));
 
 const ExclusividadeConteudo = () => {

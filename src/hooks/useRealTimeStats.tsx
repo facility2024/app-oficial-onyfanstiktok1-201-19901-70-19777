@@ -42,8 +42,8 @@ export const useRealTimeStats = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Refs para controlar intervalos e evitar duplicações
-  const statsIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const statsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cleanupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isInitialized = useRef(false);
   const isFetching = useRef(false);
   const lastFetchTime = useRef(0);

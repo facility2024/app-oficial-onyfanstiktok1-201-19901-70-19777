@@ -45,7 +45,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const videoRef = useRef<HTMLVideoElement>(null);
     const retryCountRef = useRef(0);
     const maxRetries = 5;
-    const autoRetryTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const autoRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
 

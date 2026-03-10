@@ -22,7 +22,7 @@ interface UserRecord {
 export const UserAddressLog = () => {
   const [records, setRecords] = useState<UserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRecords = async () => {
     try {

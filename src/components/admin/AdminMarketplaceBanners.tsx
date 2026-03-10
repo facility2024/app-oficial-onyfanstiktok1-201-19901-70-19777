@@ -121,7 +121,17 @@ export const AdminMarketplaceBanners = () => {
             <p className="text-gray-400 text-sm">Gerencie os banners do carrossel do Marketplace</p>
           </div>
         </div>
-        <div className="flex gap-2">
+      <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(banners));
+              window.dispatchEvent(new Event(EVENT_KEY));
+              toast.success('✅ Banners publicados com sucesso! Alterações visíveis no Marketplace.');
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold animate-pulse hover:animate-none"
+          >
+            🚀 Publicar Banners
+          </Button>
           <Dialog open={showBatchModal} onOpenChange={setShowBatchModal}>
             <DialogTrigger asChild>
               <Button className="bg-amber-600 hover:bg-amber-700 text-white">

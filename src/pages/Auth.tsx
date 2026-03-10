@@ -279,6 +279,7 @@ const Auth = () => {
       
       // Se confirmação de email está desabilitada, já vai ter sessão
       if (data.session) {
+        saveSessionMeta(data.user!.id);
         toast.success('Conta criada com sucesso!');
         const returnTo = localStorage.getItem('returnTo') || '/app';
         localStorage.removeItem('returnTo');

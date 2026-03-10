@@ -6,7 +6,7 @@ import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
-const products = Array.from({ length: 30 }, (_, i) => {
+const products = Array.from({ length: 29 }, (_, i) => {
   const num = i + 1;
   const fileName = num < 10 ? `0${num}` : `${num}`;
   return {

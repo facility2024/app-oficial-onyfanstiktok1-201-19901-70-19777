@@ -354,23 +354,25 @@ export const TikTokApp = () => {
   useEffect(() => {
     if (videos.length === 0 || promotions.length === 0) return;
 
-    // Não injetar se já tem promo nesse bloco atual
+    // Não injetar se já tem promos — evita loop infinito
     if (videos.some(v => v.id.startsWith('promo-'))) return;
 
     const interval = promotions[0]?.position_interval || 5;
-    const newVideos = [...videos];
-    let inserted = 0;
+
+    // Separar apenas vídeos reais (sem promos)
+    const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
+    const result: any[] = [];
     let promoIdx = 0;
 
-    // Injetar promos a cada `interval` vídeos reais ao longo de TODO o feed
-    let realCount = 0;
-    for (let i = 0; i < newVideos.length + inserted; i++) {
-      // Calcular posição onde inserir a próxima promo
-      const insertPos = (promoIdx + 1) * interval + promoIdx;
-      if (i === insertPos && promoIdx < 500) { // Limite de segurança
+    // Lógica limpa: a cada `interval` vídeos reais, inserir 1 promo
+    for (let i = 0; i < realVideos.length; i++) {
+      result.push(realVideos[i]);
+
+      // Após cada bloco de `interval` vídeos reais, inserir 1 promo
+      if ((i + 1) % interval === 0 && promotions.length > 0) {
         const promo = promotions[promoIdx % promotions.length];
         const fakeVideo: any = {
-          id: `promo-${promo.id}-${promoIdx}`,
+          id: `promo-${promo.id}-pos${i}`,
           title: promo.title || promo.display_name,
           description: promo.description || '',
           video_url: promo.media_url,
@@ -400,15 +402,14 @@ export const TikTokApp = () => {
             posting_panel_url: promo.cta_link || undefined,
           },
         };
-        newVideos.splice(i, 0, fakeVideo);
-        inserted++;
+        result.push(fakeVideo);
         promoIdx++;
       }
     }
 
-    if (inserted > 0) {
-      console.log('📢 Promos injetadas no feed:', inserted, 'promos em', newVideos.length, 'itens');
-      setVideos(newVideos);
+    if (promoIdx > 0) {
+      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${interval} vídeos (${result.length} total)`);
+      setVideos(result);
     }
   }, [videos, promotions]);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 
-const bannerImages = [
+interface BannerImage {
+  src: string;
+  alt: string;
+  active?: boolean;
+}
+
+const defaultBannerImages: BannerImage[] = [
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/Moedas%20coconudi%20(1).png', alt: 'Moedas Coconudi' },
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/2.jpg', alt: 'Banner 2' },
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/3.jpg', alt: 'Banner 3' },
@@ -9,15 +15,49 @@ const bannerImages = [
   { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/6.jpg', alt: 'Banner 6' },
 ];
 
+const STORAGE_KEY = 'marketplace_banners';
+const EVENT_KEY = 'marketplace_banners_updated';
+
+const loadBanners = (): BannerImage[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Array<{ src: string; alt: string; active?: boolean }>;
+      return parsed.filter(b => b.active !== false);
+    }
+  } catch {}
+  return defaultBannerImages;
+};
+
 export const BannerCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [bannerImages, setBannerImages] = useState<BannerImage[]>(loadBanners);
 
   useEffect(() => {
+    const handleUpdate = () => setBannerImages(loadBanners());
+    window.addEventListener(EVENT_KEY, handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener(EVENT_KEY, handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (bannerImages.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % bannerImages.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [bannerImages.length]);
+
+  useEffect(() => {
+    if (currentIndex >= bannerImages.length && bannerImages.length > 0) {
+      setCurrentIndex(0);
+    }
+  }, [bannerImages.length, currentIndex]);
+
+  if (bannerImages.length === 0) return null;
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl shadow-lg shadow-black/30">

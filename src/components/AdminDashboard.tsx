@@ -44,6 +44,7 @@ import { AdminModelSubscriptions } from './admin/AdminModelSubscriptions';
 import { AdminAffiliates } from './admin/AdminAffiliates';
 import { AdminVideoCall } from './admin/AdminVideoCall';
 import { AdminAds } from './admin/AdminAds';
+import { AdminMarketplaceBanners } from './admin/AdminMarketplaceBanners';
 import { AdminPhysicalProducts } from './admin/AdminPhysicalProducts';
 import { AdminLive } from './admin/AdminLive';
 import { AdminPromoAds } from './admin/AdminPromoAds';
@@ -204,6 +205,8 @@ export const AdminDashboard = () => {
         return <AdminModelChatPanels />;
       case 'ads':
         return <AdminAds />;
+      case 'marketplace-banners':
+        return <AdminMarketplaceBanners />;
       case 'promo-ads':
         return <AdminPromoAds />;
       case 'feed-promotions':

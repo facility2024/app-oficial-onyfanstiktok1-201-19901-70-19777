@@ -3871,6 +3871,7 @@ export type Database = {
           is_active: boolean
           is_live: boolean
           is_premium: boolean
+          is_promo_creator: boolean | null
           is_verified: boolean
           likes_count: number
           name: string
@@ -3902,6 +3903,7 @@ export type Database = {
           is_active?: boolean
           is_live?: boolean
           is_premium?: boolean
+          is_promo_creator?: boolean | null
           is_verified?: boolean
           likes_count?: number
           name: string
@@ -3933,6 +3935,7 @@ export type Database = {
           is_active?: boolean
           is_live?: boolean
           is_premium?: boolean
+          is_promo_creator?: boolean | null
           is_verified?: boolean
           likes_count?: number
           name?: string

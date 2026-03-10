@@ -38,11 +38,10 @@ const ExclusividadeConteudo = () => {
     try {
       const { data, error } = await supabase
         .from('videos')
-        .select('id, title, thumbnail_url, video_url, views_count, likes_count, model_id, creator_id')
+        .select('id, title, thumbnail_url, video_url, views_count, likes_count')
         .eq('is_active', true)
-        .in('access_level', ['premium', 'private'])
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(20) as any;
 
       if (!error && data) {
         setVideos(data.map((v: any) => ({

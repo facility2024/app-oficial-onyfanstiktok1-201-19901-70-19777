@@ -163,6 +163,10 @@ const App = () => (
           {/* Atualizações Recentes - Changelog */}
           <Route path="/atualizacoes" element={<AtualizacoesPage />} />
           
+          {/* Área Exclusiva */}
+          <Route path="/exclusividade" element={<ExclusividadeLogin />} />
+          <Route path="/exclusividade/conteudo" element={<ExclusividadeConteudo />} />
+          
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={
             <AdminRoute>

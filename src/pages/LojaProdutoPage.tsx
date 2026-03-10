@@ -112,10 +112,16 @@ const LojaProdutoPage = () => {
               <button
                 key={video.id}
                 onClick={() => setActiveVideo(video.video_url)}
-                className="group relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 hover:border-amber-400/50 transition-all"
+                className="group relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black hover:border-amber-400/50 transition-all"
               >
-                <img src={posterImg} alt="" className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity" />
-                <div className="absolute inset-0 flex items-center justify-center">
+                <video
+                  src={video.video_url}
+                  preload="metadata"
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center border border-white/20 group-hover:bg-red-600 transition-colors">
                     <Play className="w-4 h-4 text-white ml-0.5" />
                   </div>

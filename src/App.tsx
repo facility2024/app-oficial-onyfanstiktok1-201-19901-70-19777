@@ -169,6 +169,10 @@ const App = () => (
           <Route path="/exclusividade" element={<ExclusividadeLogin />} />
           <Route path="/exclusividade/conteudo" element={<ExclusividadeConteudo />} />
           
+          {/* Loja */}
+          <Route path="/loja" element={<LojaPage />} />
+          <Route path="/loja/:id" element={<LojaProdutoPage />} />
+          
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={
             <AdminRoute>

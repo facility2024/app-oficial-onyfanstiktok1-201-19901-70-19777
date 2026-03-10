@@ -121,12 +121,14 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
   const filteredModels = models.filter(model => {
     if (!searchQuery.trim()) return true;
     
-    const words = searchQuery.toLowerCase().trim().split(/\s+/);
+    const query = searchQuery.toLowerCase().trim();
     const name = (model.name || '').toLowerCase();
     const username = (model.username || '').toLowerCase();
-    const combined = `${name} ${username}`;
     
-    return words.every(word => combined.includes(word));
+    // Busca flexível: verifica se qualquer parte do query está no nome/username
+    // ou se qualquer parte do nome/username contém o query
+    return name.includes(query) || username.includes(query) ||
+      query.split(/\s+/).some(word => name.includes(word) || username.includes(word));
   });
 
   if (!isOpen) return null;

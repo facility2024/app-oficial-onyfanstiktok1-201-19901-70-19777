@@ -27,7 +27,7 @@ const ExclusividadeLogin = () => {
     setLoading(true);
     sessionStorage.setItem('exclusividade_user', JSON.stringify({ name: name.trim(), email: email.trim() }));
     toast.success('Bem-vindo(a) à área exclusiva!');
-    navigate('/exclusividade/conteudo');
+    navigate('/loja');
   };
 
   return (

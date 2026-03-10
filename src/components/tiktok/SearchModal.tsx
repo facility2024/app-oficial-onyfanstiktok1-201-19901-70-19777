@@ -38,7 +38,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
         .from('models')
         .select('*')
         .eq('is_active', true)
-        .order('followers_count', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (modelsError) throw modelsError;
 

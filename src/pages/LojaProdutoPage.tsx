@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, ThumbsUp, Share2, MessageCircle, ShoppingBag, Package, Eye, X } from 'lucide-react';
+import { ArrowLeft, Play, ThumbsUp, Share2, MessageCircle, ShoppingBag, Package, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
-// Placeholder para vídeos — será preenchido depois com URLs reais do Bunny CDN
-const productVideos: Record<number, string | null> = {};
-
-// Simula múltiplos vídeos por produto (thumbnails minimalistas)
-const getProductVideoList = (productId: number) => {
-  const videos = productVideos[productId];
-  if (!videos) return [];
-  return [{ id: 1, url: videos, title: `Vídeo ${productId}` }];
-};
+interface ProductVideo {
+  id: string;
+  video_url: string;
+  title: string | null;
+}
 
 const LojaProdutoPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +19,21 @@ const LojaProdutoPage = () => {
   const productId = Number(id);
   const fileName = productId < 10 ? `0${productId}` : `${productId}`;
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const [videos, setVideos] = useState<ProductVideo[]>([]);
+
+  useEffect(() => {
+    if (productId >= 1 && productId <= 29) {
+      supabase
+        .from('loja_product_videos')
+        .select('id, video_url, title')
+        .eq('product_id', productId)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .then(({ data }) => {
+          if (data) setVideos(data as any[]);
+        });
+    }
+  }, [productId]);
 
   if (!productId || productId < 1 || productId > 29) {
     return (
@@ -36,7 +48,6 @@ const LojaProdutoPage = () => {
     );
   }
 
-  const videoUrl = productVideos[productId] || null;
   const posterImg = `${CDN_BASE}/${fileName}.jpg`;
 
   return (
@@ -60,7 +71,7 @@ const LojaProdutoPage = () => {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-5 space-y-5">
-        {/* Imagem principal do produto */}
+        {/* Imagem principal */}
         <div className="rounded-xl overflow-hidden border border-white/10">
           <img
             src={posterImg}
@@ -70,7 +81,7 @@ const LojaProdutoPage = () => {
           />
         </div>
 
-        {/* Título + info */}
+        {/* Título */}
         <div>
           <h1 className="text-lg font-bold text-white">Produto {productId} — CocoNudi Exclusive</h1>
           <p className="text-white/50 text-xs mt-1">Publicado recentemente</p>
@@ -89,10 +100,10 @@ const LojaProdutoPage = () => {
         <div>
           <p className="text-white/80 text-sm font-semibold mb-3">Vídeos do Produto</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {/* Thumbnail de vídeo — minimalista */}
-            {videoUrl ? (
+            {videos.length > 0 ? videos.map((video, idx) => (
               <button
-                onClick={() => setActiveVideo(videoUrl)}
+                key={video.id}
+                onClick={() => setActiveVideo(video.video_url)}
                 className="group relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 hover:border-amber-400/50 transition-all"
               >
                 <img src={posterImg} alt="" className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity" />
@@ -101,10 +112,16 @@ const LojaProdutoPage = () => {
                     <Play className="w-4 h-4 text-white ml-0.5" />
                   </div>
                 </div>
-                <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">0:00</span>
+                {video.title && (
+                  <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded truncate max-w-[90%]">
+                    {video.title}
+                  </span>
+                )}
+                <span className="absolute top-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                  {idx + 1}
+                </span>
               </button>
-            ) : (
-              /* Placeholder quando não há vídeo ainda */
+            )) : (
               <div className="relative aspect-video rounded-lg overflow-hidden border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-1.5">
                 <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
                   <Play className="w-4 h-4 text-white/40 ml-0.5" />
@@ -144,17 +161,13 @@ const LojaProdutoPage = () => {
         </Button>
       </div>
 
-      {/* ===== POP-UP de vídeo estilo YouTube ===== */}
+      {/* Pop-up de vídeo estilo YouTube */}
       {activeVideo && (
         <div
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
           onClick={() => setActiveVideo(null)}
         >
-          <div
-            className="relative w-full max-w-4xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botão fechar */}
+          <div className="relative w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setActiveVideo(null)}
               className="absolute -top-10 right-0 text-white/70 hover:text-white"
@@ -162,7 +175,6 @@ const LojaProdutoPage = () => {
               <X className="w-7 h-7" />
             </button>
 
-            {/* Player 16:9 */}
             <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
               <video
                 src={activeVideo}
@@ -174,7 +186,6 @@ const LojaProdutoPage = () => {
               />
             </div>
 
-            {/* Info abaixo do vídeo no pop-up */}
             <div className="mt-3 px-1">
               <h2 className="text-white font-bold text-base">Produto {productId}</h2>
               <div className="flex items-center gap-3 mt-2">

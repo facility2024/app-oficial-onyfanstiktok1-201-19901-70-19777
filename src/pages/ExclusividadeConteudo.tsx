@@ -71,24 +71,25 @@ const ExclusividadeConteudo = () => {
           {exclusiveImages.map((img) => (
             <Card
               key={img.id}
-              className="group cursor-pointer border-0 bg-white/5 hover:bg-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+              className="group cursor-pointer border border-white/10 bg-white/5 hover:bg-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
               onClick={() => setSelectedImage(img)}
             >
-              <div className="relative aspect-[9/16]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-black/20">
                 <img
                   src={img.url}
                   alt={img.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
                   loading="lazy"
                   onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
                 />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
+                <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <Badge className="absolute top-2 right-2 bg-yellow-500/80 text-white text-[10px] border-0">
                   Exclusivo
                 </Badge>
               </div>
-              <CardContent className="p-3">
-                <p className="text-white text-sm font-medium truncate">{img.title}</p>
+              <CardContent className="p-3 space-y-1">
+                <p className="text-white text-sm font-semibold leading-tight line-clamp-2">{img.title}</p>
+                <p className="text-white/60 text-xs">Toque para ampliar</p>
               </CardContent>
             </Card>
           ))}

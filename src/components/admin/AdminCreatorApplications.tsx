@@ -118,10 +118,26 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     }
   };
 
+  const fetchPromoCreators = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('models')
+        .select('id, name, username, avatar_url, is_active, created_at')
+        .eq('is_promo_creator', true)
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setPromoCreators(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar criadoras de promoção:', err);
+    }
+  };
+
   useEffect(() => {
     fetchApplications();
     fetchDirectCreators();
     fetchExternalCadastros();
+    fetchPromoCreators();
     const channel = supabase
       .channel('creator_applications_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, (payload) => {

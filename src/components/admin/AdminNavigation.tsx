@@ -21,6 +21,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'users', label: 'Usuários', icon: Users, shortLabel: '👥' },
     { id: 'creators', label: 'Criadores', icon: Sparkles, shortLabel: '✨' },
     { id: 'marketplace', label: 'Marketplace', icon: Settings, shortLabel: '🛒' },
+    { id: 'loja', label: 'Loja', icon: Store, shortLabel: '🏪' },
     { id: 'local-businesses', label: 'Comércios', icon: MapPin, shortLabel: '📍' },
     { id: 'ads', label: 'Anúncios', icon: Megaphone, shortLabel: '📢' },
     { id: 'promo-ads', label: 'Promo Live', icon: Radio, shortLabel: '📺' },

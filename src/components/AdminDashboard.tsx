@@ -208,6 +208,8 @@ export const AdminDashboard = () => {
         return <AdminPromoAds />;
       case 'feed-promotions':
         return <AdminFeedPromotions />;
+      case 'loja':
+        return <AdminLoja />;
       case 'videos':
         return <AdminVideos />;
       case 'genres':

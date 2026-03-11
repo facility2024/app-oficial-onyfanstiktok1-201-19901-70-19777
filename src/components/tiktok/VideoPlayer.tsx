@@ -121,7 +121,7 @@ export const VideoPlayer = React.memo(forwardRef<HTMLVideoElement, VideoPlayerPr
             setIsInView(visible);
           });
         },
-        { root: null, rootMargin: '0px', threshold: [0, 0.6, 1] }
+        { root: null, rootMargin: '200px 0px', threshold: [0, 0.6, 1] }
       );
       observer.observe(el);
       return () => observer.disconnect();

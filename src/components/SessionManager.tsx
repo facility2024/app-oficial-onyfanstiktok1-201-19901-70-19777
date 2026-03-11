@@ -2,13 +2,25 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SESSION_KEY = 'coconudi_session_meta';
-const SESSION_DURATION_DAYS = 14;
+const DEVICE_KEY = 'coconudi_device_id';
+const SESSION_DURATION_DAYS = 365; // Praticamente permanente - 1 ano
 
 interface SessionMeta {
   createdAt: number;
   deviceType: 'mobile' | 'desktop';
   userId: string;
+  deviceId: string;
 }
+
+// Gerar um ID único para este dispositivo (persistente)
+const getDeviceId = (): string => {
+  let deviceId = localStorage.getItem(DEVICE_KEY);
+  if (!deviceId) {
+    deviceId = 'dev-' + crypto.randomUUID();
+    localStorage.setItem(DEVICE_KEY, deviceId);
+  }
+  return deviceId;
+};
 
 const detectDeviceType = (): 'mobile' | 'desktop' => {
   const ua = navigator.userAgent || '';
@@ -31,9 +43,10 @@ export const saveSessionMeta = (userId: string) => {
     createdAt: Date.now(),
     deviceType: detectDeviceType(),
     userId,
+    deviceId: getDeviceId(),
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(meta));
-  console.log(`✅ Sessão registrada (${meta.deviceType}) - válida por ${SESSION_DURATION_DAYS} dias`);
+  console.log(`✅ Sessão registrada (${meta.deviceType}, device: ${meta.deviceId}) - login permanente neste dispositivo`);
 };
 
 export const SessionManager = () => {

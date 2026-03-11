@@ -1309,7 +1309,7 @@ export const TikTokApp = () => {
           });
         });
 
-        // 2) Definir ordem dos modelos e criadores (prioriza novos, hoje, interação)
+        // 2) Definir ordem dos modelos e criadores (prioriza novos, hoje, interação, MAIS VÍDEOS)
         const modelIdsWithVideos = Object.keys(videosByModel);
         const modelScores: Record<string, number> = {};
         modelIdsWithVideos.forEach(mid => {
@@ -1319,10 +1319,11 @@ export const TikTokApp = () => {
           const isNewModel = newModelIds.has(mid);
           const modelInfo = modelsData?.find((m: any) => m.id === mid) || creatorsData?.find((c: any) => c.id === mid);
           let score = 0;
-          // 🆕 Modelos novos têm prioridade máxima no feed
           if (isNewModel) score += 2000;
           if (hasToday) score += 1000;
           if (interacted) score += 500;
+          // 🆕 Modelos com MAIS vídeos têm prioridade (mantém fila mais longa)
+          score += queue.length * 10;
           score += (modelInfo?.followers_count || 0) * 0.001;
           score += Math.random() * 5;
           modelScores[mid] = score;
@@ -1366,12 +1367,13 @@ export const TikTokApp = () => {
           }
         });
 
-        // 🎯 SEQUÊNCIA FINAL: Posts recentes → Modelos novas → Não-assistidos → Já assistidos
+        // 🎯 SEQUÊNCIA FINAL: Posts recentes → Modelos novas → Não-assistidos (NUNCA assistidos já vistos no início)
+        // Vídeos já assistidos só aparecem quando não houver mais não-assistidos em loadMoreVideos
         const ordered: any[] = [
           ...recentPosts,           // Posts agendados recentes sempre no topo
-          ...newModelVideos,        // 🆕 Vídeos de modelos novas em destaque
-          ...regularUnwatched,      // 🆕 Vídeos ainda não assistidos
-          ...watchedCatalog         // 🆕 Vídeos já assistidos por último
+          ...newModelVideos,        // Vídeos de modelos novas em destaque
+          ...regularUnwatched,      // Vídeos ainda não assistidos
+          // watchedCatalog NÃO entra aqui — só é usado em loadMoreVideos quando acabar os novos
         ];
 
         // 4) Definir estados (carregamento em blocos)

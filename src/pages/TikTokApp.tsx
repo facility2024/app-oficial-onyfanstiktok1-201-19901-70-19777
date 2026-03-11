@@ -2925,13 +2925,10 @@ export const TikTokApp = () => {
           </div>
         </div>
 
-        {/* Hidden preloader for next 3 videos (turbo loading for iOS) */}
-        {[1, 2, 3].map(offset => {
-          const nextVideo = videos[currentVideoIndex + offset];
-          return nextVideo?.video_url ? (
-            <link key={`prefetch-${offset}`} rel="prefetch" href={nextVideo.video_url} as="video" />
-          ) : null;
-        })}
+        {/* Hidden preloader for next video (speeds up decode/start) */}
+        {videos[currentVideoIndex + 1]?.video_url && <video src={videos[currentVideoIndex + 1].video_url} preload="auto" muted playsInline style={{
+        display: 'none'
+      }} />}
 
         {/* Profile Screen */}
         <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={!!chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id]} onVideoSelect={videoId => {

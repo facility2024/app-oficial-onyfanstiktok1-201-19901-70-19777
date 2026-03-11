@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SESSION_KEY = 'coconudi_session_meta';
-const SESSION_DURATION_DAYS = 14;
+const DEVICE_KEY = 'coconudi_device_id';
+const SESSION_DURATION_DAYS = 365; // Praticamente permanente - 1 ano
 
 interface SessionMeta {
   createdAt: number;

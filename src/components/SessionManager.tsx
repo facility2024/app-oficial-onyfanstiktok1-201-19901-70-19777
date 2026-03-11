@@ -9,7 +9,18 @@ interface SessionMeta {
   createdAt: number;
   deviceType: 'mobile' | 'desktop';
   userId: string;
+  deviceId: string;
 }
+
+// Gerar um ID único para este dispositivo (persistente)
+const getDeviceId = (): string => {
+  let deviceId = localStorage.getItem(DEVICE_KEY);
+  if (!deviceId) {
+    deviceId = 'dev-' + crypto.randomUUID();
+    localStorage.setItem(DEVICE_KEY, deviceId);
+  }
+  return deviceId;
+};
 
 const detectDeviceType = (): 'mobile' | 'desktop' => {
   const ua = navigator.userAgent || '';

@@ -351,23 +351,22 @@ export const VideoPlayer = React.memo(forwardRef<HTMLVideoElement, VideoPlayerPr
 
     return (
       <div ref={containerRef} className="relative w-full h-full">
-        {isInView ? (
-          <UniversalVideoPlayer
-            key={video.id}
-            ref={ref}
-            src={(video as any).video_url}
-            isPlaying={isPlaying}
-            isMuted={isMuted}
-            volume={volume}
-            autoPlayOnReady={true}
-            className={locked ? 'blur-sm' : ''}
-            onClick={handleVideoTap}
-            onLoadedData={() => setIsBuffering(false)}
-            onError={() => setIsBuffering(false)}
-          />
-        ) : (
-          <div className="w-full h-full bg-black" />
-        )}
+        {/* Always mount the video element but control via CSS to avoid iOS flickering from mount/unmount */}
+        <UniversalVideoPlayer
+          key={video.id}
+          ref={ref}
+          src={isInView ? (video as any).video_url : ''}
+          poster={(video as any).thumbnail_url}
+          isPlaying={isPlaying && isInView}
+          isMuted={isMuted}
+          volume={volume}
+          autoPlayOnReady={isInView}
+          className={locked ? 'blur-sm' : ''}
+          onClick={handleVideoTap}
+          onLoadedData={() => setIsBuffering(false)}
+          onError={() => setIsBuffering(false)}
+          style={!isInView ? { visibility: 'hidden' } : {}}
+        />
 
         {/* Overlay para vídeo PREMIUM (VIP Global) */}
         {lockedPremium && !showSubscriptionOverlay && (

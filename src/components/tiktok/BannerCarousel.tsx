@@ -42,7 +42,7 @@ export const BannerCarousel = () => {
       } catch (err) {
         console.error('🎯 BannerCarousel error:', err);
       }
-      setBannerImages(defaultBannerImages);
+      // Não setar fallback estático — manter vazio se não há dados do admin
     };
 
     loadBanners();

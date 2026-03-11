@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import ad1 from '@/assets/ads/ad1.png';
-import ad2 from '@/assets/ads/ad2.png';
-import ad3 from '@/assets/ads/ad3.png';
-import ad4 from '@/assets/ads/ad4.png';
-import ad5 from '@/assets/ads/ad5.png';
-
-const imageMap: Record<number, string> = { 1: ad1, 2: ad2, 3: ad3, 4: ad4, 5: ad5 };
+import { supabase } from '@/integrations/supabase/client';
 
 interface StoredAd {
   id: number;
@@ -26,49 +20,39 @@ interface AdCarouselProps {
   location?: 'feed' | 'marketplace' | 'comercios';
 }
 
-const defaultAds: StoredAd[] = [
-  { id: 1, image: ad1, title: 'ASHA CLUB', link: '#', active: true, locations: { feed: true, marketplace: true, comercios: true } },
-  { id: 2, image: ad2, title: 'INNER CLUB', link: '#', active: true, locations: { feed: true, marketplace: true, comercios: true } },
-  { id: 3, image: ad3, title: 'Terça - Realize todos seus fetiches', link: '#', active: true, locations: { feed: true, marketplace: true, comercios: true } },
-  { id: 4, image: ad4, title: 'Quinta - Desfile de Lingerie', link: '#', active: true, locations: { feed: true, marketplace: true, comercios: true } },
-  { id: 5, image: ad5, title: 'O Melhor Night Club de BH', link: '#', active: true, locations: { feed: true, marketplace: true, comercios: true } },
-];
-
 export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [filteredAds, setFilteredAds] = useState<StoredAd[]>(defaultAds);
+  const [filteredAds, setFilteredAds] = useState<StoredAd[]>([]);
 
-  // Reload ads from localStorage periodically to pick up admin edits
   useEffect(() => {
-    const loadAds = () => {
+    const loadAds = async () => {
       try {
-        const stored = localStorage.getItem('admin_ads');
-        const allAds: StoredAd[] = stored ? JSON.parse(stored) : defaultAds;
-        const active = allAds.filter(ad => ad.active);
-        setFilteredAds(active.map(ad => {
-          // Only use bundled image if ad image matches default or is empty
-          const defaultImg = imageMap[ad.id];
-          const isDefaultOrEmpty = !ad.image || ad.image === '#' || ad.image === defaultImg || ad.image.startsWith('/src/assets/');
-          return {
-            ...ad,
-            image: isDefaultOrEmpty && defaultImg ? defaultImg : ad.image,
-          };
-        }));
-      } catch {
-        setFilteredAds(defaultAds);
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'sponsored_ads')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao carregar anúncios:', error);
+          return;
+        }
+
+        if (data?.setting_value) {
+          const allAds = data.setting_value as any as StoredAd[];
+          if (Array.isArray(allAds)) {
+            const active = allAds.filter(ad => ad.active && ad.locations?.[location]);
+            setFilteredAds(active);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar anúncios:', err);
       }
     };
+
     loadAds();
-    const interval = setInterval(loadAds, 3000);
-    window.addEventListener('storage', loadAds);
-    window.addEventListener('ads_updated', loadAds);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', loadAds);
-      window.removeEventListener('ads_updated', loadAds);
-    };
   }, [location]);
 
   useEffect(() => {
@@ -107,9 +91,7 @@ export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
             alt={current.title} 
             className="w-full h-full object-cover rounded-lg"
             onError={(e) => {
-              // Remove broken image ads from localStorage
-              const target = e.currentTarget;
-              target.style.display = 'none';
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
             }}
           />
         </a>

@@ -357,25 +357,28 @@ export const TikTokApp = () => {
     // Não injetar se já tem promos — evita loop infinito
     if (videos.some(v => v.id.startsWith('promo-'))) return;
 
-    const PROMO_INTERVAL = 5; // Rigorosamente 5 vídeos reais, depois 1 anúncio
+    // Usar o intervalo configurado no painel admin (position_interval de cada promo)
+    // Se houver múltiplas promos, usar o menor intervalo como base
+    const adminInterval = Math.max(
+      1,
+      Math.min(...promotions.map(p => p.position_interval || 5))
+    );
 
     // Separar apenas vídeos reais (sem promos)
     const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
     const result: any[] = [];
     let promoIdx = 0;
-    // Track quais promos já foram usadas neste ciclo para evitar repetição imediata
     const usedPromoIds = new Set<string>();
 
-    // Lógica rigorosa: a cada 5 vídeos reais, inserir 1 promo (sem repetir consecutivamente)
     for (let i = 0; i < realVideos.length; i++) {
       result.push(realVideos[i]);
 
-      // Após cada bloco de 5 vídeos reais, inserir 1 promo
-      if ((i + 1) % PROMO_INTERVAL === 0 && promotions.length > 0) {
-        // Selecionar próxima promo que não foi usada recentemente
+      // Respeitar o intervalo definido pelo admin
+      if ((i + 1) % adminInterval === 0 && promotions.length > 0) {
+        // Selecionar próxima promo, respeitando prioridade e evitando repetição
+        // Promos com maior prioridade aparecem primeiro (já vêm ordenadas por priority DESC)
         let selectedPromo = promotions[promoIdx % promotions.length];
         
-        // Se só temos 1 promo, resetar controle de repetição a cada uso
         if (promotions.length > 1) {
           let attempts = 0;
           while (usedPromoIds.has(selectedPromo.id) && attempts < promotions.length) {
@@ -386,7 +389,6 @@ export const TikTokApp = () => {
         }
         
         usedPromoIds.add(selectedPromo.id);
-        // Resetar set quando todas as promos foram usadas
         if (usedPromoIds.size >= promotions.length) {
           usedPromoIds.clear();
         }
@@ -428,7 +430,7 @@ export const TikTokApp = () => {
     }
 
     if (promoIdx > 0) {
-      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${PROMO_INTERVAL} vídeos (${result.length} total)`);
+      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${adminInterval} vídeos (${result.length} total) — intervalo do admin`);
       setVideos(result);
     }
   }, [videos, promotions]);

@@ -356,7 +356,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         <video
           ref={internalRef}
           src={src}
-          poster={poster}
+          poster={isReady ? poster : undefined}
           className={`w-full h-full object-cover ${className}`}
           style={{ backgroundColor: '#000', ...style }}
           autoPlay={false}
@@ -374,6 +374,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           
         />
         
+        {/* Fundo preto enquanto o vídeo não está pronto - impede poster/thumbnail colorido */}
+        {!isReady && !hasError && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+            <div className="w-8 h-8 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          </div>
+        )}
+        
         {/* Botão de play para primeira interação */}
         {needsUserInteraction && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none">
@@ -387,16 +394,16 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           </div>
         )}
         
-        {/* Indicador de carregamento */}
-        {isBuffering && !hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+        {/* Indicador de carregamento (buffering após vídeo pronto) */}
+        {isBuffering && isReady && !hasError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         
         {/* Indicador de erro */}
         {hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
             <div className="text-white text-center p-4">
               <div className="text-3xl mb-2">⚠️</div>
               <div className="text-sm mb-3">Erro ao carregar vídeo</div>

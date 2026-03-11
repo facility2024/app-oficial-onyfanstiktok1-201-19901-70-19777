@@ -537,34 +537,34 @@ export const TikTokApp = () => {
     }
   }, [currentUser, navigate]);
 
-  // Preload adjacent videos for faster navigation
+  // Preload adjacent videos for faster navigation (otimizado)
   useEffect(() => {
     if (videos.length === 0) return;
     const preloadVideo = (index: number) => {
       if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
       const video = videos[index];
-      if (video?.video_url) {
+      if (video?.video_url && !video.id.startsWith('promo-')) {
+        // Usar prefetch (mais leve que preload) para próximos vídeos
         const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'video';
+        link.rel = 'prefetch';
         link.href = video.video_url;
         link.type = 'video/mp4';
         document.head.appendChild(link);
         setPreloadedVideos(prev => new Set(prev).add(index));
 
-        // Clean up after 30 seconds
+        // Clean up after 60 seconds
         setTimeout(() => {
           if (document.head.contains(link)) {
             document.head.removeChild(link);
           }
-        }, 30000);
+        }, 60000);
       }
     };
 
-    // Preload next 2 and previous 1 videos
+    // Preload next 3 videos for instant playback
     preloadVideo(currentVideoIndex + 1);
     preloadVideo(currentVideoIndex + 2);
-    preloadVideo(currentVideoIndex - 1);
+    preloadVideo(currentVideoIndex + 3);
   }, [currentVideoIndex, videos, preloadedVideos]);
 
   // DESABILITADO: Verificação de idade

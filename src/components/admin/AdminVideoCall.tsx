@@ -34,6 +34,9 @@ export const AdminVideoCall = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
+  const [showModelResults, setShowModelResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     model_name: '',
     model_avatar: '',
@@ -45,6 +48,17 @@ export const AdminVideoCall = () => {
     show_in_menu: false,
     selected_model_id: '' as string,
   });
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowModelResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     loadData();

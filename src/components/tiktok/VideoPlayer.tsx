@@ -39,7 +39,7 @@ interface Offer {
   is_active: boolean;
 }
 
-export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
+export const VideoPlayer = React.memo(forwardRef<HTMLVideoElement, VideoPlayerProps>(
   ({ video, isPlaying, isMuted, volume = 0.8, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
     const [doubleTapHeart, setDoubleTapHeart] = useState(false);
     const [lastTap, setLastTap] = useState(0);

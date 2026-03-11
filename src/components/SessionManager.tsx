@@ -43,9 +43,10 @@ export const saveSessionMeta = (userId: string) => {
     createdAt: Date.now(),
     deviceType: detectDeviceType(),
     userId,
+    deviceId: getDeviceId(),
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(meta));
-  console.log(`✅ Sessão registrada (${meta.deviceType}) - válida por ${SESSION_DURATION_DAYS} dias`);
+  console.log(`✅ Sessão registrada (${meta.deviceType}, device: ${meta.deviceId}) - login permanente neste dispositivo`);
 };
 
 export const SessionManager = () => {

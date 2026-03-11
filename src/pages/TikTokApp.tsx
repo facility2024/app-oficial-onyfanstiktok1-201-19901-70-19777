@@ -1367,12 +1367,13 @@ export const TikTokApp = () => {
           }
         });
 
-        // 🎯 SEQUÊNCIA FINAL: Posts recentes → Modelos novas → Não-assistidos → Já assistidos
+        // 🎯 SEQUÊNCIA FINAL: Posts recentes → Modelos novas → Não-assistidos (NUNCA assistidos já vistos no início)
+        // Vídeos já assistidos só aparecem quando não houver mais não-assistidos em loadMoreVideos
         const ordered: any[] = [
           ...recentPosts,           // Posts agendados recentes sempre no topo
-          ...newModelVideos,        // 🆕 Vídeos de modelos novas em destaque
-          ...regularUnwatched,      // 🆕 Vídeos ainda não assistidos
-          ...watchedCatalog         // 🆕 Vídeos já assistidos por último
+          ...newModelVideos,        // Vídeos de modelos novas em destaque
+          ...regularUnwatched,      // Vídeos ainda não assistidos
+          // watchedCatalog NÃO entra aqui — só é usado em loadMoreVideos quando acabar os novos
         ];
 
         // 4) Definir estados (carregamento em blocos)

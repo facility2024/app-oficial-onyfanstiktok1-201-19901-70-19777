@@ -49,7 +49,6 @@ export const AdminVideoCall = () => {
     selected_model_id: '' as string,
   });
 
-  // Close search dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -90,6 +89,7 @@ export const AdminVideoCall = () => {
     });
     setEditingId(null);
     setShowForm(false);
+    setModelSearch('');
   };
 
   const handleSave = async () => {
@@ -136,6 +136,9 @@ export const AdminVideoCall = () => {
     });
     setEditingId(model.id);
     setShowForm(true);
+    // Set search to the selected model name
+    const selected = modelOptions.find(m => m.id === model.selected_model_id);
+    setModelSearch(selected?.name || '');
   };
 
   const handleDelete = async (id: string) => {
@@ -168,14 +171,17 @@ export const AdminVideoCall = () => {
     !modelSearch.trim() || m.name.toLowerCase().includes(modelSearch.toLowerCase())
   );
 
-  const resetFormFull = () => {
-    resetForm();
-    setModelSearch('');
-  };
-
   if (loading) {
     return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500" /></div>;
   }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <Phone className="w-6 h-6 text-pink-400" />
+          Gerenciar Vídeo Chamada
+        </h2>
         <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-pink-600 hover:bg-pink-700">
           <Plus className="w-4 h-4 mr-2" /> Adicionar Modelo
         </Button>
@@ -190,19 +196,44 @@ export const AdminVideoCall = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Select existing model */}
-            <div>
+            {/* Search model with autocomplete */}
+            <div ref={searchRef} className="relative">
               <Label className="text-white/70">Vincular a Modelo Existente</Label>
-              <select
-                value={form.selected_model_id}
-                onChange={(e) => handleSelectModel(e.target.value)}
-                className="w-full mt-1 bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white"
-              >
-                <option value="">Selecione uma modelo (opcional)</option>
-                {modelOptions.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+              <div className="relative mt-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                <Input
+                  value={modelSearch}
+                  onChange={(e) => {
+                    setModelSearch(e.target.value);
+                    setShowModelResults(true);
+                  }}
+                  onFocus={() => setShowModelResults(true)}
+                  placeholder="🔍 Pesquisar modelo pelo nome..."
+                  className="pl-10 bg-gray-800 border-white/10 text-white"
+                />
+              </div>
+              {showModelResults && (
+                <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-white/10 rounded-lg max-h-60 overflow-y-auto shadow-xl">
+                  {filteredModelOptions.length === 0 ? (
+                    <div className="p-3 text-white/50 text-sm text-center">Nenhuma modelo encontrada</div>
+                  ) : (
+                    filteredModelOptions.map((m) => (
+                      <div
+                        key={m.id}
+                        onClick={() => handleSelectModel(m.id)}
+                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-white/10 transition-colors ${form.selected_model_id === m.id ? 'bg-pink-500/20 border-l-2 border-pink-500' : ''}`}
+                      >
+                        <img
+                          src={m.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                          alt={m.name}
+                          className="w-10 h-10 rounded-full object-cover border border-pink-500/50"
+                        />
+                        <span className="text-white font-medium">{m.name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -159,20 +159,23 @@ export const AdminVideoCall = () => {
         model_name: prev.model_name || selected.name,
         model_avatar: prev.model_avatar || selected.avatar_url,
       }));
+      setModelSearch(selected.name);
+      setShowModelResults(false);
     }
+  };
+
+  const filteredModelOptions = modelOptions.filter(m =>
+    !modelSearch.trim() || m.name.toLowerCase().includes(modelSearch.toLowerCase())
+  );
+
+  const resetFormFull = () => {
+    resetForm();
+    setModelSearch('');
   };
 
   if (loading) {
     return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500" /></div>;
   }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Phone className="w-6 h-6 text-pink-400" />
-          Gerenciar Vídeo Chamada
-        </h2>
         <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-pink-600 hover:bg-pink-700">
           <Plus className="w-4 h-4 mr-2" /> Adicionar Modelo
         </Button>

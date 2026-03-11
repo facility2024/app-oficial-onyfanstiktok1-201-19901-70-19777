@@ -357,49 +357,69 @@ export const TikTokApp = () => {
     // Não injetar se já tem promos — evita loop infinito
     if (videos.some(v => v.id.startsWith('promo-'))) return;
 
-    const interval = promotions[0]?.position_interval || 5;
+    const PROMO_INTERVAL = 5; // Rigorosamente 5 vídeos reais, depois 1 anúncio
 
     // Separar apenas vídeos reais (sem promos)
     const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
     const result: any[] = [];
     let promoIdx = 0;
+    // Track quais promos já foram usadas neste ciclo para evitar repetição imediata
+    const usedPromoIds = new Set<string>();
 
-    // Lógica limpa: a cada `interval` vídeos reais, inserir 1 promo
+    // Lógica rigorosa: a cada 5 vídeos reais, inserir 1 promo (sem repetir consecutivamente)
     for (let i = 0; i < realVideos.length; i++) {
       result.push(realVideos[i]);
 
-      // Após cada bloco de `interval` vídeos reais, inserir 1 promo
-      if ((i + 1) % interval === 0 && promotions.length > 0) {
-        const promo = promotions[promoIdx % promotions.length];
+      // Após cada bloco de 5 vídeos reais, inserir 1 promo
+      if ((i + 1) % PROMO_INTERVAL === 0 && promotions.length > 0) {
+        // Selecionar próxima promo que não foi usada recentemente
+        let selectedPromo = promotions[promoIdx % promotions.length];
+        
+        // Se só temos 1 promo, resetar controle de repetição a cada uso
+        if (promotions.length > 1) {
+          let attempts = 0;
+          while (usedPromoIds.has(selectedPromo.id) && attempts < promotions.length) {
+            promoIdx++;
+            selectedPromo = promotions[promoIdx % promotions.length];
+            attempts++;
+          }
+        }
+        
+        usedPromoIds.add(selectedPromo.id);
+        // Resetar set quando todas as promos foram usadas
+        if (usedPromoIds.size >= promotions.length) {
+          usedPromoIds.clear();
+        }
+
         const fakeVideo: any = {
-          id: `promo-${promo.id}-pos${i}`,
-          title: promo.title || promo.display_name,
-          description: promo.description || '',
-          video_url: promo.media_url,
-          thumbnail_url: promo.banner_url || '',
-          user_id: `promo-${promo.id}`,
+          id: `promo-${selectedPromo.id}-pos${i}`,
+          title: selectedPromo.title || selectedPromo.display_name,
+          description: selectedPromo.description || '',
+          video_url: selectedPromo.media_url,
+          thumbnail_url: selectedPromo.banner_url || '',
+          user_id: `promo-${selectedPromo.id}`,
           likes_count: 0,
           comments_count: 0,
           shares_count: 0,
-          views_count: promo.views_count || 0,
-          music_name: `${promo.display_name} • Patrocinado`,
+          views_count: selectedPromo.views_count || 0,
+          music_name: `${selectedPromo.display_name} • Patrocinado`,
           is_active: true,
           visibility: 'public',
           created_at: new Date().toISOString(),
-          _promoCtaText: promo.cta_text || null,
-          _promoCtaLink: promo.cta_link || null,
-          _promoBannerUrl: promo.banner_url || null,
-          _promoDescription: promo.description || null,
+          _promoCtaText: selectedPromo.cta_text || null,
+          _promoCtaLink: selectedPromo.cta_link || null,
+          _promoBannerUrl: selectedPromo.banner_url || null,
+          _promoDescription: selectedPromo.description || null,
           user: {
-            id: `promo-${promo.id}`,
-            username: promo.display_name,
-            avatar_url: promo.avatar_url || '/placeholder.svg',
+            id: `promo-${selectedPromo.id}`,
+            username: selectedPromo.display_name,
+            avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
             followers_count: 0,
             following_count: 0,
             is_online: false,
             created_at: new Date().toISOString(),
-            bio: promo.description || '',
-            posting_panel_url: promo.cta_link || undefined,
+            bio: selectedPromo.description || '',
+            posting_panel_url: selectedPromo.cta_link || undefined,
           },
         };
         result.push(fakeVideo);
@@ -408,7 +428,7 @@ export const TikTokApp = () => {
     }
 
     if (promoIdx > 0) {
-      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${interval} vídeos (${result.length} total)`);
+      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${PROMO_INTERVAL} vídeos (${result.length} total)`);
       setVideos(result);
     }
   }, [videos, promotions]);

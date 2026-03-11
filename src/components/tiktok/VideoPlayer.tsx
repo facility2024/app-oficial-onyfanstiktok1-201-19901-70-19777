@@ -455,4 +455,6 @@ export const VideoPlayer = React.memo(forwardRef<HTMLVideoElement, VideoPlayerPr
       </div>
     );
   }
-);
+));
+
+VideoPlayer.displayName = 'VideoPlayer';

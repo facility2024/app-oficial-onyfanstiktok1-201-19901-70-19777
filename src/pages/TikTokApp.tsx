@@ -544,9 +544,10 @@ export const TikTokApp = () => {
       if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
       const video = videos[index];
       if (video?.video_url && !video.id.startsWith('promo-')) {
-        // Usar prefetch (mais leve que preload) para próximos vídeos
+        // Usar preload para os próximos vídeos (mais agressivo = mais rápido)
         const link = document.createElement('link');
-        link.rel = 'prefetch';
+        link.rel = 'preload';
+        link.as = 'video';
         link.href = video.video_url;
         link.type = 'video/mp4';
         document.head.appendChild(link);

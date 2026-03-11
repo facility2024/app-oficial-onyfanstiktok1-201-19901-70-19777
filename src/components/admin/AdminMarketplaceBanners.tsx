@@ -54,10 +54,8 @@ export const AdminMarketplaceBanners = () => {
             return;
           }
         }
-        // No data found, use defaults and save them
-        const defaults = getDefaultBanners();
-        setBanners(defaults);
-        await saveBannersToSupabase(defaults);
+        // No data found — start empty (admin will add banners)
+        setBanners([]);
       } catch {
         setBanners(getDefaultBanners());
       }

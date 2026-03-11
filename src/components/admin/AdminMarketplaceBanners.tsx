@@ -23,14 +23,8 @@ const BANNER_WIDTH = 1200;
 const BANNER_HEIGHT = 400;
 const BANNER_RATIO = '3:1';
 
-const getDefaultBanners = (): MarketplaceBanner[] => [
-  { id: 1, src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/Moedas%20coconudi%20(1).png', alt: 'Moedas Coconudi', active: true },
-  { id: 2, src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/2.jpg', alt: 'Banner 2', active: true },
-  { id: 3, src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/3.jpg', alt: 'Banner 3', active: true },
-  { id: 4, src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/4.jpg', alt: 'Banner 4', active: true },
-  { id: 5, src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/5.jpg', alt: 'Banner 5', active: true },
-  { id: 6, src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/6.jpg', alt: 'Banner 6', active: true },
-];
+// Sem fallback estático — banners vêm exclusivamente do admin
+const getDefaultBanners = (): MarketplaceBanner[] => [];
 
 export const AdminMarketplaceBanners = () => {
   const [banners, setBanners] = useState<MarketplaceBanner[]>([]);

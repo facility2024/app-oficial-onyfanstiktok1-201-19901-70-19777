@@ -85,6 +85,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.loop = true;
       video.controls = false;
       
+      // Buffering agressivo para carregamento rápido
+      if ('buffered' in video) {
+        video.preload = 'auto';
+      }
+      
       // Configurações específicas para iOS
       if (isIOS) {
         video.setAttribute('x-webkit-airplay', 'deny');

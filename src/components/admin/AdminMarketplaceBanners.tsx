@@ -57,7 +57,7 @@ export const AdminMarketplaceBanners = () => {
         // No data found — start empty (admin will add banners)
         setBanners([]);
       } catch {
-        setBanners(getDefaultBanners());
+        setBanners([]);
       }
       setIsLoading(false);
     };

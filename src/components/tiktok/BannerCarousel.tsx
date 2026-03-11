@@ -7,14 +7,8 @@ interface BannerImage {
   active?: boolean;
 }
 
-const defaultBannerImages: BannerImage[] = [
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/Moedas%20coconudi%20(1).png', alt: 'Moedas Coconudi' },
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/2.jpg', alt: 'Banner 2' },
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/3.jpg', alt: 'Banner 3' },
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/4.jpg', alt: 'Banner 4' },
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/5.jpg', alt: 'Banner 5' },
-  { src: 'https://tiktokonyfans.b-cdn.net/material%20coconudi/6.jpg', alt: 'Banner 6' },
-];
+// Sem fallback estático — banners vêm exclusivamente do admin/Supabase
+const defaultBannerImages: BannerImage[] = [];
 
 const SETTING_KEY = 'marketplace_banners';
 
@@ -48,7 +42,7 @@ export const BannerCarousel = () => {
       } catch (err) {
         console.error('🎯 BannerCarousel error:', err);
       }
-      setBannerImages(defaultBannerImages);
+      // Não setar fallback estático — manter vazio se não há dados do admin
     };
 
     loadBanners();

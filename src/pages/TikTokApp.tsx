@@ -357,49 +357,69 @@ export const TikTokApp = () => {
     // Não injetar se já tem promos — evita loop infinito
     if (videos.some(v => v.id.startsWith('promo-'))) return;
 
-    const interval = promotions[0]?.position_interval || 5;
+    const PROMO_INTERVAL = 5; // Rigorosamente 5 vídeos reais, depois 1 anúncio
 
     // Separar apenas vídeos reais (sem promos)
     const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
     const result: any[] = [];
     let promoIdx = 0;
+    // Track quais promos já foram usadas neste ciclo para evitar repetição imediata
+    const usedPromoIds = new Set<string>();
 
-    // Lógica limpa: a cada `interval` vídeos reais, inserir 1 promo
+    // Lógica rigorosa: a cada 5 vídeos reais, inserir 1 promo (sem repetir consecutivamente)
     for (let i = 0; i < realVideos.length; i++) {
       result.push(realVideos[i]);
 
-      // Após cada bloco de `interval` vídeos reais, inserir 1 promo
-      if ((i + 1) % interval === 0 && promotions.length > 0) {
-        const promo = promotions[promoIdx % promotions.length];
+      // Após cada bloco de 5 vídeos reais, inserir 1 promo
+      if ((i + 1) % PROMO_INTERVAL === 0 && promotions.length > 0) {
+        // Selecionar próxima promo que não foi usada recentemente
+        let selectedPromo = promotions[promoIdx % promotions.length];
+        
+        // Se só temos 1 promo, resetar controle de repetição a cada uso
+        if (promotions.length > 1) {
+          let attempts = 0;
+          while (usedPromoIds.has(selectedPromo.id) && attempts < promotions.length) {
+            promoIdx++;
+            selectedPromo = promotions[promoIdx % promotions.length];
+            attempts++;
+          }
+        }
+        
+        usedPromoIds.add(selectedPromo.id);
+        // Resetar set quando todas as promos foram usadas
+        if (usedPromoIds.size >= promotions.length) {
+          usedPromoIds.clear();
+        }
+
         const fakeVideo: any = {
-          id: `promo-${promo.id}-pos${i}`,
-          title: promo.title || promo.display_name,
-          description: promo.description || '',
-          video_url: promo.media_url,
-          thumbnail_url: promo.banner_url || '',
-          user_id: `promo-${promo.id}`,
+          id: `promo-${selectedPromo.id}-pos${i}`,
+          title: selectedPromo.title || selectedPromo.display_name,
+          description: selectedPromo.description || '',
+          video_url: selectedPromo.media_url,
+          thumbnail_url: selectedPromo.banner_url || '',
+          user_id: `promo-${selectedPromo.id}`,
           likes_count: 0,
           comments_count: 0,
           shares_count: 0,
-          views_count: promo.views_count || 0,
-          music_name: `${promo.display_name} • Patrocinado`,
+          views_count: selectedPromo.views_count || 0,
+          music_name: `${selectedPromo.display_name} • Patrocinado`,
           is_active: true,
           visibility: 'public',
           created_at: new Date().toISOString(),
-          _promoCtaText: promo.cta_text || null,
-          _promoCtaLink: promo.cta_link || null,
-          _promoBannerUrl: promo.banner_url || null,
-          _promoDescription: promo.description || null,
+          _promoCtaText: selectedPromo.cta_text || null,
+          _promoCtaLink: selectedPromo.cta_link || null,
+          _promoBannerUrl: selectedPromo.banner_url || null,
+          _promoDescription: selectedPromo.description || null,
           user: {
-            id: `promo-${promo.id}`,
-            username: promo.display_name,
-            avatar_url: promo.avatar_url || '/placeholder.svg',
+            id: `promo-${selectedPromo.id}`,
+            username: selectedPromo.display_name,
+            avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
             followers_count: 0,
             following_count: 0,
             is_online: false,
             created_at: new Date().toISOString(),
-            bio: promo.description || '',
-            posting_panel_url: promo.cta_link || undefined,
+            bio: selectedPromo.description || '',
+            posting_panel_url: selectedPromo.cta_link || undefined,
           },
         };
         result.push(fakeVideo);
@@ -408,7 +428,7 @@ export const TikTokApp = () => {
     }
 
     if (promoIdx > 0) {
-      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${interval} vídeos (${result.length} total)`);
+      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${PROMO_INTERVAL} vídeos (${result.length} total)`);
       setVideos(result);
     }
   }, [videos, promotions]);
@@ -517,34 +537,34 @@ export const TikTokApp = () => {
     }
   }, [currentUser, navigate]);
 
-  // Preload adjacent videos for faster navigation
+  // Preload adjacent videos for faster navigation (otimizado)
   useEffect(() => {
     if (videos.length === 0) return;
     const preloadVideo = (index: number) => {
       if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
       const video = videos[index];
-      if (video?.video_url) {
+      if (video?.video_url && !video.id.startsWith('promo-')) {
+        // Usar prefetch (mais leve que preload) para próximos vídeos
         const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'video';
+        link.rel = 'prefetch';
         link.href = video.video_url;
         link.type = 'video/mp4';
         document.head.appendChild(link);
         setPreloadedVideos(prev => new Set(prev).add(index));
 
-        // Clean up after 30 seconds
+        // Clean up after 60 seconds
         setTimeout(() => {
           if (document.head.contains(link)) {
             document.head.removeChild(link);
           }
-        }, 30000);
+        }, 60000);
       }
     };
 
-    // Preload next 2 and previous 1 videos
+    // Preload next 3 videos for instant playback
     preloadVideo(currentVideoIndex + 1);
     preloadVideo(currentVideoIndex + 2);
-    preloadVideo(currentVideoIndex - 1);
+    preloadVideo(currentVideoIndex + 3);
   }, [currentVideoIndex, videos, preloadedVideos]);
 
   // DESABILITADO: Verificação de idade
@@ -1513,32 +1533,55 @@ export const TikTokApp = () => {
       const realVideosInFeed = videos.filter(v => !v.id.startsWith('promo-'));
       const realCount = realVideosInFeed.length;
 
-      // Calcular próximo bloco do ciclo (volta ao início quando acabar)
-      const totalAvailable = allAvailableVideos.length;
-      const startIdx = realCount % totalAvailable;
-      
-      // Pegar próximo bloco, ciclando
-      const nextBlock: any[] = [];
-      for (let i = 0; i < VIDEOS_PER_BLOCK; i++) {
-        const idx = (startIdx + i) % totalAvailable;
-        const original = allAvailableVideos[idx];
-        // Criar cópia com ID único para evitar duplicatas no DOM
-        nextBlock.push({
-          ...original,
-          id: `${original.id}-cycle-${Math.floor((realCount + i) / totalAvailable)}`,
-          _originalId: original.id, // Manter ID original para tracking
-        });
+      // 🆕 CARREGAR MEMÓRIA DE VÍDEOS JÁ ASSISTIDOS
+      let watchedVideoIds = new Set<string>();
+      try {
+        const memoryRaw = localStorage.getItem('intelligent_feed_memory');
+        if (memoryRaw) {
+          const memory = JSON.parse(memoryRaw);
+          watchedVideoIds = new Set(memory.videos_vistos || []);
+        }
+      } catch {}
+
+      // IDs originais já no feed (para evitar duplicatas reais)
+      const idsInFeed = new Set(realVideosInFeed.map(v => (v as any)._originalId || v.id));
+
+      // Priorizar vídeos NÃO assistidos e NÃO no feed
+      const unwatched = allAvailableVideos.filter(v => 
+        !watchedVideoIds.has(v.id) && !idsInFeed.has(v.id)
+      );
+
+      let nextBlock: any[];
+      if (unwatched.length >= VIDEOS_PER_BLOCK) {
+        // Temos vídeos não-assistidos suficientes
+        nextBlock = unwatched.slice(0, VIDEOS_PER_BLOCK).map((v, i) => ({
+          ...v,
+          id: `${v.id}-block-${currentPage}-${i}`,
+          _originalId: v.id,
+        }));
+      } else {
+        // Não há suficientes — usar não-assistidos + ciclar os já assistidos
+        const watched = allAvailableVideos.filter(v => 
+          watchedVideoIds.has(v.id) && !idsInFeed.has(v.id)
+        );
+        // Embaralhar assistidos para variedade
+        const shuffledWatched = [...watched].sort(() => Math.random() - 0.5);
+        const combined = [...unwatched, ...shuffledWatched].slice(0, VIDEOS_PER_BLOCK);
+        nextBlock = combined.map((v, i) => ({
+          ...v,
+          id: `${v.id}-block-${currentPage}-${i}`,
+          _originalId: v.id,
+        }));
       }
 
       // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
       setVideos(prev => {
-        // Remover promos existentes, adicionar novos vídeos, promos serão reinjetadas
         const withoutPromos = prev.filter(v => !v.id.startsWith('promo-'));
         return [...withoutPromos, ...nextBlock];
       });
       setCurrentPage(prev => prev + 1);
-      setHasMoreVideos(true); // Sempre true — feed infinito
-      console.log(`✅ Bloco cíclico adicionado: ${nextBlock.length} vídeos a partir do índice ${startIdx}`);
+      setHasMoreVideos(true);
+      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos (${unwatched.length} não-assistidos disponíveis)`);
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
     } finally {

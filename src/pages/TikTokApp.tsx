@@ -1513,32 +1513,55 @@ export const TikTokApp = () => {
       const realVideosInFeed = videos.filter(v => !v.id.startsWith('promo-'));
       const realCount = realVideosInFeed.length;
 
-      // Calcular próximo bloco do ciclo (volta ao início quando acabar)
-      const totalAvailable = allAvailableVideos.length;
-      const startIdx = realCount % totalAvailable;
-      
-      // Pegar próximo bloco, ciclando
-      const nextBlock: any[] = [];
-      for (let i = 0; i < VIDEOS_PER_BLOCK; i++) {
-        const idx = (startIdx + i) % totalAvailable;
-        const original = allAvailableVideos[idx];
-        // Criar cópia com ID único para evitar duplicatas no DOM
-        nextBlock.push({
-          ...original,
-          id: `${original.id}-cycle-${Math.floor((realCount + i) / totalAvailable)}`,
-          _originalId: original.id, // Manter ID original para tracking
-        });
+      // 🆕 CARREGAR MEMÓRIA DE VÍDEOS JÁ ASSISTIDOS
+      let watchedVideoIds = new Set<string>();
+      try {
+        const memoryRaw = localStorage.getItem('intelligent_feed_memory');
+        if (memoryRaw) {
+          const memory = JSON.parse(memoryRaw);
+          watchedVideoIds = new Set(memory.videos_vistos || []);
+        }
+      } catch {}
+
+      // IDs originais já no feed (para evitar duplicatas reais)
+      const idsInFeed = new Set(realVideosInFeed.map(v => (v as any)._originalId || v.id));
+
+      // Priorizar vídeos NÃO assistidos e NÃO no feed
+      const unwatched = allAvailableVideos.filter(v => 
+        !watchedVideoIds.has(v.id) && !idsInFeed.has(v.id)
+      );
+
+      let nextBlock: any[];
+      if (unwatched.length >= VIDEOS_PER_BLOCK) {
+        // Temos vídeos não-assistidos suficientes
+        nextBlock = unwatched.slice(0, VIDEOS_PER_BLOCK).map((v, i) => ({
+          ...v,
+          id: `${v.id}-block-${currentPage}-${i}`,
+          _originalId: v.id,
+        }));
+      } else {
+        // Não há suficientes — usar não-assistidos + ciclar os já assistidos
+        const watched = allAvailableVideos.filter(v => 
+          watchedVideoIds.has(v.id) && !idsInFeed.has(v.id)
+        );
+        // Embaralhar assistidos para variedade
+        const shuffledWatched = [...watched].sort(() => Math.random() - 0.5);
+        const combined = [...unwatched, ...shuffledWatched].slice(0, VIDEOS_PER_BLOCK);
+        nextBlock = combined.map((v, i) => ({
+          ...v,
+          id: `${v.id}-block-${currentPage}-${i}`,
+          _originalId: v.id,
+        }));
       }
 
       // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
       setVideos(prev => {
-        // Remover promos existentes, adicionar novos vídeos, promos serão reinjetadas
         const withoutPromos = prev.filter(v => !v.id.startsWith('promo-'));
         return [...withoutPromos, ...nextBlock];
       });
       setCurrentPage(prev => prev + 1);
-      setHasMoreVideos(true); // Sempre true — feed infinito
-      console.log(`✅ Bloco cíclico adicionado: ${nextBlock.length} vídeos a partir do índice ${startIdx}`);
+      setHasMoreVideos(true);
+      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos (${unwatched.length} não-assistidos disponíveis)`);
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
     } finally {

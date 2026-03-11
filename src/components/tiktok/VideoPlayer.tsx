@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, useRef } from 'react';
+import React, { forwardRef, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
@@ -39,7 +39,7 @@ interface Offer {
   is_active: boolean;
 }
 
-export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
+export const VideoPlayer = React.memo(forwardRef<HTMLVideoElement, VideoPlayerProps>(
   ({ video, isPlaying, isMuted, volume = 0.8, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
     const [doubleTapHeart, setDoubleTapHeart] = useState(false);
     const [lastTap, setLastTap] = useState(0);
@@ -121,7 +121,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             setIsInView(visible);
           });
         },
-        { root: null, rootMargin: '0px', threshold: [0, 0.6, 1] }
+        { root: null, rootMargin: '200px 0px', threshold: [0, 0.6, 1] }
       );
       observer.observe(el);
       return () => observer.disconnect();
@@ -351,23 +351,22 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     return (
       <div ref={containerRef} className="relative w-full h-full">
-        {isInView ? (
-          <UniversalVideoPlayer
-            key={video.id}
-            ref={ref}
-            src={(video as any).video_url}
-            isPlaying={isPlaying}
-            isMuted={isMuted}
-            volume={volume}
-            autoPlayOnReady={true}
-            className={locked ? 'blur-sm' : ''}
-            onClick={handleVideoTap}
-            onLoadedData={() => setIsBuffering(false)}
-            onError={() => setIsBuffering(false)}
-          />
-        ) : (
-          <div className="w-full h-full bg-black" />
-        )}
+        {/* Always mount the video element but control via CSS to avoid iOS flickering from mount/unmount */}
+        <UniversalVideoPlayer
+          key={video.id}
+          ref={ref}
+          src={isInView ? (video as any).video_url : ''}
+          poster={(video as any).thumbnail_url}
+          isPlaying={isPlaying && isInView}
+          isMuted={isMuted}
+          volume={volume}
+          autoPlayOnReady={isInView}
+          className={locked ? 'blur-sm' : ''}
+          onClick={handleVideoTap}
+          onLoadedData={() => setIsBuffering(false)}
+          onError={() => setIsBuffering(false)}
+          style={!isInView ? { visibility: 'hidden' } : {}}
+        />
 
         {/* Overlay para vídeo PREMIUM (VIP Global) */}
         {lockedPremium && !showSubscriptionOverlay && (
@@ -456,4 +455,6 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       </div>
     );
   }
-);
+));
+
+VideoPlayer.displayName = 'VideoPlayer';

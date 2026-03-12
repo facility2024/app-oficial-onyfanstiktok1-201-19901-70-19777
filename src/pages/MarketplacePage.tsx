@@ -546,7 +546,7 @@ export default function MarketplacePage() {
   const filteredProducts = selectedCategory === "all" ? products : products.filter(p => p.category === selectedCategory);
 
   // Lista de nomes de gêneros (exceto Hétero) para filtrar da tela principal
-  const nonHeteroGenres = MARKETPLACE_GENRES
+  const nonHeteroGenres = dynamicGenres
     .filter(g => g.name !== 'Hétero')
     .map(g => g.name.toLowerCase());
 

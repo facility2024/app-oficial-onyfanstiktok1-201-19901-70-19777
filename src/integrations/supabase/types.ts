@@ -3315,6 +3315,30 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       marketplace_orders: {
         Row: {
           created_at: string | null
@@ -8304,6 +8328,7 @@ export type Database = {
       cleanup_offline_users: { Args: never; Returns: undefined }
       cleanup_old_active_sessions: { Args: never; Returns: undefined }
       cleanup_old_comments: { Args: never; Returns: undefined }
+      cleanup_old_marketplace_feedback: { Args: never; Returns: undefined }
       cleanup_old_online_users: { Args: never; Returns: undefined }
       cleanup_old_sessions: { Args: never; Returns: undefined }
       cleanup_registration_limits: { Args: never; Returns: undefined }

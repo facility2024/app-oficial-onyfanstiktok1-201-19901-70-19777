@@ -614,7 +614,7 @@ export default function MarketplacePage() {
         </div>
         
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
-          {VIDEO_GENRES.map(genre => (
+          {dynamicGenres.map(genre => (
             <Button 
               key={genre.name} 
               variant={selectedGenre === genre.name ? "default" : "outline"} 

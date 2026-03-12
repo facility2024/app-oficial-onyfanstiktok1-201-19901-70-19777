@@ -200,6 +200,8 @@ export const AdminDashboard = () => {
         return <AdminMarketplace />;
       case 'physical-products':
         return <AdminPhysicalProducts />;
+      case 'marketplace-feedback':
+        return <AdminMarketplaceFeedback />;
       case 'local-businesses':
         return <AdminLocalBusinesses />;
       case 'chat-panels':

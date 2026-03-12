@@ -768,7 +768,7 @@ export default function MarketplacePage() {
                   const el = document.getElementById('marketplace-feedback') as HTMLTextAreaElement;
                   const msg = el?.value?.trim();
                   if (!msg) { toast.error('Escreva sua sugestão antes de enviar'); return; }
-                  supabase.from('app_statistics').insert({ metric_name: 'marketplace_feedback', metric_type: 'feedback', metric_value: msg }).then(() => {
+                  (supabase as any).from('marketplace_feedback').insert({ message: msg, user_email: null }).then(() => {
                     toast.success('Feedback enviado com sucesso! Obrigado 🎉');
                     el.value = '';
                   });

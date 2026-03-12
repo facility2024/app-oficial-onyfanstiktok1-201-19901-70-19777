@@ -20,6 +20,7 @@ const LojaProdutoPage = () => {
   const fileName = productId < 10 ? `0${productId}` : `${productId}`;
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [videos, setVideos] = useState<ProductVideo[]>([]);
+  const [coverImg, setCoverImg] = useState(`${CDN_BASE}/${fileName}.jpg`);
 
   // Fix mobile scroll on iOS
   useEffect(() => {

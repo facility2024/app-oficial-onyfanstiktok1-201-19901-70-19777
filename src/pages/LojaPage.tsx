@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
-const products = Array.from({ length: 29 }, (_, i) => {
+const defaultProducts = Array.from({ length: 29 }, (_, i) => {
   const num = i + 1;
   const fileName = num < 10 ? `0${num}` : `${num}`;
   return {

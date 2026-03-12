@@ -752,7 +752,32 @@ export default function MarketplacePage() {
           </h2>
           
           {allModels.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">Nenhuma modelo encontrada</p>
+            <div className="relative border border-cyan-400/30 rounded-xl p-6 text-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 shadow-[0_0_20px_rgba(0,255,200,0.15)]">
+              <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-cyan-400 to-green-300 drop-shadow-[0_0_10px_rgba(0,255,150,0.6)] animate-pulse mb-2">
+                💡 Não encontrou o que procurava?
+              </h3>
+              <p className="text-gray-300 text-sm mb-4">Deixe sua mensagem de feedback e vamos adicionar o que você procura!</p>
+              <Textarea
+                placeholder="Escreva aqui o que gostaria de encontrar..."
+                className="bg-gray-950 border-cyan-400/30 text-white placeholder:text-gray-500 mb-3 focus:border-cyan-400 focus:ring-cyan-400/30"
+                rows={3}
+                id="marketplace-feedback"
+              />
+              <Button
+                onClick={() => {
+                  const el = document.getElementById('marketplace-feedback') as HTMLTextAreaElement;
+                  const msg = el?.value?.trim();
+                  if (!msg) { toast.error('Escreva sua sugestão antes de enviar'); return; }
+                  supabase.from('app_statistics').insert({ metric_name: 'marketplace_feedback', metric_type: 'feedback', metric_value: msg }).then(() => {
+                    toast.success('Feedback enviado com sucesso! Obrigado 🎉');
+                    el.value = '';
+                  });
+                }}
+                className="bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 text-white font-bold px-8"
+              >
+                ✉️ Enviar Feedback
+              </Button>
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">

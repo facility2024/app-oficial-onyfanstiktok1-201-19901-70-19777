@@ -666,13 +666,31 @@ export default function MarketplacePage() {
                         onClick={() => handleProductClick(product)}
                       >
                         <div className="relative aspect-square overflow-hidden">
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          {product.video_url ? (
+                            <>
+                              <video
+                                src={product.video_url}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                muted
+                                playsInline
+                                preload="metadata"
+                                poster={product.image_url}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
+                                  <Play className="w-6 h-6 text-white fill-white" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                         </div>
                         <div className="p-2">
                           <p className="text-white text-xs font-semibold line-clamp-1">{product.name}</p>

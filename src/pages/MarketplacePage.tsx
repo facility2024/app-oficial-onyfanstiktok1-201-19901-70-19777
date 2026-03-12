@@ -16,10 +16,6 @@ import { PhysicalProductsSection } from "@/components/tiktok/PhysicalProductsSec
 import logoWhite from "@/assets/coconudi-logo-new.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
-
-import { MARKETPLACE_GENRES } from '@/constants/marketplaceGenres';
-
-const VIDEO_GENRES = MARKETPLACE_GENRES;
 interface Product {
   id: string;
   name: string;

@@ -206,11 +206,17 @@ const AdminLoja = () => {
               }`}
             >
               <img
-                src={`${CDN_BASE}/${fileName}.jpg`}
+                src={customCovers[num] || `${CDN_BASE}/${fileName}.jpg`}
                 alt={`Produto ${num}`}
                 className="w-full aspect-square object-cover"
                 loading="lazy"
+                onError={(e) => { e.currentTarget.src = `${CDN_BASE}/${fileName}.jpg`; }}
               />
+              {customCovers[num] && (
+                <div className="absolute bottom-0.5 left-0.5">
+                  <ImageIcon className="w-3 h-3 text-green-400 drop-shadow-lg" />
+                </div>
+              )}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">#{num}</span>
               </div>

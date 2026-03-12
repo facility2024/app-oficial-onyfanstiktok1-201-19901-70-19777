@@ -26,6 +26,8 @@ const AdminLoja = () => {
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
+  const [coverUrl, setCoverUrl] = useState('');
+  const [customCovers, setCustomCovers] = useState<Record<number, string>>({});
 
   // Count videos per product
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});

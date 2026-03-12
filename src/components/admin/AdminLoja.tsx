@@ -250,6 +250,27 @@ const AdminLoja = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Editar capa */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 space-y-2">
+              <p className="text-amber-300 text-sm font-semibold flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" /> Capa do Produto
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="URL da nova capa (deixe vazio para padrão)"
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/40 text-sm"
+                />
+                <Button onClick={saveCover} className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs">
+                  <Upload className="w-3 h-3 mr-1" /> Salvar Capa
+                </Button>
+              </div>
+              {coverUrl && (
+                <img src={coverUrl} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-white/20" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              )}
+            </div>
+
             {/* Adicionar vídeo individual */}
             {!bulkMode && (
               <div className="flex gap-2 flex-wrap">

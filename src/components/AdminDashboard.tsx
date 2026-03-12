@@ -46,6 +46,7 @@ import { AdminVideoCall } from './admin/AdminVideoCall';
 import { AdminAds } from './admin/AdminAds';
 import { AdminMarketplaceBanners } from './admin/AdminMarketplaceBanners';
 import { AdminPhysicalProducts } from './admin/AdminPhysicalProducts';
+import { AdminMarketplaceFeedback } from './admin/AdminMarketplaceFeedback';
 import { AdminLive } from './admin/AdminLive';
 import { AdminPromoAds } from './admin/AdminPromoAds';
 import { AdminCadastros } from './admin/AdminCadastros';

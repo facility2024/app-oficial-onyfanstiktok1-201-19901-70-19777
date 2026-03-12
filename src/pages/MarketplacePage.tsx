@@ -346,6 +346,7 @@ export default function MarketplacePage() {
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [modelsToShow, setModelsToShow] = useState(12);
   const [productsToShow, setProductsToShow] = useState(15);
+  const [dynamicGenres, setDynamicGenres] = useState<{name: string; icon: string}[]>([]);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -353,11 +354,30 @@ export default function MarketplacePage() {
   });
   // Ler gênero da URL ao montar
   const genreFromUrl = searchParams.get('genre');
+
+  // Fetch genres from database
+  const fetchMarketplaceGenres = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('video_genres')
+        .select('name, icon')
+        .eq('is_active', true)
+        .neq('name', 'Todos')
+        .order('display_order', { ascending: true });
+      
+      if (!error && data && data.length > 0) {
+        setDynamicGenres(data);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar gêneros:', err);
+    }
+  };
   
   useEffect(() => {
     fetchProducts();
     fetchAllModels();
     fetchFeaturedVideos();
+    fetchMarketplaceGenres();
     // Auto-selecionar gênero da URL
     if (genreFromUrl && !selectedGenre) {
       setSelectedGenre(genreFromUrl);

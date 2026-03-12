@@ -19,6 +19,20 @@ const defaultProducts = Array.from({ length: 29 }, (_, i) => {
 
 const LojaPage = () => {
   const navigate = useNavigate();
+  const [products, setProducts] = useState(defaultProducts);
+
+  useEffect(() => {
+    (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {
+      if (data && data.length > 0) {
+        const coverMap: Record<number, string> = {};
+        data.forEach((c: any) => { coverMap[c.product_id] = c.cover_url; });
+        setProducts(defaultProducts.map(p => ({
+          ...p,
+          image: coverMap[p.id] || p.image,
+        })));
+      }
+    });
+  }, []);
 
   // Fix mobile scroll - force scrollable on iOS/Android
   React.useEffect(() => {

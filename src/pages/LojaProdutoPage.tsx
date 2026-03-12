@@ -67,7 +67,7 @@ const LojaProdutoPage = () => {
     );
   }
 
-  const posterImg = `${CDN_BASE}/${fileName}.jpg`;
+  const posterImg = coverImg;
 
   return (
     <div className="min-h-screen" style={{

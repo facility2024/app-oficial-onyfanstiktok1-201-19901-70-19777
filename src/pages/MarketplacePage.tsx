@@ -806,12 +806,12 @@ export default function MarketplacePage() {
                     </div>
                     <div className="p-2">
                       <p className="text-white text-xs font-semibold line-clamp-1">{product.name}</p>
-                      <p className="text-gray-400 text-[10px] line-clamp-1">{product.description}</p>
+                      <p className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-cyan-400 to-green-300 text-[10px] font-bold line-clamp-1 animate-pulse drop-shadow-[0_0_6px_rgba(0,255,150,0.5)]">{product.description}</p>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-green-400 text-sm font-bold">R$ {product.price.toFixed(2)}</span>
                         <div className="flex items-center gap-0.5">
                           <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-gray-400 text-[10px]">{product.average_rating.toFixed(1)}</span>
+                          <span className="text-yellow-400 text-[10px] font-medium">5.0</span>
                         </div>
                       </div>
                     </div>

@@ -34,11 +34,48 @@ const AdminLoja = () => {
 
   useEffect(() => {
     fetchVideoCounts();
+    fetchAllCovers();
   }, []);
 
   useEffect(() => {
-    if (selectedProduct) fetchProductVideos(selectedProduct);
+    if (selectedProduct) {
+      fetchProductVideos(selectedProduct);
+      setCoverUrl(customCovers[selectedProduct] || '');
+    }
   }, [selectedProduct]);
+
+  const fetchAllCovers = async () => {
+    const { data } = await (supabase as any)
+      .from('loja_product_covers')
+      .select('product_id, cover_url');
+    if (data) {
+      const map: Record<number, string> = {};
+      data.forEach((c: any) => { map[c.product_id] = c.cover_url; });
+      setCustomCovers(map);
+    }
+  };
+
+  const saveCover = async () => {
+    if (!selectedProduct) return;
+    if (!coverUrl.trim()) {
+      // Delete custom cover
+      await (supabase as any).from('loja_product_covers').delete().eq('product_id', selectedProduct);
+      const updated = { ...customCovers };
+      delete updated[selectedProduct];
+      setCustomCovers(updated);
+      toast.success('Capa padrão restaurada!');
+      return;
+    }
+    const { error } = await (supabase as any)
+      .from('loja_product_covers')
+      .upsert({ product_id: selectedProduct, cover_url: coverUrl.trim(), updated_at: new Date().toISOString() }, { onConflict: 'product_id' });
+    if (error) {
+      toast.error('Erro ao salvar capa');
+    } else {
+      setCustomCovers({ ...customCovers, [selectedProduct]: coverUrl.trim() });
+      toast.success('Capa atualizada!');
+    }
+  };
 
   const fetchVideoCounts = async () => {
     const { data } = await supabase

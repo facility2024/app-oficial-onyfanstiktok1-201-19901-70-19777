@@ -478,7 +478,7 @@ export const AdminGenres = () => {
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Ex: Fitness, Lifestyle, Dança..."
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
               />
             </div>
 
@@ -489,7 +489,7 @@ export const AdminGenres = () => {
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Descrição opcional do gênero..."
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
                 rows={3}
               />
             </div>
@@ -502,7 +502,7 @@ export const AdminGenres = () => {
                 min={0}
                 value={formData.display_order}
                 onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
 

@@ -85,12 +85,12 @@ const ProductDetailModal = ({
                 {[1, 2, 3, 4, 5].map(star => (
                   <Star 
                     key={star} 
-                    className={`w-5 h-5 ${star <= product.average_rating ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`} 
+                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
                   />
                 ))}
               </div>
               <span className="text-sm text-gray-400">
-                ({product.total_reviews} avaliações)
+                (5.0)
               </span>
             </div>
           </DialogDescription>

@@ -112,9 +112,7 @@ export const MarketplaceCarousel = () => {
                     </span>
                     <div className="flex items-center gap-1">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-white text-xs font-medium">
-                        {product.average_rating.toFixed(1)}
-                      </span>
+                      <span className="text-white text-xs font-medium">5.0</span>
                     </div>
                   </div>
                 </div>

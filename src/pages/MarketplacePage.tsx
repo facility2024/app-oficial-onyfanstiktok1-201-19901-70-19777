@@ -16,10 +16,6 @@ import { PhysicalProductsSection } from "@/components/tiktok/PhysicalProductsSec
 import logoWhite from "@/assets/coconudi-logo-new.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
-
-import { MARKETPLACE_GENRES } from '@/constants/marketplaceGenres';
-
-const VIDEO_GENRES = MARKETPLACE_GENRES;
 interface Product {
   id: string;
   name: string;
@@ -350,6 +346,7 @@ export default function MarketplacePage() {
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [modelsToShow, setModelsToShow] = useState(12);
   const [productsToShow, setProductsToShow] = useState(15);
+  const [dynamicGenres, setDynamicGenres] = useState<{name: string; icon: string}[]>([]);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -357,11 +354,30 @@ export default function MarketplacePage() {
   });
   // Ler gênero da URL ao montar
   const genreFromUrl = searchParams.get('genre');
+
+  // Fetch genres from database
+  const fetchMarketplaceGenres = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('video_genres')
+        .select('name, icon')
+        .eq('is_active', true)
+        .neq('name', 'Todos')
+        .order('display_order', { ascending: true });
+      
+      if (!error && data && data.length > 0) {
+        setDynamicGenres(data);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar gêneros:', err);
+    }
+  };
   
   useEffect(() => {
     fetchProducts();
     fetchAllModels();
     fetchFeaturedVideos();
+    fetchMarketplaceGenres();
     // Auto-selecionar gênero da URL
     if (genreFromUrl && !selectedGenre) {
       setSelectedGenre(genreFromUrl);
@@ -530,7 +546,7 @@ export default function MarketplacePage() {
   const filteredProducts = selectedCategory === "all" ? products : products.filter(p => p.category === selectedCategory);
 
   // Lista de nomes de gêneros (exceto Hétero) para filtrar da tela principal
-  const nonHeteroGenres = MARKETPLACE_GENRES
+  const nonHeteroGenres = dynamicGenres
     .filter(g => g.name !== 'Hétero')
     .map(g => g.name.toLowerCase());
 
@@ -598,7 +614,7 @@ export default function MarketplacePage() {
         </div>
         
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
-          {VIDEO_GENRES.map(genre => (
+          {dynamicGenres.map(genre => (
             <Button 
               key={genre.name} 
               variant={selectedGenre === genre.name ? "default" : "outline"} 

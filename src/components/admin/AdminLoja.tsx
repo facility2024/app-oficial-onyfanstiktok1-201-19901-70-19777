@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Plus, Trash2, Play, Save, ExternalLink } from 'lucide-react';
+import { Store, Plus, Trash2, Play, Save, ExternalLink, ImageIcon, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,17 +26,56 @@ const AdminLoja = () => {
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
+  const [coverUrl, setCoverUrl] = useState('');
+  const [customCovers, setCustomCovers] = useState<Record<number, string>>({});
 
   // Count videos per product
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     fetchVideoCounts();
+    fetchAllCovers();
   }, []);
 
   useEffect(() => {
-    if (selectedProduct) fetchProductVideos(selectedProduct);
+    if (selectedProduct) {
+      fetchProductVideos(selectedProduct);
+      setCoverUrl(customCovers[selectedProduct] || '');
+    }
   }, [selectedProduct]);
+
+  const fetchAllCovers = async () => {
+    const { data } = await (supabase as any)
+      .from('loja_product_covers')
+      .select('product_id, cover_url');
+    if (data) {
+      const map: Record<number, string> = {};
+      data.forEach((c: any) => { map[c.product_id] = c.cover_url; });
+      setCustomCovers(map);
+    }
+  };
+
+  const saveCover = async () => {
+    if (!selectedProduct) return;
+    if (!coverUrl.trim()) {
+      // Delete custom cover
+      await (supabase as any).from('loja_product_covers').delete().eq('product_id', selectedProduct);
+      const updated = { ...customCovers };
+      delete updated[selectedProduct];
+      setCustomCovers(updated);
+      toast.success('Capa padrão restaurada!');
+      return;
+    }
+    const { error } = await (supabase as any)
+      .from('loja_product_covers')
+      .upsert({ product_id: selectedProduct, cover_url: coverUrl.trim(), updated_at: new Date().toISOString() }, { onConflict: 'product_id' });
+    if (error) {
+      toast.error('Erro ao salvar capa');
+    } else {
+      setCustomCovers({ ...customCovers, [selectedProduct]: coverUrl.trim() });
+      toast.success('Capa atualizada!');
+    }
+  };
 
   const fetchVideoCounts = async () => {
     const { data } = await supabase
@@ -167,11 +206,17 @@ const AdminLoja = () => {
               }`}
             >
               <img
-                src={`${CDN_BASE}/${fileName}.jpg`}
+                src={customCovers[num] || `${CDN_BASE}/${fileName}.jpg`}
                 alt={`Produto ${num}`}
                 className="w-full aspect-square object-cover"
                 loading="lazy"
+                onError={(e) => { e.currentTarget.src = `${CDN_BASE}/${fileName}.jpg`; }}
               />
+              {customCovers[num] && (
+                <div className="absolute bottom-0.5 left-0.5">
+                  <ImageIcon className="w-3 h-3 text-green-400 drop-shadow-lg" />
+                </div>
+              )}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">#{num}</span>
               </div>
@@ -205,6 +250,27 @@ const AdminLoja = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Editar capa */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 space-y-2">
+              <p className="text-amber-300 text-sm font-semibold flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" /> Capa do Produto
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="URL da nova capa (deixe vazio para padrão)"
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/40 text-sm"
+                />
+                <Button onClick={saveCover} className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs">
+                  <Upload className="w-3 h-3 mr-1" /> Salvar Capa
+                </Button>
+              </div>
+              {coverUrl && (
+                <img src={coverUrl} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-white/20" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              )}
+            </div>
+
             {/* Adicionar vídeo individual */}
             {!bulkMode && (
               <div className="flex gap-2 flex-wrap">

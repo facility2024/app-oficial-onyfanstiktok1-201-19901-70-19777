@@ -20,6 +20,7 @@ const LojaProdutoPage = () => {
   const fileName = productId < 10 ? `0${productId}` : `${productId}`;
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [videos, setVideos] = useState<ProductVideo[]>([]);
+  const [coverImg, setCoverImg] = useState(`${CDN_BASE}/${fileName}.jpg`);
 
   // Fix mobile scroll on iOS
   useEffect(() => {
@@ -40,6 +41,16 @@ const LojaProdutoPage = () => {
         .then(({ data }) => {
           if (data) setVideos(data as any[]);
         });
+
+      // Fetch custom cover
+      (supabase as any)
+        .from('loja_product_covers')
+        .select('cover_url')
+        .eq('product_id', productId)
+        .maybeSingle()
+        .then(({ data }: any) => {
+          if (data?.cover_url) setCoverImg(data.cover_url);
+        });
     }
   }, [productId]);
 
@@ -56,7 +67,7 @@ const LojaProdutoPage = () => {
     );
   }
 
-  const posterImg = `${CDN_BASE}/${fileName}.jpg`;
+  const posterImg = coverImg;
 
   return (
     <div className="min-h-screen" style={{

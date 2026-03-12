@@ -3041,6 +3041,30 @@ export type Database = {
         }
         Relationships: []
       }
+      loja_product_covers: {
+        Row: {
+          cover_url: string
+          created_at: string | null
+          id: string
+          product_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          cover_url: string
+          created_at?: string | null
+          id?: string
+          product_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          cover_url?: string
+          created_at?: string | null
+          id?: string
+          product_id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       loja_product_videos: {
         Row: {
           created_at: string | null

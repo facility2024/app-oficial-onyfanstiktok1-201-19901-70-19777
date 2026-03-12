@@ -41,6 +41,16 @@ const LojaProdutoPage = () => {
         .then(({ data }) => {
           if (data) setVideos(data as any[]);
         });
+
+      // Fetch custom cover
+      (supabase as any)
+        .from('loja_product_covers')
+        .select('cover_url')
+        .eq('product_id', productId)
+        .maybeSingle()
+        .then(({ data }: any) => {
+          if (data?.cover_url) setCoverImg(data.cover_url);
+        });
     }
   }, [productId]);
 

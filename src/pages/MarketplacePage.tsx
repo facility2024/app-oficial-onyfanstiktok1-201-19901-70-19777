@@ -154,7 +154,9 @@ const ProductDetailModal = ({
 
           <div>
             <h3 className="font-semibold text-lg mb-2 text-white">Descrição</h3>
-            <p className="text-gray-400">{product.description}</p>
+            <p className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-cyan-400 to-green-300 font-bold text-base animate-pulse drop-shadow-[0_0_8px_rgba(0,255,150,0.6)]">
+              {product.description}
+            </p>
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-white/10">

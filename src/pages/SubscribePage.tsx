@@ -74,24 +74,11 @@ const SubscribePage = () => {
   const [savingPhone, setSavingPhone] = useState(false);
 
   useEffect(() => {
-    const fetchPlans = async () => {
+    const fetchPlans = () => {
       try {
-        // Primeiro tenta buscar do Supabase
-        const { data, error } = await supabase
-          .from('admin_settings')
-          .select('setting_value')
-          .eq('setting_key', 'vip_plans')
-          .maybeSingle();
-
-        if (!error && data?.setting_value) {
-          const plans = data.setting_value as unknown as VIPPlans;
-          setVipPlans(plans);
-        } else {
-          // Fallback para localStorage
-          const stored = localStorage.getItem('vip_plans');
-          if (stored) {
-            setVipPlans(JSON.parse(stored));
-          }
+        const stored = localStorage.getItem('vip_plans');
+        if (stored) {
+          setVipPlans(JSON.parse(stored));
         }
       } catch (error) {
         console.error('Error fetching VIP plans:', error);
@@ -193,10 +180,17 @@ const SubscribePage = () => {
         throw new Error(data?.error || 'Erro ao gerar link de pagamento');
       }
 
-      // Abrir checkout do Asaas em nova aba (iframe bloqueado pelo Asaas)
-      window.open(data.checkoutUrl, '_blank');
+      // Marcar que está verificando pagamento
+      sessionStorage.setItem('checking_payment', 'true');
 
-      // Redirecionar para página de confirmação
+      // Abrir checkout do Asaas em nova aba
+      window.open(data.checkoutUrl, '_blank');
+      toast.success('Pagamento aberto em nova aba!', {
+        description: 'Você será notificado automaticamente quando seu VIP for ativado!',
+        duration: 8000,
+      });
+
+      // Redirecionar para a página de confirmação de pagamento
       navigate('/payment-confirmation');
     } catch (error: any) {
       console.error('Erro ao criar checkout Asaas:', error);

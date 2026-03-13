@@ -301,7 +301,7 @@ const SubscribePage = () => {
                 <Button
                   className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
                   onClick={handlePhoneSubmit}
-                  disabled={savingPhone || phoneInput.replace(/\D/g, '').length < 10}
+                  disabled={savingPhone || phoneInput.replace(/\D/g, '').length < 10 || cpfInput.replace(/\D/g, '').length < 11}
                 >
                   {savingPhone ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

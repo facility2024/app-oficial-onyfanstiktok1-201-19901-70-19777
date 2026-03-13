@@ -49,7 +49,13 @@ serve(async (req: Request) => {
     const { name, phone, plan_type = "mensal" } = body;
 
     const customerName = name || userEmail.split("@")[0];
-    const cpfCnpj = body.cpf || "00000000000"; // CPF é obrigatório no Asaas
+    const cpfCnpj = body.cpf;
+    if (!cpfCnpj || cpfCnpj.replace(/\D/g, '').length < 11) {
+      return new Response(JSON.stringify({ success: false, error: "CPF é obrigatório" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log("[asaas-checkout] Criando checkout para:", userEmail, "plano:", plan_type);
 

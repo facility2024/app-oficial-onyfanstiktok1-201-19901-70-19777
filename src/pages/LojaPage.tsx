@@ -7,32 +7,27 @@ import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
-const defaultProducts = Array.from({ length: 29 }, (_, i) => {
-  const num = i + 1;
-  const fileName = num < 10 ? `0${num}` : `${num}`;
-  return {
-    id: num,
-    title: `Produto ${num}`,
-    image: `${CDN_BASE}/${fileName}.jpg`,
-  };
-});
+interface LojaProduct {
+  id: number;
+  title: string;
+  cover_url: string | null;
+}
 
 const LojaPage = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState(defaultProducts);
+  const [products, setProducts] = useState<LojaProduct[]>([]);
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
 
   useEffect(() => {
-    (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {
-      if (data && data.length > 0) {
-        const coverMap: Record<number, string> = {};
-        data.forEach((c: any) => { coverMap[c.product_id] = c.cover_url; });
-        setProducts(defaultProducts.map(p => ({
-          ...p,
-          image: coverMap[p.id] || p.image,
-        })));
-      }
-    });
+    // Fetch products from database
+    (supabase as any)
+      .from('loja_products')
+      .select('id, title, cover_url')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then(({ data }: any) => {
+        if (data) setProducts(data);
+      });
 
     (supabase as any)
       .from('loja_product_videos')
@@ -76,6 +71,12 @@ const LojaPage = () => {
     };
   }, []);
 
+  const getCoverImage = (product: LojaProduct) => {
+    if (product.cover_url) return product.cover_url;
+    const fileName = product.id < 10 ? `0${product.id}` : `${product.id}`;
+    return `${CDN_BASE}/${fileName}.jpg`;
+  };
+
   return (
     <div className="min-h-screen" style={{
       background: 'linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%)',
@@ -118,7 +119,7 @@ const LojaPage = () => {
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-black/20">
                 <img
-                  src={product.image}
+                  src={getCoverImage(product)}
                   alt={product.title}
                   className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"

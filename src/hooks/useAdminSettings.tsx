@@ -169,9 +169,22 @@ export const useAdminSettings = () => {
     return securityLogs.find(log => log.event_type === type);
   };
 
+  // Asaas Wallet ID
+  const fetchAsaasWalletId = () => {
+    const stored = localStorage.getItem('asaas_wallet_id');
+    if (stored) setAsaasWalletId(stored);
+  };
+
+  const updateAsaasWalletId = (walletId: string) => {
+    localStorage.setItem('asaas_wallet_id', walletId);
+    setAsaasWalletId(walletId);
+    toast.success('Wallet ID do Asaas salvo com sucesso!');
+  };
+
   useEffect(() => {
     setPlatforms(formatPlatformStats());
     fetchVIPPlans();
+    fetchAsaasWalletId();
   }, []);
 
   return {

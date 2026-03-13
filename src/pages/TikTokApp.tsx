@@ -3073,7 +3073,7 @@ export const TikTokApp = () => {
       {/* Desktop Main Content with Sidebar */}
       <div className="flex">
         {/* Left Sidebar Menu */}
-        <div className="w-64 bg-black border-r border-gray-800 min-h-[calc(100vh-73px)] overflow-y-auto relative z-10">
+        <div className="w-64 bg-black border-r border-gray-800 h-[calc(100vh-73px)] overflow-y-auto relative z-10 sticky top-[73px]">
           <div className="py-6 relative z-20">
             {/* Header do Usuário - Desktop */}
             <UserMenuHeader />

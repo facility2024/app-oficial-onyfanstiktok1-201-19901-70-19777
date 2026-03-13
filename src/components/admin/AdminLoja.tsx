@@ -9,6 +9,13 @@ import { toast } from 'sonner';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
+interface LojaProduct {
+  id: number;
+  title: string;
+  cover_url: string | null;
+  is_active: boolean;
+}
+
 interface ProductVideo {
   id: string;
   product_id: number;
@@ -19,6 +26,7 @@ interface ProductVideo {
 }
 
 const AdminLoja = () => {
+  const [products, setProducts] = useState<LojaProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
   const [videos, setVideos] = useState<ProductVideo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,53 +35,44 @@ const AdminLoja = () => {
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
   const [coverUrl, setCoverUrl] = useState('');
-  const [customCovers, setCustomCovers] = useState<Record<number, string>>({});
-
-  // Count videos per product
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProdTitle, setNewProdTitle] = useState('');
+  const [newProdCover, setNewProdCover] = useState('');
 
   useEffect(() => {
+    fetchProducts();
     fetchVideoCounts();
-    fetchAllCovers();
   }, []);
 
   useEffect(() => {
     if (selectedProduct) {
       fetchProductVideos(selectedProduct);
-      setCoverUrl(customCovers[selectedProduct] || '');
+      const prod = products.find(p => p.id === selectedProduct);
+      setCoverUrl(prod?.cover_url || '');
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, products]);
 
-  const fetchAllCovers = async () => {
-    const { data } = await (supabase as any)
-      .from('loja_product_covers')
-      .select('product_id, cover_url');
-    if (data) {
-      const map: Record<number, string> = {};
-      data.forEach((c: any) => { map[c.product_id] = c.cover_url; });
-      setCustomCovers(map);
-    }
+  const fetchProducts = async () => {
+    const { data, error } = await (supabase as any)
+      .from('loja_products')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+    if (data) setProducts(data);
   };
 
   const saveCover = async () => {
     if (!selectedProduct) return;
-    if (!coverUrl.trim()) {
-      // Delete custom cover
-      await (supabase as any).from('loja_product_covers').delete().eq('product_id', selectedProduct);
-      const updated = { ...customCovers };
-      delete updated[selectedProduct];
-      setCustomCovers(updated);
-      toast.success('Capa padrão restaurada!');
-      return;
-    }
     const { error } = await (supabase as any)
-      .from('loja_product_covers')
-      .upsert({ product_id: selectedProduct, cover_url: coverUrl.trim(), updated_at: new Date().toISOString() }, { onConflict: 'product_id' });
+      .from('loja_products')
+      .update({ cover_url: coverUrl.trim() || null, updated_at: new Date().toISOString() })
+      .eq('id', selectedProduct);
     if (error) {
       toast.error('Erro ao salvar capa');
     } else {
-      setCustomCovers({ ...customCovers, [selectedProduct]: coverUrl.trim() });
-      toast.success('Capa atualizada!');
+      toast.success(coverUrl.trim() ? 'Capa atualizada!' : 'Capa padrão restaurada!');
+      fetchProducts();
     }
   };
 
@@ -82,7 +81,6 @@ const AdminLoja = () => {
       .from('loja_product_videos')
       .select('product_id')
       .eq('is_active', true);
-    
     if (data) {
       const counts: Record<number, number> = {};
       data.forEach((v: any) => {
@@ -99,18 +97,13 @@ const AdminLoja = () => {
       .select('*')
       .eq('product_id', productId)
       .order('sort_order', { ascending: true });
-    
-    if (error) {
-      toast.error('Erro ao carregar vídeos');
-    } else {
-      setVideos((data as any[]) || []);
-    }
+    if (error) toast.error('Erro ao carregar vídeos');
+    else setVideos((data as any[]) || []);
     setLoading(false);
   };
 
   const addVideo = async () => {
     if (!selectedProduct || !newVideoUrl.trim()) return;
-    
     const { error } = await supabase
       .from('loja_product_videos')
       .insert({
@@ -119,10 +112,8 @@ const AdminLoja = () => {
         title: newVideoTitle.trim() || null,
         sort_order: videos.length,
       } as any);
-    
-    if (error) {
-      toast.error('Erro ao adicionar vídeo');
-    } else {
+    if (error) toast.error('Erro ao adicionar vídeo');
+    else {
       toast.success('Vídeo adicionado!');
       setNewVideoUrl('');
       setNewVideoTitle('');
@@ -133,24 +124,19 @@ const AdminLoja = () => {
 
   const addBulkVideos = async () => {
     if (!selectedProduct || !bulkUrls.trim()) return;
-    
     const urls = bulkUrls.split('\n').map(u => u.trim()).filter(u => u.length > 0);
     if (urls.length === 0) return;
-
     const inserts = urls.map((url, i) => ({
       product_id: selectedProduct,
       video_url: url,
       title: null,
       sort_order: videos.length + i,
     }));
-
     const { error } = await supabase
       .from('loja_product_videos')
       .insert(inserts as any[]);
-    
-    if (error) {
-      toast.error('Erro ao adicionar vídeos');
-    } else {
+    if (error) toast.error('Erro ao adicionar vídeos');
+    else {
       toast.success(`${urls.length} vídeo(s) adicionado(s)!`);
       setBulkUrls('');
       setBulkMode(false);
@@ -164,10 +150,8 @@ const AdminLoja = () => {
       .from('loja_product_videos')
       .delete()
       .eq('id', videoId);
-    
-    if (error) {
-      toast.error('Erro ao remover vídeo');
-    } else {
+    if (error) toast.error('Erro ao remover vídeo');
+    else {
       toast.success('Vídeo removido!');
       if (selectedProduct) {
         fetchProductVideos(selectedProduct);
@@ -176,35 +160,36 @@ const AdminLoja = () => {
     }
   };
 
-  const [totalProducts, setTotalProducts] = useState(29);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProdTitle, setNewProdTitle] = useState('');
-  const [newProdCover, setNewProdCover] = useState('');
-
-  const products = Array.from({ length: totalProducts }, (_, i) => i + 1);
-
-  const handleCreateProduct = () => {
+  const handleCreateProduct = async () => {
     if (!newProdTitle.trim()) {
       toast.error('Informe o nome do produto');
       return;
     }
-    const nextId = totalProducts + 1;
-    setTotalProducts(nextId);
+    const { data, error } = await (supabase as any)
+      .from('loja_products')
+      .insert({
+        title: newProdTitle.trim(),
+        cover_url: newProdCover.trim() || null,
+        sort_order: products.length + 1,
+      })
+      .select()
+      .single();
 
-    // Save cover if provided
-    if (newProdCover.trim()) {
-      (supabase as any).from('loja_product_covers').upsert({
-        product_id: nextId,
-        cover_url: newProdCover.trim(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'product_id' });
-      setCustomCovers(prev => ({ ...prev, [nextId]: newProdCover.trim() }));
+    if (error) {
+      toast.error('Erro ao criar produto: ' + error.message);
+      return;
     }
-
-    toast.success(`Produto #${nextId} "${newProdTitle}" criado!`);
+    toast.success(`Produto #${data.id} "${newProdTitle}" criado!`);
     setNewProdTitle('');
     setNewProdCover('');
     setShowCreateModal(false);
+    fetchProducts();
+  };
+
+  const getCoverImage = (product: LojaProduct) => {
+    if (product.cover_url) return product.cover_url;
+    const fileName = product.id < 10 ? `0${product.id}` : `${product.id}`;
+    return `${CDN_BASE}/${fileName}.jpg`;
   };
 
   return (
@@ -213,7 +198,7 @@ const AdminLoja = () => {
         <Store className="w-6 h-6 text-amber-400" />
         <h2 className="text-2xl font-bold text-white">Nossa Loja</h2>
         <Badge variant="outline" className="text-amber-400 border-amber-400/30">
-          {totalProducts} Produtos
+          {products.length} Produtos
         </Badge>
         <Button
           onClick={() => setShowCreateModal(true)}
@@ -226,15 +211,13 @@ const AdminLoja = () => {
 
       {/* Grid de produtos */}
       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 gap-2">
-        {products.map((num) => {
-          const fileName = num < 10 ? `0${num}` : `${num}`;
-          const count = videoCounts[num] || 0;
-          const isSelected = selectedProduct === num;
-
+        {products.map((product) => {
+          const count = videoCounts[product.id] || 0;
+          const isSelected = selectedProduct === product.id;
           return (
             <button
-              key={num}
-              onClick={() => setSelectedProduct(num)}
+              key={product.id}
+              onClick={() => setSelectedProduct(product.id)}
               className={`relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
                 isSelected
                   ? 'border-amber-400 shadow-lg shadow-amber-400/20'
@@ -242,19 +225,20 @@ const AdminLoja = () => {
               }`}
             >
               <img
-                src={customCovers[num] || `${CDN_BASE}/${fileName}.jpg`}
-                alt={`Produto ${num}`}
+                src={getCoverImage(product)}
+                alt={product.title}
                 className="w-full aspect-square object-cover"
                 loading="lazy"
-                onError={(e) => { e.currentTarget.src = `${CDN_BASE}/${fileName}.jpg`; }}
+                onError={(e) => { const f = product.id < 10 ? `0${product.id}` : `${product.id}`; e.currentTarget.src = `${CDN_BASE}/${f}.jpg`; }}
               />
-              {customCovers[num] && (
+              {product.cover_url && (
                 <div className="absolute bottom-0.5 left-0.5">
                   <ImageIcon className="w-3 h-3 text-green-400 drop-shadow-lg" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">#{num}</span>
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
+                <span className="text-white font-bold text-lg">#{product.id}</span>
+                <span className="text-white/80 text-[8px] font-semibold leading-tight text-center px-1 truncate max-w-full">{product.title}</span>
               </div>
               {count > 0 && (
                 <div className="absolute top-1 right-1 bg-green-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -343,7 +327,7 @@ const AdminLoja = () => {
                   onChange={(e) => setBulkUrls(e.target.value)}
                   rows={5}
                   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white text-sm resize-y"
-                  placeholder="https://cdn.bunny.net/video1.mp4&#10;https://cdn.bunny.net/video2.mp4&#10;https://cdn.bunny.net/video3.mp4"
+                  placeholder="https://cdn.bunny.net/video1.mp4&#10;https://cdn.bunny.net/video2.mp4"
                 />
                 <div className="flex gap-2">
                   <Button onClick={addBulkVideos} className="bg-green-600 hover:bg-green-700 text-white">
@@ -366,10 +350,7 @@ const AdminLoja = () => {
             ) : (
               <div className="space-y-2">
                 {videos.map((video, idx) => (
-                  <div
-                    key={video.id}
-                    className="flex items-center gap-3 bg-white/5 rounded-lg p-3 border border-white/10"
-                  >
+                  <div key={video.id} className="flex items-center gap-3 bg-white/5 rounded-lg p-3 border border-white/10">
                     <span className="text-white/40 text-xs w-6">{idx + 1}.</span>
                     <Play className="w-4 h-4 text-amber-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -391,6 +372,7 @@ const AdminLoja = () => {
           </CardContent>
         </Card>
       )}
+
       {/* Modal Criar Produto */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowCreateModal(false)}>
@@ -422,7 +404,7 @@ const AdminLoja = () => {
             )}
             <div className="flex gap-2">
               <Button onClick={handleCreateProduct} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold">
-                <Plus className="w-4 h-4 mr-1" /> Criar Produto #{totalProducts + 1}
+                <Plus className="w-4 h-4 mr-1" /> Criar Produto
               </Button>
               <Button variant="ghost" onClick={() => setShowCreateModal(false)} className="text-white/60">
                 Cancelar

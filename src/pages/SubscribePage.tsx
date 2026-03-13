@@ -149,11 +149,12 @@ const SubscribePage = () => {
       return;
     }
 
-    // Verificar se tem telefone cadastrado
+    // Verificar se tem telefone e CPF
     const currentPhone = profile?.phone || phoneInput.replace(/\D/g, '');
-    if (!currentPhone || currentPhone.length < 10) {
+    const currentCpf = cpfInput.replace(/\D/g, '');
+    if (!currentPhone || currentPhone.length < 10 || !currentCpf || currentCpf.length < 11) {
       setShowPhoneModal(true);
-      toast.info('Por favor, informe seu telefone para continuar');
+      toast.info('Por favor, informe seu telefone e CPF para continuar');
       return;
     }
 

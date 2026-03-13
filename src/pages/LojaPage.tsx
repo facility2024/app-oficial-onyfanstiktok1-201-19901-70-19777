@@ -142,11 +142,26 @@ const LojaPage = () => {
 
       {/* Title */}
       <div className="px-4 pt-6 pb-4 text-center">
-        <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-amber-400" />
-          Nossa Loja
-        </h1>
+        <div className="flex items-center justify-center gap-3">
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <ShoppingBag className="w-6 h-6 text-amber-400" />
+            Nossa Loja
+          </h1>
+          <span className="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            {products.length} Produtos
+          </span>
+        </div>
         <p className="text-white/60 text-sm mt-1">Clique em um produto para ver mais detalhes</p>
+        {isAdmin && (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-3 bg-green-600 hover:bg-green-700 text-white font-bold"
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Criar Novo Produto
+          </Button>
+        )}
       </div>
 
       {/* Grid de Produtos */}

@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
-import { useUserRoles } from '@/hooks/useUserRoles';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 
@@ -24,11 +23,11 @@ const defaultProducts = Array.from({ length: 29 }, (_, i) => {
 
 const LojaPage = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useUserRoles();
   const [products, setProducts] = useState(defaultProducts);
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newProduct, setNewProduct] = useState({ title: '', image: '' });
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {

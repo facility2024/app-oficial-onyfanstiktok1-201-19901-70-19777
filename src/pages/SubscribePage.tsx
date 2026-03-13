@@ -180,18 +180,8 @@ const SubscribePage = () => {
         throw new Error(data?.error || 'Erro ao gerar link de pagamento');
       }
 
-      // Marcar que está verificando pagamento
-      sessionStorage.setItem('checking_payment', 'true');
-
-      // Abrir checkout do Asaas em nova aba
-      window.open(data.checkoutUrl, '_blank');
-      toast.success('Pagamento aberto em nova aba!', {
-        description: 'Você será notificado automaticamente quando seu VIP for ativado!',
-        duration: 8000,
-      });
-
-      // Redirecionar para a página de confirmação de pagamento
-      navigate('/payment-confirmation');
+      // Redirecionar para página interna de checkout
+      navigate(`/checkout?url=${encodeURIComponent(data.checkoutUrl)}`);
     } catch (error: any) {
       console.error('Erro ao criar checkout Asaas:', error);
       toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');

@@ -77,17 +77,30 @@ const AdminLoja = () => {
   };
 
   const fetchVideoCounts = async () => {
-    const { data } = await supabase
-      .from('loja_product_videos')
-      .select('product_id')
-      .eq('is_active', true);
-    if (data) {
-      const counts: Record<number, number> = {};
-      data.forEach((v: any) => {
-        counts[v.product_id] = (counts[v.product_id] || 0) + 1;
-      });
-      setVideoCounts(counts);
+    // Fetch all video records in pages of 1000 to avoid Supabase default limit
+    let allData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data } = await supabase
+        .from('loja_product_videos')
+        .select('product_id')
+        .eq('is_active', true)
+        .range(from, from + pageSize - 1);
+      if (data && data.length > 0) {
+        allData = allData.concat(data);
+        from += pageSize;
+        hasMore = data.length === pageSize;
+      } else {
+        hasMore = false;
+      }
     }
+    const counts: Record<number, number> = {};
+    allData.forEach((v: any) => {
+      counts[v.product_id] = (counts[v.product_id] || 0) + 1;
+    });
+    setVideoCounts(counts);
   };
 
   const fetchProductVideos = async (productId: number) => {

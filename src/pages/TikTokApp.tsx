@@ -2876,23 +2876,10 @@ export const TikTokApp = () => {
             <span className="text-xs">Marketplace</span>
           </button>
 
-          {/* Chat - só aparece se o criador/modelo tem chat ativo */}
-          {currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && <button onClick={() => {
-          setChatEntity({
-            name: currentVideo.user.username,
-            avatar: currentVideo.user.avatar_url,
-            id: currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id,
-            isCreator: !!currentVideo.creator_id
-          });
-          setShowChat(true);
-        }} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors relative">
-              <div className="relative">
-                <MessageCircle className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
-                {/* Indicador de Online */}
-                {chatOnlineMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] && <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-black animate-pulse"></div>}
-              </div>
-              <span className="text-xs">Chat</span>
-            </button>}
+          <button onClick={() => navigate('/profile')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
+            <User className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+            <span className="text-xs">Perfil</span>
+          </button>
         </div>
 
         {/* Vertical Carousel Container */}

@@ -292,15 +292,17 @@ serve(async (req: Request) => {
   } catch (error: any) {
     console.error("[payment-webhook] ❌ Erro fatal:", error.message);
 
-    await supabase.from("webhook_logs").insert({
-      source: "payment-webhook",
-      webhook_type: "payment",
-      event_type: "error",
-      payload: { raw_error: error.message },
-      processed: false,
-      error_message: error.message,
-      ip_address: clientIP,
-    }).catch(() => {});
+    try {
+      await supabase.from("webhook_logs").insert({
+        source: "payment-webhook",
+        webhook_type: "payment",
+        event_type: "error",
+        payload: { raw_error: error.message },
+        processed: false,
+        error_message: error.message,
+        ip_address: clientIP,
+      });
+    } catch (_) { /* ignore logging errors */ }
 
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,

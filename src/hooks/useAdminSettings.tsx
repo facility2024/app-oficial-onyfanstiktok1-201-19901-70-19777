@@ -25,7 +25,7 @@ const defaultVIPPlans: VIPPlans = {
       'Chat exclusivo com modelos',
       'Badge VIP no perfil'
     ],
-    paymentUrl: 'https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1'
+    paymentUrl: ''
   },
   trimestral: {
     price: 49.99,
@@ -37,7 +37,7 @@ const defaultVIPPlans: VIPPlans = {
       'Suporte prioritário',
       'Conteúdo exclusivo semanal'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/f488d9e1-3e79-4ea5-a9cc-4a108bb03c92'
+    paymentUrl: ''
   },
   anual: {
     price: 149.99,
@@ -48,7 +48,7 @@ const defaultVIPPlans: VIPPlans = {
       'Sorteios e brindes',
       'Perfil verificado especial'
     ],
-    paymentUrl: 'https://p.hoopay.com.br/v/61207e4a-9455-4cb8-8207-9002a87c5fe6'
+    paymentUrl: ''
   }
 };
 
@@ -100,13 +100,29 @@ export const useAdminSettings = () => {
   const [loading, setLoading] = useState(false);
   const [asaasWalletId, setAsaasWalletId] = useState('');
 
-  // Fetch VIP Plans from localStorage (simulating persistence)
+  // Fetch VIP Plans from Supabase admin_settings
   const fetchVIPPlans = async () => {
     setVipPlansLoading(true);
     try {
-      const stored = localStorage.getItem('vip_plans');
-      if (stored) {
-        setVipPlans(JSON.parse(stored));
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'vip_plans')
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching VIP plans from DB:', error);
+        // Fallback to localStorage
+        const stored = localStorage.getItem('vip_plans');
+        if (stored) setVipPlans(JSON.parse(stored));
+        return;
+      }
+
+      if (data?.setting_value) {
+        const plans = data.setting_value as unknown as VIPPlans;
+        setVipPlans(plans);
+        // Sync localStorage for quick access on subscribe page
+        localStorage.setItem('vip_plans', JSON.stringify(plans));
       }
     } catch (error) {
       console.error('Error fetching VIP plans:', error);
@@ -115,9 +131,24 @@ export const useAdminSettings = () => {
     }
   };
 
-  // Update VIP Plans
+  // Update VIP Plans - persist to Supabase
   const updateVIPPlans = async (plans: VIPPlans) => {
     try {
+      // Upsert into admin_settings
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert({
+          setting_key: 'vip_plans',
+          setting_value: plans as any,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'setting_key' });
+
+      if (error) {
+        console.error('Error saving VIP plans to DB:', error);
+        toast.error('Erro ao salvar no banco de dados. Salvando localmente...');
+      }
+
+      // Also update localStorage as cache
       localStorage.setItem('vip_plans', JSON.stringify(plans));
       setVipPlans(plans);
       toast.success('Planos VIP atualizados com sucesso!');

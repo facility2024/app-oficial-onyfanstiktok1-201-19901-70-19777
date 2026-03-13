@@ -259,6 +259,22 @@ const SubscribePage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="cpf" className="text-white">CPF</Label>
+                <Input
+                  id="cpf"
+                  type="text"
+                  placeholder="000.000.000-00"
+                  value={cpfInput.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}
+                  onChange={(e) => setCpfInput(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  maxLength={14}
+                />
+                <p className="text-xs text-gray-500">
+                  Obrigatório para pagamento no Asaas
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="phone" className="text-white">Telefone (com DDD)</Label>
                 <Input
                   id="phone"

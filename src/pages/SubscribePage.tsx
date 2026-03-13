@@ -193,8 +193,11 @@ const SubscribePage = () => {
         throw new Error(data?.error || 'Erro ao gerar link de pagamento');
       }
 
-      // Redirecionar para página interna de checkout
-      navigate(`/checkout?url=${encodeURIComponent(data.checkoutUrl)}`);
+      // Abrir checkout do Asaas em nova aba (iframe bloqueado pelo Asaas)
+      window.open(data.checkoutUrl, '_blank');
+
+      // Redirecionar para página de confirmação
+      navigate('/payment-confirmation');
     } catch (error: any) {
       console.error('Erro ao criar checkout Asaas:', error);
       toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');

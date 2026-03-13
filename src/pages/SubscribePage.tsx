@@ -190,8 +190,8 @@ const SubscribePage = () => {
         duration: 8000,
       });
 
-      // Redirecionar para a página inicial para verificar status VIP
-      navigate('/');
+      // Redirecionar para a página de confirmação de pagamento
+      navigate('/payment-confirmation');
     } catch (error: any) {
       console.error('Erro ao criar checkout Asaas:', error);
       toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');

@@ -19,7 +19,25 @@ serve(async (req: Request) => {
   const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
 
   try {
-    const payload = await req.json();
+    // Suporte a JSON e URL-encoded (Asaas pode enviar ambos)
+    const contentType = req.headers.get("content-type") || "";
+    let payload: any;
+    
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const text = await req.text();
+      const params = new URLSearchParams(text);
+      // Tentar parsear o campo "data" se existir
+      const dataField = params.get("data");
+      if (dataField) {
+        payload = JSON.parse(dataField);
+      } else {
+        payload = Object.fromEntries(params.entries());
+      }
+    } else {
+      const text = await req.text();
+      payload = JSON.parse(text);
+    }
+    
     console.log("[payment-webhook] 📥 Payload recebido:", JSON.stringify(payload));
 
     // Detectar se é payload do Asaas (tem campo "event" como PAYMENT_RECEIVED etc)
@@ -274,15 +292,17 @@ serve(async (req: Request) => {
   } catch (error: any) {
     console.error("[payment-webhook] ❌ Erro fatal:", error.message);
 
-    await supabase.from("webhook_logs").insert({
-      source: "payment-webhook",
-      webhook_type: "payment",
-      event_type: "error",
-      payload: { raw_error: error.message },
-      processed: false,
-      error_message: error.message,
-      ip_address: clientIP,
-    }).catch(() => {});
+    try {
+      await supabase.from("webhook_logs").insert({
+        source: "payment-webhook",
+        webhook_type: "payment",
+        event_type: "error",
+        payload: { raw_error: error.message },
+        processed: false,
+        error_message: error.message,
+        ip_address: clientIP,
+      });
+    } catch (_) { /* ignore logging errors */ }
 
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,

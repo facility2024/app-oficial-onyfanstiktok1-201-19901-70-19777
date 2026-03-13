@@ -22,48 +22,102 @@ serve(async (req: Request) => {
     const payload = await req.json();
     console.log("[payment-webhook] 📥 Payload recebido:", JSON.stringify(payload));
 
-    // Extrair dados do pagamento - suporta múltiplos formatos de gateway
-    const email = (
-      payload.email ||
-      payload.customer?.email ||
-      payload.data?.customer?.email ||
-      payload.data?.email ||
-      payload.buyer?.email ||
-      ""
-    ).toLowerCase().trim();
+    // Detectar se é payload do Asaas (tem campo "event" como PAYMENT_RECEIVED etc)
+    const isAsaas = !!(payload.event && payload.payment);
 
-    const name = (
-      payload.name ||
-      payload.customer?.name ||
-      payload.data?.customer?.name ||
-      payload.data?.name ||
-      payload.buyer?.name ||
-      "VIP Automático"
-    ).trim();
+    let email: string;
+    let name: string;
+    let phone: string | null;
+    let planType: string;
+    let status: string;
 
-    const phone = (
-      payload.phone ||
-      payload.whatsapp ||
-      payload.customer?.phone ||
-      payload.data?.customer?.phone ||
-      payload.buyer?.phone ||
-      null
-    );
+    if (isAsaas) {
+      // === FORMATO ASAAS ===
+      const payment = payload.payment || {};
+      
+      // Buscar dados do customer via API se necessário
+      email = (payment.customer?.email || payment.customerEmail || "").toLowerCase().trim();
+      name = (payment.customer?.name || payment.customerName || "VIP Automático").trim();
+      phone = payment.customer?.phone || payment.customerPhone || null;
+      
+      // Detectar plano pelo ciclo da assinatura ou descrição
+      const description = (payment.description || "").toLowerCase();
+      if (description.includes("anual") || payment.cycle === "YEARLY") {
+        planType = "anual";
+      } else if (description.includes("trimestral") || payment.cycle === "QUARTERLY") {
+        planType = "trimestral";
+      } else {
+        planType = "mensal";
+      }
+      
+      status = (payload.event || "").toLowerCase();
+      console.log("[payment-webhook] 📦 Formato Asaas detectado. Evento:", payload.event);
+      
+      // Se não temos email no payload, buscar via Asaas API
+      if (!email && payment.customer) {
+        const customerId = typeof payment.customer === "string" ? payment.customer : payment.customer.id;
+        if (customerId) {
+          try {
+            const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
+            if (ASAAS_API_KEY) {
+              const customerRes = await fetch(`https://api.asaas.com/v3/customers/${customerId}`, {
+                headers: { access_token: ASAAS_API_KEY },
+              });
+              const customerData = await customerRes.json();
+              email = (customerData.email || "").toLowerCase().trim();
+              name = customerData.name || name;
+              phone = customerData.phone || phone;
+              console.log("[payment-webhook] 📧 Email obtido via API Asaas:", email);
+            }
+          } catch (e) {
+            console.error("[payment-webhook] ⚠️ Erro ao buscar customer Asaas:", e);
+          }
+        }
+      }
+    } else {
+      // === FORMATO GENÉRICO (Hoopay, etc) ===
+      email = (
+        payload.email ||
+        payload.customer?.email ||
+        payload.data?.customer?.email ||
+        payload.data?.email ||
+        payload.buyer?.email ||
+        ""
+      ).toLowerCase().trim();
 
-    const planType = (
-      payload.plan_type ||
-      payload.plan ||
-      payload.data?.plan_type ||
-      "mensal"
-    );
+      name = (
+        payload.name ||
+        payload.customer?.name ||
+        payload.data?.customer?.name ||
+        payload.data?.name ||
+        payload.buyer?.name ||
+        "VIP Automático"
+      ).trim();
 
-    const status = (
-      payload.status ||
-      payload.payment_status ||
-      payload.data?.status ||
-      payload.event ||
-      ""
-    ).toLowerCase();
+      phone = (
+        payload.phone ||
+        payload.whatsapp ||
+        payload.customer?.phone ||
+        payload.data?.customer?.phone ||
+        payload.buyer?.phone ||
+        null
+      );
+
+      planType = (
+        payload.plan_type ||
+        payload.plan ||
+        payload.data?.plan_type ||
+        "mensal"
+      );
+
+      status = (
+        payload.status ||
+        payload.payment_status ||
+        payload.data?.status ||
+        payload.event ||
+        ""
+      ).toLowerCase();
+    }
 
     // Verificar se é uma confirmação de pagamento aprovado
     const approvedStatuses = ["approved", "paid", "completed", "confirmed", "success", "active", "payment_confirmed", "charge.completed"];

@@ -24,8 +24,11 @@ const defaultProducts = Array.from({ length: 29 }, (_, i) => {
 
 const LojaPage = () => {
   const navigate = useNavigate();
+  const { isAdmin } = useUserRoles();
   const [products, setProducts] = useState(defaultProducts);
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({ title: '', image: '' });
 
   useEffect(() => {
     (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {

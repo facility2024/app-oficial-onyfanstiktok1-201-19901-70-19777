@@ -29,19 +29,33 @@ const LojaPage = () => {
         if (data) setProducts(data);
       });
 
-    (supabase as any)
-      .from('loja_product_videos')
-      .select('product_id')
-      .eq('is_active', true)
-      .then(({ data }: any) => {
-        if (data) {
-          const counts: Record<number, number> = {};
-          data.forEach((v: any) => {
-            counts[v.product_id] = (counts[v.product_id] || 0) + 1;
-          });
-          setVideoCounts(counts);
+    // Fetch video counts with pagination to avoid 1000 row limit
+    const fetchCounts = async () => {
+      let allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      while (hasMore) {
+        const { data } = await (supabase as any)
+          .from('loja_product_videos')
+          .select('product_id')
+          .eq('is_active', true)
+          .range(from, from + pageSize - 1);
+        if (data && data.length > 0) {
+          allData = allData.concat(data);
+          from += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
         }
+      }
+      const counts: Record<number, number> = {};
+      allData.forEach((v: any) => {
+        counts[v.product_id] = (counts[v.product_id] || 0) + 1;
       });
+      setVideoCounts(counts);
+    };
+    fetchCounts();
   }, []);
 
   // Fix mobile scroll

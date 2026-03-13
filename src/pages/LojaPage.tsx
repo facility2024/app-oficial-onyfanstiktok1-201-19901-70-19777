@@ -128,6 +128,11 @@ const LojaPage = () => {
                 <span className="absolute top-2 right-2 bg-amber-500/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                   #{product.id}
                 </span>
+                {videoCounts[product.id] > 0 && (
+                  <span className="absolute top-2 left-2 bg-green-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {videoCounts[product.id]}
+                  </span>
+                )}
               </div>
               <div className="p-3 space-y-2">
                 <p className="text-white text-sm font-semibold text-center">{product.title}</p>

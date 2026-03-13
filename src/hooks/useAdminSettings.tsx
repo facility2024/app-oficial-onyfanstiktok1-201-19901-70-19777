@@ -98,6 +98,7 @@ export const useAdminSettings = () => {
     }
   ]);
   const [loading, setLoading] = useState(false);
+  const [asaasWalletId, setAsaasWalletId] = useState('');
 
   // Fetch VIP Plans from localStorage (simulating persistence)
   const fetchVIPPlans = async () => {
@@ -168,9 +169,22 @@ export const useAdminSettings = () => {
     return securityLogs.find(log => log.event_type === type);
   };
 
+  // Asaas Wallet ID
+  const fetchAsaasWalletId = () => {
+    const stored = localStorage.getItem('asaas_wallet_id');
+    if (stored) setAsaasWalletId(stored);
+  };
+
+  const updateAsaasWalletId = (walletId: string) => {
+    localStorage.setItem('asaas_wallet_id', walletId);
+    setAsaasWalletId(walletId);
+    toast.success('Wallet ID do Asaas salvo com sucesso!');
+  };
+
   useEffect(() => {
     setPlatforms(formatPlatformStats());
     fetchVIPPlans();
+    fetchAsaasWalletId();
   }, []);
 
   return {
@@ -182,12 +196,14 @@ export const useAdminSettings = () => {
     loading,
     vipPlans,
     vipPlansLoading,
+    asaasWalletId,
     updateSetting,
     connectPlatform,
     performBackup,
     getAppStatByType,
     getSecurityLogByType,
     updateVIPPlans,
+    updateAsaasWalletId,
     fetchVIPPlans,
     refreshData: () => toast.success('Dados atualizados!')
   };

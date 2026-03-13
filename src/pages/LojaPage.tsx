@@ -205,6 +205,45 @@ const LojaPage = () => {
           ))}
         </div>
       </main>
+
+      {/* Modal Criar Produto */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="bg-gray-900 text-white border-white/10 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-green-400" />
+              Criar Novo Produto
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-white/80">Nome do Produto *</Label>
+              <Input
+                value={newProduct.title}
+                onChange={e => setNewProduct(p => ({ ...p, title: e.target.value }))}
+                className="bg-gray-800 border-white/10 text-white mt-1"
+                placeholder="Ex: Coroas, Novinhas..."
+              />
+            </div>
+            <div>
+              <Label className="text-white/80">URL da Capa (opcional)</Label>
+              <Input
+                value={newProduct.image}
+                onChange={e => setNewProduct(p => ({ ...p, image: e.target.value }))}
+                className="bg-gray-800 border-white/10 text-white mt-1"
+                placeholder="https://cdn.../imagem.jpg"
+              />
+            </div>
+            {newProduct.image && (
+              <img src={newProduct.image} alt="Preview" className="w-full h-32 object-cover rounded-lg" onError={e => { e.currentTarget.src = '/placeholder.svg'; }} />
+            )}
+            <Button onClick={handleCreateProduct} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
+              <Plus className="w-4 h-4 mr-1" />
+              Criar Produto #{products.length + 1}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

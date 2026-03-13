@@ -98,6 +98,7 @@ export const useAdminSettings = () => {
     }
   ]);
   const [loading, setLoading] = useState(false);
+  const [asaasWalletId, setAsaasWalletId] = useState('');
 
   // Fetch VIP Plans from localStorage (simulating persistence)
   const fetchVIPPlans = async () => {

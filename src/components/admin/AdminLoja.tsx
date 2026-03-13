@@ -176,7 +176,36 @@ const AdminLoja = () => {
     }
   };
 
-  const products = Array.from({ length: 29 }, (_, i) => i + 1);
+  const [totalProducts, setTotalProducts] = useState(29);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProdTitle, setNewProdTitle] = useState('');
+  const [newProdCover, setNewProdCover] = useState('');
+
+  const products = Array.from({ length: totalProducts }, (_, i) => i + 1);
+
+  const handleCreateProduct = () => {
+    if (!newProdTitle.trim()) {
+      toast.error('Informe o nome do produto');
+      return;
+    }
+    const nextId = totalProducts + 1;
+    setTotalProducts(nextId);
+
+    // Save cover if provided
+    if (newProdCover.trim()) {
+      (supabase as any).from('loja_product_covers').upsert({
+        product_id: nextId,
+        cover_url: newProdCover.trim(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'product_id' });
+      setCustomCovers(prev => ({ ...prev, [nextId]: newProdCover.trim() }));
+    }
+
+    toast.success(`Produto #${nextId} "${newProdTitle}" criado!`);
+    setNewProdTitle('');
+    setNewProdCover('');
+    setShowCreateModal(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -184,8 +213,15 @@ const AdminLoja = () => {
         <Store className="w-6 h-6 text-amber-400" />
         <h2 className="text-2xl font-bold text-white">Nossa Loja</h2>
         <Badge variant="outline" className="text-amber-400 border-amber-400/30">
-          29 Produtos
+          {totalProducts} Produtos
         </Badge>
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="ml-auto bg-green-600 hover:bg-green-700 text-white font-bold"
+          size="sm"
+        >
+          <Plus className="w-4 h-4 mr-1" /> Criar Produto
+        </Button>
       </div>
 
       {/* Grid de produtos */}

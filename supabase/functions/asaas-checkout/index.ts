@@ -105,21 +105,36 @@ serve(async (req: Request) => {
     const nextDueDate = today.toISOString().split("T")[0]; // YYYY-MM-DD
 
     // 4. Criar assinatura no Asaas
+    const ASAAS_WALLET_ID = Deno.env.get("ASAAS_WALLET_ID");
+
+    const subscriptionBody: Record<string, unknown> = {
+      customer: customerId,
+      billingType: "UNDEFINED",
+      value: plan.value,
+      nextDueDate: nextDueDate,
+      cycle: plan.cycle,
+      description: `Assinatura VIP CocoNudi - ${plan_type}`,
+      externalReference: userId,
+    };
+
+    // Adicionar split se Wallet ID estiver configurado
+    if (ASAAS_WALLET_ID) {
+      subscriptionBody.split = [
+        {
+          walletId: ASAAS_WALLET_ID,
+          percentualValue: 100,
+        },
+      ];
+      console.log("[asaas-checkout] Split configurado para wallet:", ASAAS_WALLET_ID);
+    }
+
     const subscriptionRes = await fetch(`${ASAAS_BASE_URL}/v3/subscriptions`, {
       method: "POST",
       headers: {
         access_token: ASAAS_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        customer: customerId,
-        billingType: "UNDEFINED", // Permite PIX e cartão no checkout
-        value: plan.value,
-        nextDueDate: nextDueDate,
-        cycle: plan.cycle,
-        description: `Assinatura VIP CocoNudi - ${plan_type}`,
-        externalReference: userId,
-      }),
+      body: JSON.stringify(subscriptionBody),
     });
 
     const subscriptionData = await subscriptionRes.json();

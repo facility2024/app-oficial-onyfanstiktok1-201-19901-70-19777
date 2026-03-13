@@ -478,6 +478,64 @@ export const AdminSettings = () => {
         </CardContent>
       </Card>
 
+      {/* Asaas Integration */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <CreditCard className="w-5 h-5 text-green-500" />
+            <span>💳 Integração Asaas</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="p-4 border border-border rounded-lg">
+              <Label className="text-sm font-medium text-foreground">Wallet ID do Asaas</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                ID da carteira para split de pagamentos. Deixe vazio para receber na conta principal.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={walletIdInput}
+                  onChange={(e) => setWalletIdInput(e.target.value)}
+                  placeholder="Ex: wal_abc123..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => updateAsaasWalletId(walletIdInput)}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+              {asaasWalletId && (
+                <p className="text-xs text-green-500 mt-2">✓ Wallet ID configurado: {asaasWalletId.substring(0, 20)}...</p>
+              )}
+            </div>
+            <div className="p-4 border border-border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-foreground mb-1">Webhook URL</h4>
+                  <p className="text-xs text-muted-foreground font-mono break-all">
+                    https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/payment-webhook
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText('https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/payment-webhook');
+                    toast.success('URL copiada!');
+                  }}
+                >
+                  Copiar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Platform Connections */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader className="flex flex-row items-center justify-between">

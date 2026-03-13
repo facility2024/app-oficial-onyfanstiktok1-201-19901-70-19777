@@ -421,10 +421,14 @@ const SubscribePage = () => {
         <Button 
           className="w-full py-6 text-lg font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black"
           onClick={() => handleSelectPlan(selectedPlan || 'mensal')}
-          disabled={!selectedPlan}
+          disabled={!selectedPlan || checkoutLoading}
         >
-          <Crown className="w-5 h-5 mr-2" />
-          {selectedPlan ? `Assinar ${planNames[selectedPlan as keyof typeof planNames]}` : 'Selecione um plano'}
+          {checkoutLoading ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <Crown className="w-5 h-5 mr-2" />
+          )}
+          {checkoutLoading ? 'Gerando pagamento...' : selectedPlan ? `Assinar ${planNames[selectedPlan as keyof typeof planNames]}` : 'Selecione um plano'}
         </Button>
         
         <p className="text-center text-gray-500 text-xs mt-3">

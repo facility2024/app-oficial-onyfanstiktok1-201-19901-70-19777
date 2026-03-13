@@ -26,6 +26,7 @@ import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
 import CollectionsPage from "./pages/CollectionsPage";
 import SubscribePage from "./pages/SubscribePage";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
+import CheckoutPage from "./pages/CheckoutPage";
 import VIPManagementPage from "./pages/VIPManagementPage";
 import MySubscriptionsPage from "./pages/MySubscriptionsPage";
 

@@ -20,6 +20,7 @@ const defaultProducts = Array.from({ length: 29 }, (_, i) => {
 const LojaPage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState(defaultProducts);
+  const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {
@@ -32,8 +33,22 @@ const LojaPage = () => {
         })));
       }
     });
-  }, []);
 
+    // Fetch real video counts per product
+    (supabase as any)
+      .from('loja_product_videos')
+      .select('product_id')
+      .eq('is_active', true)
+      .then(({ data }: any) => {
+        if (data) {
+          const counts: Record<number, number> = {};
+          data.forEach((v: any) => {
+            counts[v.product_id] = (counts[v.product_id] || 0) + 1;
+          });
+          setVideoCounts(counts);
+        }
+      });
+  }, []);
   // Fix mobile scroll - force scrollable on iOS/Android
   React.useEffect(() => {
     document.documentElement.classList.add('allow-scroll');

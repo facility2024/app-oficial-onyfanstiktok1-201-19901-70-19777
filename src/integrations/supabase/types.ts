@@ -3098,6 +3098,36 @@ export type Database = {
         }
         Relationships: []
       }
+      loja_products: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          id: number
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       magazine_buttons: {
         Row: {
           color: string | null

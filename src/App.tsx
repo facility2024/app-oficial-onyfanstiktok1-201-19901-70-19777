@@ -138,6 +138,7 @@ const App = () => (
           {/* Assinatura VIP */}
           <Route path="/subscribe" element={<SubscribePage />} />
           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/vip-management" element={
             <ProtectedRoute>
               <VIPManagementPage />

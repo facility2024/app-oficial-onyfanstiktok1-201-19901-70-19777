@@ -21,14 +21,18 @@ export const AdminSettings = () => {
     loading,
     vipPlans,
     vipPlansLoading,
+    asaasWalletId,
     updateSetting,
     connectPlatform,
     performBackup,
     getAppStatByType,
     getSecurityLogByType,
     updateVIPPlans,
+    updateAsaasWalletId,
     refreshData
   } = useAdminSettings();
+
+  const [walletIdInput, setWalletIdInput] = useState(asaasWalletId);
 
   const [connectFormData, setConnectFormData] = useState({
     platform: '',

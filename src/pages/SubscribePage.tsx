@@ -250,11 +250,9 @@ const SubscribePage = () => {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
                 <Phone className="w-8 h-8 text-amber-500" />
               </div>
-              <CardTitle className="text-white text-center">Informe seu Telefone</CardTitle>
+              <CardTitle className="text-white text-center">Dados para Pagamento</CardTitle>
               <CardDescription className="text-center text-gray-400">
-                Precisamos do seu telefone para identificar seu pagamento no Hoopay.
-                <br />
-                <strong className="text-amber-400">Use o MESMO número no pagamento!</strong>
+                Precisamos do seu CPF e telefone para processar o pagamento no Asaas.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

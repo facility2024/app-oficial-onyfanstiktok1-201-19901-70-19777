@@ -120,7 +120,12 @@ serve(async (req: Request) => {
     }
 
     // Verificar se é uma confirmação de pagamento aprovado
-    const approvedStatuses = ["approved", "paid", "completed", "confirmed", "success", "active", "payment_confirmed", "charge.completed"];
+    const approvedStatuses = [
+      "approved", "paid", "completed", "confirmed", "success", "active",
+      "payment_confirmed", "charge.completed",
+      // Asaas events
+      "payment_received", "payment_confirmed", "payment_created"
+    ];
     const isApproved = approvedStatuses.some(s => status.includes(s)) || !status;
 
     if (!email) {

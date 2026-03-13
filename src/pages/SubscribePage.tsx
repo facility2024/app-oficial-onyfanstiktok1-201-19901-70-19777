@@ -135,6 +135,8 @@ const SubscribePage = () => {
     }
   };
 
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
   const handleSelectPlan = async (planKey: string) => {
     setSelectedPlan(planKey);
     
@@ -154,27 +156,45 @@ const SubscribePage = () => {
       return;
     }
 
-    const plan = vipPlans[planKey as keyof VIPPlans];
-    if (plan?.paymentUrl) {
-      // Salvar telefone antes de redirecionar (se ainda não salvou)
-      if (!profile?.phone && phoneInput) {
-        await savePhoneToProfile();
+    // Salvar telefone antes de redirecionar (se ainda não salvou)
+    if (!profile?.phone && phoneInput) {
+      await savePhoneToProfile();
+    }
+
+    // Chamar Edge Function do Asaas para criar checkout
+    setCheckoutLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('asaas-checkout', {
+        body: {
+          name: profile?.username || user.email?.split('@')[0] || 'Usuário',
+          phone: currentPhone,
+          plan_type: planKey,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success || !data?.checkoutUrl) {
+        throw new Error(data?.error || 'Erro ao gerar link de pagamento');
       }
-      
+
       // Marcar que está verificando pagamento
       sessionStorage.setItem('checking_payment', 'true');
-      
-      window.open(plan.paymentUrl, '_blank');
+
+      // Abrir checkout do Asaas em nova aba
+      window.open(data.checkoutUrl, '_blank');
       toast.success('Pagamento aberto em nova aba!', {
         description: 'Você será notificado automaticamente quando seu VIP for ativado!',
-        duration: 8000
+        duration: 8000,
       });
-      
+
       // Redirecionar para a página inicial para verificar status VIP
       navigate('/');
+    } catch (error: any) {
+      console.error('Erro ao criar checkout Asaas:', error);
+      toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setCheckoutLoading(false);
     }
-    
-    toast.info('Sistema de pagamento em breve!');
   };
 
   const handlePhoneSubmit = async () => {

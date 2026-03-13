@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.payment-webhook]
 verify_jwt = false
+
+[functions.asaas-checkout]
+verify_jwt = false

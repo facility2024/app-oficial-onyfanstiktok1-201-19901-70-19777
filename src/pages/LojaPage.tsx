@@ -30,6 +30,15 @@ const LojaPage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Check admin role
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        (supabase as any).from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').then(({ data }: any) => {
+          setIsAdmin(data && data.length > 0);
+        });
+      }
+    });
+
     (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {
       if (data && data.length > 0) {
         const coverMap: Record<number, string> = {};
@@ -41,7 +50,6 @@ const LojaPage = () => {
       }
     });
 
-    // Fetch real video counts per product
     (supabase as any)
       .from('loja_product_videos')
       .select('product_id')
@@ -56,6 +64,32 @@ const LojaPage = () => {
         }
       });
   }, []);
+
+  const handleCreateProduct = () => {
+    if (!newProduct.title.trim()) {
+      toast.error('Informe o nome do produto');
+      return;
+    }
+    const nextId = products.length + 1;
+    const newProd = {
+      id: nextId,
+      title: newProduct.title.trim(),
+      image: newProduct.image.trim() || '/placeholder.svg',
+    };
+    setProducts(prev => [...prev, newProd]);
+
+    // Save cover if custom image provided
+    if (newProduct.image.trim()) {
+      (supabase as any).from('loja_product_covers').upsert({
+        product_id: nextId,
+        cover_url: newProduct.image.trim(),
+      });
+    }
+
+    toast.success(`Produto #${nextId} criado!`);
+    setNewProduct({ title: '', image: '' });
+    setShowCreateModal(false);
+  };
   // Fix mobile scroll - force scrollable on iOS/Android
   React.useEffect(() => {
     document.documentElement.classList.add('allow-scroll');

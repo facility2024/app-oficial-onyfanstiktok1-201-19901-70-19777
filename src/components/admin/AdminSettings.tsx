@@ -32,7 +32,11 @@ export const AdminSettings = () => {
     refreshData
   } = useAdminSettings();
 
-  const [walletIdInput, setWalletIdInput] = useState(asaasWalletId);
+  const [walletIdInput, setWalletIdInput] = useState('');
+
+  React.useEffect(() => {
+    setWalletIdInput(asaasWalletId);
+  }, [asaasWalletId]);
 
   const [connectFormData, setConnectFormData] = useState({
     platform: '',

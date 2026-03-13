@@ -31,7 +31,7 @@ const LojaProdutoPage = () => {
   }, []);
 
   useEffect(() => {
-    if (productId >= 1 && productId <= 29) {
+    if (productId >= 1) {
       supabase
         .from('loja_product_videos')
         .select('id, video_url, title')
@@ -42,11 +42,11 @@ const LojaProdutoPage = () => {
           if (data) setVideos(data as any[]);
         });
 
-      // Fetch custom cover
+      // Fetch cover and title from loja_products
       (supabase as any)
-        .from('loja_product_covers')
-        .select('cover_url')
-        .eq('product_id', productId)
+        .from('loja_products')
+        .select('cover_url, title')
+        .eq('id', productId)
         .maybeSingle()
         .then(({ data }: any) => {
           if (data?.cover_url) setCoverImg(data.cover_url);
@@ -54,7 +54,7 @@ const LojaProdutoPage = () => {
     }
   }, [productId]);
 
-  if (!productId || productId < 1 || productId > 29) {
+  if (!productId || productId < 1) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         <div className="text-center space-y-4">

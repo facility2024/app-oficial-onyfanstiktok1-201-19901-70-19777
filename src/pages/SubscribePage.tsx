@@ -170,6 +170,7 @@ const SubscribePage = () => {
         body: {
           name: profile?.username || user.email?.split('@')[0] || 'Usuário',
           phone: currentPhone,
+          cpf: cpfInput.replace(/\D/g, ''),
           plan_type: planKey,
         },
       });

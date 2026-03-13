@@ -69,6 +69,7 @@ const SubscribePage = () => {
   const [vipPlans, setVipPlans] = useState<VIPPlans>(defaultVIPPlans);
   const [loading, setLoading] = useState(true);
   const [phoneInput, setPhoneInput] = useState('');
+  const [cpfInput, setCpfInput] = useState('');
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [savingPhone, setSavingPhone] = useState(false);
 

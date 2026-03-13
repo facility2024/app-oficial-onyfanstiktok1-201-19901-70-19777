@@ -1,28 +1,64 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Crown, CheckCircle, Clock, ArrowRight, Sparkles } from 'lucide-react';
+import { Crown, CheckCircle, Clock, ArrowRight, Sparkles, AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { supabase } from '@/integrations/supabase/client';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
+
+type PaymentStatus = 'loading' | 'CONFIRMED' | 'PENDING' | 'ERROR' | 'NOT_FOUND';
 
 const PaymentConfirmation = () => {
   const navigate = useNavigate();
-  const { isPremium, loading, checkPremiumStatus, getDaysRemaining } = usePremiumStatus();
+  const [status, setStatus] = useState<PaymentStatus>('loading');
+  const [message, setMessage] = useState('');
   const [checkCount, setCheckCount] = useState(0);
 
-  // Verificar status a cada 5 segundos até confirmar ou 6 tentativas (30s)
+  const verifyPayment = useCallback(async () => {
+    try {
+      const paymentId = sessionStorage.getItem('pending_payment_id');
+      
+      const { data, error } = await supabase.functions.invoke('asaas-verify-payment', {
+        body: { payment_id: paymentId || undefined },
+      });
+
+      if (error) throw error;
+
+      if (data?.status === 'CONFIRMED') {
+        setStatus('CONFIRMED');
+        setMessage(data.message || 'Pagamento efetuado com sucesso!');
+        sessionStorage.removeItem('pending_payment_id');
+      } else if (data?.status === 'PENDING') {
+        setStatus('PENDING');
+        setMessage(data.message || 'Pagamento pendente. Aguardando confirmação.');
+      } else if (data?.status === 'NOT_FOUND') {
+        setStatus('PENDING');
+        setMessage('Aguardando processamento do pagamento...');
+      } else {
+        setStatus('ERROR');
+        setMessage(data?.message || 'Pagamento não confirmado.');
+      }
+    } catch (err: any) {
+      console.error('Erro ao verificar pagamento:', err);
+      setStatus('ERROR');
+      setMessage('Erro ao verificar status do pagamento.');
+    }
+  }, []);
+
+  // Auto-verificar a cada 5 segundos enquanto pendente
   useEffect(() => {
-    if (!isPremium && checkCount < 6) {
+    verifyPayment();
+  }, [verifyPayment]);
+
+  useEffect(() => {
+    if ((status === 'PENDING' || status === 'loading') && checkCount < 12) {
       const timer = setTimeout(() => {
-        checkPremiumStatus();
+        verifyPayment();
         setCheckCount(prev => prev + 1);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [isPremium, checkCount, checkPremiumStatus]);
-
-  const daysRemaining = getDaysRemaining();
+  }, [status, checkCount, verifyPayment]);
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
@@ -44,12 +80,13 @@ const PaymentConfirmation = () => {
           transition={{ duration: 0.5 }}
           className="max-w-md w-full"
         >
-          {loading ? (
+          {status === 'loading' ? (
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-gray-400">Verificando seu pagamento...</p>
             </div>
-          ) : isPremium ? (
+
+          ) : status === 'CONFIRMED' ? (
             /* Sucesso - VIP Ativo */
             <div className="text-center">
               <motion.div
@@ -78,14 +115,13 @@ const PaymentConfirmation = () => {
                 transition={{ delay: 0.3 }}
               >
                 <h1 className="text-3xl font-bold text-white mb-2">
-                  Parabéns! 🎉
+                  Bem-vindo ao VIP! 🎉
                 </h1>
-                <p className="text-xl text-amber-400 font-semibold mb-4">
-                  Você agora é VIP!
+                <p className="text-xl text-amber-400 font-semibold mb-2">
+                  {message}
                 </p>
                 <p className="text-gray-400 mb-6">
-                  Sua assinatura está ativa por <span className="text-white font-medium">{daysRemaining} dias</span>.
-                  Aproveite todo o conteúdo exclusivo!
+                  Obrigado por fazer sua assinatura! Aproveite todo o conteúdo exclusivo.
                 </p>
               </motion.div>
 
@@ -111,11 +147,12 @@ const PaymentConfirmation = () => {
                 onClick={() => navigate('/app')}
                 className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold py-6 text-lg"
               >
-                Explorar Conteúdo VIP
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <Home className="w-5 h-5 mr-2" />
+                Voltar para Home
               </Button>
             </div>
-          ) : (
+
+          ) : status === 'PENDING' ? (
             /* Aguardando Confirmação */
             <div className="text-center">
               <motion.div
@@ -129,17 +166,20 @@ const PaymentConfirmation = () => {
               <h1 className="text-2xl font-bold text-white mb-2">
                 Processando Pagamento
               </h1>
-              <p className="text-gray-400 mb-6">
-                Estamos confirmando seu pagamento. Isso pode levar alguns instantes...
+              <p className="text-gray-400 mb-2">
+                {message}
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Estamos verificando automaticamente. Isso pode levar alguns instantes...
               </p>
 
               <div className="bg-gray-900/50 border border-white/10 rounded-xl p-4 mb-6">
                 <p className="text-sm text-gray-400">
-                  {checkCount < 6 ? (
-                    <>Verificando automaticamente... ({checkCount}/6)</>
+                  {checkCount < 12 ? (
+                    <>Verificando automaticamente... ({checkCount}/12)</>
                   ) : (
                     <>Se você já pagou, seu status será atualizado em breve. 
-                    Você pode continuar navegando e verificar depois.</>
+                    Você pode voltar para a Home e verificar depois.</>
                   )}
                 </p>
               </div>
@@ -148,11 +188,13 @@ const PaymentConfirmation = () => {
                 <Button
                   onClick={() => {
                     setCheckCount(0);
-                    checkPremiumStatus();
+                    setStatus('loading');
+                    verifyPayment();
                   }}
                   variant="outline"
                   className="w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
                 >
+                  <RefreshCw className="w-4 h-4 mr-2" />
                   Verificar Novamente
                 </Button>
                 <Button
@@ -160,7 +202,51 @@ const PaymentConfirmation = () => {
                   variant="ghost"
                   className="w-full text-gray-400 hover:text-white"
                 >
-                  Voltar ao App
+                  <Home className="w-4 h-4 mr-2" />
+                  Voltar para Home
+                </Button>
+              </div>
+            </div>
+
+          ) : (
+            /* Erro */
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-10 h-10 text-red-400" />
+              </div>
+
+              <h1 className="text-2xl font-bold text-white mb-2">
+                Erro no Pagamento
+              </h1>
+              <p className="text-gray-400 mb-6">
+                {message}
+              </p>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={() => {
+                    setStatus('loading');
+                    verifyPayment();
+                  }}
+                  variant="outline"
+                  className="w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Verificar Novamente
+                </Button>
+                <Button
+                  onClick={() => navigate('/subscribe')}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold"
+                >
+                  Tentar Novamente
+                </Button>
+                <Button
+                  onClick={() => navigate('/app')}
+                  variant="ghost"
+                  className="w-full text-gray-400 hover:text-white"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Voltar para Home
                 </Button>
               </div>
             </div>

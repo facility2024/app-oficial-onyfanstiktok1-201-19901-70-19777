@@ -4829,6 +4829,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          asaas_customer_id: string | null
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          checkout_url: string | null
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          plan_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          checkout_url?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          plan_type?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          checkout_url?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          plan_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       perfil_preferencias: {
         Row: {
           created_at: string

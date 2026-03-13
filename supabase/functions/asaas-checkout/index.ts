@@ -46,7 +46,7 @@ serve(async (req: Request) => {
     const userEmail = user.email || "";
 
     const body = await req.json();
-    const { name, phone, plan_type = "mensal" } = body;
+    const { name, phone, plan_type = "mensal", return_url } = body;
 
     const customerName = name || userEmail.split("@")[0];
     const cpfCnpj = body.cpf;
@@ -71,7 +71,6 @@ serve(async (req: Request) => {
       customerId = searchData.data[0].id;
       console.log("[asaas-checkout] Customer existente:", customerId);
     } else {
-      // Criar customer
       const createRes = await fetch(`${ASAAS_BASE_URL}/v3/customers`, {
         method: "POST",
         headers: {
@@ -107,71 +106,78 @@ serve(async (req: Request) => {
 
     // 3. Calcular nextDueDate (hoje)
     const today = new Date();
-    const nextDueDate = today.toISOString().split("T")[0]; // YYYY-MM-DD
+    const nextDueDate = today.toISOString().split("T")[0];
 
-    // 4. Criar assinatura no Asaas
+    // 4. Criar cobrança avulsa (não assinatura) para checkout imediato
     const ASAAS_WALLET_ID = Deno.env.get("ASAAS_WALLET_ID");
 
-    const subscriptionBody: Record<string, unknown> = {
+    const paymentBody: Record<string, unknown> = {
       customer: customerId,
       billingType: "UNDEFINED",
       value: plan.value,
-      nextDueDate: nextDueDate,
-      cycle: plan.cycle,
+      dueDate: nextDueDate,
       description: `Assinatura VIP CocoNudi - ${plan_type}`,
       externalReference: userId,
     };
 
     // Adicionar split se Wallet ID estiver configurado
     if (ASAAS_WALLET_ID) {
-      subscriptionBody.split = [
+      paymentBody.split = [
         {
           walletId: ASAAS_WALLET_ID,
           percentualValue: 100,
         },
       ];
-      console.log("[asaas-checkout] Split configurado para wallet:", ASAAS_WALLET_ID);
     }
 
-    const subscriptionRes = await fetch(`${ASAAS_BASE_URL}/v3/subscriptions`, {
+    const paymentRes = await fetch(`${ASAAS_BASE_URL}/v3/payments`, {
       method: "POST",
       headers: {
         access_token: ASAAS_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(subscriptionBody),
+      body: JSON.stringify(paymentBody),
     });
 
-    const subscriptionData = await subscriptionRes.json();
+    const paymentData = await paymentRes.json();
 
-    if (!subscriptionRes.ok) {
-      console.error("[asaas-checkout] Erro ao criar assinatura:", JSON.stringify(subscriptionData));
-      throw new Error(`Erro ao criar assinatura: ${JSON.stringify(subscriptionData.errors || subscriptionData)}`);
+    if (!paymentRes.ok) {
+      console.error("[asaas-checkout] Erro ao criar cobrança:", JSON.stringify(paymentData));
+      throw new Error(`Erro ao criar cobrança: ${JSON.stringify(paymentData.errors || paymentData)}`);
     }
 
-    console.log("[asaas-checkout] Assinatura criada:", subscriptionData.id);
+    console.log("[asaas-checkout] Cobrança criada:", paymentData.id);
 
-    // 5. Gerar link de pagamento da primeira cobrança
-    // Buscar a primeira cobrança gerada pela assinatura
-    const paymentsRes = await fetch(
-      `${ASAAS_BASE_URL}/v3/subscriptions/${subscriptionData.id}/payments`,
-      { headers: { access_token: ASAAS_API_KEY } }
+    // 5. Gerar URL do checkout
+    const invoiceUrl = paymentData.invoiceUrl || `https://www.asaas.com/i/${paymentData.id}`;
+    console.log("[asaas-checkout] URL de pagamento:", invoiceUrl);
+
+    // 6. Salvar transação no banco usando service role
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
-    const paymentsData = await paymentsRes.json();
 
-    let invoiceUrl = subscriptionData.invoiceUrl || "";
-
-    if (paymentsData.data && paymentsData.data.length > 0) {
-      const firstPayment = paymentsData.data[0];
-      invoiceUrl = firstPayment.invoiceUrl || `https://www.asaas.com/i/${firstPayment.id}`;
-      console.log("[asaas-checkout] URL de pagamento:", invoiceUrl);
+    try {
+      await supabaseAdmin.from("payment_transactions").insert({
+        user_id: userId,
+        asaas_payment_id: paymentData.id,
+        asaas_customer_id: customerId,
+        amount: plan.value,
+        plan_type: plan_type,
+        status: "PENDING",
+        checkout_url: invoiceUrl,
+      });
+      console.log("[asaas-checkout] Transação salva no banco");
+    } catch (dbErr) {
+      console.error("[asaas-checkout] Erro ao salvar transação:", dbErr);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         checkoutUrl: invoiceUrl,
-        subscriptionId: subscriptionData.id,
+        paymentId: paymentData.id,
         customerId,
       }),
       {

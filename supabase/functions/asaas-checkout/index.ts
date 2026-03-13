@@ -118,10 +118,10 @@ serve(async (req: Request) => {
     const subscriptionBody: Record<string, unknown> = {
       customer: customerId,
       billingType: "UNDEFINED",
-      value: plan.value,
+      value: finalValue,
       nextDueDate: nextDueDate,
       cycle: plan.cycle,
-      description: `Assinatura VIP CocoNudi - ${plan_type}`,
+      description: `Assinatura VIP CocoNudi - ${plan_type} (R$ ${finalValue})`,
       externalReference: userId,
     };
 

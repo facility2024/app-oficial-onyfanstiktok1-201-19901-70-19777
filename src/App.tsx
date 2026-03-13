@@ -26,6 +26,7 @@ import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
 import CollectionsPage from "./pages/CollectionsPage";
 import SubscribePage from "./pages/SubscribePage";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
+import CheckoutPage from "./pages/CheckoutPage";
 import VIPManagementPage from "./pages/VIPManagementPage";
 import MySubscriptionsPage from "./pages/MySubscriptionsPage";
 
@@ -137,6 +138,7 @@ const App = () => (
           {/* Assinatura VIP */}
           <Route path="/subscribe" element={<SubscribePage />} />
           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/vip-management" element={
             <ProtectedRoute>
               <VIPManagementPage />

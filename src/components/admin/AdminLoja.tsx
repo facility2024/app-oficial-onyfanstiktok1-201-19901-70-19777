@@ -176,7 +176,36 @@ const AdminLoja = () => {
     }
   };
 
-  const products = Array.from({ length: 29 }, (_, i) => i + 1);
+  const [totalProducts, setTotalProducts] = useState(29);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProdTitle, setNewProdTitle] = useState('');
+  const [newProdCover, setNewProdCover] = useState('');
+
+  const products = Array.from({ length: totalProducts }, (_, i) => i + 1);
+
+  const handleCreateProduct = () => {
+    if (!newProdTitle.trim()) {
+      toast.error('Informe o nome do produto');
+      return;
+    }
+    const nextId = totalProducts + 1;
+    setTotalProducts(nextId);
+
+    // Save cover if provided
+    if (newProdCover.trim()) {
+      (supabase as any).from('loja_product_covers').upsert({
+        product_id: nextId,
+        cover_url: newProdCover.trim(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'product_id' });
+      setCustomCovers(prev => ({ ...prev, [nextId]: newProdCover.trim() }));
+    }
+
+    toast.success(`Produto #${nextId} "${newProdTitle}" criado!`);
+    setNewProdTitle('');
+    setNewProdCover('');
+    setShowCreateModal(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -184,8 +213,15 @@ const AdminLoja = () => {
         <Store className="w-6 h-6 text-amber-400" />
         <h2 className="text-2xl font-bold text-white">Nossa Loja</h2>
         <Badge variant="outline" className="text-amber-400 border-amber-400/30">
-          29 Produtos
+          {totalProducts} Produtos
         </Badge>
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="ml-auto bg-green-600 hover:bg-green-700 text-white font-bold"
+          size="sm"
+        >
+          <Plus className="w-4 h-4 mr-1" /> Criar Produto
+        </Button>
       </div>
 
       {/* Grid de produtos */}
@@ -354,6 +390,46 @@ const AdminLoja = () => {
             )}
           </CardContent>
         </Card>
+      )}
+      {/* Modal Criar Produto */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowCreateModal(false)}>
+          <div className="bg-gray-900 border border-white/10 rounded-xl p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white text-lg font-bold flex items-center gap-2">
+              <Plus className="w-5 h-5 text-green-400" />
+              Criar Novo Produto
+            </h3>
+            <div>
+              <label className="text-white/70 text-sm">Nome do Produto *</label>
+              <Input
+                value={newProdTitle}
+                onChange={e => setNewProdTitle(e.target.value)}
+                className="bg-white/10 border-white/20 text-white mt-1"
+                placeholder="Ex: Coroas, Novinhas..."
+              />
+            </div>
+            <div>
+              <label className="text-white/70 text-sm">URL da Capa (opcional)</label>
+              <Input
+                value={newProdCover}
+                onChange={e => setNewProdCover(e.target.value)}
+                className="bg-white/10 border-white/20 text-white mt-1"
+                placeholder="https://cdn.../imagem.jpg"
+              />
+            </div>
+            {newProdCover && (
+              <img src={newProdCover} alt="Preview" className="w-full h-32 object-cover rounded-lg" onError={e => { e.currentTarget.src = '/placeholder.svg'; }} />
+            )}
+            <div className="flex gap-2">
+              <Button onClick={handleCreateProduct} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold">
+                <Plus className="w-4 h-4 mr-1" /> Criar Produto #{totalProducts + 1}
+              </Button>
+              <Button variant="ghost" onClick={() => setShowCreateModal(false)} className="text-white/60">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

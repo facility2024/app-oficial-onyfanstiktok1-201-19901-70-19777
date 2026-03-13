@@ -1,0 +1,1 @@
+ALTER TABLE public.loja_product_videos DROP CONSTRAINT loja_product_videos_product_id_check;

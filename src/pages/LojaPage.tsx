@@ -152,16 +152,14 @@ const LojaPage = () => {
           </span>
         </div>
         <p className="text-white/60 text-sm mt-1">Clique em um produto para ver mais detalhes</p>
-        {isAdmin && (
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-3 bg-green-600 hover:bg-green-700 text-white font-bold"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Criar Novo Produto
-          </Button>
-        )}
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="mt-3 bg-green-600 hover:bg-green-700 text-white font-bold"
+          size="sm"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Criar Novo Produto
+        </Button>
       </div>
 
       {/* Grid de Produtos */}

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Store, ShoppingBag, ArrowLeft, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
@@ -21,8 +25,20 @@ const LojaPage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState(defaultProducts);
   const [videoCounts, setVideoCounts] = useState<Record<number, number>>({});
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({ title: '', image: '' });
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Check admin role
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        (supabase as any).from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').then(({ data }: any) => {
+          setIsAdmin(data && data.length > 0);
+        });
+      }
+    });
+
     (supabase as any).from('loja_product_covers').select('product_id, cover_url').then(({ data }: any) => {
       if (data && data.length > 0) {
         const coverMap: Record<number, string> = {};
@@ -34,7 +50,6 @@ const LojaPage = () => {
       }
     });
 
-    // Fetch real video counts per product
     (supabase as any)
       .from('loja_product_videos')
       .select('product_id')
@@ -49,6 +64,32 @@ const LojaPage = () => {
         }
       });
   }, []);
+
+  const handleCreateProduct = () => {
+    if (!newProduct.title.trim()) {
+      toast.error('Informe o nome do produto');
+      return;
+    }
+    const nextId = products.length + 1;
+    const newProd = {
+      id: nextId,
+      title: newProduct.title.trim(),
+      image: newProduct.image.trim() || '/placeholder.svg',
+    };
+    setProducts(prev => [...prev, newProd]);
+
+    // Save cover if custom image provided
+    if (newProduct.image.trim()) {
+      (supabase as any).from('loja_product_covers').upsert({
+        product_id: nextId,
+        cover_url: newProduct.image.trim(),
+      });
+    }
+
+    toast.success(`Produto #${nextId} criado!`);
+    setNewProduct({ title: '', image: '' });
+    setShowCreateModal(false);
+  };
   // Fix mobile scroll - force scrollable on iOS/Android
   React.useEffect(() => {
     document.documentElement.classList.add('allow-scroll');
@@ -101,11 +142,26 @@ const LojaPage = () => {
 
       {/* Title */}
       <div className="px-4 pt-6 pb-4 text-center">
-        <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-amber-400" />
-          Nossa Loja
-        </h1>
+        <div className="flex items-center justify-center gap-3">
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <ShoppingBag className="w-6 h-6 text-amber-400" />
+            Nossa Loja
+          </h1>
+          <span className="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            {products.length} Produtos
+          </span>
+        </div>
         <p className="text-white/60 text-sm mt-1">Clique em um produto para ver mais detalhes</p>
+        {isAdmin && (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-3 bg-green-600 hover:bg-green-700 text-white font-bold"
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Criar Novo Produto
+          </Button>
+        )}
       </div>
 
       {/* Grid de Produtos */}
@@ -149,6 +205,45 @@ const LojaPage = () => {
           ))}
         </div>
       </main>
+
+      {/* Modal Criar Produto */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="bg-gray-900 text-white border-white/10 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-green-400" />
+              Criar Novo Produto
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-white/80">Nome do Produto *</Label>
+              <Input
+                value={newProduct.title}
+                onChange={e => setNewProduct(p => ({ ...p, title: e.target.value }))}
+                className="bg-gray-800 border-white/10 text-white mt-1"
+                placeholder="Ex: Coroas, Novinhas..."
+              />
+            </div>
+            <div>
+              <Label className="text-white/80">URL da Capa (opcional)</Label>
+              <Input
+                value={newProduct.image}
+                onChange={e => setNewProduct(p => ({ ...p, image: e.target.value }))}
+                className="bg-gray-800 border-white/10 text-white mt-1"
+                placeholder="https://cdn.../imagem.jpg"
+              />
+            </div>
+            {newProduct.image && (
+              <img src={newProduct.image} alt="Preview" className="w-full h-32 object-cover rounded-lg" onError={e => { e.currentTarget.src = '/placeholder.svg'; }} />
+            )}
+            <Button onClick={handleCreateProduct} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
+              <Plus className="w-4 h-4 mr-1" />
+              Criar Produto #{products.length + 1}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

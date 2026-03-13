@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.asaas-checkout]
 verify_jwt = false
+
+[functions.asaas-verify-payment]
+verify_jwt = false

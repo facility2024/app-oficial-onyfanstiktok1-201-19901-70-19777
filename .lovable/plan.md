@@ -1,53 +1,73 @@
 
 
-## Plano: Redirecionar na mesma aba com retorno automático após pagamento
+## Correcao: Criar Conta de Autenticacao ao Aprovar Criador
 
-### Problema atual
-O checkout do Asaas abre em **nova aba** (`window.open(..., '_blank')`), e o app navega para `/payment-confirmation`. O usuário paga no Asaas mas fica preso lá — não há retorno automático para o app porque:
-1. O Asaas não sabe para onde redirecionar (nenhum `callback.successUrl` foi configurado)
-2. O checkout abre em aba separada, então o usuário precisa voltar manualmente
+### Problema Identificado
+Quando um modelo/criador e aprovado pelo painel admin, o sistema apenas adiciona a role "creator" na tabela `user_roles` e atualiza o status da aplicacao. Porem, se o modelo foi cadastrado por um sistema externo (como o painel marketing.coconudi.com), ele **nao possui uma conta no Supabase Auth** -- por isso ao tentar fazer login, recebe "Email ou senha incorretos".
 
-### Solução
-Usar o recurso nativo do Asaas de **redirecionamento após pagamento** (`callback.successUrl` + `autoRedirect: true`) e abrir o checkout **na mesma aba**.
+### Solucao
+Criar uma **Edge Function** chamada `approve-creator` que sera chamada pelo painel admin ao aprovar uma aplicacao. Essa funcao ira:
 
-### Alterações
+1. Verificar se o email ja tem conta no `auth.users`
+2. Se NAO tiver, criar a conta usando `supabase.auth.admin.createUser()` com uma senha temporaria
+3. Adicionar a role `creator` na tabela `user_roles`
+4. Atualizar o status da aplicacao para `approved`
+5. Retornar os dados incluindo a senha temporaria para o admin enviar ao modelo
 
-**1. Edge Function `supabase/functions/asaas-checkout/index.ts`**
-- Receber `successUrl` do frontend no body da requisição
-- Ao criar a assinatura, adicionar o campo `callback` com `successUrl` e `autoRedirect: true`
-- Também atualizar a primeira cobrança gerada pela assinatura com o mesmo `callback` (via PATCH `/v3/payments/{id}`)
+### Etapas de Implementacao
 
-```typescript
-// No body da subscription:
-subscriptionBody.callback = {
-  successUrl: body.successUrl || "https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/payment-confirmation",
-  autoRedirect: true
-};
+**1. Criar Edge Function `approve-creator`**
+- Arquivo: `supabase/functions/approve-creator/index.ts`
+- Usa o `SUPABASE_SERVICE_ROLE_KEY` (ja configurado) para criar usuarios via Admin API
+- Recebe: `application_id`, `admin_user_id`
+- Gera senha aleatoria segura
+- Cria usuario no auth.users (se nao existir)
+- Adiciona role creator
+- Atualiza application status
+- Retorna email + senha temporaria
+
+**2. Atualizar `AdminCreatorApplications.tsx`**
+- Modificar `handleApprove()` para chamar a Edge Function em vez de fazer insert direto
+- Apos aprovacao bem-sucedida, mostrar um modal com as credenciais (email + senha) para o admin copiar e enviar ao modelo
+- Adicionar botao de copiar credenciais e enviar via WhatsApp
+
+**3. Configurar `supabase/config.toml`**
+- Adicionar configuracao da nova Edge Function com `verify_jwt = false` (validacao manual no codigo)
+
+### Detalhes Tecnicos
+
+```text
+Fluxo de Aprovacao:
+  Admin clica "Aprovar"
+       |
+       v
+  Edge Function "approve-creator"
+       |
+       +-- Busca dados da aplicacao (email, nome)
+       |
+       +-- Verifica se email existe em auth.users
+       |      |
+       |      +-- SIM: Apenas adiciona role "creator"
+       |      |
+       |      +-- NAO: Cria conta com senha temporaria
+       |              e adiciona role "creator"
+       |
+       +-- Atualiza status da aplicacao
+       |
+       v
+  Retorna credenciais ao admin
+       |
+       v
+  Modal com email + senha + botao WhatsApp
 ```
 
-**2. Frontend `src/pages/SubscribePage.tsx`**
-- Mudar de `window.open(url, '_blank')` para `window.location.href = url` (mesma aba)
-- Remover o `navigate('/payment-confirmation')` (o Asaas cuidará do redirect)
-- Enviar `successUrl` para a Edge Function usando o domínio publicado
+### Arquivos a Criar/Modificar
+- **Criar**: `supabase/functions/approve-creator/index.ts`
+- **Modificar**: `src/components/admin/AdminCreatorApplications.tsx`
+- **Modificar**: `supabase/config.toml`
 
-```typescript
-// Enviar no body:
-successUrl: "https://app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app/payment-confirmation"
-
-// Redirecionar na mesma aba:
-window.location.href = data.checkoutUrl;
-```
-
-**3. Página `src/pages/PaymentConfirmation.tsx`**
-- Já está funcionando corretamente — verifica o status VIP via polling
-- Nenhuma alteração necessária
-
-### Fluxo final
-1. Usuário clica "Assinar" → app redireciona para checkout Asaas (mesma aba)
-2. Usuário paga (PIX/Cartão) → Asaas redireciona automaticamente para `/payment-confirmation`
-3. Tela mostra "Processando..." → webhook ativa VIP → tela mostra "Parabéns, você é VIP!"
-4. Usuário clica "Explorar Conteúdo VIP" → volta para `/app`
-
-### Observação importante
-O domínio configurado no `successUrl` **deve ser o mesmo domínio cadastrado nos dados comerciais do Asaas**. Confirme que `app-oficial-onyfanstiktok1-201-19901-70-19777.lovable.app` está cadastrado no painel Asaas em "Configurações da conta → Informações".
+### Seguranca
+- A Edge Function valida que o chamador e admin verificando o JWT
+- Senha temporaria gerada com caracteres alfanumericos (12 chars)
+- O `SUPABASE_SERVICE_ROLE_KEY` ja esta configurado nos secrets
 

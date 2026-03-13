@@ -46,7 +46,7 @@ serve(async (req: Request) => {
     const userEmail = user.email || "";
 
     const body = await req.json();
-    const { name, phone, plan_type = "mensal", price: customPrice } = body;
+    const { name, phone, plan_type = "mensal" } = body;
 
     const customerName = name || userEmail.split("@")[0];
     const cpfCnpj = body.cpf;
@@ -104,9 +104,6 @@ serve(async (req: Request) => {
       anual: { value: 149.99, cycle: "YEARLY" },
     };
     const plan = planConfig[plan_type] || planConfig.mensal;
-    // Usar preço customizado do admin se fornecido
-    const finalValue = customPrice && customPrice > 0 ? customPrice : plan.value;
-    console.log("[asaas-checkout] Preço final:", finalValue, "customPrice:", customPrice);
 
     // 3. Calcular nextDueDate (hoje)
     const today = new Date();
@@ -118,10 +115,10 @@ serve(async (req: Request) => {
     const subscriptionBody: Record<string, unknown> = {
       customer: customerId,
       billingType: "UNDEFINED",
-      value: finalValue,
+      value: plan.value,
       nextDueDate: nextDueDate,
       cycle: plan.cycle,
-      description: `Assinatura VIP CocoNudi - ${plan_type} (R$ ${finalValue})`,
+      description: `Assinatura VIP CocoNudi - ${plan_type}`,
       externalReference: userId,
     };
 

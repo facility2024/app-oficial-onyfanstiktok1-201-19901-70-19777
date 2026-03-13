@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Store, ShoppingBag, ArrowLeft, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import rainbowLogo from '@/assets/coconudi-rainbow-logo.png';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 const CDN_BASE = 'https://tiktokonyfans.b-cdn.net/material%20coconudi/CAPAS%20SITE%20EXCLUSIVO';
 

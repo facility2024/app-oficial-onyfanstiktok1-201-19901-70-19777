@@ -69,6 +69,7 @@ const SubscribePage = () => {
   const [vipPlans, setVipPlans] = useState<VIPPlans>(defaultVIPPlans);
   const [loading, setLoading] = useState(true);
   const [phoneInput, setPhoneInput] = useState('');
+  const [cpfInput, setCpfInput] = useState('');
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [savingPhone, setSavingPhone] = useState(false);
 
@@ -148,11 +149,12 @@ const SubscribePage = () => {
       return;
     }
 
-    // Verificar se tem telefone cadastrado
+    // Verificar se tem telefone e CPF
     const currentPhone = profile?.phone || phoneInput.replace(/\D/g, '');
-    if (!currentPhone || currentPhone.length < 10) {
+    const currentCpf = cpfInput.replace(/\D/g, '');
+    if (!currentPhone || currentPhone.length < 10 || !currentCpf || currentCpf.length < 11) {
       setShowPhoneModal(true);
-      toast.info('Por favor, informe seu telefone para continuar');
+      toast.info('Por favor, informe seu telefone e CPF para continuar');
       return;
     }
 
@@ -168,6 +170,7 @@ const SubscribePage = () => {
         body: {
           name: profile?.username || user.email?.split('@')[0] || 'Usuário',
           phone: currentPhone,
+          cpf: cpfInput.replace(/\D/g, ''),
           plan_type: planKey,
         },
       });
@@ -247,14 +250,28 @@ const SubscribePage = () => {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
                 <Phone className="w-8 h-8 text-amber-500" />
               </div>
-              <CardTitle className="text-white text-center">Informe seu Telefone</CardTitle>
+              <CardTitle className="text-white text-center">Dados para Pagamento</CardTitle>
               <CardDescription className="text-center text-gray-400">
-                Precisamos do seu telefone para identificar seu pagamento no Hoopay.
-                <br />
-                <strong className="text-amber-400">Use o MESMO número no pagamento!</strong>
+                Precisamos do seu CPF e telefone para processar o pagamento no Asaas.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="cpf" className="text-white">CPF</Label>
+                <Input
+                  id="cpf"
+                  type="text"
+                  placeholder="000.000.000-00"
+                  value={cpfInput.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}
+                  onChange={(e) => setCpfInput(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  maxLength={14}
+                />
+                <p className="text-xs text-gray-500">
+                  Obrigatório para pagamento no Asaas
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-white">Telefone (com DDD)</Label>
                 <Input
@@ -282,7 +299,7 @@ const SubscribePage = () => {
                 <Button
                   className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
                   onClick={handlePhoneSubmit}
-                  disabled={savingPhone || phoneInput.replace(/\D/g, '').length < 10}
+                  disabled={savingPhone || phoneInput.replace(/\D/g, '').length < 10 || cpfInput.replace(/\D/g, '').length < 11}
                 >
                   {savingPhone ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

@@ -172,12 +172,14 @@ const SubscribePage = () => {
     // Chamar Edge Function do Asaas para criar checkout
     setCheckoutLoading(true);
     try {
+      const plan = vipPlans[planKey as keyof VIPPlans];
       const { data, error } = await supabase.functions.invoke('asaas-checkout', {
         body: {
           name: profile?.username || user.email?.split('@')[0] || 'Usuário',
           phone: currentPhone,
           cpf: cpfInput.replace(/\D/g, ''),
           plan_type: planKey,
+          customPrice: plan.price,
         },
       });
 

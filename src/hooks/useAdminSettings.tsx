@@ -100,13 +100,19 @@ export const useAdminSettings = () => {
   const [loading, setLoading] = useState(false);
   const [asaasWalletId, setAsaasWalletId] = useState('');
 
-  // Fetch VIP Plans from localStorage (simulating persistence)
+  // Fetch VIP Plans from Supabase admin_settings
   const fetchVIPPlans = async () => {
     setVipPlansLoading(true);
     try {
-      const stored = localStorage.getItem('vip_plans');
-      if (stored) {
-        setVipPlans(JSON.parse(stored));
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'vip_plans')
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data?.setting_value) {
+        setVipPlans(data.setting_value as unknown as VIPPlans);
       }
     } catch (error) {
       console.error('Error fetching VIP plans:', error);
@@ -115,10 +121,18 @@ export const useAdminSettings = () => {
     }
   };
 
-  // Update VIP Plans
+  // Update VIP Plans in Supabase
   const updateVIPPlans = async (plans: VIPPlans) => {
     try {
-      localStorage.setItem('vip_plans', JSON.stringify(plans));
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert({
+          setting_key: 'vip_plans',
+          setting_value: plans as unknown as import('@/integrations/supabase/types').Json,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'setting_key' });
+
+      if (error) throw error;
       setVipPlans(plans);
       toast.success('Planos VIP atualizados com sucesso!');
       return true;

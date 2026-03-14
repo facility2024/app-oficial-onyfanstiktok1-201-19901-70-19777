@@ -74,11 +74,17 @@ const SubscribePage = () => {
   const [savingPhone, setSavingPhone] = useState(false);
 
   useEffect(() => {
-    const fetchPlans = () => {
+    const fetchPlans = async () => {
       try {
-        const stored = localStorage.getItem('vip_plans');
-        if (stored) {
-          setVipPlans(JSON.parse(stored));
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'vip_plans')
+          .maybeSingle();
+
+        if (error) throw error;
+        if (data?.setting_value) {
+          setVipPlans(data.setting_value as unknown as VIPPlans);
         }
       } catch (error) {
         console.error('Error fetching VIP plans:', error);

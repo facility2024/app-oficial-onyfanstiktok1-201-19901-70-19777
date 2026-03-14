@@ -103,7 +103,9 @@ serve(async (req: Request) => {
       anual: { value: 149.99, cycle: "YEARLY" },
     };
     const plan = planConfig[plan_type] || planConfig.mensal;
-
+    // Usar preço customizado do admin se fornecido
+    const finalPrice = customPrice && Number(customPrice) > 0 ? Number(customPrice) : plan.value;
+    console.log("[asaas-checkout] Preço final:", finalPrice, "customPrice:", customPrice);
     // 3. Calcular nextDueDate (hoje)
     const today = new Date();
     const nextDueDate = today.toISOString().split("T")[0];

@@ -46,7 +46,7 @@ serve(async (req: Request) => {
     const userEmail = user.email || "";
 
     const body = await req.json();
-    const { name, phone, plan_type = "mensal", return_url } = body;
+    const { name, phone, plan_type = "mensal", return_url, customPrice } = body;
 
     const customerName = name || userEmail.split("@")[0];
     const cpfCnpj = body.cpf;

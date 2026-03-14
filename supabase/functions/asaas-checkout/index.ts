@@ -116,7 +116,7 @@ serve(async (req: Request) => {
     const paymentBody: Record<string, unknown> = {
       customer: customerId,
       billingType: "UNDEFINED",
-      value: plan.value,
+      value: finalPrice,
       dueDate: nextDueDate,
       description: `Assinatura VIP CocoNudi - ${plan_type}`,
       externalReference: userId,

@@ -3292,7 +3292,7 @@ export const TikTokApp = () => {
                   setShowProfile(true);
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
-                  setShowVideoCallList(true);
+                  setShowLiveList(true);
                 }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
                   console.log('Desktop chat clicked');
                   setChatEntity({

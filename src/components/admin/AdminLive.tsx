@@ -224,12 +224,12 @@ export const AdminLive = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="liveUrl">URL da Live</Label>
+              <Label htmlFor="liveUrl">Amostra da Live</Label>
               <Input
                 id="liveUrl"
                 value={liveUrl}
                 onChange={(e) => setLiveUrl(e.target.value)}
-                placeholder="https://exemplo.com/live-stream"
+                placeholder="Link do vídeo de amostra da live"
                 type="url"
               />
             </div>

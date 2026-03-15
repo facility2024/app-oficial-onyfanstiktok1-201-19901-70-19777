@@ -15,6 +15,7 @@ interface VideoCallModel {
   model_avatar: string;
   preview_video_url: string;
   redirect_url: string;
+  buy_link: string;
   price: string;
   description: string;
   is_active: boolean;
@@ -42,6 +43,7 @@ export const AdminVideoCall = () => {
     model_avatar: '',
     preview_video_url: '',
     redirect_url: '',
+    buy_link: '',
     price: '',
     description: '',
     is_active: true,
@@ -84,7 +86,7 @@ export const AdminVideoCall = () => {
   const resetForm = () => {
     setForm({
       model_name: '', model_avatar: '', preview_video_url: '',
-      redirect_url: '', price: '', description: '',
+      redirect_url: '', buy_link: '', price: '', description: '',
       is_active: true, show_in_menu: false, selected_model_id: '',
     });
     setEditingId(null);
@@ -128,6 +130,7 @@ export const AdminVideoCall = () => {
       model_avatar: model.model_avatar || '',
       preview_video_url: model.preview_video_url || '',
       redirect_url: model.redirect_url || '',
+      buy_link: (model as any).buy_link || '',
       price: model.price || '',
       description: model.description || '',
       is_active: model.is_active,
@@ -256,6 +259,10 @@ export const AdminVideoCall = () => {
               <div className="md:col-span-2">
                 <Label className="text-white/70">Link de Redirecionamento (Comprar) *</Label>
                 <Input value={form.redirect_url} onChange={e => setForm(p => ({ ...p, redirect_url: e.target.value }))} className="bg-gray-800 border-white/10 text-white" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white/70">Link Comprar (botão na amostra)</Label>
+                <Input value={form.buy_link} onChange={e => setForm(p => ({ ...p, buy_link: e.target.value }))} placeholder="Link que aparece no popup de amostra do vídeo" className="bg-gray-800 border-white/10 text-white" />
               </div>
             </div>
 

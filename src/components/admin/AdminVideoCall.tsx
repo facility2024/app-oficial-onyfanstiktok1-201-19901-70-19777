@@ -286,7 +286,7 @@ export const AdminVideoCall = () => {
               <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
                 <Save className="w-4 h-4 mr-2" /> Salvar
               </Button>
-              <Button variant="outline" onClick={resetForm} className="border-white/20 text-white hover:bg-white/10">
+              <Button onClick={resetForm} className="bg-red-600 hover:bg-red-700 text-white font-bold">
                 <X className="w-4 h-4 mr-2" /> Cancelar
               </Button>
             </div>
@@ -321,10 +321,10 @@ export const AdminVideoCall = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => handleEdit(model)} className="flex-1 border-white/20 text-white hover:bg-white/10">
+                <Button size="sm" onClick={() => handleEdit(model)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold">
                   <Edit className="w-3 h-3 mr-1" /> Editar
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => handleDelete(model.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                <Button size="sm" onClick={() => handleDelete(model.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold">
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>

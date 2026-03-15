@@ -7473,6 +7473,7 @@ export type Database = {
       }
       video_call_models: {
         Row: {
+          buy_link: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -7487,6 +7488,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          buy_link?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -7501,6 +7503,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          buy_link?: string | null
           created_at?: string | null
           description?: string | null
           id?: string

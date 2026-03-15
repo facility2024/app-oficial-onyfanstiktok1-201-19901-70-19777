@@ -3095,8 +3095,8 @@ export const TikTokApp = () => {
                 <span>Vídeo Chamada</span>
               </button>
               <button onClick={() => {
-                toast({ title: '🔴 Em breve!', description: 'Acesse o perfil da modelo para ver se está ao vivo.' });
                 setShowLiveList(true);
+              }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                 <span className="relative inline-flex items-center justify-center mr-3">
                   <span className="absolute inset-0 rounded-full bg-red-400/20 animate-ping" />
                   <Radio className="w-5 h-5 text-red-400 drop-shadow-[0_0_6px_rgba(248,113,113,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />

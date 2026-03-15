@@ -286,7 +286,7 @@ export const AdminVideoCall = () => {
               <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
                 <Save className="w-4 h-4 mr-2" /> Salvar
               </Button>
-              <Button variant="outline" onClick={resetForm} className="border-white/20 text-white hover:bg-white/10">
+              <Button onClick={resetForm} className="bg-red-600 hover:bg-red-700 text-white font-bold">
                 <X className="w-4 h-4 mr-2" /> Cancelar
               </Button>
             </div>

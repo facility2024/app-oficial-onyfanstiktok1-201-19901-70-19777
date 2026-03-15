@@ -2993,6 +2993,7 @@ export const TikTokApp = () => {
         {/* Video Chamada Popup */}
         <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
         <VideoCallListPopup isOpen={showVideoCallList} onClose={() => setShowVideoCallList(false)} />
+        <LiveListPopup isOpen={showLiveList} onClose={() => setShowLiveList(false)} />
 
         {/* Action Tracker */}
         <ActionTracker onActionAttempt={async (actionType, userName) => {

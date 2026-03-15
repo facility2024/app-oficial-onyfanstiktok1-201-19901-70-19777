@@ -2780,7 +2780,7 @@ export const TikTokApp = () => {
       }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
-            <CategoryMenu onOpenLive={() => setShowVideoCallList(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
+            <CategoryMenu onOpenLive={() => setShowLiveList(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
             try {
               sessionStorage.setItem('logging_out', 'true');
               await supabase.auth.signOut();

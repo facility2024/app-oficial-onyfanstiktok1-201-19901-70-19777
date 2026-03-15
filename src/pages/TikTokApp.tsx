@@ -3416,6 +3416,7 @@ export const TikTokApp = () => {
       {/* Desktop Video Chamada Popup */}
       <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
       <VideoCallListPopup isOpen={showVideoCallList} onClose={() => setShowVideoCallList(false)} />
+      <LiveListPopup isOpen={showLiveList} onClose={() => setShowLiveList(false)} />
       
       {/* Age Verification Modal */}
       <AgeVerificationModal open={showAgeVerification} onClose={() => {

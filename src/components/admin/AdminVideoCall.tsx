@@ -86,7 +86,7 @@ export const AdminVideoCall = () => {
   const resetForm = () => {
     setForm({
       model_name: '', model_avatar: '', preview_video_url: '',
-      redirect_url: '', price: '', description: '',
+      redirect_url: '', buy_link: '', price: '', description: '',
       is_active: true, show_in_menu: false, selected_model_id: '',
     });
     setEditingId(null);

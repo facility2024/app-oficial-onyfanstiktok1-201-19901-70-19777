@@ -15,6 +15,7 @@ interface VideoCallModel {
   model_avatar: string;
   preview_video_url: string;
   redirect_url: string;
+  buy_link: string;
   price: string;
   description: string;
   is_active: boolean;

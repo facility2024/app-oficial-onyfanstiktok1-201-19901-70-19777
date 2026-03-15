@@ -201,7 +201,6 @@ export const AdminLive = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Escolher Modelo do App</Label>
-              <p className="text-xs text-muted-foreground">Nome da modelo</p>
               <Button
                 variant="outline"
                 className="w-full justify-start"
@@ -221,6 +220,17 @@ export const AdminLive = () => {
                   <span className="text-muted-foreground">Clique para selecionar um modelo</span>
                 )}
               </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nome da Modelo</Label>
+              <Input
+                placeholder="Digite o nome da modelo manualmente"
+                value={selectedModel?.name || ''}
+                readOnly
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">Preenchido automaticamente ao selecionar ou digite manualmente</p>
             </div>
 
             <div className="space-y-2">

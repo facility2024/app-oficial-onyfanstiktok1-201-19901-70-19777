@@ -260,6 +260,10 @@ export const AdminVideoCall = () => {
                 <Label className="text-white/70">Link de Redirecionamento (Comprar) *</Label>
                 <Input value={form.redirect_url} onChange={e => setForm(p => ({ ...p, redirect_url: e.target.value }))} className="bg-gray-800 border-white/10 text-white" />
               </div>
+              <div className="md:col-span-2">
+                <Label className="text-white/70">Link Comprar (botão na amostra)</Label>
+                <Input value={form.buy_link} onChange={e => setForm(p => ({ ...p, buy_link: e.target.value }))} placeholder="Link que aparece no popup de amostra do vídeo" className="bg-gray-800 border-white/10 text-white" />
+              </div>
             </div>
 
             <div>

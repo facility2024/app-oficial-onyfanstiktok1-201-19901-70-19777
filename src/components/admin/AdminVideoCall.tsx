@@ -130,6 +130,7 @@ export const AdminVideoCall = () => {
       model_avatar: model.model_avatar || '',
       preview_video_url: model.preview_video_url || '',
       redirect_url: model.redirect_url || '',
+      buy_link: (model as any).buy_link || '',
       price: model.price || '',
       description: model.description || '',
       is_active: model.is_active,

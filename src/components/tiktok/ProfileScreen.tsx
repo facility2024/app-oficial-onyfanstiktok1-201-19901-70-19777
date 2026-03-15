@@ -575,7 +575,7 @@ if (!isOpen) return null;
         {/* Header com Gradiente */}
         <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black/60 backdrop-blur-sm sticky top-0 z-10">
           <button
-            onClick={onGoHome || onClose}
+            onClick={onClose}
             className="text-white text-xl w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

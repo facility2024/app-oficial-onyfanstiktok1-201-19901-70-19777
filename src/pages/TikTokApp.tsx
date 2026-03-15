@@ -20,6 +20,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { VideoCallPopup } from '@/components/tiktok/VideoCallPopup';
 import { VideoCallListPopup } from '@/components/tiktok/VideoCallListPopup';
+import { LiveListPopup } from '@/components/tiktok/LiveListPopup';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";

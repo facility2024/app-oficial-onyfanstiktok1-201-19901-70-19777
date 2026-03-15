@@ -244,6 +244,7 @@ export const TikTokApp = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
   const [showVideoCallList, setShowVideoCallList] = useState(false);
+  const [showLiveList, setShowLiveList] = useState(false);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo

@@ -2853,7 +2853,7 @@ export const TikTokApp = () => {
           setShowProfile(true);
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
-          setShowVideoCallList(true);
+          setShowLiveList(true);
         }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} />
           </div>}
 

@@ -20,6 +20,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchModal } from '@/components/tiktok/SearchModal';
 import { VideoCallPopup } from '@/components/tiktok/VideoCallPopup';
 import { VideoCallListPopup } from '@/components/tiktok/VideoCallListPopup';
+import { LiveListPopup } from '@/components/tiktok/LiveListPopup';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
 import { useCreatorRole } from '@/hooks/useUserRoles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -243,6 +244,7 @@ export const TikTokApp = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
   const [showVideoCallList, setShowVideoCallList] = useState(false);
+  const [showLiveList, setShowLiveList] = useState(false);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
@@ -2778,7 +2780,7 @@ export const TikTokApp = () => {
       }}>
           {/* Menu - Esquerda */}
           <div className="flex items-center gap-2">
-            <CategoryMenu onOpenLive={() => setShowVideoCallList(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
+            <CategoryMenu onOpenLive={() => setShowLiveList(true)} onSelectModel={modelId => goToModelVideo(modelId)} onExit={async () => {
             try {
               sessionStorage.setItem('logging_out', 'true');
               await supabase.auth.signOut();
@@ -2851,7 +2853,7 @@ export const TikTokApp = () => {
           setShowProfile(true);
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
-          setShowVideoCallList(true);
+          setShowLiveList(true);
         }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} />
           </div>}
 
@@ -2991,6 +2993,7 @@ export const TikTokApp = () => {
         {/* Video Chamada Popup */}
         <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
         <VideoCallListPopup isOpen={showVideoCallList} onClose={() => setShowVideoCallList(false)} />
+        <LiveListPopup isOpen={showLiveList} onClose={() => setShowLiveList(false)} />
 
         {/* Action Tracker */}
         <ActionTracker onActionAttempt={async (actionType, userName) => {
@@ -3093,7 +3096,7 @@ export const TikTokApp = () => {
                 <span>Vídeo Chamada</span>
               </button>
               <button onClick={() => {
-                toast({ title: '🔴 Em breve!', description: 'Acesse o perfil da modelo para ver se está ao vivo.' });
+                setShowLiveList(true);
               }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
                 <span className="relative inline-flex items-center justify-center mr-3">
                   <span className="absolute inset-0 rounded-full bg-red-400/20 animate-ping" />
@@ -3290,7 +3293,7 @@ export const TikTokApp = () => {
                   setShowProfile(true);
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
-                  setShowVideoCallList(true);
+                  setShowLiveList(true);
                 }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={currentVideo && chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id] ? () => {
                   console.log('Desktop chat clicked');
                   setChatEntity({
@@ -3413,6 +3416,7 @@ export const TikTokApp = () => {
       {/* Desktop Video Chamada Popup */}
       <VideoCallPopup isOpen={showLive} onClose={() => setShowLive(false)} activeModel={activeVideoCallModel} />
       <VideoCallListPopup isOpen={showVideoCallList} onClose={() => setShowVideoCallList(false)} />
+      <LiveListPopup isOpen={showLiveList} onClose={() => setShowLiveList(false)} />
       
       {/* Age Verification Modal */}
       <AgeVerificationModal open={showAgeVerification} onClose={() => {

@@ -324,7 +324,7 @@ export const AdminVideoCall = () => {
                 <Button size="sm" onClick={() => handleEdit(model)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold">
                   <Edit className="w-3 h-3 mr-1" /> Editar
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => handleDelete(model.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                <Button size="sm" onClick={() => handleDelete(model.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold">
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>

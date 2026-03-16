@@ -323,11 +323,14 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       setLastTap(currentTime);
     }, [lastTap, onDoubleClick, onTogglePlay]);
 
-    const effectClass = offer?.button_effect === 'pulse'
-      ? 'animate-pulse'
-      : offer?.button_effect === 'bounce'
-      ? 'animate-bounce'
-      : '';
+    const effectClass = useMemo(() => 
+      offer?.button_effect === 'pulse'
+        ? 'animate-pulse'
+        : offer?.button_effect === 'bounce'
+        ? 'animate-bounce'
+        : '',
+      [offer?.button_effect]
+    );
 
     const trackClick = async (type: 'button' | 'ad_text') => {
       try {

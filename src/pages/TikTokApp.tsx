@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { VideoPlayer } from '@/components/tiktok/VideoPlayer';
+import { VideoPlayer, MemoizedVideoPlayer } from '@/components/tiktok/VideoPlayer';
 import { SideMenu } from '@/components/tiktok/SideMenu';
 import { BottomInfo } from '@/components/tiktok/BottomInfo';
 import { ProfileScreen } from '@/components/tiktok/ProfileScreen';

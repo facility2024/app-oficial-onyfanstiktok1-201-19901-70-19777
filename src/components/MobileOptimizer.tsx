@@ -1,27 +1,51 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Componente para otimizações específicas de mobile
+ * Componente para otimizações específicas de mobile e performance geral
  */
 export const MobileOptimizer = () => {
   const [isOptimized, setIsOptimized] = useState(false);
 
   useEffect(() => {
-    // Detectar dispositivo mobile
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
+    // Performance CSS aplicado globalmente (mobile e desktop)
+    const style = document.createElement('style');
+    style.id = 'perf-optimizer';
+    style.textContent = `
+      /* GPU acceleration para vídeos */
+      video {
+        will-change: auto;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+      }
+      
+      /* Otimizar imagens com lazy loading */
+      img[loading="lazy"] {
+        content-visibility: auto;
+      }
+      
+      /* Reduzir compositing layers em mobile */
+      ${isMobile ? `
+        .embla__slide:not(.active) video {
+          will-change: auto;
+        }
+        
+        /* Forçar compositing suave */
+        .embla__container {
+          -webkit-perspective: 1000;
+          perspective: 1000;
+        }
+      ` : ''}
+    `;
+    document.head.appendChild(style);
+
     if (isMobile) {
-      // Otimizações para mobile
       const optimizeMobile = () => {
         // Reduzir qualidade de animações para melhor performance
         document.documentElement.style.setProperty('--animation-speed', '0.2s');
-        
-        // Preload crítico apenas
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'style';
-        link.href = '/static/css/main.css';
-        document.head.appendChild(link);
         
         // Otimizar viewport para dispositivos mobile
         const viewport = document.querySelector('meta[name="viewport"]');
@@ -65,6 +89,9 @@ export const MobileOptimizer = () => {
 
     return () => {
       // Cleanup
+      const perfStyle = document.getElementById('perf-optimizer');
+      if (perfStyle) perfStyle.remove();
+      
       if (isMobile) {
         document.body.style.userSelect = '';
         document.body.style.webkitUserSelect = '';

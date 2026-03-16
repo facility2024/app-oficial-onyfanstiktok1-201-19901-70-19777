@@ -379,9 +379,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           
         />
         
-        {/* Botão de play para primeira interação */}
-        {needsUserInteraction && !hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none">
+        {/* Botão de play para primeira interação - escondido quando playing */}
+        {needsUserInteraction && !hasError && !isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none transition-opacity duration-300">
             <button
               onClick={handleUserClick}
               className="w-16 h-16 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/30 pointer-events-auto"

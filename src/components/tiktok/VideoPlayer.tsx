@@ -346,11 +346,11 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       }
     }, [offer?.id, video.id, modelId]);
 
-    const handleOfferAction = (type: 'button' | 'ad_text') => {
+    const handleOfferAction = useCallback((type: 'button' | 'ad_text') => {
       const url = type === 'button' ? offer?.button_link : offer?.ad_text_link;
       if (url) window.open(url, '_blank');
       trackClick(type);
-    };
+    }, [offer?.button_link, offer?.ad_text_link, trackClick]);
 
     return (
       <div ref={containerRef} className="relative w-full h-full">

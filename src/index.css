@@ -46,6 +46,9 @@
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   position: relative;
+  contain: layout style paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 100vw 100dvh;
 }
 
 /* iOS Performance Optimizations */

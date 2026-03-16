@@ -457,3 +457,15 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     );
   }
 );
+
+VideoPlayer.displayName = 'VideoPlayer';
+
+// Memoized version to prevent re-renders when parent state changes
+export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
+  return (
+    prev.video.id === next.video.id &&
+    prev.isPlaying === next.isPlaying &&
+    prev.isMuted === next.isMuted &&
+    prev.volume === next.volume
+  );
+});

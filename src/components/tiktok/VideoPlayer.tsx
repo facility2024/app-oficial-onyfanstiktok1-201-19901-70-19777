@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, useRef } from 'react';
+import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
@@ -306,7 +306,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       return () => clearTimers();
     }, [offer, isInView, offerDismissed]);
 
-    const handleVideoTap = (event: React.MouseEvent) => {
+    const handleVideoTap = useCallback((event: React.MouseEvent) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
       
@@ -321,15 +321,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       }
       
       setLastTap(currentTime);
-    };
+    }, [lastTap, onDoubleClick, onTogglePlay]);
 
-    const effectClass = offer?.button_effect === 'pulse'
-      ? 'animate-pulse'
-      : offer?.button_effect === 'bounce'
-      ? 'animate-bounce'
-      : '';
+    const effectClass = useMemo(() => 
+      offer?.button_effect === 'pulse'
+        ? 'animate-pulse'
+        : offer?.button_effect === 'bounce'
+        ? 'animate-bounce'
+        : '',
+      [offer?.button_effect]
+    );
 
-    const trackClick = async (type: 'button' | 'ad_text') => {
+    const trackClick = useCallback(async (type: 'button' | 'ad_text') => {
       try {
         await supabase.from('offer_clicks').insert({
           offer_id: offer?.id as string,
@@ -341,13 +344,13 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       } catch {
         // Silently fail click tracking
       }
-    };
+    }, [offer?.id, video.id, modelId]);
 
-    const handleOfferAction = (type: 'button' | 'ad_text') => {
+    const handleOfferAction = useCallback((type: 'button' | 'ad_text') => {
       const url = type === 'button' ? offer?.button_link : offer?.ad_text_link;
       if (url) window.open(url, '_blank');
       trackClick(type);
-    };
+    }, [offer?.button_link, offer?.ad_text_link, trackClick]);
 
     return (
       <div ref={containerRef} className="relative w-full h-full">
@@ -457,3 +460,15 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     );
   }
 );
+
+VideoPlayer.displayName = 'VideoPlayer';
+
+// Memoized version to prevent re-renders when parent state changes
+export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
+  return (
+    prev.video.id === next.video.id &&
+    prev.isPlaying === next.isPlaying &&
+    prev.isMuted === next.isMuted &&
+    prev.volume === next.volume
+  );
+});

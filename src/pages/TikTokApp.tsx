@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { VideoPlayer } from '@/components/tiktok/VideoPlayer';
+import { VideoPlayer, MemoizedVideoPlayer } from '@/components/tiktok/VideoPlayer';
 import { SideMenu } from '@/components/tiktok/SideMenu';
 import { BottomInfo } from '@/components/tiktok/BottomInfo';
 import { ProfileScreen } from '@/components/tiktok/ProfileScreen';
@@ -2891,7 +2891,7 @@ export const TikTokApp = () => {
               const isPromoVideo = video.id.startsWith('promo-');
               return (
                 <div key={video.id} className="embla__slide flex-shrink-0 w-full relative" style={{ height: '100dvh' }}>
-                  <VideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
+                  <MemoizedVideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
                   
                   {/* Bottom Info - only show for current video */}
                   {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}

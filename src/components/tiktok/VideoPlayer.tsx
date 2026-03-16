@@ -306,7 +306,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       return () => clearTimers();
     }, [offer, isInView, offerDismissed]);
 
-    const handleVideoTap = (event: React.MouseEvent) => {
+    const handleVideoTap = useCallback((event: React.MouseEvent) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
       
@@ -321,7 +321,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       }
       
       setLastTap(currentTime);
-    };
+    }, [lastTap, onDoubleClick, onTogglePlay]);
 
     const effectClass = offer?.button_effect === 'pulse'
       ? 'animate-pulse'

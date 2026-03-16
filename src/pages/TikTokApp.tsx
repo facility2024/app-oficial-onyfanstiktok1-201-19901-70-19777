@@ -548,7 +548,7 @@ export const TikTokApp = () => {
       if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
       const video = videos[index];
       if (video?.video_url && !video.id.startsWith('promo-')) {
-        // Usar preload para os próximos vídeos (mais agressivo = mais rápido)
+        // Usar preload link para os próximos vídeos
         const link = document.createElement('link');
         link.rel = 'preload';
         link.as = 'video';
@@ -557,7 +557,22 @@ export const TikTokApp = () => {
         document.head.appendChild(link);
         setPreloadedVideos(prev => new Set(prev).add(index));
 
-        // Clean up after 60 seconds
+        // Buffered preload: criar elemento de vídeo oculto para os 2 próximos
+        if (index <= currentVideoIndex + 2) {
+          const hiddenVideo = document.createElement('video');
+          hiddenVideo.src = video.video_url;
+          hiddenVideo.preload = 'auto';
+          hiddenVideo.muted = true;
+          hiddenVideo.style.display = 'none';
+          document.body.appendChild(hiddenVideo);
+          setTimeout(() => {
+            if (document.body.contains(hiddenVideo)) {
+              document.body.removeChild(hiddenVideo);
+            }
+          }, 15000);
+        }
+
+        // Clean up link after 60 seconds
         setTimeout(() => {
           if (document.head.contains(link)) {
             document.head.removeChild(link);

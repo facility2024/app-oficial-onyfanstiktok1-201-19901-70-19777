@@ -332,7 +332,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       [offer?.button_effect]
     );
 
-    const trackClick = async (type: 'button' | 'ad_text') => {
+    const trackClick = useCallback(async (type: 'button' | 'ad_text') => {
       try {
         await supabase.from('offer_clicks').insert({
           offer_id: offer?.id as string,
@@ -344,7 +344,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       } catch {
         // Silently fail click tracking
       }
-    };
+    }, [offer?.id, video.id, modelId]);
 
     const handleOfferAction = (type: 'button' | 'ad_text') => {
       const url = type === 'button' ? offer?.button_link : offer?.ad_text_link;

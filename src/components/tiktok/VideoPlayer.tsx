@@ -117,11 +117,11 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         (entries) => {
           entries.forEach((entry) => {
             const ratio = entry.intersectionRatio || 0;
-            const visible = entry.isIntersecting && ratio >= 0.6;
+            const visible = entry.isIntersecting && ratio >= 0.8;
             setIsInView(visible);
           });
         },
-        { root: null, rootMargin: '0px', threshold: [0, 0.6, 1] }
+        { root: null, rootMargin: '0px', threshold: [0, 0.8, 1] }
       );
       observer.observe(el);
       return () => observer.disconnect();

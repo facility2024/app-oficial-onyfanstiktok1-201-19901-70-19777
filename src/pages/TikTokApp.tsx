@@ -260,6 +260,7 @@ export const TikTokApp = () => {
   const [pendingRefresh, setPendingRefresh] = useState(false);
   const scheduledSessionSelectionRef = useRef<Record<string, string>>({});
   const SCHEDULED_QUEUE_KEY_PREFIX = 'sched_queue_';
+  const MAIN_QUEUE_KEY_PREFIX = 'main_queue_';
   const SCHEDULED_VIEWED_KEY = 'viewed_highlight_posts';
   const HIGHLIGHT_NEW_WINDOW_MS = 12 * 60 * 60 * 1000;
   const videoRef = useRef<HTMLVideoElement>(null);

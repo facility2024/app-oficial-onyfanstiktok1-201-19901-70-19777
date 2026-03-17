@@ -308,7 +308,7 @@ export const AdminVideoScheduler = () => {
             id: generatedId,
             username: newUsername,
             name: newUsername,
-            avatar_url: 'https://via.placeholder.com/150',
+            avatar_url: formData.modelAvatarUrl.trim() || 'https://via.placeholder.com/150',
             is_active: true,
             posting_panel_url: formData.profileLink.trim() || null,
           })

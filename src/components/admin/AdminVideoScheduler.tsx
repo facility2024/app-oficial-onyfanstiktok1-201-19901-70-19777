@@ -62,14 +62,15 @@ export const AdminVideoScheduler = () => {
   const [formData, setFormData] = useState({
     useExistingId: true,
     videoUrl: '',
-    videoUrls: '', // Para envio em lista (múltiplos links, um por linha)
+    videoUrls: '',
     modelId: '',
     scheduleDate: '',
     scheduleTime: '',
     profileLink: '',
+    modelAvatarUrl: '',
     sendType: 'single' as 'single' | 'list',
-    listInterval: 5, // Intervalo em minutos entre cada envio da lista
-    dailyFrequency: 3, // Quantas vezes aparece no feed por dia
+    listInterval: 5,
+    dailyFrequency: 3,
   });
 
   useEffect(() => {

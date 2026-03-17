@@ -434,10 +434,10 @@ export const TikTokApp = () => {
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {
-    if (!videos.length) return;
+    if (!displayVideos.length) return;
     const links: HTMLLinkElement[] = [];
     try {
-      const url = new URL(videos[0].video_url);
+      const url = new URL(displayVideos[0].video_url);
       const preconnect = document.createElement('link');
       preconnect.rel = 'preconnect';
       preconnect.href = url.origin;
@@ -454,7 +454,7 @@ export const TikTokApp = () => {
         } catch {}
       });
     };
-  }, [videos]);
+  }, [displayVideos]);
 
   // Update video when carousel slides
   useEffect(() => {

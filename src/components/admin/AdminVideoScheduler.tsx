@@ -44,9 +44,10 @@ const defaultFormData = {
   scheduleDate: '',
   scheduleTime: '',
   profileLink: '',
+  modelAvatarUrl: '',
   sendType: 'single' as const,
   listInterval: 5,
-  dailyFrequency: 3, // Quantas vezes aparece no feed por dia
+  dailyFrequency: 3,
 };
 
 export const AdminVideoScheduler = () => {

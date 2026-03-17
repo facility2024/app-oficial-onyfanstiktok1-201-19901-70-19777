@@ -460,66 +460,87 @@ export const TikTokApp = () => {
   // Update video when carousel slides
   useEffect(() => {
     if (!emblaApi) return;
+
     const onSelect = () => {
       const newIndex = emblaApi.selectedScrollSnap();
-      if (newIndex !== currentVideoIndex) {
-        // 🎯 TRACKING: Calcular duração do vídeo anterior e registrar skip/interesse
-        if (currentUser?.id && lastTrackedVideoRef.current) {
-          const watchDuration = Math.floor((Date.now() - videoWatchStartRef.current) / 1000);
-          const prevVideo = displayVideos[currentVideoIndex];
-          if (prevVideo) {
-            const prevEntityId = prevVideo.creator_id || prevVideo.model_id || '';
-            updateWatchDuration(lastTrackedVideoRef.current, currentUser.id, watchDuration);
-            if (watchDuration >= 20 && prevEntityId) {
-              trackStrongInterest(currentUser.id, prevEntityId, 'watch_long', (prevVideo as any).tags);
-            } else if (watchDuration < 3 && (prevVideo as any).tags?.length > 0) {
-              trackSkip(currentUser.id, (prevVideo as any).tags);
-            }
-          }
-        }
+      if (newIndex === currentVideoIndex) return;
 
-        setCurrentVideoIndex(newIndex);
-        videoWatchStartRef.current = Date.now();
+      // 🎯 TRACKING: Calcular duração do vídeo anterior e registrar skip/interesse
+      if (currentUser?.id && lastTrackedVideoRef.current) {
+        const watchDuration = Math.floor((Date.now() - videoWatchStartRef.current) / 1000);
+        const prevVideo = displayVideos[currentVideoIndex];
 
-        // 🧠 FEED INTELIGENTE: Marcar vídeo como assistido
-        const watchedVideo = displayVideos[newIndex];
-        if (watchedVideo && markVideoAsWatched) {
-          const entityId = watchedVideo.creator_id || watchedVideo.model_id || watchedVideo.user?.id;
-          if (entityId) {
-            markVideoAsWatched(watchedVideo.id, entityId);
-          }
-        }
+        if (prevVideo && !prevVideo.id.startsWith('promo-')) {
+          const prevEntityId = prevVideo.creator_id || prevVideo.model_id || '';
+          updateWatchDuration(lastTrackedVideoRef.current, currentUser.id, watchDuration);
 
-        // 🎯 TRACKING: Registrar visualização no DB após 3s (via timer)
-        if (currentUser?.id && watchedVideo) {
-          lastTrackedVideoRef.current = watchedVideo.id;
-          setTimeout(() => {
-            if (lastTrackedVideoRef.current === watchedVideo.id) {
-              trackVideoEngagement(watchedVideo.id, currentUser.id);
-            }
-          }, 3000);
-        }
-
-        // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
-        if (!currentUser && newIndex > currentVideoIndex) {
-          const newCount = videosWatched + 1;
-          setVideosWatched(newCount);
-          localStorage.setItem('videosWatched', newCount.toString());
-
-          // Redireciona para /auth após 10 vídeos
-          if (newCount >= 10) {
-            localStorage.setItem('requiresLogin', 'true');
-            localStorage.setItem('returnTo', '/app');
-            navigate('/auth');
+          if (watchDuration >= 20 && prevEntityId) {
+            trackStrongInterest(currentUser.id, prevEntityId, 'watch_long', (prevVideo as any).tags);
+          } else if (watchDuration < 3 && (prevVideo as any).tags?.length > 0) {
+            trackSkip(currentUser.id, (prevVideo as any).tags);
           }
         }
       }
+
+      setCurrentVideoIndex(newIndex);
+      videoWatchStartRef.current = Date.now();
+
+      const watchedVideo = displayVideos[newIndex];
+      const watchedVideoId = watchedVideo ? ((watchedVideo as any)._originalId || watchedVideo.id) : '';
+      const isPromoVideo = watchedVideo?.id.startsWith('promo-');
+
+      // 🧠 FEED INTELIGENTE: Marcar vídeo real como assistido
+      if (watchedVideo && markVideoAsWatched && !isPromoVideo) {
+        const entityId = watchedVideo.creator_id || watchedVideo.model_id || watchedVideo.user?.id;
+        if (entityId && watchedVideoId) {
+          markVideoAsWatched(watchedVideoId, entityId);
+        }
+      }
+
+      // 🎯 TRACKING: Registrar visualização no DB após 3s (via timer)
+      if (currentUser?.id && watchedVideo && !isPromoVideo && watchedVideoId) {
+        lastTrackedVideoRef.current = watchedVideoId;
+        setTimeout(() => {
+          if (lastTrackedVideoRef.current === watchedVideoId) {
+            trackVideoEngagement(watchedVideoId, currentUser.id);
+          }
+        }, 3000);
+      } else {
+        lastTrackedVideoRef.current = '';
+      }
+
+      // 🔐 INCREMENTA CONTADOR SE USUÁRIO NÃO ESTIVER LOGADO
+      if (!currentUser && newIndex > currentVideoIndex) {
+        const newCount = videosWatched + 1;
+        setVideosWatched(newCount);
+        localStorage.setItem('videosWatched', newCount.toString());
+
+        // Redireciona para /auth após 10 vídeos
+        if (newCount >= 10) {
+          localStorage.setItem('requiresLogin', 'true');
+          localStorage.setItem('returnTo', '/app');
+          navigate('/auth');
+        }
+      }
     };
+
     emblaApi.on('select', onSelect);
     return () => {
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, currentVideoIndex, currentUser, videosWatched, navigate]);
+  }, [
+    emblaApi,
+    currentVideoIndex,
+    currentUser,
+    displayVideos,
+    markVideoAsWatched,
+    navigate,
+    trackSkip,
+    trackStrongInterest,
+    trackVideoEngagement,
+    updateWatchDuration,
+    videosWatched,
+  ]);
 
   // 🔐 Bloqueia interações do Embla quando redirecionado para login
   useEffect(() => {

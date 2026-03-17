@@ -259,6 +259,7 @@ export const TikTokApp = () => {
   const [cycleSize, setCycleSize] = useState(0);
   const [pendingRefresh, setPendingRefresh] = useState(false);
   const scheduledSessionSelectionRef = useRef<Record<string, string>>({});
+  const mainSessionSelectionRef = useRef<Record<string, string>>({});
   const SCHEDULED_QUEUE_KEY_PREFIX = 'sched_queue_';
   const MAIN_QUEUE_KEY_PREFIX = 'main_queue_';
   const SCHEDULED_VIEWED_KEY = 'viewed_highlight_posts';

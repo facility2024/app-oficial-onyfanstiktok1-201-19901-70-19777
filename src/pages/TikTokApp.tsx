@@ -812,12 +812,10 @@ export const TikTokApp = () => {
             await trackView(trackingId, userId, isCreator);
             ensureInteractedModel(userId);
 
-            // 🆕 MARCAR VÍDEO COMO ASSISTIDO na memória persistente
             if (markVideoAsWatched) {
               markVideoAsWatched(trackingId, userId);
             }
 
-            // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO
             if ((currentVideo as any).isHighlighted) {
               try {
                 const stored = localStorage.getItem(SCHEDULED_VIEWED_KEY);
@@ -855,12 +853,11 @@ export const TikTokApp = () => {
 
     if (currentVideo) {
       const currentVideoDataId = (currentVideo as any)._originalId || currentVideo.id;
-      loadComments(currentVideoDataId);
       checkIfLiked(currentVideoDataId);
       checkIfFollowing(currentVideo.user.id);
       registerView();
     }
-  }, [currentVideo, loadComments, markVideoAsWatched, trackView]);
+  }, [currentVideo, markVideoAsWatched, trackView]);
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 

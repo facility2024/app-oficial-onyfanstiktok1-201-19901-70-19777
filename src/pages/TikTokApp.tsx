@@ -342,7 +342,7 @@ export const TikTokApp = () => {
 
   // Handle action tracking with async support
   const handleActionAttempt = async (actionType: string, userName: string): Promise<boolean> => {
-    const currentVideo = videos[currentVideoIndex];
+    const currentVideo = displayVideos[currentVideoIndex];
     return await checkAndTrackAction(actionType, currentVideo?.id, currentVideo?.user_id);
   };
 

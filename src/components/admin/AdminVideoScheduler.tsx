@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar } from 'lucide-react';
+import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar, X, Video } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface Model {

@@ -18,6 +18,9 @@ interface Model {
   is_active: boolean;
 }
 
+interface SearchResult extends Model {}
+
+
 interface ScheduledPost {
   id: string;
   modelo_id: string;
@@ -55,6 +58,8 @@ export const AdminVideoScheduler = () => {
   const [loading, setLoading] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
   const [createdModelInfo, setCreatedModelInfo] = useState<{ id: string; username: string; shareableLink: string } | null>(null);
@@ -153,20 +158,34 @@ export const AdminVideoScheduler = () => {
       .select('*')
       .or(`id.eq.${search},username.ilike.%${search}%,name.ilike.%${search}%`)
       .eq('is_active', true)
-      .limit(1)
-      .single();
+      .limit(10);
 
     setLoading(false);
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       toast.error('Modelo não encontrado');
       setSelectedModel(null);
+      setSearchResults([]);
+      setShowSearchResults(false);
       return;
     }
 
-    setSelectedModel(data);
-    setFormData(prev => ({ ...prev, modelId: data.id }));
-    toast.success(`Modelo encontrado: ${data.name} (@${data.username})`);
+    if (data.length === 1) {
+      selectModel(data[0]);
+    } else {
+      setSearchResults(data);
+      setShowSearchResults(true);
+      toast.info(`${data.length} modelos encontrados - selecione um`);
+    }
+  };
+
+  const selectModel = (model: Model) => {
+    setSelectedModel(model);
+    setFormData(prev => ({ ...prev, modelId: model.id }));
+    setModelSearch(model.name || model.username);
+    setSearchResults([]);
+    setShowSearchResults(false);
+    toast.success(`Modelo selecionado: ${model.name} (@${model.username})`);
   };
 
   const testVideoLink = async () => {
@@ -614,6 +633,24 @@ export const AdminVideoScheduler = () => {
                   </Button>
                 )}
               </div>
+              {/* Search results dropdown */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="border border-border rounded-md bg-background shadow-md max-h-48 overflow-y-auto">
+                  {searchResults.map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={() => selectModel(model)}
+                      className="flex items-center gap-2 w-full p-2 hover:bg-muted text-left transition-colors"
+                    >
+                      <img src={model.avatar_url} className="w-8 h-8 rounded-full object-cover" alt="" />
+                      <div className="text-sm">
+                        <div className="font-medium">{model.name}</div>
+                        <div className="text-muted-foreground">@{model.username}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {selectedModel && (
                 <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                   <img src={selectedModel.avatar_url} className="w-8 h-8 rounded-full" alt="" />

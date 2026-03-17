@@ -782,7 +782,27 @@ export const AdminVideoScheduler = () => {
         {/* Fila de Publicações */}
         <Card>
           <CardHeader>
-            <CardTitle>Fila de Publicações ({scheduledPosts.length})</CardTitle>
+            <div className="flex items-center justify-between w-full">
+              <CardTitle>Fila de Publicações ({scheduledPosts.length})</CardTitle>
+              {scheduledPosts.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    if (!confirm('Tem certeza que deseja limpar TODAS as postagens da fila?')) return;
+                    for (const post of scheduledPosts) {
+                      await supabase.from('posts_agendados').delete().eq('id', post.id);
+                    }
+                    toast.success('Fila limpa com sucesso!');
+                    loadScheduledPosts();
+                  }}
+                  disabled={loading}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Limpar Tudo
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="max-h-[700px] overflow-y-auto">

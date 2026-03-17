@@ -18,6 +18,9 @@ interface Model {
   is_active: boolean;
 }
 
+interface SearchResult extends Model {}
+
+
 interface ScheduledPost {
   id: string;
   modelo_id: string;

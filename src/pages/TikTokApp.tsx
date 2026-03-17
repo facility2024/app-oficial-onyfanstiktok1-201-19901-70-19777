@@ -538,10 +538,10 @@ export const TikTokApp = () => {
 
   // Preload adjacent videos for faster navigation (otimizado)
   useEffect(() => {
-    if (videos.length === 0) return;
+    if (displayVideos.length === 0) return;
     const preloadVideo = (index: number) => {
-      if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
-      const video = videos[index];
+      if (index < 0 || index >= displayVideos.length || preloadedVideos.has(index)) return;
+      const video = displayVideos[index];
       if (video?.video_url && !video.id.startsWith('promo-')) {
         // Usar preload link para os próximos vídeos
         const link = document.createElement('link');
@@ -580,7 +580,7 @@ export const TikTokApp = () => {
     preloadVideo(currentVideoIndex + 1);
     preloadVideo(currentVideoIndex + 2);
     preloadVideo(currentVideoIndex + 3);
-  }, [currentVideoIndex, videos, preloadedVideos]);
+  }, [currentVideoIndex, displayVideos, preloadedVideos]);
 
   // DESABILITADO: Verificação de idade
   // useEffect(() => {

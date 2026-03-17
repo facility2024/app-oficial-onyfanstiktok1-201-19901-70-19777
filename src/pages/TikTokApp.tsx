@@ -359,92 +359,78 @@ export const TikTokApp = () => {
 
   // Embla API ready
 
-  // 📢 Injetar promoções como vídeos falsos no feed
-  const injectPromosRef = useRef(false);
-  useEffect(() => {
-    if (videos.length === 0 || promotions.length === 0) return;
+  // 📢 Montagem estável do feed com promos, sem reescrever o estado base de vídeos
+  const displayVideos = useMemo(() => {
+    if (videos.length === 0) return [] as Video[];
+    if (promotions.length === 0) return videos;
 
-    // Não injetar se já tem promos — evita loop infinito
-    if (videos.some(v => v.id.startsWith('promo-'))) return;
-
-    // Usar o intervalo configurado no painel admin (position_interval de cada promo)
-    // Se houver múltiplas promos, usar o menor intervalo como base
     const adminInterval = Math.max(
       1,
       Math.min(...promotions.map(p => p.position_interval || 5))
     );
 
-    // Separar apenas vídeos reais (sem promos)
-    const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
-    const result: any[] = [];
-    let promoIdx = 0;
-    const usedPromoIds = new Set<string>();
+    const result: Video[] = [];
+    let lastPromoId: string | null = null;
 
-    for (let i = 0; i < realVideos.length; i++) {
-      result.push(realVideos[i]);
+    videos.forEach((video, index) => {
+      result.push(video);
 
-      // Respeitar o intervalo definido pelo admin
-      if ((i + 1) % adminInterval === 0 && promotions.length > 0) {
-        // Selecionar próxima promo, respeitando prioridade e evitando repetição
-        // Promos com maior prioridade aparecem primeiro (já vêm ordenadas por priority DESC)
-        let selectedPromo = promotions[promoIdx % promotions.length];
-        
-        if (promotions.length > 1) {
-          let attempts = 0;
-          while (usedPromoIds.has(selectedPromo.id) && attempts < promotions.length) {
-            promoIdx++;
-            selectedPromo = promotions[promoIdx % promotions.length];
-            attempts++;
-          }
-        }
-        
-        usedPromoIds.add(selectedPromo.id);
-        if (usedPromoIds.size >= promotions.length) {
-          usedPromoIds.clear();
-        }
+      if ((index + 1) % adminInterval !== 0) return;
 
-        const fakeVideo: any = {
-          id: `promo-${selectedPromo.id}-pos${i}`,
-          title: selectedPromo.title || selectedPromo.display_name,
-          description: selectedPromo.description || '',
-          video_url: selectedPromo.media_url,
-          thumbnail_url: selectedPromo.banner_url || '',
-          user_id: `promo-${selectedPromo.id}`,
-          likes_count: 0,
-          comments_count: 0,
-          shares_count: 0,
-          views_count: selectedPromo.views_count || 0,
-          music_name: `${selectedPromo.display_name} • Patrocinado`,
-          is_active: true,
-          visibility: 'public',
-          created_at: new Date().toISOString(),
+      const slotIndex = Math.floor((index + 1) / adminInterval) - 1;
+      let selectedPromo = promotions[slotIndex % promotions.length];
+
+      if (promotions.length > 1 && selectedPromo.id === lastPromoId) {
+        selectedPromo = promotions[(slotIndex + 1) % promotions.length];
+      }
+
+      lastPromoId = selectedPromo.id;
+
+      result.push({
+        id: `promo-${selectedPromo.id}-slot-${slotIndex}`,
+        title: selectedPromo.title || selectedPromo.display_name,
+        description: selectedPromo.description || '',
+        video_url: selectedPromo.media_url,
+        thumbnail_url: selectedPromo.banner_url || '',
+        user_id: `promo-${selectedPromo.id}`,
+        likes_count: 0,
+        comments_count: 0,
+        shares_count: 0,
+        views_count: selectedPromo.views_count || 0,
+        music_name: `${selectedPromo.display_name} • Patrocinado`,
+        is_active: true,
+        visibility: 'public',
+        created_at: selectedPromo.updated_at || selectedPromo.created_at || new Date().toISOString(),
+        user: {
+          id: `promo-${selectedPromo.id}`,
+          username: selectedPromo.display_name,
+          avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
+          followers_count: 0,
+          following_count: 0,
+          is_online: false,
+          created_at: selectedPromo.created_at || new Date().toISOString(),
+          bio: selectedPromo.description || '',
+          posting_panel_url: selectedPromo.cta_link || undefined,
+        },
+        ...( {
           _promoCtaText: selectedPromo.cta_text || null,
           _promoCtaLink: selectedPromo.cta_link || null,
           _promoBannerUrl: selectedPromo.banner_url || null,
           _promoDescription: selectedPromo.description || null,
-          user: {
-            id: `promo-${selectedPromo.id}`,
-            username: selectedPromo.display_name,
-            avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
-            followers_count: 0,
-            following_count: 0,
-            is_online: false,
-            created_at: new Date().toISOString(),
-            bio: selectedPromo.description || '',
-            posting_panel_url: selectedPromo.cta_link || undefined,
-          },
-        };
-        result.push(fakeVideo);
-        promoIdx++;
-      }
-    }
+        } as any),
+      } as Video);
+    });
 
-    if (promoIdx > 0) {
-      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${adminInterval} vídeos (${result.length} total) — intervalo do admin`);
-      setVideos(result);
-    }
+    return result;
   }, [videos, promotions]);
-  const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
+
+  useEffect(() => {
+    if (displayVideos.length === 0) return;
+    if (currentVideoIndex < displayVideos.length) return;
+    setCurrentVideoIndex(displayVideos.length - 1);
+  }, [currentVideoIndex, displayVideos.length]);
+
+  const currentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {

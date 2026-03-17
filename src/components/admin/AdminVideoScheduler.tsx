@@ -633,6 +633,24 @@ export const AdminVideoScheduler = () => {
                   </Button>
                 )}
               </div>
+              {/* Search results dropdown */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="border border-border rounded-md bg-background shadow-md max-h-48 overflow-y-auto">
+                  {searchResults.map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={() => selectModel(model)}
+                      className="flex items-center gap-2 w-full p-2 hover:bg-muted text-left transition-colors"
+                    >
+                      <img src={model.avatar_url} className="w-8 h-8 rounded-full object-cover" alt="" />
+                      <div className="text-sm">
+                        <div className="font-medium">{model.name}</div>
+                        <div className="text-muted-foreground">@{model.username}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {selectedModel && (
                 <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                   <img src={selectedModel.avatar_url} className="w-8 h-8 rounded-full" alt="" />

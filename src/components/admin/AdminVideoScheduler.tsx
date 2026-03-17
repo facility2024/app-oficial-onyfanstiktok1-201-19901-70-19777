@@ -63,6 +63,7 @@ export const AdminVideoScheduler = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
   const [createdModelInfo, setCreatedModelInfo] = useState<{ id: string; username: string; shareableLink: string } | null>(null);
+  const [showTutorial, setShowTutorial] = useState(true);
   
   const [formData, setFormData] = useState({
     useExistingId: true,

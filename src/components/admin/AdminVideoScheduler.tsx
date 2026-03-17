@@ -785,67 +785,66 @@ export const AdminVideoScheduler = () => {
             <CardTitle>Fila de Publicações ({scheduledPosts.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 max-h-[600px] overflow-y-auto">
+            <div className="max-h-[700px] overflow-y-auto">
               {scheduledPosts.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   Nenhum vídeo agendado
                 </div>
               ) : (
-                scheduledPosts.map((post) => (
-                  <div key={post.id} className="border rounded-lg p-4 space-y-3">
-                    {/* Preview do Vídeo */}
-                    <video
-                      src={post.conteudo_url}
-                      controls
-                      className="w-full h-48 object-cover rounded-md bg-black"
-                      preload="metadata"
-                    >
-                      <source src={post.conteudo_url} type="video/mp4" />
-                    </video>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {scheduledPosts.map((post) => (
+                    <div key={post.id} className="relative group border rounded-lg overflow-hidden bg-black">
+                      {/* Miniatura do Vídeo */}
+                      <video
+                        src={post.conteudo_url}
+                        className="w-full aspect-[9/16] object-cover"
+                        preload="metadata"
+                        muted
+                        playsInline
+                        onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                        onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                      />
 
-                    {/* Informações */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">ID: {post.modelo_id}</span>
+                      {/* Overlay com status */}
+                      <div className="absolute top-1 left-1 z-10">
                         {getStatusBadge(post.status)}
                       </div>
-                      
+
+                      {/* Username */}
                       {post.models && (
-                        <div className="text-sm text-muted-foreground">
-                          @{post.models.username}
+                        <div className="absolute bottom-8 left-1 z-10">
+                          <span className="text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
+                            @{post.models.username}
+                          </span>
                         </div>
                       )}
 
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <div>Criado: {formatDateTime(post.created_at)}</div>
-                        <div>Agendado: {formatDateTime(post.data_agendamento)}</div>
-                      </div>
-
-                      {/* Ações */}
-                      {post.status === 'agendado' && (
-                        <div className="flex gap-2">
+                      {/* Botões de ação - sempre visíveis */}
+                      <div className="absolute bottom-0 inset-x-0 z-10 flex gap-1 p-1 bg-black/70">
+                        {post.status === 'agendado' && (
                           <Button
                             onClick={() => handleSendNow(post.id)}
                             disabled={loading}
                             size="sm"
-                            className="flex-1"
+                            className="flex-1 h-6 text-[10px] px-1"
                           >
-                            <Send className="w-3 h-3 mr-1" />
-                            Enviar agora
+                            <Send className="w-2.5 h-2.5 mr-0.5" />
+                            Enviar
                           </Button>
-                          <Button
-                            onClick={() => handleRemove(post.id)}
-                            disabled={loading}
-                            size="sm"
-                            variant="destructive"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          onClick={() => handleRemove(post.id)}
+                          disabled={loading}
+                          size="sm"
+                          variant="destructive"
+                          className="h-6 text-[10px] px-1.5"
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </CardContent>

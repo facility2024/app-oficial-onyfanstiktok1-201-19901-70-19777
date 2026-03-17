@@ -2979,7 +2979,7 @@ export const TikTokApp = () => {
         {/* Vertical Carousel Container */}
         <div className="embla h-screen" ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
-            {videos.map((video, index) => {
+            {displayVideos.map((video, index) => {
               const isPromoVideo = video.id.startsWith('promo-');
               return (
                 <div key={video.id} className="embla__slide flex-shrink-0 w-full relative" style={{ height: '100dvh' }}>
@@ -3055,7 +3055,7 @@ export const TikTokApp = () => {
         </div>
 
         {/* Hidden preloader for next video (speeds up decode/start) */}
-        {videos[currentVideoIndex + 1]?.video_url && <video src={videos[currentVideoIndex + 1].video_url} preload="auto" muted playsInline style={{
+        {displayVideos[currentVideoIndex + 1]?.video_url && <video src={displayVideos[currentVideoIndex + 1].video_url} preload="auto" muted playsInline style={{
         display: 'none'
       }} />}
 

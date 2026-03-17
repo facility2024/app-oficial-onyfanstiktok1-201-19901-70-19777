@@ -1115,49 +1115,97 @@ export const TikTokApp = () => {
         }
       })());
 
-      // 🎯 Processar posts agendados recentes como prioridade
-      const processedScheduledPosts = (postsAgendados || []).filter(post => !viewedPosts.has(`scheduled-${post.id}`)) // 🆕 Filtrar já visualizados
-      .map(post => {
-        const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-        const contentUrl = normalizeUrl(post.conteudo_url || '');
-        if (!contentUrl || !isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-          return null;
+      // 🎯 Processar posts agendados — LIMITADO A 1 POR MODELO por sessão
+      // Isso impede que todos os vídeos agendados apareçam de uma vez no feed
+      const scheduledPostsByModel: Record<string, any[]> = {};
+      (postsAgendados || []).forEach(post => {
+        const mid = post.modelo_id || 'unknown';
+        if (!scheduledPostsByModel[mid]) scheduledPostsByModel[mid] = [];
+        scheduledPostsByModel[mid].push(post);
+      });
+
+      // Helper para construir vídeo de post agendado
+      const buildScheduledVideo = (post: any, model: any, contentUrl: string) => ({
+        id: `scheduled-${post.id}`,
+        video_url: contentUrl,
+        title: post.titulo || 'Conteúdo Agendado',
+        user_id: post.modelo_id || 'unknown',
+        model_id: post.modelo_id || 'unknown',
+        music_name: 'Novo Conteúdo',
+        visibility: 'public' as const,
+        source: 'scheduled_post',
+        isHighlighted: true,
+        created_at: post.data_publicacao || post.created_at,
+        user: model ? {
+          id: model.id || post.modelo_id || 'unknown',
+          username: model.username || model.name || 'Usuário',
+          avatar_url: model.avatar_url || '',
+          followers_count: model.followers_count || 0,
+          following_count: 0,
+          is_online: chatPanelsMap[model.id] || false,
+          bio: model.bio || '',
+          posting_panel_url: model.posting_panel_url || '',
+          created_at: model.created_at || ''
+        } : {
+          id: post.modelo_id || 'unknown',
+          username: post.modelo_username || 'Usuário',
+          avatar_url: '',
+          followers_count: 0,
+          following_count: 0,
+          is_online: false,
+          bio: '',
+          created_at: ''
         }
-        return {
-          id: `scheduled-${post.id}`,
-          video_url: contentUrl,
-          title: post.titulo || 'Conteúdo Agendado',
-          user_id: post.modelo_id || 'unknown',
-          model_id: post.modelo_id || 'unknown',
-          music_name: 'Novo Conteúdo',
-          visibility: 'public' as const,
-          source: 'scheduled_post',
-          isHighlighted: true,
-          // 🆕 Marcar como destaque
-          created_at: post.data_publicacao || post.created_at,
-          user: model ? {
-            id: model.id || post.modelo_id || 'unknown',
-            username: model.username || model.name || 'Usuário',
-            avatar_url: model.avatar_url || '',
-            followers_count: model.followers_count || 0,
-            following_count: 0,
-            is_online: chatPanelsMap[model.id] || false,
-            bio: model.bio || '',
-            posting_panel_url: model.posting_panel_url || '',
-            created_at: model.created_at || ''
-          } : {
-            id: post.modelo_id || 'unknown',
-            username: post.modelo_username || 'Usuário',
-            avatar_url: '',
-            followers_count: 0,
-            following_count: 0,
-            is_online: false,
-            bio: '',
-            created_at: ''
+      });
+
+      // Para cada modelo, ordenar por data e pegar apenas o PRÓXIMO não-visualizado
+      const getScheduledQueueIndex = (modelId: string): number => {
+        try {
+          const raw = localStorage.getItem(`sched_queue_${modelId}`);
+          return raw ? parseInt(raw, 10) : 0;
+        } catch { return 0; }
+      };
+
+      const processedScheduledPosts: any[] = [];
+      Object.entries(scheduledPostsByModel).forEach(([mid, posts]) => {
+        // Ordenar por data de publicação (mais antigo primeiro = fila FIFO)
+        posts.sort((a, b) => new Date(a.data_publicacao || a.created_at).getTime() - new Date(b.data_publicacao || b.created_at).getTime());
+        
+        // Pegar o índice atual na fila deste modelo
+        let queueIdx = getScheduledQueueIndex(mid);
+        if (queueIdx >= posts.length) queueIdx = 0; // Reiniciar fila quando acabar
+        
+        // Encontrar o próximo post não-visualizado a partir do índice atual
+        let found = false;
+        for (let attempt = 0; attempt < posts.length; attempt++) {
+          const idx = (queueIdx + attempt) % posts.length;
+          const post = posts[idx];
+          if (viewedPosts.has(`scheduled-${post.id}`)) continue;
+          
+          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
+          const contentUrl = normalizeUrl(post.conteudo_url || '');
+          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) continue;
+          
+          processedScheduledPosts.push(buildScheduledVideo(post, model, contentUrl));
+          // Salvar próximo índice para a próxima sessão
+          localStorage.setItem(`sched_queue_${mid}`, ((idx + 1) % posts.length).toString());
+          found = true;
+          break; // Apenas 1 por modelo!
+        }
+        
+        // Se todos foram visualizados, resetar fila e mostrar o primeiro
+        if (!found && posts.length > 0) {
+          localStorage.setItem(`sched_queue_${mid}`, '1');
+          const post = posts[0];
+          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
+          const contentUrl = normalizeUrl(post.conteudo_url || '');
+          if (contentUrl && (isValidVideoUrl(contentUrl) || contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+            processedScheduledPosts.push(buildScheduledVideo(post, model, contentUrl));
           }
-        } as any;
-      }).filter(Boolean);
-      const processedMainPosts = (postsPrincipais || []).filter(post => !viewedPosts.has(`main-${post.id}`)) // 🆕 Filtrar já visualizados
+        }
+      });
+
+      const processedMainPosts = (postsPrincipais || []).filter(post => !viewedPosts.has(`main-${post.id}`))
       .map(post => {
         const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
         const contentUrl = normalizeUrl(post.conteudo_url || '');
@@ -1174,7 +1222,6 @@ export const TikTokApp = () => {
           visibility: 'public' as const,
           source: 'main_post',
           isHighlighted: true,
-          // 🆕 Marcar como destaque
           created_at: post.created_at,
           user: model ? {
             id: model.id || post.modelo_id || 'unknown',

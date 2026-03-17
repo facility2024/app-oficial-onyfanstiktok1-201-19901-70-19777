@@ -819,6 +819,14 @@ export const AdminVideoScheduler = () => {
                         {getStatusBadge(post.status)}
                       </div>
 
+                      {/* Hora agendada */}
+                      <div className="absolute top-1 right-1 z-10">
+                        <span className="text-[9px] bg-black/70 text-yellow-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <Calendar className="w-2.5 h-2.5" />
+                          {new Date(post.data_agendamento).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
                       {/* Username */}
                       {post.models && (
                         <div className="absolute bottom-8 left-1 z-10">

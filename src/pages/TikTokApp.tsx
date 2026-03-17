@@ -1540,12 +1540,7 @@ export const TikTokApp = () => {
 
   // Simplificar - não precisamos mais desta função separada
 
-  // useEffect para inicializar o feed
-  useEffect(() => {
-    console.log('🚀 INICIALIZANDO APLICATIVO - Carregando dados...');
-    console.log('🔍 Estado inicial de loading:', loading);
-    initializeFeed();
-  }, []); // Executar apenas uma vez na montagem
+  // initializeFeed já é chamado no efeito de montagem acima para evitar corrida e reordenação duplicada.
 
   // 🎬 FILTRAR VÍDEOS POR GÊNERO SELECIONADO
   useEffect(() => {

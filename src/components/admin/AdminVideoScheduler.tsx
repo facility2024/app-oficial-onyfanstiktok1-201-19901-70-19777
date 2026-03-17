@@ -47,7 +47,6 @@ const defaultFormData = {
   modelAvatarUrl: '',
   sendType: 'single' as const,
   listInterval: 5,
-  dailyFrequency: 3,
 };
 
 export const AdminVideoScheduler = () => {

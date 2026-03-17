@@ -300,17 +300,20 @@ export const TikTokApp = () => {
   } = usePremiumStatus();
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  // Verifica se um vídeo é novo (criado nas últimas 2 horas ou de modelo nova)
+  // Verifica se um vídeo é novo
   const isVideoNew = (video: Video): boolean => {
     try {
-      // 🆕 Vídeos de modelos novas (criadas nas últimas 48h) sempre são "novos"
-      if ((video as any).isNewModel) return true;
       const videoDate = new Date(video.created_at).getTime();
+      const isHighlightedVideo = (video as any).isHighlighted || (video as any).source === 'scheduled_post' || (video as any).source === 'main_post' || (video as any).isNewModel;
+
+      // Posts novos/agendados ficam com badge NOVO por 12 horas
+      if (isHighlightedVideo) {
+        return videoDate > Date.now() - HIGHLIGHT_NEW_WINDOW_MS;
+      }
+
       const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
-      // Vídeos criados nas últimas 2 horas são considerados "novos"
       if (videoDate > twoHoursAgo) return true;
-      // Também marcar como novo se isHighlighted (posts agendados recentes)
-      if ((video as any).isHighlighted) return true;
+
       // Fallback: verificar contra última sessão
       const lastSession = localStorage.getItem('last_app_session');
       if (!lastSession) return false;

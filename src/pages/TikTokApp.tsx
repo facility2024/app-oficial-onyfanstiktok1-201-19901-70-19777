@@ -2188,26 +2188,28 @@ export const TikTokApp = () => {
         console.log('✅ Comment inserted successfully');
       }
 
+      const activeVideoId = (currentVideo as any)?._originalId || currentVideo.id;
+
       // Recarregar comentários para mostrar o novo com dados atualizados
-      await loadComments(currentVideo.id);
+      await loadComments(activeVideoId);
 
       // ✨ IMPORTANTE: Registrar no sistema de analytics
-      await trackComment(currentVideo.id, currentVideo.user?.id || '');
-      await checkAndTrackAction('comment', currentVideo.id, currentVideo.user_id);
+      await trackComment(activeVideoId, currentVideo.user?.id || '');
+      await checkAndTrackAction('comment', activeVideoId, currentVideo.user_id);
 
       // Update video comments count
       const newCount = currentVideo.comments_count + 1;
       await supabase.from('videos').update({
         comments_count: newCount
-      }).eq('id', currentVideo.id);
+      }).eq('id', activeVideoId);
       setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
         ...video,
         comments_count: newCount
       } : video));
       console.log('✅ ADD COMMENT - Ação completa! Novo count:', newCount);
 
-      // ✨ Forçar reload dos comentários para garantir sincronização  
-      await loadComments(currentVideo.id);
+      // ✨ Forçar reload dos comentários para garantir sincronização
+      await loadComments(activeVideoId);
       toast({
         title: "Comentário adicionado!",
         description: "Seu comentário foi publicado"

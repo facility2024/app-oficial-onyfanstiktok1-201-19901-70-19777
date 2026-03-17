@@ -1371,11 +1371,8 @@ export const TikTokApp = () => {
       console.log('🎨 Criadores com vídeos:', [...new Set(creatorVideos.map((v: any) => v.user?.username))]);
       const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
       if (allContent.length > 0) {
-        // 🌟 PRIORIDADE MÁXIMA: Posts agendados recentes sempre no topo
-        const recentPosts = [...processedScheduledPosts, ...processedMainPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        console.log(`🌟 ${recentPosts.length} posts agendados/principais serão destacados no início`);
+        console.log(`🌟 ${processedScheduledPosts.length + processedMainPosts.length} conteúdos prioritários serão distribuídos sem repetir influencer no mesmo ciclo`);
 
-        // 🆕 DETECTAR MODELOS NOVOS (criados nas últimas 48h pelo admin) e marcar como destaque
         const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
         const newModelIds = new Set<string>();
         (modelsData || []).forEach((m: any) => {
@@ -1386,122 +1383,114 @@ export const TikTokApp = () => {
           }
         });
 
-        // 🆕 CARREGAR MEMÓRIA DE VÍDEOS JÁ ASSISTIDOS (persistente entre sessões)
+        const normalizeStoredVideoId = (id: string) => String(id).replace(/-block-\d+-\d+$/, '');
         let watchedVideoIds = new Set<string>();
         try {
           const memoryRaw = localStorage.getItem('intelligent_feed_memory');
           if (memoryRaw) {
             const memory = JSON.parse(memoryRaw);
-            watchedVideoIds = new Set(memory.videos_vistos || []);
+            watchedVideoIds = new Set((memory.videos_vistos || []).map((id: string) => normalizeStoredVideoId(id)));
           }
         } catch {}
         console.log(`👁️ ${watchedVideoIds.size} vídeos já assistidos pelo usuário`);
 
-        // 1) Organizar vídeos do catálogo por modelo e preparar filas internas
-        const videosByModel: Record<string, any[]> = {};
-        validVideos.forEach((v: any) => {
-          const mid = v.creator_id || v.model_id || v.user?.id || '';
-          if (!mid) return;
-          if (!videosByModel[mid]) videosByModel[mid] = [];
-          
-          // 🆕 Marcar vídeos de modelos novos como destaque
-          if (newModelIds.has(mid)) {
-            v.isHighlighted = true;
-            v.isNewModel = true;
+        const getContentOwnerId = (item: any) => item.creator_id || item.model_id || item.user?.id || item.user_id || '';
+        const getContentPriority = (item: any, ownerId: string) => {
+          let score = 0;
+          if (item.source === 'scheduled_post') score += 4000;
+          else if (item.source === 'main_post') score += 3000;
+          if (newModelIds.has(ownerId) || item.isNewModel) score += 2000;
+          if (item.isHighlighted) score += 1000;
+          if (isToday(item.created_at)) score += 500;
+          if (interactedModelIds.has(ownerId)) score += 250;
+          return score;
+        };
+
+        const contentByOwner: Record<string, any[]> = {};
+        const uniqueContentKeys = new Set<string>();
+
+        allContent.forEach((item: any) => {
+          const ownerId = getContentOwnerId(item);
+          if (!ownerId) return;
+
+          const originalId = (item as any)._originalId || item.id;
+          const normalizedVideoUrl = normalizeUrl(item.video_url || '');
+          const dedupeKey = `${ownerId}::${normalizedVideoUrl || originalId}`;
+
+          if (uniqueContentKeys.has(dedupeKey)) return;
+          uniqueContentKeys.add(dedupeKey);
+
+          const normalizedItem = {
+            ...item,
+            _originalId: originalId,
+            isNewModel: Boolean(item.isNewModel || newModelIds.has(ownerId)),
+          };
+
+          if (!contentByOwner[ownerId]) {
+            contentByOwner[ownerId] = [];
           }
-          
-          videosByModel[mid].push(v);
+
+          contentByOwner[ownerId].push(normalizedItem);
         });
 
-        // Ordenar fila de cada modelo: hoje primeiro, depois mais recentes
-        Object.keys(videosByModel).forEach(mid => {
-          videosByModel[mid].sort((a, b) => {
-            const aToday = isToday(a.created_at);
-            const bToday = isToday(b.created_at);
-            if (aToday !== bToday) return aToday ? -1 : 1;
+        Object.entries(contentByOwner).forEach(([ownerId, queue]) => {
+          queue.sort((a, b) => {
+            const priorityDiff = getContentPriority(b, ownerId) - getContentPriority(a, ownerId);
+            if (priorityDiff !== 0) return priorityDiff;
+
             const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
             const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
             return bTime - aTime;
           });
         });
 
-        // 2) Definir ordem dos modelos e criadores (prioriza novos, hoje, interação, MAIS VÍDEOS)
-        const modelIdsWithVideos = Object.keys(videosByModel);
-        const modelScores: Record<string, number> = {};
-        modelIdsWithVideos.forEach(mid => {
-          const queue = videosByModel[mid] || [];
-          const hasToday = queue.some(v => isToday(v.created_at));
-          const interacted = interactedModelIds.has(mid);
-          const isNewModel = newModelIds.has(mid);
-          const modelInfo = modelsData?.find((m: any) => m.id === mid) || creatorsData?.find((c: any) => c.id === mid);
-          let score = 0;
-          if (isNewModel) score += 2000;
-          if (hasToday) score += 1000;
-          if (interacted) score += 500;
-          // 🆕 Modelos com MAIS vídeos têm prioridade (mantém fila mais longa)
-          score += queue.length * 10;
-          score += (modelInfo?.followers_count || 0) * 0.001;
-          score += Math.random() * 5;
-          modelScores[mid] = score;
-        });
-        const orderedModels = modelIdsWithVideos.sort((a, b) => (modelScores[b] || 0) - (modelScores[a] || 0));
+        const orderedOwners = Object.keys(contentByOwner).sort((a, b) => {
+          const aTop = contentByOwner[a]?.[0];
+          const bTop = contentByOwner[b]?.[0];
+          const scoreDiff = (bTop ? getContentPriority(bTop, b) : 0) - (aTop ? getContentPriority(aTop, a) : 0);
+          if (scoreDiff !== 0) return scoreDiff;
 
-        // 3) Round-robin: 1 vídeo por modelo por ciclo, até esgotar filas
+          const aTime = aTop?.created_at ? new Date(aTop.created_at).getTime() : 0;
+          const bTime = bTop?.created_at ? new Date(bTop.created_at).getTime() : 0;
+          return bTime - aTime;
+        });
+
         const catalogVideos: any[] = [];
         let remaining = true;
         while (remaining) {
           remaining = false;
-          for (const mid of orderedModels) {
-            const queue = videosByModel[mid];
-            if (queue && queue.length) {
+          for (const ownerId of orderedOwners) {
+            const queue = contentByOwner[ownerId];
+            if (queue && queue.length > 0) {
               catalogVideos.push(queue.shift()!);
               remaining = true;
             }
           }
         }
 
-        // 🆕 SEPARAR VÍDEOS EM NÃO-ASSISTIDOS E ASSISTIDOS
         const unwatchedCatalog: any[] = [];
         const watchedCatalog: any[] = [];
-        catalogVideos.forEach(v => {
-          if (watchedVideoIds.has(v.id)) {
-            watchedCatalog.push(v);
+        catalogVideos.forEach((video: any) => {
+          const originalId = (video as any)._originalId || video.id;
+          if (watchedVideoIds.has(originalId)) {
+            watchedCatalog.push(video);
           } else {
-            unwatchedCatalog.push(v);
+            unwatchedCatalog.push(video);
           }
         });
         console.log(`📊 Feed: ${unwatchedCatalog.length} não-assistidos + ${watchedCatalog.length} já assistidos`);
 
-        // 🆕 VÍDEOS DE MODELOS NOVAS sempre no início (mesmo se já assistidos)
-        const newModelVideos: any[] = [];
-        const regularUnwatched: any[] = [];
-        unwatchedCatalog.forEach(v => {
-          if (v.isNewModel) {
-            newModelVideos.push(v);
-          } else {
-            regularUnwatched.push(v);
-          }
-        });
+        const ordered: any[] = [...unwatchedCatalog, ...watchedCatalog];
 
-        // 🎯 SEQUÊNCIA FINAL: Posts recentes → Modelos novas → Não-assistidos (NUNCA assistidos já vistos no início)
-        // Vídeos já assistidos só aparecem quando não houver mais não-assistidos em loadMoreVideos
-        const ordered: any[] = [
-          ...recentPosts,           // Posts agendados recentes sempre no topo
-          ...newModelVideos,        // Vídeos de modelos novas em destaque
-          ...regularUnwatched,      // Vídeos ainda não assistidos
-          // watchedCatalog NÃO entra aqui — só é usado em loadMoreVideos quando acabar os novos
-        ];
-
-        // 4) Definir estados (carregamento em blocos)
         const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
         setAllAvailableVideos(ordered as any);
         setVideos(firstBlock as any);
         setCurrentVideoIndex(0);
         setCurrentPage(1);
-        setHasMoreVideos(true); // Sempre true — feed infinito
-        setModelOrder(orderedModels);
-        setCycleSize(orderedModels.length);
-        console.log(`🎯 Feed organizado: ${recentPosts.length} posts recentes + ${catalogVideos.length} vídeos rotativos = ${ordered.length} total. Exibindo primeiros ${firstBlock.length}.`);
+        setHasMoreVideos(true);
+        setModelOrder(orderedOwners);
+        setCycleSize(orderedOwners.length);
+        console.log(`🎯 Feed organizado: ${orderedOwners.length} influencers distribuídos sem repetição por ciclo. ${ordered.length} vídeos no total, exibindo os primeiros ${firstBlock.length}.`);
 
         // 🆕 NÃO usar cache de sessionStorage para evitar repetição de vídeos
         // A memória persistente (localStorage) é a fonte de verdade

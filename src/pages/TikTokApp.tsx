@@ -798,22 +798,23 @@ export const TikTokApp = () => {
   useEffect(() => {
     console.log('🔍 DEBUG: useEffect disparado com currentVideo:', currentVideo?.id);
     console.log('🔍 DEBUG: trackView disponível:', typeof trackView);
+
     const registerView = async () => {
-      if (currentVideo && currentVideo.id) {
-        // Usar ID original para vídeos cíclicos
+      if (currentVideo && currentVideo.id && !currentVideo.id.startsWith('promo-')) {
         const trackingId = (currentVideo as any)._originalId || currentVideo.id;
         console.log('📹 REGISTRANDO VIEW para vídeo:', trackingId);
+
         try {
           const userId = currentVideo.user?.id || currentVideo.model_id || '';
           const isCreator = !!currentVideo.creator_id;
+
           if (userId) {
             await trackView(trackingId, userId, isCreator);
             ensureInteractedModel(userId);
-            
+
             // 🆕 MARCAR VÍDEO COMO ASSISTIDO na memória persistente
-            // Isso garante que ao recarregar/voltar, este vídeo não repita
             if (markVideoAsWatched) {
-              markVideoAsWatched(currentVideo.id, userId);
+              markVideoAsWatched(trackingId, userId);
             }
 
             // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO
@@ -821,9 +822,9 @@ export const TikTokApp = () => {
               try {
                 const stored = localStorage.getItem(SCHEDULED_VIEWED_KEY);
                 const viewedSet = new Set(stored ? JSON.parse(stored) : []);
-                const isFirstHighlightView = !viewedSet.has(currentVideo.id);
+                const isFirstHighlightView = !viewedSet.has(trackingId);
 
-                viewedSet.add(currentVideo.id);
+                viewedSet.add(trackingId);
                 localStorage.setItem(SCHEDULED_VIEWED_KEY, JSON.stringify([...viewedSet]));
 
                 if (
@@ -838,11 +839,12 @@ export const TikTokApp = () => {
                   );
                 }
 
-                console.log('✨ Post em destaque marcado como visualizado:', currentVideo.id);
+                console.log('✨ Post em destaque marcado como visualizado:', trackingId);
               } catch (error) {
                 console.warn('⚠️ Erro ao salvar post visualizado:', error);
               }
             }
+
             console.log('✅ VIEW registrada com sucesso!');
           }
         } catch (error) {
@@ -850,13 +852,15 @@ export const TikTokApp = () => {
         }
       }
     };
+
     if (currentVideo) {
-      loadComments(currentVideo.id);
-      checkIfLiked(currentVideo.id);
+      const currentVideoDataId = (currentVideo as any)._originalId || currentVideo.id;
+      loadComments(currentVideoDataId);
+      checkIfLiked(currentVideoDataId);
       checkIfFollowing(currentVideo.user.id);
       registerView();
     }
-  }, [currentVideo, trackView]);
+  }, [currentVideo, loadComments, markVideoAsWatched, trackView]);
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 

@@ -791,7 +791,7 @@ export const AdminVideoScheduler = () => {
                   onClick={async () => {
                     if (!confirm('Tem certeza que deseja limpar TODAS as postagens da fila?')) return;
                     for (const post of scheduledPosts) {
-                      await deleteScheduledPost(post.id);
+                      await handleRemove(post.id);
                     }
                     loadScheduledPosts();
                   }}

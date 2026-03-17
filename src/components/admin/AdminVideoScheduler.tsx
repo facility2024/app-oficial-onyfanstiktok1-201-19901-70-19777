@@ -58,6 +58,8 @@ export const AdminVideoScheduler = () => {
   const [loading, setLoading] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
   const [createdModelInfo, setCreatedModelInfo] = useState<{ id: string; username: string; shareableLink: string } | null>(null);

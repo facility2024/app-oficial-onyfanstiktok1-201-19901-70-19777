@@ -810,10 +810,25 @@ export const TikTokApp = () => {
             // 🆕 SALVAR POST EM DESTAQUE COMO VISUALIZADO
             if ((currentVideo as any).isHighlighted) {
               try {
-                const stored = localStorage.getItem('viewed_highlight_posts');
+                const stored = localStorage.getItem(SCHEDULED_VIEWED_KEY);
                 const viewedSet = new Set(stored ? JSON.parse(stored) : []);
+                const isFirstHighlightView = !viewedSet.has(currentVideo.id);
+
                 viewedSet.add(currentVideo.id);
-                localStorage.setItem('viewed_highlight_posts', JSON.stringify([...viewedSet]));
+                localStorage.setItem(SCHEDULED_VIEWED_KEY, JSON.stringify([...viewedSet]));
+
+                if (
+                  isFirstHighlightView &&
+                  (currentVideo as any).source === 'scheduled_post' &&
+                  typeof (currentVideo as any).scheduled_next_queue_index === 'number' &&
+                  userId
+                ) {
+                  localStorage.setItem(
+                    `${SCHEDULED_QUEUE_KEY_PREFIX}${userId}`,
+                    String((currentVideo as any).scheduled_next_queue_index)
+                  );
+                }
+
                 console.log('✨ Post em destaque marcado como visualizado:', currentVideo.id);
               } catch (error) {
                 console.warn('⚠️ Erro ao salvar post visualizado:', error);

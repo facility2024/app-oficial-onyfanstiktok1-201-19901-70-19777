@@ -1644,13 +1644,13 @@ export const TikTokApp = () => {
     if (isLoadingMore || allAvailableVideos.length === 0) {
       return;
     }
+
     try {
       setIsLoadingMore(true);
       console.log(`🔄 Carregando mais vídeos... Página: ${currentPage + 1}`);
 
       // Pegar vídeos reais (sem promos) já no feed
       const realVideosInFeed = videos.filter(v => !v.id.startsWith('promo-'));
-      const realCount = realVideosInFeed.length;
 
       // 🆕 CARREGAR MEMÓRIA DE VÍDEOS JÁ ASSISTIDOS
       let watchedVideoIds = new Set<string>();
@@ -1658,7 +1658,7 @@ export const TikTokApp = () => {
         const memoryRaw = localStorage.getItem('intelligent_feed_memory');
         if (memoryRaw) {
           const memory = JSON.parse(memoryRaw);
-          watchedVideoIds = new Set(memory.videos_vistos || []);
+          watchedVideoIds = new Set((memory.videos_vistos || []).map((id: string) => String(id).replace(/-block-\d+-\d+$/, '')));
         }
       } catch {}
 
@@ -1666,31 +1666,37 @@ export const TikTokApp = () => {
       const idsInFeed = new Set(realVideosInFeed.map(v => (v as any)._originalId || v.id));
 
       // Priorizar vídeos NÃO assistidos e NÃO no feed
-      const unwatched = allAvailableVideos.filter(v => 
-        !watchedVideoIds.has(v.id) && !idsInFeed.has(v.id)
-      );
+      const unwatched = allAvailableVideos.filter(v => {
+        const originalId = (v as any)._originalId || v.id;
+        return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId);
+      });
 
       let nextBlock: any[];
       if (unwatched.length >= VIDEOS_PER_BLOCK) {
-        // Temos vídeos não-assistidos suficientes
-        nextBlock = unwatched.slice(0, VIDEOS_PER_BLOCK).map((v, i) => ({
-          ...v,
-          id: `${v.id}-block-${currentPage}-${i}`,
-          _originalId: v.id,
-        }));
+        nextBlock = unwatched.slice(0, VIDEOS_PER_BLOCK).map((v, i) => {
+          const originalId = (v as any)._originalId || v.id;
+          return {
+            ...v,
+            id: `${originalId}-block-${currentPage}-${i}`,
+            _originalId: originalId,
+          };
+        });
       } else {
-        // Não há suficientes — usar não-assistidos + ciclar os já assistidos
-        const watched = allAvailableVideos.filter(v => 
-          watchedVideoIds.has(v.id) && !idsInFeed.has(v.id)
-        );
-        // Embaralhar assistidos para variedade
+        const watched = allAvailableVideos.filter(v => {
+          const originalId = (v as any)._originalId || v.id;
+          return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId);
+        });
+
         const shuffledWatched = [...watched].sort(() => Math.random() - 0.5);
         const combined = [...unwatched, ...shuffledWatched].slice(0, VIDEOS_PER_BLOCK);
-        nextBlock = combined.map((v, i) => ({
-          ...v,
-          id: `${v.id}-block-${currentPage}-${i}`,
-          _originalId: v.id,
-        }));
+        nextBlock = combined.map((v, i) => {
+          const originalId = (v as any)._originalId || v.id;
+          return {
+            ...v,
+            id: `${originalId}-block-${currentPage}-${i}`,
+            _originalId: originalId,
+          };
+        });
       }
 
       // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
@@ -1706,7 +1712,7 @@ export const TikTokApp = () => {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, allAvailableVideos, videos, currentPage, VIDEOS_PER_BLOCK]);
+  }, [allAvailableVideos, currentPage, isLoadingMore, videos, VIDEOS_PER_BLOCK]);
 
   // 📱 Carregamento automático infinito quando próximo do fim
   useEffect(() => {

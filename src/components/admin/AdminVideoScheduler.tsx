@@ -47,7 +47,6 @@ const defaultFormData = {
   modelAvatarUrl: '',
   sendType: 'single' as const,
   listInterval: 5,
-  dailyFrequency: 3,
 };
 
 export const AdminVideoScheduler = () => {
@@ -71,7 +70,6 @@ export const AdminVideoScheduler = () => {
     modelAvatarUrl: '',
     sendType: 'single' as 'single' | 'list',
     listInterval: 5,
-    dailyFrequency: 3,
   });
 
   useEffect(() => {
@@ -694,20 +692,8 @@ export const AdminVideoScheduler = () => {
               </p>
             </div>
 
-            {/* Frequência diária no feed */}
-            <div className="space-y-2">
-              <Label>Quantas vezes por dia aparece no feed</Label>
-              <Input
-                type="number"
-                min={0}
-                max={50}
-                value={formData.dailyFrequency}
-                onChange={(e) => setFormData(prev => ({ ...prev, dailyFrequency: parseInt(e.target.value) || 0 }))}
-                placeholder="3"
-              />
-              <p className="text-xs text-muted-foreground">
-                0 = ilimitado. Define quantas vezes o vídeo aparece no feed por dia.
-              </p>
+            <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              Os vídeos agendados entram no feed em fila automática por perfil: aparece 1 vídeo por modelo em cada acesso ao app, sem repetir vários da mesma modelo na mesma rolagem. O próximo da fila só entra quando o usuário sai e volta ao feed.
             </div>
             {createdModelInfo && !formData.useExistingId && (
               <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3">
@@ -804,7 +790,7 @@ export const AdminVideoScheduler = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              ℹ️ No feed, apenas 1 vídeo por modelo aparece por vez. O próximo vídeo da fila aparece quando o usuário atualiza.
+              ℹ️ Regra aplicada no feed: 1 vídeo por modelo por acesso, sem repetição na mesma sessão; ao entrar novamente, o próximo vídeo da fila do perfil é exibido e o badge NOVO dura 12 horas.
             </p>
           </CardHeader>
           <CardContent>

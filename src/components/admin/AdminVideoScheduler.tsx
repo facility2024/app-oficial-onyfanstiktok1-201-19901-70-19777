@@ -790,7 +790,7 @@ export const AdminVideoScheduler = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              ℹ️ No feed, apenas 1 vídeo por modelo aparece por vez. O próximo vídeo da fila aparece quando o usuário atualiza.
+              ℹ️ Regra aplicada no feed: 1 vídeo por modelo por acesso, sem repetição na mesma sessão; ao entrar novamente, o próximo vídeo da fila do perfil é exibido e o badge NOVO dura 12 horas.
             </p>
           </CardHeader>
           <CardContent>

@@ -1137,8 +1137,8 @@ export const TikTokApp = () => {
         }
       })());
 
-      // 🎯 Processar posts agendados — LIMITADO A 1 POR MODELO por sessão
-      // Isso impede que todos os vídeos agendados apareçam de uma vez no feed
+      // 🎯 Processar posts agendados: 1 vídeo por modelo por acesso ao feed
+      // O próximo da fila só entra após novo acesso/reload, sem empilhar vários vídeos do mesmo perfil
       const scheduledPostsByModel: Record<string, any[]> = {};
       (postsAgendados || []).forEach(post => {
         const mid = post.modelo_id || 'unknown';
@@ -1146,8 +1146,7 @@ export const TikTokApp = () => {
         scheduledPostsByModel[mid].push(post);
       });
 
-      // Helper para construir vídeo de post agendado
-      const buildScheduledVideo = (post: any, model: any, contentUrl: string) => ({
+      const buildScheduledVideo = (post: any, model: any, contentUrl: string, nextQueueIndex: number) => ({
         id: `scheduled-${post.id}`,
         video_url: contentUrl,
         title: post.titulo || 'Conteúdo Agendado',
@@ -1157,6 +1156,8 @@ export const TikTokApp = () => {
         visibility: 'public' as const,
         source: 'scheduled_post',
         isHighlighted: true,
+        scheduled_post_id: post.id,
+        scheduled_next_queue_index: nextQueueIndex,
         created_at: post.data_publicacao || post.created_at,
         user: model ? {
           id: model.id || post.modelo_id || 'unknown',
@@ -1180,51 +1181,54 @@ export const TikTokApp = () => {
         }
       });
 
-      // Para cada modelo, ordenar por data e pegar apenas o PRÓXIMO não-visualizado
       const getScheduledQueueIndex = (modelId: string): number => {
         try {
-          const raw = localStorage.getItem(`sched_queue_${modelId}`);
+          const raw = localStorage.getItem(`${SCHEDULED_QUEUE_KEY_PREFIX}${modelId}`);
           return raw ? parseInt(raw, 10) : 0;
-        } catch { return 0; }
+        } catch {
+          return 0;
+        }
       };
 
       const processedScheduledPosts: any[] = [];
       Object.entries(scheduledPostsByModel).forEach(([mid, posts]) => {
-        // Ordenar por data de publicação (mais antigo primeiro = fila FIFO)
         posts.sort((a, b) => new Date(a.data_publicacao || a.created_at).getTime() - new Date(b.data_publicacao || b.created_at).getTime());
-        
-        // Pegar o índice atual na fila deste modelo
-        let queueIdx = getScheduledQueueIndex(mid);
-        if (queueIdx >= posts.length) queueIdx = 0; // Reiniciar fila quando acabar
-        
-        // Encontrar o próximo post não-visualizado a partir do índice atual
-        let found = false;
-        for (let attempt = 0; attempt < posts.length; attempt++) {
-          const idx = (queueIdx + attempt) % posts.length;
-          const post = posts[idx];
-          if (viewedPosts.has(`scheduled-${post.id}`)) continue;
-          
-          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-          const contentUrl = normalizeUrl(post.conteudo_url || '');
-          if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) continue;
-          
-          processedScheduledPosts.push(buildScheduledVideo(post, model, contentUrl));
-          // Salvar próximo índice para a próxima sessão
-          localStorage.setItem(`sched_queue_${mid}`, ((idx + 1) % posts.length).toString());
-          found = true;
-          break; // Apenas 1 por modelo!
-        }
-        
-        // Se todos foram visualizados, resetar fila e mostrar o primeiro
-        if (!found && posts.length > 0) {
-          localStorage.setItem(`sched_queue_${mid}`, '1');
-          const post = posts[0];
-          const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-          const contentUrl = normalizeUrl(post.conteudo_url || '');
-          if (contentUrl && (isValidVideoUrl(contentUrl) || contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-            processedScheduledPosts.push(buildScheduledVideo(post, model, contentUrl));
+
+        const sessionSelectedPostId = scheduledSessionSelectionRef.current[mid];
+        let selectedPost = sessionSelectedPostId ? posts.find(post => post.id === sessionSelectedPostId) : undefined;
+        let selectedIndex = selectedPost ? posts.findIndex(post => post.id === sessionSelectedPostId) : -1;
+
+        if (!selectedPost) {
+          let queueIdx = getScheduledQueueIndex(mid);
+          if (queueIdx >= posts.length) queueIdx = 0;
+
+          for (let attempt = 0; attempt < posts.length; attempt++) {
+            const idx = (queueIdx + attempt) % posts.length;
+            const candidate = posts[idx];
+            const candidateUrl = normalizeUrl(candidate.conteudo_url || '');
+
+            if (!candidateUrl || (!isValidVideoUrl(candidateUrl) && !candidateUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+              continue;
+            }
+
+            selectedPost = candidate;
+            selectedIndex = idx;
+            break;
           }
         }
+
+        if (!selectedPost || selectedIndex === -1) return;
+
+        const model = selectedPost.modelo || modelsData?.find((m: any) => m.id === selectedPost.modelo_id);
+        const contentUrl = normalizeUrl(selectedPost.conteudo_url || '');
+        if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+          return;
+        }
+
+        processedScheduledPosts.push(
+          buildScheduledVideo(selectedPost, model, contentUrl, (selectedIndex + 1) % posts.length)
+        );
+        scheduledSessionSelectionRef.current[mid] = selectedPost.id;
       });
 
       const processedMainPosts = (postsPrincipais || []).filter(post => !viewedPosts.has(`main-${post.id}`))
@@ -1268,6 +1272,15 @@ export const TikTokApp = () => {
         } as any;
       }).filter(Boolean);
 
+      const publishedScheduledVideoKeys = new Set(
+        (postsAgendados || [])
+          .map((post: any) => {
+            const contentUrl = normalizeUrl(post.conteudo_url || '');
+            return post.modelo_id && contentUrl ? `${post.modelo_id}::${contentUrl}` : null;
+          })
+          .filter(Boolean)
+      );
+
       // Normalizar e enriquecer vídeos válidos do catálogo
       const validVideos = (videosData || []).map(v => ({
         ...v,
@@ -1276,8 +1289,15 @@ export const TikTokApp = () => {
         const isValid = isValidVideoUrl(v.video_url);
         if (!isValid && v.video_url) {
           console.warn(`🚫 URL inválida filtrada: ${v.video_url}`);
+          return false;
         }
-        return isValid;
+
+        const scheduledVideoKey = v.model_id ? `${v.model_id}::${v.video_url}` : null;
+        if (scheduledVideoKey && publishedScheduledVideoKeys.has(scheduledVideoKey)) {
+          return false;
+        }
+
+        return true;
       }).map((video: any) => {
         // Procurar owner: priorizar creator_id, depois model_id
         const owner: any = video.creator_id ? creatorsData?.find((c: any) => c.id === video.creator_id) : modelsData?.find((m: any) => m.id === video.model_id);

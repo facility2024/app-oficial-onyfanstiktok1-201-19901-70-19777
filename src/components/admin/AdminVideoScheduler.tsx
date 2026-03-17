@@ -44,9 +44,10 @@ const defaultFormData = {
   scheduleDate: '',
   scheduleTime: '',
   profileLink: '',
+  modelAvatarUrl: '',
   sendType: 'single' as const,
   listInterval: 5,
-  dailyFrequency: 3, // Quantas vezes aparece no feed por dia
+  dailyFrequency: 3,
 };
 
 export const AdminVideoScheduler = () => {
@@ -62,14 +63,15 @@ export const AdminVideoScheduler = () => {
   const [formData, setFormData] = useState({
     useExistingId: true,
     videoUrl: '',
-    videoUrls: '', // Para envio em lista (múltiplos links, um por linha)
+    videoUrls: '',
     modelId: '',
     scheduleDate: '',
     scheduleTime: '',
     profileLink: '',
+    modelAvatarUrl: '',
     sendType: 'single' as 'single' | 'list',
-    listInterval: 5, // Intervalo em minutos entre cada envio da lista
-    dailyFrequency: 3, // Quantas vezes aparece no feed por dia
+    listInterval: 5,
+    dailyFrequency: 3,
   });
 
   useEffect(() => {
@@ -226,7 +228,7 @@ export const AdminVideoScheduler = () => {
         id: pendingModelData.generatedId,
         username: pendingModelData.username,
         name: pendingModelData.username,
-        avatar_url: 'https://via.placeholder.com/150',
+        avatar_url: formData.modelAvatarUrl.trim() || 'https://via.placeholder.com/150',
         is_active: true,
         posting_panel_url: formData.profileLink.trim() || null,
       })
@@ -306,7 +308,7 @@ export const AdminVideoScheduler = () => {
             id: generatedId,
             username: newUsername,
             name: newUsername,
-            avatar_url: 'https://via.placeholder.com/150',
+            avatar_url: formData.modelAvatarUrl.trim() || 'https://via.placeholder.com/150',
             is_active: true,
             posting_panel_url: formData.profileLink.trim() || null,
           })
@@ -630,6 +632,33 @@ export const AdminVideoScheduler = () => {
                 </Button>
               )}
             </div>
+
+            {/* Avatar da Modelo (apenas ao criar nova) */}
+            {!formData.useExistingId && (
+              <div className="space-y-2">
+                <Label>Avatar da Modelo</Label>
+                <Input
+                  value={formData.modelAvatarUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, modelAvatarUrl: e.target.value }))}
+                  placeholder="https://exemplo.com/foto-modelo.jpg"
+                  type="url"
+                />
+                <p className="text-xs text-muted-foreground">
+                  URL da foto de perfil da modelo. Deixe vazio para usar placeholder.
+                </p>
+                {formData.modelAvatarUrl && (
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                    <img 
+                      src={formData.modelAvatarUrl} 
+                      className="w-12 h-12 rounded-full object-cover border-2 border-primary" 
+                      alt="Preview avatar"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150'; }}
+                    />
+                    <span className="text-xs text-muted-foreground">Preview do avatar</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Data e Hora */}
             <div className="grid grid-cols-2 gap-4">

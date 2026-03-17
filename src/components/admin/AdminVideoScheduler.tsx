@@ -791,8 +791,9 @@ export const AdminVideoScheduler = () => {
                   onClick={async () => {
                     if (!confirm('Tem certeza que deseja limpar TODAS as postagens da fila?')) return;
                     for (const post of scheduledPosts) {
-                      await handleRemove(post.id);
+                      await supabase.from('posts_agendados').delete().eq('id', post.id);
                     }
+                    toast.success('Fila limpa com sucesso!');
                     loadScheduledPosts();
                   }}
                   disabled={loading}

@@ -632,6 +632,33 @@ export const AdminVideoScheduler = () => {
               )}
             </div>
 
+            {/* Avatar da Modelo (apenas ao criar nova) */}
+            {!formData.useExistingId && (
+              <div className="space-y-2">
+                <Label>Avatar da Modelo</Label>
+                <Input
+                  value={formData.modelAvatarUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, modelAvatarUrl: e.target.value }))}
+                  placeholder="https://exemplo.com/foto-modelo.jpg"
+                  type="url"
+                />
+                <p className="text-xs text-muted-foreground">
+                  URL da foto de perfil da modelo. Deixe vazio para usar placeholder.
+                </p>
+                {formData.modelAvatarUrl && (
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                    <img 
+                      src={formData.modelAvatarUrl} 
+                      className="w-12 h-12 rounded-full object-cover border-2 border-primary" 
+                      alt="Preview avatar"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150'; }}
+                    />
+                    <span className="text-xs text-muted-foreground">Preview do avatar</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Data e Hora */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

@@ -692,20 +692,8 @@ export const AdminVideoScheduler = () => {
               </p>
             </div>
 
-            {/* Frequência diária no feed */}
-            <div className="space-y-2">
-              <Label>Quantas vezes por dia aparece no feed</Label>
-              <Input
-                type="number"
-                min={0}
-                max={50}
-                value={formData.dailyFrequency}
-                onChange={(e) => setFormData(prev => ({ ...prev, dailyFrequency: parseInt(e.target.value) || 0 }))}
-                placeholder="3"
-              />
-              <p className="text-xs text-muted-foreground">
-                0 = ilimitado. Define quantas vezes o vídeo aparece no feed por dia.
-              </p>
+            <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              Os vídeos agendados entram no feed em fila automática por perfil: aparece 1 vídeo por modelo em cada acesso ao app, sem repetir vários da mesma modelo na mesma rolagem. O próximo da fila só entra quando o usuário sai e volta ao feed.
             </div>
             {createdModelInfo && !formData.useExistingId && (
               <div className="p-4 rounded-lg border border-green-500/30 bg-green-950/20 space-y-3">

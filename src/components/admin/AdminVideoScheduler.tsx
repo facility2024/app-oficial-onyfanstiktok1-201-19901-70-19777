@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar } from 'lucide-react';
+import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar, X, Video } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface Model {
@@ -63,6 +63,7 @@ export const AdminVideoScheduler = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingModelData, setPendingModelData] = useState<{ username: string; generatedId: string } | null>(null);
   const [createdModelInfo, setCreatedModelInfo] = useState<{ id: string; username: string; shareableLink: string } | null>(null);
+  const [showTutorial, setShowTutorial] = useState(true);
   
   const [formData, setFormData] = useState({
     useExistingId: true,
@@ -957,6 +958,30 @@ export const AdminVideoScheduler = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Tutorial Flutuante */}
+      {showTutorial && (
+        <div className="fixed bottom-4 right-4 z-[9999] w-[320px] rounded-xl overflow-hidden shadow-2xl border border-border bg-black">
+          <div className="flex items-center justify-between px-3 py-2 bg-primary/90">
+            <span className="text-xs font-bold text-primary-foreground flex items-center gap-1.5">
+              <Video className="w-4 h-4" />
+              Tutorial de Agendamento
+            </span>
+            <button onClick={() => setShowTutorial(false)} className="text-primary-foreground hover:opacity-70 transition-opacity">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <video
+            src="https://tiktokonyfans.b-cdn.net/material%20coconudi/TUTORIAL%20AGENDMENTO/Screen%20Recording%20-%20Mar%2017%2C%202026%2C%2094726%20AM.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls
+            className="w-full aspect-video"
+          />
+        </div>
+      )}
     </div>
   );
 };

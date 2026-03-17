@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -259,7 +259,9 @@ export const TikTokApp = () => {
   const [cycleSize, setCycleSize] = useState(0);
   const [pendingRefresh, setPendingRefresh] = useState(false);
   const scheduledSessionSelectionRef = useRef<Record<string, string>>({});
+  const mainSessionSelectionRef = useRef<Record<string, string>>({});
   const SCHEDULED_QUEUE_KEY_PREFIX = 'sched_queue_';
+  const MAIN_QUEUE_KEY_PREFIX = 'main_queue_';
   const SCHEDULED_VIEWED_KEY = 'viewed_highlight_posts';
   const HIGHLIGHT_NEW_WINDOW_MS = 12 * 60 * 60 * 1000;
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -340,7 +342,7 @@ export const TikTokApp = () => {
 
   // Handle action tracking with async support
   const handleActionAttempt = async (actionType: string, userName: string): Promise<boolean> => {
-    const currentVideo = videos[currentVideoIndex];
+    const currentVideo = displayVideos[currentVideoIndex];
     return await checkAndTrackAction(actionType, currentVideo?.id, currentVideo?.user_id);
   };
 
@@ -358,99 +360,85 @@ export const TikTokApp = () => {
 
   // Embla API ready
 
-  // 📢 Injetar promoções como vídeos falsos no feed
-  const injectPromosRef = useRef(false);
-  useEffect(() => {
-    if (videos.length === 0 || promotions.length === 0) return;
+  // 📢 Montagem estável do feed com promos, sem reescrever o estado base de vídeos
+  const displayVideos = useMemo(() => {
+    if (videos.length === 0) return [] as Video[];
+    if (promotions.length === 0) return videos;
 
-    // Não injetar se já tem promos — evita loop infinito
-    if (videos.some(v => v.id.startsWith('promo-'))) return;
-
-    // Usar o intervalo configurado no painel admin (position_interval de cada promo)
-    // Se houver múltiplas promos, usar o menor intervalo como base
     const adminInterval = Math.max(
       1,
       Math.min(...promotions.map(p => p.position_interval || 5))
     );
 
-    // Separar apenas vídeos reais (sem promos)
-    const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
-    const result: any[] = [];
-    let promoIdx = 0;
-    const usedPromoIds = new Set<string>();
+    const result: Video[] = [];
+    let lastPromoId: string | null = null;
 
-    for (let i = 0; i < realVideos.length; i++) {
-      result.push(realVideos[i]);
+    videos.forEach((video, index) => {
+      result.push(video);
 
-      // Respeitar o intervalo definido pelo admin
-      if ((i + 1) % adminInterval === 0 && promotions.length > 0) {
-        // Selecionar próxima promo, respeitando prioridade e evitando repetição
-        // Promos com maior prioridade aparecem primeiro (já vêm ordenadas por priority DESC)
-        let selectedPromo = promotions[promoIdx % promotions.length];
-        
-        if (promotions.length > 1) {
-          let attempts = 0;
-          while (usedPromoIds.has(selectedPromo.id) && attempts < promotions.length) {
-            promoIdx++;
-            selectedPromo = promotions[promoIdx % promotions.length];
-            attempts++;
-          }
-        }
-        
-        usedPromoIds.add(selectedPromo.id);
-        if (usedPromoIds.size >= promotions.length) {
-          usedPromoIds.clear();
-        }
+      if ((index + 1) % adminInterval !== 0) return;
 
-        const fakeVideo: any = {
-          id: `promo-${selectedPromo.id}-pos${i}`,
-          title: selectedPromo.title || selectedPromo.display_name,
-          description: selectedPromo.description || '',
-          video_url: selectedPromo.media_url,
-          thumbnail_url: selectedPromo.banner_url || '',
-          user_id: `promo-${selectedPromo.id}`,
-          likes_count: 0,
-          comments_count: 0,
-          shares_count: 0,
-          views_count: selectedPromo.views_count || 0,
-          music_name: `${selectedPromo.display_name} • Patrocinado`,
-          is_active: true,
-          visibility: 'public',
-          created_at: new Date().toISOString(),
+      const slotIndex = Math.floor((index + 1) / adminInterval) - 1;
+      let selectedPromo = promotions[slotIndex % promotions.length];
+
+      if (promotions.length > 1 && selectedPromo.id === lastPromoId) {
+        selectedPromo = promotions[(slotIndex + 1) % promotions.length];
+      }
+
+      lastPromoId = selectedPromo.id;
+
+      result.push({
+        id: `promo-${selectedPromo.id}-slot-${slotIndex}`,
+        title: selectedPromo.title || selectedPromo.display_name,
+        description: selectedPromo.description || '',
+        video_url: selectedPromo.media_url,
+        thumbnail_url: selectedPromo.banner_url || '',
+        user_id: `promo-${selectedPromo.id}`,
+        likes_count: 0,
+        comments_count: 0,
+        shares_count: 0,
+        views_count: selectedPromo.views_count || 0,
+        music_name: `${selectedPromo.display_name} • Patrocinado`,
+        is_active: true,
+        visibility: 'public',
+        created_at: selectedPromo.updated_at || selectedPromo.created_at || new Date().toISOString(),
+        user: {
+          id: `promo-${selectedPromo.id}`,
+          username: selectedPromo.display_name,
+          avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
+          followers_count: 0,
+          following_count: 0,
+          is_online: false,
+          created_at: selectedPromo.created_at || new Date().toISOString(),
+          bio: selectedPromo.description || '',
+          posting_panel_url: selectedPromo.cta_link || undefined,
+        },
+        ...( {
           _promoCtaText: selectedPromo.cta_text || null,
           _promoCtaLink: selectedPromo.cta_link || null,
           _promoBannerUrl: selectedPromo.banner_url || null,
           _promoDescription: selectedPromo.description || null,
-          user: {
-            id: `promo-${selectedPromo.id}`,
-            username: selectedPromo.display_name,
-            avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
-            followers_count: 0,
-            following_count: 0,
-            is_online: false,
-            created_at: new Date().toISOString(),
-            bio: selectedPromo.description || '',
-            posting_panel_url: selectedPromo.cta_link || undefined,
-          },
-        };
-        result.push(fakeVideo);
-        promoIdx++;
-      }
-    }
+        } as any),
+      } as Video);
+    });
 
-    if (promoIdx > 0) {
-      console.log(`📢 Promos injetadas: ${promoIdx} anúncios a cada ${adminInterval} vídeos (${result.length} total) — intervalo do admin`);
-      setVideos(result);
-    }
+    return result;
   }, [videos, promotions]);
-  const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
+
+  useEffect(() => {
+    if (displayVideos.length === 0) return;
+    if (currentVideoIndex < displayVideos.length) return;
+    setCurrentVideoIndex(displayVideos.length - 1);
+  }, [currentVideoIndex, displayVideos.length]);
+
+  const currentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {
-    if (!videos.length) return;
+    if (!displayVideos.length) return;
     const links: HTMLLinkElement[] = [];
     try {
-      const url = new URL(videos[0].video_url);
+      const url = new URL(displayVideos[0].video_url);
       const preconnect = document.createElement('link');
       preconnect.rel = 'preconnect';
       preconnect.href = url.origin;
@@ -467,7 +455,7 @@ export const TikTokApp = () => {
         } catch {}
       });
     };
-  }, [videos]);
+  }, [displayVideos]);
 
   // Update video when carousel slides
   useEffect(() => {
@@ -478,7 +466,7 @@ export const TikTokApp = () => {
         // 🎯 TRACKING: Calcular duração do vídeo anterior e registrar skip/interesse
         if (currentUser?.id && lastTrackedVideoRef.current) {
           const watchDuration = Math.floor((Date.now() - videoWatchStartRef.current) / 1000);
-          const prevVideo = videos[currentVideoIndex];
+          const prevVideo = displayVideos[currentVideoIndex];
           if (prevVideo) {
             const prevEntityId = prevVideo.creator_id || prevVideo.model_id || '';
             updateWatchDuration(lastTrackedVideoRef.current, currentUser.id, watchDuration);
@@ -494,7 +482,7 @@ export const TikTokApp = () => {
         videoWatchStartRef.current = Date.now();
 
         // 🧠 FEED INTELIGENTE: Marcar vídeo como assistido
-        const watchedVideo = videos[newIndex];
+        const watchedVideo = displayVideos[newIndex];
         if (watchedVideo && markVideoAsWatched) {
           const entityId = watchedVideo.creator_id || watchedVideo.model_id || watchedVideo.user?.id;
           if (entityId) {
@@ -550,10 +538,10 @@ export const TikTokApp = () => {
 
   // Preload adjacent videos for faster navigation (otimizado)
   useEffect(() => {
-    if (videos.length === 0) return;
+    if (displayVideos.length === 0) return;
     const preloadVideo = (index: number) => {
-      if (index < 0 || index >= videos.length || preloadedVideos.has(index)) return;
-      const video = videos[index];
+      if (index < 0 || index >= displayVideos.length || preloadedVideos.has(index)) return;
+      const video = displayVideos[index];
       if (video?.video_url && !video.id.startsWith('promo-')) {
         // Usar preload link para os próximos vídeos
         const link = document.createElement('link');
@@ -592,7 +580,7 @@ export const TikTokApp = () => {
     preloadVideo(currentVideoIndex + 1);
     preloadVideo(currentVideoIndex + 2);
     preloadVideo(currentVideoIndex + 3);
-  }, [currentVideoIndex, videos, preloadedVideos]);
+  }, [currentVideoIndex, displayVideos, preloadedVideos]);
 
   // DESABILITADO: Verificação de idade
   // useEffect(() => {
@@ -2991,7 +2979,7 @@ export const TikTokApp = () => {
         {/* Vertical Carousel Container */}
         <div className="embla h-screen" ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
-            {videos.map((video, index) => {
+            {displayVideos.map((video, index) => {
               const isPromoVideo = video.id.startsWith('promo-');
               return (
                 <div key={video.id} className="embla__slide flex-shrink-0 w-full relative" style={{ height: '100dvh' }}>
@@ -3067,7 +3055,7 @@ export const TikTokApp = () => {
         </div>
 
         {/* Hidden preloader for next video (speeds up decode/start) */}
-        {videos[currentVideoIndex + 1]?.video_url && <video src={videos[currentVideoIndex + 1].video_url} preload="auto" muted playsInline style={{
+        {displayVideos[currentVideoIndex + 1]?.video_url && <video src={displayVideos[currentVideoIndex + 1].video_url} preload="auto" muted playsInline style={{
         display: 'none'
       }} />}
 

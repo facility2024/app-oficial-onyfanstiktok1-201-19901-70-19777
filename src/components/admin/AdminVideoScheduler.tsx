@@ -803,6 +803,9 @@ export const AdminVideoScheduler = () => {
                 </Button>
               )}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              ℹ️ No feed, apenas 1 vídeo por modelo aparece por vez. O próximo vídeo da fila aparece quando o usuário atualiza.
+            </p>
           </CardHeader>
           <CardContent>
             <div className="max-h-[700px] overflow-y-auto">

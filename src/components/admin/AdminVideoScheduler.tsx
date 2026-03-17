@@ -70,7 +70,6 @@ export const AdminVideoScheduler = () => {
     modelAvatarUrl: '',
     sendType: 'single' as 'single' | 'list',
     listInterval: 5,
-    dailyFrequency: 3,
   });
 
   useEffect(() => {

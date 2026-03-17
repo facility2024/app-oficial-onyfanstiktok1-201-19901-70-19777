@@ -158,20 +158,34 @@ export const AdminVideoScheduler = () => {
       .select('*')
       .or(`id.eq.${search},username.ilike.%${search}%,name.ilike.%${search}%`)
       .eq('is_active', true)
-      .limit(1)
-      .single();
+      .limit(10);
 
     setLoading(false);
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       toast.error('Modelo não encontrado');
       setSelectedModel(null);
+      setSearchResults([]);
+      setShowSearchResults(false);
       return;
     }
 
-    setSelectedModel(data);
-    setFormData(prev => ({ ...prev, modelId: data.id }));
-    toast.success(`Modelo encontrado: ${data.name} (@${data.username})`);
+    if (data.length === 1) {
+      selectModel(data[0]);
+    } else {
+      setSearchResults(data);
+      setShowSearchResults(true);
+      toast.info(`${data.length} modelos encontrados - selecione um`);
+    }
+  };
+
+  const selectModel = (model: Model) => {
+    setSelectedModel(model);
+    setFormData(prev => ({ ...prev, modelId: model.id }));
+    setModelSearch(model.name || model.username);
+    setSearchResults([]);
+    setShowSearchResults(false);
+    toast.success(`Modelo selecionado: ${model.name} (@${model.username})`);
   };
 
   const testVideoLink = async () => {

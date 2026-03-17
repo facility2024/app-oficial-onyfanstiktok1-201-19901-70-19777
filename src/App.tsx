@@ -174,6 +174,9 @@ const App = () => (
           <Route path="/loja" element={<LojaPage />} />
           <Route path="/loja/:id" element={<LojaProdutoPage />} />
           
+          {/* Painel de Postagens - acesso direto */}
+          <Route path="/postagem" element={<PostagemPage />} />
+          
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={
             <AdminRoute>

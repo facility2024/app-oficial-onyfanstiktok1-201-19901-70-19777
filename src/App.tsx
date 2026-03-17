@@ -41,6 +41,7 @@ import ExclusividadeLogin from "./pages/ExclusividadeLogin";
 import ExclusividadeConteudo from "./pages/ExclusividadeConteudo";
 import LojaPage from "./pages/LojaPage";
 import LojaProdutoPage from "./pages/LojaProdutoPage";
+import PostagemPage from "./pages/PostagemPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({

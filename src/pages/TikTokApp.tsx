@@ -3086,7 +3086,7 @@ export const TikTokApp = () => {
       }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
         {/* Comments Screen */}
-        <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={currentVideo?.id} onReloadComments={() => currentVideo?.id && loadComments(currentVideo.id)} />
+        <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
         
         {/* Search Modal */}
         <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={modelId => {

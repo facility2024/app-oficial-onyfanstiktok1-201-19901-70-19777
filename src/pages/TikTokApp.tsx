@@ -466,7 +466,7 @@ export const TikTokApp = () => {
         // 🎯 TRACKING: Calcular duração do vídeo anterior e registrar skip/interesse
         if (currentUser?.id && lastTrackedVideoRef.current) {
           const watchDuration = Math.floor((Date.now() - videoWatchStartRef.current) / 1000);
-          const prevVideo = videos[currentVideoIndex];
+          const prevVideo = displayVideos[currentVideoIndex];
           if (prevVideo) {
             const prevEntityId = prevVideo.creator_id || prevVideo.model_id || '';
             updateWatchDuration(lastTrackedVideoRef.current, currentUser.id, watchDuration);
@@ -482,7 +482,7 @@ export const TikTokApp = () => {
         videoWatchStartRef.current = Date.now();
 
         // 🧠 FEED INTELIGENTE: Marcar vídeo como assistido
-        const watchedVideo = videos[newIndex];
+        const watchedVideo = displayVideos[newIndex];
         if (watchedVideo && markVideoAsWatched) {
           const entityId = watchedVideo.creator_id || watchedVideo.model_id || watchedVideo.user?.id;
           if (entityId) {

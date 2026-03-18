@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, Eye, Image, Video, ExternalLink, Calendar, Clock, Copy, Share2, Link, CheckCircle, Send } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Image, Video, ExternalLink, Calendar, Clock, Copy, Share2, Link, CheckCircle, Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FeedPromotion {
@@ -78,6 +78,7 @@ export const AdminFeedPromotions = () => {
   const [batchUrls, setBatchUrls] = useState('');
   const [batchSaving, setBatchSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const ITEMS_PER_PAGE = 10;
   const modalInputClass = 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400';
 
@@ -547,23 +548,50 @@ export const AdminFeedPromotions = () => {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center text-gray-400 py-8">Carregando...</div>
-      ) : promotions.length === 0 ? (
-        <Card className="bg-gray-900 border-gray-700">
-          <CardContent className="py-12 text-center">
-            <Image className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-400">Nenhuma promoção criada ainda</p>
-            <p className="text-gray-500 text-sm mt-1">Clique em "Nova Promoção" para criar um card promocional no feed</p>
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Input
+          placeholder="Buscar por nome, título ou descrição..."
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          className="pl-10 bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
+        />
+      </div>
+
+      {(() => {
+        const filtered = promotions.filter((p) => {
+          if (!searchQuery.trim()) return true;
+          const q = searchQuery.toLowerCase();
+          return (
+            (p.display_name || '').toLowerCase().includes(q) ||
+            (p.title || '').toLowerCase().includes(q) ||
+            (p.description || '').toLowerCase().includes(q)
+          );
+        });
+        if (isLoading) return <div className="text-center text-gray-400 py-8">Carregando...</div>;
+        if (promotions.length === 0) return (
+          <Card className="bg-gray-900 border-gray-700">
+            <CardContent className="py-12 text-center">
+              <Image className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400">Nenhuma promoção criada ainda</p>
+              <p className="text-gray-500 text-sm mt-1">Clique em "Nova Promoção" para criar um card promocional no feed</p>
+            </CardContent>
+          </Card>
+        );
+        if (filtered.length === 0) return (
+          <div className="text-center text-gray-400 py-8">
+            <Search className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+            <p>Nenhuma promoção encontrada para "<span className="text-white">{searchQuery}</span>"</p>
+          </div>
+        );
+        return (
         <div>
           <p className="text-sm text-gray-400 mb-4">
-            Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, promotions.length)} de {promotions.length} promoções
+            Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} de {filtered.length} promoções
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {promotions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((promo) => (
+          {filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((promo) => (
             <Card key={promo.id} className="bg-gray-900 border-gray-700 overflow-hidden">
               <div className="aspect-video bg-gray-800 relative">
                 {promo.media_type === 'video' ? (
@@ -635,17 +663,18 @@ export const AdminFeedPromotions = () => {
           </div>
 
           {/* Pagination */}
-          {Math.ceil(promotions.length / ITEMS_PER_PAGE) > 1 && (
+          {Math.ceil(filtered.length / ITEMS_PER_PAGE) > 1 && (
             <div className="flex items-center justify-center gap-2 mt-6">
               <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Anterior</Button>
-              {Array.from({ length: Math.ceil(promotions.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+              {Array.from({ length: Math.ceil(filtered.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
                 <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={page === currentPage ? 'bg-primary text-primary-foreground' : ''}>{page}</Button>
               ))}
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(Math.ceil(promotions.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(promotions.length / ITEMS_PER_PAGE)}>Próxima →</Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(Math.ceil(filtered.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filtered.length / ITEMS_PER_PAGE)}>Próxima →</Button>
             </div>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Modal de criação/edição */}
       <Dialog open={showModal} onOpenChange={setShowModal}>

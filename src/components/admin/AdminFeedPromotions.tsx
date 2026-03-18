@@ -548,6 +548,17 @@ export const AdminFeedPromotions = () => {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Input
+          placeholder="Buscar por nome, título ou descrição..."
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          className="pl-10 bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
+        />
+      </div>
+
       {isLoading ? (
         <div className="text-center text-gray-400 py-8">Carregando...</div>
       ) : promotions.length === 0 ? (

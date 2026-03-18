@@ -1310,7 +1310,19 @@ export const TikTokApp = () => {
         }
 
         return true;
-      }).map((video: any) => {
+      });
+
+      // Deduplicar vídeos por video_url (manter apenas o primeiro de cada URL)
+      const seenUrls = new Set<string>();
+      const deduplicatedVideos = validVideos.filter((v: any) => {
+        if (!v.video_url) return false;
+        const key = v.video_url.toLowerCase();
+        if (seenUrls.has(key)) return false;
+        seenUrls.add(key);
+        return true;
+      });
+
+      const enrichedVideos = deduplicatedVideos.map((video: any) => {
         // Procurar owner: priorizar creator_id, depois model_id
         const owner: any = video.creator_id ? creatorsData?.find((c: any) => c.id === video.creator_id) : modelsData?.find((m: any) => m.id === video.model_id);
 

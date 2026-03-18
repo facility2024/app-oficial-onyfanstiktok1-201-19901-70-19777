@@ -431,7 +431,9 @@ export const TikTokApp = () => {
     setCurrentVideoIndex(displayVideos.length - 1);
   }, [currentVideoIndex, displayVideos.length]);
 
-  const currentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
+  const defaultUser = { id: 'unknown', username: 'Usuário', avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png', followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString() };
+  const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
+  const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
 
   // Preconnect otimizado para melhor performance
   useEffect(() => {

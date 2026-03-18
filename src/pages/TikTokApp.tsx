@@ -1121,10 +1121,12 @@ export const TikTokApp = () => {
         }
         return raw;
       };
+      const INVALID_DOMAINS = ['example.com', 'localhost', '127.0.0.1', 'test.com'];
       const isValidVideoUrl = (u: string) => {
         if (!/^https?:\/\//i.test(u)) return false;
         try {
-          new URL(u);
+          const parsed = new URL(u);
+          if (INVALID_DOMAINS.includes(parsed.hostname)) return false;
           return true;
         } catch {
           return false;

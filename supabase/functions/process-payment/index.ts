@@ -13,10 +13,24 @@ serve(async (req: Request) => {
 
   try {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://api.asaas.com/api/v3";
+    let ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "";
 
     if (!ASAAS_API_KEY) {
       throw new Error("ASAAS_API_KEY não configurada");
+    }
+
+    // If no env var, try to read from admin_settings
+    if (!ASAAS_BASE_URL) {
+      const adminSupabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      const { data: urlSetting } = await adminSupabase
+        .from("admin_settings")
+        .select("setting_value")
+        .eq("setting_key", "asaas_base_url")
+        .maybeSingle();
+      ASAAS_BASE_URL = (urlSetting?.setting_value as string) || "https://sandbox.asaas.com/api/v3";
     }
 
     // Validate JWT

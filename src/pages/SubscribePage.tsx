@@ -155,59 +155,8 @@ const SubscribePage = () => {
       return;
     }
 
-    // Verificar se tem telefone e CPF
-    const currentPhone = profile?.phone || phoneInput.replace(/\D/g, '');
-    const currentCpf = cpfInput.replace(/\D/g, '');
-    if (!currentPhone || currentPhone.length < 10 || !currentCpf || currentCpf.length < 11) {
-      setShowPhoneModal(true);
-      toast.info('Por favor, informe seu telefone e CPF para continuar');
-      return;
-    }
-
-    // Salvar telefone antes de redirecionar (se ainda não salvou)
-    if (!profile?.phone && phoneInput) {
-      await savePhoneToProfile();
-    }
-
-    // Chamar Edge Function do Asaas para criar checkout
-    setCheckoutLoading(true);
-    try {
-      const plan = vipPlans[planKey as keyof VIPPlans];
-      const { data, error } = await supabase.functions.invoke('asaas-checkout', {
-        body: {
-          name: profile?.username || user.email?.split('@')[0] || 'Usuário',
-          phone: currentPhone,
-          cpf: cpfInput.replace(/\D/g, ''),
-          plan_type: planKey,
-          customPrice: plan.price,
-        },
-      });
-
-      if (error) throw error;
-      if (!data?.success || !data?.checkoutUrl) {
-        throw new Error(data?.error || 'Erro ao gerar link de pagamento');
-      }
-
-      // Salvar paymentId para verificação posterior
-      if (data.paymentId) {
-        sessionStorage.setItem('pending_payment_id', data.paymentId);
-      }
-
-      // Abrir checkout do Asaas - redirecionar na mesma aba
-      window.open(data.checkoutUrl, '_blank');
-      toast.success('Pagamento aberto em nova aba!', {
-        description: 'Após pagar, volte aqui e clique em "Verificar Pagamento".',
-        duration: 10000,
-      });
-
-      // Redirecionar para a página de confirmação
-      navigate('/payment-confirmation');
-    } catch (error: any) {
-      console.error('Erro ao criar checkout Asaas:', error);
-      toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setCheckoutLoading(false);
-    }
+    // Redirecionar para checkout transparente
+    navigate('/checkout');
   };
 
   const handlePhoneSubmit = async () => {

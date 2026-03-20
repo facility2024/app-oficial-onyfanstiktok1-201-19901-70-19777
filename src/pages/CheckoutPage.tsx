@@ -100,12 +100,6 @@ const CheckoutPage = () => {
     const e: Record<string, string> = {};
     if (!validateCpf(cpf)) e.cpf = 'CPF inválido';
     if (!billingName.trim() || billingName.trim().length < 3) e.billingName = 'Nome obrigatório';
-    if (cep.replace(/\D/g, '').length !== 8) e.cep = 'CEP inválido';
-    if (!endereco.trim()) e.endereco = 'Endereço obrigatório';
-    if (!numero.trim()) e.numero = 'Número obrigatório';
-    if (!bairro.trim()) e.bairro = 'Bairro obrigatório';
-    if (!cidade.trim()) e.cidade = 'Cidade obrigatória';
-    if (!estado.trim()) e.estado = 'Estado obrigatório';
 
     // Card-only validations
     if (paymentMethod === 'CREDIT_CARD') {

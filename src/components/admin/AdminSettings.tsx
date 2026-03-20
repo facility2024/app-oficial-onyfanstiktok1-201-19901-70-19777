@@ -41,6 +41,10 @@ export const AdminSettings = () => {
     setWalletIdInput(asaasWalletId);
   }, [asaasWalletId]);
 
+  React.useEffect(() => {
+    setBaseUrlInput(asaasBaseUrl);
+  }, [asaasBaseUrl]);
+
   const [connectFormData, setConnectFormData] = useState({
     platform: '',
     apiKey: '',

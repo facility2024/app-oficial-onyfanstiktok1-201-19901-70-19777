@@ -112,11 +112,25 @@ serve(async (req: Request) => {
 
     console.log(`[process-payment] Processing for ${userEmail}, type ${billing_type}, plan ${plan_type}`);
 
-    // Plan config
-    const planConfig: Record<string, { value: number; cycle: string; description: string }> = {
-      mensal: { value: 19.90, cycle: "MONTHLY", description: "Assinatura VIP Mensal - CocoNudi" },
-    };
-    const plan = planConfig[plan_type] || planConfig.mensal;
+    // Plan config - fetch price from admin_settings
+    let planValue = 19.90;
+    try {
+      const { data: planData } = await supabaseAdmin.from("admin_settings")
+        .select("setting_value")
+        .eq("setting_key", "vip_plans")
+        .maybeSingle();
+      if (planData?.setting_value) {
+        const plans = planData.setting_value as any;
+        if (plans?.mensal?.price && Number(plans.mensal.price) > 0) {
+          planValue = Number(plans.mensal.price);
+        }
+      }
+    } catch (e) {
+      console.log("[process-payment] Could not fetch admin plan price, using default");
+    }
+    console.log(`[process-payment] Plan price: ${planValue}`);
+
+    const plan = { value: planValue, cycle: "MONTHLY", description: "Assinatura VIP Mensal - CocoNudi" };
 
     // 1. Search/create Asaas customer
     let customerId: string;

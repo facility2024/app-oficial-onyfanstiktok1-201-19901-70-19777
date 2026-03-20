@@ -94,29 +94,6 @@ const CheckoutPage = () => {
     }
   }, [profile]);
 
-  // CEP auto-complete
-  const fetchCep = useCallback(async (cepValue: string) => {
-    const clean = cepValue.replace(/\D/g, '');
-    if (clean.length !== 8) return;
-    setLoadingCep(true);
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        setEndereco(data.logradouro || '');
-        setBairro(data.bairro || '');
-        setCidade(data.localidade || '');
-        setEstado(data.uf || '');
-        setComplemento(data.complemento || '');
-      }
-    } catch { /* ignore */ }
-    setLoadingCep(false);
-  }, []);
-
-  useEffect(() => {
-    const clean = cep.replace(/\D/g, '');
-    if (clean.length === 8) fetchCep(clean);
-  }, [cep, fetchCep]);
 
   // Validate form
   const validate = (): boolean => {

@@ -196,6 +196,40 @@ export const useAdminSettings = () => {
     toast.success('Wallet ID do Asaas salvo com sucesso!');
   };
 
+  // Asaas Base URL
+  const fetchAsaasBaseUrl = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'asaas_base_url')
+        .maybeSingle();
+      if (!error && data?.setting_value) {
+        setAsaasBaseUrl(data.setting_value as unknown as string);
+      }
+    } catch (e) {
+      console.error('Error fetching Asaas base URL:', e);
+    }
+  };
+
+  const updateAsaasBaseUrl = async (url: string) => {
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert({
+          setting_key: 'asaas_base_url',
+          setting_value: url as unknown as import('@/integrations/supabase/types').Json,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'setting_key' });
+      if (error) throw error;
+      setAsaasBaseUrl(url);
+      toast.success('URL Base do Asaas atualizada com sucesso!');
+    } catch (e) {
+      console.error('Error updating Asaas base URL:', e);
+      toast.error('Erro ao atualizar URL Base do Asaas');
+    }
+  };
+
   useEffect(() => {
     setPlatforms(formatPlatformStats());
     fetchVIPPlans();

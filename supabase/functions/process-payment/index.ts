@@ -203,10 +203,6 @@ serve(async (req: Request) => {
       console.log(`[process-payment] Customer created: ${customerId}`);
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     // Update profile with billing info
     await supabaseAdmin.from("profiles").update({

@@ -4874,6 +4874,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          created_at: string | null
+          id: string
+          paid_at: string | null
+          plan: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string | null
+          id?: string
+          paid_at?: string | null
+          plan?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string | null
+          id?: string
+          paid_at?: string | null
+          plan?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       perfil_preferencias: {
         Row: {
           created_at: string
@@ -5802,10 +5838,19 @@ export type Database = {
       }
       profiles: {
         Row: {
+          asaas_customer_id: string | null
           avatar_url: string | null
+          bairro: string | null
+          billing_name: string | null
           bio: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          cpf: string | null
           created_at: string | null
           email: string | null
+          endereco: string | null
+          estado: string | null
           first_name: string | null
           followers_count: number | null
           id: string
@@ -5813,6 +5858,7 @@ export type Database = {
           live_active: boolean | null
           live_url: string | null
           name: string | null
+          numero: string | null
           phone: string | null
           referral_code: string | null
           referred_by: string | null
@@ -5823,10 +5869,19 @@ export type Database = {
           video_call_url: string | null
         }
         Insert: {
+          asaas_customer_id?: string | null
           avatar_url?: string | null
+          bairro?: string | null
+          billing_name?: string | null
           bio?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          cpf?: string | null
           created_at?: string | null
           email?: string | null
+          endereco?: string | null
+          estado?: string | null
           first_name?: string | null
           followers_count?: number | null
           id: string
@@ -5834,6 +5889,7 @@ export type Database = {
           live_active?: boolean | null
           live_url?: string | null
           name?: string | null
+          numero?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
@@ -5844,10 +5900,19 @@ export type Database = {
           video_call_url?: string | null
         }
         Update: {
+          asaas_customer_id?: string | null
           avatar_url?: string | null
+          bairro?: string | null
+          billing_name?: string | null
           bio?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          cpf?: string | null
           created_at?: string | null
           email?: string | null
+          endereco?: string | null
+          estado?: string | null
           first_name?: string | null
           followers_count?: number | null
           id?: string
@@ -5855,6 +5920,7 @@ export type Database = {
           live_active?: boolean | null
           live_url?: string | null
           name?: string | null
+          numero?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null

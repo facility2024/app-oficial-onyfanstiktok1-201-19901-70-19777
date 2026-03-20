@@ -499,6 +499,51 @@ export const AdminSettings = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Asaas Base URL */}
+            <div className="p-4 border border-border rounded-lg">
+              <Label className="text-sm font-medium text-foreground">URL Base da API Asaas</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Alterne entre Sandbox (testes) e Produção. Atual: <Badge variant="outline" className={baseUrlInput.includes('sandbox') ? 'border-amber-500 text-amber-500' : 'border-green-500 text-green-500'}>{baseUrlInput.includes('sandbox') ? '🧪 Sandbox' : '🚀 Produção'}</Badge>
+              </p>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  size="sm"
+                  variant={baseUrlInput.includes('sandbox') ? 'default' : 'outline'}
+                  onClick={() => setBaseUrlInput('https://sandbox.asaas.com/api/v3')}
+                  className={baseUrlInput.includes('sandbox') ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}
+                >
+                  Sandbox
+                </Button>
+                <Button
+                  size="sm"
+                  variant={!baseUrlInput.includes('sandbox') ? 'default' : 'outline'}
+                  onClick={() => setBaseUrlInput('https://api.asaas.com/api/v3')}
+                  className={!baseUrlInput.includes('sandbox') ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
+                >
+                  Produção
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={baseUrlInput}
+                  onChange={(e) => setBaseUrlInput(e.target.value)}
+                  placeholder="https://sandbox.asaas.com/api/v3"
+                  className="flex-1 font-mono text-xs"
+                />
+                <Button
+                  onClick={() => updateAsaasBaseUrl(baseUrlInput)}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+              {asaasBaseUrl && (
+                <p className="text-xs text-green-500 mt-2">✓ URL configurada: {asaasBaseUrl}</p>
+              )}
+            </div>
+
+            {/* Wallet ID */}
             <div className="p-4 border border-border rounded-lg">
               <Label className="text-sm font-medium text-foreground">Wallet ID do Asaas</Label>
               <p className="text-xs text-muted-foreground mb-2">

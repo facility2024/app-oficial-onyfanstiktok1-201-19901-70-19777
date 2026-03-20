@@ -234,6 +234,7 @@ export const useAdminSettings = () => {
     setPlatforms(formatPlatformStats());
     fetchVIPPlans();
     fetchAsaasWalletId();
+    fetchAsaasBaseUrl();
   }, []);
 
   return {

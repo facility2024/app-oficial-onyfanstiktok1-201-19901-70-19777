@@ -112,6 +112,11 @@ serve(async (req: Request) => {
 
     console.log(`[process-payment] Processing for ${userEmail}, type ${billing_type}, plan ${plan_type}`);
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     // Plan config - fetch price from admin_settings
     let planValue = 19.90;
     try {

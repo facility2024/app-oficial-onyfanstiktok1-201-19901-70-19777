@@ -1,73 +1,45 @@
 
 
-## Correcao: Criar Conta de Autenticacao ao Aprovar Criador
+## Bug: VIP Activated Without Payment
 
-### Problema Identificado
-Quando um modelo/criador e aprovado pelo painel admin, o sistema apenas adiciona a role "creator" na tabela `user_roles` e atualiza o status da aplicacao. Porem, se o modelo foi cadastrado por um sistema externo (como o painel marketing.coconudi.com), ele **nao possui uma conta no Supabase Auth** -- por isso ao tentar fazer login, recebe "Email ou senha incorretos".
+### Root Cause
 
-### Solucao
-Criar uma **Edge Function** chamada `approve-creator` que sera chamada pelo painel admin ao aprovar uma aplicacao. Essa funcao ira:
+In `supabase/functions/payment-webhook/index.ts`, line 145, `"payment_created"` is listed as an approved status:
 
-1. Verificar se o email ja tem conta no `auth.users`
-2. Se NAO tiver, criar a conta usando `supabase.auth.admin.createUser()` com uma senha temporaria
-3. Adicionar a role `creator` na tabela `user_roles`
-4. Atualizar o status da aplicacao para `approved`
-5. Retornar os dados incluindo a senha temporaria para o admin enviar ao modelo
-
-### Etapas de Implementacao
-
-**1. Criar Edge Function `approve-creator`**
-- Arquivo: `supabase/functions/approve-creator/index.ts`
-- Usa o `SUPABASE_SERVICE_ROLE_KEY` (ja configurado) para criar usuarios via Admin API
-- Recebe: `application_id`, `admin_user_id`
-- Gera senha aleatoria segura
-- Cria usuario no auth.users (se nao existir)
-- Adiciona role creator
-- Atualiza application status
-- Retorna email + senha temporaria
-
-**2. Atualizar `AdminCreatorApplications.tsx`**
-- Modificar `handleApprove()` para chamar a Edge Function em vez de fazer insert direto
-- Apos aprovacao bem-sucedida, mostrar um modal com as credenciais (email + senha) para o admin copiar e enviar ao modelo
-- Adicionar botao de copiar credenciais e enviar via WhatsApp
-
-**3. Configurar `supabase/config.toml`**
-- Adicionar configuracao da nova Edge Function com `verify_jwt = false` (validacao manual no codigo)
-
-### Detalhes Tecnicos
-
-```text
-Fluxo de Aprovacao:
-  Admin clica "Aprovar"
-       |
-       v
-  Edge Function "approve-creator"
-       |
-       +-- Busca dados da aplicacao (email, nome)
-       |
-       +-- Verifica se email existe em auth.users
-       |      |
-       |      +-- SIM: Apenas adiciona role "creator"
-       |      |
-       |      +-- NAO: Cria conta com senha temporaria
-       |              e adiciona role "creator"
-       |
-       +-- Atualiza status da aplicacao
-       |
-       v
-  Retorna credenciais ao admin
-       |
-       v
-  Modal com email + senha + botao WhatsApp
+```javascript
+const approvedStatuses = [
+  "approved", "paid", "completed", "confirmed", "success", "active",
+  "payment_confirmed", "charge.completed",
+  "payment_received", "payment_confirmed", "payment_created"  // <-- BUG
+];
 ```
 
-### Arquivos a Criar/Modificar
-- **Criar**: `supabase/functions/approve-creator/index.ts`
-- **Modificar**: `src/components/admin/AdminCreatorApplications.tsx`
-- **Modificar**: `supabase/config.toml`
+When the `process-payment` function creates a PIX charge on Asaas, Asaas immediately sends a `PAYMENT_CREATED` webhook event. The webhook treats this as an approved payment and activates VIP — even though the user hasn't paid yet.
 
-### Seguranca
-- A Edge Function valida que o chamador e admin verificando o JWT
-- Senha temporaria gerada com caracteres alfanumericos (12 chars)
-- O `SUPABASE_SERVICE_ROLE_KEY` ja esta configurado nos secrets
+**Evidence from the database:**
+- `webhook_logs`: event `PAYMENT_CREATED` with payment status `PENDING` was processed as approved
+- `premium_users`: record created at `05:08:47` (same second as webhook)
+- `payments`: status is `PENDING`, `paid_at` is `null` — payment was never made
+
+### Fix
+
+**1. Remove `payment_created` from approved statuses in `payment-webhook/index.ts`**
+
+Only these Asaas events should activate VIP:
+- `PAYMENT_RECEIVED` — payment confirmed
+- `PAYMENT_CONFIRMED` — payment confirmed (duplicate safety)
+
+Remove: `payment_created` (just means charge was created, not paid)
+
+**2. Delete the incorrectly activated VIP record**
+
+Run a migration to delete the bogus `premium_users` record for `benga@gmail.com` (id: `8a660fce-f199-4a78-b8f2-e06d21b07023`) that was created without actual payment.
+
+**3. Clear localStorage fallback**
+
+The `usePremiumStatus` hook also caches VIP in localStorage. After the DB fix, the user needs to refresh — the hook will re-check and clear the cached status since the DB record will be gone.
+
+### Files Changed
+- `supabase/functions/payment-webhook/index.ts` — remove `payment_created` from approved list
+- SQL migration — delete the invalid premium_users record
 

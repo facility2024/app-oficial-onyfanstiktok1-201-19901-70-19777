@@ -22,6 +22,7 @@ export const AdminSettings = () => {
     vipPlans,
     vipPlansLoading,
     asaasWalletId,
+    asaasBaseUrl,
     updateSetting,
     connectPlatform,
     performBackup,
@@ -29,6 +30,7 @@ export const AdminSettings = () => {
     getSecurityLogByType,
     updateVIPPlans,
     updateAsaasWalletId,
+    updateAsaasBaseUrl,
     refreshData
   } = useAdminSettings();
 

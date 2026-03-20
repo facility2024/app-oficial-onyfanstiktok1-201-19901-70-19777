@@ -35,6 +35,7 @@ export const AdminSettings = () => {
   } = useAdminSettings();
 
   const [walletIdInput, setWalletIdInput] = useState('');
+  const [baseUrlInput, setBaseUrlInput] = useState('');
 
   React.useEffect(() => {
     setWalletIdInput(asaasWalletId);

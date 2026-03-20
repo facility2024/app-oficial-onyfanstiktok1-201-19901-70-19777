@@ -307,7 +307,16 @@ serve(async (req: Request) => {
       headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify(paymentBody),
     });
-    const payData = await payRes.json();
+    const payText = await payRes.text();
+    console.log(`[process-payment] ${billing_type} payment response status: ${payRes.status}, body length: ${payText.length}`);
+
+    let payData: any;
+    try {
+      payData = JSON.parse(payText);
+    } catch (e) {
+      console.error(`[process-payment] Invalid JSON from payment: ${payText.substring(0, 300)}`);
+      throw new Error(`Resposta inválida do gateway ao gerar ${billing_type}`);
+    }
 
     if (!payRes.ok) {
       console.error(`[process-payment] ${billing_type} error:`, JSON.stringify(payData));

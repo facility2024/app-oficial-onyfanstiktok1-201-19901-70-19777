@@ -66,6 +66,10 @@ const CheckoutPage = () => {
   // Payment method
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CREDIT_CARD');
 
+  // Plan price from admin
+  const [planPrice, setPlanPrice] = useState(19.90);
+  const [loadingPrice, setLoadingPrice] = useState(true);
+
   // Form state
   const [cpf, setCpf] = useState('');
   const [billingName, setBillingName] = useState('');
@@ -84,6 +88,30 @@ const CheckoutPage = () => {
   // PIX/Boleto result
   const [pixData, setPixData] = useState<{ qrCodeUrl?: string; payload?: string; expirationDate?: string } | null>(null);
   const [boletoData, setBoletoData] = useState<{ bankSlipUrl?: string; barCode?: string; dueDate?: string } | null>(null);
+
+  // Fetch plan price from admin settings
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'vip_plans')
+          .maybeSingle();
+        if (data?.setting_value) {
+          const plans = data.setting_value as any;
+          if (plans?.mensal?.price) {
+            setPlanPrice(Number(plans.mensal.price));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching plan price:', err);
+      } finally {
+        setLoadingPrice(false);
+      }
+    };
+    fetchPrice();
+  }, []);
 
   // Prefill from profile
   useEffect(() => {

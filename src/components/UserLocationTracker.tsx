@@ -95,7 +95,8 @@ export const UserLocationTracker = () => {
         const deviceType = getDeviceType();
 
         const { data: sessionData } = await supabase.auth.getSession();
-        const finalUserId = sessionData?.session?.user?.id || anonymousUserId;
+        const authenticatedUserId = sessionData?.session?.user?.id ?? null;
+        const finalUserId = authenticatedUserId || anonymousUserId;
 
         const resolvedLocation = await resolveBestLocation();
 
@@ -113,19 +114,21 @@ export const UserLocationTracker = () => {
               .select('location_state, location_city, location_country, location_address, location_neighborhood')
               .eq('session_id', onlineSessionId)
               .maybeSingle(),
-            supabase
-              .from('user_sessions')
-              .select('location_state, location_city, location_country')
-              .eq('session_token', sessionToken)
-              .maybeSingle(),
+            authenticatedUserId
+              ? supabase
+                  .from('user_sessions')
+                  .select('location_state, location_city, location_country')
+                  .eq('session_token', sessionToken)
+                  .maybeSingle()
+              : Promise.resolve({ data: null, error: null }),
           ]);
 
           const onlineData = existingOnline.data;
-          const sessionData = existingSession.data;
+          const existingSessionData = existingSession.data;
 
-          stickyState = stickyState || onlineData?.location_state || sessionData?.location_state || null;
-          stickyCity = stickyCity || onlineData?.location_city || sessionData?.location_city || null;
-          stickyCountry = stickyCountry || onlineData?.location_country || sessionData?.location_country || 'BR';
+          stickyState = stickyState || onlineData?.location_state || existingSessionData?.location_state || null;
+          stickyCity = stickyCity || onlineData?.location_city || existingSessionData?.location_city || null;
+          stickyCountry = stickyCountry || onlineData?.location_country || existingSessionData?.location_country || 'BR';
           stickyAddress = stickyAddress || onlineData?.location_address || null;
           stickyNeighborhood = stickyNeighborhood || onlineData?.location_neighborhood || null;
         }
@@ -157,21 +160,24 @@ export const UserLocationTracker = () => {
                 },
                 { onConflict: 'session_id' }
               ),
-            supabase
-              .from('user_sessions')
-              .upsert(
-                {
-                  ...payloadBase,
-                  session_token: sessionToken,
-                  is_active: true,
-                  started_at: timestamp,
-                  last_activity_at: timestamp,
-                  last_seen_at: timestamp,
-                  expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                  device_info: { type: deviceType, userAgent: ua },
-                },
-                { onConflict: 'session_token' }
-              ),
+            authenticatedUserId
+              ? supabase
+                  .from('user_sessions')
+                  .upsert(
+                    {
+                      ...payloadBase,
+                      user_id: authenticatedUserId,
+                      session_token: sessionToken,
+                      is_active: true,
+                      started_at: timestamp,
+                      last_activity_at: timestamp,
+                      last_seen_at: timestamp,
+                      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                      device_info: { type: deviceType, userAgent: ua },
+                    },
+                    { onConflict: 'session_token' }
+                  )
+              : Promise.resolve({ error: null }),
           ]);
 
           if (onlineResult.error) {

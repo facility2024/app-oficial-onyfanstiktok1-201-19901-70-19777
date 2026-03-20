@@ -13,7 +13,27 @@ serve(async (req: Request) => {
 
   try {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
-    let ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "";
+
+    const normalizeAsaasBaseUrl = (url: string) => {
+      const trimmed = url.trim().replace(/\/+$/, "");
+
+      if (!trimmed) return "";
+      if (trimmed.includes("api.asaas.com/api/v3")) {
+        return trimmed.replace("api.asaas.com/api/v3", "api.asaas.com/v3");
+      }
+      if (trimmed.endsWith("/v3") || trimmed.endsWith("/api/v3")) {
+        return trimmed;
+      }
+      if (trimmed.includes("sandbox.asaas.com")) {
+        return `${trimmed}/api/v3`;
+      }
+      if (trimmed.includes("api.asaas.com")) {
+        return `${trimmed}/v3`;
+      }
+      return trimmed;
+    };
+
+    let ASAAS_BASE_URL = normalizeAsaasBaseUrl(Deno.env.get("ASAAS_BASE_URL") || "");
 
     if (!ASAAS_API_KEY) {
       throw new Error("ASAAS_API_KEY não configurada");
@@ -30,8 +50,10 @@ serve(async (req: Request) => {
         .select("setting_value")
         .eq("setting_key", "asaas_base_url")
         .maybeSingle();
-      ASAAS_BASE_URL = (urlSetting?.setting_value as string) || "https://sandbox.asaas.com/api/v3";
+      ASAAS_BASE_URL = normalizeAsaasBaseUrl((urlSetting?.setting_value as string) || "https://sandbox.asaas.com/api/v3");
     }
+
+    console.log(`[process-payment] Using Asaas base URL: ${ASAAS_BASE_URL}`);
 
     // Validate JWT
     const authHeader = req.headers.get("Authorization");

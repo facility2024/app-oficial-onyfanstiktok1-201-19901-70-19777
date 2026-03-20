@@ -545,7 +545,5 @@ export default function UserProfile() {
         </div>
       </div>
     </div>
-
-  </div>
   );
 }

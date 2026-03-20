@@ -98,10 +98,26 @@ serve(async (req: Request) => {
 
     // 1. Search/create Asaas customer
     let customerId: string;
+    console.log(`[process-payment] Searching customer at ${ASAAS_BASE_URL}/customers`);
     const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?email=${encodeURIComponent(userEmail)}`, {
       headers: { access_token: ASAAS_API_KEY },
     });
-    const searchData = await searchRes.json();
+    
+    const searchText = await searchRes.text();
+    console.log(`[process-payment] Customer search status: ${searchRes.status}, body length: ${searchText.length}`);
+    
+    if (!searchRes.ok) {
+      console.error(`[process-payment] Customer search failed: ${searchText}`);
+      throw new Error(`Erro ao buscar cliente no Asaas (status ${searchRes.status})`);
+    }
+
+    let searchData: any;
+    try {
+      searchData = JSON.parse(searchText);
+    } catch (e) {
+      console.error(`[process-payment] Invalid JSON from customer search: ${searchText.substring(0, 200)}`);
+      throw new Error("Resposta inválida do gateway de pagamento. Verifique a configuração da API.");
+    }
 
     if (searchData.data && searchData.data.length > 0) {
       customerId = searchData.data[0].id;
@@ -126,7 +142,17 @@ serve(async (req: Request) => {
           notificationDisabled: true,
         }),
       });
-      const createData = await createRes.json();
+      
+      const createText = await createRes.text();
+      console.log(`[process-payment] Customer create status: ${createRes.status}`);
+      
+      let createData: any;
+      try {
+        createData = JSON.parse(createText);
+      } catch (e) {
+        console.error(`[process-payment] Invalid JSON from customer create: ${createText.substring(0, 200)}`);
+        throw new Error("Resposta inválida ao criar cliente no gateway.");
+      }
 
       if (!createRes.ok) {
         console.error("[process-payment] Customer error:", JSON.stringify(createData));

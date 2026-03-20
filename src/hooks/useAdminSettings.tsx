@@ -99,6 +99,7 @@ export const useAdminSettings = () => {
   ]);
   const [loading, setLoading] = useState(false);
   const [asaasWalletId, setAsaasWalletId] = useState('');
+  const [asaasBaseUrl, setAsaasBaseUrl] = useState('https://sandbox.asaas.com/api/v3');
 
   // Fetch VIP Plans from Supabase admin_settings
   const fetchVIPPlans = async () => {

@@ -247,6 +247,7 @@ export const useAdminSettings = () => {
     vipPlans,
     vipPlansLoading,
     asaasWalletId,
+    asaasBaseUrl,
     updateSetting,
     connectPlatform,
     performBackup,
@@ -254,6 +255,7 @@ export const useAdminSettings = () => {
     getSecurityLogByType,
     updateVIPPlans,
     updateAsaasWalletId,
+    updateAsaasBaseUrl,
     fetchVIPPlans,
     refreshData: () => toast.success('Dados atualizados!')
   };

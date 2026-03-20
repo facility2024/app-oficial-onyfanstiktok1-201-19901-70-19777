@@ -321,7 +321,9 @@ const CheckoutPage = () => {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-amber-400">R$ 19,90</p>
+           <p className="text-2xl font-bold text-amber-400">
+              {loadingPrice ? '...' : `R$ ${planPrice.toFixed(2).replace('.', ',')}`}
+            </p>
             <p className="text-gray-500 text-xs">/mês</p>
           </div>
         </div>

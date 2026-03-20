@@ -354,57 +354,6 @@ const CheckoutPage = () => {
           </CardContent>
         </Card>
 
-        {/* Address */}
-        <Card className="bg-gray-900/50 border-gray-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-amber-400" /> Endereço
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label className="text-gray-300 text-sm">CEP</Label>
-              <div className="relative">
-                <Input value={cep} onChange={e => setCep(formatCep(e.target.value))} placeholder="00000-000" maxLength={9} className={inputClass} />
-                {loadingCep && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-amber-500" />}
-              </div>
-              {errors.cep && <p className={errorClass}>{errors.cep}</p>}
-            </div>
-            <div>
-              <Label className="text-gray-300 text-sm">Logradouro</Label>
-              <Input value={endereco} onChange={e => setEndereco(e.target.value)} placeholder="Rua, Avenida..." className={inputClass} />
-              {errors.endereco && <p className={errorClass}>{errors.endereco}</p>}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <Label className="text-gray-300 text-sm">Número</Label>
-                <Input value={numero} onChange={e => setNumero(e.target.value)} placeholder="Nº" className={inputClass} />
-                {errors.numero && <p className={errorClass}>{errors.numero}</p>}
-              </div>
-              <div className="col-span-2">
-                <Label className="text-gray-300 text-sm">Complemento</Label>
-                <Input value={complemento} onChange={e => setComplemento(e.target.value)} placeholder="Apto, Sala..." className={inputClass} />
-              </div>
-            </div>
-            <div>
-              <Label className="text-gray-300 text-sm">Bairro</Label>
-              <Input value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Bairro" className={inputClass} />
-              {errors.bairro && <p className={errorClass}>{errors.bairro}</p>}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <Label className="text-gray-300 text-sm">Cidade</Label>
-                <Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" className={inputClass} />
-                {errors.cidade && <p className={errorClass}>{errors.cidade}</p>}
-              </div>
-              <div>
-                <Label className="text-gray-300 text-sm">UF</Label>
-                <Input value={estado} onChange={e => setEstado(e.target.value.toUpperCase().slice(0, 2))} placeholder="UF" maxLength={2} className={inputClass} />
-                {errors.estado && <p className={errorClass}>{errors.estado}</p>}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Card data - only for credit card */}
         {paymentMethod === 'CREDIT_CARD' && (

@@ -65,12 +65,12 @@ serve(async (req: Request) => {
       cep, endereco, numero, complemento, bairro, cidade, estado,
       card_number, card_holder, card_expiry_month, card_expiry_year, card_cvv,
       plan_type = "mensal",
+      billing_type = "CREDIT_CARD",
     } = body;
 
     // Sanitize
     const cleanCpf = (cpf || "").replace(/\D/g, "");
     const cleanPhone = (phone || "").replace(/\D/g, "");
-    const cleanCardNumber = (card_number || "").replace(/\s/g, "");
     const cleanCep = (cep || "").replace(/\D/g, "");
 
     if (cleanCpf.length < 11) {
@@ -79,14 +79,16 @@ serve(async (req: Request) => {
       });
     }
 
-    if (cleanCardNumber.length < 13) {
-      return new Response(JSON.stringify({ success: false, error: "Número do cartão inválido" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (billing_type === "CREDIT_CARD") {
+      const cleanCardNumber = (card_number || "").replace(/\s/g, "");
+      if (cleanCardNumber.length < 13) {
+        return new Response(JSON.stringify({ success: false, error: "Número do cartão inválido" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    const maskedCard = `****${cleanCardNumber.slice(-4)}`;
-    console.log(`[process-payment] Processing for ${userEmail}, card ${maskedCard}, plan ${plan_type}`);
+    console.log(`[process-payment] Processing for ${userEmail}, type ${billing_type}, plan ${plan_type}`);
 
     // Plan config
     const planConfig: Record<string, { value: number; cycle: string; description: string }> = {
@@ -134,85 +136,10 @@ serve(async (req: Request) => {
       console.log(`[process-payment] Customer created: ${customerId}`);
     }
 
-    // 2. Create subscription with credit card
-    const externalRef = `${userId}_${plan_type}_${Date.now()}`;
-
-    const subscriptionBody = {
-      customer: customerId,
-      billingType: "CREDIT_CARD",
-      value: plan.value,
-      cycle: plan.cycle,
-      description: plan.description,
-      externalReference: externalRef,
-      creditCard: {
-        holderName: card_holder,
-        number: cleanCardNumber,
-        expiryMonth: card_expiry_month,
-        expiryYear: card_expiry_year,
-        ccv: card_cvv,
-      },
-      creditCardHolderInfo: {
-        name: billing_name,
-        email: userEmail,
-        cpfCnpj: cleanCpf,
-        phone: cleanPhone || undefined,
-        postalCode: cleanCep || undefined,
-        addressNumber: numero || undefined,
-        address: endereco || undefined,
-        province: bairro || undefined,
-        city: cidade || undefined,
-        complement: complemento || undefined,
-      },
-    };
-
-    console.log(`[process-payment] Creating subscription for customer ${customerId}`);
-
-    const subRes = await fetch(`${ASAAS_BASE_URL}/subscriptions`, {
-      method: "POST",
-      headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify(subscriptionBody),
-    });
-    const subData = await subRes.json();
-
-    if (!subRes.ok) {
-      console.error("[process-payment] Subscription error:", JSON.stringify(subData));
-      const errorMsg = subData.errors?.[0]?.description || JSON.stringify(subData.errors || subData);
-      throw new Error(`Erro ao processar pagamento: ${errorMsg}`);
-    }
-
-    console.log(`[process-payment] Subscription created: ${subData.id}, status: ${subData.status}`);
-
-    // 3. Save to database using service role
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
-
-    // Save payment record
-    const { error: paymentError } = await supabaseAdmin.from("payments").insert({
-      user_id: userId,
-      plan: plan_type,
-      amount: plan.value,
-      status: subData.status === "ACTIVE" ? "CONFIRMED" : "PENDING",
-      asaas_subscription_id: subData.id,
-      asaas_payment_id: subData.id,
-      paid_at: subData.status === "ACTIVE" ? new Date().toISOString() : null,
-    });
-
-    if (paymentError) {
-      console.error("[process-payment] DB payment error:", paymentError);
-      // Rollback: cancel subscription
-      try {
-        await fetch(`${ASAAS_BASE_URL}/subscriptions/${subData.id}`, {
-          method: "DELETE",
-          headers: { access_token: ASAAS_API_KEY },
-        });
-        console.log("[process-payment] Rollback: subscription cancelled");
-      } catch (rbErr) {
-        console.error("[process-payment] Rollback failed:", rbErr);
-      }
-      throw new Error("Erro ao salvar pagamento. A cobrança foi cancelada.");
-    }
 
     // Update profile with billing info
     await supabaseAdmin.from("profiles").update({
@@ -228,38 +155,210 @@ serve(async (req: Request) => {
       estado,
     } as any).eq("id", userId);
 
-    // If subscription is active, activate VIP immediately
-    if (subData.status === "ACTIVE") {
-      const expDate = new Date();
-      expDate.setMonth(expDate.getMonth() + 1);
+    // === CREDIT CARD: create subscription ===
+    if (billing_type === "CREDIT_CARD") {
+      const cleanCardNumber = (card_number || "").replace(/\s/g, "");
+      const maskedCard = `****${cleanCardNumber.slice(-4)}`;
+      console.log(`[process-payment] Card ${maskedCard}`);
 
-      await supabaseAdmin.from("premium_users").upsert({
+      const externalRef = `${userId}_${plan_type}_${Date.now()}`;
+
+      const subscriptionBody = {
+        customer: customerId,
+        billingType: "CREDIT_CARD",
+        value: plan.value,
+        cycle: plan.cycle,
+        description: plan.description,
+        externalReference: externalRef,
+        creditCard: {
+          holderName: card_holder,
+          number: cleanCardNumber,
+          expiryMonth: card_expiry_month,
+          expiryYear: card_expiry_year,
+          ccv: card_cvv,
+        },
+        creditCardHolderInfo: {
+          name: billing_name,
+          email: userEmail,
+          cpfCnpj: cleanCpf,
+          phone: cleanPhone || undefined,
+          postalCode: cleanCep || undefined,
+          addressNumber: numero || undefined,
+          address: endereco || undefined,
+          province: bairro || undefined,
+          city: cidade || undefined,
+          complement: complemento || undefined,
+        },
+      };
+
+      const subRes = await fetch(`${ASAAS_BASE_URL}/subscriptions`, {
+        method: "POST",
+        headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify(subscriptionBody),
+      });
+      const subData = await subRes.json();
+
+      if (!subRes.ok) {
+        console.error("[process-payment] Subscription error:", JSON.stringify(subData));
+        const errorMsg = subData.errors?.[0]?.description || JSON.stringify(subData.errors || subData);
+        throw new Error(`Erro ao processar pagamento: ${errorMsg}`);
+      }
+
+      console.log(`[process-payment] Subscription created: ${subData.id}, status: ${subData.status}`);
+
+      // Save payment record
+      const { error: paymentError } = await supabaseAdmin.from("payments").insert({
         user_id: userId,
-        email: userEmail,
-        name: billing_name,
-        phone: cleanPhone,
-        plan_type: plan_type,
-        is_active: true,
-        activated_at: new Date().toISOString(),
-        expires_at: expDate.toISOString(),
-      } as any, { onConflict: "user_id" });
+        plan: plan_type,
+        amount: plan.value,
+        status: subData.status === "ACTIVE" ? "CONFIRMED" : "PENDING",
+        asaas_subscription_id: subData.id,
+        asaas_payment_id: subData.id,
+        paid_at: subData.status === "ACTIVE" ? new Date().toISOString() : null,
+      });
+
+      if (paymentError) {
+        console.error("[process-payment] DB payment error:", paymentError);
+        try {
+          await fetch(`${ASAAS_BASE_URL}/subscriptions/${subData.id}`, {
+            method: "DELETE",
+            headers: { access_token: ASAAS_API_KEY },
+          });
+        } catch (rbErr) {
+          console.error("[process-payment] Rollback failed:", rbErr);
+        }
+        throw new Error("Erro ao salvar pagamento. A cobrança foi cancelada.");
+      }
+
+      // If active, activate VIP
+      if (subData.status === "ACTIVE") {
+        const expDate = new Date();
+        expDate.setMonth(expDate.getMonth() + 1);
+        await supabaseAdmin.from("premium_users").upsert({
+          user_id: userId,
+          email: userEmail,
+          name: billing_name,
+          phone: cleanPhone,
+          plan_type: plan_type,
+          is_active: true,
+          activated_at: new Date().toISOString(),
+          expires_at: expDate.toISOString(),
+        } as any, { onConflict: "user_id" });
+      }
+
+      let mappedStatus = "PENDING";
+      if (["ACTIVE", "CONFIRMED", "RECEIVED"].includes(subData.status)) mappedStatus = "APPROVED";
+      else if (["OVERDUE", "INACTIVE"].includes(subData.status)) mappedStatus = "REJECTED";
+
+      return new Response(
+        JSON.stringify({ success: true, subscriptionId: subData.id, status: mappedStatus, billingType: "CREDIT_CARD" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Map status
-    let mappedStatus = "PENDING";
-    if (["ACTIVE", "CONFIRMED", "RECEIVED"].includes(subData.status)) {
-      mappedStatus = "APPROVED";
-    } else if (["OVERDUE", "INACTIVE"].includes(subData.status)) {
-      mappedStatus = "REJECTED";
+    // === PIX or BOLETO: create single payment (cobrança avulsa) ===
+    const dueDate = new Date();
+    if (billing_type === "BOLETO") {
+      dueDate.setDate(dueDate.getDate() + 3); // 3 days for boleto
+    } else {
+      dueDate.setDate(dueDate.getDate() + 1); // 1 day for PIX
     }
+    const dueDateStr = dueDate.toISOString().split("T")[0];
+
+    const paymentBody: any = {
+      customer: customerId,
+      billingType: billing_type,
+      value: plan.value,
+      dueDate: dueDateStr,
+      description: plan.description,
+      externalReference: `${userId}_${plan_type}_${Date.now()}`,
+    };
+
+    console.log(`[process-payment] Creating ${billing_type} payment for customer ${customerId}`);
+
+    const payRes = await fetch(`${ASAAS_BASE_URL}/payments`, {
+      method: "POST",
+      headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify(paymentBody),
+    });
+    const payData = await payRes.json();
+
+    if (!payRes.ok) {
+      console.error(`[process-payment] ${billing_type} error:`, JSON.stringify(payData));
+      const errorMsg = payData.errors?.[0]?.description || JSON.stringify(payData.errors || payData);
+      throw new Error(`Erro ao gerar ${billing_type}: ${errorMsg}`);
+    }
+
+    console.log(`[process-payment] ${billing_type} payment created: ${payData.id}, status: ${payData.status}`);
+
+    // Save payment record
+    await supabaseAdmin.from("payments").insert({
+      user_id: userId,
+      plan: plan_type,
+      amount: plan.value,
+      status: "PENDING",
+      asaas_payment_id: payData.id,
+      paid_at: null,
+    });
+
+    // For PIX, fetch the QR code
+    let pixInfo = null;
+    if (billing_type === "PIX") {
+      try {
+        const pixRes = await fetch(`${ASAAS_BASE_URL}/payments/${payData.id}/pixQrCode`, {
+          headers: { access_token: ASAAS_API_KEY },
+        });
+        const pixQrData = await pixRes.json();
+        if (pixRes.ok) {
+          pixInfo = {
+            qrCodeUrl: pixQrData.encodedImage ? `data:image/png;base64,${pixQrData.encodedImage}` : null,
+            payload: pixQrData.payload || null,
+            expirationDate: pixQrData.expirationDate || payData.dueDate,
+          };
+        }
+        console.log(`[process-payment] PIX QR Code generated for payment ${payData.id}`);
+      } catch (pixErr) {
+        console.error("[process-payment] PIX QR error:", pixErr);
+      }
+    }
+
+    // For BOLETO, get identificationField (bar code) and bankSlipUrl
+    let boletoInfo = null;
+    if (billing_type === "BOLETO") {
+      boletoInfo = {
+        bankSlipUrl: payData.bankSlipUrl || null,
+        barCode: payData.identificationField || null,
+        dueDate: payData.dueDate || dueDateStr,
+      };
+
+      // If not in the payment response, try to fetch it
+      if (!boletoInfo.barCode) {
+        try {
+          const boletoRes = await fetch(`${ASAAS_BASE_URL}/payments/${payData.id}/identificationField`, {
+            headers: { access_token: ASAAS_API_KEY },
+          });
+          const boletoFieldData = await boletoRes.json();
+          if (boletoRes.ok) {
+            boletoInfo.barCode = boletoFieldData.identificationField || null;
+          }
+        } catch (bErr) {
+          console.error("[process-payment] Boleto barcode error:", bErr);
+        }
+      }
+    }
+
+    const responseBody: any = {
+      success: true,
+      paymentId: payData.id,
+      status: "PENDING",
+      billingType: billing_type,
+    };
+
+    if (pixInfo) responseBody.pix = pixInfo;
+    if (boletoInfo) responseBody.boleto = boletoInfo;
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        subscriptionId: subData.id,
-        status: mappedStatus,
-        asaasStatus: subData.status,
-      }),
+      JSON.stringify(responseBody),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

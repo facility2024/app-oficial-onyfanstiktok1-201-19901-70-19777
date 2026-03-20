@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Heart, MessageCircle, Users, CheckCircle, Crown } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Heart, MessageCircle, Users, CheckCircle, Crown, LogOut } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,

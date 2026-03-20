@@ -133,8 +133,6 @@ const CheckoutPage = () => {
         cpf: cpf.replace(/\D/g, ''),
         billing_name: billingName,
         phone: phone.replace(/\D/g, ''),
-        cep: cep.replace(/\D/g, ''),
-        endereco, numero, complemento, bairro, cidade, estado,
         plan_type: 'mensal',
         billing_type: paymentMethod,
       };

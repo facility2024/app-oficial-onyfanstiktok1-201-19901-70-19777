@@ -16,10 +16,6 @@ const formatCpf = (v: string) => {
   return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 };
 
-const formatCep = (v: string) => {
-  const d = v.replace(/\D/g, '').slice(0, 8);
-  return d.replace(/(\d{5})(\d)/, '$1-$2');
-};
 
 const formatCardNumber = (v: string) => {
   const d = v.replace(/\D/g, '').slice(0, 16);

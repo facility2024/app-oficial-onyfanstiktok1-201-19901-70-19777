@@ -91,13 +91,6 @@ const CheckoutPage = () => {
       if ((profile as any).phone) setPhone((profile as any).phone);
       if ((profile as any).cpf) setCpf(formatCpf((profile as any).cpf));
       if ((profile as any).billing_name) setBillingName((profile as any).billing_name);
-      if ((profile as any).cep) setCep(formatCep((profile as any).cep));
-      if ((profile as any).endereco) setEndereco((profile as any).endereco);
-      if ((profile as any).numero) setNumero((profile as any).numero);
-      if ((profile as any).complemento) setComplemento((profile as any).complemento);
-      if ((profile as any).bairro) setBairro((profile as any).bairro);
-      if ((profile as any).cidade) setCidade((profile as any).cidade);
-      if ((profile as any).estado) setEstado((profile as any).estado);
     }
   }, [profile]);
 

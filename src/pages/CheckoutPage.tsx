@@ -79,7 +79,6 @@ const CheckoutPage = () => {
   const [processing, setProcessing] = useState(false);
   const [polling, setPolling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [loadingCep, setLoadingCep] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // PIX/Boleto result

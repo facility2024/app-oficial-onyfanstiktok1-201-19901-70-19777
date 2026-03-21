@@ -1263,9 +1263,9 @@ export const TikTokApp = () => {
           isHighlighted: true,
           created_at: post.created_at,
           user: model ? {
-            id: model.id || post.modelo_id || 'unknown',
+             id: model.id || post.modelo_id || 'unknown',
             username: model.username || model.name || 'Usuário',
-            avatar_url: model.avatar_url || '',
+            avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
             followers_count: model.followers_count || 0,
             following_count: 0,
             is_online: chatPanelsMap[model.id] || false,

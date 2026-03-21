@@ -75,6 +75,7 @@ export const SideMenu = ({
                 src={video.user.avatar_url} 
                 alt={video.user.username}
                 className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'; }}
               />
             </div>
           ) : (

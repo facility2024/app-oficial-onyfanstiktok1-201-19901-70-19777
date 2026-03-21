@@ -1358,7 +1358,7 @@ export const TikTokApp = () => {
           user: ownerData ? {
             id: ownerData.id,
             username: ownerData.username || ownerData.name || 'Usuário',
-            avatar_url: ownerData.avatar_url || '',
+            avatar_url: ownerData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
             followers_count: ownerData.followers_count || 0,
             following_count: 0,
             is_online: ownerData.is_live || false,

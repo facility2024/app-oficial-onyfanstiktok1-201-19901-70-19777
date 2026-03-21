@@ -1755,9 +1755,9 @@ export const TikTokApp = () => {
         user_id: vData.model_id || '',
         music_name: vData.title || `Som original - ${model?.username || model?.name || 'Autor'}`,
         user: model ? {
-          id: model.id,
+           id: model.id,
           username: model.username || model.name || 'Usuário',
-          avatar_url: model.avatar_url || '',
+          avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
           followers_count: model.followers_count || 0,
           following_count: 0,
           is_online: model.is_live || false,

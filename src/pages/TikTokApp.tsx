@@ -1377,14 +1377,14 @@ export const TikTokApp = () => {
           }
         } as any;
       });
-      console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${validVideos.length} vídeos válidos`);
+      console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${enrichedVideos.length} vídeos válidos`);
 
       // Debug: Verificar quantos vídeos são de criadores
-      const creatorVideos = validVideos.filter((v: any) => v.creator_id);
-      const modelVideos = validVideos.filter((v: any) => v.model_id && !v.creator_id);
+      const creatorVideos = enrichedVideos.filter((v: any) => v.creator_id);
+      const modelVideos = enrichedVideos.filter((v: any) => v.model_id && !v.creator_id);
       console.log(`📊 Vídeos por tipo: ${creatorVideos.length} de criadores, ${modelVideos.length} de modelos`);
       console.log('🎨 Criadores com vídeos:', [...new Set(creatorVideos.map((v: any) => v.user?.username))]);
-      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
+      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...enrichedVideos];
       if (allContent.length > 0) {
         console.log(`🌟 ${processedScheduledPosts.length + processedMainPosts.length} conteúdos prioritários serão distribuídos sem repetir influencer no mesmo ciclo`);
 

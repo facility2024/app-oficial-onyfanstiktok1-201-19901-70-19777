@@ -399,7 +399,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         transformedVideos = [{
           id: `fallback-${user.id}`,
           title: `${user.username} - Vídeo Principal`,
-          thumbnail_url: user.avatar_url || '/placeholder.svg',
+          thumbnail_url: user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
           video_url: modelPanelUrl,
           type: 'video' as const,
           likes_count: 0,

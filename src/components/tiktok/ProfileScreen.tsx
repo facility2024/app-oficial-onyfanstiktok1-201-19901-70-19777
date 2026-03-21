@@ -399,7 +399,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         transformedVideos = [{
           id: `fallback-${user.id}`,
           title: `${user.username} - Vídeo Principal`,
-          thumbnail_url: user.avatar_url || '/placeholder.svg',
+          thumbnail_url: user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
           video_url: modelPanelUrl,
           type: 'video' as const,
           likes_count: 0,
@@ -631,9 +631,10 @@ if (!isOpen) return null;
             <div className="flex flex-col items-center pt-8 pb-4">
               <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
                 <img
-                  src={user.avatar_url || '/placeholder.svg'}
+                  src={user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
                   alt="Profile"
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'; }}
                 />
               </div>
             </div>

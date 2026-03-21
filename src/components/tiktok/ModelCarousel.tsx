@@ -153,6 +153,7 @@ export const ModelCarousel = ({
                   src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
                   alt={model.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'; }}
                 />
               </div>
               <p className="text-white text-xs text-center truncate">{model.name}</p>

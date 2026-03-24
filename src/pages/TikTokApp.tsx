@@ -2482,7 +2482,7 @@ export const TikTokApp = () => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
 
     // Primeiro tentar encontrar nos vídeos já carregados
-    const modelVideoIndex = videos.findIndex(video => video.user.id === modelId || video.model_id === modelId || video.creator_id === modelId);
+    const modelVideoIndex = videos.findIndex(video => video.user?.id === modelId || video.model_id === modelId || video.creator_id === modelId);
     if (modelVideoIndex !== -1) {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);

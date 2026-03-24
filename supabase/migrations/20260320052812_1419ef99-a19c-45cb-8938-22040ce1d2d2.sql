@@ -1,1 +1,0 @@
-DELETE FROM premium_users WHERE id = '8a660fce-f199-4a78-b8f2-e06d21b07023';

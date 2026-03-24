@@ -112,30 +112,11 @@ serve(async (req: Request) => {
 
     console.log(`[process-payment] Processing for ${userEmail}, type ${billing_type}, plan ${plan_type}`);
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    // Plan config - fetch price from admin_settings
-    let planValue = 19.90;
-    try {
-      const { data: planData } = await supabaseAdmin.from("admin_settings")
-        .select("setting_value")
-        .eq("setting_key", "vip_plans")
-        .maybeSingle();
-      if (planData?.setting_value) {
-        const plans = planData.setting_value as any;
-        if (plans?.mensal?.price && Number(plans.mensal.price) > 0) {
-          planValue = Number(plans.mensal.price);
-        }
-      }
-    } catch (e) {
-      console.log("[process-payment] Could not fetch admin plan price, using default");
-    }
-    console.log(`[process-payment] Plan price: ${planValue}`);
-
-    const plan = { value: planValue, cycle: "MONTHLY", description: "Assinatura VIP Mensal - CocoNudi" };
+    // Plan config
+    const planConfig: Record<string, { value: number; cycle: string; description: string }> = {
+      mensal: { value: 19.90, cycle: "MONTHLY", description: "Assinatura VIP Mensal - CocoNudi" },
+    };
+    const plan = planConfig[plan_type] || planConfig.mensal;
 
     // 1. Search/create Asaas customer
     let customerId: string;
@@ -203,6 +184,10 @@ serve(async (req: Request) => {
       console.log(`[process-payment] Customer created: ${customerId}`);
     }
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
     // Update profile with billing info
     await supabaseAdmin.from("profiles").update({

@@ -1173,11 +1173,11 @@ export const TikTokApp = () => {
         scheduled_next_queue_index: nextQueueIndex,
         created_at: post.data_publicacao || post.created_at,
         user: model ? {
-            id: model.id || post.modelo_id || 'unknown',
-            username: model.username || model.name || 'Usuário',
-            avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
-            followers_count: model.followers_count || 0,
-            following_count: 0,
+          id: model.id || post.modelo_id || 'unknown',
+          username: model.username || model.name || 'Usuário',
+          avatar_url: model.avatar_url || '',
+          followers_count: model.followers_count || 0,
+          following_count: 0,
           is_online: chatPanelsMap[model.id] || false,
           bio: model.bio || '',
           posting_panel_url: model.posting_panel_url || '',
@@ -1263,9 +1263,9 @@ export const TikTokApp = () => {
           isHighlighted: true,
           created_at: post.created_at,
           user: model ? {
-             id: model.id || post.modelo_id || 'unknown',
+            id: model.id || post.modelo_id || 'unknown',
             username: model.username || model.name || 'Usuário',
-            avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: model.avatar_url || '',
             followers_count: model.followers_count || 0,
             following_count: 0,
             is_online: chatPanelsMap[model.id] || false,
@@ -1358,7 +1358,7 @@ export const TikTokApp = () => {
           user: ownerData ? {
             id: ownerData.id,
             username: ownerData.username || ownerData.name || 'Usuário',
-            avatar_url: ownerData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: ownerData.avatar_url || '',
             followers_count: ownerData.followers_count || 0,
             following_count: 0,
             is_online: ownerData.is_live || false,
@@ -1377,14 +1377,14 @@ export const TikTokApp = () => {
           }
         } as any;
       });
-      console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${enrichedVideos.length} vídeos válidos`);
+      console.log(`✅ Conteúdo processado: ${processedScheduledPosts.length} posts agendados, ${processedMainPosts.length} posts principais, ${validVideos.length} vídeos válidos`);
 
       // Debug: Verificar quantos vídeos são de criadores
-      const creatorVideos = enrichedVideos.filter((v: any) => v.creator_id);
-      const modelVideos = enrichedVideos.filter((v: any) => v.model_id && !v.creator_id);
+      const creatorVideos = validVideos.filter((v: any) => v.creator_id);
+      const modelVideos = validVideos.filter((v: any) => v.model_id && !v.creator_id);
       console.log(`📊 Vídeos por tipo: ${creatorVideos.length} de criadores, ${modelVideos.length} de modelos`);
       console.log('🎨 Criadores com vídeos:', [...new Set(creatorVideos.map((v: any) => v.user?.username))]);
-      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...enrichedVideos];
+      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
       if (allContent.length > 0) {
         console.log(`🌟 ${processedScheduledPosts.length + processedMainPosts.length} conteúdos prioritários serão distribuídos sem repetir influencer no mesmo ciclo`);
 
@@ -1755,9 +1755,9 @@ export const TikTokApp = () => {
         user_id: vData.model_id || '',
         music_name: vData.title || `Som original - ${model?.username || model?.name || 'Autor'}`,
         user: model ? {
-           id: model.id,
+          id: model.id,
           username: model.username || model.name || 'Usuário',
-          avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          avatar_url: model.avatar_url || '',
           followers_count: model.followers_count || 0,
           following_count: 0,
           is_online: model.is_live || false,

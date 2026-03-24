@@ -141,8 +141,8 @@ serve(async (req: Request) => {
     const approvedStatuses = [
       "approved", "paid", "completed", "confirmed", "success", "active",
       "payment_confirmed", "charge.completed",
-      // Asaas events - only confirmed payments, NOT payment_created (just means charge was generated)
-      "payment_received", "payment_confirmed"
+      // Asaas events
+      "payment_received", "payment_confirmed", "payment_created"
     ];
     const isApproved = approvedStatuses.some(s => status.includes(s)) || !status;
 

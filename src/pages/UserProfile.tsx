@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Heart, MessageCircle, Users, CheckCircle, Crown, LogOut } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X, Sparkles, Settings, Heart, MessageCircle, Users, CheckCircle, Crown } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -526,24 +526,8 @@ export default function UserProfile() {
             </div>
           )}
         </div>
-
-        {/* Logout button */}
-        <div className="mt-8 pb-8">
-          <Button
-            variant="outline"
-            className="w-full bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300"
-            onClick={() => {
-              sessionStorage.setItem('logging_out', 'true');
-              supabase.auth.signOut().then(() => {
-                navigate('/auth');
-              });
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair da plataforma
-          </Button>
-        </div>
       </div>
+
     </div>
   );
 }

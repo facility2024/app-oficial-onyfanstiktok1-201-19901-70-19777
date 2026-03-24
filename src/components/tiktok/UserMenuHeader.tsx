@@ -1,7 +1,8 @@
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';
-import { User, Crown } from 'lucide-react';
+import { User, Crown, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 

@@ -66,6 +66,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [profileVideoCallUrl, setProfileVideoCallUrl] = useState('');
   const [profileLiveActive, setProfileLiveActive] = useState(false);
   const [profileLiveUrl, setProfileLiveUrl] = useState('');
+  const [freshAvatar, setFreshAvatar] = useState<string | null>(null);
   
   const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
   const navigate = useNavigate();

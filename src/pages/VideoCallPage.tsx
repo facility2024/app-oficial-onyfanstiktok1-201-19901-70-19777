@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
@@ -102,7 +103,7 @@ export const VideoCallPage = () => {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <img
-                        src={model.model_avatar || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                        src={model.model_avatar || DEFAULT_AVATAR}
                         alt={model.model_name}
                         className="w-full h-full object-cover"
                       />
@@ -116,7 +117,7 @@ export const VideoCallPage = () => {
                 <div className="p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     <img
-                      src={model.model_avatar || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                      src={model.model_avatar || DEFAULT_AVATAR}
                       alt={model.model_name}
                       className="w-10 h-10 rounded-full object-cover border border-pink-500"
                     />

@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -165,7 +166,7 @@ export const LiveInterface = () => {
         video_id: comment.video_id,
         likes_count: comment.likes_count || 0,
         created_at: comment.created_at,
-        user: { username: 'Anônimo', avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png' }
+        user: { username: 'Anônimo', avatar_url: DEFAULT_AVATAR }
       }));
       
       setComments(formattedComments);

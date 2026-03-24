@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,6 +82,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   } = useModelSubscription(user.id);
   
   useEffect(() => {
+    setFreshAvatar(null);
     if (isOpen && user.id) {
       Promise.all([
         loadModelContent(),
@@ -651,10 +653,10 @@ if (!isOpen) return null;
             <div className="flex flex-col items-center pt-8 pb-4">
             <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
                 <img
-                  src={freshAvatar || user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                  src={freshAvatar || user.avatar_url || DEFAULT_AVATAR}
                   alt="Profile"
                   className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'; }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                 />
               </div>
             </div>

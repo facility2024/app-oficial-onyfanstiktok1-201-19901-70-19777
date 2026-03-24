@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -301,7 +302,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
             <div 
               className="h-20 w-full rounded-lg bg-cover bg-center bg-no-repeat flex items-center justify-center flex-shrink-0"
               style={{
-                backgroundImage: 'url("/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png")',
+                backgroundImage: `url("${DEFAULT_AVATAR}")`,
                 backgroundColor: 'rgba(0, 0, 0, 0.9)'
               }}
             >

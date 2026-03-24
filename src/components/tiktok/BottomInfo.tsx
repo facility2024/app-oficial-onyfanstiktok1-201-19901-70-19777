@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
 import { Coffee, Crown, Lock } from 'lucide-react';
 import { VinylRecord } from './VinylRecord';
@@ -31,7 +32,7 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden shrink-0">
           <img
-            src={video.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+            src={video.user?.avatar_url || DEFAULT_AVATAR}
             alt="User Avatar"
             className="w-full h-full object-cover"
           />

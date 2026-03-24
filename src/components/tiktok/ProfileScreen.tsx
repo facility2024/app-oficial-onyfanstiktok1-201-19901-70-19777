@@ -82,13 +82,32 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   
   useEffect(() => {
     if (isOpen && user.id) {
-      // Load in parallel for faster initial render
       Promise.all([
         loadModelContent(),
         checkFollowingStatus(),
         checkCreatorStatus(),
         loadServiceStatus()
       ]);
+      // Fetch fresh avatar from DB
+      (async () => {
+        const { data: model } = await supabase
+          .from('models')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (model?.avatar_url) {
+          setFreshAvatar(model.avatar_url);
+        } else {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (profile?.avatar_url) {
+            setFreshAvatar(profile.avatar_url);
+          }
+        }
+      })();
     }
   }, [isOpen, user.id]);
 

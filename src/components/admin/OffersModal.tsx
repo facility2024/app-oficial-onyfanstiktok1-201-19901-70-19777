@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
@@ -74,7 +75,7 @@ export const OffersModal = ({ isOpen, onClose, selectedContent }: OffersModalPro
     <div 
       className="fixed inset-0 z-[9999]"
       style={{
-        backgroundImage: formData.productImage ? `url("${formData.productImage}")` : 'url("/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png")',
+        backgroundImage: formData.productImage ? `url("${formData.productImage}")` : `url("${DEFAULT_AVATAR}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'

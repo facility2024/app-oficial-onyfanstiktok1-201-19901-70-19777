@@ -97,6 +97,30 @@ const CheckoutPage = () => {
   const [pixData, setPixData] = useState<{ qrCodeUrl?: string; payload?: string; expirationDate?: string } | null>(null);
   const [boletoData, setBoletoData] = useState<{ bankSlipUrl?: string; barCode?: string; dueDate?: string } | null>(null);
 
+  // Dynamic plan price from admin_settings
+  const [planPrice, setPlanPrice] = useState<number>(19.90);
+
+  useEffect(() => {
+    const fetchPlanPrice = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'vip_plans')
+          .maybeSingle();
+        if (data?.setting_value) {
+          const plans = data.setting_value as any;
+          if (plans?.mensal?.price) {
+            setPlanPrice(Number(plans.mensal.price));
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching plan price:', e);
+      }
+    };
+    fetchPlanPrice();
+  }, []);
+
   // Prefill from profile
   useEffect(() => {
     if (profile) {
@@ -343,7 +367,7 @@ const CheckoutPage = () => {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-amber-400">R$ 19,90</p>
+            <p className="text-2xl font-bold text-amber-400">R$ {planPrice.toFixed(2).replace('.', ',')}</p>
             <p className="text-gray-500 text-xs">/mês</p>
           </div>
         </div>
@@ -618,11 +642,11 @@ const CheckoutPage = () => {
             {processing ? (
               <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processando...</>
             ) : paymentMethod === 'PIX' ? (
-              <><QrCode className="w-5 h-5 mr-2" />Gerar PIX - R$ 19,90</>
+              <><QrCode className="w-5 h-5 mr-2" />Gerar PIX - R$ {planPrice.toFixed(2).replace('.', ',')}</>
             ) : paymentMethod === 'BOLETO' ? (
-              <><FileText className="w-5 h-5 mr-2" />Gerar Boleto - R$ 19,90</>
+              <><FileText className="w-5 h-5 mr-2" />Gerar Boleto - R$ {planPrice.toFixed(2).replace('.', ',')}</>
             ) : (
-              <><ShieldCheck className="w-5 h-5 mr-2" />Finalizar Pagamento - R$ 19,90</>
+              <><ShieldCheck className="w-5 h-5 mr-2" />Finalizar Pagamento - R$ {planPrice.toFixed(2).replace('.', ',')}</>
             )}
           </Button>
           <p className="text-center text-gray-500 text-xs mt-2">

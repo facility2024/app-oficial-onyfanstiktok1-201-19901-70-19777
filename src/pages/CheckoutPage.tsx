@@ -642,11 +642,11 @@ const CheckoutPage = () => {
             {processing ? (
               <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processando...</>
             ) : paymentMethod === 'PIX' ? (
-              <><QrCode className="w-5 h-5 mr-2" />Gerar PIX - R$ 19,90</>
+              <><QrCode className="w-5 h-5 mr-2" />Gerar PIX - R$ {planPrice.toFixed(2).replace('.', ',')}</>
             ) : paymentMethod === 'BOLETO' ? (
-              <><FileText className="w-5 h-5 mr-2" />Gerar Boleto - R$ 19,90</>
+              <><FileText className="w-5 h-5 mr-2" />Gerar Boleto - R$ {planPrice.toFixed(2).replace('.', ',')}</>
             ) : (
-              <><ShieldCheck className="w-5 h-5 mr-2" />Finalizar Pagamento - R$ 19,90</>
+              <><ShieldCheck className="w-5 h-5 mr-2" />Finalizar Pagamento - R$ {planPrice.toFixed(2).replace('.', ',')}</>
             )}
           </Button>
           <p className="text-center text-gray-500 text-xs mt-2">

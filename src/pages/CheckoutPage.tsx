@@ -97,6 +97,30 @@ const CheckoutPage = () => {
   const [pixData, setPixData] = useState<{ qrCodeUrl?: string; payload?: string; expirationDate?: string } | null>(null);
   const [boletoData, setBoletoData] = useState<{ bankSlipUrl?: string; barCode?: string; dueDate?: string } | null>(null);
 
+  // Dynamic plan price from admin_settings
+  const [planPrice, setPlanPrice] = useState<number>(19.90);
+
+  useEffect(() => {
+    const fetchPlanPrice = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'vip_plans')
+          .maybeSingle();
+        if (data?.setting_value) {
+          const plans = data.setting_value as any;
+          if (plans?.mensal?.price) {
+            setPlanPrice(Number(plans.mensal.price));
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching plan price:', e);
+      }
+    };
+    fetchPlanPrice();
+  }, []);
+
   // Prefill from profile
   useEffect(() => {
     if (profile) {

@@ -1275,7 +1275,7 @@ export const TikTokApp = () => {
           } : {
             id: post.modelo_id || 'unknown',
             username: post.modelo_username || 'Usuário',
-            avatar_url: '',
+            avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
             followers_count: 0,
             following_count: 0,
             is_online: false,
@@ -1358,7 +1358,7 @@ export const TikTokApp = () => {
           user: ownerData ? {
             id: ownerData.id,
             username: ownerData.username || ownerData.name || 'Usuário',
-            avatar_url: ownerData.avatar_url || '',
+            avatar_url: ownerData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
             followers_count: ownerData.followers_count || 0,
             following_count: 0,
             is_online: ownerData.is_live || false,
@@ -1757,7 +1757,7 @@ export const TikTokApp = () => {
         user: model ? {
           id: model.id,
           username: model.username || model.name || 'Usuário',
-          avatar_url: model.avatar_url || '',
+          avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
           followers_count: model.followers_count || 0,
           following_count: 0,
           is_online: model.is_live || false,
@@ -1765,7 +1765,7 @@ export const TikTokApp = () => {
         } : {
           id: vData.model_id || '',
           username: vData.title || 'Usuário',
-          avatar_url: '',
+          avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
           followers_count: 0,
           following_count: 0,
           is_online: false,

@@ -629,11 +629,12 @@ if (!isOpen) return null;
             
             {/* Avatar Centralizado */}
             <div className="flex flex-col items-center pt-8 pb-4">
-              <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
+            <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
                 <img
-                  src={user.avatar_url || '/placeholder.svg'}
+                  src={freshAvatar || user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
                   alt="Profile"
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'; }}
                 />
               </div>
             </div>

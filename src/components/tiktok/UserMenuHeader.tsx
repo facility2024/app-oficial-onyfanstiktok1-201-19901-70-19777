@@ -1,8 +1,7 @@
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';
-import { User, Crown, LogOut } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { User, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -64,28 +63,14 @@ export const UserMenuHeader = () => {
         </div>
       </div>
 
-      {/* Botões de Ação */}
-      <div className="flex gap-2">
-        <Button 
-          onClick={() => navigate('/profile')} 
-          className="flex-1 text-white hover:opacity-90 transition-opacity"
-          style={{ background: 'linear-gradient(to right, #C4842E, #8B4513)' }}
-        >
-          <User className="w-4 h-4 mr-2" />
-          Ver Perfil
-        </Button>
-        <Button
-          variant="outline"
-          onClick={async () => {
-            sessionStorage.setItem('logging_out', 'true');
-            await supabase.auth.signOut();
-            navigate('/auth');
-          }}
-          className="border-white/20 text-white hover:bg-white/10 transition-colors"
-          title="Sair"
-        >
-          <LogOut className="w-4 h-4" />
-        </Button>
-      </div>
+      {/* Botão de Ação */}
+      <Button 
+        onClick={() => navigate('/profile')} 
+        className="w-full text-white hover:opacity-90 transition-opacity"
+        style={{ background: 'linear-gradient(to right, #C4842E, #8B4513)' }}
+      >
+        <User className="w-4 h-4 mr-2" />
+        Ver Perfil
+      </Button>
     </div>;
 };

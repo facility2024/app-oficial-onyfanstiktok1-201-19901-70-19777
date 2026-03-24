@@ -82,6 +82,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   } = useModelSubscription(user.id);
   
   useEffect(() => {
+    setFreshAvatar(null);
     if (isOpen && user.id) {
       Promise.all([
         loadModelContent(),

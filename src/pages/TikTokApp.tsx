@@ -431,7 +431,7 @@ export const TikTokApp = () => {
     setCurrentVideoIndex(displayVideos.length - 1);
   }, [currentVideoIndex, displayVideos.length]);
 
-  const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png', followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
+  const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
   const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
 
@@ -1185,7 +1185,7 @@ export const TikTokApp = () => {
         } : {
           id: post.modelo_id || 'unknown',
           username: post.modelo_username || 'Usuário',
-          avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          avatar_url: DEFAULT_AVATAR,
           followers_count: 0,
           following_count: 0,
           is_online: false,
@@ -1275,7 +1275,7 @@ export const TikTokApp = () => {
           } : {
             id: post.modelo_id || 'unknown',
             username: post.modelo_username || 'Usuário',
-            avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: DEFAULT_AVATAR,
             followers_count: 0,
             following_count: 0,
             is_online: false,
@@ -1335,7 +1335,7 @@ export const TikTokApp = () => {
             id: owner.id,
             username: displayName,
             name: displayName,
-            avatar_url: owner.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: owner.avatar_url || DEFAULT_AVATAR,
             followers_count: 0,
             is_live: false,
             bio: owner.bio || '',
@@ -1358,7 +1358,7 @@ export const TikTokApp = () => {
           user: ownerData ? {
             id: ownerData.id,
             username: ownerData.username || ownerData.name || 'Usuário',
-            avatar_url: ownerData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: ownerData.avatar_url || DEFAULT_AVATAR,
             followers_count: ownerData.followers_count || 0,
             following_count: 0,
             is_online: ownerData.is_live || false,
@@ -1368,7 +1368,7 @@ export const TikTokApp = () => {
           } : {
             id: video.creator_id || video.model_id || '',
             username: video.creator_id ? 'Criador' : 'Modelo',
-            avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: DEFAULT_AVATAR,
             followers_count: 0,
             following_count: 0,
             is_online: false,
@@ -1757,7 +1757,7 @@ export const TikTokApp = () => {
         user: model ? {
           id: model.id,
           username: model.username || model.name || 'Usuário',
-          avatar_url: model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          avatar_url: model.avatar_url || DEFAULT_AVATAR,
           followers_count: model.followers_count || 0,
           following_count: 0,
           is_online: model.is_live || false,
@@ -1765,7 +1765,7 @@ export const TikTokApp = () => {
         } : {
           id: vData.model_id || '',
           username: vData.title || 'Usuário',
-          avatar_url: '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          avatar_url: DEFAULT_AVATAR,
           followers_count: 0,
           following_count: 0,
           is_online: false,
@@ -1857,7 +1857,7 @@ export const TikTokApp = () => {
         const profile = profilesMap.get(comment.user_id);
 
         // ✅ Buscar avatar do localStorage ou usar padrão
-        const avatarUrl = localStorage.getItem(`avatar_${comment.user_id}`) || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png';
+        const avatarUrl = localStorage.getItem(`avatar_${comment.user_id}`) || DEFAULT_AVATAR;
         return {
           id: comment.id,
           text: comment.content || comment.text || '',
@@ -2544,7 +2544,7 @@ export const TikTokApp = () => {
           user: {
             id: profile.id,
             username: profile.username || profile.name || 'Criador',
-            avatar_url: profile.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: profile.avatar_url || DEFAULT_AVATAR,
             followers_count: 0,
             following_count: 0,
             is_online: false,
@@ -2616,7 +2616,7 @@ export const TikTokApp = () => {
             user: {
               id: modelData.id,
               username: modelData.username,
-              avatar_url: modelData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+              avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
               followers_count: modelData.followers_count || 0,
               following_count: 0,
               is_online: modelData.is_live || false,
@@ -2667,7 +2667,7 @@ export const TikTokApp = () => {
             user: {
               id: modelData.id,
               username: modelData.username,
-              avatar_url: modelData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+              avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
               followers_count: modelData.followers_count || 0,
               following_count: 0,
               is_online: modelData.is_live || false,
@@ -2704,7 +2704,7 @@ export const TikTokApp = () => {
           user: {
             id: modelData.id,
             username: modelData.username,
-            avatar_url: modelData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+            avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
             followers_count: modelData.followers_count || 0,
             following_count: 0,
             is_online: modelData.is_live || false,
@@ -2741,7 +2741,7 @@ export const TikTokApp = () => {
         user: {
           id: modelData.id,
           username: modelData.username,
-          avatar_url: modelData.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
           followers_count: modelData.followers_count || 0,
           following_count: 0,
           is_online: modelData.is_live || false,

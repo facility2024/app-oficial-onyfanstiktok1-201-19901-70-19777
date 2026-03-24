@@ -101,7 +101,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
           id: c.id,
           name: displayName,
           username: displayName,
-          avatar_url: c.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png',
+          avatar_url: c.avatar_url || DEFAULT_AVATAR,
           followers_count: 0,
           is_live: false,
           is_verified: true,
@@ -188,7 +188,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
                 >
                   <div className="relative">
                     <img
-                      src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                      src={model.avatar_url || DEFAULT_AVATAR}
                       alt={model.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />

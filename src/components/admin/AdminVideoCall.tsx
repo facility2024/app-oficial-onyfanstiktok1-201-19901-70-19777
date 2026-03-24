@@ -227,7 +227,7 @@ export const AdminVideoCall = () => {
                         className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-white/10 transition-colors ${form.selected_model_id === m.id ? 'bg-pink-500/20 border-l-2 border-pink-500' : ''}`}
                       >
                         <img
-                          src={m.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                          src={m.avatar_url || DEFAULT_AVATAR}
                           alt={m.name}
                           className="w-10 h-10 rounded-full object-cover border border-pink-500/50"
                         />
@@ -301,7 +301,7 @@ export const AdminVideoCall = () => {
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-3">
                 <img
-                  src={model.model_avatar || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                  src={model.model_avatar || DEFAULT_AVATAR}
                   alt={model.model_name}
                   className="w-12 h-12 rounded-full object-cover border border-pink-500"
                 />

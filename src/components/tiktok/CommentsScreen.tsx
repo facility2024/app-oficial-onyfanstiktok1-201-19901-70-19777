@@ -123,7 +123,7 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
                   className="flex gap-3"
                 >
                   <img
-                    src={comment.user?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                    src={comment.user?.avatar_url || DEFAULT_AVATAR}
                     alt="User"
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                   />
@@ -166,7 +166,7 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
         {/* User Avatar */}
         <div className="flex-shrink-0 relative">
           <img
-            src={profile?.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+            src={profile?.avatar_url || DEFAULT_AVATAR}
             alt={profile?.username || user?.email || 'Meu perfil'}
             className={`w-8 h-8 rounded-full object-cover ${isPremium ? 'ring-2 ring-amber-400' : ''}`}
           />

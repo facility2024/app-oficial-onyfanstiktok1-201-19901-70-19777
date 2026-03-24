@@ -152,7 +152,7 @@ export const AdminLive = () => {
                 <div className="flex items-center gap-3 mb-3">
                   <div className="relative">
                     <img
-                      src={live.model_avatar || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                      src={live.model_avatar || DEFAULT_AVATAR}
                       alt={live.manual_name || live.model_name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -222,7 +222,7 @@ export const AdminLive = () => {
                 {selectedModel ? (
                   <div className="flex items-center gap-2">
                     <img
-                      src={selectedModel.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                      src={selectedModel.avatar_url || DEFAULT_AVATAR}
                       alt={selectedModel.name}
                       className="w-6 h-6 rounded-full object-cover"
                     />
@@ -343,7 +343,7 @@ export const AdminLive = () => {
                   }`}
                 >
                   <img
-                    src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                    src={model.avatar_url || DEFAULT_AVATAR}
                     alt={model.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />

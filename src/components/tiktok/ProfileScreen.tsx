@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';

@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
 import { Coffee, Crown, Lock } from 'lucide-react';
 import { VinylRecord } from './VinylRecord';

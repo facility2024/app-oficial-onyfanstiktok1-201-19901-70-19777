@@ -6,6 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const normalizeAsaasBaseUrl = (url: string) => {
+  const trimmed = url.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  if (trimmed.includes("api.asaas.com/api/v3")) {
+    return trimmed.replace("api.asaas.com/api/v3", "api.asaas.com/v3");
+  }
+  if (trimmed.endsWith("/v3") || trimmed.endsWith("/api/v3")) return trimmed;
+  if (trimmed.includes("sandbox.asaas.com")) return `${trimmed}/api/v3`;
+  if (trimmed.includes("api.asaas.com")) return `${trimmed}/v3`;
+  return trimmed;
+};
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -13,11 +25,10 @@ serve(async (req: Request) => {
 
   try {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://api.asaas.com/api/v3";
+    let ASAAS_BASE_URL = normalizeAsaasBaseUrl(Deno.env.get("ASAAS_BASE_URL") || "https://api.asaas.com/v3");
 
     if (!ASAAS_API_KEY) throw new Error("ASAAS_API_KEY não configurada");
 
-    // Validate JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -39,30 +50,57 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { subscription_id } = body;
+    const { subscription_id, payment_id } = body;
+    const lookupId = subscription_id || payment_id;
 
-    if (!subscription_id) {
-      return new Response(JSON.stringify({ error: "subscription_id obrigatório" }), {
+    if (!lookupId) {
+      return new Response(JSON.stringify({ error: "subscription_id ou payment_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check subscription status on Asaas
-    const res = await fetch(`${ASAAS_BASE_URL}/subscriptions/${subscription_id}`, {
+    // Determine if it's a subscription or single payment
+    const isPayment = !!payment_id || lookupId.startsWith("pay_");
+    const endpoint = isPayment
+      ? `${ASAAS_BASE_URL}/payments/${lookupId}`
+      : `${ASAAS_BASE_URL}/subscriptions/${lookupId}`;
+
+    console.log(`[check-payment-status] Checking ${isPayment ? 'payment' : 'subscription'}: ${lookupId} at ${endpoint}`);
+
+    const res = await fetch(endpoint, {
       headers: { access_token: ASAAS_API_KEY },
     });
-    const data = await res.json();
+
+    const resText = await res.text();
+    console.log(`[check-payment-status] Response status: ${res.status}, body length: ${resText.length}`);
+
+    if (!resText || resText.trim().length === 0) {
+      throw new Error(`Resposta vazia do gateway (status ${res.status})`);
+    }
+
+    let data: any;
+    try {
+      data = JSON.parse(resText);
+    } catch (e) {
+      console.error(`[check-payment-status] Invalid JSON: ${resText.substring(0, 200)}`);
+      throw new Error(`Resposta inválida do gateway de pagamento`);
+    }
 
     if (!res.ok) {
-      throw new Error(`Erro ao consultar assinatura: ${JSON.stringify(data)}`);
+      console.error(`[check-payment-status] API error: ${JSON.stringify(data)}`);
+      throw new Error(`Erro ao consultar status: ${data.errors?.[0]?.description || JSON.stringify(data)}`);
     }
 
     // Map status
+    const approvedStatuses = ["ACTIVE", "CONFIRMED", "RECEIVED", "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"];
+    const rejectedStatuses = ["OVERDUE", "INACTIVE", "EXPIRED", "REFUNDED", "DELETED"];
+
     let mappedStatus = "PENDING";
-    if (["ACTIVE", "CONFIRMED", "RECEIVED"].includes(data.status)) {
+    const asaasStatus = data.status || "";
+
+    if (approvedStatuses.includes(asaasStatus)) {
       mappedStatus = "APPROVED";
 
-      // Activate VIP if approved
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -80,18 +118,20 @@ serve(async (req: Request) => {
         expires_at: expDate.toISOString(),
       } as any, { onConflict: "user_id" });
 
-      // Update payment status
-      await supabaseAdmin.from("payments")
-        .update({ status: "CONFIRMED", paid_at: new Date().toISOString() })
-        .eq("asaas_subscription_id", subscription_id)
-        .eq("user_id", user.id);
+      // Update payment record
+      const updateFilter = isPayment
+        ? supabaseAdmin.from("payments").update({ status: "CONFIRMED", paid_at: new Date().toISOString() }).eq("asaas_payment_id", lookupId).eq("user_id", user.id)
+        : supabaseAdmin.from("payments").update({ status: "CONFIRMED", paid_at: new Date().toISOString() }).eq("asaas_subscription_id", lookupId).eq("user_id", user.id);
 
-    } else if (["OVERDUE", "INACTIVE", "EXPIRED"].includes(data.status)) {
+      await updateFilter;
+
+      console.log(`[check-payment-status] VIP activated for ${user.email}`);
+    } else if (rejectedStatuses.includes(asaasStatus)) {
       mappedStatus = "REJECTED";
     }
 
     return new Response(
-      JSON.stringify({ success: true, status: mappedStatus, asaasStatus: data.status }),
+      JSON.stringify({ success: true, status: mappedStatus, asaasStatus }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

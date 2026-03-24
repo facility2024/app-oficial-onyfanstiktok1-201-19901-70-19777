@@ -112,10 +112,42 @@ serve(async (req: Request) => {
 
     console.log(`[process-payment] Processing for ${userEmail}, type ${billing_type}, plan ${plan_type}`);
 
-    // Plan config
-    const planConfig: Record<string, { value: number; cycle: string; description: string }> = {
-      mensal: { value: 19.90, cycle: "MONTHLY", description: "Assinatura VIP Mensal - CocoNudi" },
+    // Fetch plan config from admin_settings (dynamic pricing)
+    const adminSupabaseForPlans = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+    const { data: plansSetting } = await adminSupabaseForPlans
+      .from("admin_settings")
+      .select("setting_value")
+      .eq("setting_key", "vip_plans")
+      .maybeSingle();
+
+    const defaultPlanConfig: Record<string, { value: number; cycle: string; description: string }> = {
+      mensal: { value: 19.99, cycle: "MONTHLY", description: "Assinatura VIP Mensal - CocoNudi" },
+      trimestral: { value: 49.99, cycle: "QUARTERLY", description: "Assinatura VIP Trimestral - CocoNudi" },
+      anual: { value: 149.99, cycle: "YEARLY", description: "Assinatura VIP Anual - CocoNudi" },
     };
+
+    let planConfig = defaultPlanConfig;
+
+    if (plansSetting?.setting_value) {
+      const dbPlans = plansSetting.setting_value as Record<string, any>;
+      for (const key of Object.keys(dbPlans)) {
+        if (dbPlans[key]?.price !== undefined) {
+          const cycleMap: Record<string, string> = { mensal: "MONTHLY", trimestral: "QUARTERLY", anual: "YEARLY" };
+          planConfig[key] = {
+            value: Number(dbPlans[key].price),
+            cycle: cycleMap[key] || "MONTHLY",
+            description: `Assinatura VIP ${key.charAt(0).toUpperCase() + key.slice(1)} - CocoNudi`,
+          };
+        }
+      }
+      console.log(`[process-payment] Loaded plans from admin_settings: ${JSON.stringify(Object.keys(planConfig).map(k => `${k}=${planConfig[k].value}`))}`);
+    } else {
+      console.log(`[process-payment] Using default plan config (no admin_settings found)`);
+    }
+
     const plan = planConfig[plan_type] || planConfig.mensal;
 
     // 1. Search/create Asaas customer

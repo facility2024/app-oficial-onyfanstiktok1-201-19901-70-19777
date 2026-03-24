@@ -66,6 +66,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [profileVideoCallUrl, setProfileVideoCallUrl] = useState('');
   const [profileLiveActive, setProfileLiveActive] = useState(false);
   const [profileLiveUrl, setProfileLiveUrl] = useState('');
+  const [freshAvatar, setFreshAvatar] = useState<string | null>(null);
   
   const { followCreator, checkIfFollowing: checkCreatorFollow } = useCreatorFollow();
   const navigate = useNavigate();
@@ -81,13 +82,32 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   
   useEffect(() => {
     if (isOpen && user.id) {
-      // Load in parallel for faster initial render
       Promise.all([
         loadModelContent(),
         checkFollowingStatus(),
         checkCreatorStatus(),
         loadServiceStatus()
       ]);
+      // Fetch fresh avatar from DB
+      (async () => {
+        const { data: model } = await supabase
+          .from('models')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (model?.avatar_url) {
+          setFreshAvatar(model.avatar_url);
+        } else {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (profile?.avatar_url) {
+            setFreshAvatar(profile.avatar_url);
+          }
+        }
+      })();
     }
   }, [isOpen, user.id]);
 
@@ -629,11 +649,12 @@ if (!isOpen) return null;
             
             {/* Avatar Centralizado */}
             <div className="flex flex-col items-center pt-8 pb-4">
-              <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
+            <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden">
                 <img
-                  src={user.avatar_url || '/placeholder.svg'}
+                  src={freshAvatar || user.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
                   alt="Profile"
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'; }}
                 />
               </div>
             </div>

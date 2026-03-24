@@ -259,8 +259,9 @@ const CheckoutPage = () => {
     const poll = async () => {
       attempts++;
       try {
+        const isPayment = paymentOrSubId.startsWith('pay_');
         const { data } = await supabase.functions.invoke('check-payment-status', {
-          body: { subscription_id: paymentOrSubId },
+          body: isPayment ? { payment_id: paymentOrSubId } : { subscription_id: paymentOrSubId },
         });
 
         if (data?.status === 'APPROVED') {

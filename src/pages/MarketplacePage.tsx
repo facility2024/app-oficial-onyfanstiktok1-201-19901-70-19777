@@ -350,6 +350,7 @@ export default function MarketplacePage() {
   const [modelsToShow, setModelsToShow] = useState(12);
   const [productsToShow, setProductsToShow] = useState(15);
   const [dynamicGenres, setDynamicGenres] = useState<{name: string; icon: string}[]>([]);
+  const [stores, setStores] = useState<any[]>([]);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -376,11 +377,26 @@ export default function MarketplacePage() {
     }
   };
   
+  const fetchStores = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('marketplace_stores')
+        .select('id, name, slug, logo_url, description, is_verified')
+        .eq('is_active', true)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+      if (!error && data) setStores(data);
+    } catch (err) {
+      console.error('Erro ao carregar lojas:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchAllModels();
     fetchFeaturedVideos();
     fetchMarketplaceGenres();
+    fetchStores();
     // Auto-selecionar gênero da URL
     if (genreFromUrl && !selectedGenre) {
       setSelectedGenre(genreFromUrl);
@@ -609,6 +625,46 @@ export default function MarketplacePage() {
           <BannerCarousel />
         </div>
       </div>
+
+      {/* LOJAS SaaS */}
+      {!selectedGenre && stores.length > 0 && (
+        <div className="container mx-auto px-4 py-6 border-t border-white/10">
+          <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
+            🏪 LOJAS
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {stores.map(store => (
+              <div
+                key={store.id}
+                className="bg-gray-900 rounded-xl overflow-hidden cursor-pointer group border border-white/10 hover:border-primary/40 transition-all"
+                onClick={() => navigate(`/marketplace/loja/${store.slug}`)}
+              >
+                <div className="aspect-square overflow-hidden bg-gray-800 flex items-center justify-center">
+                  {store.logo_url ? (
+                    <img
+                      src={store.logo_url}
+                      alt={store.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                    />
+                  ) : (
+                    <span className="text-4xl">🏪</span>
+                  )}
+                </div>
+                <div className="p-3 text-center">
+                  <p className="text-white text-sm font-semibold truncate flex items-center justify-center gap-1">
+                    {store.name}
+                    {store.is_verified && <span className="text-primary text-xs">✓</span>}
+                  </p>
+                  {store.description && (
+                    <p className="text-muted-foreground text-xs line-clamp-1 mt-0.5">{store.description}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* CATEGORIAS - Gênero */}
       <div className="container mx-auto px-4 py-6 border-t border-white/10">

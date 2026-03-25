@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // store page
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Store, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

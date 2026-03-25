@@ -1,13 +1,31 @@
 
 
-## Adicionar "Lojas SaaS" ao menu lateral do Admin
+## Plano: Vincular produtos à CocoLoja e exibir lojas SaaS no Marketplace
 
-### Problema
-O item "Lojas SaaS" (`stores`) existe na navegação horizontal (`AdminNavigation.tsx`) mas **não foi adicionado** ao `AdminSidebar.tsx` no grupo "Negócios".
+### Parte 1: Vincular produtos existentes à loja Coconudi Brasil
 
-### Solução
-Adicionar `{ id: 'stores', label: 'Lojas SaaS', icon: Store }` ao grupo "Negócios" no `AdminSidebar.tsx`, logo após o item "Nossa Loja".
+Todos os `marketplace_products` têm `store_id = NULL`. A loja "Coconudi Brasil" já existe com id `4af1ce85-758a-4389-8c26-8c3cc9827f39`.
 
-### Arquivo alterado
-- `src/components/admin/AdminSidebar.tsx` — inserir uma linha no array `items` do grupo "Negócios"
+**Ação**: Executar UPDATE para setar `store_id` de todos os produtos existentes para a loja Coconudi Brasil.
+
+```sql
+UPDATE marketplace_products 
+SET store_id = '4af1ce85-758a-4389-8c26-8c3cc9827f39' 
+WHERE store_id IS NULL;
+```
+
+### Parte 2: Mostrar lojas SaaS no Marketplace
+
+Adicionar uma seção "Lojas" no `MarketplacePage.tsx` que:
+- Busca lojas ativas de `marketplace_stores`
+- Exibe cards com logo, nome e badge de verificação
+- Ao clicar, navega para `/marketplace/loja/:slug` (rota já existente via `StoreProfilePage`)
+
+**Arquivo editado**: `src/pages/MarketplacePage.tsx`
+- Novo state `stores` com fetch de `marketplace_stores` ativas
+- Nova seção "🏪 LOJAS" renderizada acima dos produtos, com grid de cards de lojas
+
+### Resultado
+- Produtos existentes ficam vinculados à CocoLoja
+- Novas lojas SaaS aparecem no marketplace público para os usuários navegarem
 

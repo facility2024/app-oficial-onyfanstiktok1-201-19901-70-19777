@@ -43,6 +43,9 @@ import LojaPage from "./pages/LojaPage";
 import LojaProdutoPage from "./pages/LojaProdutoPage";
 import PostagemPage from "./pages/PostagemPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import CreateStorePage from "./pages/CreateStorePage";
+import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
+import StoreProfilePage from "./pages/StoreProfilePage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -124,6 +127,19 @@ const App = () => (
           
           {/* Marketplace */}
           <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/marketplace/criar-loja" element={
+            <ProtectedRoute>
+              <CreateStorePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace/loja/:slug" element={<StoreProfilePage />} />
+          
+          {/* Dashboard do Lojista */}
+          <Route path="/minha-loja" element={
+            <ProtectedRoute>
+              <ShopkeeperDashboard />
+            </ProtectedRoute>
+          } />
           
           {/* Negócios Locais */}
           <Route path="/local-business" element={<LocalBusinessPage />} />

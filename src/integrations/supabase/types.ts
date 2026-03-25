@@ -3460,6 +3460,7 @@ export type Database = {
           name: string
           price: number
           stock: number
+          store_id: string | null
           total_reviews: number | null
           updated_at: string | null
           video_url: string | null
@@ -3476,6 +3477,7 @@ export type Database = {
           name: string
           price: number
           stock?: number
+          store_id?: string | null
           total_reviews?: number | null
           updated_at?: string | null
           video_url?: string | null
@@ -3492,11 +3494,20 @@ export type Database = {
           name?: string
           price?: number
           stock?: number
+          store_id?: string | null
           total_reviews?: number | null
           updated_at?: string | null
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketplace_reviews: {
         Row: {
@@ -3544,6 +3555,65 @@ export type Database = {
           {
             foreignKeyName: "marketplace_reviews_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_stores: {
+        Row: {
+          banner_url: string | null
+          commission_rate: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          logo_url: string | null
+          name: string
+          owner_id: string
+          slug: string
+          total_revenue: number
+          total_sales: number
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          commission_rate?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          slug: string
+          total_revenue?: number
+          total_sales?: number
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          commission_rate?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          slug?: string
+          total_revenue?: number
+          total_sales?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_stores_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -6697,6 +6767,50 @@ export type Database = {
           },
         ]
       }
+      store_payouts: {
+        Row: {
+          created_at: string
+          id: string
+          order_reference: string | null
+          paid_at: string | null
+          platform_fee: number
+          status: string
+          store_amount: number
+          store_id: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_reference?: string | null
+          paid_at?: string | null
+          platform_fee?: number
+          status?: string
+          store_amount?: number
+          store_id: string
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_reference?: string | null
+          paid_at?: string | null
+          platform_fee?: number
+          status?: string
+          store_amount?: number
+          store_id?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_payouts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           category: string | null
@@ -8730,7 +8844,7 @@ export type Database = {
       verify_pix_payment: { Args: { p_payment_id: string }; Returns: Json }
     }
     Enums: {
-      app_role: "user" | "admin" | "moderator" | "creator"
+      app_role: "user" | "admin" | "moderator" | "creator" | "shopkeeper"
       payment_frequency: "monthly" | "quarterly" | "yearly"
     }
     CompositeTypes: {
@@ -8859,7 +8973,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["user", "admin", "moderator", "creator"],
+      app_role: ["user", "admin", "moderator", "creator", "shopkeeper"],
       payment_frequency: ["monthly", "quarterly", "yearly"],
     },
   },

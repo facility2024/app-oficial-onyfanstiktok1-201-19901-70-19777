@@ -124,6 +124,19 @@ const App = () => (
           
           {/* Marketplace */}
           <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/marketplace/criar-loja" element={
+            <ProtectedRoute>
+              <CreateStorePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace/loja/:slug" element={<StoreProfilePage />} />
+          
+          {/* Dashboard do Lojista */}
+          <Route path="/minha-loja" element={
+            <ProtectedRoute>
+              <ShopkeeperDashboard />
+            </ProtectedRoute>
+          } />
           
           {/* Negócios Locais */}
           <Route path="/local-business" element={<LocalBusinessPage />} />

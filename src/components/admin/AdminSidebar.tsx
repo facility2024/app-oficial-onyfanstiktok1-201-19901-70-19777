@@ -85,6 +85,7 @@ const navigationGroups = [
     label: 'Negócios',
     items: [
       { id: 'loja', label: 'Nossa Loja', icon: Store },
+      { id: 'stores', label: 'Lojas SaaS', icon: Store },
       { id: 'marketplace', label: 'Marketplace', icon: Store },
       { id: 'marketplace-feedback', label: 'Feedback Marketplace', icon: Store },
       { id: 'physical-products', label: 'Produtos Físicos', icon: Store },

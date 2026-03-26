@@ -111,6 +111,7 @@ export const TikTokApp = () => {
     isCreator,
     loading: creatorLoading
   } = useCreatorRole();
+  const { isAdmin } = useAdminRole();
 
   // Hook para gerenciar gêneros
   const {

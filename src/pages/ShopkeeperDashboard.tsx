@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Store, Package, DollarSign, Settings, Plus, Trash2, Edit, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,8 @@ interface StoreProduct {
 
 const ShopkeeperDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const adminStoreId = searchParams.get('store_id');
   const { user } = useCurrentUser();
   const [store, setStore] = useState<StoreData | null>(null);
   const [products, setProducts] = useState<StoreProduct[]>([]);
@@ -54,8 +56,27 @@ const ShopkeeperDashboard = () => {
   const [settingsForm, setSettingsForm] = useState({ name: '', description: '', logo_url: '', banner_url: '' });
 
   useEffect(() => {
-    if (user?.id) fetchStore();
-  }, [user?.id]);
+    if (adminStoreId) {
+      fetchStoreById(adminStoreId);
+    } else if (user?.id) {
+      fetchStore();
+    }
+  }, [user?.id, adminStoreId]);
+
+  const fetchStoreById = async (storeId: string) => {
+    setLoading(true);
+    const { data } = await (supabase as any)
+      .from('marketplace_stores')
+      .select('*')
+      .eq('id', storeId)
+      .maybeSingle();
+    if (data) {
+      setStore(data);
+      fetchProducts(data.id);
+      fetchPayouts(data.id);
+    }
+    setLoading(false);
+  };
 
   const fetchStore = async () => {
     setLoading(true);

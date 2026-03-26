@@ -235,21 +235,27 @@ const ShopkeeperDashboard = () => {
   const totalComissao = store.total_revenue * store.commission_rate;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Header com gradiente Coconudi */}
+      <header
+        className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-white/10 backdrop-blur-md shadow-lg"
+        style={{
+          background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        }}
+      >
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/app')} className="text-foreground hover:text-foreground/80">
+          <button onClick={() => navigate('/app')} className="text-white/80 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <Store className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-bold truncate">{store.name}</h1>
+          <Store className="w-5 h-5 text-white drop-shadow-md" />
+          <h1 className="text-lg font-bold truncate text-white drop-shadow-sm">{store.name}</h1>
         </div>
         <div className="flex items-center gap-2">
           {!store.is_active && (
-            <span className="text-[10px] px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full font-semibold">Aguardando aprovação</span>
+            <span className="text-[10px] px-2 py-1 bg-black/30 text-yellow-200 rounded-full font-semibold backdrop-blur-sm">⏳ Aguardando aprovação</span>
           )}
           {store.is_active && (
-            <span className="text-[10px] px-2 py-1 bg-green-500/20 text-green-400 rounded-full font-semibold">Ativa</span>
+            <span className="text-[10px] px-2 py-1 bg-black/30 text-green-200 rounded-full font-semibold backdrop-blur-sm">✅ Ativa</span>
           )}
         </div>
       </header>
@@ -257,30 +263,30 @@ const ShopkeeperDashboard = () => {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="p-4 rounded-xl bg-muted border border-border text-center">
-            <p className="text-2xl font-bold text-primary">{products.length}</p>
-            <p className="text-xs text-muted-foreground">Produtos</p>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#7CB342]/20 to-[#558B2F]/10 border border-[#7CB342]/30 text-center">
+            <p className="text-2xl font-bold text-[#7CB342]">{products.length}</p>
+            <p className="text-xs text-gray-400">Produtos</p>
           </div>
-          <div className="p-4 rounded-xl bg-muted border border-border text-center">
-            <p className="text-2xl font-bold text-green-400">R$ {totalLiquido.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground">Receita (70%)</p>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#7CB342]/20 to-[#558B2F]/10 border border-[#7CB342]/30 text-center">
+            <p className="text-2xl font-bold text-[#7CB342]">R$ {totalLiquido.toFixed(2)}</p>
+            <p className="text-xs text-gray-400">Receita (70%)</p>
           </div>
-          <div className="p-4 rounded-xl bg-muted border border-border text-center">
-            <p className="text-2xl font-bold text-foreground">{store.total_sales}</p>
-            <p className="text-xs text-muted-foreground">Vendas</p>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#C4842E]/20 to-[#8B4513]/10 border border-[#C4842E]/30 text-center">
+            <p className="text-2xl font-bold text-[#C4842E]">{store.total_sales}</p>
+            <p className="text-xs text-gray-400">Vendas</p>
           </div>
         </div>
 
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="w-full bg-muted">
-            <TabsTrigger value="products" className="flex-1"><Package className="w-4 h-4 mr-1" /> Produtos</TabsTrigger>
-            <TabsTrigger value="financial" className="flex-1"><DollarSign className="w-4 h-4 mr-1" /> Financeiro</TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1"><Settings className="w-4 h-4 mr-1" /> Config</TabsTrigger>
+          <TabsList className="w-full bg-gray-900 border border-white/10">
+            <TabsTrigger value="products" className="flex-1 data-[state=active]:bg-[#7CB342] data-[state=active]:text-white"><Package className="w-4 h-4 mr-1" /> Produtos</TabsTrigger>
+            <TabsTrigger value="financial" className="flex-1 data-[state=active]:bg-[#C4842E] data-[state=active]:text-white"><DollarSign className="w-4 h-4 mr-1" /> Financeiro</TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1 data-[state=active]:bg-[#8B4513] data-[state=active]:text-white"><Settings className="w-4 h-4 mr-1" /> Config</TabsTrigger>
           </TabsList>
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-4 space-y-4">
-            <Button onClick={openNewProduct} className="w-full bg-primary text-primary-foreground">
+            <Button onClick={openNewProduct} className="w-full text-white font-bold" style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}>
               <Plus className="w-4 h-4 mr-2" /> Adicionar Produto
             </Button>
 
@@ -289,7 +295,7 @@ const ShopkeeperDashboard = () => {
             ) : (
               <div className="space-y-3">
                 {products.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted border border-border">
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-900 border border-white/10 hover:border-[#7CB342]/40 transition-colors">
                     <img src={p.image_url || '/placeholder.svg'} alt={p.name} className="w-14 h-14 rounded-lg object-cover" />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{p.name}</p>
@@ -315,17 +321,17 @@ const ShopkeeperDashboard = () => {
           {/* Financial Tab */}
           <TabsContent value="financial" className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-xl bg-muted border border-border">
-                <p className="text-xs text-muted-foreground">Receita Total</p>
-                <p className="text-xl font-bold">R$ {store.total_revenue.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-gray-900 border border-white/10">
+                <p className="text-xs text-gray-400">Receita Total</p>
+                <p className="text-xl font-bold text-white">R$ {store.total_revenue.toFixed(2)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-muted border border-border">
-                <p className="text-xs text-muted-foreground">Comissão ({(store.commission_rate * 100).toFixed(0)}%)</p>
-                <p className="text-xl font-bold text-destructive">-R$ {totalComissao.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-gray-900 border border-white/10">
+                <p className="text-xs text-gray-400">Comissão ({(store.commission_rate * 100).toFixed(0)}%)</p>
+                <p className="text-xl font-bold text-red-400">-R$ {totalComissao.toFixed(2)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 col-span-2">
-                <p className="text-xs text-muted-foreground">Valor Líquido (seu)</p>
-                <p className="text-2xl font-bold text-green-400">R$ {totalLiquido.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-[#7CB342]/20 to-[#558B2F]/10 border border-[#7CB342]/30 col-span-2">
+                <p className="text-xs text-gray-400">Valor Líquido (seu)</p>
+                <p className="text-2xl font-bold text-[#7CB342]">R$ {totalLiquido.toFixed(2)}</p>
               </div>
             </div>
 
@@ -335,7 +341,7 @@ const ShopkeeperDashboard = () => {
             ) : (
               <div className="space-y-2">
                 {payouts.map((p: any) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-muted border border-border">
+                  <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900 border border-white/10">
                     <div>
                       <p className="text-sm font-medium">R$ {p.store_amount?.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString('pt-BR')}</p>

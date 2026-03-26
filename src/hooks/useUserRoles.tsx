@@ -195,6 +195,54 @@ export const useUserRoles = () => {
   };
 };
 
+export const useAdminRole = () => {
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAdminRole = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          if (isMounted) { setIsAdmin(false); setLoading(false); }
+          return;
+        }
+
+        const { data, error } = await (supabase as any)
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (isMounted) {
+          setIsAdmin(!error && !!data);
+          setLoading(false);
+        }
+      } catch {
+        if (isMounted) { setIsAdmin(false); setLoading(false); }
+      }
+    };
+
+    checkAdminRole();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        if (isMounted) { setIsAdmin(false); setLoading(false); }
+      } else if (event === 'SIGNED_IN') {
+        checkAdminRole();
+      }
+    });
+
+    return () => { isMounted = false; subscription.unsubscribe(); };
+  }, []);
+
+  return { isAdmin, loading };
+};
+
 export const useCreatorRole = () => {
   const [isCreator, setIsCreator] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);

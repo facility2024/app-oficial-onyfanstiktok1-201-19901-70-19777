@@ -23,7 +23,8 @@ import { VideoCallPopup } from '@/components/tiktok/VideoCallPopup';
 import { VideoCallListPopup } from '@/components/tiktok/VideoCallListPopup';
 import { LiveListPopup } from '@/components/tiktok/LiveListPopup';
 import { AgeVerificationModal } from '@/components/tiktok/AgeVerificationModal';
-import { useCreatorRole } from '@/hooks/useUserRoles';
+import { useCreatorRole, useAdminRole } from '@/hooks/useUserRoles';
+import { Shield } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
@@ -110,6 +111,7 @@ export const TikTokApp = () => {
     isCreator,
     loading: creatorLoading
   } = useCreatorRole();
+  const { isAdmin } = useAdminRole();
 
   // Hook para gerenciar gêneros
   const {
@@ -2926,6 +2928,11 @@ export const TikTokApp = () => {
           
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button onClick={() => navigate('/admin')} className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-colors" title="Painel Admin">
+                <Shield className="w-5 h-5 text-primary-foreground" />
+              </button>
+            )}
             {/* Search/Lupa */}
             <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center hover:bg-black/40 transition-colors" title="Pesquisar">
               <Search className="w-5 h-5 text-white" />
@@ -3182,6 +3189,15 @@ export const TikTokApp = () => {
               <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
               <span className="text-sm font-medium text-white">{selectedGenre}</span>
               <span className="text-xs text-white/60">×</span>
+            </button>
+          )}
+          {isAdmin && (
+            <button 
+              onClick={() => navigate('/admin')} 
+              className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground hover:bg-primary transition-colors" 
+              title="Painel Admin"
+            >
+              <Shield className="w-5 h-5" />
             </button>
           )}
           <button 

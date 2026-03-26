@@ -369,11 +369,11 @@ const ShopkeeperDashboard = () => {
                 setShowSettingsModal(true);
               }}
               variant="outline"
-              className="w-full"
+              className="w-full border-[#C4842E]/50 text-[#C4842E] hover:bg-[#C4842E]/10"
             >
               <Settings className="w-4 h-4 mr-2" /> Editar Configurações da Loja
             </Button>
-            <div className="p-4 rounded-xl bg-muted border border-border space-y-2">
+            <div className="p-4 rounded-xl bg-gray-900 border border-white/10 space-y-2">
               <p className="text-sm"><strong>Nome:</strong> {store.name}</p>
               <p className="text-sm"><strong>Slug:</strong> /marketplace/loja/{store.slug}</p>
               <p className="text-sm"><strong>Comissão:</strong> {(store.commission_rate * 100).toFixed(0)}%</p>

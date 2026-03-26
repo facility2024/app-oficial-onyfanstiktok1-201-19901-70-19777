@@ -235,21 +235,27 @@ const ShopkeeperDashboard = () => {
   const totalComissao = store.total_revenue * store.commission_rate;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Header com gradiente Coconudi */}
+      <header
+        className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-white/10 backdrop-blur-md shadow-lg"
+        style={{
+          background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        }}
+      >
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/app')} className="text-foreground hover:text-foreground/80">
+          <button onClick={() => navigate('/app')} className="text-white/80 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <Store className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-bold truncate">{store.name}</h1>
+          <Store className="w-5 h-5 text-white drop-shadow-md" />
+          <h1 className="text-lg font-bold truncate text-white drop-shadow-sm">{store.name}</h1>
         </div>
         <div className="flex items-center gap-2">
           {!store.is_active && (
-            <span className="text-[10px] px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full font-semibold">Aguardando aprovação</span>
+            <span className="text-[10px] px-2 py-1 bg-black/30 text-yellow-200 rounded-full font-semibold backdrop-blur-sm">⏳ Aguardando aprovação</span>
           )}
           {store.is_active && (
-            <span className="text-[10px] px-2 py-1 bg-green-500/20 text-green-400 rounded-full font-semibold">Ativa</span>
+            <span className="text-[10px] px-2 py-1 bg-black/30 text-green-200 rounded-full font-semibold backdrop-blur-sm">✅ Ativa</span>
           )}
         </div>
       </header>
@@ -257,30 +263,30 @@ const ShopkeeperDashboard = () => {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="p-4 rounded-xl bg-muted border border-border text-center">
-            <p className="text-2xl font-bold text-primary">{products.length}</p>
-            <p className="text-xs text-muted-foreground">Produtos</p>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#7CB342]/20 to-[#558B2F]/10 border border-[#7CB342]/30 text-center">
+            <p className="text-2xl font-bold text-[#7CB342]">{products.length}</p>
+            <p className="text-xs text-gray-400">Produtos</p>
           </div>
-          <div className="p-4 rounded-xl bg-muted border border-border text-center">
-            <p className="text-2xl font-bold text-green-400">R$ {totalLiquido.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground">Receita (70%)</p>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#7CB342]/20 to-[#558B2F]/10 border border-[#7CB342]/30 text-center">
+            <p className="text-2xl font-bold text-[#7CB342]">R$ {totalLiquido.toFixed(2)}</p>
+            <p className="text-xs text-gray-400">Receita (70%)</p>
           </div>
-          <div className="p-4 rounded-xl bg-muted border border-border text-center">
-            <p className="text-2xl font-bold text-foreground">{store.total_sales}</p>
-            <p className="text-xs text-muted-foreground">Vendas</p>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#C4842E]/20 to-[#8B4513]/10 border border-[#C4842E]/30 text-center">
+            <p className="text-2xl font-bold text-[#C4842E]">{store.total_sales}</p>
+            <p className="text-xs text-gray-400">Vendas</p>
           </div>
         </div>
 
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="w-full bg-muted">
-            <TabsTrigger value="products" className="flex-1"><Package className="w-4 h-4 mr-1" /> Produtos</TabsTrigger>
-            <TabsTrigger value="financial" className="flex-1"><DollarSign className="w-4 h-4 mr-1" /> Financeiro</TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1"><Settings className="w-4 h-4 mr-1" /> Config</TabsTrigger>
+          <TabsList className="w-full bg-gray-900 border border-white/10">
+            <TabsTrigger value="products" className="flex-1 data-[state=active]:bg-[#7CB342] data-[state=active]:text-white"><Package className="w-4 h-4 mr-1" /> Produtos</TabsTrigger>
+            <TabsTrigger value="financial" className="flex-1 data-[state=active]:bg-[#C4842E] data-[state=active]:text-white"><DollarSign className="w-4 h-4 mr-1" /> Financeiro</TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1 data-[state=active]:bg-[#8B4513] data-[state=active]:text-white"><Settings className="w-4 h-4 mr-1" /> Config</TabsTrigger>
           </TabsList>
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-4 space-y-4">
-            <Button onClick={openNewProduct} className="w-full bg-primary text-primary-foreground">
+            <Button onClick={openNewProduct} className="w-full text-white font-bold" style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}>
               <Plus className="w-4 h-4 mr-2" /> Adicionar Produto
             </Button>
 
@@ -289,7 +295,7 @@ const ShopkeeperDashboard = () => {
             ) : (
               <div className="space-y-3">
                 {products.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted border border-border">
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-900 border border-white/10 hover:border-[#7CB342]/40 transition-colors">
                     <img src={p.image_url || '/placeholder.svg'} alt={p.name} className="w-14 h-14 rounded-lg object-cover" />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{p.name}</p>
@@ -315,17 +321,17 @@ const ShopkeeperDashboard = () => {
           {/* Financial Tab */}
           <TabsContent value="financial" className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-xl bg-muted border border-border">
-                <p className="text-xs text-muted-foreground">Receita Total</p>
-                <p className="text-xl font-bold">R$ {store.total_revenue.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-gray-900 border border-white/10">
+                <p className="text-xs text-gray-400">Receita Total</p>
+                <p className="text-xl font-bold text-white">R$ {store.total_revenue.toFixed(2)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-muted border border-border">
-                <p className="text-xs text-muted-foreground">Comissão ({(store.commission_rate * 100).toFixed(0)}%)</p>
-                <p className="text-xl font-bold text-destructive">-R$ {totalComissao.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-gray-900 border border-white/10">
+                <p className="text-xs text-gray-400">Comissão ({(store.commission_rate * 100).toFixed(0)}%)</p>
+                <p className="text-xl font-bold text-red-400">-R$ {totalComissao.toFixed(2)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 col-span-2">
-                <p className="text-xs text-muted-foreground">Valor Líquido (seu)</p>
-                <p className="text-2xl font-bold text-green-400">R$ {totalLiquido.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-[#7CB342]/20 to-[#558B2F]/10 border border-[#7CB342]/30 col-span-2">
+                <p className="text-xs text-gray-400">Valor Líquido (seu)</p>
+                <p className="text-2xl font-bold text-[#7CB342]">R$ {totalLiquido.toFixed(2)}</p>
               </div>
             </div>
 
@@ -335,7 +341,7 @@ const ShopkeeperDashboard = () => {
             ) : (
               <div className="space-y-2">
                 {payouts.map((p: any) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-muted border border-border">
+                  <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900 border border-white/10">
                     <div>
                       <p className="text-sm font-medium">R$ {p.store_amount?.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString('pt-BR')}</p>
@@ -363,11 +369,11 @@ const ShopkeeperDashboard = () => {
                 setShowSettingsModal(true);
               }}
               variant="outline"
-              className="w-full"
+              className="w-full border-[#C4842E]/50 text-[#C4842E] hover:bg-[#C4842E]/10"
             >
               <Settings className="w-4 h-4 mr-2" /> Editar Configurações da Loja
             </Button>
-            <div className="p-4 rounded-xl bg-muted border border-border space-y-2">
+            <div className="p-4 rounded-xl bg-gray-900 border border-white/10 space-y-2">
               <p className="text-sm"><strong>Nome:</strong> {store.name}</p>
               <p className="text-sm"><strong>Slug:</strong> /marketplace/loja/{store.slug}</p>
               <p className="text-sm"><strong>Comissão:</strong> {(store.commission_rate * 100).toFixed(0)}%</p>
@@ -380,21 +386,21 @@ const ShopkeeperDashboard = () => {
 
       {/* Product Modal */}
       <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-        <DialogContent className="max-w-md bg-background border-border">
+        <DialogContent className="max-w-md bg-gray-950 border-white/10">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
+            <DialogTitle className="text-white">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div><Label>Nome *</Label><Input value={productForm.name} onChange={e => setProductForm(p => ({ ...p, name: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>Descrição</Label><Textarea value={productForm.description} onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} className="bg-muted" rows={2} /></div>
+            <div><Label className="text-gray-300">Nome *</Label><Input value={productForm.name} onChange={e => setProductForm(p => ({ ...p, name: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">Descrição</Label><Textarea value={productForm.description} onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} className="bg-gray-900 border-white/10 text-white" rows={2} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Preço (R$) *</Label><Input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm(p => ({ ...p, price: e.target.value }))} className="bg-muted" /></div>
-              <div><Label>Estoque</Label><Input type="number" value={productForm.stock} onChange={e => setProductForm(p => ({ ...p, stock: e.target.value }))} className="bg-muted" /></div>
+              <div><Label className="text-gray-300">Preço (R$) *</Label><Input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm(p => ({ ...p, price: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+              <div><Label className="text-gray-300">Estoque</Label><Input type="number" value={productForm.stock} onChange={e => setProductForm(p => ({ ...p, stock: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
             </div>
-            <div><Label>Categoria</Label><Input value={productForm.category} onChange={e => setProductForm(p => ({ ...p, category: e.target.value }))} className="bg-muted" placeholder="Ex: Roupas" /></div>
-            <div><Label>URL da Imagem</Label><Input value={productForm.image_url} onChange={e => setProductForm(p => ({ ...p, image_url: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>URL do Vídeo</Label><Input value={productForm.video_url} onChange={e => setProductForm(p => ({ ...p, video_url: e.target.value }))} className="bg-muted" /></div>
-            <Button onClick={saveProduct} disabled={saving} className="w-full bg-primary text-primary-foreground">
+            <div><Label className="text-gray-300">Categoria</Label><Input value={productForm.category} onChange={e => setProductForm(p => ({ ...p, category: e.target.value }))} className="bg-gray-900 border-white/10 text-white" placeholder="Ex: Roupas" /></div>
+            <div><Label className="text-gray-300">URL da Imagem</Label><Input value={productForm.image_url} onChange={e => setProductForm(p => ({ ...p, image_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">URL do Vídeo</Label><Input value={productForm.video_url} onChange={e => setProductForm(p => ({ ...p, video_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <Button onClick={saveProduct} disabled={saving} className="w-full text-white font-bold" style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               {editingProduct ? 'Salvar Alterações' : 'Criar Produto'}
             </Button>
@@ -404,14 +410,14 @@ const ShopkeeperDashboard = () => {
 
       {/* Settings Modal */}
       <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
-        <DialogContent className="max-w-md bg-background border-border">
-          <DialogHeader><DialogTitle>Configurações da Loja</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md bg-gray-950 border-white/10">
+          <DialogHeader><DialogTitle className="text-white">Configurações da Loja</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Nome</Label><Input value={settingsForm.name} onChange={e => setSettingsForm(p => ({ ...p, name: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>Descrição</Label><Textarea value={settingsForm.description} onChange={e => setSettingsForm(p => ({ ...p, description: e.target.value }))} className="bg-muted" rows={3} /></div>
-            <div><Label>URL do Logo</Label><Input value={settingsForm.logo_url} onChange={e => setSettingsForm(p => ({ ...p, logo_url: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>URL do Banner</Label><Input value={settingsForm.banner_url} onChange={e => setSettingsForm(p => ({ ...p, banner_url: e.target.value }))} className="bg-muted" /></div>
-            <Button onClick={saveSettings} disabled={saving} className="w-full bg-primary text-primary-foreground">
+            <div><Label className="text-gray-300">Nome</Label><Input value={settingsForm.name} onChange={e => setSettingsForm(p => ({ ...p, name: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">Descrição</Label><Textarea value={settingsForm.description} onChange={e => setSettingsForm(p => ({ ...p, description: e.target.value }))} className="bg-gray-900 border-white/10 text-white" rows={3} /></div>
+            <div><Label className="text-gray-300">URL do Logo</Label><Input value={settingsForm.logo_url} onChange={e => setSettingsForm(p => ({ ...p, logo_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">URL do Banner</Label><Input value={settingsForm.banner_url} onChange={e => setSettingsForm(p => ({ ...p, banner_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <Button onClick={saveSettings} disabled={saving} className="w-full text-white font-bold" style={{ background: 'linear-gradient(to right, #C4842E, #8B4513)' }}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Salvar
             </Button>

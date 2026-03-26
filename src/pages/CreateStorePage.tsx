@@ -96,88 +96,94 @@ const CreateStorePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 px-4 py-3 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm">
-        <button onClick={() => navigate(-1)} className="text-foreground hover:text-foreground/80">
+    <div className="min-h-screen bg-gray-950 text-white">
+      <header
+        className="sticky top-0 z-50 px-4 py-3 flex items-center gap-3 border-b border-white/10 backdrop-blur-md shadow-lg"
+        style={{
+          background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        }}
+      >
+        <button onClick={() => navigate(-1)} className="text-white/80 hover:text-white transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <Store className="w-5 h-5 text-primary" />
-        <h1 className="text-lg font-bold">Criar Minha Loja</h1>
+        <Store className="w-5 h-5 text-white drop-shadow-md" />
+        <h1 className="text-lg font-bold text-white drop-shadow-sm">Criar Minha Loja</h1>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-8">
-        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <p className="text-sm text-amber-400">
+        <div className="mb-6 p-4 rounded-xl bg-[#C4842E]/10 border border-[#C4842E]/30">
+          <p className="text-sm text-[#CD853F]">
             ⚠️ Sua loja será enviada para aprovação. Após aprovada, você poderá adicionar produtos e começar a vender. A comissão é de <strong>30% para o site</strong> e <strong>70% para você</strong>.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome da Loja *</Label>
+            <Label htmlFor="name" className="text-gray-300">Nome da Loja *</Label>
             <Input
               id="name"
               value={form.name}
               onChange={e => handleNameChange(e.target.value)}
               placeholder="Minha Loja Incrível"
               required
-              className="bg-muted border-border"
+              className="bg-gray-900 border-white/10 text-white placeholder:text-gray-500"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="slug">URL da Loja *</Label>
+            <Label htmlFor="slug" className="text-gray-300">URL da Loja *</Label>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">/marketplace/loja/</span>
+              <span className="text-xs text-gray-500">/marketplace/loja/</span>
               <Input
                 id="slug"
                 value={form.slug}
                 onChange={e => setForm(prev => ({ ...prev, slug: e.target.value }))}
                 placeholder="minha-loja"
                 required
-                className="bg-muted border-border"
+                className="bg-gray-900 border-white/10 text-white placeholder:text-gray-500"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description" className="text-gray-300">Descrição</Label>
             <Textarea
               id="description"
               value={form.description}
               onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Descreva sua loja..."
               rows={3}
-              className="bg-muted border-border"
+              className="bg-gray-900 border-white/10 text-white placeholder:text-gray-500"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="logo">URL do Logo</Label>
+            <Label htmlFor="logo" className="text-gray-300">URL do Logo</Label>
             <Input
               id="logo"
               value={form.logo_url}
               onChange={e => setForm(prev => ({ ...prev, logo_url: e.target.value }))}
               placeholder="https://..."
-              className="bg-muted border-border"
+              className="bg-gray-900 border-white/10 text-white placeholder:text-gray-500"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="banner">URL do Banner</Label>
+            <Label htmlFor="banner" className="text-gray-300">URL do Banner</Label>
             <Input
               id="banner"
               value={form.banner_url}
               onChange={e => setForm(prev => ({ ...prev, banner_url: e.target.value }))}
               placeholder="https://..."
-              className="bg-muted border-border"
+              className="bg-gray-900 border-white/10 text-white placeholder:text-gray-500"
             />
           </div>
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3"
+            className="w-full text-white font-bold py-3"
+            style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}
           >
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Store className="w-4 h-4 mr-2" />}
             Criar Loja

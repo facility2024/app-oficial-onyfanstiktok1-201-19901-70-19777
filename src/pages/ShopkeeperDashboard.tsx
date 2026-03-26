@@ -386,21 +386,21 @@ const ShopkeeperDashboard = () => {
 
       {/* Product Modal */}
       <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-        <DialogContent className="max-w-md bg-background border-border">
+        <DialogContent className="max-w-md bg-gray-950 border-white/10">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
+            <DialogTitle className="text-white">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div><Label>Nome *</Label><Input value={productForm.name} onChange={e => setProductForm(p => ({ ...p, name: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>Descrição</Label><Textarea value={productForm.description} onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} className="bg-muted" rows={2} /></div>
+            <div><Label className="text-gray-300">Nome *</Label><Input value={productForm.name} onChange={e => setProductForm(p => ({ ...p, name: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">Descrição</Label><Textarea value={productForm.description} onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} className="bg-gray-900 border-white/10 text-white" rows={2} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Preço (R$) *</Label><Input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm(p => ({ ...p, price: e.target.value }))} className="bg-muted" /></div>
-              <div><Label>Estoque</Label><Input type="number" value={productForm.stock} onChange={e => setProductForm(p => ({ ...p, stock: e.target.value }))} className="bg-muted" /></div>
+              <div><Label className="text-gray-300">Preço (R$) *</Label><Input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm(p => ({ ...p, price: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+              <div><Label className="text-gray-300">Estoque</Label><Input type="number" value={productForm.stock} onChange={e => setProductForm(p => ({ ...p, stock: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
             </div>
-            <div><Label>Categoria</Label><Input value={productForm.category} onChange={e => setProductForm(p => ({ ...p, category: e.target.value }))} className="bg-muted" placeholder="Ex: Roupas" /></div>
-            <div><Label>URL da Imagem</Label><Input value={productForm.image_url} onChange={e => setProductForm(p => ({ ...p, image_url: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>URL do Vídeo</Label><Input value={productForm.video_url} onChange={e => setProductForm(p => ({ ...p, video_url: e.target.value }))} className="bg-muted" /></div>
-            <Button onClick={saveProduct} disabled={saving} className="w-full bg-primary text-primary-foreground">
+            <div><Label className="text-gray-300">Categoria</Label><Input value={productForm.category} onChange={e => setProductForm(p => ({ ...p, category: e.target.value }))} className="bg-gray-900 border-white/10 text-white" placeholder="Ex: Roupas" /></div>
+            <div><Label className="text-gray-300">URL da Imagem</Label><Input value={productForm.image_url} onChange={e => setProductForm(p => ({ ...p, image_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">URL do Vídeo</Label><Input value={productForm.video_url} onChange={e => setProductForm(p => ({ ...p, video_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <Button onClick={saveProduct} disabled={saving} className="w-full text-white font-bold" style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               {editingProduct ? 'Salvar Alterações' : 'Criar Produto'}
             </Button>
@@ -410,14 +410,14 @@ const ShopkeeperDashboard = () => {
 
       {/* Settings Modal */}
       <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
-        <DialogContent className="max-w-md bg-background border-border">
-          <DialogHeader><DialogTitle>Configurações da Loja</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md bg-gray-950 border-white/10">
+          <DialogHeader><DialogTitle className="text-white">Configurações da Loja</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Nome</Label><Input value={settingsForm.name} onChange={e => setSettingsForm(p => ({ ...p, name: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>Descrição</Label><Textarea value={settingsForm.description} onChange={e => setSettingsForm(p => ({ ...p, description: e.target.value }))} className="bg-muted" rows={3} /></div>
-            <div><Label>URL do Logo</Label><Input value={settingsForm.logo_url} onChange={e => setSettingsForm(p => ({ ...p, logo_url: e.target.value }))} className="bg-muted" /></div>
-            <div><Label>URL do Banner</Label><Input value={settingsForm.banner_url} onChange={e => setSettingsForm(p => ({ ...p, banner_url: e.target.value }))} className="bg-muted" /></div>
-            <Button onClick={saveSettings} disabled={saving} className="w-full bg-primary text-primary-foreground">
+            <div><Label className="text-gray-300">Nome</Label><Input value={settingsForm.name} onChange={e => setSettingsForm(p => ({ ...p, name: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">Descrição</Label><Textarea value={settingsForm.description} onChange={e => setSettingsForm(p => ({ ...p, description: e.target.value }))} className="bg-gray-900 border-white/10 text-white" rows={3} /></div>
+            <div><Label className="text-gray-300">URL do Logo</Label><Input value={settingsForm.logo_url} onChange={e => setSettingsForm(p => ({ ...p, logo_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <div><Label className="text-gray-300">URL do Banner</Label><Input value={settingsForm.banner_url} onChange={e => setSettingsForm(p => ({ ...p, banner_url: e.target.value }))} className="bg-gray-900 border-white/10 text-white" /></div>
+            <Button onClick={saveSettings} disabled={saving} className="w-full text-white font-bold" style={{ background: 'linear-gradient(to right, #C4842E, #8B4513)' }}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Salvar
             </Button>

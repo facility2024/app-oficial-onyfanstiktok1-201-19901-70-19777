@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Check, X, Eye, Loader2, BadgeCheck } from 'lucide-react';
+import { Store, Check, X, Eye, Loader2, BadgeCheck, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -78,40 +79,51 @@ export const AdminStores = () => {
   );
 };
 
-const StoreCard = ({ store, onToggleActive, onToggleVerified }: { store: any; onToggleActive: (s: any) => void; onToggleVerified: (s: any) => void }) => (
-  <div className="p-4 rounded-xl bg-muted border border-border flex items-center gap-4">
-    {store.logo_url ? (
-      <img src={store.logo_url} alt="" className="w-12 h-12 rounded-full object-cover" />
-    ) : (
-      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-        <Store className="w-6 h-6 text-primary" />
+const StoreCard = ({ store, onToggleActive, onToggleVerified }: { store: any; onToggleActive: (s: any) => void; onToggleVerified: (s: any) => void }) => {
+  const navigate = useNavigate();
+  return (
+    <div className="p-4 rounded-xl bg-muted border border-border flex items-center gap-4">
+      {store.logo_url ? (
+        <img src={store.logo_url} alt="" className="w-12 h-12 rounded-full object-cover" />
+      ) : (
+        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+          <Store className="w-6 h-6 text-primary" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold truncate flex items-center gap-1">
+          {store.name}
+          {store.is_verified && <BadgeCheck className="w-4 h-4 text-primary" />}
+        </p>
+        <p className="text-xs text-muted-foreground">/marketplace/loja/{store.slug}</p>
+        <p className="text-xs text-muted-foreground">Comissão: {(store.commission_rate * 100).toFixed(0)}% · Vendas: {store.total_sales} · R$ {store.total_revenue?.toFixed(2)}</p>
       </div>
-    )}
-    <div className="flex-1 min-w-0">
-      <p className="font-semibold truncate flex items-center gap-1">
-        {store.name}
-        {store.is_verified && <BadgeCheck className="w-4 h-4 text-primary" />}
-      </p>
-      <p className="text-xs text-muted-foreground">/marketplace/loja/{store.slug}</p>
-      <p className="text-xs text-muted-foreground">Comissão: {(store.commission_rate * 100).toFixed(0)}% · Vendas: {store.total_sales} · R$ {store.total_revenue?.toFixed(2)}</p>
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => navigate(`/marketplace/loja/${store.slug}`)}
+          className="text-xs"
+        >
+          <Eye className="w-3 h-3 mr-1" /> Ver Loja
+        </Button>
+        <Button
+          size="sm"
+          variant={store.is_active ? 'destructive' : 'default'}
+          onClick={() => onToggleActive(store)}
+          className="text-xs"
+        >
+          {store.is_active ? <><X className="w-3 h-3 mr-1" /> Desativar</> : <><Check className="w-3 h-3 mr-1" /> Aprovar</>}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onToggleVerified(store)}
+          className="text-xs"
+        >
+          <BadgeCheck className="w-3 h-3 mr-1" /> {store.is_verified ? 'Remover ✓' : 'Verificar'}
+        </Button>
+      </div>
     </div>
-    <div className="flex items-center gap-2">
-      <Button
-        size="sm"
-        variant={store.is_active ? 'destructive' : 'default'}
-        onClick={() => onToggleActive(store)}
-        className="text-xs"
-      >
-        {store.is_active ? <><X className="w-3 h-3 mr-1" /> Desativar</> : <><Check className="w-3 h-3 mr-1" /> Aprovar</>}
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => onToggleVerified(store)}
-        className="text-xs"
-      >
-        <BadgeCheck className="w-3 h-3 mr-1" /> {store.is_verified ? 'Remover ✓' : 'Verificar'}
-      </Button>
-    </div>
-  </div>
-);
+  );
+};

@@ -101,6 +101,14 @@ const StoreCard = ({ store, onToggleActive, onToggleVerified }: { store: any; on
       <div className="flex items-center gap-2 flex-wrap justify-end">
         <Button
           size="sm"
+          variant="secondary"
+          onClick={() => navigate(`/minha-loja?store_id=${store.id}`)}
+          className="text-xs"
+        >
+          <ExternalLink className="w-3 h-3 mr-1" /> Painel da Loja
+        </Button>
+        <Button
+          size="sm"
           variant="outline"
           onClick={() => navigate(`/marketplace/loja/${store.slug}`)}
           className="text-xs"

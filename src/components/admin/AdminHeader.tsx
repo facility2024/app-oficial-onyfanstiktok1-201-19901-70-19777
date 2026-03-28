@@ -176,7 +176,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
             variant="ghost" 
             size="sm" 
             onClick={onLogout}
-            className="text-red-600 hover:text-red-700 hover:bg-red-100/50"
+            className="text-white hover:text-white/80 hover:bg-white/10"
             title="Sair do sistema"
           >
             <LogOut className="h-4 w-4" />

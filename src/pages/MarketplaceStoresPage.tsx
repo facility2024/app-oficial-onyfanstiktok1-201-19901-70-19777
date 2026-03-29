@@ -155,6 +155,53 @@ const MarketplaceStoresPage = () => {
         </div>
       )}
 
+      {/* Cards de todas as lojas logo abaixo do carrossel */}
+      {!loading && stores.length > 0 && (
+        <div className="container mx-auto px-4 pb-6">
+          <h2 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
+            <Store className="w-5 h-5 text-primary" />
+            Nossas Lojas
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {stores.map((store) => (
+              <div
+                key={`card-${store.id}`}
+                className="relative overflow-hidden rounded-xl cursor-pointer group border border-white/10 hover:border-primary/50 transition-all duration-300"
+                onClick={() => navigate(`/marketplace/loja/${store.slug}`)}
+              >
+                <div className="h-20 sm:h-24 bg-gradient-to-r from-gray-800 to-gray-700 overflow-hidden">
+                  {store.banner_url ? (
+                    <img src={store.banner_url} alt={store.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-800 border-2 border-white/20 overflow-hidden flex-shrink-0 shadow-lg">
+                    {store.logo_url ? (
+                      <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-primary/20">
+                        <Store className="w-5 h-5 text-primary" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-white font-bold text-sm truncate">{store.name}</h3>
+                      {store.is_verified && <ShieldCheck className="w-4 h-4 text-blue-400 flex-shrink-0" />}
+                    </div>
+                    <p className="text-gray-400 text-xs">{store.products.length} produtos</p>
+                  </div>
+                  <ShoppingBag className="w-4 h-4 text-white/50 group-hover:text-primary transition-colors flex-shrink-0" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Lojas com seus produtos */}
       <div className="container mx-auto px-4 pb-10 space-y-8">
         {loading ? (

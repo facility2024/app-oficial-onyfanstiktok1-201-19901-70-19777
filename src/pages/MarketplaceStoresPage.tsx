@@ -48,7 +48,6 @@ const MarketplaceStoresPage = () => {
           .from('marketplace_stores')
           .select('id, name, slug, logo_url, banner_url, description, is_verified')
           .eq('is_active', true)
-          .eq('status', 'approved')
           .order('created_at', { ascending: false });
 
         // Fetch all active products

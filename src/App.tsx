@@ -47,6 +47,8 @@ import CreateStorePage from "./pages/CreateStorePage";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
 import StoreProfilePage from "./pages/StoreProfilePage";
 import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
+import StoreCartPage from "./pages/StoreCartPage";
+import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -62,6 +64,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <CartProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -135,6 +138,7 @@ const App = () => (
             </ProtectedRoute>
           } />
           <Route path="/marketplace/loja/:slug" element={<StoreProfilePage />} />
+          <Route path="/marketplace/carrinho" element={<StoreCartPage />} />
           
           {/* Dashboard do Lojista */}
           <Route path="/minha-loja" element={
@@ -215,6 +219,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </CartProvider>
   </QueryClientProvider>
 );
 

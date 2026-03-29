@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Store, ShoppingCart, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 
 const StoreProfilePage = () => {
   const navigate = useNavigate();
@@ -10,6 +12,7 @@ const StoreProfilePage = () => {
   const [store, setStore] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addItem, totalItems } = useCart();
 
   useEffect(() => {
     if (slug) fetchStore();
@@ -90,10 +93,16 @@ const StoreProfilePage = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
         {store.logo_url && <img src={store.logo_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-white/30" />}
-        <h1 className="text-lg font-bold truncate flex items-center gap-2 text-white drop-shadow-sm">
+        <h1 className="text-lg font-bold truncate flex items-center gap-2 text-white drop-shadow-sm flex-1">
           {store.name}
           {store.is_verified && <BadgeCheck className="w-4 h-4 text-yellow-200" />}
         </h1>
+        <button onClick={() => navigate('/marketplace/carrinho')} className="relative text-white/80 hover:text-white">
+          <ShoppingCart className="w-5 h-5" />
+          {totalItems > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{totalItems}</span>
+          )}
+        </button>
       </header>
 
       {store.description && (
@@ -117,8 +126,23 @@ const StoreProfilePage = () => {
                 <div className="p-3 space-y-2">
                   <p className="text-sm font-semibold truncate text-white">{p.name}</p>
                   <p className="text-[#7CB342] font-bold">R$ {p.price?.toFixed(2)}</p>
-                  <Button size="sm" className="w-full text-white text-xs font-bold" style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}>
-                    <ShoppingCart className="w-3 h-3 mr-1" /> Comprar
+                  <Button
+                    size="sm"
+                    className="w-full text-white text-xs font-bold"
+                    style={{ background: 'linear-gradient(to right, #7CB342, #558B2F)' }}
+                    onClick={() => {
+                      addItem({
+                        id: p.id,
+                        name: p.name,
+                        price: p.price,
+                        image_url: p.image_url,
+                        store_id: store.id,
+                        store_name: store.name,
+                      });
+                      toast.success(`${p.name} adicionado ao carrinho!`);
+                    }}
+                  >
+                    <ShoppingCart className="w-3 h-3 mr-1" /> Adicionar
                   </Button>
                 </div>
               </div>

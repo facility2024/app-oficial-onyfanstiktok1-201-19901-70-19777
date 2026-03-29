@@ -46,6 +46,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import CreateStorePage from "./pages/CreateStorePage";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
 import StoreProfilePage from "./pages/StoreProfilePage";
+import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -127,6 +128,7 @@ const App = () => (
           
           {/* Marketplace */}
           <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/marketplace/lojas" element={<MarketplaceStoresPage />} />
           <Route path="/marketplace/criar-loja" element={
             <ProtectedRoute>
               <CreateStorePage />

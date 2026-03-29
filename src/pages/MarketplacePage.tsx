@@ -383,7 +383,6 @@ export default function MarketplacePage() {
         .from('marketplace_stores')
         .select('id, name, slug, logo_url, description, is_verified')
         .eq('is_active', true)
-        .eq('status', 'approved')
         .order('created_at', { ascending: false });
       if (!error && data) setStores(data);
     } catch (err) {

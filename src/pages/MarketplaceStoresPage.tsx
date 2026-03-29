@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { ArrowLeft, Star, ChevronLeft, ChevronRight, Store, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Star, ChevronLeft, ChevronRight, Store, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface StoreData {

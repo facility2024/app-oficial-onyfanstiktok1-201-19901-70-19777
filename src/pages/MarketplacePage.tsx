@@ -628,21 +628,26 @@ export default function MarketplacePage() {
       {/* CATEGORIAS - Gênero (horizontal scroll) */}
       <div className="container mx-auto px-4 py-4 border-t border-white/10">
         <h2 className="text-white font-bold text-lg mb-3">CATEGORIAS - GÊNERO</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {dynamicGenres.map(genre => (
-            <button
-              key={genre.name}
-              onClick={() => handleGenreClick(genre.name)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                selectedGenre === genre.name
-                  ? 'bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white shadow-lg'
-                  : 'bg-gray-800 text-white border border-white/20 hover:bg-gray-700'
-              }`}
-            >
-              <span>{genre.icon}</span>
-              <span className="whitespace-nowrap">{genre.name}</span>
-            </button>
-          ))}
+        <div className="relative overflow-hidden">
+          <div 
+            className="flex gap-2 animate-marquee hover:[animation-play-state:paused]"
+            style={{ width: 'max-content' }}
+          >
+            {[...dynamicGenres, ...dynamicGenres].map((genre, idx) => (
+              <button
+                key={`${genre.name}-${idx}`}
+                onClick={() => handleGenreClick(genre.name)}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedGenre === genre.name
+                    ? 'bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white shadow-lg'
+                    : 'bg-gray-800 text-white border border-white/20 hover:bg-gray-700'
+                }`}
+              >
+                <span>{genre.icon}</span>
+                <span className="whitespace-nowrap">{genre.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Conteúdo do gênero selecionado */}

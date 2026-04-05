@@ -625,6 +625,104 @@ export default function MarketplacePage() {
         </div>
       </div>
 
+      {/* CATEGORIAS - Gênero (horizontal scroll) */}
+      <div className="container mx-auto px-4 py-4 border-t border-white/10">
+        <h2 className="text-white font-bold text-lg mb-3">CATEGORIAS - GÊNERO</h2>
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {dynamicGenres.map(genre => (
+            <button
+              key={genre.name}
+              onClick={() => handleGenreClick(genre.name)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                selectedGenre === genre.name
+                  ? 'bg-gradient-to-r from-[#7CB342] to-[#C4842E] text-white shadow-lg'
+                  : 'bg-gray-800 text-white border border-white/20 hover:bg-gray-700'
+              }`}
+            >
+              <span>{genre.icon}</span>
+              <span className="whitespace-nowrap">{genre.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Conteúdo do gênero selecionado */}
+        {selectedGenre && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-lg">{selectedGenre}</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setSelectedGenre(null); setGenreVideos([]); setGenreProducts([]); }}
+                className="bg-gray-800 text-white border border-white/20 hover:bg-gray-700"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+              </Button>
+            </div>
+
+            {loadingVideos ? (
+              <p className="text-gray-400 text-center py-8">Carregando conteúdo...</p>
+            ) : genreVideos.length === 0 && genreProducts.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">Nenhum conteúdo encontrado nesta categoria</p>
+            ) : (
+              <div className="space-y-6">
+                {genreProducts.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {genreProducts.map(product => (
+                      <div
+                        key={product.id}
+                        className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-colors"
+                        onClick={() => handleProductClick(product)}
+                      >
+                        <div className="relative aspect-square overflow-hidden">
+                          {product.video_url ? (
+                            <>
+                              <video src={product.video_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" muted playsInline preload="metadata" poster={product.image_url} />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm"><Play className="w-6 h-6 text-white fill-white" /></div>
+                              </div>
+                            </>
+                          ) : (
+                            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                        </div>
+                        <div className="p-2">
+                          <p className="text-white text-xs font-semibold line-clamp-1">{product.name}</p>
+                          <p className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-cyan-400 to-green-300 text-[10px] font-bold line-clamp-1 animate-pulse drop-shadow-[0_0_6px_rgba(0,255,150,0.5)]">{product.description}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-green-400 text-sm font-bold">R$ {product.price.toFixed(2)}</span>
+                            <div className="flex items-center gap-0.5">
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /><span className="text-yellow-400 text-[10px] font-medium">5.0</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {genreVideos.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {genreVideos.map(video => (
+                      <div key={video.id} className="relative rounded-lg overflow-hidden cursor-pointer group bg-gray-900" onClick={() => navigate(`/app?video=${video.id}`)}>
+                        <img src={video.thumbnail_url || ''} alt={video.title || 'Vídeo'} className="w-full aspect-[9/16] object-cover group-hover:scale-105 transition-transform" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="text-white text-xs font-semibold line-clamp-2">{video.title || (video.models?.name || video.profiles?.username || 'Vídeo')}</p>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="bg-black/50 rounded-full p-2"><Play className="w-6 h-6 text-white fill-white" /></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* LOJAS SaaS */}
       {!selectedGenre && stores.length > 0 && (
         <div className="container mx-auto px-4 py-6 border-t border-white/10">

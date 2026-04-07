@@ -1,20 +1,33 @@
 
 
-## Plano: Trocar a logo na navbar para a nova logo Coconudi
+## Corrigir erro de UUID "unknown" no TikTokApp.tsx
 
 ### Problema
-A logo atual usada na navbar (e em todo o app) é `coconudi-logo-new.png`. O usuário quer substituí-la pela nova logo rainbow "C" enviada em anexo.
+Quando um vídeo não tem `user` associado, o sistema usa `defaultUser` com `id: 'unknown'`. Esse valor é passado para `checkIfFollowing()` e `registerView()` (via `trackView`), que tentam inserir/consultar no Supabase com `model_id = 'unknown'`, causando erro `invalid input syntax for type uuid`.
 
-### Solução
+### Correções
 
-1. **Copiar a nova logo** para `src/assets/coconudi-logo-new.png`, substituindo a atual. Isso atualiza automaticamente todos os ~15 arquivos que importam essa logo (navbar do TikTokApp, AdminHeader, Auth, MarketplacePage, etc.)
+**Arquivo: `src/pages/TikTokApp.tsx`**
 
-### Arquivos impactados (sem edição necessária)
-Todos já importam `coconudi-logo-new.png`, então a substituição do arquivo resolve tudo:
-- `src/pages/TikTokApp.tsx` (navbar principal)
-- `src/components/admin/AdminHeader.tsx` (navbar admin)
-- `src/pages/Auth.tsx`, `MarketplacePage.tsx`, `UserProfile.tsx`, etc.
+1. **Linha ~861**: Adicionar validação antes de chamar `checkIfFollowing` — só chamar se `currentVideo.user.id` for um UUID válido (não `'unknown'`)
+
+2. **Linha ~437 (defaultUser)**: Manter `'unknown'` como fallback (necessário para renderização), mas proteger nos pontos de chamada ao Supabase
+
+3. **Na função `checkIfFollowing` (linha ~1931)**: Adicionar guard no início para retornar imediatamente se `modelId` for `'unknown'` ou não for UUID válido
+
+4. **Na função `registerView` (linhas ~790-856)**: Adicionar guard para não passar `model_id = 'unknown'` ao `trackView` — passar `undefined` se o model_id não for UUID válido
+
+**Arquivo: `src/hooks/useAppAnalytics.tsx`**
+
+5. **Linha ~49**: Adicionar validação antes de setar `analyticsData.model_id` — ignorar se `modelId` for `'unknown'` ou não for UUID válido
+
+### Validação UUID
+Usar uma função helper simples:
+```typescript
+const isValidUUID = (id: string) => 
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+```
 
 ### Resultado
-A nova logo rainbow "C" aparecerá em todas as navbars e telas que usam a logo do Coconudi.
+Os erros `invalid input syntax for type uuid: "unknown"` deixarão de aparecer no console, sem afetar o funcionamento do feed.
 

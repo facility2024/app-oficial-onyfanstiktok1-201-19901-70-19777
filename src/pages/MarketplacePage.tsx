@@ -13,7 +13,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ModelCarousel } from "@/components/tiktok/ModelCarousel";
 import { AdCarousel } from "@/components/tiktok/AdCarousel";
 import { BannerCarousel } from "@/components/tiktok/BannerCarousel";
-import { PhysicalProductsSection } from "@/components/tiktok/PhysicalProductsSection";
+
 import logoWhite from "@/assets/coconudi-logo-new.png";
 import useEmblaCarousel from "embla-carousel-react";
 import bannerAtualizacao from "@/assets/banner-atualizacao-mensal.png";
@@ -842,82 +842,6 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      {/* PRODUTOS FÍSICOS - Seção da lojinha */}
-      {!selectedGenre && <PhysicalProductsSection />}
-
-      {/* PRODUTOS POR MODELO (marketplace_products por categoria) */}
-      {!selectedGenre && (
-        <div className="container mx-auto px-4 pb-8">
-          <h2 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
-            🛍️ PRODUTOS POR MODELO
-          </h2>
-
-          {homeProducts.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {homeProducts.slice(0, productsToShow).map(product => (
-                  <div
-                    key={product.id}
-                    className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-colors"
-                    onClick={() => handleProductClick(product)}
-                  >
-                    <div className="relative aspect-square overflow-hidden">
-                      {product.video_url ? (
-                        <>
-                          <video
-                            src={product.video_url}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            muted
-                            playsInline
-                            preload="metadata"
-                            poster={product.image_url}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-black/40 rounded-full p-3 backdrop-blur-sm">
-                              <Play className="w-6 h-6 text-white fill-white" />
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                    </div>
-                    <div className="p-2">
-                      <p className="text-white text-xs font-semibold line-clamp-1">{product.name}</p>
-                      <p className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-cyan-400 to-green-300 text-[10px] font-bold line-clamp-1 animate-pulse drop-shadow-[0_0_6px_rgba(0,255,150,0.5)]">{product.description}</p>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-green-400 text-sm font-bold">R$ {product.price.toFixed(2)}</span>
-                        <div className="flex items-center gap-0.5">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-yellow-400 text-[10px] font-medium">5.0</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {homeProducts.length > productsToShow && (
-                <div className="flex justify-center mt-4">
-                  <Button
-                    onClick={() => setProductsToShow(prev => prev + 15)}
-                    className="bg-gray-800 text-white border border-white/20 hover:bg-gray-700 px-6"
-                  >
-                    Ver mais produtos
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
 
       {/* PRODUTOS EM ALTA - Apenas vídeos com is_featured = true */}
       {!selectedGenre && homeFeaturedVideos.length > 0 && (

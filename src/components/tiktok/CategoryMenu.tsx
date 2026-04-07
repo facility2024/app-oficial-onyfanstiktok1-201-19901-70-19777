@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown, Radio, Film } from "lucide-react";
+import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown, Radio } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconudi-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
@@ -143,15 +143,6 @@ export const CategoryMenu = ({
       onClick: () => {
         setOpen(false);
         setTimeout(() => navigate('/following-creators'), 100);
-      }
-    },
-    {
-      id: "cocoflix",
-      name: "Cocoflix",
-      icon: <Film className="w-5 h-5 text-red-500" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/cocoflix'), 100);
       }
     },
     {

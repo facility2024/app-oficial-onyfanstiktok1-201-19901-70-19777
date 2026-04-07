@@ -53,7 +53,6 @@ import { AdminCadastros } from './admin/AdminCadastros';
 import { AdminFeedPromotions } from './admin/AdminFeedPromotions';
 import AdminLoja from './admin/AdminLoja';
 import { AdminStores } from './admin/AdminStores';
-import { AdminCocoflix } from './admin/AdminCocoflix';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -151,7 +150,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions','cocoflix'];
+    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -220,8 +219,6 @@ export const AdminDashboard = () => {
         return <AdminLoja />;
       case 'stores':
         return <AdminStores />;
-      case 'cocoflix':
-        return <AdminCocoflix />;
       case 'videos':
         return <AdminVideos />;
       case 'genres':

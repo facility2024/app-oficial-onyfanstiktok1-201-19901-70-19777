@@ -17,16 +17,19 @@ export const usePremiumStatus = () => {
       console.log('👑 Verificando status premium para:', { email: userEmail, userId });
       
       if (!userEmail && !userId) {
-        // Sem autenticação = sem VIP
-        setIsPremium(false);
-        setPremiumData(null);
-        localStorage.removeItem('premium_user');
-        localStorage.removeItem('premium_email');
+        // Fallback: localStorage se não estiver autenticado
+        const localPremium = localStorage.getItem('premium_user');
+        if (localPremium === 'true') {
+          setIsPremium(true);
+        } else {
+          setIsPremium(false);
+          setPremiumData(null);
+        }
         setLoading(false);
         return;
       }
       
-      // 2. Buscar registros premium ativos do banco (fonte única de verdade)
+      // 2. Buscar TODOS os registros premium ativos (RLS deve permitir ver o próprio)
       const { data: allPremium, error } = await supabase
         .from('premium_users')
         .select('*')
@@ -37,11 +40,11 @@ export const usePremiumStatus = () => {
 
       if (error) {
         console.error('❌ Erro RLS ao buscar premium_users:', error);
-        // Em caso de erro, NÃO liberar VIP — segurança primeiro
-        setIsPremium(false);
-        setPremiumData(null);
-        localStorage.removeItem('premium_user');
-        localStorage.removeItem('premium_email');
+        // Fallback localStorage
+        const localPremium = localStorage.getItem('premium_user');
+        if (localPremium === 'true') {
+          setIsPremium(true);
+        }
         setLoading(false);
         return;
       }
@@ -50,14 +53,17 @@ export const usePremiumStatus = () => {
       let matchedPremium = null;
 
       if (allPremium && allPremium.length > 0) {
+        // Buscar por email (case-insensitive)
         matchedPremium = allPremium.find(p => 
           p.email && userEmail && p.email.toLowerCase() === userEmail
         );
 
+        // Se não encontrou por email, buscar por user_id
         if (!matchedPremium && userId) {
           matchedPremium = allPremium.find(p => p.user_id === userId);
         }
 
+        // Se ainda não encontrou, buscar por telefone
         if (!matchedPremium && userId) {
           const { data: profileData } = await supabase
             .from('profiles')
@@ -74,6 +80,8 @@ export const usePremiumStatus = () => {
 
       if (matchedPremium) {
         console.log('✅ Usuário é VIP! Plano:', matchedPremium.subscription_type);
+        localStorage.setItem('premium_user', 'true');
+        localStorage.setItem('premium_email', userEmail || '');
         setIsPremium(true);
         setPremiumData(matchedPremium);
       } else {
@@ -92,17 +100,18 @@ export const usePremiumStatus = () => {
     }
   }, []);
 
-  const setPremiumStatus = useCallback((status: boolean, _email?: string) => {
-    // Apenas atualiza o estado local temporariamente — a verificação real vem do banco
-    if (status) {
+  const setPremiumStatus = useCallback((status: boolean, email?: string) => {
+    if (status && email) {
+      localStorage.setItem('premium_user', 'true');
+      localStorage.setItem('premium_email', email);
       setIsPremium(true);
     } else {
+      localStorage.removeItem('premium_user');
+      localStorage.removeItem('premium_email');
       setIsPremium(false);
       setPremiumData(null);
     }
-    // Sempre re-verificar no banco para garantir
-    checkPremiumStatus();
-  }, [checkPremiumStatus]);
+  }, []);
 
   const isContentUnlocked = useCallback((contentType: 'video' | 'model' | 'feature', contentId?: string) => {
     // Se é premium, libera tudo

@@ -166,7 +166,11 @@ export const PaymentVerificationIndicator = ({
     setIsVIPActivated(true);
     sessionStorage.removeItem('checking_payment');
     
-    // Status VIP agora é verificado exclusivamente pelo banco de dados
+    // Salvar no localStorage
+    localStorage.setItem('premium_user', 'true');
+    if (vipData.email) {
+      localStorage.setItem('premium_email', vipData.email);
+    }
     
     // Mostrar notificação
     toast({

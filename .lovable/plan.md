@@ -1,31 +1,20 @@
 
 
-## Plano: Vincular produtos à CocoLoja e exibir lojas SaaS no Marketplace
+## Plano: Trocar a logo na navbar para a nova logo Coconudi
 
-### Parte 1: Vincular produtos existentes à loja Coconudi Brasil
+### Problema
+A logo atual usada na navbar (e em todo o app) é `coconudi-logo-new.png`. O usuário quer substituí-la pela nova logo rainbow "C" enviada em anexo.
 
-Todos os `marketplace_products` têm `store_id = NULL`. A loja "Coconudi Brasil" já existe com id `4af1ce85-758a-4389-8c26-8c3cc9827f39`.
+### Solução
 
-**Ação**: Executar UPDATE para setar `store_id` de todos os produtos existentes para a loja Coconudi Brasil.
+1. **Copiar a nova logo** para `src/assets/coconudi-logo-new.png`, substituindo a atual. Isso atualiza automaticamente todos os ~15 arquivos que importam essa logo (navbar do TikTokApp, AdminHeader, Auth, MarketplacePage, etc.)
 
-```sql
-UPDATE marketplace_products 
-SET store_id = '4af1ce85-758a-4389-8c26-8c3cc9827f39' 
-WHERE store_id IS NULL;
-```
-
-### Parte 2: Mostrar lojas SaaS no Marketplace
-
-Adicionar uma seção "Lojas" no `MarketplacePage.tsx` que:
-- Busca lojas ativas de `marketplace_stores`
-- Exibe cards com logo, nome e badge de verificação
-- Ao clicar, navega para `/marketplace/loja/:slug` (rota já existente via `StoreProfilePage`)
-
-**Arquivo editado**: `src/pages/MarketplacePage.tsx`
-- Novo state `stores` com fetch de `marketplace_stores` ativas
-- Nova seção "🏪 LOJAS" renderizada acima dos produtos, com grid de cards de lojas
+### Arquivos impactados (sem edição necessária)
+Todos já importam `coconudi-logo-new.png`, então a substituição do arquivo resolve tudo:
+- `src/pages/TikTokApp.tsx` (navbar principal)
+- `src/components/admin/AdminHeader.tsx` (navbar admin)
+- `src/pages/Auth.tsx`, `MarketplacePage.tsx`, `UserProfile.tsx`, etc.
 
 ### Resultado
-- Produtos existentes ficam vinculados à CocoLoja
-- Novas lojas SaaS aparecem no marketplace público para os usuários navegarem
+A nova logo rainbow "C" aparecerá em todas as navbars e telas que usam a logo do Coconudi.
 

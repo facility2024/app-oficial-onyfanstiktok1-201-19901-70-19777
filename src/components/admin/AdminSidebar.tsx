@@ -22,7 +22,8 @@ import {
   Phone,
   Megaphone,
   Radio,
-  Mail
+  Mail,
+  Film
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -70,6 +71,7 @@ const navigationGroups = [
       { id: 'genres', label: 'Gêneros', icon: Tags },
       { id: 'intelligent-feed', label: 'Feed Inteligente', icon: Brain },
       { id: 'posts', label: 'Postagens', icon: Calendar },
+      { id: 'cocoflix', label: 'Cocoflix', icon: Film },
     ]
   },
   {

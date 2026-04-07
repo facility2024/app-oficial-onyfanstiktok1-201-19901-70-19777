@@ -48,6 +48,8 @@ import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
 import StoreProfilePage from "./pages/StoreProfilePage";
 import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
 import StoreCartPage from "./pages/StoreCartPage";
+import CocoflixPage from "./pages/CocoflixPage";
+import CocoflixContentPage from "./pages/CocoflixContentPage";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
@@ -202,6 +204,10 @@ const App = () => (
           <Route path="/loja" element={<LojaPage />} />
           <Route path="/loja/:id" element={<LojaProdutoPage />} />
           
+          {/* Cocoflix */}
+          <Route path="/cocoflix" element={<CocoflixPage />} />
+          <Route path="/cocoflix/:contentId" element={<CocoflixContentPage />} />
+
           {/* Painel de Postagens - acesso direto */}
           <Route path="/postagem" element={<PostagemPage />} />
           

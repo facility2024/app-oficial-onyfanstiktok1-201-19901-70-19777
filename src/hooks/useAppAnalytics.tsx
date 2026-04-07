@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
 export const useAppAnalytics = () => {
   console.log('🔧 DEBUG: useAppAnalytics hook sendo chamado');
   
@@ -43,12 +45,10 @@ export const useAppAnalytics = () => {
           user_agent: navigator.userAgent
         };
 
-        // Diferenciar model_id vs creator_id
-        if (modelId) {
-          // Se for um modelo estático, usar model_id
+        // Diferenciar model_id vs creator_id (validar UUID antes)
+        if (modelId && isValidUUID(modelId)) {
           analyticsData.model_id = modelId;
-        } else if (additionalData?.creator_id) {
-          // Se for um criador, usar creator_id
+        } else if (additionalData?.creator_id && isValidUUID(additionalData.creator_id)) {
           analyticsData.creator_id = additionalData.creator_id;
         }
 
@@ -75,7 +75,7 @@ export const useAppAnalytics = () => {
               .insert({
                 user_id: currentUserId,
                 video_id: videoId,
-                model_id: modelId || null,
+                model_id: (modelId && isValidUUID(modelId)) ? modelId : null,
                 is_active: true,
                 user_agent: navigator.userAgent
               });
@@ -112,7 +112,7 @@ export const useAppAnalytics = () => {
             .from('video_views')
             .insert({
               video_id: videoId,
-              model_id: modelId || null,
+              model_id: (modelId && isValidUUID(modelId)) ? modelId : null,
               user_id: currentUserId,
               session_id: localStorage.getItem('session_id') || currentUserId,
               device_type: /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',

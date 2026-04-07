@@ -149,7 +149,7 @@ export default {
 			'float': 'float 3s ease-in-out infinite',
 			'shimmer': 'shimmer 2s linear infinite',
 			'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-			'marquee': 'marquee 15s linear infinite'
+			'marquee': 'marquee 35s linear infinite'
 		}
 		}
 	},

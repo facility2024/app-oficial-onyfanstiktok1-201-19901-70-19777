@@ -809,9 +809,7 @@ export const TikTokApp = () => {
         console.log('📹 REGISTRANDO VIEW para vídeo:', trackingId);
 
         try {
-          const rawUserId = currentVideo.user?.id || currentVideo.model_id || '';
-          const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-          const userId = (rawUserId && isValidUUID(rawUserId)) ? rawUserId : '';
+          const userId = currentVideo.user?.id || currentVideo.model_id || '';
           const isCreator = !!currentVideo.creator_id;
 
           if (userId) {
@@ -1932,11 +1930,6 @@ export const TikTokApp = () => {
   };
   const checkIfFollowing = async (modelId: string) => {
     try {
-      const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      if (!modelId || !isValidUUID(modelId)) {
-        console.log('⏭️ Ignorando checkIfFollowing para ID inválido:', modelId);
-        return;
-      }
       console.log('🔍 VERIFICANDO STATUS DE SEGUIR:', modelId);
 
       // ✅ USAR ID DO USUÁRIO AUTENTICADO se estiver logado

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
 import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Volume1 } from 'lucide-react';
 import { useVideoActions } from '@/hooks/useVideoActions';
@@ -169,18 +170,13 @@ export const EnhancedSideMenu = ({
       
       {/* Profile */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
-        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white group-hover:border-white/80 transition-all shadow-lg">
-          {video?.user?.avatar_url ? (
-            <img 
-              src={video.user.avatar_url} 
-              alt={video.user.username}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-800">
-              <User className="w-6 h-6 text-white" strokeWidth={1.5} />
-            </div>
-          )}
+        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white group-hover:border-white/80 transition-all shadow-lg bg-gray-800">
+          <img 
+            src={video?.user?.avatar_url || DEFAULT_AVATAR} 
+            alt={video?.user?.username}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+          />
           <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#22C55E] rounded-full border-2 border-black shadow-sm"></div>
         </div>
         

@@ -158,18 +158,6 @@ export const CategoryMenu = ({
     }
   });
 
-  // Adicionar "Seja VIP" apenas se NÃO for premium
-  if (!isPremium) {
-    baseMenuItems.push({
-      id: "subscribe",
-      name: "Seja VIP",
-      icon: <Sparkles className="w-5 h-5 text-amber-400" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/subscribe'), 100);
-      }
-    });
-  }
 
   // Adicionar "Sou Criador" apenas se isCreator === true E não está carregando
   if (isCreator === true && creatorLoading === false) {

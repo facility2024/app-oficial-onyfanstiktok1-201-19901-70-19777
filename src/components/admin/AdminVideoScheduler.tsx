@@ -143,7 +143,14 @@ export const AdminVideoScheduler = () => {
       return;
     }
 
-    setScheduledPosts((data || []) as ScheduledPost[]);
+    const enrichedData = (data || []).map((post: any) => ({
+      ...post,
+      models: post.models ? {
+        ...post.models,
+        avatar_url: post.models.avatar_url || DEFAULT_AVATAR
+      } : undefined
+    }));
+    setScheduledPosts(enrichedData as ScheduledPost[]);
   };
 
   const searchModel = async () => {

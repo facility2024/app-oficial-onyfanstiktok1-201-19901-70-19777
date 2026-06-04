@@ -3509,7 +3509,7 @@ export const TikTokApp = () => {
                   <ModelCarousel title="Novas Modelos" icon="✨" direction="ltr" carouselIndex={1} onSelectModel={modelId => {
                   goToModelVideo(modelId);
                 }} />
-                  <MarketplaceCarousel />
+                  
                   <LocalBusinessCarousel />
                 </div>
               </ScrollArea>

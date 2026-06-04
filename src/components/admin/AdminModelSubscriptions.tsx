@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import {
   Dialog,
   DialogContent,
@@ -264,7 +265,7 @@ export const AdminModelSubscriptions = () => {
         let modelName = '';
         let modelAvatar = '';
         let subscriberName = '';
-        let subscriberAvatar = '';
+        let subscriberAvatar = DEFAULT_AVATAR;
         let actualType = sub.model_type;
         
         // Try to fetch from models table first
@@ -276,7 +277,7 @@ export const AdminModelSubscriptions = () => {
         
         if (model?.name) {
           modelName = model.name;
-          modelAvatar = model.avatar_url || '';
+          modelAvatar = model.avatar_url || DEFAULT_AVATAR;
           actualType = 'model';
         } else {
           // If not found in models, try profiles (creators)
@@ -288,7 +289,7 @@ export const AdminModelSubscriptions = () => {
           
           if (profile?.name) {
             modelName = profile.name;
-            modelAvatar = profile.avatar_url || '';
+            modelAvatar = profile.avatar_url || DEFAULT_AVATAR;
             actualType = 'creator';
           } else {
             modelName = `ID: ${sub.model_id.slice(0, 8)}...`;
@@ -305,7 +306,7 @@ export const AdminModelSubscriptions = () => {
           
           if (subscriberProfile) {
             subscriberName = subscriberProfile.name || '';
-            subscriberAvatar = subscriberProfile.avatar_url || '';
+            subscriberAvatar = subscriberProfile.avatar_url || DEFAULT_AVATAR;
           }
         }
         

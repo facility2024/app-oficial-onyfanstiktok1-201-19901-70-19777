@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -438,9 +439,10 @@ export default function ModelChat() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <img
-          src={entity.avatar_url || '/placeholder.svg'}
+          src={entity.avatar_url || DEFAULT_AVATAR}
           alt={entity.name}
           className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
+          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
         />
         <div className="flex-1">
           <p className="font-semibold text-black flex items-center gap-2">

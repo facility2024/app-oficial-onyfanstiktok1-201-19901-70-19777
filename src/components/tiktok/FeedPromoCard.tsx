@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -94,10 +95,10 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/50 shadow-lg flex-shrink-0">
             <img 
-              src={promo.avatar_url || '/placeholder.svg'} 
+              src={promo.avatar_url || DEFAULT_AVATAR} 
               alt={promo.display_name}
               className="w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -138,7 +139,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
             src={promo.media_url}
             alt={promo.title || promo.display_name}
             className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
           />
         )}
       </div>
@@ -148,10 +149,10 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         <div className="flex flex-col items-center">
           <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-lg">
             <img 
-              src={promo.avatar_url || '/placeholder.svg'} 
+              src={promo.avatar_url || DEFAULT_AVATAR} 
               alt={promo.display_name}
               className="w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
             />
           </div>
           <span className="text-white text-[10px] mt-1">Perfil</span>
@@ -242,7 +243,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
                     src={promo.popup_media_url}
                     alt="Promoção"
                     className="w-full h-full object-contain"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                   />
                 )}
               </div>

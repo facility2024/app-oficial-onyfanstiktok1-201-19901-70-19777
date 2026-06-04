@@ -30,7 +30,7 @@ interface Video {
   user: {
     id: string;
     username: string;
-    avatar_url: string;
+    avatar_url: string | null;
     followers_count: number;
     following_count: number;
     is_online: boolean;
@@ -122,7 +122,7 @@ export const LiveInterface = () => {
           user: {
             id: model.id,
             username: model.username,
-            avatar_url: model.avatar_url,
+            avatar_url: model.avatar_url || DEFAULT_AVATAR,
             followers_count: model.followers_count || 0,
             following_count: 0,
             is_online: true,

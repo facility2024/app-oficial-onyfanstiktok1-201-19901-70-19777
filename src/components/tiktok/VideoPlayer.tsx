@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
 import { VideoProgressBar } from './VideoProgressBar';
@@ -395,7 +396,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         {lockedPrivate && showSubscriptionOverlay && plans.length > 0 && (
           <ModelSubscriptionOverlay
             modelName={video.user?.username || 'Criadora'}
-            modelAvatar={video.user?.avatar_url}
+            modelAvatar={video.user?.avatar_url || DEFAULT_AVATAR}
             plans={plans}
             thumbnailUrl={(video as any).thumbnail_url}
             onClose={() => setShowSubscriptionOverlay(false)}

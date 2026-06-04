@@ -190,6 +190,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
                   <div className="relative">
                     <img
                       src={model.avatar_url || DEFAULT_AVATAR}
+                      onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                       alt={model.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />

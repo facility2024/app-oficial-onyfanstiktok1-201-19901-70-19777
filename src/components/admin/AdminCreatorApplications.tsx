@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -126,7 +127,7 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
         .eq('is_promo_creator', true)
         .order('created_at', { ascending: false });
       if (!error && data) {
-        setPromoCreators(data);
+        setPromoCreators(data.map(m => ({ ...m, avatar_url: m.avatar_url || DEFAULT_AVATAR })));
       }
     } catch (err) {
       console.error('Erro ao buscar criadoras de promoção:', err);

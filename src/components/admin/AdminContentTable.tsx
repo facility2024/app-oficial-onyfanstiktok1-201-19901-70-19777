@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -101,7 +102,7 @@ export const AdminContentTable = () => {
           videoId: latestVideo?.id,
           name: model.name || model.username || 'Usuário Anônimo',
           email: null,
-          avatar: model.avatar_url || crownLogo,
+          avatar: model.avatar_url || DEFAULT_AVATAR || crownLogo,
           platform: model.is_verified || (model.followers_count || 0) > 10000 ? 'premium' : 'standard',
           views: formatNumber(latestVideo?.views_count || 0),
           likes: formatNumber(model.likes_count || latestVideo?.likes_count || 0),
@@ -126,7 +127,7 @@ export const AdminContentTable = () => {
           videoId: latestVideo?.id,
           name: profile?.name || profile?.email?.split('@')[0] || 'Criador',
           email: profile?.email,
-          avatar: crownLogo, // Temporariamente usar logo padrão até schema estar correto
+          avatar: profile?.avatar_url || DEFAULT_AVATAR || crownLogo,
           platform: 'creator',
           views: formatNumber(latestVideo?.views_count || 0),
           likes: formatNumber(latestVideo?.likes_count || 0),
@@ -730,9 +731,10 @@ export const AdminContentTable = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12">
                         <img 
-                          src={content.avatar} 
+                          src={content.avatar || DEFAULT_AVATAR} 
                           alt={`Avatar ${content.name}`} 
                           className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover border-2 border-primary/30"
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                         />
                       </div>
                       <div className="ml-2 sm:ml-3">

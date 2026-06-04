@@ -154,6 +154,7 @@ export const AdminLive = () => {
                   <div className="relative">
                     <img
                       src={live.model_avatar || DEFAULT_AVATAR}
+                      onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                       alt={live.manual_name || live.model_name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -345,6 +346,7 @@ export const AdminLive = () => {
                 >
                   <img
                     src={model.avatar_url || DEFAULT_AVATAR}
+                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                     alt={model.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />

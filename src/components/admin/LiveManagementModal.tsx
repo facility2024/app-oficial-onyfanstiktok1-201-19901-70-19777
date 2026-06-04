@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -157,9 +158,10 @@ export const LiveManagementModal = ({ isOpen, onClose }: LiveManagementModalProp
                     <SelectItem key={model.id} value={model.id}>
                       <div className="flex items-center gap-2">
                         <img 
-                          src={model.avatar_url || '/api/placeholder/24/24'} 
+                          src={model.avatar_url || DEFAULT_AVATAR} 
                           alt={model.name}
                           className="w-6 h-6 rounded-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                         />
                         <span>{model.name}</span>
                         {model.posting_panel_url && (
@@ -176,9 +178,10 @@ export const LiveManagementModal = ({ isOpen, onClose }: LiveManagementModalProp
               <div className="p-3 bg-muted rounded-lg">
                 <div className="flex items-center gap-3">
                   <img 
-                    src={selectedModel.avatar_url || '/api/placeholder/40/40'} 
+                    src={selectedModel.avatar_url || DEFAULT_AVATAR} 
                     alt={selectedModel.name}
                     className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                   />
                   <div>
                     <h4 className="font-semibold">{selectedModel.name}</h4>
@@ -232,9 +235,10 @@ export const LiveManagementModal = ({ isOpen, onClose }: LiveManagementModalProp
                       <div className="flex items-center gap-3">
                         <div className="relative">
                           <img 
-                            src={model.avatar_url || '/api/placeholder/40/40'} 
+                            src={model.avatar_url || DEFAULT_AVATAR} 
                             alt={model.name}
                             className="w-10 h-10 rounded-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                           />
                           <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
                             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>

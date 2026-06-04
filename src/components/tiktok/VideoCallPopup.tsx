@@ -1,4 +1,5 @@
 import { X, Video, Phone } from 'lucide-react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,11 +39,12 @@ export const VideoCallPopup = ({ isOpen, onClose, activeModel }: VideoCallPopupP
         <div className="p-6 flex flex-col items-center text-center space-y-4">
           {/* Icon/Avatar */}
           <div className="relative">
-            {activeModel?.avatar_url ? (
+            {activeModel?.avatar_url || DEFAULT_AVATAR ? (
               <img
-                src={activeModel.avatar_url}
-                alt={activeModel.name}
+                src={activeModel?.avatar_url || DEFAULT_AVATAR}
+                alt={activeModel?.name}
                 className="w-24 h-24 rounded-full object-cover border-2 border-pink-500"
+                onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">

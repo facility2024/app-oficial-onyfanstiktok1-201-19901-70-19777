@@ -127,6 +127,7 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
                     src={comment.user?.avatar_url || DEFAULT_AVATAR}
                     alt="User"
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -170,6 +171,7 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
             src={profile?.avatar_url || DEFAULT_AVATAR}
             alt={profile?.username || user?.email || 'Meu perfil'}
             className={`w-8 h-8 rounded-full object-cover ${isPremium ? 'ring-2 ring-amber-400' : ''}`}
+            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
           />
           {isPremium && (
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">

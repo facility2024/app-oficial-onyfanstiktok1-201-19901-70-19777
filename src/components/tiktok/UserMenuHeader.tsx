@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,7 @@ export const UserMenuHeader = () => {
       {/* Avatar e Info */}
       <div className="flex items-center gap-3 mb-3">
         <div className="relative">
-          <img src={profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.id} alt={displayUsername || 'User'} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg" />
+          <img src={profile?.avatar_url || DEFAULT_AVATAR} alt={displayUsername || 'User'} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }} />
           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#22C55E] rounded-full border-2 border-black"></div>
         </div>
         

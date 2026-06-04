@@ -408,7 +408,7 @@ export const TikTokApp = () => {
         user: {
           id: `promo-${selectedPromo.id}`,
           username: selectedPromo.display_name,
-          avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
+          avatar_url: selectedPromo.avatar_url || DEFAULT_AVATAR,
           followers_count: 0,
           following_count: 0,
           is_online: false,
@@ -786,7 +786,7 @@ export const TikTokApp = () => {
     if (matched) {
       setActiveVideoCallModel({
         name: matched.model_name,
-        avatar_url: matched.model_avatar,
+        avatar_url: matched.model_avatar || DEFAULT_AVATAR,
         description: matched.description,
         price: matched.price,
       });
@@ -1870,7 +1870,7 @@ export const TikTokApp = () => {
           created_at: comment.created_at,
           user: {
             username: profile?.name || profile?.email?.split('@')[0] || `User ${comment.user_id?.slice(0, 8)}`,
-            avatar_url: avatarUrl
+            avatar_url: avatarUrl || DEFAULT_AVATAR
           }
         };
       });
@@ -3105,7 +3105,7 @@ export const TikTokApp = () => {
         <ChatScreen isOpen={showChat} onClose={() => {
         setShowChat(false);
         setChatEntity(null);
-      }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
+      }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url || DEFAULT_AVATAR} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
         {/* Comments Screen */}
         <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
@@ -3347,7 +3347,7 @@ export const TikTokApp = () => {
                  )}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <img src={currentVideo?.user?.avatar_url || DEFAULT_AVATAR} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
+                    <img src={currentVideo?.user?.avatar_url || DEFAULT_AVATAR} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }} />
                   </div>
                   <p className="text-white font-semibold text-lg drop-shadow-lg">
                     {currentVideo?.user?.username || 'Modelo'}
@@ -3496,7 +3496,7 @@ export const TikTokApp = () => {
       <ChatScreen isOpen={showChat} onClose={() => {
       setShowChat(false);
       setChatEntity(null);
-    }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
+    }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url || DEFAULT_AVATAR} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
       {/* Desktop Comments Screen */}
       <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />

@@ -117,6 +117,7 @@ export const LiveModal = ({ isOpen, onClose, onSelectModel }: LiveModalProps) =>
                       src={model.avatar_url || DEFAULT_AVATAR}
                       alt={model.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                     />
                     
                     {/* Gradient Overlay */}

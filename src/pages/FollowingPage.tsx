@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from "@/constants/defaultAvatar";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,7 +86,7 @@ export default function FollowingPage() {
             id: model.id,
             name: model.username,
             username: model.username,
-            avatar_url: model.avatar_url || '/placeholder.svg',
+            avatar_url: model.avatar_url || DEFAULT_AVATAR,
             followers_count: model.followers_count || 0,
             entity_type: 'model' as const,
             followed_at: new Date().toISOString()
@@ -118,7 +119,7 @@ export default function FollowingPage() {
             id: creator.id,
             name: creator.name || creator.email?.split('@')[0] || 'Criador',
             username: creator.name || creator.email?.split('@')[0],
-            avatar_url: creator.avatar_url || '/placeholder.svg',
+            avatar_url: creator.avatar_url || DEFAULT_AVATAR,
             followers_count: 0,
             entity_type: 'creator' as const,
             followed_at: new Date().toISOString()

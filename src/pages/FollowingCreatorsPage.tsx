@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserIdSync } from '@/utils/getUserId';
@@ -68,7 +69,7 @@ const FollowingCreatorsPage = () => {
         id: c.id,
         name: c.name || 'Criador',
         email: c.email || '',
-        avatar_url: '/placeholder-avatar.png',
+        avatar_url: c.avatar_url || DEFAULT_AVATAR,
         bio: '',
         followers_count: 0
       }));

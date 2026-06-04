@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -280,7 +281,8 @@ const CollectionsPage = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
                         <img
-                          src={favorite.video.user?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                          src={favorite.video.user?.avatar_url || DEFAULT_AVATAR}
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                           alt={favorite.video.user?.username}
                           className="w-full h-full object-cover"
                         />

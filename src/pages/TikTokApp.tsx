@@ -3180,11 +3180,11 @@ export const TikTokApp = () => {
         {/* Controles à direita */}
         <div className="flex items-center space-x-3">
           {/* Indicador de Gênero Selecionado */}
-          {selectedGenre && selectedGenre !== 'Todos' && (
+          {selectedGenre && selectedGenre !== 'Hétero' && (
             <button 
-              onClick={() => setSelectedGenre('Todos')} 
+              onClick={() => setSelectedGenre('Hétero')} 
               className="flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors" 
-              title="Clique para ver todos os gêneros"
+              title="Clique para voltar ao gênero padrão"
             >
               <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
               <span className="text-sm font-medium text-white">{selectedGenre}</span>

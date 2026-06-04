@@ -120,6 +120,11 @@ export const AdminVideos = () => {
         .limit(50);
 
       setVideos(videosData?.map((video: any) => ({
+        ...video,
+        users: video.users ? {
+          ...video.users,
+          avatar_url: video.users.avatar_url || DEFAULT_AVATAR
+        } : undefined,
         id: video.id,
         title: video.title || 'Vídeo sem título',
         thumbnail_url: video.thumbnail_url || DEFAULT_AVATAR,

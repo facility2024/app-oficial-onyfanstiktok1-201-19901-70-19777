@@ -117,15 +117,6 @@ export const CategoryMenu = ({
         setTimeout(() => navigate('/following-creators'), 100);
       }
     },
-    {
-      id: "chat-ai",
-      name: "Chat IA",
-      icon: <Bot className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/ChatIA'), 100);
-      }
-    }
   ];
 
 

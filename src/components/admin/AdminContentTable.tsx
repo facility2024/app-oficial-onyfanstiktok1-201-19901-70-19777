@@ -731,9 +731,10 @@ export const AdminContentTable = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12">
                         <img 
-                          src={content.avatar} 
+                          src={content.avatar || DEFAULT_AVATAR} 
                           alt={`Avatar ${content.name}`} 
                           className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover border-2 border-primary/30"
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                         />
                       </div>
                       <div className="ml-2 sm:ml-3">

@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
 import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
@@ -69,19 +70,14 @@ export const SideMenu = ({
       {/* Profile */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
         <div className="relative w-12 h-12 md:w-[75px] md:h-[75px] flex items-center justify-center transition-all">
-          {video?.user?.avatar_url ? (
-            <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white overflow-hidden shrink-0 shadow-lg">
-              <img 
-                src={video.user.avatar_url} 
-                alt={video.user.username}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white flex items-center justify-center bg-gray-800 shrink-0 shadow-lg">
-              <User className="w-6 h-6 md:w-10 md:h-10 text-white" strokeWidth={1.5} />
-            </div>
-          )}
+          <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white overflow-hidden shrink-0 shadow-lg bg-gray-800">
+            <img 
+              src={video?.user?.avatar_url || DEFAULT_AVATAR} 
+              alt={video?.user?.username}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+            />
+          </div>
           <div className="absolute -bottom-1 -right-1 w-4 h-4 md:w-6 md:h-6 bg-[#22C55E] rounded-full border-2 border-black"></div>
         </div>
       </div>

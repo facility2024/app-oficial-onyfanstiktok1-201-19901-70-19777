@@ -1082,7 +1082,7 @@ export const TikTokApp = () => {
           title: `${m.name || m.username} - Vídeo Principal`,
           description: `Conteúdo de ${m.name || m.username}`,
           video_url: m.posting_panel_url,
-          thumbnail_url: m.avatar_url || '',
+          thumbnail_url: m.avatar_url || DEFAULT_AVATAR,
           model_id: m.id,
           visibility: m.is_premium ? 'premium' : 'public',
           is_active: true,
@@ -1099,7 +1099,7 @@ export const TikTokApp = () => {
             title: `${m.name || m.username} - Vídeo Principal`,
             description: `Conteúdo de ${m.name || m.username}`,
             video_url: m.posting_panel_url,
-            thumbnail_url: m.avatar_url || '',
+            thumbnail_url: m.avatar_url || DEFAULT_AVATAR,
             model_id: m.id,
             creator_id: null,
             visibility: m.is_premium ? 'premium' : 'public',
@@ -1178,7 +1178,7 @@ export const TikTokApp = () => {
         user: model ? {
           id: model.id || post.modelo_id || 'unknown',
           username: model.username || model.name || 'Usuário',
-          avatar_url: model.avatar_url || '',
+          avatar_url: model.avatar_url || DEFAULT_AVATAR,
           followers_count: model.followers_count || 0,
           following_count: 0,
           is_online: chatPanelsMap[model.id] || false,
@@ -1268,7 +1268,7 @@ export const TikTokApp = () => {
           user: model ? {
             id: model.id || post.modelo_id || 'unknown',
             username: model.username || model.name || 'Usuário',
-            avatar_url: model.avatar_url || '',
+            avatar_url: model.avatar_url || DEFAULT_AVATAR,
             followers_count: model.followers_count || 0,
             following_count: 0,
             is_online: chatPanelsMap[model.id] || false,
@@ -3347,7 +3347,7 @@ export const TikTokApp = () => {
                  )}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <img src={currentVideo?.user?.avatar_url || '/placeholder.svg'} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
+                    <img src={currentVideo?.user?.avatar_url || DEFAULT_AVATAR} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
                   </div>
                   <p className="text-white font-semibold text-lg drop-shadow-lg">
                     {currentVideo?.user?.username || 'Modelo'}

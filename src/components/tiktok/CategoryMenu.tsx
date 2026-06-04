@@ -82,15 +82,6 @@ export const CategoryMenu = ({
       }
     },
     {
-      id: "following",
-      name: "Seguindo",
-      icon: <Users className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        window.location.href = '/following';
-      }
-    },
-    {
       id: "local-business",
       name: "Negócios Locais",
       icon: <MapPin className="w-5 h-5" />,

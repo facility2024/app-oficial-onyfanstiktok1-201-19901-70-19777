@@ -67,7 +67,7 @@ export const GenreSelector = ({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 p-2">
-              {genres.map((genre) => {
+              {genres.filter(g => g.name !== 'Todos').map((genre) => {
                 const isSelected = selectedGenre === genre.name;
                 return (
                   <button

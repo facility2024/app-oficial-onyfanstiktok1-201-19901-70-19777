@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -246,7 +247,7 @@ export const AdminVideoScheduler = () => {
         id: pendingModelData.generatedId,
         username: pendingModelData.username,
         name: pendingModelData.username,
-        avatar_url: formData.modelAvatarUrl.trim() || 'https://via.placeholder.com/150',
+        avatar_url: formData.modelAvatarUrl.trim() || DEFAULT_AVATAR,
         is_active: true,
         posting_panel_url: formData.profileLink.trim() || null,
       })
@@ -326,7 +327,7 @@ export const AdminVideoScheduler = () => {
             id: generatedId,
             username: newUsername,
             name: newUsername,
-            avatar_url: formData.modelAvatarUrl.trim() || 'https://via.placeholder.com/150',
+            avatar_url: formData.modelAvatarUrl.trim() || DEFAULT_AVATAR,
             is_active: true,
             posting_panel_url: formData.profileLink.trim() || null,
           })
@@ -389,7 +390,7 @@ export const AdminVideoScheduler = () => {
         model_id: modelId,
         is_active: false, // Fica inativo até publicar
         title: `Vídeo agendado ${i + 1}`,
-        thumbnail_url: url, // Usa o próprio link como fallback
+        thumbnail_url: url || DEFAULT_AVATAR, // Usa o próprio link como fallback
         duration: '0:00',
         likes_count: 0,
         views_count: 0,

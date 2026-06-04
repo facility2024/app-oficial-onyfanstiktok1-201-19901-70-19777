@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -121,7 +122,7 @@ export const AdminVideos = () => {
       setVideos(videosData?.map((video: any) => ({
         id: video.id,
         title: video.title || 'Vídeo sem título',
-        thumbnail_url: video.thumbnail_url || '/api/placeholder/160/90',
+        thumbnail_url: video.thumbnail_url || DEFAULT_AVATAR,
         duration: '0:00',
         views: formatNumber(video.views_count || 0),
         likes: formatNumber(video.likes_count || 0),

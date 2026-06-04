@@ -400,18 +400,6 @@ const ExplorePage = () => {
       </div>
 
       {/* Bottom Navigation removida conforme solicitado */}
-            <User className="w-6 h-6 mb-1" />
-            <span className="text-xs">Perfil</span>
-          </button>
-          <button 
-            onClick={() => setSelectedTab('more')}
-            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
-          >
-            <MoreHorizontal className="w-6 h-6 mb-1" />
-            <span className="text-xs">Mais</span>
-          </button>
-        </div>
-      </div>
 
       {/* Modal de Vídeo em Tela Cheia */}
       {fullscreenVideo && (

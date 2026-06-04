@@ -81,6 +81,7 @@ export const SideMenu = ({
             <User className="w-10 h-10 md:w-[75px] md:h-[75px] text-white md:text-gray-800" strokeWidth={1.5} />
           )}
         </div>
+      </div>
 
       {/* Follow */}
       {onToggleFollow && (

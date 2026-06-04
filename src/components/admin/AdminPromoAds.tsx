@@ -394,7 +394,12 @@ export const AdminPromoAds = () => {
             <div className="space-y-3">
               {promoAds.map(ad => (
                 <div key={ad.id} className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                  <img src={ad.model_avatar || '/placeholder.svg'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-gray-600" />
+                  <img 
+                    src={ad.model_avatar || DEFAULT_AVATAR} 
+                    alt="" 
+                    className="w-12 h-12 rounded-full object-cover border-2 border-gray-600"
+                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-white font-semibold">{ad.model_name}</span>

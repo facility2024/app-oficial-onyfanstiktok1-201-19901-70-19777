@@ -245,8 +245,6 @@ export const CategoryMenu = ({
               }}
             />
             
-            {/* Top Avaliados - Marketplace */}
-            <MarketplaceCarousel />
             
             {/* Top 10 Comércios Locais */}
             <LocalBusinessCarousel />

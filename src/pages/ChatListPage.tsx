@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -246,9 +247,10 @@ export default function ChatListPage() {
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <img
-                          src={entity.avatar_url || '/placeholder.svg'}
+                          src={entity.avatar_url || DEFAULT_AVATAR}
                           alt={entity.name}
                           className="w-12 h-12 rounded-full object-cover border-2 border-gray-700"
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                         />
                         {entity.is_online && (
                           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />

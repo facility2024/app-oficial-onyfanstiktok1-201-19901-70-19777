@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { X, Radio, Play, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -53,11 +54,12 @@ export const LiveListPopup = ({ isOpen, onClose }: LiveListPopupProps) => {
           {/* Model info */}
           <div className="flex items-center gap-3 p-4 border-b border-white/10">
             <div className="relative">
-              {previewLive.model_avatar ? (
+              {previewLive.model_avatar || DEFAULT_AVATAR ? (
                 <img
-                  src={previewLive.model_avatar}
+                  src={previewLive.model_avatar || DEFAULT_AVATAR}
                   alt={previewLive.manual_name || previewLive.model_name}
                   className="w-10 h-10 rounded-full object-cover border border-red-500"
+                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
@@ -147,11 +149,12 @@ export const LiveListPopup = ({ isOpen, onClose }: LiveListPopupProps) => {
                 <div className="flex items-center gap-3 p-3">
                   {/* Avatar */}
                   <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-red-500">
-                    {live.model_avatar ? (
+                    {live.model_avatar || DEFAULT_AVATAR ? (
                       <img
-                        src={live.model_avatar}
+                        src={live.model_avatar || DEFAULT_AVATAR}
                         alt={live.manual_name || live.model_name}
                         className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">

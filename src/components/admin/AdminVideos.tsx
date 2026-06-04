@@ -846,7 +846,12 @@ export const AdminVideos = () => {
               <div key={video.id} className="border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200">
                 <div className="relative">
                   <div className="w-full h-32 bg-muted flex items-center justify-center">
-                    <Play className="w-8 h-8 text-muted-foreground" />
+                    <img 
+                      src={video.thumbnail_url || DEFAULT_AVATAR} 
+                      alt={video.title} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                    />
                   </div>
                   <div className="absolute bottom-2 right-2 bg-black/75 text-white px-2 py-1 rounded text-xs">
                     {video.duration}

@@ -73,31 +73,12 @@ export const CategoryMenu = ({
   // Construir menuItems dinamicamente
   const baseMenuItems: MenuItemProps[] = [
     {
-      id: "video-chamada",
-      name: "Vídeo Chamada",
-      icon: (
-        <span className="relative inline-flex items-center justify-center">
-          <span className="absolute inset-0 rounded-full bg-green-400/20 animate-ping" />
-          <Phone className="w-5 h-5 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />
-        </span>
-      ),
-      onClick: () => {
-        onOpenLive?.();
-        setOpen(false);
-      }
-    },
-    {
-      id: "live",
-      name: "Live",
-      icon: (
-        <span className="relative inline-flex items-center justify-center">
-          <span className="absolute inset-0 rounded-full bg-red-400/20 animate-ping" />
-          <Radio className="w-5 h-5 text-red-400 drop-shadow-[0_0_6px_rgba(248,113,113,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />
-        </span>
-      ),
+      id: "following",
+      name: "Seguindo",
+      icon: <Users className="w-5 h-5" />,
       onClick: () => {
         setOpen(false);
-        toast.info('🔴 Em breve! Acesse o perfil da modelo para ver se está ao vivo.');
+        window.location.href = '/following';
       }
     },
     {

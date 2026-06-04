@@ -70,7 +70,7 @@ export const SideMenu = ({
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
         <div className="relative w-12 h-12 md:w-[75px] md:h-[75px] flex items-center justify-center transition-all">
           {video?.user?.avatar_url ? (
-            <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-black overflow-hidden shrink-0">
+            <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white overflow-hidden shrink-0 shadow-lg">
               <img 
                 src={video.user.avatar_url} 
                 alt={video.user.username}
@@ -78,7 +78,9 @@ export const SideMenu = ({
               />
             </div>
           ) : (
-            <User className="w-10 h-10 md:w-[75px] md:h-[75px] text-white md:text-gray-800" strokeWidth={1.5} />
+            <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white flex items-center justify-center bg-gray-800 shrink-0 shadow-lg">
+              <User className="w-6 h-6 md:w-10 md:h-10 text-white" strokeWidth={1.5} />
+            </div>
           )}
         </div>
       </div>

@@ -148,7 +148,7 @@ export const ModelCarousel = ({
               onClick={() => onSelectModel?.(model.id)}
               className="flex-shrink-0 w-16 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gray-700 mb-1">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-1 shadow-md">
                 <img
                   src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
                   alt={model.name}

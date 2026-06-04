@@ -408,7 +408,7 @@ export const TikTokApp = () => {
         user: {
           id: `promo-${selectedPromo.id}`,
           username: selectedPromo.display_name,
-          avatar_url: selectedPromo.avatar_url || '/placeholder.svg',
+          avatar_url: selectedPromo.avatar_url || DEFAULT_AVATAR,
           followers_count: 0,
           following_count: 0,
           is_online: false,
@@ -1870,7 +1870,7 @@ export const TikTokApp = () => {
           created_at: comment.created_at,
           user: {
             username: profile?.name || profile?.email?.split('@')[0] || `User ${comment.user_id?.slice(0, 8)}`,
-            avatar_url: avatarUrl
+            avatar_url: avatarUrl || DEFAULT_AVATAR
           }
         };
       });

@@ -30,7 +30,7 @@ interface Video {
   user: {
     id: string;
     username: string;
-    avatar_url: string;
+    avatar_url: string | null;
     followers_count: number;
     following_count: number;
     is_online: boolean;

@@ -2856,7 +2856,7 @@ export const TikTokApp = () => {
     console.log('🚫 RENDER: selectedGenre:', selectedGenre);
 
     // Verifica se é filtro por gênero ou realmente sem vídeos
-    const isGenreFiltered = selectedGenre && selectedGenre !== 'Todos';
+    const isGenreFiltered = selectedGenre && selectedGenre !== 'Hétero';
     const currentGenreData = genres.find(g => g.name === selectedGenre);
     return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center px-6 max-w-sm">
@@ -2870,9 +2870,9 @@ export const TikTokApp = () => {
                 Ainda não há vídeos de <span className="font-semibold text-white">"{selectedGenre}"</span> disponíveis.
               </p>
               <div className="space-y-3">
-                <Button onClick={() => setSelectedGenre('Todos')} className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold">
+                <Button onClick={() => setSelectedGenre('Hétero')} className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold">
                   <Film className="w-4 h-4 mr-2" />
-                  Ver Todos os Vídeos
+                  Voltar ao Início
                 </Button>
                 <p className="text-xs text-gray-500">
                   Novos vídeos são adicionados diariamente
@@ -3180,11 +3180,11 @@ export const TikTokApp = () => {
         {/* Controles à direita */}
         <div className="flex items-center space-x-3">
           {/* Indicador de Gênero Selecionado */}
-          {selectedGenre && selectedGenre !== 'Todos' && (
+          {selectedGenre && selectedGenre !== 'Hétero' && (
             <button 
-              onClick={() => setSelectedGenre('Todos')} 
+              onClick={() => setSelectedGenre('Hétero')} 
               className="flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors" 
-              title="Clique para ver todos os gêneros"
+              title="Clique para voltar ao gênero padrão"
             >
               <span className="text-sm">{genres.find(g => g.name === selectedGenre)?.icon || '🎬'}</span>
               <span className="text-sm font-medium text-white">{selectedGenre}</span>
@@ -3282,13 +3282,6 @@ export const TikTokApp = () => {
               }} showLabel={false} triggerClassName="w-full justify-start px-4 py-2.5 text-white hover:bg-white/10 rounded-lg cursor-pointer" />
               </div>
               
-              {!isPremium && <button onClick={() => {
-              console.log('👑 Botão VIP clicado - Navegando para /subscribe');
-              navigate('/subscribe');
-            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
-                  <Crown className="w-5 h-5 mr-3 text-amber-400" />
-                  <span className="text-amber-400 font-medium">Seja VIP</span>
-                </button>}
               {isCreator === true && creatorLoading === false && <button onClick={() => {
               console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
               navigate('/creator-studio');

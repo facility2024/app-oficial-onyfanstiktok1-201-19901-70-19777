@@ -110,15 +110,6 @@ export const CategoryMenu = ({
       }
     },
     {
-      id: "marketplace",
-      name: "Market-Place",
-      icon: <ShoppingBag className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/marketplace'), 100);
-      }
-    },
-    {
       id: "local-business",
       name: "Negócios Locais",
       icon: <MapPin className="w-5 h-5" />,
@@ -254,8 +245,6 @@ export const CategoryMenu = ({
               }}
             />
             
-            {/* Top Avaliados - Marketplace */}
-            <MarketplaceCarousel />
             
             {/* Top 10 Comércios Locais */}
             <LocalBusinessCarousel />
@@ -268,7 +257,8 @@ export const CategoryMenu = ({
               onGenreSelect={(genre) => {
                 setOpen(false);
                 if (genre && genre !== 'Todos') {
-                  setTimeout(() => navigate(`/marketplace?genre=${encodeURIComponent(genre)}`), 150);
+                  // Redireciona para explorar ou mantém no feed com filtro
+                  setTimeout(() => navigate(`/explore?genre=${encodeURIComponent(genre)}`), 150);
                 }
               }} 
               showLabel={true}

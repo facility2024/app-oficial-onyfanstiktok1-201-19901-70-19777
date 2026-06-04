@@ -413,7 +413,10 @@ const ExplorePage = () => {
             <span className="text-xs">Início</span>
           </button>
           <button 
-            onClick={() => setSelectedTab('explore')}
+            onClick={() => {
+              setSelectedTab('explore');
+              navigate('/explore');
+            }}
             className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
           >
             <Compass className="w-6 h-6 mb-1" />

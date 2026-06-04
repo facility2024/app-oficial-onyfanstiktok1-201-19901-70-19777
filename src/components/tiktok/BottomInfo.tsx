@@ -35,6 +35,7 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPremium =
             src={video.user?.avatar_url || DEFAULT_AVATAR}
             alt="User Avatar"
             className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
           />
         </div>
         <span className="text-white font-semibold text-sm drop-shadow-lg">{video.user?.username || 'Usuário'}</span>

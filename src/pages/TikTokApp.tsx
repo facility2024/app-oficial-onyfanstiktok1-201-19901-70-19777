@@ -2856,7 +2856,7 @@ export const TikTokApp = () => {
     console.log('🚫 RENDER: selectedGenre:', selectedGenre);
 
     // Verifica se é filtro por gênero ou realmente sem vídeos
-    const isGenreFiltered = selectedGenre && selectedGenre !== 'Todos';
+    const isGenreFiltered = selectedGenre && selectedGenre !== 'Hétero';
     const currentGenreData = genres.find(g => g.name === selectedGenre);
     return <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="text-center px-6 max-w-sm">

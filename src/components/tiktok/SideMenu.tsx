@@ -230,19 +230,6 @@ export const SideMenu = ({
         </div>
       )}
 
-      {/* Chat - Desktop Only */}
-      {onOpenChat && (
-        <div className="hidden md:flex flex-col items-center cursor-pointer group" onClick={onOpenChat}>
-          <div className="w-12 h-12 flex items-center justify-center transition-all relative">
-            <MessagesSquare className="w-8 h-8 text-gray-800 md:text-gray-800" strokeWidth={1.5} />
-            {/* Indicador de Online */}
-            {isChatOnline && (
-              <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full border border-white animate-pulse"></div>
-            )}
-          </div>
-          <span className="text-foreground text-xs mt-1 font-light md:text-gray-800">chat</span>
-        </div>
-      )}
 
       {/* Video Options Menu */}
       <VideoOptionsMenu 

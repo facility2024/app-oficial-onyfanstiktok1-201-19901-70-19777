@@ -3282,13 +3282,6 @@ export const TikTokApp = () => {
               }} showLabel={false} triggerClassName="w-full justify-start px-4 py-2.5 text-white hover:bg-white/10 rounded-lg cursor-pointer" />
               </div>
               
-              {!isPremium && <button onClick={() => {
-              console.log('👑 Botão VIP clicado - Navegando para /subscribe');
-              navigate('/subscribe');
-            }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
-                  <Crown className="w-5 h-5 mr-3 text-amber-400" />
-                  <span className="text-amber-400 font-medium">Seja VIP</span>
-                </button>}
               {isCreator === true && creatorLoading === false && <button onClick={() => {
               console.log('🎯 Botão Creator Studio clicado - Navegando para /creator-studio');
               navigate('/creator-studio');

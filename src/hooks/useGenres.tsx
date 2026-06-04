@@ -17,9 +17,11 @@ export const useGenres = () => {
   const [loading, setLoading] = useState(true);
   const [selectedGenre, setSelectedGenreState] = useState<string>(() => {
     try {
-      return localStorage.getItem(SELECTED_GENRE_KEY) || 'Todos';
+      const saved = localStorage.getItem(SELECTED_GENRE_KEY);
+      if (saved && saved !== 'Todos') return saved;
+      return 'Hétero'; // Novo padrão
     } catch {
-      return 'Todos';
+      return 'Hétero';
     }
   });
 

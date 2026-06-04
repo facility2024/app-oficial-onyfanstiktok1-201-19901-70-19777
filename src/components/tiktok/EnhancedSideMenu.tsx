@@ -181,6 +181,7 @@ export const EnhancedSideMenu = ({
               <User className="w-6 h-6 text-white" strokeWidth={1.5} />
             </div>
           )}
+          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black shadow-sm"></div>
         </div>
         
       </div>

@@ -82,6 +82,7 @@ export const SideMenu = ({
               <User className="w-6 h-6 md:w-10 md:h-10 text-white" strokeWidth={1.5} />
             </div>
           )}
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 md:w-6 md:h-6 bg-green-500 rounded-full border-2 border-black"></div>
         </div>
       </div>
 

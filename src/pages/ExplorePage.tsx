@@ -399,43 +399,7 @@ const ExplorePage = () => {
         </div>
       </div>
 
-      {/* Bottom Navigation - Apenas Mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-white/10 z-50">
-        <div className="grid grid-cols-5 gap-0">
-          <button 
-            onClick={() => {
-              setSelectedTab('home');
-              navigate('/app');
-            }}
-            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
-          >
-            <Home className="w-6 h-6 mb-1" />
-            <span className="text-xs">Início</span>
-          </button>
-          <button 
-            onClick={() => {
-              setSelectedTab('explore');
-              navigate('/explore');
-            }}
-            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
-          >
-            <Compass className="w-6 h-6 mb-1" />
-            <span className="text-xs">Explorar</span>
-          </button>
-          <button 
-            onClick={() => setSelectedTab('trending')}
-            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
-          >
-            <TrendingUp className="w-6 h-6 mb-1" />
-            <span className="text-xs">Em alta</span>
-          </button>
-          <button 
-            onClick={() => {
-              setSelectedTab('profile');
-              navigate('/profile');
-            }}
-            className="flex flex-col items-center justify-center py-3 text-white hover:text-gray-300 transition-colors"
-          >
+      {/* Bottom Navigation removida conforme solicitado */}
             <User className="w-6 h-6 mb-1" />
             <span className="text-xs">Perfil</span>
           </button>

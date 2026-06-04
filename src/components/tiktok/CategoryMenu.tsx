@@ -71,44 +71,7 @@ export const CategoryMenu = ({
   };
 
   // Construir menuItems dinamicamente
-  const baseMenuItems: MenuItemProps[] = [
-    {
-      id: "following",
-      name: "Seguindo",
-      icon: <Users className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        window.location.href = '/following';
-      }
-    },
-    {
-      id: "local-business",
-      name: "Negócios Locais",
-      icon: <MapPin className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/local-business'), 100);
-      }
-    },
-    {
-      id: "collections",
-      name: "Coleções",
-      icon: <BookmarkPlus className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/collections'), 100);
-      }
-    },
-    {
-      id: "following-creators",
-      name: "Criadores Seguidos",
-      icon: <Sparkles className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/following-creators'), 100);
-      }
-    },
-  ];
+  const baseMenuItems: MenuItemProps[] = [];
 
 
 

@@ -182,7 +182,7 @@ export const EnhancedSideMenu = ({
             </div>
           )}
         </div>
-        <span className="text-white text-xs mt-1 font-light">Perfil</span>
+        
       </div>
 
       {/* Like */}
@@ -221,7 +221,7 @@ export const EnhancedSideMenu = ({
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all">
             <Eye className="w-6 h-6 text-white" strokeWidth={1.5} />
           </div>
-          <span className="text-white text-xs mt-1 font-light">Bloquear</span>
+          
         </div>
       )}
 
@@ -242,9 +242,6 @@ export const EnhancedSideMenu = ({
               <Volume2 className="w-6 h-6 text-white" strokeWidth={1.5} />
             )}
           </div>
-          <span className="text-white text-xs mt-1 font-light">
-            {Math.round(volume * 100)}%
-          </span>
         </div>
         
         {/* Volume Slider Popup */}
@@ -286,7 +283,7 @@ export const EnhancedSideMenu = ({
             <Play className="w-6 h-6 text-white" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-white text-xs mt-1 font-light">{isPlaying ? 'Pausar' : 'Play'}</span>
+        
       </div>
     </div>
   );

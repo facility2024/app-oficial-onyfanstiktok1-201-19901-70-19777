@@ -81,8 +81,6 @@ export const SideMenu = ({
             <User className="w-10 h-10 md:w-[75px] md:h-[75px] text-white md:text-gray-800" strokeWidth={1.5} />
           )}
         </div>
-        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">Perfil</span>
-      </div>
 
       {/* Follow */}
       {onToggleFollow && (
@@ -107,9 +105,6 @@ export const SideMenu = ({
               />
             )}
           </div>
-          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">
-            {isFollowing ? 'Seguindo' : 'Seguir'}
-          </span>
         </div>
       )}
 
@@ -164,7 +159,7 @@ export const SideMenu = ({
           <div className="w-12 h-12 flex items-center justify-center transition-all">
             <Eye className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
           </div>
-          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">Bloquear</span>
+          
         </div>
       )}
 
@@ -185,9 +180,6 @@ export const SideMenu = ({
               <Volume2 className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
             )}
           </div>
-          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">
-            {Math.round(volume * 100)}%
-          </span>
         </div>
         
         {/* Volume Slider Popup */}
@@ -226,7 +218,7 @@ export const SideMenu = ({
           <div className="w-12 h-12 flex items-center justify-center transition-all">
             <Share className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
           </div>
-          <span className="text-white md:text-gray-800 text-xs mt-1 font-light">compartilhar</span>
+          
         </div>
       )}
 

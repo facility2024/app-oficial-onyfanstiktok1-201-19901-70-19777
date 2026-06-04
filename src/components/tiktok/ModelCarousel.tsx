@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -150,7 +151,7 @@ export const ModelCarousel = ({
             >
               <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-1 shadow-md">
                 <img
-                  src={model.avatar_url || '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png'}
+                  src={model.avatar_url || DEFAULT_AVATAR}
                   alt={model.name}
                   className="w-full h-full object-cover"
                 />

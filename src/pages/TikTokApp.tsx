@@ -786,7 +786,7 @@ export const TikTokApp = () => {
     if (matched) {
       setActiveVideoCallModel({
         name: matched.model_name,
-        avatar_url: matched.model_avatar,
+        avatar_url: matched.model_avatar || DEFAULT_AVATAR,
         description: matched.description,
         price: matched.price,
       });
@@ -3105,7 +3105,7 @@ export const TikTokApp = () => {
         <ChatScreen isOpen={showChat} onClose={() => {
         setShowChat(false);
         setChatEntity(null);
-      }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
+      }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url || DEFAULT_AVATAR} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
         {/* Comments Screen */}
         <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
@@ -3496,7 +3496,7 @@ export const TikTokApp = () => {
       <ChatScreen isOpen={showChat} onClose={() => {
       setShowChat(false);
       setChatEntity(null);
-    }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
+    }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url || DEFAULT_AVATAR} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
       {/* Desktop Comments Screen */}
       <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />

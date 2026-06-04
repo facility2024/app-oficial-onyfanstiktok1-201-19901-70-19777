@@ -257,7 +257,8 @@ export const CategoryMenu = ({
               onGenreSelect={(genre) => {
                 setOpen(false);
                 if (genre && genre !== 'Todos') {
-                  setTimeout(() => navigate(`/marketplace?genre=${encodeURIComponent(genre)}`), 150);
+                  // Redireciona para explorar ou mantém no feed com filtro
+                  setTimeout(() => navigate(`/explore?genre=${encodeURIComponent(genre)}`), 150);
                 }
               }} 
               showLabel={true}

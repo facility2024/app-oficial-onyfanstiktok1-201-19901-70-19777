@@ -459,7 +459,7 @@ export const AdminCreatorApplications = ({ currentUserId }: AdminCreatorApplicat
     window.open(`https://wa.me/55${number}`, '_blank');
   };
 
-  const filteredApplications = (status: string) => applications.filter(app => app.status === status).map(app => ({ ...app, avatar_url: app.avatar_url || DEFAULT_AVATAR }));
+  const filteredApplications = (status: string) => applications.filter(app => app.status === status);
 
   if (loading) {
     return (

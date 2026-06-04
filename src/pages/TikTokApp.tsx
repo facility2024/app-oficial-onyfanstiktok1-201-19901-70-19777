@@ -2870,9 +2870,9 @@ export const TikTokApp = () => {
                 Ainda não há vídeos de <span className="font-semibold text-white">"{selectedGenre}"</span> disponíveis.
               </p>
               <div className="space-y-3">
-                <Button onClick={() => setSelectedGenre('Todos')} className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold">
+                <Button onClick={() => setSelectedGenre('Hétero')} className="w-full bg-gradient-to-r from-teal-500 to-yellow-500 hover:from-teal-600 hover:to-yellow-600 text-black font-semibold">
                   <Film className="w-4 h-4 mr-2" />
-                  Ver Todos os Vídeos
+                  Voltar ao Início
                 </Button>
                 <p className="text-xs text-gray-500">
                   Novos vídeos são adicionados diariamente

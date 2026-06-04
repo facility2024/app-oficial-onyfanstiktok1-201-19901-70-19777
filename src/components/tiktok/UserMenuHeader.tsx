@@ -41,8 +41,8 @@ export const UserMenuHeader = () => {
       {/* Avatar e Info */}
       <div className="flex items-center gap-3 mb-3">
         <div className="relative">
-          <img src={profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.id} alt={displayUsername || 'User'} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black"></div>
+          <img src={profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.id} alt={displayUsername || 'User'} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg" />
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#22C55E] rounded-full border-2 border-black"></div>
         </div>
         
         <div className="flex-1 min-w-0">

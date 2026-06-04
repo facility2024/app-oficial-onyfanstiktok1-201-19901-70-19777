@@ -169,7 +169,7 @@ export const EnhancedSideMenu = ({
       
       {/* Profile */}
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
-        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition-all">
+        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white group-hover:border-white/80 transition-all shadow-lg">
           {video?.user?.avatar_url ? (
             <img 
               src={video.user.avatar_url} 
@@ -177,10 +177,11 @@ export const EnhancedSideMenu = ({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-sm">
+            <div className="w-full h-full flex items-center justify-center bg-gray-800">
               <User className="w-6 h-6 text-white" strokeWidth={1.5} />
             </div>
           )}
+          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#22C55E] rounded-full border-2 border-black shadow-sm"></div>
         </div>
         
       </div>

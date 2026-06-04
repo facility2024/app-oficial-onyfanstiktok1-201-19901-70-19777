@@ -2998,9 +2998,6 @@ export const TikTokApp = () => {
             <span className="text-xs">Explorar</span>
           </button>
 
-          <button onClick={() => setShowVideoCallList(true)} className="flex items-center justify-center w-12 h-9 bg-white rounded-lg shadow-lg -mt-2">
-            <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
-          </button>
 
           <button onClick={() => navigate('/explore')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <Compass className="w-7 h-7 mb-0.5" strokeWidth={1.5} />

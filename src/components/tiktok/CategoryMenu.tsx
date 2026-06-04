@@ -110,15 +110,6 @@ export const CategoryMenu = ({
       }
     },
     {
-      id: "marketplace",
-      name: "Market-Place",
-      icon: <ShoppingBag className="w-5 h-5" />,
-      onClick: () => {
-        setOpen(false);
-        setTimeout(() => navigate('/marketplace'), 100);
-      }
-    },
-    {
       id: "local-business",
       name: "Negócios Locais",
       icon: <MapPin className="w-5 h-5" />,

@@ -3226,13 +3226,6 @@ export const TikTokApp = () => {
             <div className="space-y-1 mt-4" style={{
             pointerEvents: 'auto'
           }}>
-              <button onClick={() => setShowVideoCallList(true)} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">
-                <span className="relative inline-flex items-center justify-center mr-3">
-                  <span className="absolute inset-0 rounded-full bg-green-400/20 animate-ping" />
-                  <Phone className="w-5 h-5 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-[vibrate_0.3s_linear_infinite]" strokeWidth={1.5} />
-                </span>
-                <span>Vídeo Chamada</span>
-              </button>
               <button onClick={() => {
                 setShowLiveList(true);
               }} className="w-full flex items-center px-6 py-3 text-white hover:bg-white/10 transition-colors">

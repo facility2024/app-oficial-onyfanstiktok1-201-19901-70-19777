@@ -128,16 +128,6 @@ export const CategoryMenu = ({
     }
   ];
 
-  // Adicionar opção de Minhas Assinaturas (sempre visível)
-  baseMenuItems.push({
-    id: "my-subscriptions",
-    name: "Minhas Assinaturas",
-    icon: <Crown className="w-5 h-5 text-amber-400" />,
-    onClick: () => {
-      setOpen(false);
-      setTimeout(() => navigate('/my-subscriptions'), 100);
-    }
-  });
 
 
   // Adicionar "Sou Criador" apenas se isCreator === true E não está carregando

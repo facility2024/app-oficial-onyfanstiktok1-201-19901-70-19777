@@ -271,9 +271,10 @@ export default function UserProfile() {
             <div className="relative">
               <div className="w-32 h-32 rounded-full ring-4 ring-black bg-gray-900 overflow-hidden shadow-xl">
                 <img 
-                  src={avatarPreview || displayProfile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user?.id} 
+                  src={avatarPreview || displayProfile.avatar_url || DEFAULT_AVATAR} 
                   alt={displayProfile.username || 'User'}
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                 />
               </div>
               

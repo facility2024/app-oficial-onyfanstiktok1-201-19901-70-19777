@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -291,7 +292,7 @@ export const AdminFeedPromotions = () => {
         id: pendingModelData.generatedId,
         username: pendingModelData.username.toLowerCase().replace(/\s+/g, '_'),
         name: pendingModelData.username,
-        avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+        avatar_url: form.avatar_url || DEFAULT_AVATAR,
         is_active: true,
       })
       .select('id')
@@ -380,7 +381,7 @@ export const AdminFeedPromotions = () => {
           id: generatedId,
           username,
           name: form.display_name.trim(),
-          avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+          avatar_url: form.avatar_url || DEFAULT_AVATAR,
           is_active: true,
           is_promo_creator: true,
         })
@@ -420,7 +421,7 @@ export const AdminFeedPromotions = () => {
           id: generatedId,
           username,
           name: form.display_name.trim(),
-          avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+          avatar_url: form.avatar_url || DEFAULT_AVATAR,
           is_active: true,
           is_promo_creator: true,
         })
@@ -467,7 +468,7 @@ export const AdminFeedPromotions = () => {
         id: generatedId,
         username,
         name: form.display_name.trim(),
-        avatar_url: form.avatar_url || 'https://via.placeholder.com/150',
+        avatar_url: form.avatar_url || DEFAULT_AVATAR,
         is_active: true,
         is_promo_creator: true,
       })

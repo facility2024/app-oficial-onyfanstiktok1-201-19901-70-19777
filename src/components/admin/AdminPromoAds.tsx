@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -255,7 +256,7 @@ export const AdminPromoAds = () => {
                       <button key={m.id} type="button"
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-gray-700 ${selectedModelId === m.id ? 'bg-gray-700' : ''}`}
                         onClick={() => { setSelectedModelId(m.id); setModelSearch(m.name); setShowModelDropdown(false); }}>
-                        <img src={m.avatar_url || '/placeholder.svg'} alt="" className="w-6 h-6 rounded-full object-cover" />
+                        <img src={m.avatar_url || DEFAULT_AVATAR} alt="" className="w-6 h-6 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }} />
                         {m.name} <span className="text-gray-400">@{m.username}</span>
                         {m.isCreator && <Badge variant="outline" className="text-xs px-1 py-0 text-blue-400 border-blue-400 ml-1">Criador</Badge>}
                         {selectedModelId === m.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}

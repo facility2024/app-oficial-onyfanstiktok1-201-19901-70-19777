@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -279,7 +280,8 @@ export default function AdminModelChatPanels() {
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <img
-              src={entity.avatar_url || '/placeholder.svg'}
+              src={entity.avatar_url || DEFAULT_AVATAR}
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
               alt={displayName}
               className="w-12 h-12 rounded-full object-cover border-2 border-gray-700"
             />
@@ -337,7 +339,8 @@ export default function AdminModelChatPanels() {
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-white">
             <img
-              src={entity.avatar_url || '/placeholder.svg'}
+              src={entity.avatar_url || DEFAULT_AVATAR}
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
               alt={displayName}
               className="w-10 h-10 rounded-full object-cover"
             />

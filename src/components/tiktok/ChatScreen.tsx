@@ -324,7 +324,7 @@ export const ChatScreen = ({
             <div className="relative">
               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shrink-0">
                 {displayAvatar || DEFAULT_AVATAR ? (
-                  <img src={displayAvatar || DEFAULT_AVATAR} alt={displayName} className="w-full h-full object-cover" />
+                  <img src={displayAvatar || DEFAULT_AVATAR} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-white/20">
                     <User className="w-6 h-6 text-white" />

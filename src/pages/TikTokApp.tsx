@@ -3347,7 +3347,7 @@ export const TikTokApp = () => {
                  )}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <img src={currentVideo?.user?.avatar_url || DEFAULT_AVATAR} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" />
+                    <img src={currentVideo?.user?.avatar_url || DEFAULT_AVATAR} alt={currentVideo?.user?.username || 'Modelo'} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }} />
                   </div>
                   <p className="text-white font-semibold text-lg drop-shadow-lg">
                     {currentVideo?.user?.username || 'Modelo'}

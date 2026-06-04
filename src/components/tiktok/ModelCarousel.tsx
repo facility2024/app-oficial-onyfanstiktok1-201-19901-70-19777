@@ -154,6 +154,7 @@ export const ModelCarousel = ({
                   src={model.avatar_url || DEFAULT_AVATAR}
                   alt={model.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
                 />
               </div>
               <p className="text-white text-xs text-center truncate">{model.name}</p>

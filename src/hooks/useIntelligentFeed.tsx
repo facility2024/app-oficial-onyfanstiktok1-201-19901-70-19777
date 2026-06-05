@@ -379,7 +379,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
         .from('videos')
         .select(`
           *,
-          profiles(id, username, avatar_url, followers_count, following_count, video_call_active)
+          profiles:user_id(id, username, avatar_url, followers_count, video_call_active)
         `)
         .in('id', videoIds);
       
@@ -406,7 +406,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
             const videoData = fullVideos.find((v: any) => v.id === id);
             if (!videoData) return null;
 
-            const profile = Array.isArray(videoData.profiles) ? videoData.profiles[0] : videoData.profiles;
+            const profile = (videoData as any).profiles;
 
             // Se for vídeo de modelo, garante que use os dados da modelo para nome e avatar
             if (videoData.model_id && modelsMap[videoData.model_id]) {

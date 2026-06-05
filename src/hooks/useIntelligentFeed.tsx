@@ -377,18 +377,55 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       const videoIds = newFeed.videos.map(v => v.video_id);
       const { data: fullVideos } = await supabase
         .from('videos')
-        .select('*')
+        .select(`
+          *,
+          user:profiles(*)
+        `)
         .in('id', videoIds);
       
       if (fullVideos) {
+        // Enriquecer vídeos com dados das modelos se houver model_id
+        const modelIds = fullVideos.map(v => v.model_id).filter(Boolean);
+        let modelsMap: Record<string, any> = {};
+        
+        if (modelIds.length > 0) {
+          const { data: modelsData } = await supabase
+            .from('models')
+            .select('id, name, username, avatar_url')
+            .in('id', modelIds);
+          
+          if (modelsData) {
+            modelsData.forEach(m => {
+              modelsMap[m.id] = m;
+            });
+          }
+        }
+
         const orderedVideos = videoIds
-          .map(id => fullVideos.find((v: any) => v.id === id))
+          .map(id => {
+            const video = fullVideos.find((v: any) => v.id === id);
+            if (!video) return null;
+
+            // Se for vídeo de modelo, garante que use os dados da modelo para nome e avatar
+            if (video.model_id && modelsMap[video.model_id]) {
+              const model = modelsMap[video.model_id];
+              return {
+                ...video,
+                user: {
+                  ...video.user,
+                  username: model.name || model.username || video.user?.username || 'Modelo',
+                  avatar_url: model.avatar_url || video.user?.avatar_url || ''
+                }
+              };
+            }
+            return video;
+          })
           .filter(Boolean);
         
         setVideos(orderedVideos as any);
       }
     } catch (error) {
-      // Silencioso
+      console.error('Erro ao atualizar feed:', error);
     } finally {
       setLoading(false);
     }

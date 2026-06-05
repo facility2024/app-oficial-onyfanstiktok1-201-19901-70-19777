@@ -598,7 +598,8 @@ export const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Tabela de Modelos Cadastrados */}
+      {/* Tabela de Modelos Cadastrados - Oculta conforme solicitação do usuário */}
+      {/* 
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -671,6 +672,7 @@ export const AdminUsers = () => {
           {renderPagination(models.length, currentModelsPage, setCurrentModelsPage)}
         </CardContent>
       </Card>
+      */}
 
       {/* User Activity Map */}
       <Card className="bg-gradient-card border-border/50">

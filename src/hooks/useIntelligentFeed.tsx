@@ -379,7 +379,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
         .from('videos')
         .select(`
           *,
-          user:profiles(*)
+          profiles(id, username, avatar_url, followers_count, following_count, video_call_active)
         `)
         .in('id', videoIds);
       
@@ -403,22 +403,27 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
 
         const orderedVideos = videoIds
           .map(id => {
-            const video = fullVideos.find((v: any) => v.id === id);
-            if (!video) return null;
+            const videoData = fullVideos.find((v: any) => v.id === id);
+            if (!videoData) return null;
+
+            const profile = Array.isArray(videoData.profiles) ? videoData.profiles[0] : videoData.profiles;
 
             // Se for vídeo de modelo, garante que use os dados da modelo para nome e avatar
-            if (video.model_id && modelsMap[video.model_id]) {
-              const model = modelsMap[video.model_id];
+            if (videoData.model_id && modelsMap[videoData.model_id]) {
+              const model = modelsMap[videoData.model_id];
               return {
-                ...video,
+                ...videoData,
                 user: {
-                  ...video.user,
-                  username: model.name || model.username || video.user?.username || 'Modelo',
-                  avatar_url: model.avatar_url || video.user?.avatar_url || ''
+                  ...profile,
+                  username: model.name || model.username || profile?.username || 'Modelo',
+                  avatar_url: model.avatar_url || profile?.avatar_url || ''
                 }
               };
             }
-            return video;
+            return {
+              ...videoData,
+              user: profile
+            };
           })
           .filter(Boolean);
         

@@ -1387,7 +1387,7 @@ export const TikTokApp = () => {
       const modelVideos = validVideos.filter((v: any) => v.model_id && !v.creator_id);
       console.log(`📊 Vídeos por tipo: ${creatorVideos.length} de criadores, ${modelVideos.length} de modelos`);
       console.log('🎨 Criadores com vídeos:', [...new Set(creatorVideos.map((v: any) => v.user?.username))]);
-      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...validVideos];
+      const allContent = [...processedScheduledPosts, ...processedMainPosts, ...enrichedVideos];
       if (allContent.length > 0) {
         console.log(`🌟 ${processedScheduledPosts.length + processedMainPosts.length} conteúdos prioritários serão distribuídos sem repetir influencer no mesmo ciclo`);
 

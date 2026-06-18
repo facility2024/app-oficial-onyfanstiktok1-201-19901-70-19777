@@ -91,12 +91,12 @@ const navigationGroups = [
       { id: 'physical-products', label: 'Produtos Físicos', icon: Store },
       { id: 'local-businesses', label: 'Comércios Locais', icon: MapPin },
       { id: 'ads', label: 'Anúncios', icon: Megaphone },
+      { id: 'ads-garotas-top', label: 'Feed de Ofertas', icon: Sparkles },
       { id: 'marketplace-banners', label: 'Banners Marketplace', icon: Megaphone },
       { id: 'feed-promotions', label: 'Promos no Feed', icon: Megaphone },
       { id: 'video-call', label: 'Vídeo Chamada', icon: Phone },
       { id: 'live', label: 'Live', icon: Radio },
       { id: 'promo-ads', label: 'Promo Live/Chamada', icon: Radio },
-      { id: 'ads-garotas-top', label: 'Ads Garotas Top', icon: Sparkles },
     ]
   },
   {

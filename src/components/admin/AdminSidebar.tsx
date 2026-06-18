@@ -96,6 +96,7 @@ const navigationGroups = [
       { id: 'video-call', label: 'Vídeo Chamada', icon: Phone },
       { id: 'live', label: 'Live', icon: Radio },
       { id: 'promo-ads', label: 'Promo Live/Chamada', icon: Radio },
+      { id: 'ads-garotas-top', label: 'Ads Garotas Top', icon: Sparkles },
     ]
   },
   {

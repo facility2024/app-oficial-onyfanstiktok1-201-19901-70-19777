@@ -3,11 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, Video, CheckCircle, AlertCircle, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import * as tus from 'tus-js-client';
+import { supabase } from '@/integrations/supabase/client';
 
-// Bunny.net credentials - Direct upload
-const BUNNY_LIBRARY_ID = '558340';
-const BUNNY_API_KEY = '3be9e550-5641-40ea-ba4696767be3-755b-449f';
-const BUNNY_CDN_HOSTNAME = 'vz-2342b018-2d3.b-cdn.net';
+// 🔐 SEGURANÇA: a chave do Bunny.net não vive mais no bundle do client.
+// A edge function `bunny-video-upload` cria o vídeo no Bunny e devolve uma
+// assinatura TUS de uso único (expira em 1h). O upload resumable acontece
+// direto do navegador para o Bunny usando essa assinatura — a chave nunca
+// é exposta ao client.
+const BUNNY_CDN_HOSTNAME = 'vz-2342b018-2d3.b-cdn.net'; // público (aparece nas URLs do CDN)
 
 interface BunnyVideoUploaderProps {
   onUploadComplete: (videoUrl: string, thumbnailUrl: string) => void;
@@ -71,92 +75,86 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
 
     setUploading(true);
     setUploadStatus('uploading');
-    setProgress(10);
+    setProgress(5);
     onUploadStart?.();
 
     try {
-      // Step 1: Create video object in Bunny Stream
+      // Step 1: pedir à edge function que crie o vídeo no Bunny e devolva a assinatura TUS
+      setProgress(10);
+      const title = selectedFile.name.replace(/\.[^/.]+$/, '');
+      const { data: createData, error: createError } = await supabase.functions.invoke(
+        'bunny-video-upload',
+        { body: { action: 'create', title } },
+      );
+
+      if (createError || !createData?.videoGuid) {
+        throw new Error(createError?.message || 'Falha ao criar vídeo no servidor');
+      }
+
+      const {
+        videoGuid,
+        libraryId,
+        tusEndpoint,
+        signature,
+        expirationTime,
+        videoUrl,
+        thumbnailUrl,
+      } = createData as {
+        videoGuid: string;
+        libraryId: string;
+        tusEndpoint: string;
+        signature: string;
+        expirationTime: number;
+        videoUrl: string;
+        thumbnailUrl: string;
+      };
+
       setProgress(15);
-      const createResponse = await fetch(
-        `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
-        {
-          method: 'POST',
+
+      // Step 2: upload resumable via TUS direto para o Bunny (sem chave no client)
+      await new Promise<void>((resolve, reject) => {
+        const upload = new tus.Upload(selectedFile, {
+          endpoint: tusEndpoint,
+          retryDelays: [0, 1000, 3000, 5000, 10000],
           headers: {
-            'AccessKey': BUNNY_API_KEY,
-            'Content-Type': 'application/json'
+            AuthorizationSignature: signature,
+            AuthorizationExpire: String(expirationTime),
+            VideoId: videoGuid,
+            LibraryId: String(libraryId),
           },
-          body: JSON.stringify({
-            title: selectedFile.name.replace(/\.[^/.]+$/, '')
-          })
-        }
-      );
-
-      if (!createResponse.ok) {
-        const errorText = await createResponse.text();
-        throw new Error(`Erro ao criar vídeo: ${errorText}`);
-      }
-
-      const videoData = await createResponse.json();
-      const videoGuid = videoData.guid;
-
-      if (!videoGuid) {
-        throw new Error('GUID do vídeo não retornado pela Bunny');
-      }
-
-      setProgress(30);
-
-      // Step 2: Upload the video file directly to Bunny
-      const uploadResponse = await fetch(
-        `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoGuid}`,
-        {
-          method: 'PUT',
-          headers: {
-            'AccessKey': BUNNY_API_KEY,
-            'Content-Type': 'application/octet-stream'
+          metadata: {
+            filetype: selectedFile.type,
+            title,
           },
-          body: selectedFile
-        }
-      );
+          chunkSize: 50 * 1024 * 1024, // 50MB
+          onError: (err) => reject(err),
+          onProgress: (bytesUploaded, bytesTotal) => {
+            const pct = 15 + Math.round((bytesUploaded / bytesTotal) * 55); // 15% -> 70%
+            setProgress(pct);
+          },
+          onSuccess: () => resolve(),
+        });
+        upload.start();
+      });
 
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        throw new Error(`Erro no upload: ${errorText}`);
-      }
-
-      setProgress(70);
-
-      // Poll Bunny API to check encoding status before confirming
-      const videoUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/play_720p.mp4`;
-      const thumbnailUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`;
-
+      setProgress(72);
       toast.info('Vídeo enviado! Aguardando processamento no servidor...', { duration: 5000 });
 
-      // Poll encoding status (up to 2 minutes)
+      // Step 3: aguardar encoding ficar pronto (status público — não precisa de chave)
       let encoded = false;
       for (let i = 0; i < 24; i++) {
-        setProgress(70 + Math.min(i * 1.2, 28));
+        setProgress(72 + Math.min(i * 1.1, 26));
         try {
-          const statusRes = await fetch(
-            `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoGuid}`,
-            { headers: { 'AccessKey': BUNNY_API_KEY, 'Accept': 'application/json' } }
-          );
-          if (statusRes.ok) {
-            const statusData = await statusRes.json();
-            // status: 0=created, 1=uploaded, 2=processing, 3=transcoding, 4=finished, 5=error
-            console.log(`🔄 Bunny encoding status: ${statusData.status} (attempt ${i + 1})`);
-            if (statusData.status >= 4) {
-              encoded = true;
-              break;
-            }
-            if (statusData.status === 5) {
-              throw new Error('Erro no processamento do vídeo pelo Bunny.net');
-            }
+          // testa se o MP4 transcodificado já está acessível no CDN
+          const head = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
+          if (head.ok) {
+            encoded = true;
+            break;
           }
-        } catch (pollErr: any) {
-          if (pollErr.message?.includes('Erro no processamento')) throw pollErr;
-          console.warn('Poll error:', pollErr);
+        } catch (e) {
+          // ignora — vamos tentar de novo
         }
-        await new Promise(r => setTimeout(r, 5000)); // wait 5s between polls
+        await new Promise((r) => setTimeout(r, 5000));
       }
 
       setProgress(100);
@@ -165,17 +163,19 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
       if (encoded) {
         toast.success('Vídeo processado e pronto para exibição! 🎉');
       } else {
-        toast.warning('Vídeo enviado, mas ainda está sendo processado. Pode levar alguns minutos para aparecer no feed.', { duration: 8000 });
+        toast.warning(
+          'Vídeo enviado, mas ainda está sendo processado. Pode levar alguns minutos para aparecer no feed.',
+          { duration: 8000 },
+        );
       }
-      
-      // Pass URLs to parent
-      onUploadComplete(videoUrl, thumbnailUrl);
 
+      onUploadComplete(videoUrl, thumbnailUrl);
     } catch (error: any) {
       console.error('Erro no upload:', error);
       setUploadStatus('error');
-      setErrorMessage(error.message || 'Erro ao fazer upload');
-      toast.error('Erro ao fazer upload: ' + error.message);
+      const msg = error?.message || 'Erro ao fazer upload';
+      setErrorMessage(msg);
+      toast.error('Erro ao fazer upload: ' + msg);
     } finally {
       setUploading(false);
     }
@@ -199,7 +199,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
 
   return (
     <div className="space-y-4">
-      {/* Drop Zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -207,10 +206,10 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
         onClick={() => !selectedFile && fileInputRef.current?.click()}
         className={`
           relative border-2 border-dashed rounded-xl p-8 transition-all duration-200 cursor-pointer
-          ${isDragging 
-            ? 'border-green-400 bg-green-500/10' 
-            : selectedFile 
-              ? 'border-gray-600 bg-gray-800/50' 
+          ${isDragging
+            ? 'border-green-400 bg-green-500/10'
+            : selectedFile
+              ? 'border-gray-600 bg-gray-800/50'
               : 'border-gray-600 bg-gray-800/30 hover:border-gray-500 hover:bg-gray-800/50'
           }
         `}
@@ -235,7 +234,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
           </div>
         ) : (
           <div className="space-y-4">
-            {/* File Info */}
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
                 <Video className="w-6 h-6 text-green-400" />
@@ -259,7 +257,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
               )}
             </div>
 
-            {/* Progress Bar */}
             {uploadStatus === 'uploading' && (
               <div className="space-y-2">
                 <Progress value={progress} className="h-2" />
@@ -273,7 +270,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
               </div>
             )}
 
-            {/* Success State */}
             {uploadStatus === 'success' && (
               <div className="flex items-center gap-2 text-green-400">
                 <CheckCircle className="w-5 h-5" />
@@ -281,7 +277,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
               </div>
             )}
 
-            {/* Error State */}
             {uploadStatus === 'error' && (
               <div className="flex items-center gap-2 text-red-400">
                 <AlertCircle className="w-5 h-5" />
@@ -292,7 +287,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
         )}
       </div>
 
-      {/* Upload Button */}
       {selectedFile && uploadStatus !== 'success' && (
         <Button
           onClick={uploadVideo}
@@ -313,7 +307,6 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
         </Button>
       )}
 
-      {/* Upload Another */}
       {uploadStatus === 'success' && (
         <Button
           variant="outline"

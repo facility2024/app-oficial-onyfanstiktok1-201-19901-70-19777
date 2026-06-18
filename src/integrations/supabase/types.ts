@@ -198,6 +198,45 @@ export type Database = {
           },
         ]
       }
+      ads_garotas_top: {
+        Row: {
+          created_at: string
+          cta_link: string | null
+          cta_texto: string
+          id: string
+          imagem_url: string
+          is_active: boolean
+          nome: string
+          ordem: number
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta_link?: string | null
+          cta_texto?: string
+          id?: string
+          imagem_url: string
+          is_active?: boolean
+          nome: string
+          ordem?: number
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta_link?: string | null
+          cta_texto?: string
+          id?: string
+          imagem_url?: string
+          is_active?: boolean
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       agendamento_execucoes: {
         Row: {
           created_at: string

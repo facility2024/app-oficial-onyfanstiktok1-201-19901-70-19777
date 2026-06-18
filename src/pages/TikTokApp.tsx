@@ -1498,9 +1498,46 @@ export const TikTokApp = () => {
         });
         console.log(`📊 Feed: ${unwatchedCatalog.length} não-assistidos + ${watchedCatalog.length} já assistidos`);
 
-        const ordered: any[] = [...unwatchedCatalog, ...watchedCatalog];
+        // 🆕 ANTI-REPETIÇÃO DO VÍDEO INICIAL:
+        // 1) Excluir do topo o último "vídeo inicial" da sessão anterior
+        // 2) Aplicar rotação suave baseada em hora para variar a entrada
+        let rotatedUnwatched = [...unwatchedCatalog];
+        try {
+          const lastInitialId = localStorage.getItem('last_initial_video_id') || '';
+          if (lastInitialId && rotatedUnwatched.length > 1) {
+            const idx = rotatedUnwatched.findIndex(
+              (v: any) => ((v as any)._originalId || v.id) === lastInitialId
+            );
+            if (idx === 0) {
+              // move o vídeo inicial anterior para o fim da fila de não-assistidos
+              const [prev] = rotatedUnwatched.splice(0, 1);
+              rotatedUnwatched.push(prev);
+            }
+          }
+          if (rotatedUnwatched.length > 2) {
+            const offset = Math.floor(Date.now() / 3600000) % rotatedUnwatched.length;
+            if (offset > 0) {
+              rotatedUnwatched = [
+                ...rotatedUnwatched.slice(offset),
+                ...rotatedUnwatched.slice(0, offset),
+              ];
+            }
+          }
+        } catch {}
+
+        const ordered: any[] = [...rotatedUnwatched, ...watchedCatalog];
 
         const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
+
+        // Persistir o novo vídeo inicial para evitar repetição na próxima abertura
+        try {
+          const newInitial = firstBlock[0] as any;
+          const newInitialId = newInitial ? (newInitial._originalId || newInitial.id) : '';
+          if (newInitialId) {
+            localStorage.setItem('last_initial_video_id', String(newInitialId));
+          }
+        } catch {}
+
         setAllAvailableVideos(ordered as any);
         setVideos(firstBlock as any);
         setCurrentVideoIndex(0);

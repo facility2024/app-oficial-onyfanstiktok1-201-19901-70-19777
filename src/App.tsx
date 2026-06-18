@@ -48,6 +48,7 @@ import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
 import StoreProfilePage from "./pages/StoreProfilePage";
 import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
 import StoreCartPage from "./pages/StoreCartPage";
+import AdsGarotasTopPage from "./pages/AdsGarotasTopPage";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
@@ -205,6 +206,9 @@ const App = () => (
           {/* Painel de Postagens - acesso direto */}
           <Route path="/postagem" element={<PostagemPage />} />
           
+          {/* Ads Garotas Top */}
+          <Route path="/ads/garotas-top" element={<AdsGarotasTopPage />} />
+
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={
             <AdminRoute>

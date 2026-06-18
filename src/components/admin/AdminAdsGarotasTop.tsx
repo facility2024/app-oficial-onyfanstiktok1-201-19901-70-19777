@@ -85,7 +85,7 @@ export const AdminAdsGarotasTop = () => {
       video_url: form.video_url || null,
       cta_texto: form.cta_texto || "Assinar Conteúdo",
       cta_link: form.cta_link || null,
-      ordem: Number(form.ordem) || 0,
+      ordem: editingId ? Number(form.ordem) || 0 : 0,
       is_active: form.is_active,
     };
 
@@ -103,7 +103,11 @@ export const AdminAdsGarotasTop = () => {
 
     setSaving(false);
     if (error) {
-      toast.error("Erro ao salvar: " + error.message);
+      toast.error(
+        error.message?.includes("row-level security")
+          ? "Erro ao salvar: confirme que você está logado como admin"
+          : "Erro ao salvar: " + error.message
+      );
       return;
     }
     toast.success(editingId ? "Card atualizado!" : "Card criado!");
@@ -135,7 +139,7 @@ export const AdminAdsGarotasTop = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-white">Ads Garotas Top</h1>
-          <p className="text-gray-400">Página /ads/garotas-top — máx. 20 por página</p>
+          <p className="text-gray-400">Página /ads/garotas-top — cards novos entram no topo como ordem 1</p>
         </div>
         {!isCreating && !editingId && (
           <Button
@@ -167,7 +171,7 @@ export const AdminAdsGarotasTop = () => {
                   className="bg-gray-800 text-white border-gray-700"
                 />
               </div>
-              <div>
+              {editingId && <div>
                 <Label className="text-white">Ordem</Label>
                 <Input
                   type="number"
@@ -175,7 +179,7 @@ export const AdminAdsGarotasTop = () => {
                   onChange={(e) => setForm({ ...form, ordem: Number(e.target.value) })}
                   className="bg-gray-800 text-white border-gray-700"
                 />
-              </div>
+              </div>}
               <div className="md:col-span-2">
                 <Label className="text-white">URL da imagem *</Label>
                 <Input

@@ -262,24 +262,17 @@ export const useRealTimeStats = () => {
         console.error('❌ Erro ao registrar sessão:', sessionError);
       }
 
-      // 2. Registrar/atualizar usuário online
-      const { error: onlineError } = await supabase
-        .from('online_users')
-        .upsert({
-          user_id: userId,
-          session_id: onlineSessionId,
-          is_online: true,
-          last_seen_at: now,
-          updated_at: now,
-          location_state: safeState,
-          location_city: safeCity,
-          location_country: safeCountry,
-          ip_address: clientIP,
-          device_type: deviceType,
-          user_agent: userAgent
-        }, {
-          onConflict: 'session_id'
-        });
+      // 2. Registrar/atualizar usuário online via RPC segura (bypass de RLS)
+      const { error: onlineError } = await supabase.rpc('register_online_user', {
+        p_user_id: userId,
+        p_session_id: onlineSessionId,
+        p_location_state: safeState,
+        p_location_city: safeCity,
+        p_location_country: safeCountry,
+        p_ip_address: clientIP,
+        p_device_type: deviceType,
+        p_user_agent: userAgent
+      });
 
       if (onlineError && onlineError.code !== '42P10') {
         console.error('❌ Erro ao registrar usuário online:', onlineError);

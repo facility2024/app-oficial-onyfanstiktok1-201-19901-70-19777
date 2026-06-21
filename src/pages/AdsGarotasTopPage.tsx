@@ -7,8 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
+import { useNavigate } from "react-router-dom";
 
 interface Card {
   id: string;

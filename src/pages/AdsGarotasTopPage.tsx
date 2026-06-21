@@ -35,7 +35,7 @@ export default function AdsGarotasTopPage() {
 
   const fetchCards = async () => {
     setLoading(true);
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("ads_garotas_top")
       .select("*")
       .eq("is_active", true)

@@ -203,7 +203,7 @@ export default function AdsGarotasTopPage() {
               {selected?.nome}
             </DialogTitle>
           </DialogHeader>
-          {selected?.video_url ? (
+          {selected?.video_url && !videoFallbacks[selected.id] ? (
             <video
               key={selected.id}
               src={selected.video_url}

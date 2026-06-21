@@ -81,6 +81,14 @@ export default function AdsGarotasTopPage() {
       )}
 
       <div className="relative max-w-7xl mx-auto px-4 py-10">
+        <button
+          onClick={() => navigate('/app')}
+          className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-purple-900/40 border border-purple-500/40 text-purple-200 hover:bg-purple-800/60 hover:text-white transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-semibold">Voltar ao app</span>
+        </button>
+
         {/* Header */}
         <header className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-900/40 border border-purple-500/40 mb-4">

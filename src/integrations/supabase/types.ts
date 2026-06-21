@@ -8974,6 +8974,19 @@ export type Database = {
         }
         Returns: Json
       }
+      register_online_user: {
+        Args: {
+          p_device_type?: string
+          p_ip_address?: string
+          p_location_city?: string
+          p_location_country?: string
+          p_location_state?: string
+          p_session_id: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       register_sale: {
         Args: {
           p_amount: number

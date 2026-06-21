@@ -198,10 +198,6 @@ export default function AdsGarotasTopPage() {
               preload="auto"
               className="w-full rounded-xl aspect-[9/16] object-cover bg-black"
             />
-          ) : null}
-          {false ? (
-            <></>
-
           ) : selected?.imagem_url ? (
             <img
               src={selected.imagem_url}

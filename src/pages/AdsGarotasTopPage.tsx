@@ -115,7 +115,7 @@ export default function AdsGarotasTopPage() {
             Nenhuma garota disponível no momento.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4 justify-items-start">
             {pageCards.map((card) => (
               <button
                 key={card.id}

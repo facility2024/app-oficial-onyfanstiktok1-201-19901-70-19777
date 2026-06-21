@@ -30,6 +30,7 @@ export default function AdsGarotasTopPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Card | null>(null);
   const { hasUpdate, clear } = useAdsGarotasRealtime();
+  const navigate = useNavigate();
 
   const fetchCards = async () => {
     setLoading(true);

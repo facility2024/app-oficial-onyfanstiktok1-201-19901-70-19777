@@ -194,8 +194,14 @@ export default function AdsGarotasTopPage() {
               autoPlay
               playsInline
               controls
+              muted
+              preload="auto"
               className="w-full rounded-xl aspect-[9/16] object-cover bg-black"
             />
+          ) : null}
+          {false ? (
+            <></>
+
           ) : selected?.imagem_url ? (
             <img
               src={selected.imagem_url}

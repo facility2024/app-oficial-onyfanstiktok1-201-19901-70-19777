@@ -10,6 +10,18 @@ export const UserLocationTracker = () => {
   const isInitialized = useRef(false);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const isValidUUID = (value: string | null): value is string =>
+    !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  const getOrCreateUUID = (storageKey: string) => {
+    const existing = localStorage.getItem(storageKey);
+    if (isValidUUID(existing)) return existing;
+
+    const generated = crypto.randomUUID();
+    localStorage.setItem(storageKey, generated);
+    return generated;
+  };
+
   const getDeviceType = () => {
     const ua = navigator.userAgent;
     if (/Mobi|Mobile|Android|iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'mobile';
@@ -73,23 +85,9 @@ export const UserLocationTracker = () => {
 
     const track = async () => {
       try {
-        let anonymousUserId = localStorage.getItem('user_session_id');
-        if (!anonymousUserId) {
-          anonymousUserId = crypto.randomUUID();
-          localStorage.setItem('user_session_id', anonymousUserId);
-        }
-
-        let onlineSessionId = localStorage.getItem('online_session_id');
-        if (!onlineSessionId) {
-          onlineSessionId = crypto.randomUUID();
-          localStorage.setItem('online_session_id', onlineSessionId);
-        }
-
-        let sessionToken = localStorage.getItem('user_session_token');
-        if (!sessionToken) {
-          sessionToken = crypto.randomUUID();
-          localStorage.setItem('user_session_token', sessionToken);
-        }
+        const anonymousUserId = getOrCreateUUID('user_session_id');
+        const onlineSessionId = getOrCreateUUID('online_session_id');
+        const sessionToken = getOrCreateUUID('user_session_token');
 
         const ua = navigator.userAgent;
         const deviceType = getDeviceType();
@@ -107,31 +105,29 @@ export const UserLocationTracker = () => {
         let stickyAddress = resolvedLocation.address;
         let stickyNeighborhood = resolvedLocation.neighborhood;
 
+        const cachedLocation = JSON.parse(localStorage.getItem('last_known_location') || 'null') as {
+          state?: string | null;
+          city?: string | null;
+          country?: string | null;
+          address?: string | null;
+          neighborhood?: string | null;
+        } | null;
+
         if (!stickyState || !stickyCity || !stickyAddress) {
-          const [existingOnline, existingSession] = await Promise.all([
-            supabase
-              .from('online_users')
-              .select('location_state, location_city, location_country, location_address, location_neighborhood')
-              .eq('session_id', onlineSessionId)
-              .maybeSingle(),
-            authenticatedUserId
-              ? supabase
-                  .from('user_sessions')
-                  .select('location_state, location_city, location_country')
-                  .eq('session_token', sessionToken)
-                  .maybeSingle()
-              : Promise.resolve({ data: null, error: null }),
-          ]);
-
-          const onlineData = existingOnline.data;
-          const existingSessionData = existingSession.data;
-
-          stickyState = stickyState || onlineData?.location_state || existingSessionData?.location_state || null;
-          stickyCity = stickyCity || onlineData?.location_city || existingSessionData?.location_city || null;
-          stickyCountry = stickyCountry || onlineData?.location_country || existingSessionData?.location_country || 'BR';
-          stickyAddress = stickyAddress || onlineData?.location_address || null;
-          stickyNeighborhood = stickyNeighborhood || onlineData?.location_neighborhood || null;
+          stickyState = stickyState || cachedLocation?.state || null;
+          stickyCity = stickyCity || cachedLocation?.city || null;
+          stickyCountry = stickyCountry || cachedLocation?.country || 'BR';
+          stickyAddress = stickyAddress || cachedLocation?.address || null;
+          stickyNeighborhood = stickyNeighborhood || cachedLocation?.neighborhood || null;
         }
+
+        localStorage.setItem('last_known_location', JSON.stringify({
+          state: stickyState,
+          city: stickyCity,
+          country: stickyCountry,
+          address: stickyAddress,
+          neighborhood: stickyNeighborhood,
+        }));
 
         const now = new Date().toISOString();
 
@@ -147,19 +143,16 @@ export const UserLocationTracker = () => {
           };
 
           const [onlineResult, sessionResult] = await Promise.all([
-            supabase
-              .from('online_users')
-              .upsert(
-                {
-                  ...payloadBase,
-                  session_id: onlineSessionId,
-                  is_online: true,
-                  last_seen_at: timestamp,
-                  location_address: stickyAddress,
-                  location_neighborhood: stickyNeighborhood,
-                },
-                { onConflict: 'session_id' }
-              ),
+            supabase.rpc('register_online_user', {
+              p_user_id: finalUserId,
+              p_session_id: onlineSessionId,
+              p_location_state: stickyState,
+              p_location_city: stickyCity,
+              p_location_country: stickyCountry,
+              p_ip_address: null,
+              p_device_type: deviceType,
+              p_user_agent: ua,
+            }),
             authenticatedUserId
               ? supabase
                   .from('user_sessions')

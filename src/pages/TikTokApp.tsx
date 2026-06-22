@@ -2136,9 +2136,9 @@ export const TikTokApp = () => {
       const userId = currentVideo.user?.id || currentVideo.model_id || '';
       const modelId = currentVideo.model_id || userId;
       if (didPersistNewLike && userId) {
-        await trackLike(currentVideo.id, userId, true);
+        await trackLike(dataVideoId, userId, true);
         ensureInteractedModel(userId);
-        await checkAndTrackAction('like', currentVideo.id, userId);
+        await checkAndTrackAction('like', dataVideoId, userId);
 
         // 🧠 FEED INTELIGENTE: Marcar modelo/criador como favorito ao dar like
         if (markModelAsFavorite) {
@@ -2156,7 +2156,7 @@ export const TikTokApp = () => {
       const { count: liveLikesCount, error: countError } = await supabase
         .from('likes')
         .select('id', { count: 'exact', head: true })
-        .eq('video_id', currentVideo.id)
+        .eq('video_id', dataVideoId)
         .eq('is_active', true);
 
       if (countError) throw countError;
@@ -2166,12 +2166,12 @@ export const TikTokApp = () => {
       const { error } = await supabase
         .from('videos')
         .update({ likes_count: newCount })
-        .eq('id', currentVideo.id);
+        .eq('id', dataVideoId);
 
       if (error) throw error;
 
       // Update local state
-      setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
+      setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
         ...video,
         likes_count: newCount
       } : video));
@@ -2185,6 +2185,8 @@ export const TikTokApp = () => {
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);
       // Silenciar erro de like para o usuário
+    } finally {
+      isTogglingLikeRef.current = false;
     }
   };
   const createLikeExplosion = () => {

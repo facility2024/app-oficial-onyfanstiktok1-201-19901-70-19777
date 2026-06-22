@@ -313,7 +313,10 @@ const ExplorePage = () => {
                     muted
                     loop
                     playsInline
-                    onMouseEnter={(e) => e.currentTarget.play()}
+                    onMouseEnter={(e) => {
+                      const p = e.currentTarget.play();
+                      if (p && typeof p.catch === 'function') p.catch(() => {});
+                    }}
                     onMouseLeave={(e) => {
                       e.currentTarget.pause();
                       e.currentTarget.currentTime = 0;

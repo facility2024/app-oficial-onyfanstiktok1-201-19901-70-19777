@@ -207,6 +207,7 @@ const App = () => (
           <Route path="/postagem" element={<PostagemPage />} />
           
           {/* Ads Garotas Top */}
+          <Route path="/garotas" element={<AdsGarotasTopPage />} />
           <Route path="/ads/garotas-top" element={<AdsGarotasTopPage />} />
 
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}

@@ -30,6 +30,7 @@ export default function AdsGarotasTopPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
 
@@ -116,13 +117,22 @@ export default function AdsGarotasTopPage() {
             Nenhuma garota disponível no momento.
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4 justify-items-start">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
             {pageCards.map((card) => (
               <button
                 key={card.id}
                 onClick={() => setSelected(card)}
-                className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-purple-500/30 bg-gradient-to-br from-purple-950 to-black shadow-[0_0_20px_rgba(126,34,206,0.3)] hover:shadow-[0_0_40px_rgba(217,70,239,0.6)] hover:border-fuchsia-400 transition-all duration-300 hover:-translate-y-1"
+                className="group relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-purple-500/30 bg-gradient-to-br from-purple-950 to-black shadow-[0_0_20px_rgba(126,34,206,0.3)] hover:shadow-[0_0_40px_rgba(217,70,239,0.6)] hover:border-fuchsia-400 transition-all duration-300 hover:-translate-y-1"
               >
+                <img
+                  src={card.imagem_url}
+                  alt={card.nome}
+                  loading="eager"
+                  onLoad={() => setLoadedImages((prev) => ({ ...prev, [card.id]: true }))}
+                  className={`absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-500 ${
+                    loadedImages[card.id] ? "opacity-100" : "opacity-70"
+                  }`}
+                />
                 {card.video_url && !videoFallbacks[card.id] ? (
                   <video
                     src={card.video_url}
@@ -135,14 +145,7 @@ export default function AdsGarotasTopPage() {
                     onError={() => setVideoFallbacks((prev) => ({ ...prev, [card.id]: true }))}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                ) : (
-                  <img
-                    src={card.imagem_url}
-                    alt={card.nome}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                )}
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
                   <h3 className="text-white font-bold text-sm md:text-base drop-shadow-lg truncate">

@@ -2093,7 +2093,7 @@ export const TikTokApp = () => {
           .from('likes')
           .insert({
             user_id: currentUserId,
-            video_id: currentVideo.id,
+            video_id: dataVideoId,
             // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
             model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
             is_active: true,
@@ -2112,7 +2112,7 @@ export const TikTokApp = () => {
               .from('likes')
               .insert({
                 user_id: currentUserId,
-                video_id: currentVideo.id,
+                video_id: dataVideoId,
                 is_active: true
               });
 
@@ -2128,8 +2128,8 @@ export const TikTokApp = () => {
 
       // Atualizar estado local (sempre curtido)
       setIsLiked(newLikedState);
-      if (currentVideo.id) {
-        localStorage.setItem(`liked_${currentVideo.id}`, 'true');
+      if (dataVideoId) {
+        localStorage.setItem(`liked_${dataVideoId}`, 'true');
       }
 
       // Registrar analytics apenas quando houve nova persistência de curtida

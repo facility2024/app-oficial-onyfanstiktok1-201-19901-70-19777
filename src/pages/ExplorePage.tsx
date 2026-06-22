@@ -25,6 +25,8 @@ interface ExploreVideo {
   is_creator: boolean;
 }
 
+const DEFAULT_AVATAR = "/default-avatar.svg";
+
 const ExplorePage = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("explore");
@@ -32,20 +34,11 @@ const ExplorePage = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "creators" | "models">("all");
   const [fullscreenVideo, setFullscreenVideo] = useState<{ url: string; time: number } | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    checkUser();
     loadVideos();
   }, [filter]);
-
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUserId(session.user.id);
-    }
-  };
 
   const loadVideos = async () => {
     setLoading(true);
@@ -64,72 +57,75 @@ const ExplorePage = () => {
       }
 
       const { data: videosData, error } = await query;
-
       if (error) throw error;
 
-      if (!videosData) {
+      if (!videosData || videosData.length === 0) {
         setVideos([]);
-        setLoading(false);
         return;
       }
 
-      // Buscar dados dos owners (models ou creators)
-      const enrichedVideos: ExploreVideo[] = await Promise.all(
-        videosData.map(async (video: any) => {
-          let ownerName = "Desconhecido";
-          let ownerAvatar = "/placeholder.svg";
-          let ownerUsername = "";
-          let isCreator = false;
-
-          if (video.creator_id) {
-            // Buscar dados do criador
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('name, email')
-              .eq('id', video.creator_id)
-              .maybeSingle();
-
-            if (profile) {
-              ownerName = profile.name || profile.email?.split('@')[0] || "Criador";
-              ownerAvatar = "/placeholder.svg";
-              ownerUsername = profile.name || "";
-              isCreator = true;
-            }
-          } else if (video.model_id) {
-            // Buscar dados do modelo
-            const { data: model } = await supabase
-              .from('models')
-              .select('name, username')
-              .eq('id', video.model_id)
-              .maybeSingle();
-
-            if (model) {
-              ownerName = model.name || model.username || "Modelo";
-              ownerAvatar = "/placeholder.svg";
-              ownerUsername = model.username || model.name || "";
-              isCreator = false;
-            }
-          }
-
-          return {
-            id: video.id,
-            video_url: video.video_url,
-            thumbnail_url: video.thumbnail_url || "/placeholder.svg",
-            title: video.title || video.description || "",
-            likes_count: video.likes_count || 0,
-            views_count: video.views_count || 0,
-            comments_count: video.comments_count || 0,
-            shares_count: video.shares_count || 0,
-            model_id: video.model_id,
-            creator_id: video.creator_id,
-            owner_name: ownerName,
-            owner_avatar: ownerAvatar,
-            owner_username: ownerUsername,
-            created_at: video.created_at,
-            is_creator: isCreator,
-          };
-        })
+      // Coletar IDs únicos em lote (evita N+1)
+      const creatorIds = Array.from(
+        new Set(videosData.map((v: any) => v.creator_id).filter(Boolean))
       );
+      const modelIds = Array.from(
+        new Set(videosData.map((v: any) => v.model_id).filter(Boolean))
+      );
+
+      const [profilesRes, modelsRes] = await Promise.all([
+        creatorIds.length
+          ? supabase.from('profiles').select('id, name, email, avatar_url').in('id', creatorIds)
+          : Promise.resolve({ data: [] as any[] }),
+        modelIds.length
+          ? supabase.from('models').select('id, name, username, avatar_url').in('id', modelIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const profilesMap = new Map(
+        (profilesRes.data || []).map((p: any) => [p.id, p])
+      );
+      const modelsMap = new Map(
+        (modelsRes.data || []).map((m: any) => [m.id, m])
+      );
+
+      const enrichedVideos: ExploreVideo[] = videosData.map((video: any) => {
+        let ownerName = "Desconhecido";
+        let ownerAvatar = DEFAULT_AVATAR;
+        let ownerUsername = "";
+        let isCreator = false;
+
+        if (video.creator_id && profilesMap.has(video.creator_id)) {
+          const profile: any = profilesMap.get(video.creator_id);
+          ownerName = profile.name || profile.email?.split('@')[0] || "Criador";
+          ownerAvatar = profile.avatar_url || DEFAULT_AVATAR;
+          ownerUsername = profile.name || "";
+          isCreator = true;
+        } else if (video.model_id && modelsMap.has(video.model_id)) {
+          const model: any = modelsMap.get(video.model_id);
+          ownerName = model.name || model.username || "Modelo";
+          ownerAvatar = model.avatar_url || DEFAULT_AVATAR;
+          ownerUsername = model.username || model.name || "";
+          isCreator = false;
+        }
+
+        return {
+          id: video.id,
+          video_url: video.video_url,
+          thumbnail_url: video.thumbnail_url || "/placeholder.svg",
+          title: video.title || video.description || "",
+          likes_count: video.likes_count || 0,
+          views_count: video.views_count || 0,
+          comments_count: video.comments_count || 0,
+          shares_count: video.shares_count || 0,
+          model_id: video.model_id,
+          creator_id: video.creator_id,
+          owner_name: ownerName,
+          owner_avatar: ownerAvatar,
+          owner_username: ownerUsername,
+          created_at: video.created_at,
+          is_creator: isCreator,
+        };
+      });
 
       setVideos(enrichedVideos);
     } catch (error) {

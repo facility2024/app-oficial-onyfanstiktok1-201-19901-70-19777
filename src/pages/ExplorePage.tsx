@@ -261,7 +261,7 @@ const ExplorePage = () => {
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
             >
-              Todos ({filteredVideos.length})
+              Todos ({videos.length})
             </button>
             <button
               onClick={() => setFilter("creators")}

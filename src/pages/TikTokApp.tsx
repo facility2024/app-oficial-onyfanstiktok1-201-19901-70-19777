@@ -2031,7 +2031,10 @@ export const TikTokApp = () => {
   };
   const toggleLike = async () => {
     if (!currentVideo) return;
-    console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', currentVideo.id);
+    if (isTogglingLikeRef.current) return;
+    isTogglingLikeRef.current = true;
+    const dataVideoId = getVideoDataId(currentVideo);
+    console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', dataVideoId);
 
     // ✅ Usar ID correto: autenticado se logado, anônimo se não
     const {
@@ -2046,6 +2049,7 @@ export const TikTokApp = () => {
     })();
     console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
     try {
+      if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
       // Primeiro, verificar se já existe like para este usuário/vídeo
       const {
         data: existingLike,
@@ -2054,7 +2058,7 @@ export const TikTokApp = () => {
         .from('likes')
         .select('id, is_active')
         .eq('user_id', currentUserId)
-        .eq('video_id', currentVideo.id)
+        .eq('video_id', dataVideoId)
         .maybeSingle();
 
       if (checkError && checkError.code !== 'PGRST116') {

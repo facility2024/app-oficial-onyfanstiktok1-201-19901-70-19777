@@ -154,6 +154,7 @@ export const TikTokApp = () => {
   } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
+  const isTogglingLikeRef = useRef(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [chatActiveMap, setChatActiveMap] = useState<Record<string, boolean>>({});
@@ -437,6 +438,7 @@ export const TikTokApp = () => {
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
   const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
+  const getVideoDataId = (video?: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
 
   useEffect(() => {
     if (!displayVideos.length) return;
@@ -1920,6 +1922,7 @@ export const TikTokApp = () => {
   }, []);
   const checkIfLiked = async (videoId: string) => {
     try {
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const {
         data: {
@@ -1932,19 +1935,19 @@ export const TikTokApp = () => {
         return newId;
       })();
       console.log('🔍 CHECKING IF LIKED:');
-      console.log('🔍 Video ID:', videoId);
+      console.log('🔍 Video ID:', dataVideoId);
       console.log('🔍 User ID:', currentUserId);
 
       // Check if user has an active like for this video in database
       const {
         data,
         error
-      } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', videoId).eq('is_active', true).maybeSingle();
+      } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', dataVideoId).eq('is_active', true).maybeSingle();
       if (error) {
         console.error('❌ Error checking like status:', error);
         if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
           console.log('📝 Likes table não existe, usando localStorage...');
-          const liked = localStorage.getItem(`liked_${videoId}`);
+          const liked = localStorage.getItem(`liked_${dataVideoId}`);
           setIsLiked(liked === 'true');
           return;
         }
@@ -1955,13 +1958,13 @@ export const TikTokApp = () => {
       console.log('🔍 IS LIKED:', liked);
       setIsLiked(liked);
       // Also update localStorage for consistency
-      if (videoId) {
-        localStorage.setItem(`liked_${videoId}`, String(liked));
+      if (dataVideoId) {
+        localStorage.setItem(`liked_${dataVideoId}`, String(liked));
       }
     } catch (error) {
       console.error('Error in checkIfLiked:', error);
       // Fallback to localStorage
-      const liked = localStorage.getItem(`liked_${videoId}`);
+      const liked = localStorage.getItem(`liked_${String(videoId || '').replace(/-block-\d+-\d+$/, '')}`);
       setIsLiked(liked === 'true');
     }
   };
@@ -2028,7 +2031,10 @@ export const TikTokApp = () => {
   };
   const toggleLike = async () => {
     if (!currentVideo) return;
-    console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', currentVideo.id);
+    if (isTogglingLikeRef.current) return;
+    isTogglingLikeRef.current = true;
+    const dataVideoId = getVideoDataId(currentVideo);
+    console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', dataVideoId);
 
     // ✅ Usar ID correto: autenticado se logado, anônimo se não
     const {
@@ -2043,6 +2049,7 @@ export const TikTokApp = () => {
     })();
     console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
     try {
+      if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
       // Primeiro, verificar se já existe like para este usuário/vídeo
       const {
         data: existingLike,
@@ -2051,7 +2058,7 @@ export const TikTokApp = () => {
         .from('likes')
         .select('id, is_active')
         .eq('user_id', currentUserId)
-        .eq('video_id', currentVideo.id)
+        .eq('video_id', dataVideoId)
         .maybeSingle();
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -2086,7 +2093,7 @@ export const TikTokApp = () => {
           .from('likes')
           .insert({
             user_id: currentUserId,
-            video_id: currentVideo.id,
+            video_id: dataVideoId,
             // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
             model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
             is_active: true,
@@ -2105,7 +2112,7 @@ export const TikTokApp = () => {
               .from('likes')
               .insert({
                 user_id: currentUserId,
-                video_id: currentVideo.id,
+                video_id: dataVideoId,
                 is_active: true
               });
 
@@ -2121,17 +2128,17 @@ export const TikTokApp = () => {
 
       // Atualizar estado local (sempre curtido)
       setIsLiked(newLikedState);
-      if (currentVideo.id) {
-        localStorage.setItem(`liked_${currentVideo.id}`, 'true');
+      if (dataVideoId) {
+        localStorage.setItem(`liked_${dataVideoId}`, 'true');
       }
 
       // Registrar analytics apenas quando houve nova persistência de curtida
       const userId = currentVideo.user?.id || currentVideo.model_id || '';
       const modelId = currentVideo.model_id || userId;
       if (didPersistNewLike && userId) {
-        await trackLike(currentVideo.id, userId, true);
+        await trackLike(dataVideoId, userId, true);
         ensureInteractedModel(userId);
-        await checkAndTrackAction('like', currentVideo.id, userId);
+        await checkAndTrackAction('like', dataVideoId, userId);
 
         // 🧠 FEED INTELIGENTE: Marcar modelo/criador como favorito ao dar like
         if (markModelAsFavorite) {
@@ -2149,7 +2156,7 @@ export const TikTokApp = () => {
       const { count: liveLikesCount, error: countError } = await supabase
         .from('likes')
         .select('id', { count: 'exact', head: true })
-        .eq('video_id', currentVideo.id)
+        .eq('video_id', dataVideoId)
         .eq('is_active', true);
 
       if (countError) throw countError;
@@ -2159,12 +2166,12 @@ export const TikTokApp = () => {
       const { error } = await supabase
         .from('videos')
         .update({ likes_count: newCount })
-        .eq('id', currentVideo.id);
+        .eq('id', dataVideoId);
 
       if (error) throw error;
 
       // Update local state
-      setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
+      setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
         ...video,
         likes_count: newCount
       } : video));
@@ -2178,6 +2185,8 @@ export const TikTokApp = () => {
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);
       // Silenciar erro de like para o usuário
+    } finally {
+      isTogglingLikeRef.current = false;
     }
   };
   const createLikeExplosion = () => {

@@ -72,12 +72,20 @@ const ExplorePage = () => {
         new Set(videosData.map((v: any) => v.model_id).filter(Boolean))
       );
 
-      const [profilesRes, modelsRes] = await Promise.all([
+      const videoIds = videosData.map((v: any) => v.id);
+
+      const [profilesRes, modelsRes, likesRes, commentsRes] = await Promise.all([
         creatorIds.length
           ? supabase.from('profiles').select('id, name, email, avatar_url').in('id', creatorIds)
           : Promise.resolve({ data: [] as any[] }),
         modelIds.length
           ? supabase.from('models').select('id, name, username, avatar_url').in('id', modelIds)
+          : Promise.resolve({ data: [] as any[] }),
+        videoIds.length
+          ? supabase.from('likes').select('video_id').in('video_id', videoIds).eq('is_active', true)
+          : Promise.resolve({ data: [] as any[] }),
+        videoIds.length
+          ? supabase.from('comments').select('video_id').in('video_id', videoIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
 
@@ -87,6 +95,17 @@ const ExplorePage = () => {
       const modelsMap = new Map(
         (modelsRes.data || []).map((m: any) => [m.id, m])
       );
+
+      // Contagens reais (memória do projeto: usar linhas reais, não colunas agregadas)
+      const likesCountMap = new Map<string, number>();
+      (likesRes.data || []).forEach((l: any) => {
+        likesCountMap.set(l.video_id, (likesCountMap.get(l.video_id) || 0) + 1);
+      });
+      const commentsCountMap = new Map<string, number>();
+      (commentsRes.data || []).forEach((c: any) => {
+        commentsCountMap.set(c.video_id, (commentsCountMap.get(c.video_id) || 0) + 1);
+      });
+
 
       const enrichedVideos: ExploreVideo[] = videosData.map((video: any) => {
         let ownerName = "Desconhecido";

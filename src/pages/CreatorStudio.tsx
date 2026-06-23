@@ -66,7 +66,7 @@ export default function CreatorStudio() {
     video_url: '',
     thumbnail_url: '',
     genres: [] as string[],
-    visibility: 'public' as 'public' | 'premium' | 'private',
+    visibility: 'public' as 'public' | 'private',
     is_featured: false,
   });
 
@@ -551,26 +551,6 @@ export default function CreatorStudio() {
                       <p className="text-xs text-gray-400">Todos podem ver este vídeo gratuitamente</p>
                     </button>
 
-                    {/* Premium (VIP Global) */}
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, visibility: 'premium' })}
-                      className={`
-                        p-4 rounded-lg border-2 transition-all duration-200 text-left
-                        ${formData.visibility === 'premium' 
-                          ? 'border-amber-500 bg-amber-500/10' 
-                          : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Crown className={`w-5 h-5 ${formData.visibility === 'premium' ? 'text-amber-400' : 'text-gray-400'}`} />
-                        <span className={`font-semibold ${formData.visibility === 'premium' ? 'text-amber-400' : 'text-white'}`}>
-                          Premium VIP
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-400">Apenas assinantes VIP Global podem ver</p>
-                    </button>
 
                     {/* Privado (Meus Assinantes) */}
                     <button

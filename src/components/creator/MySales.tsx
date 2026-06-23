@@ -16,12 +16,35 @@ export default function MySales() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
-      const { data } = await supabase
-        .from("purchases")
-        .select("id, created_at, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
-        .eq("seller_id", user.id)
-        .order("created_at", { ascending: false });
-      setRows(data ?? []);
+
+      const [purchasesRes, txRes] = await Promise.all([
+        supabase
+          .from("purchases")
+          .select("id, created_at, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
+          .eq("seller_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("payment_transactions")
+          .select("id, created_at, amount, platform_amount, creator_amount, creator_net_amount, neonpay_fee, status, plan_type")
+          .eq("private_model_id", user.id)
+          .order("created_at", { ascending: false }),
+      ]);
+
+      const fromTx = (txRes.data ?? []).map((t: any) => ({
+        id: `tx_${t.id}`,
+        created_at: t.created_at,
+        amount: t.amount,
+        platform_amount: t.platform_amount,
+        seller_amount: t.creator_amount,
+        seller_net: t.creator_net_amount ?? t.creator_amount,
+        neonpay_fee: t.neonpay_fee ?? 0,
+        status: String(t.status || "").toLowerCase() === "approved" ? "paid" : "pending",
+        payment_method: `privado ${t.plan_type ?? ""}`.trim(),
+      }));
+
+      const merged = [...(purchasesRes.data ?? []), ...fromTx]
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      setRows(merged);
       setLoading(false);
     })();
   }, []);

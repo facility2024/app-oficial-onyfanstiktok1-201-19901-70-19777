@@ -14,7 +14,7 @@ const editVideoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres').max(500),
   thumbnail_url: z.string().url('URL da thumbnail inválida'),
-  visibility: z.enum(['public', 'premium', 'private']),
+  visibility: z.enum(['public', 'private']),
 });
 
 interface EditVideoModalProps {

@@ -287,7 +287,7 @@ const CheckoutPage = () => {
         });
 
         if (data?.status === 'APPROVED') {
-          finishApproved();
+          if (await hasActivePrivateAccess() || await grantPrivateAccessFromApprovedTransaction()) finishApproved();
           return;
         }
         if (data?.status === 'REJECTED') {

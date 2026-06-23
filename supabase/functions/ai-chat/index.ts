@@ -40,7 +40,14 @@ serve(async (req) => {
       query = query.eq('model_id', entityId);
     }
 
-    const { data: chatPanel, error: panelError } = await query.single();
+    const { data: chatPanel, error: panelError } = await query.maybeSingle();
+
+    if (!chatPanel && !panelError) {
+      return new Response(
+        JSON.stringify({ error: 'Chat panel não encontrado' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (panelError) {
       console.error('❌ Erro ao buscar chat panel:', panelError);

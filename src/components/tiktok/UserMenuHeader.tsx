@@ -54,7 +54,7 @@ export const UserMenuHeader = () => {
             {isPremium && (
               <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded-full text-[10px] font-medium shrink-0">
                 <Crown className="w-2.5 h-2.5" />
-                VIP
+                Conteúdo Privado
               </div>
             )}
           </div>

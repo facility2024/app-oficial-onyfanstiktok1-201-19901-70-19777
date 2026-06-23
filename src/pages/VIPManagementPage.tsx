@@ -63,7 +63,7 @@ export default function VIPManagementPage() {
       case 'mensal': return 'Plano Mensal';
       case 'trimestral': return 'Plano Trimestral';
       case 'anual': return 'Plano Anual';
-      default: return 'Plano VIP';
+      default: return 'Plano Conteúdo Privado';
     }
   };
 
@@ -127,7 +127,7 @@ export default function VIPManagementPage() {
                     <Crown className="w-8 h-8 text-amber-400" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold text-white">Você é VIP!</h1>
+                    <h1 className="text-2xl font-bold text-white">Você é Conteúdo Privado!</h1>
                     <p className="text-amber-300/80">{getPlanName(premiumData.subscription_type)}</p>
                   </div>
                 </div>
@@ -176,14 +176,14 @@ export default function VIPManagementPage() {
                 <div className="bg-black/20 rounded-xl p-4">
                   <h3 className="text-sm font-medium text-amber-300 mb-3 flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
-                    Seus Benefícios VIP
+                    Seus Benefícios Conteúdo Privado
                   </h3>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       'Conteúdo Premium Exclusivo',
                       'Sem Anúncios',
                       'Chat Prioritário',
-                      'Badge VIP no Perfil',
+                      'Badge Conteúdo Privado no Perfil',
                       'Acesso Antecipado',
                       'Suporte Prioritário'
                     ].map((benefit, i) => (
@@ -199,7 +199,7 @@ export default function VIPManagementPage() {
           ) : (
             <div className="bg-gray-900/50 border border-white/10 rounded-2xl p-8 text-center">
               <Crown className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-white mb-2">Você ainda não é VIP</h2>
+              <h2 className="text-xl font-bold text-white mb-2">Você ainda não é Conteúdo Privado</h2>
               <p className="text-gray-400 mb-6">
                 Assine agora e tenha acesso a conteúdo exclusivo e benefícios especiais!
               </p>
@@ -208,7 +208,7 @@ export default function VIPManagementPage() {
                 className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold"
               >
                 <Crown className="w-4 h-4 mr-2" />
-                Tornar-se VIP
+                Tornar-se Conteúdo Privado
               </Button>
             </div>
           )}

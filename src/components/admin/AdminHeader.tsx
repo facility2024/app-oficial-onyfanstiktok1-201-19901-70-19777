@@ -54,7 +54,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
     creator_application: 'Criador',
     new_user: 'Usuário',
     security: 'Segurança',
-    vip_expired: 'VIP',
+    vip_expired: 'Conteúdo Privado',
   };
 
   return (

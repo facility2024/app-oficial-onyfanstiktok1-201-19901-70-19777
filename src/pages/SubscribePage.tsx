@@ -33,7 +33,7 @@ const defaultVIPPlans: VIPPlans = {
       'Acesso a conteúdo premium',
       'Sem anúncios',
       'Chat exclusivo com modelos',
-      'Badge VIP no perfil'
+      'Badge Conteúdo Privado no perfil'
     ],
     paymentUrl: 'https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1'
   },
@@ -54,7 +54,7 @@ const defaultVIPPlans: VIPPlans = {
     discount: '38% OFF',
     features: [
       'Tudo do plano Trimestral',
-      'Lives exclusivas VIP',
+      'Lives exclusivas Conteúdo Privado',
       'Sorteios e brindes',
       'Perfil verificado especial'
     ],
@@ -87,7 +87,7 @@ const SubscribePage = () => {
           setVipPlans(data.setting_value as unknown as VIPPlans);
         }
       } catch (error) {
-        console.error('Error fetching VIP plans:', error);
+        console.error('Error fetching Conteúdo Privado plans:', error);
       } finally {
         setLoading(false);
       }
@@ -149,7 +149,7 @@ const SubscribePage = () => {
     
     // Verificar se usuário está logado
     if (!user) {
-      toast.error('Você precisa estar logado para assinar VIP');
+      toast.error('Você precisa estar logado para assinar Conteúdo Privado');
       localStorage.setItem('returnTo', '/subscribe');
       navigate('/auth');
       return;
@@ -287,7 +287,7 @@ const SubscribePage = () => {
           <ArrowLeft className="w-6 h-6" />
         </Button>
         
-        <h1 className="text-xl font-bold text-black">Seja VIP</h1>
+        <h1 className="text-xl font-bold text-black">Seja Conteúdo Privado</h1>
         
         <img 
           src={coconudiLogo} 
@@ -316,7 +316,7 @@ const SubscribePage = () => {
             <Crown className="w-10 h-10 text-black" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">
-            Torne-se <span className="text-amber-400">VIP</span>
+            Torne-se <span className="text-amber-400">Conteúdo Privado</span>
           </h2>
           <p className="text-gray-400 max-w-md mx-auto">
             Desbloqueie acesso exclusivo a conteúdos premium, recursos especiais e muito mais!

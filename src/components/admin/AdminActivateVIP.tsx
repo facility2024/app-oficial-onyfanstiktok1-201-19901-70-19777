@@ -79,7 +79,7 @@ export const AdminActivateVIP = () => {
         const { error } = await supabase
           .from('premium_users')
           .update({
-            name: name || profile?.name || 'Assinante VIP',
+            name: name || profile?.name || 'Assinante Conteúdo Privado',
             user_id: userId,
             whatsapp: whatsapp || undefined,
             subscription_status: 'active',
@@ -94,13 +94,13 @@ export const AdminActivateVIP = () => {
 
         setResult({
           success: true,
-          message: 'VIP atualizado com sucesso!',
+          message: 'Conteúdo Privado atualizado com sucesso!',
           email: normalizedEmail,
           plan: planType,
           expires: newEndDate.toISOString(),
         });
 
-        toast.success(`VIP ${planType} ativado para ${normalizedEmail}`);
+        toast.success(`Conteúdo Privado ${planType} ativado para ${normalizedEmail}`);
       } else {
         // Criar novo
         const { error } = await supabase
@@ -108,7 +108,7 @@ export const AdminActivateVIP = () => {
           .insert({
             email: normalizedEmail,
             user_id: userId,
-            name: name || profile?.name || 'Assinante VIP',
+            name: name || profile?.name || 'Assinante Conteúdo Privado',
             whatsapp: whatsapp || null,
             subscription_status: 'active',
             subscription_type: planType,
@@ -120,13 +120,13 @@ export const AdminActivateVIP = () => {
 
         setResult({
           success: true,
-          message: 'Novo VIP criado com sucesso!',
+          message: 'Novo Conteúdo Privado criado com sucesso!',
           email: normalizedEmail,
           plan: planType,
           expires: subscriptionEnd.toISOString(),
         });
 
-        toast.success(`Novo VIP ${planType} criado para ${normalizedEmail}`);
+        toast.success(`Novo Conteúdo Privado ${planType} criado para ${normalizedEmail}`);
       }
 
       // Limpar formulário
@@ -134,12 +134,12 @@ export const AdminActivateVIP = () => {
       setName('');
       setWhatsapp('');
     } catch (error: any) {
-      console.error('Erro ao ativar VIP:', error);
+      console.error('Erro ao ativar Conteúdo Privado:', error);
       setResult({
         success: false,
-        message: error.message || 'Erro ao ativar VIP',
+        message: error.message || 'Erro ao ativar Conteúdo Privado',
       });
-      toast.error('Erro ao ativar VIP: ' + error.message);
+      toast.error('Erro ao ativar Conteúdo Privado: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -150,7 +150,7 @@ export const AdminActivateVIP = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-amber-400">
           <Crown className="w-5 h-5" />
-          Ativar VIP Manualmente
+          Ativar Conteúdo Privado Manualmente
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -219,7 +219,7 @@ export const AdminActivateVIP = () => {
           ) : (
             <>
               <UserPlus className="w-4 h-4 mr-2" />
-              Ativar VIP Manualmente
+              Ativar Conteúdo Privado Manualmente
             </>
           )}
         </Button>

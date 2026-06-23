@@ -87,7 +87,7 @@ export const AdminWebhookLogs = () => {
           </div>
           <p className="text-xs text-gray-400">
             Configure esta URL no seu gateway de pagamento (Hoopay, etc). Quando o pagamento for confirmado, 
-            o VIP será ativado automaticamente. O payload deve conter: <code className="text-green-400">email</code>, <code className="text-green-400">name</code> e opcionalmente <code className="text-green-400">plan_type</code> (mensal/trimestral/anual).
+            o Conteúdo Privado será ativado automaticamente. O payload deve conter: <code className="text-green-400">email</code>, <code className="text-green-400">name</code> e opcionalmente <code className="text-green-400">plan_type</code> (mensal/trimestral/anual).
           </p>
         </CardContent>
       </Card>

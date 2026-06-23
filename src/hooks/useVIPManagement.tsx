@@ -92,7 +92,7 @@ export const useVIPManagement = () => {
 
     } catch (error) {
       console.error('Erro ao buscar VIPs:', error);
-      toast.error('Erro ao carregar usuários VIP');
+      toast.error('Erro ao carregar usuários Conteúdo Privado');
     } finally {
       setLoading(false);
     }
@@ -148,10 +148,10 @@ export const useVIPManagement = () => {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Usuário VIP atualizado');
+      toast.success('Usuário Conteúdo Privado atualizado');
       return true;
     } catch (error) {
-      console.error('Erro ao atualizar VIP:', error);
+      console.error('Erro ao atualizar Conteúdo Privado:', error);
       toast.error('Erro ao atualizar usuário');
       return false;
     }
@@ -279,18 +279,18 @@ export const useVIPManagement = () => {
 
       if (error) {
         if (error.code === '23505') {
-          toast.error('Este email já possui uma assinatura VIP');
+          toast.error('Este email já possui uma assinatura Conteúdo Privado');
         } else {
           throw error;
         }
         return false;
       }
       
-      toast.success('Usuário VIP criado com sucesso!');
+      toast.success('Usuário Conteúdo Privado criado com sucesso!');
       return true;
     } catch (error) {
-      console.error('Erro ao criar VIP:', error);
-      toast.error('Erro ao criar usuário VIP');
+      console.error('Erro ao criar Conteúdo Privado:', error);
+      toast.error('Erro ao criar usuário Conteúdo Privado');
       return false;
     }
   }, []);
@@ -327,7 +327,7 @@ export const useVIPManagement = () => {
         const { error } = await (supabase as any)
           .from('premium_users')
           .update({
-            name: params.name || 'VIP Manual',
+            name: params.name || 'Conteúdo Privado Manual',
             whatsapp: params.phone || null,
             cpf: params.cpf || null,
             subscription_status: 'active',
@@ -339,14 +339,14 @@ export const useVIPManagement = () => {
           .eq('id', existing.id);
 
         if (error) throw error;
-        toast.success('VIP atualizado com sucesso!');
+        toast.success('Conteúdo Privado atualizado com sucesso!');
       } else {
         // Criar novo
         const { error } = await (supabase as any)
           .from('premium_users')
           .insert({
             email: params.email.toLowerCase(),
-            name: params.name || 'VIP Manual',
+            name: params.name || 'Conteúdo Privado Manual',
             whatsapp: params.phone || null,
             cpf: params.cpf || null,
             subscription_status: 'active',
@@ -358,13 +358,13 @@ export const useVIPManagement = () => {
           });
 
         if (error) throw error;
-        toast.success('VIP ativado com sucesso!');
+        toast.success('Conteúdo Privado ativado com sucesso!');
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Erro ao ativar VIP manualmente:', error);
-      toast.error('Erro ao ativar VIP');
+      console.error('❌ Erro ao ativar Conteúdo Privado manualmente:', error);
+      toast.error('Erro ao ativar Conteúdo Privado');
       return false;
     }
   }, []);

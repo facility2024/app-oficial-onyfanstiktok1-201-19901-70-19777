@@ -211,14 +211,14 @@ const updates: UpdateEntry[] = [
   },
   {
     date: '21/02/2026',
-    title: 'Sistema VIP/Premium com PIX',
+    title: 'Sistema Conteúdo Privado/Premium com PIX',
     category: 'feature',
-    description: 'Implementação do sistema de assinatura VIP com pagamento via PIX brasileiro.',
+    description: 'Implementação do sistema de assinatura Conteúdo Privado com pagamento via PIX brasileiro.',
     details: [
       'Edge Function `generate-pix` para gerar código PIX + QR Code Base64',
       'Edge Function `verify-payment` para verificação automática de status',
       'Tabela `premium_users` com campos: email, user_id, expires_at, plan_type',
-      'Hook `usePremiumStatus` para verificação de status VIP em tempo real',
+      'Hook `usePremiumStatus` para verificação de status Conteúdo Privado em tempo real',
       'Página `SubscribePage` com planos configuráveis',
       'Overlay de conteúdo premium para não-assinantes',
     ],

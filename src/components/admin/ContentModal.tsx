@@ -501,7 +501,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
         name: contentData.displayName,
         username: username,
         avatar_url: contentData.avatarUrl,
-        bio: isPremium ? `Modelo VIP criado via painel - ${contentData.displayName}` : `Modelo criado via painel - ${contentData.displayName}`,
+        bio: isPremium ? `Modelo Conteúdo Privado criado via painel - ${contentData.displayName}` : `Modelo criado via painel - ${contentData.displayName}`,
         followers_count: Math.floor(Math.random() * 50000) + 10000,
         is_premium: isPremium,
         is_verified: isPremium,
@@ -1213,7 +1213,7 @@ export const ContentModal = ({ isOpen, onClose, onSubmit, editingContent, onOpen
                     {vipFormData.avatarUrl ? (
                       <img 
                         src={vipFormData.avatarUrl} 
-                        alt="Preview VIP Avatar" 
+                        alt="Preview Conteúdo Privado Avatar" 
                         className="w-full h-full rounded-full object-cover"
                         onError={(e) => {
                           e.currentTarget.src = '';

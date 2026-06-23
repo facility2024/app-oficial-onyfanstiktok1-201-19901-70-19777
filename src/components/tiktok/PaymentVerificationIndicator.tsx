@@ -95,7 +95,7 @@ export const PaymentVerificationIndicator = ({
   useEffect(() => {
     if (!userEmail && !userId) return;
 
-    console.log('🔔 Configurando listener realtime para VIP:', { userEmail, userId });
+    console.log('🔔 Configurando listener realtime para Conteúdo Privado:', { userEmail, userId });
 
     const channel = supabase
       .channel('vip-activation')
@@ -107,7 +107,7 @@ export const PaymentVerificationIndicator = ({
           table: 'premium_users'
         },
         (payload) => {
-          console.log('🔔 Novo VIP detectado:', payload.new);
+          console.log('🔔 Novo Conteúdo Privado detectado:', payload.new);
           const newVIP = payload.new as any;
           
           // Verificar se é o usuário atual
@@ -127,7 +127,7 @@ export const PaymentVerificationIndicator = ({
           table: 'premium_users'
         },
         (payload) => {
-          console.log('🔔 VIP atualizado:', payload.new);
+          console.log('🔔 Conteúdo Privado atualizado:', payload.new);
           const updatedVIP = payload.new as any;
           
           // Verificar se é o usuário atual e se foi ativado
@@ -153,7 +153,7 @@ export const PaymentVerificationIndicator = ({
   }, [userEmail, userId]);
 
   const handleVIPActivation = useCallback((vipData: any) => {
-    console.log('🎉 VIP ATIVADO!', vipData);
+    console.log('🎉 Conteúdo Privado ATIVADO!', vipData);
     
     // Evitar tocar som múltiplas vezes
     if (!soundPlayedRef.current) {
@@ -174,7 +174,7 @@ export const PaymentVerificationIndicator = ({
     
     // Mostrar notificação
     toast({
-      title: "🎉 Parabéns! Você é VIP!",
+      title: "🎉 Parabéns! Você é Conteúdo Privado!",
       description: `Seu plano ${vipData.subscription_type} foi ativado com sucesso!`,
       duration: 10000,
     });
@@ -251,7 +251,7 @@ export const PaymentVerificationIndicator = ({
               </motion.div>
               
               <h2 className="text-3xl font-bold text-white mb-2">
-                Você é VIP! 🎉
+                Você é Conteúdo Privado! 🎉
               </h2>
               <p className="text-yellow-100/90 text-lg">
                 Acesso premium ativado com sucesso!

@@ -571,7 +571,7 @@ export const AdminGamification = () => {
             
             <div className="p-4 border border-border rounded-lg text-center hover:bg-card-hover transition-colors">
               <div className="text-2xl mb-2">👑</div>
-              <h4 className="font-medium text-foreground">Status VIP top10</h4>
+              <h4 className="font-medium text-foreground">Status Conteúdo Privado top10</h4>
               <p className="text-sm text-muted-foreground mb-2">7 dias premium</p>
               <Badge className="bg-warning text-warning-foreground">1000 pontos</Badge>
             </div>

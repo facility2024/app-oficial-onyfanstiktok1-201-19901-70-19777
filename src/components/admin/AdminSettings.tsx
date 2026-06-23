@@ -314,7 +314,7 @@ export const AdminSettings = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
             <Crown className="w-5 h-5 text-amber-500" />
-            <span>💎 Configuração dos Planos VIP</span>
+            <span>💎 Configuração dos Planos Conteúdo Privado</span>
           </CardTitle>
           {!editingPlans ? (
             <Button

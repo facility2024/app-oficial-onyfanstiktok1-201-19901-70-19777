@@ -13,16 +13,16 @@ const Subscribe = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // VIP fields
+  // Conteúdo Privado fields
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Assinatura VIP – Conteúdo premium';
+    document.title = 'Assinatura Conteúdo Privado – Conteúdo premium';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Torne-se VIP para desbloquear vídeos premium.');
+    if (meta) meta.setAttribute('content', 'Torne-se Conteúdo Privado para desbloquear vídeos premium.');
   }, []);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ const Subscribe = () => {
     <main className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
       <section className="w-full max-w-md rounded-xl bg-card text-card-foreground shadow-xl p-6 space-y-4">
         <header className="text-center space-y-1">
-          <h1 className="text-xl font-semibold">Acesso VIP</h1>
+          <h1 className="text-xl font-semibold">Acesso Conteúdo Privado</h1>
           <p className="text-sm text-muted-foreground">Desbloqueie todos os vídeos premium.</p>
         </header>
 
@@ -116,7 +116,7 @@ const Subscribe = () => {
           </div>
         ) : success ? (
           <div className="text-center space-y-4">
-            <div className="text-base font-medium">Pronto! Seu acesso VIP foi ativado.</div>
+            <div className="text-base font-medium">Pronto! Seu acesso Conteúdo Privado foi ativado.</div>
             <Button asChild className="w-full">
               <a href="/app">Abrir o App</a>
             </Button>
@@ -132,7 +132,7 @@ const Subscribe = () => {
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
             </div>
             <Button className="w-full" onClick={handleVip} disabled={loading}>
-              {loading ? 'Enviando...' : 'Ativar VIP'}
+              {loading ? 'Enviando...' : 'Ativar Conteúdo Privado'}
             </Button>
             <button className="w-full text-xs text-muted-foreground hover:text-foreground" onClick={() => supabase.auth.signOut()}>
               Trocar de conta

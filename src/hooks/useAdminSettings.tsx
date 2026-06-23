@@ -23,7 +23,7 @@ const defaultVIPPlans: VIPPlans = {
       'Acesso a conteúdo premium',
       'Sem anúncios',
       'Chat exclusivo com modelos',
-      'Badge VIP no perfil'
+      'Badge Conteúdo Privado no perfil'
     ],
     paymentUrl: 'https://pay.hoopay.com.br/?productId[]=6ca7b341-2e5b-4153-82d3-f4d4d76fa2d1&qty[]=1'
   },
@@ -44,7 +44,7 @@ const defaultVIPPlans: VIPPlans = {
     discount: '38% OFF',
     features: [
       'Tudo do plano Trimestral',
-      'Lives exclusivas VIP',
+      'Lives exclusivas Conteúdo Privado',
       'Sorteios e brindes',
       'Perfil verificado especial'
     ],
@@ -116,7 +116,7 @@ export const useAdminSettings = () => {
         setVipPlans(data.setting_value as unknown as VIPPlans);
       }
     } catch (error) {
-      console.error('Error fetching VIP plans:', error);
+      console.error('Error fetching Conteúdo Privado plans:', error);
     } finally {
       setVipPlansLoading(false);
     }
@@ -135,11 +135,11 @@ export const useAdminSettings = () => {
 
       if (error) throw error;
       setVipPlans(plans);
-      toast.success('Planos VIP atualizados com sucesso!');
+      toast.success('Planos Conteúdo Privado atualizados com sucesso!');
       return true;
     } catch (error) {
-      console.error('Error updating VIP plans:', error);
-      toast.error('Erro ao atualizar planos VIP');
+      console.error('Error updating Conteúdo Privado plans:', error);
+      toast.error('Erro ao atualizar planos Conteúdo Privado');
       return false;
     }
   };

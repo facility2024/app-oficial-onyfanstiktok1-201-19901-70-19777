@@ -30,16 +30,17 @@ Deno.serve(async (req) => {
       })
     }
 
-    const totalCents = Math.round(Number(amount) * 100)
-    const platformCents = Math.round(totalCents * (commission / 100))
-    const sellerCents = totalCents - platformCents
+    const total = Number(amount)
+    const platformAmount = +(total * (commission / 100)).toFixed(2)
+    const sellerAmount = +(total - platformAmount).toFixed(2)
+    const totalCents = Math.round(total * 100)
+    const sellerCents = Math.round(sellerAmount * 100)
 
     const payload = {
       payment_method: 'credit_card',
       amount: totalCents,
       installments,
-      customer,
-      card,
+      customer, card,
       splits: [{ recipient_id: seller.neonpay_producer_id, amount: sellerCents }],
       metadata: { item_id, item_type, seller_id },
     }
@@ -65,7 +66,11 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       transaction_id: data.id,
       status: data.status,
-      amount, commission_percentage: commission,
+      amount: total,
+      commission_percentage: commission,
+      platform_amount: platformAmount,
+      seller_amount: sellerAmount,
+      seller_id,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {

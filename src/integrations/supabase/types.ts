@@ -6366,11 +6366,17 @@ export type Database = {
       purchases: {
         Row: {
           amount: number
+          commission_percentage: number | null
           created_at: string
           id: string
           item_id: string
           item_type: string
+          neonpay_fee: number | null
           payment_method: string | null
+          platform_amount: number | null
+          seller_amount: number | null
+          seller_id: string | null
+          seller_net: number | null
           status: string
           transaction_id: string | null
           updated_at: string
@@ -6378,11 +6384,17 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          commission_percentage?: number | null
           created_at?: string
           id?: string
           item_id: string
           item_type?: string
+          neonpay_fee?: number | null
           payment_method?: string | null
+          platform_amount?: number | null
+          seller_amount?: number | null
+          seller_id?: string | null
+          seller_net?: number | null
           status?: string
           transaction_id?: string | null
           updated_at?: string
@@ -6390,11 +6402,17 @@ export type Database = {
         }
         Update: {
           amount?: number
+          commission_percentage?: number | null
           created_at?: string
           id?: string
           item_id?: string
           item_type?: string
+          neonpay_fee?: number | null
           payment_method?: string | null
+          platform_amount?: number | null
+          seller_amount?: number | null
+          seller_id?: string | null
+          seller_net?: number | null
           status?: string
           transaction_id?: string | null
           updated_at?: string

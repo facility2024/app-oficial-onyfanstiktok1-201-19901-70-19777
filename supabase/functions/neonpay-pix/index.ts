@@ -19,31 +19,28 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // comissão atual
     const { data: pct } = await supabase.rpc('get_commission_percentage')
     const commission = Number(pct ?? 20)
 
-    // producer_id do vendedor
     const { data: seller } = await supabase
       .from('profiles').select('neonpay_producer_id').eq('id', seller_id).maybeSingle()
-
     if (!seller?.neonpay_producer_id) {
       return new Response(JSON.stringify({ error: 'seller not configured on NeonPay' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const totalCents = Math.round(Number(amount) * 100)
-    const platformCents = Math.round(totalCents * (commission / 100))
-    const sellerCents = totalCents - platformCents
+    const total = Number(amount)
+    const platformAmount = +(total * (commission / 100)).toFixed(2)
+    const sellerAmount = +(total - platformAmount).toFixed(2)
+    const totalCents = Math.round(total * 100)
+    const sellerCents = Math.round(sellerAmount * 100)
 
     const payload = {
       payment_method: 'pix',
       amount: totalCents,
       customer,
-      splits: [
-        { recipient_id: seller.neonpay_producer_id, amount: sellerCents },
-      ],
+      splits: [{ recipient_id: seller.neonpay_producer_id, amount: sellerCents }],
       metadata: { item_id, item_type, seller_id },
     }
 
@@ -69,7 +66,11 @@ Deno.serve(async (req) => {
       transaction_id: data.id,
       pix_code: data.pix?.qr_code ?? data.qr_code,
       pix_qr_image: data.pix?.qr_code_image ?? data.qr_code_image,
-      amount, commission_percentage: commission,
+      amount: total,
+      commission_percentage: commission,
+      platform_amount: platformAmount,
+      seller_amount: sellerAmount,
+      seller_id,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {

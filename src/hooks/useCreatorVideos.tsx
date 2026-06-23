@@ -9,7 +9,7 @@ export interface CreatorVideo {
   video_url: string;
   thumbnail_url: string;
   thumbnail_locked?: string;
-  visibility: 'public' | 'premium' | 'private';
+  visibility: 'public' | 'private';
   is_active: boolean;
   is_featured?: boolean;
   views_count: number;
@@ -24,7 +24,7 @@ export const useCreatorVideos = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'premium' | 'private'>('all');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
 
   const fetchVideos = useCallback(async () => {
     try {
@@ -130,7 +130,7 @@ export const useCreatorVideos = () => {
     }
   };
 
-  const changeVisibility = async (videoId: string, newVisibility: 'public' | 'premium' | 'private') => {
+  const changeVisibility = async (videoId: string, newVisibility: 'public' | 'private') => {
     try {
       const { error } = await supabase
         .from('videos')
@@ -141,10 +141,9 @@ export const useCreatorVideos = () => {
 
       const messages = {
         public: '🌐 Vídeo agora é público!',
-        premium: '👑 Vídeo marcado como Premium VIP!',
         private: '🔒 Vídeo agora é privado (apenas seus assinantes)',
       };
-      
+
       toast.success(messages[newVisibility]);
       fetchVideos();
     } catch (error) {
@@ -154,13 +153,7 @@ export const useCreatorVideos = () => {
   };
 
   const toggleVideoPremium = async (videoId: string, currentVisibility: string) => {
-    // Ciclar: public -> premium -> private -> public
-    const cycle: Record<string, 'public' | 'premium' | 'private'> = {
-      public: 'premium',
-      premium: 'private',
-      private: 'public',
-    };
-    const newVisibility = cycle[currentVisibility] || 'public';
+    const newVisibility: 'public' | 'private' = currentVisibility === 'private' ? 'public' : 'private';
     await changeVisibility(videoId, newVisibility);
   };
 

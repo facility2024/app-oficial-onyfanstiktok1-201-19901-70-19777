@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
       amount: isPix ? Number(price.toFixed(2)) : Math.round(price * 100),
       client,
       description: `Assinatura VIP ${plan_type}`,
+      callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
     }
     if (!isPix) {
       payload.card = {
@@ -98,15 +99,19 @@ Deno.serve(async (req) => {
     }
 
     const paymentId = data?.transactionId || data?.id || identifier
+    const orderId = data?.order?.id || data?.orderId || null
     const statusRaw = String(data?.status || data?.transaction?.status || '').toLowerCase()
     const approved = ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(statusRaw)
 
     await admin.from('payment_transactions').insert({
       user_id: user.id,
       asaas_payment_id: paymentId,
+      asaas_subscription_id: orderId,
+      asaas_customer_id: identifier,
       amount: price,
       plan_type,
       status: approved ? 'APPROVED' : 'PENDING',
+      checkout_url: data?.order?.url || null,
     }).then(() => {}, () => {})
 
     if (approved) {

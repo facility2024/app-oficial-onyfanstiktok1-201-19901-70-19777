@@ -5097,10 +5097,14 @@ export type Database = {
           asaas_payment_id: string | null
           asaas_subscription_id: string | null
           checkout_url: string | null
+          commission_percentage: number | null
           confirmed_at: string | null
           created_at: string
+          creator_amount: number | null
+          creator_producer_id: string | null
           id: string
           plan_type: string
+          platform_amount: number | null
           private_model_id: string | null
           private_model_type: string
           status: string
@@ -5113,10 +5117,14 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_subscription_id?: string | null
           checkout_url?: string | null
+          commission_percentage?: number | null
           confirmed_at?: string | null
           created_at?: string
+          creator_amount?: number | null
+          creator_producer_id?: string | null
           id?: string
           plan_type?: string
+          platform_amount?: number | null
           private_model_id?: string | null
           private_model_type?: string
           status?: string
@@ -5129,10 +5137,14 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_subscription_id?: string | null
           checkout_url?: string | null
+          commission_percentage?: number | null
           confirmed_at?: string | null
           created_at?: string
+          creator_amount?: number | null
+          creator_producer_id?: string | null
           id?: string
           plan_type?: string
+          platform_amount?: number | null
           private_model_id?: string | null
           private_model_type?: string
           status?: string

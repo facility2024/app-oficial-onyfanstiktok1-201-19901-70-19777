@@ -58,6 +58,9 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
+  const [privateVideoOpen, setPrivateVideoOpen] = useState(false);
+  const [privateVideoList, setPrivateVideoList] = useState<Array<{ url: string; title?: string; thumbnail?: string }>>([]);
+  const [privateVideoIndex, setPrivateVideoIndex] = useState(0);
   const [isCreator, setIsCreator] = useState(false);
   const [isFollowingCreator, setIsFollowingCreator] = useState(false);
   const [hideSubscriptionSection, setHideSubscriptionSection] = useState(false);
@@ -1004,6 +1007,23 @@ if (!isOpen) return null;
                             }
 
                             if (content.type === 'video') {
+                              // Conteúdo privado pago abre em popup DENTRO do perfil
+                              if (isPrivate && canAccessPrivate) {
+                                const videoContents = currentContents.filter(
+                                  (c) => c.type === 'video' && !!c.visibility && c.visibility !== 'public'
+                                );
+                                const list = videoContents.map((c) => ({
+                                  url: c.video_url as string,
+                                  title: c.title,
+                                  thumbnail: c.thumbnail_url,
+                                }));
+                                const idx = videoContents.findIndex((c) => c.id === content.id);
+                                setPrivateVideoList(list);
+                                setPrivateVideoIndex(Math.max(0, idx));
+                                setPrivateVideoOpen(true);
+                                return;
+                              }
+                              // Vídeos públicos seguem o fluxo do feed
                               onVideoSelect?.(content.id);
                               onClose();
                             } else {
@@ -1144,6 +1164,63 @@ if (!isOpen) return null;
         onClose={() => setImageViewerOpen(false)}
         onIndexChange={setCurrentImageIndex}
       />
+
+      {/* Private Video Popup - permanece dentro do perfil */}
+      {privateVideoOpen && privateVideoList[privateVideoIndex] && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+          onClick={() => setPrivateVideoOpen(false)}
+        >
+          <button
+            className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white"
+            onClick={(e) => { e.stopPropagation(); setPrivateVideoOpen(false); }}
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+          <div
+            className="relative w-full h-full max-w-md mx-auto flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <video
+              key={privateVideoList[privateVideoIndex].url}
+              src={privateVideoList[privateVideoIndex].url}
+              poster={privateVideoList[privateVideoIndex].thumbnail}
+              className="w-full h-full object-contain"
+              controls
+              autoPlay
+              playsInline
+            />
+            {privateVideoList.length > 1 && (
+              <>
+                <button
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-3 text-white text-2xl"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPrivateVideoIndex((i) => (i - 1 + privateVideoList.length) % privateVideoList.length);
+                  }}
+                  aria-label="Anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-3 text-white text-2xl"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPrivateVideoIndex((i) => (i + 1) % privateVideoList.length);
+                  }}
+                  aria-label="Próximo"
+                >
+                  ›
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-xs bg-black/50 px-3 py-1 rounded-full">
+                  {privateVideoIndex + 1} / {privateVideoList.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

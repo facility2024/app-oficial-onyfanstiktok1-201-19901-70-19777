@@ -376,7 +376,7 @@ export default function CreatorStudio() {
             </TabsTrigger>
             <TabsTrigger value="neonpay" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <CreditCard className="w-4 h-4 mr-1" />
-              NeonPay
+              Neon
             </TabsTrigger>
             <TabsTrigger value="sales" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <BarChart3 className="w-4 h-4 mr-1" />

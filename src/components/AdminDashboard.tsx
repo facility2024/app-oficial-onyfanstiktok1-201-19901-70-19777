@@ -249,6 +249,8 @@ export const AdminDashboard = () => {
         return <AdminWebhookLogs />;
       case 'email-events':
         return <AdminEmailEvents />;
+      case 'neonpay':
+        return <div className="p-4"><CommissionSettings /></div>;
       case 'documentation':
         return <AdminDocumentation />;
       case 'settings':

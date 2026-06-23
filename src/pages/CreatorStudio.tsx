@@ -993,6 +993,14 @@ export default function CreatorStudio() {
               )}
             </Card>
           </TabsContent>
+
+          <TabsContent value="neonpay">
+            <NeonPayProducerSettings />
+          </TabsContent>
+
+          <TabsContent value="sales">
+            <MySales />
+          </TabsContent>
         </Tabs>
       </div>
     </div>

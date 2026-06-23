@@ -5101,6 +5101,8 @@ export type Database = {
           created_at: string
           id: string
           plan_type: string
+          private_model_id: string | null
+          private_model_type: string
           status: string
           updated_at: string
           user_id: string
@@ -5115,6 +5117,8 @@ export type Database = {
           created_at?: string
           id?: string
           plan_type?: string
+          private_model_id?: string | null
+          private_model_type?: string
           status?: string
           updated_at?: string
           user_id: string
@@ -5129,6 +5133,8 @@ export type Database = {
           created_at?: string
           id?: string
           plan_type?: string
+          private_model_id?: string | null
+          private_model_type?: string
           status?: string
           updated_at?: string
           user_id?: string

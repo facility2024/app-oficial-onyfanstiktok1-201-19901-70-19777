@@ -83,6 +83,9 @@ Deno.serve(async (req) => {
       client,
       description: `Acesso Privado ${plan_type}`,
       callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      notificationUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      postbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
       metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
       products: [{ name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
     }

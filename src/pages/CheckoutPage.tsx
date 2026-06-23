@@ -215,7 +215,7 @@ const CheckoutPage = () => {
   };
 
   const pollStatus = async (paymentId: string) => {
-    const maxAttempts = 60;
+    const maxAttempts = 240;
     let attempts = 0;
 
     const finishApproved = () => {
@@ -309,7 +309,7 @@ const CheckoutPage = () => {
         const { data: ptx } = await supabase
           .from('payment_transactions')
           .select('status, user_id')
-          .eq('asaas_payment_id', paymentId)
+          .or(`asaas_payment_id.eq.${paymentId},asaas_subscription_id.eq.${paymentId},asaas_customer_id.eq.${paymentId}`)
           .maybeSingle();
         if (ptx?.status === 'APPROVED' && ptx.user_id === user?.id) {
           if (await grantPrivateAccessFromApprovedTransaction()) finishApproved();
@@ -328,8 +328,8 @@ const CheckoutPage = () => {
       if (attempts < maxAttempts) {
         setTimeout(poll, 3000);
       } else {
-        setPolling(false);
-        toast.error('Tempo esgotado. Verifique o status do pagamento em seu perfil.');
+        setTimeout(poll, 10000);
+        toast.info('PIX ainda em verificação. Pode demorar alguns minutos; mantenha esta tela aberta.');
       }
     };
 

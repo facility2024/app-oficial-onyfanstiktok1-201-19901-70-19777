@@ -374,11 +374,10 @@ const CheckoutPage = () => {
             <CardTitle className="text-white text-base">Forma de Pagamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { method: 'CREDIT_CARD' as PaymentMethod, icon: CreditCard, label: 'Cartão' },
                 { method: 'PIX' as PaymentMethod, icon: QrCode, label: 'PIX' },
-                { method: 'BOLETO' as PaymentMethod, icon: FileText, label: 'Boleto' },
               ]).map(({ method, icon: Icon, label }) => (
                 <button
                   key={method}

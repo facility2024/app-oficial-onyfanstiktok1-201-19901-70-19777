@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, User, Loader2, CheckCircle, Crown, ShieldCheck, QrCode, FileText, Copy } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, CreditCard, User, Loader2, CheckCircle, Lock, ShieldCheck, QrCode, FileText, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+
 
 // === UTILS ===
 const formatCpf = (v: string) => {
@@ -60,38 +61,49 @@ type PaymentMethod = 'CREDIT_CARD' | 'PIX' | 'BOLETO';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile } = useCurrentUser();
 
-  // Payment method
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CREDIT_CARD');
+  // Modelo/criador alvo do acesso privado
+  const privateModelId = searchParams.get('model') || '';
+  const privateModelName = searchParams.get('name') || 'Criadora';
+  const queryPlan = (searchParams.get('plan') as 'mensal' | 'trimestral' | 'anual') || 'mensal';
 
-  // Form state
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
+
   const [cpf, setCpf] = useState('');
   const [billingName, setBillingName] = useState('');
   const [phone, setPhone] = useState('');
-  // (endereço removido - NeonPay PIX não exige)
 
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
 
-  // UI state
   const [processing, setProcessing] = useState(false);
   const [polling, setPolling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // PIX/Boleto result
   const [pixData, setPixData] = useState<{ qrCodeUrl?: string; payload?: string; expirationDate?: string } | null>(null);
   const [boletoData, setBoletoData] = useState<{ bankSlipUrl?: string; barCode?: string; dueDate?: string } | null>(null);
 
-  // Dynamic plan price from admin_settings
-  const [planPrice, setPlanPrice] = useState<number>(19.90);
+  const [planPrice, setPlanPrice] = useState<number>(14.90);
+
 
   useEffect(() => {
     const fetchPlanPrice = async () => {
       try {
+        if (privateModelId) {
+          const { data } = await (supabase as any)
+            .from('model_subscription_plans')
+            .select('price')
+            .eq('model_id', privateModelId)
+            .eq('plan_type', queryPlan)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (data?.price) { setPlanPrice(Number(data.price)); return; }
+        }
         const { data } = await supabase
           .from('admin_settings')
           .select('setting_value')
@@ -99,16 +111,15 @@ const CheckoutPage = () => {
           .maybeSingle();
         if (data?.setting_value) {
           const plans = data.setting_value as any;
-          if (plans?.mensal?.price) {
-            setPlanPrice(Number(plans.mensal.price));
-          }
+          if (plans?.[queryPlan]?.price) setPlanPrice(Number(plans[queryPlan].price));
         }
       } catch (e) {
         console.error('Error fetching plan price:', e);
       }
     };
     fetchPlanPrice();
-  }, []);
+  }, [privateModelId, queryPlan]);
+
 
   // Prefill from profile
   useEffect(() => {
@@ -149,6 +160,7 @@ const CheckoutPage = () => {
   const handleSubmit = async () => {
     if (!validate()) { toast.error('Corrija os campos destacados'); return; }
     if (!user) { toast.error('Faça login primeiro'); navigate('/auth'); return; }
+    if (!privateModelId) { toast.error('Modelo/criador não identificado.'); return; }
 
     setProcessing(true);
     setPixData(null);
@@ -159,10 +171,12 @@ const CheckoutPage = () => {
         cpf: cpf.replace(/\D/g, ''),
         billing_name: billingName,
         phone: phone.replace(/\D/g, ''),
-        plan_type: 'mensal',
-
+        plan_type: queryPlan,
         billing_type: paymentMethod,
+        private_model_id: privateModelId,
+        private_model_type: 'creator',
       };
+
 
       if (paymentMethod === 'CREDIT_CARD') {
         const expParts = cardExpiry.split('/');
@@ -310,7 +324,7 @@ const CheckoutPage = () => {
               Sua assinatura VIP foi ativada com sucesso. Aproveite todo o conteúdo exclusivo!
             </p>
             <div className="flex items-center gap-2 text-amber-400">
-              <Crown className="w-5 h-5" />
+              <Lock className="w-5 h-5" />
               <span className="font-semibold">Você agora é VIP!</span>
             </div>
             <Button onClick={handleSuccessClose} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold mt-2">
@@ -344,7 +358,7 @@ const CheckoutPage = () => {
       <div className="mx-4 mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Crown className="w-8 h-8 text-amber-400" />
+            <Lock className="w-8 h-8 text-amber-400" />
             <div>
               <p className="text-white font-bold">Plano VIP Mensal</p>
               <p className="text-gray-400 text-sm">Acesso completo por 30 dias</p>

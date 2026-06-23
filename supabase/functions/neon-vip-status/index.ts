@@ -22,20 +22,14 @@ Deno.serve(async (req) => {
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
     const { data: storedTx } = await admin.from('payment_transactions')
-      .select('user_id, plan_type, status, asaas_subscription_id, asaas_customer_id, checkout_url')
+      .select('id, user_id, plan_type, status, asaas_subscription_id, asaas_customer_id, private_model_id, private_model_type')
       .or(`asaas_payment_id.eq.${payment_id},asaas_subscription_id.eq.${payment_id},asaas_customer_id.eq.${payment_id}`)
       .maybeSingle()
 
-    const paymentIds = unique([
-      payment_id,
-      storedTx?.asaas_subscription_id,
-      storedTx?.asaas_customer_id,
-    ])
+    const paymentIds = unique([payment_id, storedTx?.asaas_subscription_id, storedTx?.asaas_customer_id])
 
-    // Tenta múltiplos endpoints (a API NeonPay/Pagstars varia conforme tipo)
     const endpoints = paymentIds.flatMap((id) => [
       `https://app.neonpay.com.br/api/v1/gateway/pix/status/${id}`,
-      `https://app.pagstars.com/api/v1/gateway/pix/status/${id}`,
       `https://app.neonpay.com.br/api/v1/gateway/transactions/${id}`,
       `https://app.neonpay.com.br/api/v1/gateway/transactions/${id}/status`,
       `https://app.neonpay.com.br/api/v1/gateway/orders/${id}`,
@@ -69,63 +63,18 @@ Deno.serve(async (req) => {
       APPROVED.includes(rawStatus) || !!paidAt ? 'APPROVED' :
       REJECTED.includes(rawStatus) ? 'REJECTED' : 'PENDING'
 
-    // 🔁 Fallback: APENAS se este payment_id específico já foi marcado APPROVED no banco
-    // (via webhook). NUNCA confiar em premium_users existente para não liberar VIP indevidamente.
-    if (status === 'PENDING') {
-      if (storedTx?.status === 'APPROVED') {
-        status = 'APPROVED'
-        console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via payment_transactions')
-      } else if (storedTx?.user_id) {
-        const { data: activePremium } = await admin.from('premium_users')
-          .select('id')
-          .eq('user_id', storedTx.user_id)
-          .eq('subscription_status', 'active')
-          .gte('subscription_end', new Date().toISOString())
-          .maybeSingle()
-        if (activePremium) {
-          status = 'APPROVED'
-          console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via active premium_users')
-        }
-      }
+    // Fallback: confirma APENAS se ESTA transação já foi marcada APPROVED no banco (via webhook)
+    if (status === 'PENDING' && storedTx?.status === 'APPROVED') {
+      status = 'APPROVED'
+      console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via payment_transactions')
     }
 
-
-
-    if (status === 'APPROVED') {
-      const { data: ptx } = storedTx?.user_id ? { data: storedTx } : await admin.from('payment_transactions')
-        .select('user_id, plan_type, status').eq('asaas_payment_id', payment_id).maybeSingle()
-
-      if (ptx?.user_id) {
-        const planType = ptx.plan_type || 'mensal'
-        const days = planType === 'anual' ? 365 : planType === 'trimestral' ? 90 : 30
-
-        let email: string | undefined
-        let name = 'Assinante VIP'
-        const { data: prof } = await admin.from('profiles')
-          .select('id, name, email').eq('id', ptx.user_id).maybeSingle()
-        if (prof) { email = (prof as any).email; name = (prof as any).name || name }
-        if (!email) {
-          const { data: u } = await admin.auth.admin.getUserById(ptx.user_id)
-          email = u?.user?.email ?? undefined
-        }
-
-        const upsert = await admin.from('premium_users').upsert({
-          user_id: ptx.user_id,
-          email,
-          name,
-          subscription_status: 'active',
-          subscription_type: planType,
-          subscription_start: new Date().toISOString(),
-          subscription_end: new Date(Date.now() + days * 86400000).toISOString(),
-        }, { onConflict: 'email' })
-        if (upsert.error) console.log('[premium_users upsert error]', upsert.error.message)
-
-        const upd = await admin.from('payment_transactions')
-          .update({ status: 'APPROVED' }).eq('asaas_payment_id', payment_id)
-        if (upd.error) console.log('[payment_transactions update error]', upd.error.message)
-      } else {
-        console.log('[neon-vip-status] no payment_transactions row for', payment_id)
-      }
+    if (status === 'APPROVED' && storedTx?.id && storedTx.status !== 'APPROVED') {
+      const upd = await admin.from('payment_transactions')
+        .update({ status: 'APPROVED', confirmed_at: new Date().toISOString() })
+        .eq('id', storedTx.id)
+      if (upd.error) console.log('[payment_transactions update error]', upd.error.message)
+      // O trigger grant_private_access_for_approved_payment cuida do model_subscriptions
     }
 
     return new Response(JSON.stringify({ status, raw_status: rawStatus, neon: tx }),

@@ -68,7 +68,7 @@ interface Video {
   views_count: number;
   music_name: string;
   is_active: boolean;
-  visibility?: 'public' | 'premium';
+  visibility?: 'public' | 'private';
   created_at: string;
   updated_at?: string;
   model_id?: string;
@@ -1087,7 +1087,7 @@ export const TikTokApp = () => {
           video_url: m.posting_panel_url,
           thumbnail_url: m.avatar_url || DEFAULT_AVATAR,
           model_id: m.id,
-          visibility: m.is_premium ? 'premium' : 'public',
+          visibility: m.is_premium ? 'private' : 'public',
           is_active: true,
           music_name: 'Som Original'
         }));
@@ -1105,7 +1105,7 @@ export const TikTokApp = () => {
             thumbnail_url: m.avatar_url || DEFAULT_AVATAR,
             model_id: m.id,
             creator_id: null,
-            visibility: m.is_premium ? 'premium' : 'public',
+            visibility: m.is_premium ? 'private' : 'public',
             is_active: true,
             music_name: 'Som Original',
             created_at: m.created_at || new Date().toISOString(),
@@ -1359,7 +1359,7 @@ export const TikTokApp = () => {
           ...video,
           user_id: video.creator_id || video.model_id || '',
           music_name: video.title || `Som original - ${ownerData?.username || ownerData?.name || 'Autor'}`,
-          visibility: video.visibility as 'public' | 'premium' || 'public',
+          visibility: video.visibility as 'public' | 'private' || 'public',
           source: 'catalog_video',
           user: ownerData ? {
             id: ownerData.id,
@@ -2587,7 +2587,7 @@ export const TikTokApp = () => {
           user_id: modelId,
           creator_id: modelId,
           music_name: video.title || `Som original - ${profile.name || profile.username || 'Criador'}`,
-          visibility: (video.visibility === 'premium' ? 'premium' : 'public') as 'public' | 'premium',
+          visibility: (video.visibility === 'private' ? 'private' : 'public') as 'public' | 'private',
           likes_count: video.likes_count || 0,
           comments_count: video.comments_count || 0,
           shares_count: video.shares_count || 0,
@@ -2784,7 +2784,7 @@ export const TikTokApp = () => {
         user_id: modelId,
         model_id: modelId,
         music_name: video.title || `Som original - ${modelData?.username}`,
-        visibility: (video.visibility === 'premium' ? 'premium' : 'public') as 'public' | 'premium',
+        visibility: (video.visibility === 'private' ? 'private' : 'public') as 'public' | 'private',
         likes_count: video.likes_count || 0,
         comments_count: video.comments_count || 0,
         shares_count: video.shares_count || 0,
@@ -3070,7 +3070,7 @@ export const TikTokApp = () => {
                   <MemoizedVideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
                   
                   {/* Bottom Info - only show for current video */}
-                  {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPremium={video.visibility === 'premium'} isPrivate={(video as any).visibility === 'private'} />}
+                  {index === currentVideoIndex && <BottomInfo video={video} isNew={isVideoNew(video)} isPlaying={isPlaying} isPrivate={(video as any).visibility === 'private'} />}
 
                    {/* Logo COCONUDI centralizada (mobile) */}
                    {index === currentVideoIndex && (

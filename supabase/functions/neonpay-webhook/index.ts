@@ -2,8 +2,8 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 /**
- * Webhook NeonPay. Atualiza purchases.status + neonpay_fee + seller_net
- * Espera payload: { id, status, fee, metadata: { item_id, seller_id } }
+ * Webhook NeonPay. Marca payment_transactions como APPROVED
+ * O trigger no banco libera o acesso PRIVADO (model_subscriptions) automaticamente.
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -12,9 +12,9 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const txid = body.id ?? body.transaction_id ?? body.transactionId ?? body.payment_id ?? body.paymentId ?? body.identifier
     const identifier = body.identifier ?? body.metadata?.identifier
-    const status = (body.status ?? '').toLowerCase()
+    const status = String(body.status ?? '').toLowerCase()
     const feeCents = Number(body.fee ?? body.neonpay_fee ?? 0)
-    const fee = feeCents > 1000 ? feeCents / 100 : feeCents // aceita centavos ou reais
+    const fee = feeCents > 1000 ? feeCents / 100 : feeCents
 
     if (!txid) {
       return new Response(JSON.stringify({ error: 'missing transaction id' }), {
@@ -27,77 +27,47 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { data: purchase } = await supabase
-      .from('purchases').select('seller_amount').eq('transaction_id', txid).maybeSingle()
-
-    const sellerNet = purchase?.seller_amount != null
-      ? +(Number(purchase.seller_amount) - fee).toFixed(2)
-      : null
-
-    const mappedStatus =
-      ['paid', 'approved', 'confirmed', 'completed'].includes(status) ? 'paid' :
-      ['refused', 'failed', 'canceled', 'cancelled'].includes(status) ? 'failed' :
-      ['refunded', 'chargedback'].includes(status) ? 'refunded' :
-      status || 'pending'
-
-    const { error } = await supabase
-      .from('purchases')
-      .update({
-        status: mappedStatus,
-        neonpay_fee: fee,
+    // 1) Atualiza purchases (compras marketplace), se houver
+    try {
+      const { data: purchase } = await supabase
+        .from('purchases').select('seller_amount').eq('transaction_id', txid).maybeSingle()
+      const sellerNet = purchase?.seller_amount != null
+        ? +(Number(purchase.seller_amount) - fee).toFixed(2)
+        : null
+      const mappedStatus =
+        ['paid', 'approved', 'confirmed', 'completed'].includes(status) ? 'paid' :
+        ['refused', 'failed', 'canceled', 'cancelled'].includes(status) ? 'failed' :
+        ['refunded', 'chargedback'].includes(status) ? 'refunded' :
+        status || 'pending'
+      await supabase.from('purchases').update({
+        status: mappedStatus, neonpay_fee: fee,
         ...(sellerNet != null ? { seller_net: sellerNet } : {}),
-      })
-      .eq('transaction_id', txid)
+      }).eq('transaction_id', txid)
+    } catch (e) { console.log('[purchases update skipped]', String(e)) }
 
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Se foi aprovado, também ativa VIP via payment_transactions/premium_users
-    if (mappedStatus === 'paid') {
-      try {
-        const lookupIds = [txid, identifier].filter(Boolean).map((id) => String(id))
-        const orFilter = lookupIds
-          .flatMap((id) => [`asaas_payment_id.eq.${id}`, `asaas_subscription_id.eq.${id}`, `asaas_customer_id.eq.${id}`])
-          .join(',')
-        const { data: ptx } = await supabase.from('payment_transactions')
-          .select('user_id, plan_type')
-          .or(orFilter)
-          .maybeSingle()
-        if (ptx?.user_id) {
-          const planType = ptx.plan_type || 'mensal'
-          const days = planType === 'anual' ? 365 : planType === 'trimestral' ? 90 : 30
-          let email: string | undefined
-          let name = 'Assinante VIP'
-          const { data: prof } = await supabase.from('profiles')
-            .select('name, email').eq('id', ptx.user_id).maybeSingle()
-          if (prof) { email = (prof as any).email; name = (prof as any).name || name }
-          if (!email) {
-            const { data: u } = await supabase.auth.admin.getUserById(ptx.user_id)
-            email = u?.user?.email ?? undefined
-          }
-          await supabase.from('premium_users').upsert({
-            user_id: ptx.user_id, email, name,
-            subscription_status: 'active',
-            subscription_type: planType,
-            subscription_start: new Date().toISOString(),
-            subscription_end: new Date(Date.now() + days * 86400000).toISOString(),
-          }, { onConflict: 'email' })
-          await supabase.from('payment_transactions')
-            .update({ status: 'APPROVED', confirmed_at: new Date().toISOString() })
-            .or(orFilter)
-        }
-      } catch (e) { console.log('[webhook vip activation error]', String(e)) }
+    // 2) Acesso privado: marca payment_transactions como APPROVED
+    //    O trigger do banco grant_private_access_for_approved_payment libera o acesso.
+    const approved = ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(status)
+    if (approved) {
+      const lookupIds = [txid, identifier].filter(Boolean).map((id) => String(id))
+      const orFilter = lookupIds
+        .flatMap((id) => [
+          `asaas_payment_id.eq.${id}`,
+          `asaas_subscription_id.eq.${id}`,
+          `asaas_customer_id.eq.${id}`,
+        ])
+        .join(',')
+      const upd = await supabase.from('payment_transactions')
+        .update({ status: 'APPROVED', confirmed_at: new Date().toISOString() })
+        .or(orFilter)
+      if (upd.error) console.log('[webhook payment_transactions update error]', upd.error.message)
     }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(JSON.stringify({ error: String(e) }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 })

@@ -56,7 +56,7 @@ export const AdminVideos = () => {
     video_url: '',
     thumbnail_url: '',
     genres: [] as string[],
-    visibility: 'public' as 'public' | 'premium' | 'private',
+    visibility: 'public' as 'public' | 'private',
     model_id: '',
   });
   
@@ -770,20 +770,6 @@ export const AdminVideos = () => {
                       <p className="text-xs text-muted-foreground">Visível para todos</p>
                     </button>
 
-                    {/* Opção Premium (VIP Global) */}
-                    <button 
-                      type="button"
-                      onClick={() => setFormData({ ...formData, visibility: 'premium' })}
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${
-                        formData.visibility === 'premium' 
-                          ? 'border-amber-500 bg-amber-500/10' 
-                          : 'border-border bg-muted hover:border-amber-500/50'
-                      }`}
-                    >
-                      <Crown className="w-6 h-6 text-amber-500 mb-2" />
-                      <p className="font-semibold text-foreground">👑 Premium</p>
-                      <p className="text-xs text-muted-foreground">Apenas VIP Global</p>
-                    </button>
 
                     {/* Opção Privado (Assinantes da Modelo) */}
                     <button 

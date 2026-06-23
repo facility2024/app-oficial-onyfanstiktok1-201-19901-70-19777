@@ -6,7 +6,6 @@ import { VideoProgressBar } from './VideoProgressBar';
 import { UniversalVideoPlayer } from './UniversalVideoPlayer';
 import { PremiumContentOverlay } from './PremiumContentOverlay';
 import { ModelSubscriptionOverlay } from './ModelSubscriptionOverlay';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useModelSubscription } from '@/hooks/useModelSubscription';
 interface VideoPlayerProps {
   video: Video;
@@ -56,33 +55,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const timersRef = useRef<number[]>([]);
 
     const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
-    const videoVisibility = ((video as any)?.visibility || 'public') as 'public' | 'premium' | 'private';
-    const isPremiumVideo = videoVisibility === 'premium';
+    const rawVisibility = String((video as any)?.visibility || 'public');
+    // Compat: qualquer 'premium' legado é tratado como 'private'
+    const videoVisibility: 'public' | 'private' = rawVisibility === 'public' ? 'public' : 'private';
     const isPrivateVideo = videoVisibility === 'private';
-    
-    // Usar o hook de status premium (VIP Global)
-    const { isPremium: isUserPremium, isContentUnlocked } = usePremiumStatus();
-    
-    // Hook para assinatura individual da modelo (só carrega se for vídeo privado)
-    const { plans, isPrivateUnlockedSync, loading: loadingSubscription } = useModelSubscription(isPrivateVideo ? modelId : undefined);
-    
-    // Estado para controlar overlay de assinatura individual
+
+    const { plans, isPrivateUnlockedSync } = useModelSubscription(isPrivateVideo ? modelId : undefined);
+
     const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(false);
-    
-    // Verificar se o vídeo está bloqueado baseado no tipo de visibilidade
-    // Premium: só VIP Global libera
-    // Private: só assinatura individual da modelo libera
-    const hasGlobalVIP = isUserPremium;
+
     const hasIndividualSubscription = isPrivateVideo ? isPrivateUnlockedSync(modelId) : false;
-    const hasSpecificUnlock = isContentUnlocked('video', video.id);
-    
-    // Lógica de bloqueio separada:
-    // - Premium (👑): bloqueado se NÃO for VIP Global
-    // - Private (🔒): bloqueado se NÃO tiver assinatura individual da modelo
-    const lockedPremium = isPremiumVideo && !hasGlobalVIP && !hasSpecificUnlock;
-    // 🔓 VIP Global libera privado também
-    const lockedPrivate = isPrivateVideo && !hasGlobalVIP && !hasIndividualSubscription && !hasSpecificUnlock;
-    const locked = lockedPremium || lockedPrivate;
+    const lockedPrivate = isPrivateVideo && !hasIndividualSubscription;
+    const locked = lockedPrivate;
 
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
@@ -202,10 +186,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     }, [isMuted, ref]);
 
     useEffect(() => {
-      if (isPremiumVideo && locked) {
+      if (isPrivateVideo && locked) {
         try { localStorage.setItem(`model_locked_${modelId}`, 'true'); } catch {}
       }
-    }, [isPremiumVideo, locked, modelId]);
+    }, [isPrivateVideo, locked, modelId]);
 
     useEffect(() => {
       if (!isInView) return;
@@ -374,26 +358,17 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           <div className="w-full h-full bg-black" />
         )}
 
-        {/* Overlay para vídeo PREMIUM (VIP Global) */}
-        {lockedPremium && !showSubscriptionOverlay && (
-          <PremiumContentOverlay 
-            thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
-            modelName={video.user?.username}
-            contentType="premium"
-          />
-        )}
-        
         {/* Overlay para vídeo PRIVADO (assinatura individual da modelo) */}
         {lockedPrivate && !showSubscriptionOverlay && (
           <PremiumContentOverlay 
             thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
             modelName={video.user?.username}
+            modelId={modelId}
             contentType="private"
             onSubscribeClick={() => setShowSubscriptionOverlay(true)}
           />
         )}
-        
-        {/* Overlay de assinatura individual da modelo (para vídeos PRIVADOS) */}
+
         {lockedPrivate && showSubscriptionOverlay && plans.length > 0 && (
           <ModelSubscriptionOverlay
             modelName={video.user?.username || 'Criadora'}

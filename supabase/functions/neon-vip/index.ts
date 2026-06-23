@@ -28,17 +28,37 @@ Deno.serve(async (req) => {
     const {
       billing_type, plan_type = 'mensal',
       cpf, billing_name, phone,
+      private_model_id, private_model_type = 'creator',
       card_number, card_holder, card_expiry_month, card_expiry_year, card_cvv,
     } = body
+
+    if (!private_model_id) {
+      return new Response(JSON.stringify({ success: false, error: 'private_model_id é obrigatório' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
-    const { data: planSetting } = await admin
-      .from('admin_settings').select('setting_value').eq('setting_key', 'vip_plans').maybeSingle()
-    const plans: any = (planSetting?.setting_value as any) ?? {}
-    const price = Number(plans?.[plan_type]?.price ?? 19.90)
+
+    // Preço por modelo (model_subscription_plans) com fallback ao admin_settings
+    let price = 14.90
+    const { data: planRow } = await admin
+      .from('model_subscription_plans')
+      .select('price')
+      .eq('model_id', private_model_id)
+      .eq('plan_type', plan_type)
+      .eq('is_active', true)
+      .maybeSingle()
+    if (planRow?.price) {
+      price = Number(planRow.price)
+    } else {
+      const { data: planSetting } = await admin
+        .from('admin_settings').select('setting_value').eq('setting_key', 'vip_plans').maybeSingle()
+      const plans: any = (planSetting?.setting_value as any) ?? {}
+      price = Number(plans?.[plan_type]?.price ?? 14.90)
+    }
 
     const PUB = Deno.env.get('NEONPAY_PUBLIC_KEY')
     const SEC = Deno.env.get('NEONPAY_SECRET_KEY')
@@ -47,7 +67,7 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const identifier = `vip_${user.id.slice(0, 8)}_${Date.now()}`
+    const identifier = `priv_${user.id.slice(0, 8)}_${Date.now()}`
     const isPix = billing_type === 'PIX'
     const client = {
       name: billing_name || user.email?.split('@')[0] || 'Cliente',
@@ -61,7 +81,7 @@ Deno.serve(async (req) => {
       identifier,
       amount: isPix ? Number(price.toFixed(2)) : Math.round(price * 100),
       client,
-      description: `Assinatura VIP ${plan_type}`,
+      description: `Acesso Privado ${plan_type}`,
       callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
     }
     if (!isPix) {
@@ -103,6 +123,7 @@ Deno.serve(async (req) => {
     const statusRaw = String(data?.status || data?.transaction?.status || '').toLowerCase()
     const approved = ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(statusRaw)
 
+    // Insere transação (o trigger libera o acesso privado quando status='APPROVED')
     await admin.from('payment_transactions').insert({
       user_id: user.id,
       asaas_payment_id: paymentId,
@@ -112,21 +133,9 @@ Deno.serve(async (req) => {
       plan_type,
       status: approved ? 'APPROVED' : 'PENDING',
       checkout_url: data?.order?.url || null,
-    }).then(() => {}, () => {})
-
-    if (approved) {
-      const days = plan_type === 'anual' ? 365 : plan_type === 'trimestral' ? 90 : 30
-      await admin.from('premium_users').upsert({
-        user_id: user.id,
-        email: user.email,
-        name: client.name,
-        whatsapp: client.phone || null,
-        subscription_status: 'active',
-        subscription_type: plan_type,
-        subscription_start: new Date().toISOString(),
-        subscription_end: new Date(Date.now() + days * 86400000).toISOString(),
-      }, { onConflict: 'email' }).then(() => {}, () => {})
-    }
+      private_model_id,
+      private_model_type,
+    }).then(() => {}, (e) => console.log('[payment_transactions insert error]', String(e)))
 
     return new Response(JSON.stringify({
       success: true,

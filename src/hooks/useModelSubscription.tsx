@@ -80,6 +80,20 @@ export const useModelSubscription = (modelId?: string) => {
   }, []);
 
   const checkSubscription = useCallback(async (targetModelId: string) => {
+    if (userId && userId === targetModelId) {
+      return {
+        id: `owner-${targetModelId}`,
+        subscriber_id: userId,
+        subscriber_email: userEmail || '',
+        model_id: targetModelId,
+        model_type: 'creator',
+        subscription_type: 'mensal',
+        subscription_status: 'active',
+        subscription_start: new Date().toISOString(),
+        subscription_end: new Date(Date.now() + 3650 * 86400000).toISOString(),
+        price_paid: null,
+      } as ModelSubscription;
+    }
     if (!userId && !userEmail) return null;
     try {
       let query = (supabase as any)
@@ -88,8 +102,11 @@ export const useModelSubscription = (modelId?: string) => {
         .eq('model_id', targetModelId)
         .eq('subscription_status', 'active')
         .gte('subscription_end', new Date().toISOString());
-      if (userId) {
-        query = query.or(`subscriber_id.eq.${userId},subscriber_email.ilike.${userEmail}`);
+      const filters = [userId ? `subscriber_id.eq.${userId}` : null, userEmail ? `subscriber_email.ilike.${userEmail}` : null]
+        .filter(Boolean)
+        .join(',');
+      if (filters) {
+        query = query.or(filters);
       } else if (userEmail) {
         query = query.ilike('subscriber_email', userEmail);
       }
@@ -101,9 +118,10 @@ export const useModelSubscription = (modelId?: string) => {
   }, [userId, userEmail]);
 
   const isPrivateUnlocked = useCallback(async (targetModelId: string): Promise<boolean> => {
+    if (userId && userId === targetModelId) return true;
     const sub = await checkSubscription(targetModelId);
     return !!sub;
-  }, [checkSubscription]);
+  }, [checkSubscription, userId]);
 
   const isContentUnlocked = useCallback(async (
     targetModelId: string,
@@ -114,13 +132,14 @@ export const useModelSubscription = (modelId?: string) => {
   }, [isPrivateUnlocked]);
 
   const isPrivateUnlockedSync = useCallback((targetModelId: string): boolean => {
+    if (userId && userId === targetModelId) return true;
     if (subscription && subscription.model_id === targetModelId) {
       const isActive = subscription.subscription_status === 'active';
       const notExpired = new Date(subscription.subscription_end) >= new Date();
       return isActive && notExpired;
     }
     return false;
-  }, [subscription]);
+  }, [subscription, userId]);
 
   const isContentUnlockedSync = useCallback((
     targetModelId: string,
@@ -149,6 +168,34 @@ export const useModelSubscription = (modelId?: string) => {
     };
     loadData();
   }, [modelId, fetchPlans, checkSubscription]);
+
+  useEffect(() => {
+    if (!modelId || (!userId && !userEmail)) return;
+
+    const refreshSubscription = async () => {
+      const latestSubscription = await checkSubscription(modelId);
+      setSubscription(latestSubscription);
+    };
+
+    const channel = supabase
+      .channel(`private-access-${modelId}-${userId || userEmail}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'model_subscriptions', filter: `model_id=eq.${modelId}` },
+        () => {
+          refreshSubscription();
+        }
+      )
+      .subscribe();
+
+    const onPrivateAccessUpdated = () => refreshSubscription();
+    window.addEventListener('private-access-updated', onPrivateAccessUpdated);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('private-access-updated', onPrivateAccessUpdated);
+    };
+  }, [modelId, userId, userEmail, checkSubscription]);
 
   const getDaysRemaining = useCallback(() => {
     if (!subscription?.subscription_end) return 0;

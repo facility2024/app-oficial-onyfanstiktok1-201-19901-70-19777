@@ -41,8 +41,9 @@ export default function CheckoutDialog({ open, onOpenChange, item }: Props) {
       if (method === "pix") {
         const { data, error } = await supabase.functions.invoke("neonpay-pix", { body: base });
         if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
-        setPix({ code: (data as any).pix_code, image: (data as any).pix_qr_image, txid: (data as any).transaction_id });
-        await record((data as any).transaction_id, "pix");
+        const d = data as any;
+        setPix({ code: d.pix_code, image: d.pix_qr_image, txid: d.transaction_id });
+        await record(d, "pix", "pending");
         setStep("pix");
       } else {
         const [mm, yy] = card.expiry.split("/").map(s => s.trim());
@@ -53,7 +54,8 @@ export default function CheckoutDialog({ open, onOpenChange, item }: Props) {
         };
         const { data, error } = await supabase.functions.invoke("neonpay-card", { body });
         if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
-        await record((data as any).transaction_id, "credit_card", (data as any).status);
+        const d = data as any;
+        await record(d, "credit_card", d.status ?? "pending");
         setStep("done");
       }
     } catch (e: any) {
@@ -63,12 +65,21 @@ export default function CheckoutDialog({ open, onOpenChange, item }: Props) {
     }
   };
 
-  const record = async (txid: string, pm: string, status = "pending") => {
+  const record = async (d: any, pm: string, status = "pending") => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     await supabase.from("purchases").upsert({
-      user_id: user.id, item_id: item.id, item_type: item.type ?? "video",
-      amount: item.amount, payment_method: pm, transaction_id: txid, status,
+      user_id: user.id,
+      item_id: item.id,
+      item_type: item.type ?? "video",
+      seller_id: item.seller_id,
+      amount: item.amount,
+      commission_percentage: d.commission_percentage ?? null,
+      platform_amount: d.platform_amount ?? null,
+      seller_amount: d.seller_amount ?? null,
+      payment_method: pm,
+      transaction_id: d.transaction_id,
+      status,
     }, { onConflict: "user_id,item_id" });
   };
 

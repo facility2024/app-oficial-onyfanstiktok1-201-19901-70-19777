@@ -11,15 +11,29 @@ Deno.serve(async (req) => {
     if (!payment_id) return new Response(JSON.stringify({ error: 'missing payment_id' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    const r = await fetch(`https://app.neonpay.com.br/api/v1/gateway/transactions/${payment_id}`, {
-      headers: {
-        'x-public-key': Deno.env.get('NEONPAY_PUBLIC_KEY') ?? '',
-        'x-secret-key': Deno.env.get('NEONPAY_SECRET_KEY') ?? '',
-      },
-    })
-    const text = await r.text()
-    let data: any
-    try { data = JSON.parse(text) } catch { data = { raw: text } }
+    const headers = {
+      'x-public-key': Deno.env.get('NEONPAY_PUBLIC_KEY') ?? '',
+      'x-secret-key': Deno.env.get('NEONPAY_SECRET_KEY') ?? '',
+    }
+
+    // Tenta múltiplos endpoints (a API NeonPay/Pagstars varia conforme tipo)
+    const endpoints = [
+      `https://app.neonpay.com.br/api/v1/gateway/pix/status/${payment_id}`,
+      `https://app.neonpay.com.br/api/v1/gateway/transactions/${payment_id}`,
+      `https://app.neonpay.com.br/api/v1/gateway/transactions/${payment_id}/status`,
+      `https://app.neonpay.com.br/api/v1/gateway/orders/${payment_id}`,
+    ]
+
+    let data: any = null
+    let rStatus = 0
+    let lastText = ''
+    for (const url of endpoints) {
+      const r = await fetch(url, { headers })
+      rStatus = r.status
+      lastText = await r.text()
+      try { data = JSON.parse(lastText) } catch { data = { raw: lastText } }
+      if (r.ok) break
+    }
 
     const tx = data?.transaction ?? data?.data ?? data
     const rawStatus = String(
@@ -27,31 +41,24 @@ Deno.serve(async (req) => {
     ).toLowerCase().trim()
     const paidAt = tx?.paid_at ?? tx?.paidAt ?? tx?.payment_date ?? null
 
-    console.log('[neon-vip-status]', payment_id, 'rawStatus=', rawStatus, 'paidAt=', paidAt, 'http=', r.status)
+    console.log('[neon-vip-status]', payment_id, 'rawStatus=', rawStatus, 'paidAt=', paidAt, 'http=', rStatus)
 
     let status: 'APPROVED'|'REJECTED'|'PENDING' =
       APPROVED.includes(rawStatus) || !!paidAt ? 'APPROVED' :
       REJECTED.includes(rawStatus) ? 'REJECTED' : 'PENDING'
 
-    // 🔁 Fallback: gateway indisponível/404 → checa banco local
-    if (status === 'PENDING' || r.status === 404 || r.status >= 500) {
+    // 🔁 Fallback: APENAS se este payment_id específico já foi marcado APPROVED no banco
+    // (via webhook). NUNCA confiar em premium_users existente para não liberar VIP indevidamente.
+    if (status === 'PENDING') {
       const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
       const { data: ptx } = await admin.from('payment_transactions')
-        .select('user_id, status').eq('asaas_payment_id', payment_id).maybeSingle()
+        .select('status').eq('asaas_payment_id', payment_id).maybeSingle()
       if (ptx?.status === 'APPROVED') {
         status = 'APPROVED'
-      } else if (ptx?.user_id) {
-        const { data: vip } = await admin.from('premium_users')
-          .select('subscription_status, subscription_end')
-          .eq('user_id', ptx.user_id)
-          .eq('subscription_status', 'active')
-          .maybeSingle()
-        if (vip && (!vip.subscription_end || new Date(vip.subscription_end) > new Date())) {
-          status = 'APPROVED'
-        }
+        console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via payment_transactions')
       }
-      console.log('[neon-vip-status fallback]', payment_id, '→', status)
     }
+
 
 
     if (status === 'APPROVED') {

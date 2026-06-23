@@ -104,54 +104,75 @@ Deno.serve(async (req) => {
     }
 
     const url = `${NEON_BASE}/${isPix ? 'pix/receive' : 'card/receive'}`
-    const payload: any = {
-      identifier,
-      amount: isPix ? Number(price.toFixed(2)) : Math.round(price * 100),
-      client,
-      description: `Acesso Privado ${plan_type}`,
-      callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
-      webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
-      notificationUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
-      postbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
-      metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
-      products: [{ id: `priv_${private_model_id}_${plan_type}`, name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
-    }
 
-    // Split NeonPay: envia o valor líquido (já com desconto) para o criador
+    // Split NeonPay: o valor para o criador precisa deixar margem p/ as taxas da NeonPay
+    // (taxa estimada: 5% + R$ 1,00 — fica retida na conta principal/admin).
+    const NEON_FEE_PCT = 0.05
+    const NEON_FEE_FIXED = 1.0
+    let sellerCents = 0
     if (creatorProducerId && creatorShareReais > 0) {
-      const sellerCents = Math.round(creatorShareReais * 100)
-      payload.splits = [{ producerId: creatorProducerId, amount: sellerCents }]
-    }
-    if (!isPix) {
-      payload.card = {
-        number: String(card_number).replace(/\s/g, ''),
-        holderName: card_holder,
-        expirationMonth: String(card_expiry_month).padStart(2, '0'),
-        expirationYear: String(card_expiry_year),
-        cvv: String(card_cvv),
-      }
-      payload.installments = 1
+      const estFeeReais = price * NEON_FEE_PCT + NEON_FEE_FIXED
+      const safeCreator = Math.max(0, creatorShareReais - estFeeReais)
+      sellerCents = Math.floor(safeCreator * 100)
     }
 
-    const r = await fetch(url, {
+    const buildPayload = (withSplit: boolean) => {
+      const p: any = {
+        identifier,
+        amount: isPix ? Number(price.toFixed(2)) : Math.round(price * 100),
+        client,
+        description: `Acesso Privado ${plan_type}`,
+        callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+        webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+        notificationUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+        postbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+        metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
+        products: [{ id: `priv_${private_model_id}_${plan_type}`, name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
+      }
+      if (withSplit && creatorProducerId && sellerCents > 0) {
+        p.splits = [{ producerId: creatorProducerId, amount: sellerCents }]
+      }
+      if (!isPix) {
+        p.card = {
+          number: String(card_number).replace(/\s/g, ''),
+          holderName: card_holder,
+          expirationMonth: String(card_expiry_month).padStart(2, '0'),
+          expirationYear: String(card_expiry_year),
+          cvv: String(card_cvv),
+        }
+        p.installments = 1
+      }
+      return p
+    }
+
+    const doPost = (body: any) => fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-public-key': PUB,
-        'x-secret-key': SEC,
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json', 'x-public-key': PUB, 'x-secret-key': SEC },
+      body: JSON.stringify(body),
     })
-    const text = await r.text()
+
+    let r = await doPost(buildPayload(true))
+    let text = await r.text()
     let data: any
     try { data = JSON.parse(text) } catch { data = { raw: text } }
-
     console.log('[neon-vip]', r.status, url, text.slice(0, 600))
+
+    // Fallback: se a NeonPay rejeitar por causa de "splits + taxas > total",
+    // refaz sem split. O valor cai 100% na conta principal (admin) e o repasse
+    // ao criador fica registrado em payment_transactions p/ reconciliação manual.
+    const splitError = !r.ok && /splits?.*taxas|soma dos splits/i.test(String(data?.message || ''))
+    if (splitError) {
+      console.log('[neon-vip] split rejeitado pela NeonPay, tentando sem split')
+      r = await doPost(buildPayload(false))
+      text = await r.text()
+      try { data = JSON.parse(text) } catch { data = { raw: text } }
+      console.log('[neon-vip retry]', r.status, text.slice(0, 600))
+    }
 
     if (!r.ok) {
       return new Response(JSON.stringify({
         success: false,
-        error: data?.message || data?.error || `Neon ${r.status}`,
+        error: 'Não foi possível gerar o pagamento agora. Tente novamente em instantes.',
         detail: data,
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }

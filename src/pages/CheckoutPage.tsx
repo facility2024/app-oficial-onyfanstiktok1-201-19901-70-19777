@@ -324,7 +324,7 @@ const CheckoutPage = () => {
               Sua assinatura VIP foi ativada com sucesso. Aproveite todo o conteúdo exclusivo!
             </p>
             <div className="flex items-center gap-2 text-amber-400">
-              <Crown className="w-5 h-5" />
+              <Lock className="w-5 h-5" />
               <span className="font-semibold">Você agora é VIP!</span>
             </div>
             <Button onClick={handleSuccessClose} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold mt-2">
@@ -358,7 +358,7 @@ const CheckoutPage = () => {
       <div className="mx-4 mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Crown className="w-8 h-8 text-amber-400" />
+            <Lock className="w-8 h-8 text-amber-400" />
             <div>
               <p className="text-white font-bold">Plano VIP Mensal</p>
               <p className="text-gray-400 text-sm">Acesso completo por 30 dias</p>

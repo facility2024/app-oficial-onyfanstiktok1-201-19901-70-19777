@@ -2202,7 +2202,9 @@ export const TikTokApp = () => {
   };
   const addComment = async (text: string) => {
     if (!currentVideo || !text.trim()) return;
-    console.log('💬 ADD COMMENT - Iniciando para vídeo:', currentVideo.id);
+    // ✅ Normalizar ID: usar _originalId quando for vídeo sintético/promo/clone
+    const realVideoId = (currentVideo as any)?._originalId || currentVideo.id;
+    console.log('💬 ADD COMMENT - Iniciando para vídeo:', realVideoId);
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const {
@@ -2219,14 +2221,14 @@ export const TikTokApp = () => {
       console.log('💬 ADD COMMENT - Inserindo:', {
         text: text.trim(),
         user_id: currentUserId,
-        video_id: currentVideo.id
+        video_id: realVideoId
       });
       const {
         error
       } = await supabase.from('comments').insert({
         content: text.trim(),
         user_id: currentUserId,
-        video_id: currentVideo.id,
+        video_id: realVideoId,
         // ✅ Para vídeos de criadores, model_id deve ser null (evita FK violation)
         model_id: currentVideo.creator_id ? null : currentVideo.model_id || null,
         likes_count: 0,
@@ -2239,11 +2241,12 @@ export const TikTokApp = () => {
         // 🔧 Se falhar por RLS, tentar inserção simplificada
         if (error.code === '42501' || error.message?.includes('row-level security')) {
           console.log('🔧 Tentando inserção simplificada devido a RLS...');
-          await supabase.from('comments').insert({
+          const { error: error2 } = await supabase.from('comments').insert({
             content: text.trim(),
             user_id: currentUserId,
-            video_id: currentVideo.id
+            video_id: realVideoId
           });
+          if (error2) throw error2;
           console.log('✅ Comentário inserido em modo simplificado');
         } else {
           throw error;

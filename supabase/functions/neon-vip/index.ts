@@ -198,6 +198,8 @@ Deno.serve(async (req) => {
       commission_percentage: commissionPct,
       platform_amount: platformShareReais,
       creator_amount: creatorShareReais,
+      creator_net_amount: creatorNetReais,
+      neonpay_fee: estFeeReais,
       creator_producer_id: creatorProducerId,
     })
     if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)

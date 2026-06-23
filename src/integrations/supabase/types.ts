@@ -5471,6 +5471,27 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       platform_terms: {
         Row: {
           content: string
@@ -6119,6 +6140,7 @@ export type Database = {
           live_active: boolean | null
           live_url: string | null
           name: string | null
+          neonpay_producer_id: string | null
           numero: string | null
           phone: string | null
           referral_code: string | null
@@ -6150,6 +6172,7 @@ export type Database = {
           live_active?: boolean | null
           live_url?: string | null
           name?: string | null
+          neonpay_producer_id?: string | null
           numero?: string | null
           phone?: string | null
           referral_code?: string | null
@@ -6181,6 +6204,7 @@ export type Database = {
           live_active?: boolean | null
           live_url?: string | null
           name?: string | null
+          neonpay_producer_id?: string | null
           numero?: string | null
           phone?: string | null
           referral_code?: string | null
@@ -6336,6 +6360,45 @@ export type Database = {
           region?: string | null
           session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          payment_method: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type?: string
+          payment_method?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          payment_method?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -8869,6 +8932,7 @@ export type Database = {
         Args: { p_entity_id: string; p_entity_type?: string }
         Returns: Json
       }
+      get_commission_percentage: { Args: never; Returns: number }
       get_current_user_role: { Args: never; Returns: string }
       get_daily_points_status: {
         Args: { p_action_type: string; p_user_id: string }

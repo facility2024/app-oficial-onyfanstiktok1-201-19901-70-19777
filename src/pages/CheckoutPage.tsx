@@ -220,7 +220,7 @@ const CheckoutPage = () => {
         payload.card_cvv = cardCvv;
       }
 
-      const { data, error } = await supabase.functions.invoke('process-payment', {
+      const { data, error } = await supabase.functions.invoke('neon-vip', {
         body: payload,
       });
 
@@ -232,17 +232,11 @@ const CheckoutPage = () => {
       } else if (data.billingType === 'PIX' && data.pix) {
         setPixData(data.pix);
         toast.success('PIX gerado! Escaneie o QR Code ou copie o código.');
-        // Start polling for PIX
         setPolling(true);
-        pollStatus(data.paymentId || data.subscriptionId);
-      } else if (data.billingType === 'BOLETO' && data.boleto) {
-        setBoletoData(data.boleto);
-        toast.success('Boleto gerado! Pague antes do vencimento.');
-        setPolling(true);
-        pollStatus(data.paymentId || data.subscriptionId);
+        pollStatus(data.paymentId);
       } else {
         setPolling(true);
-        pollStatus(data.subscriptionId);
+        pollStatus(data.paymentId);
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
@@ -252,16 +246,15 @@ const CheckoutPage = () => {
     }
   };
 
-  const pollStatus = async (paymentOrSubId: string) => {
+  const pollStatus = async (paymentId: string) => {
     const maxAttempts = 60;
     let attempts = 0;
 
     const poll = async () => {
       attempts++;
       try {
-        const isPayment = paymentOrSubId.startsWith('pay_');
-        const { data } = await supabase.functions.invoke('check-payment-status', {
-          body: isPayment ? { payment_id: paymentOrSubId } : { subscription_id: paymentOrSubId },
+        const { data } = await supabase.functions.invoke('neon-vip-status', {
+          body: { payment_id: paymentId },
         });
 
         if (data?.status === 'APPROVED') {
@@ -381,11 +374,10 @@ const CheckoutPage = () => {
             <CardTitle className="text-white text-base">Forma de Pagamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { method: 'CREDIT_CARD' as PaymentMethod, icon: CreditCard, label: 'Cartão' },
                 { method: 'PIX' as PaymentMethod, icon: QrCode, label: 'PIX' },
-                { method: 'BOLETO' as PaymentMethod, icon: FileText, label: 'Boleto' },
               ]).map(({ method, icon: Icon, label }) => (
                 <button
                   key={method}

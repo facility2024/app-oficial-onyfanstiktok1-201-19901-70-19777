@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const txid = body.id ?? body.transaction_id ?? body.transactionId ?? body.payment_id ?? body.paymentId ?? body.identifier
     const identifier = body.identifier ?? body.metadata?.identifier
-    const status = String(body.status ?? '').toLowerCase()
+    const status = String(body.status ?? body.data?.status ?? body.transaction?.status ?? '').toLowerCase()
     const feeCents = Number(body.fee ?? body.neonpay_fee ?? 0)
     const fee = feeCents > 1000 ? feeCents / 100 : feeCents
 
@@ -49,7 +49,14 @@ Deno.serve(async (req) => {
     //    O trigger do banco grant_private_access_for_approved_payment libera o acesso.
     const approved = ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(status)
     if (approved) {
-      const lookupIds = [txid, identifier].filter(Boolean).map((id) => String(id))
+      const lookupIds = [
+        txid,
+        body.transaction_id,
+        body.transactionId,
+        body.payment_id,
+        body.paymentId,
+        identifier,
+      ].filter(Boolean).map((id) => String(id))
       const orFilter = lookupIds
         .flatMap((id) => [
           `asaas_payment_id.eq.${id}`,

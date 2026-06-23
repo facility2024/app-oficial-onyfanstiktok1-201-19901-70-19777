@@ -283,7 +283,13 @@ const CheckoutPage = () => {
       attempts++;
       try {
         const { data } = await supabase.functions.invoke('neon-vip-status', {
-          body: { payment_id: paymentId },
+          body: {
+            payment_id: paymentId,
+            private_model_id: privateModelId,
+            private_model_type: privateModelType,
+            plan_type: queryPlan,
+            amount: planPrice,
+          },
         });
 
         if (data?.status === 'APPROVED') {
@@ -370,10 +376,10 @@ const CheckoutPage = () => {
             </p>
             <div className="flex items-center gap-2 text-amber-400">
               <Lock className="w-5 h-5" />
-              <span className="font-semibold">Você agora é Conteúdo Privado!</span>
+              <span className="font-semibold">Conteúdo Privado liberado!</span>
             </div>
             <Button onClick={handleSuccessClose} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold mt-2">
-              Voltar para o App
+              Voltar ao perfil
             </Button>
           </div>
         </DialogContent>

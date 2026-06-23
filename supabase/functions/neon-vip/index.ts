@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log('[neon-vip] POST payload:', JSON.stringify({ ...payload, card: payload.card ? '***' : undefined }))
+
     const r = await fetch(`${NEONPAY_API}/transactions`, {
       method: 'POST',
       headers: {
@@ -85,9 +87,17 @@ Deno.serve(async (req) => {
     let data: any
     try { data = JSON.parse(text) } catch { data = { raw: text } }
 
+    console.log('[neon-vip] Neon response:', r.status, text.slice(0, 800))
+
     if (!r.ok) {
-      return new Response(JSON.stringify({ success: false, error: 'neon error', detail: data }), {
-        status: r.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      // Retorna 200 com fallback para o cliente conseguir ler o detalhe
+      return new Response(JSON.stringify({
+        success: false,
+        error: data?.message || data?.error || `Neon API ${r.status}`,
+        detail: data,
+        neonStatus: r.status,
+      }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 

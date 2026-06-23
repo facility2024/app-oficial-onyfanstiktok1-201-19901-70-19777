@@ -36,6 +36,13 @@ export default function CommissionSettings() {
     else toast.success("Comissão atualizada");
   };
 
+  const pctNum = Number(pct) || 0;
+  // Preço mínimo para o split na NeonPay (5% + R$1) caber na comissão do app:
+  // pctNum% * preço >= preço * 5% + R$1  →  preço >= 1 / (pctNum/100 - 0.05)
+  const minPrice = pctNum > 5
+    ? Math.max(1, Math.ceil((1 / (pctNum / 100 - 0.05)) * 100) / 100)
+    : null;
+
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader>
@@ -51,6 +58,18 @@ export default function CommissionSettings() {
         <Button onClick={save} disabled={loading} className="bg-green-600 hover:bg-green-700">
           {loading ? "Salvando..." : "Salvar"}
         </Button>
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 space-y-1">
+          <p className="font-semibold">Regra do split NeonPay</p>
+          <p>Taxa da NeonPay: ~5% + R$ 1,00 por venda (absorvida do líquido do criador).</p>
+          {minPrice ? (
+            <p>
+              Com <b>{pctNum}%</b> de comissão, preço mínimo recomendado do produto: <b>R$ {minPrice.toFixed(2)}</b>.
+              Abaixo disso, a venda cai 100% no admin (fallback) e o repasse fica para conciliação manual.
+            </p>
+          ) : (
+            <p>Comissão muito baixa — não cobre a taxa fixa da NeonPay. Use pelo menos <b>10%</b>.</p>
+          )}
+        </div>
         <p className="text-xs text-gray-400">
           O restante (100% − comissão) vai direto ao vendedor via split na NeonPay.
         </p>

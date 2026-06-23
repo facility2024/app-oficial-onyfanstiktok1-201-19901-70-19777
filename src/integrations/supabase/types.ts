@@ -5101,8 +5101,10 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           creator_amount: number | null
+          creator_net_amount: number | null
           creator_producer_id: string | null
           id: string
+          neonpay_fee: number | null
           plan_type: string
           platform_amount: number | null
           private_model_id: string | null
@@ -5121,8 +5123,10 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           creator_amount?: number | null
+          creator_net_amount?: number | null
           creator_producer_id?: string | null
           id?: string
+          neonpay_fee?: number | null
           plan_type?: string
           platform_amount?: number | null
           private_model_id?: string | null
@@ -5141,8 +5145,10 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           creator_amount?: number | null
+          creator_net_amount?: number | null
           creator_producer_id?: string | null
           id?: string
+          neonpay_fee?: number | null
           plan_type?: string
           platform_amount?: number | null
           private_model_id?: string | null

@@ -109,11 +109,12 @@ Deno.serve(async (req) => {
     // (taxa estimada: 5% + R$ 1,00 — fica retida na conta principal/admin).
     const NEON_FEE_PCT = 0.05
     const NEON_FEE_FIXED = 1.0
+    const estFeeReais = Number((price * NEON_FEE_PCT + NEON_FEE_FIXED).toFixed(2))
     let sellerCents = 0
+    let creatorNetReais = 0
     if (creatorProducerId && creatorShareReais > 0) {
-      const estFeeReais = price * NEON_FEE_PCT + NEON_FEE_FIXED
-      const safeCreator = Math.max(0, creatorShareReais - estFeeReais)
-      sellerCents = Math.floor(safeCreator * 100)
+      creatorNetReais = Math.max(0, Number((creatorShareReais - estFeeReais).toFixed(2)))
+      sellerCents = Math.floor(creatorNetReais * 100)
     }
 
     const buildPayload = (withSplit: boolean) => {
@@ -197,6 +198,8 @@ Deno.serve(async (req) => {
       commission_percentage: commissionPct,
       platform_amount: platformShareReais,
       creator_amount: creatorShareReais,
+      creator_net_amount: creatorNetReais,
+      neonpay_fee: estFeeReais,
       creator_producer_id: creatorProducerId,
     })
     if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)

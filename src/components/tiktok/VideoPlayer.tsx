@@ -186,10 +186,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     }, [isMuted, ref]);
 
     useEffect(() => {
-      if (isPremiumVideo && locked) {
+      if (isPrivateVideo && locked) {
         try { localStorage.setItem(`model_locked_${modelId}`, 'true'); } catch {}
       }
-    }, [isPremiumVideo, locked, modelId]);
+    }, [isPrivateVideo, locked, modelId]);
 
     useEffect(() => {
       if (!isInView) return;
@@ -358,26 +358,17 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           <div className="w-full h-full bg-black" />
         )}
 
-        {/* Overlay para vídeo PREMIUM (VIP Global) */}
-        {lockedPremium && !showSubscriptionOverlay && (
-          <PremiumContentOverlay 
-            thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
-            modelName={video.user?.username}
-            contentType="premium"
-          />
-        )}
-        
         {/* Overlay para vídeo PRIVADO (assinatura individual da modelo) */}
         {lockedPrivate && !showSubscriptionOverlay && (
           <PremiumContentOverlay 
             thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
             modelName={video.user?.username}
+            modelId={modelId}
             contentType="private"
             onSubscribeClick={() => setShowSubscriptionOverlay(true)}
           />
         )}
-        
-        {/* Overlay de assinatura individual da modelo (para vídeos PRIVADOS) */}
+
         {lockedPrivate && showSubscriptionOverlay && plans.length > 0 && (
           <ModelSubscriptionOverlay
             modelName={video.user?.username || 'Criadora'}

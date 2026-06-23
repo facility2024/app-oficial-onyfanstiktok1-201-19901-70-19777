@@ -271,6 +271,28 @@ const CheckoutPage = () => {
         }
       } catch { /* continue polling */ }
 
+      // 🔁 Fallback: checa diretamente premium_users (caso o gateway esteja indisponível
+      // ou o webhook já tenha ativado o VIP sem o status estar acessível via API).
+      try {
+        const email = (user as any)?.email?.toLowerCase();
+        if (user?.id || email) {
+          let q = supabase.from('premium_users')
+            .select('subscription_status, subscription_end')
+            .eq('subscription_status', 'active')
+            .limit(1);
+          q = email ? q.eq('email', email) : q.eq('user_id', user!.id);
+          const { data: vip } = await q.maybeSingle();
+          if (vip && (!vip.subscription_end || new Date(vip.subscription_end) > new Date())) {
+            setPolling(false);
+            setPixData(null);
+            setBoletoData(null);
+            setShowSuccess(true);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+
+
       if (attempts < maxAttempts) {
         setTimeout(poll, 3000);
       } else {

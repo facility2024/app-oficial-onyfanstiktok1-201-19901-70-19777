@@ -59,6 +59,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     // Compat: qualquer 'premium' legado é tratado como 'private'
     const videoVisibility: 'public' | 'private' = rawVisibility === 'public' ? 'public' : 'private';
     const isPrivateVideo = videoVisibility === 'private';
+    const modelType: 'model' | 'creator' = (video as any)?.creator_id ? 'creator' : 'model';
 
     const { plans, isPrivateUnlockedSync } = useModelSubscription(isPrivateVideo ? modelId : undefined);
 
@@ -364,6 +365,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
             modelName={video.user?.username}
             modelId={modelId}
+            modelType={modelType}
             contentType="private"
             onSubscribeClick={() => setShowSubscriptionOverlay(true)}
           />

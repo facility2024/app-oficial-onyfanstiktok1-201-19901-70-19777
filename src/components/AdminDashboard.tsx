@@ -252,6 +252,8 @@ export const AdminDashboard = () => {
         return <AdminEmailEvents />;
       case 'neonpay':
         return <div className="p-4"><CommissionSettings /></div>;
+      case 'sales-reports':
+        return <SalesReports />;
       case 'documentation':
         return <AdminDocumentation />;
       case 'settings':

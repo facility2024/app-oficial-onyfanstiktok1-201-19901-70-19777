@@ -54,6 +54,36 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Se foi aprovado, também ativa VIP via payment_transactions/premium_users
+    if (mappedStatus === 'paid') {
+      try {
+        const { data: ptx } = await supabase.from('payment_transactions')
+          .select('user_id, plan_type').eq('asaas_payment_id', txid).maybeSingle()
+        if (ptx?.user_id) {
+          const planType = ptx.plan_type || 'mensal'
+          const days = planType === 'anual' ? 365 : planType === 'trimestral' ? 90 : 30
+          let email: string | undefined
+          let name = 'Assinante VIP'
+          const { data: prof } = await supabase.from('profiles')
+            .select('name, email').eq('id', ptx.user_id).maybeSingle()
+          if (prof) { email = (prof as any).email; name = (prof as any).name || name }
+          if (!email) {
+            const { data: u } = await supabase.auth.admin.getUserById(ptx.user_id)
+            email = u?.user?.email ?? undefined
+          }
+          await supabase.from('premium_users').upsert({
+            user_id: ptx.user_id, email, name,
+            subscription_status: 'active',
+            subscription_type: planType,
+            subscription_start: new Date().toISOString(),
+            subscription_end: new Date(Date.now() + days * 86400000).toISOString(),
+          }, { onConflict: 'email' })
+          await supabase.from('payment_transactions')
+            .update({ status: 'APPROVED' }).eq('asaas_payment_id', txid)
+        }
+      } catch (e) { console.log('[webhook vip activation error]', String(e)) }
+    }
+
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

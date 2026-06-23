@@ -220,7 +220,7 @@ const CheckoutPage = () => {
         payload.card_cvv = cardCvv;
       }
 
-      const { data, error } = await supabase.functions.invoke('process-payment', {
+      const { data, error } = await supabase.functions.invoke('neon-vip', {
         body: payload,
       });
 
@@ -232,17 +232,11 @@ const CheckoutPage = () => {
       } else if (data.billingType === 'PIX' && data.pix) {
         setPixData(data.pix);
         toast.success('PIX gerado! Escaneie o QR Code ou copie o código.');
-        // Start polling for PIX
         setPolling(true);
-        pollStatus(data.paymentId || data.subscriptionId);
-      } else if (data.billingType === 'BOLETO' && data.boleto) {
-        setBoletoData(data.boleto);
-        toast.success('Boleto gerado! Pague antes do vencimento.');
-        setPolling(true);
-        pollStatus(data.paymentId || data.subscriptionId);
+        pollStatus(data.paymentId);
       } else {
         setPolling(true);
-        pollStatus(data.subscriptionId);
+        pollStatus(data.paymentId);
       }
     } catch (err: any) {
       console.error('Checkout error:', err);

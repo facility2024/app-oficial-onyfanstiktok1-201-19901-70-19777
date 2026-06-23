@@ -54,6 +54,7 @@ import { AdminFeedPromotions } from './admin/AdminFeedPromotions';
 import AdminLoja from './admin/AdminLoja';
 import { AdminStores } from './admin/AdminStores';
 import CommissionSettings from './admin/CommissionSettings';
+import SalesReports from './admin/SalesReports';
 import { AdminAdsGarotasTop } from './admin/AdminAdsGarotasTop';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -251,6 +252,8 @@ export const AdminDashboard = () => {
         return <AdminEmailEvents />;
       case 'neonpay':
         return <div className="p-4"><CommissionSettings /></div>;
+      case 'sales-reports':
+        return <SalesReports />;
       case 'documentation':
         return <AdminDocumentation />;
       case 'settings':

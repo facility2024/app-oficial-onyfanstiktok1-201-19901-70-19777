@@ -17,26 +17,28 @@ const PaymentConfirmation = () => {
   const verifyPayment = useCallback(async () => {
     try {
       const paymentId = sessionStorage.getItem('pending_payment_id');
-      
-      const { data, error } = await supabase.functions.invoke('asaas-verify-payment', {
-        body: { payment_id: paymentId || undefined },
+      if (!paymentId) {
+        setStatus('PENDING');
+        setMessage('Aguardando processamento do pagamento...');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('neon-vip-status', {
+        body: { payment_id: paymentId },
       });
 
       if (error) throw error;
 
-      if (data?.status === 'CONFIRMED') {
+      if (data?.status === 'APPROVED' || data?.status === 'CONFIRMED') {
         setStatus('CONFIRMED');
-        setMessage(data.message || 'Pagamento efetuado com sucesso!');
+        setMessage('Pagamento efetuado com sucesso!');
         sessionStorage.removeItem('pending_payment_id');
-      } else if (data?.status === 'PENDING') {
-        setStatus('PENDING');
-        setMessage(data.message || 'Pagamento pendente. Aguardando confirmação.');
-      } else if (data?.status === 'NOT_FOUND') {
-        setStatus('PENDING');
-        setMessage('Aguardando processamento do pagamento...');
-      } else {
+      } else if (data?.status === 'REJECTED') {
         setStatus('ERROR');
-        setMessage(data?.message || 'Pagamento não confirmado.');
+        setMessage('Pagamento recusado.');
+      } else {
+        setStatus('PENDING');
+        setMessage('Pagamento pendente. Aguardando confirmação.');
       }
     } catch (err: any) {
       console.error('Erro ao verificar pagamento:', err);

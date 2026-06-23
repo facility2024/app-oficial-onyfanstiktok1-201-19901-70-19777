@@ -80,7 +80,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     // - Premium (👑): bloqueado se NÃO for VIP Global
     // - Private (🔒): bloqueado se NÃO tiver assinatura individual da modelo
     const lockedPremium = isPremiumVideo && !hasGlobalVIP && !hasSpecificUnlock;
-    const lockedPrivate = isPrivateVideo && !hasIndividualSubscription && !hasSpecificUnlock;
+    // 🔓 VIP Global libera privado também
+    const lockedPrivate = isPrivateVideo && !hasGlobalVIP && !hasIndividualSubscription && !hasSpecificUnlock;
     const locked = lockedPremium || lockedPrivate;
 
     const checkOfferDismissed = (offerId: string) => {

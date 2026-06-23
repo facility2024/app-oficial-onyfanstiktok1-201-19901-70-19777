@@ -60,6 +60,33 @@ Deno.serve(async (req) => {
       price = Number(plans?.[plan_type]?.price ?? 14.90)
     }
 
+    // === SPLIT DE COMISSÃO ===
+    // Busca % de comissão da plataforma e producerId do criador
+    let commissionPct = 0
+    const { data: commRow } = await admin
+      .from('platform_settings').select('value').eq('key', 'commission_percentage').maybeSingle()
+    commissionPct = Number((commRow as any)?.value ?? 0)
+
+    let creatorProducerId: string | null = null
+    if (private_model_type === 'creator') {
+      const { data: prof } = await admin
+        .from('profiles').select('neonpay_producer_id').eq('id', private_model_id).maybeSingle()
+      creatorProducerId = (prof as any)?.neonpay_producer_id || null
+    } else {
+      // model estático: tenta buscar producerId no creator dono do model
+      const { data: modelRow } = await admin
+        .from('models').select('creator_id').eq('id', private_model_id).maybeSingle()
+      const ownerId = (modelRow as any)?.creator_id
+      if (ownerId) {
+        const { data: prof } = await admin
+          .from('profiles').select('neonpay_producer_id').eq('id', ownerId).maybeSingle()
+        creatorProducerId = (prof as any)?.neonpay_producer_id || null
+      }
+    }
+
+    const creatorShareReais = Number((price * (1 - commissionPct / 100)).toFixed(2))
+    const platformShareReais = Number((price - creatorShareReais).toFixed(2))
+
     const PUB = Deno.env.get('NEONPAY_PUBLIC_KEY')
     const SEC = Deno.env.get('NEONPAY_SECRET_KEY')
     if (!PUB || !SEC) {
@@ -88,6 +115,15 @@ Deno.serve(async (req) => {
       postbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
       metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
       products: [{ id: `priv_${private_model_id}_${plan_type}`, name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
+    }
+
+    // Adiciona split se o criador tiver producerId NeonPay
+    if (creatorProducerId && creatorShareReais > 0) {
+      payload.splits = [{
+        producerId: creatorProducerId,
+        amount: isPix ? creatorShareReais : Math.round(creatorShareReais * 100),
+        type: 'fixed',
+      }]
     }
     if (!isPix) {
       payload.card = {
@@ -140,6 +176,10 @@ Deno.serve(async (req) => {
       checkout_url: data?.order?.url || null,
       private_model_id,
       private_model_type,
+      commission_percentage: commissionPct,
+      platform_amount: platformShareReais,
+      creator_amount: creatorShareReais,
+      creator_producer_id: creatorProducerId,
     })
     if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)
 

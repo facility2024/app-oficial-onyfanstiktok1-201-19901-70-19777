@@ -1,8 +1,11 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const APPROVED = ['paid','approved','confirmed','completed','authorized','received','ok','success']
+const APPROVED = ['paid','approved','confirmed','completed','authorized','received','success']
 const REJECTED = ['refused','failed','canceled','cancelled','rejected','expired']
+
+const unique = (values: Array<string | null | undefined>) =>
+  [...new Set(values.filter(Boolean).map((v) => String(v).trim()).filter(Boolean))]
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -12,17 +15,31 @@ Deno.serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
     const headers = {
+      'accept': 'application/json',
       'x-public-key': Deno.env.get('NEONPAY_PUBLIC_KEY') ?? '',
       'x-secret-key': Deno.env.get('NEONPAY_SECRET_KEY') ?? '',
     }
 
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+    const { data: storedTx } = await admin.from('payment_transactions')
+      .select('user_id, plan_type, status, asaas_subscription_id, asaas_customer_id, checkout_url')
+      .or(`asaas_payment_id.eq.${payment_id},asaas_subscription_id.eq.${payment_id},asaas_customer_id.eq.${payment_id}`)
+      .maybeSingle()
+
+    const paymentIds = unique([
+      payment_id,
+      storedTx?.asaas_subscription_id,
+      storedTx?.asaas_customer_id,
+    ])
+
     // Tenta múltiplos endpoints (a API NeonPay/Pagstars varia conforme tipo)
-    const endpoints = [
-      `https://app.neonpay.com.br/api/v1/gateway/pix/status/${payment_id}`,
-      `https://app.neonpay.com.br/api/v1/gateway/transactions/${payment_id}`,
-      `https://app.neonpay.com.br/api/v1/gateway/transactions/${payment_id}/status`,
-      `https://app.neonpay.com.br/api/v1/gateway/orders/${payment_id}`,
-    ]
+    const endpoints = paymentIds.flatMap((id) => [
+      `https://app.pagstars.com/api/v1/gateway/pix/status/${id}`,
+      `https://app.neonpay.com.br/api/v1/gateway/pix/status/${id}`,
+      `https://app.neonpay.com.br/api/v1/gateway/transactions/${id}`,
+      `https://app.neonpay.com.br/api/v1/gateway/transactions/${id}/status`,
+      `https://app.neonpay.com.br/api/v1/gateway/orders/${id}`,
+    ])
 
     let data: any = null
     let rStatus = 0
@@ -50,20 +67,27 @@ Deno.serve(async (req) => {
     // 🔁 Fallback: APENAS se este payment_id específico já foi marcado APPROVED no banco
     // (via webhook). NUNCA confiar em premium_users existente para não liberar VIP indevidamente.
     if (status === 'PENDING') {
-      const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-      const { data: ptx } = await admin.from('payment_transactions')
-        .select('status').eq('asaas_payment_id', payment_id).maybeSingle()
-      if (ptx?.status === 'APPROVED') {
+      if (storedTx?.status === 'APPROVED') {
         status = 'APPROVED'
         console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via payment_transactions')
+      } else if (storedTx?.user_id) {
+        const { data: activePremium } = await admin.from('premium_users')
+          .select('id')
+          .eq('user_id', storedTx.user_id)
+          .eq('subscription_status', 'active')
+          .gte('subscription_end', new Date().toISOString())
+          .maybeSingle()
+        if (activePremium) {
+          status = 'APPROVED'
+          console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via active premium_users')
+        }
       }
     }
 
 
 
     if (status === 'APPROVED') {
-      const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-      const { data: ptx } = await admin.from('payment_transactions')
+      const { data: ptx } = storedTx?.user_id ? { data: storedTx } : await admin.from('payment_transactions')
         .select('user_id, plan_type, status').eq('asaas_payment_id', payment_id).maybeSingle()
 
       if (ptx?.user_id) {

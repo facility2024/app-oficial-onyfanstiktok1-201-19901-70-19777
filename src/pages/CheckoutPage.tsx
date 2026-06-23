@@ -209,6 +209,24 @@ const CheckoutPage = () => {
     const maxAttempts = 60;
     let attempts = 0;
 
+    const finishApproved = () => {
+      setPolling(false);
+      setPixData(null);
+      setBoletoData(null);
+      setShowSuccess(true);
+    };
+
+    const hasActivePremium = async () => {
+      const { data } = await supabase
+        .from('premium_users')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('subscription_status', 'active')
+        .gte('subscription_end', new Date().toISOString())
+        .maybeSingle();
+      return !!data;
+    };
+
     const poll = async () => {
       attempts++;
       try {
@@ -217,10 +235,7 @@ const CheckoutPage = () => {
         });
 
         if (data?.status === 'APPROVED') {
-          setPolling(false);
-          setPixData(null);
-          setBoletoData(null);
-          setShowSuccess(true);
+          finishApproved();
           return;
         }
         if (data?.status === 'REJECTED') {
@@ -239,10 +254,14 @@ const CheckoutPage = () => {
           .eq('asaas_payment_id', paymentId)
           .maybeSingle();
         if (ptx?.status === 'APPROVED' && ptx.user_id === user?.id) {
-          setPolling(false);
-          setPixData(null);
-          setBoletoData(null);
-          setShowSuccess(true);
+          finishApproved();
+          return;
+        }
+      } catch { /* ignore */ }
+
+      try {
+        if (await hasActivePremium()) {
+          finishApproved();
           return;
         }
       } catch { /* ignore */ }

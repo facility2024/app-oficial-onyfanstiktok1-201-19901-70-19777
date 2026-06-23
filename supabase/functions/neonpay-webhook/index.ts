@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const txid = body.id ?? body.transaction_id
+    const txid = body.id ?? body.transaction_id ?? body.transactionId ?? body.payment_id ?? body.paymentId ?? body.identifier
+    const identifier = body.identifier ?? body.metadata?.identifier
     const status = (body.status ?? '').toLowerCase()
     const feeCents = Number(body.fee ?? body.neonpay_fee ?? 0)
     const fee = feeCents > 1000 ? feeCents / 100 : feeCents // aceita centavos ou reais
@@ -57,8 +58,14 @@ Deno.serve(async (req) => {
     // Se foi aprovado, também ativa VIP via payment_transactions/premium_users
     if (mappedStatus === 'paid') {
       try {
+        const lookupIds = [txid, identifier].filter(Boolean).map((id) => String(id))
+        const orFilter = lookupIds
+          .flatMap((id) => [`asaas_payment_id.eq.${id}`, `asaas_subscription_id.eq.${id}`, `asaas_customer_id.eq.${id}`])
+          .join(',')
         const { data: ptx } = await supabase.from('payment_transactions')
-          .select('user_id, plan_type').eq('asaas_payment_id', txid).maybeSingle()
+          .select('user_id, plan_type')
+          .or(orFilter)
+          .maybeSingle()
         if (ptx?.user_id) {
           const planType = ptx.plan_type || 'mensal'
           const days = planType === 'anual' ? 365 : planType === 'trimestral' ? 90 : 30
@@ -79,7 +86,8 @@ Deno.serve(async (req) => {
             subscription_end: new Date(Date.now() + days * 86400000).toISOString(),
           }, { onConflict: 'email' })
           await supabase.from('payment_transactions')
-            .update({ status: 'APPROVED' }).eq('asaas_payment_id', txid)
+            .update({ status: 'APPROVED', confirmed_at: new Date().toISOString() })
+            .or(orFilter)
         }
       } catch (e) { console.log('[webhook vip activation error]', String(e)) }
     }

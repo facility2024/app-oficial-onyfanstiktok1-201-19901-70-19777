@@ -1,11 +1,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const NEONPAY_API = 'https://api.neonpay.com.br/v1'
-
 /**
- * Assinatura VIP da plataforma via Neon (PIX ou Cartão).
- * Sem split: 100% da cobrança vai para a conta Neon da plataforma (NEONPAY_SECRET_KEY).
+ * Assinatura VIP via Asaas (PIX ou Cartão). Mantém nome "neon-vip" por compatibilidade com o frontend.
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -13,8 +10,8 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ success: false, error: 'unauthorized' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -25,8 +22,8 @@ Deno.serve(async (req) => {
     )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return new Response(JSON.stringify({ error: 'invalid token' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ success: false, error: 'invalid token' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -35,98 +32,177 @@ Deno.serve(async (req) => {
       billing_type, plan_type = 'mensal',
       cpf, billing_name, phone,
       card_number, card_holder, card_expiry_month, card_expiry_year, card_cvv,
+      cep, endereco, numero, complemento, bairro, cidade, estado,
     } = body
 
-    // Buscar preço do plano
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // Preço do plano
     const { data: planSetting } = await admin
       .from('admin_settings').select('setting_value').eq('setting_key', 'vip_plans').maybeSingle()
-    const plans: any = planSetting?.setting_value ?? {}
+    const plans: any = (planSetting?.setting_value as any) ?? {}
     const price = Number(plans?.[plan_type]?.price ?? 19.90)
-    const amountCents = Math.round(price * 100)
 
-    const customer = {
-      name: billing_name || user.email?.split('@')[0],
-      email: user.email,
-      document: String(cpf || '').replace(/\D/g, ''),
-      phone: String(phone || '').replace(/\D/g, ''),
-    }
-
-    const isPix = billing_type === 'PIX'
-    const payload: any = {
-      payment_method: isPix ? 'pix' : 'credit_card',
-      amount: amountCents,
-      customer,
-      metadata: { user_id: user.id, plan_type, kind: 'vip' },
-    }
-    if (!isPix) {
-      payload.installments = 1
-      payload.card = {
-        number: String(card_number).replace(/\s/g, ''),
-        holder_name: card_holder,
-        exp_month: card_expiry_month,
-        exp_year: card_expiry_year,
-        cvv: card_cvv,
-      }
-    }
-
-    console.log('[neon-vip] POST payload:', JSON.stringify({ ...payload, card: payload.card ? '***' : undefined }))
-
-    const r = await fetch(`${NEONPAY_API}/transactions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('NEONPAY_SECRET_KEY')}`,
-      },
-      body: JSON.stringify(payload),
-    })
-    const text = await r.text()
-    let data: any
-    try { data = JSON.parse(text) } catch { data = { raw: text } }
-
-    console.log('[neon-vip] Neon response:', r.status, text.slice(0, 800))
-
-    if (!r.ok) {
-      // Retorna 200 com fallback para o cliente conseguir ler o detalhe
-      return new Response(JSON.stringify({
-        success: false,
-        error: data?.message || data?.error || `Neon API ${r.status}`,
-        detail: data,
-        neonStatus: r.status,
-      }), {
+    // Asaas config
+    const ASAAS_KEY = Deno.env.get('ASAAS_API_KEY')
+    let ASAAS_BASE = (Deno.env.get('ASAAS_BASE_URL') || 'https://api.asaas.com/v3').replace(/\/+$/, '')
+    if (!/\/v\d+$/.test(ASAAS_BASE)) ASAAS_BASE = `${ASAAS_BASE}/v3`
+    if (!ASAAS_KEY) {
+      return new Response(JSON.stringify({ success: false, error: 'ASAAS_API_KEY não configurada' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Registrar transação no banco
+    const asaasFetch = async (path: string, init: RequestInit = {}) => {
+      const r = await fetch(`${ASAAS_BASE}${path}`, {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': ASAAS_KEY,
+          ...(init.headers || {}),
+        },
+      })
+      const text = await r.text()
+      let data: any
+      try { data = JSON.parse(text) } catch { data = { raw: text } }
+      return { ok: r.ok, status: r.status, data, text }
+    }
+
+    const cpfClean = String(cpf || '').replace(/\D/g, '')
+    const phoneClean = String(phone || '').replace(/\D/g, '')
+    const name = billing_name || user.email?.split('@')[0] || 'Cliente VIP'
+
+    // 1) Cria/recupera customer
+    let customerId: string | null = null
+    const search = await asaasFetch(`/customers?cpfCnpj=${cpfClean}`)
+    if (search.ok && Array.isArray(search.data?.data) && search.data.data.length > 0) {
+      customerId = search.data.data[0].id
+    } else {
+      const created = await asaasFetch('/customers', {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          email: user.email,
+          cpfCnpj: cpfClean,
+          mobilePhone: phoneClean,
+          postalCode: String(cep || '').replace(/\D/g, '') || undefined,
+          address: endereco || undefined,
+          addressNumber: numero || undefined,
+          complement: complemento || undefined,
+          province: bairro || undefined,
+        }),
+      })
+      if (!created.ok) {
+        console.log('[neon-vip] customer error:', created.status, created.text.slice(0, 500))
+        return new Response(JSON.stringify({
+          success: false,
+          error: created.data?.errors?.[0]?.description || 'Erro ao criar cliente',
+          detail: created.data,
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      customerId = created.data.id
+    }
+
+    // 2) Cria cobrança
+    const dueDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+    const isPix = billing_type === 'PIX'
+    const payload: any = {
+      customer: customerId,
+      billingType: isPix ? 'PIX' : 'CREDIT_CARD',
+      value: price,
+      dueDate,
+      description: `Assinatura VIP ${plan_type}`,
+      externalReference: `vip:${user.id}:${plan_type}`,
+    }
+    if (!isPix) {
+      payload.creditCard = {
+        holderName: card_holder,
+        number: String(card_number).replace(/\s/g, ''),
+        expiryMonth: String(card_expiry_month).padStart(2, '0'),
+        expiryYear: String(card_expiry_year),
+        ccv: String(card_cvv),
+      }
+      payload.creditCardHolderInfo = {
+        name,
+        email: user.email,
+        cpfCnpj: cpfClean,
+        postalCode: String(cep || '').replace(/\D/g, '') || '00000000',
+        addressNumber: numero || '0',
+        phone: phoneClean,
+      }
+    }
+
+    const pay = await asaasFetch('/payments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+
+    console.log('[neon-vip] payment response:', pay.status, pay.text.slice(0, 600))
+
+    if (!pay.ok) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: pay.data?.errors?.[0]?.description || `Asaas ${pay.status}`,
+        detail: pay.data,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    const paymentId = pay.data.id
+    const statusRaw = String(pay.data.status || '').toUpperCase()
+    const approved = ['RECEIVED', 'CONFIRMED'].includes(statusRaw)
+
+    // PIX QR
+    let pixOut: any = undefined
+    if (isPix) {
+      const qr = await asaasFetch(`/payments/${paymentId}/pixQrCode`)
+      if (qr.ok) {
+        pixOut = {
+          qrCodeUrl: qr.data?.encodedImage ? `data:image/png;base64,${qr.data.encodedImage}` : undefined,
+          payload: qr.data?.payload,
+          expirationDate: qr.data?.expirationDate,
+        }
+      }
+    }
+
+    // Registro
     await admin.from('payment_transactions').insert({
       user_id: user.id,
-      asaas_payment_id: data.id,
+      asaas_payment_id: paymentId,
       amount: price,
       plan_type,
-      status: (data.status ?? 'PENDING').toUpperCase(),
+      status: approved ? 'APPROVED' : 'PENDING',
     }).then(() => {}, () => {})
 
-    const status = (data.status ?? '').toLowerCase()
-    const approved = ['paid', 'approved', 'confirmed', 'completed'].includes(status)
+    // Ativa VIP se já aprovado (cartão)
+    if (approved) {
+      const days = plan_type === 'anual' ? 365 : plan_type === 'trimestral' ? 90 : 30
+      const end = new Date(Date.now() + days * 86400000).toISOString()
+      await admin.from('premium_users').upsert({
+        user_id: user.id,
+        email: user.email,
+        name,
+        whatsapp: phoneClean || null,
+        subscription_status: 'active',
+        subscription_type: plan_type,
+        subscription_start: new Date().toISOString(),
+        subscription_end: end,
+      }, { onConflict: 'email' }).then(() => {}, () => {})
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      paymentId: data.id,
+      paymentId,
       billingType: isPix ? 'PIX' : 'CREDIT_CARD',
       status: approved ? 'APPROVED' : 'PENDING',
-      pix: isPix ? {
-        qrCodeUrl: data.pix?.qr_code_image ?? data.qr_code_image,
-        payload: data.pix?.qr_code ?? data.qr_code,
-        expirationDate: data.pix?.expires_at ?? data.expires_at,
-      } : undefined,
+      pix: pixOut,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (e) {
+    console.log('[neon-vip] exception:', String(e))
     return new Response(JSON.stringify({ success: false, error: String(e) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })

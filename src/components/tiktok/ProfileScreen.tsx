@@ -1007,6 +1007,23 @@ if (!isOpen) return null;
                             }
 
                             if (content.type === 'video') {
+                              // Conteúdo privado pago abre em popup DENTRO do perfil
+                              if (isPrivate && canAccessPrivate) {
+                                const videoContents = currentContents.filter(
+                                  (c) => c.type === 'video' && !!c.visibility && c.visibility !== 'public'
+                                );
+                                const list = videoContents.map((c) => ({
+                                  url: c.video_url as string,
+                                  title: c.title,
+                                  thumbnail: c.thumbnail_url,
+                                }));
+                                const idx = videoContents.findIndex((c) => c.id === content.id);
+                                setPrivateVideoList(list);
+                                setPrivateVideoIndex(Math.max(0, idx));
+                                setPrivateVideoOpen(true);
+                                return;
+                              }
+                              // Vídeos públicos seguem o fluxo do feed
                               onVideoSelect?.(content.id);
                               onClose();
                             } else {

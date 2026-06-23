@@ -26,3 +26,12 @@ verify_jwt = false
 
 [functions.check-payment-status]
 verify_jwt = false
+
+[functions.neonpay-webhook]
+verify_jwt = false
+
+[functions.neon-vip-status]
+verify_jwt = false
+
+[functions.neon-vip]
+verify_jwt = false

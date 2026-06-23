@@ -36,6 +36,23 @@ interface PaymentMethodStats {
   count: number;
 }
 
+const inferMethod = (row: any): string => {
+  // identifier criado em neon-vip começa com "priv_" tanto p/ PIX quanto cartão
+  // Heurística: se asaas_subscription_id presente => cartão (Neon retorna order.id), senão PIX
+  return row.asaas_subscription_id ? 'credit_card' : 'pix';
+};
+
+const labelMethod = (method: string) => {
+  const labels: Record<string, string> = {
+    pix: 'Pix',
+    credit_card: 'Cartão de Crédito',
+    debit_card: 'Cartão de Débito',
+    bank_transfer: 'Transferência',
+    boleto: 'Boleto',
+  };
+  return labels[method] || method;
+};
+
 export const useFinancialData = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<FinancialStats>({
@@ -50,7 +67,7 @@ export const useFinancialData = () => {
     totalFees: 0,
     netProfit: 0,
     grossRevenue: 0,
-    profitMargin: 0
+    profitMargin: 0,
   });
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,105 +76,113 @@ export const useFinancialData = () => {
     try {
       setLoading(true);
 
-      // Fetch recent transactions (last 10)
-      const { data: recentTransactions, error: transactionsError } = await supabase
-        .from('transactions')
-        .select('*')
+      // Fonte primária: payment_transactions (NeonPay)
+      const { data: rows, error } = await supabase
+        .from('payment_transactions')
+        .select(
+          'id, user_id, amount, plan_type, status, created_at, confirmed_at, asaas_payment_id, asaas_subscription_id, asaas_customer_id, private_model_id, private_model_type, commission_percentage, platform_amount, creator_amount'
+        )
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(1000);
 
-      if (transactionsError) {
-        console.error('Error fetching transactions:', transactionsError);
+      if (error) {
+        console.error('Error fetching payment_transactions:', error);
+        setLoading(false);
         return;
       }
 
-      setTransactions(recentTransactions || []);
+      const all = rows || [];
+      const approved = all.filter((t: any) => String(t.status).toUpperCase() === 'APPROVED');
 
-      // Fetch ALL transactions for comprehensive statistics
-      const { data: allTransactions, error: allTransactionsError } = await supabase
-        .from('transactions')
-        .select('amount, net_amount, payment_method, status, created_at, fees')
-        .eq('status', 'completed');
+      // Top 10 recentes (todas, inclusive pendentes — para o admin acompanhar)
+      const recent: Transaction[] = all.slice(0, 10).map((t: any) => ({
+        id: t.id,
+        customer_name: t.private_model_type === 'creator' ? 'Acesso Privado (Criador)' : 'Acesso Privado',
+        customer_email: null,
+        transaction_type: 'subscription',
+        amount: Number(t.amount),
+        payment_method: inferMethod(t),
+        status:
+          String(t.status).toUpperCase() === 'APPROVED'
+            ? 'completed'
+            : String(t.status).toUpperCase() === 'PENDING'
+            ? 'pending'
+            : 'failed',
+        processed_at: t.confirmed_at,
+        created_at: t.created_at,
+        metadata: null,
+      }));
+      setTransactions(recent);
 
-      if (allTransactionsError) {
-        console.error('Error fetching all transactions:', allTransactionsError);
-        return;
-      }
-
-      // Calculate date ranges
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-      // Filter transactions by date ranges
-      const allCompletedTransactions = allTransactions || [];
-      const todayTransactions = allCompletedTransactions.filter(t => 
-        new Date(t.created_at) >= today
+      const inRange = (d: string, start: Date, end?: Date) => {
+        const dt = new Date(d);
+        return end ? dt >= start && dt < end : dt >= start;
+      };
+
+      const todayTx = approved.filter((t: any) => inRange(t.created_at, today));
+      const yesterdayTx = approved.filter((t: any) => inRange(t.created_at, yesterday, today));
+      const thisMonthTx = approved.filter((t: any) => inRange(t.created_at, thisMonth));
+      const lastMonthTx = approved.filter((t: any) => inRange(t.created_at, lastMonth, thisMonth));
+
+      const totalRevenue = approved.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+      const todaySales = todayTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+      const yesterdaySales = yesterdayTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+      const thisMonthRevenue = thisMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+      const lastMonthRevenue = lastMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+
+      // Saldo do ADMIN = soma das comissões da plataforma (platform_amount).
+      // Se não houver platform_amount, o valor inteiro é do admin.
+      const platformBalance = approved.reduce(
+        (s: number, t: any) => s + Number(t.platform_amount ?? t.amount ?? 0),
+        0
       );
-      const yesterdayTransactions = allCompletedTransactions.filter(t => 
-        new Date(t.created_at) >= yesterday && new Date(t.created_at) < today
-      );
-      const thisMonthTransactions = allCompletedTransactions.filter(t => 
-        new Date(t.created_at) >= thisMonth
-      );
-      const lastMonthTransactions = allCompletedTransactions.filter(t => 
-        new Date(t.created_at) >= lastMonth && new Date(t.created_at) < thisMonth
+      // "Taxas" do ponto de vista do admin = valor repassado ao criador
+      const creatorPaid = approved.reduce(
+        (s: number, t: any) => s + Number(t.creator_amount ?? 0),
+        0
       );
 
-      // Calculate main statistics
-      const totalRevenue = allCompletedTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const todaySales = todayTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const yesterdaySales = yesterdayTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const thisMonthRevenue = thisMonthTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const lastMonthRevenue = lastMonthTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      
-      const totalBalance = allCompletedTransactions.reduce((sum, t) => sum + Number(t.net_amount || t.amount), 0);
-      const totalFees = allCompletedTransactions.reduce((sum, t) => sum + Number(t.fees || 0), 0);
-
-      // Calculate growth percentages
       const salesGrowth = yesterdaySales > 0 ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 : 0;
-      const revenueGrowth = lastMonthRevenue > 0 ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
-      const transactionsGrowth = 0; // Real calculation would need historical data
-      const balanceGrowth = 0; // Real calculation would need historical data
+      const revenueGrowth =
+        lastMonthRevenue > 0 ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
 
       setStats({
         totalRevenue,
         todaySales,
-        totalTransactions: allCompletedTransactions.length,
-        balance: totalBalance,
+        totalTransactions: approved.length,
+        balance: platformBalance,
         revenueGrowth,
         salesGrowth,
-        transactionsGrowth,
-        balanceGrowth,
-        totalFees,
-        netProfit: totalBalance,
+        transactionsGrowth: 0,
+        balanceGrowth: 0,
+        totalFees: creatorPaid,
+        netProfit: platformBalance,
         grossRevenue: totalRevenue,
-        profitMargin: totalRevenue > 0 ? (totalBalance / totalRevenue) * 100 : 0
+        profitMargin: totalRevenue > 0 ? (platformBalance / totalRevenue) * 100 : 0,
       });
 
-      // Calculate payment method statistics
-      const paymentMethodMap = new Map<string, { amount: number; count: number }>();
-      
-      allCompletedTransactions.forEach(transaction => {
-        const method = transaction.payment_method;
-        const current = paymentMethodMap.get(method) || { amount: 0, count: 0 };
-        current.amount += Number(transaction.amount);
-        current.count += 1;
-        paymentMethodMap.set(method, current);
+      // Quebra por método (heurística)
+      const map = new Map<string, { amount: number; count: number }>();
+      approved.forEach((t: any) => {
+        const m = inferMethod(t);
+        const cur = map.get(m) || { amount: 0, count: 0 };
+        cur.amount += Number(t.amount || 0);
+        cur.count += 1;
+        map.set(m, cur);
       });
-
-      const paymentMethodsArray: PaymentMethodStats[] = Array.from(paymentMethodMap.entries()).map(([method, data]) => ({
-        method: getPaymentMethodLabel(method),
-        percentage: totalRevenue > 0 ? (data.amount / totalRevenue) * 100 : 0,
-        amount: data.amount,
-        count: data.count
+      const methods: PaymentMethodStats[] = Array.from(map.entries()).map(([m, d]) => ({
+        method: labelMethod(m),
+        percentage: totalRevenue > 0 ? (d.amount / totalRevenue) * 100 : 0,
+        amount: d.amount,
+        count: d.count,
       }));
-
-      setPaymentMethods(paymentMethodsArray.sort((a, b) => b.percentage - a.percentage));
-
+      setPaymentMethods(methods.sort((a, b) => b.percentage - a.percentage));
     } catch (error) {
       console.error('Error fetching financial data:', error);
     } finally {
@@ -165,48 +190,23 @@ export const useFinancialData = () => {
     }
   };
 
-  const getPaymentMethodLabel = (method: string) => {
-    const labels: { [key: string]: string } = {
-      pix: 'Pix',
-      credit_card: 'Cartão de Crédito',
-      debit_card: 'Cartão de Débito',
-      bank_transfer: 'Transferência',
-      boleto: 'Boleto'
-    };
-    return labels[method] || method;
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(amount);
-  };
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
+  const formatNumber = (num: number) => (num >= 1000 ? `${(num / 1000).toFixed(1)}K` : num.toString());
 
   useEffect(() => {
     fetchFinancialData();
-
-    // Set up real-time subscription for new transactions
-    const subscription = supabase
-      .channel('transactions_changes')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'transactions' 
-      }, () => {
-        fetchFinancialData();
-      })
+    const ch = supabase
+      .channel('payment_transactions_financial')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payment_transactions' },
+        () => fetchFinancialData()
+      )
       .subscribe();
-
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(ch);
     };
   }, []);
 
@@ -217,6 +217,6 @@ export const useFinancialData = () => {
     loading,
     formatCurrency,
     formatNumber,
-    refetchData: fetchFinancialData
+    refetchData: fetchFinancialData,
   };
 };

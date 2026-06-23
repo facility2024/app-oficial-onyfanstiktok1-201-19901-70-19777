@@ -116,6 +116,7 @@ const navigationGroups = [
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },
       { id: 'email-events', label: 'E-mails', icon: Mail },
       { id: 'neonpay', label: 'NeonPay (Comissão)', icon: DollarSign },
+      { id: 'sales-reports', label: 'Relatórios de Vendas', icon: DollarSign },
     ]
   },
   {

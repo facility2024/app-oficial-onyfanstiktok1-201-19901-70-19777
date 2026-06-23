@@ -713,44 +713,14 @@ if (!isOpen) return null;
                         return (
                           <button
                             key={plan.id}
-                            onClick={async () => {
-                              // Buscar dados do usuário logado
-                              const { data: { user: authUser } } = await supabase.auth.getUser();
-                              const subscriberId = authUser?.id || '';
-                              const subscriberEmail = authUser?.email || '';
-                              
-                              // Enviar dados para webhook N8N (produção)
-                              try {
-                                await fetch('https://agencia-facility-n8n.a0f1kq.easypanel.host/webhook/model_id', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    event_type: 'subscription_intent',
-                                    subscriber_id: subscriberId,
-                                    subscriber_email: subscriberEmail,
-                                    model_id: user.id,
-                                    model_name: user.username,
-                                    plan_type: plan.plan_type,
-                                    price: plan.price,
-                                    timestamp: new Date().toISOString()
-                                  })
-                                });
-                                console.log('Webhook enviado:', { subscriberId, subscriberEmail, model_id: user.id });
-                              } catch (error) {
-                                console.error('Erro ao enviar webhook:', error);
-                              }
-                              
-                              // Continuar fluxo normal de pagamento
-                              if (plan.payment_url) {
-                                window.open(plan.payment_url, '_blank');
-                                toast.info('Redirecionando para pagamento...', {
-                                  description: 'Após o pagamento, seu acesso será liberado automaticamente.',
-                                });
-                              } else {
-                                navigate(`/subscribe?model=${user.id}&plan=${plan.plan_type}&name=${encodeURIComponent(user.username)}`);
-                              }
+                            onClick={() => {
+                              const params = new URLSearchParams();
+                              params.set('model', user.id);
+                              params.set('plan', plan.plan_type);
+                              params.set('name', user.username || '');
+                              navigate(`/checkout?${params.toString()}`);
                             }}
-                            className="w-full relative overflow-hidden rounded-xl py-3.5 px-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg bg-gradient-to-r from-amber-500/40 to-amber-600/40 border-2 border-amber-400 animate-pulse-glow"
+                            className="w-full relative overflow-hidden rounded-xl py-3.5 px-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg bg-gradient-to-r from-purple-500/40 to-purple-600/40 border-2 border-purple-400"
                           >
                             {/* Efeito de brilho deslizante */}
                             <div 

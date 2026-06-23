@@ -69,6 +69,40 @@ Deno.serve(async (req) => {
       console.log('[neon-vip-status fallback]', payment_id, '→ APPROVED via payment_transactions')
     }
 
+    const shouldGrantPrivateAccess = async () => {
+      if (!storedTx?.id || !storedTx?.user_id || !storedTx?.private_model_id) return
+
+      const daysToAdd = storedTx.plan_type === 'anual' ? 365 : storedTx.plan_type === 'trimestral' ? 90 : 30
+      const now = new Date()
+      const subscriptionEnd = new Date(now.getTime() + daysToAdd * 86400000).toISOString()
+
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('email, phone')
+        .eq('id', storedTx.user_id)
+        .maybeSingle()
+
+      const paymentIdentifier = String(storedTx.id)
+
+      const upsert = await admin
+        .from('model_subscriptions')
+        .upsert({
+          subscriber_id: storedTx.user_id,
+          subscriber_email: profile?.email || `sem-email-${storedTx.user_id}@coconudi.local`,
+          subscriber_phone: profile?.phone || null,
+          model_id: storedTx.private_model_id,
+          model_type: storedTx.private_model_type || 'creator',
+          subscription_type: storedTx.plan_type || 'mensal',
+          subscription_status: 'active',
+          subscription_start: now.toISOString(),
+          subscription_end: subscriptionEnd,
+          payment_id: paymentIdentifier,
+          updated_at: now.toISOString(),
+        }, { onConflict: 'subscriber_id,model_id' })
+
+      if (upsert.error) console.log('[model_subscriptions upsert error]', upsert.error.message)
+    }
+
     if (status === 'APPROVED' && storedTx?.id && storedTx.status !== 'APPROVED') {
       const upd = await admin.from('payment_transactions')
         .update({ status: 'APPROVED', confirmed_at: new Date().toISOString() })
@@ -76,6 +110,8 @@ Deno.serve(async (req) => {
       if (upd.error) console.log('[payment_transactions update error]', upd.error.message)
       // O trigger grant_private_access_for_approved_payment cuida do model_subscriptions
     }
+
+    if (status === 'APPROVED') await shouldGrantPrivateAccess()
 
     return new Response(JSON.stringify({ status, raw_status: rawStatus, neon: tx }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

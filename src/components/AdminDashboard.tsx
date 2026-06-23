@@ -53,6 +53,7 @@ import { AdminCadastros } from './admin/AdminCadastros';
 import { AdminFeedPromotions } from './admin/AdminFeedPromotions';
 import AdminLoja from './admin/AdminLoja';
 import { AdminStores } from './admin/AdminStores';
+import CommissionSettings from './admin/CommissionSettings';
 import { AdminAdsGarotasTop } from './admin/AdminAdsGarotasTop';
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -248,6 +249,8 @@ export const AdminDashboard = () => {
         return <AdminWebhookLogs />;
       case 'email-events':
         return <AdminEmailEvents />;
+      case 'neonpay':
+        return <div className="p-4"><CommissionSettings /></div>;
       case 'documentation':
         return <AdminDocumentation />;
       case 'settings':

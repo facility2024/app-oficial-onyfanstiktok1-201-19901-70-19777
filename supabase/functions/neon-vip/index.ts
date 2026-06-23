@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     // Split NeonPay: envia o valor líquido (já com desconto) para o criador
     if (creatorProducerId && creatorShareReais > 0) {
       const sellerCents = Math.round(creatorShareReais * 100)
-      payload.splits = [{ recipient_id: creatorProducerId, amount: sellerCents }]
+      payload.splits = [{ producerId: creatorProducerId, amount: sellerCents }]
     }
     if (!isPix) {
       payload.card = {

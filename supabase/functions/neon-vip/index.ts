@@ -176,6 +176,10 @@ Deno.serve(async (req) => {
       checkout_url: data?.order?.url || null,
       private_model_id,
       private_model_type,
+      commission_percentage: commissionPct,
+      platform_amount: platformShareReais,
+      creator_amount: creatorShareReais,
+      creator_producer_id: creatorProducerId,
     })
     if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)
 

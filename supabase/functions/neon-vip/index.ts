@@ -96,11 +96,13 @@ Deno.serve(async (req) => {
         }),
       })
       if (!created.ok) {
-        console.log('[neon-vip] customer error:', created.status, created.text.slice(0, 500))
+        console.log('[neon-vip] customer error:', created.status, 'URL:', `${ASAAS_BASE}/customers`, 'BODY:', created.text.slice(0, 500))
         return new Response(JSON.stringify({
           success: false,
-          error: created.data?.errors?.[0]?.description || 'Erro ao criar cliente',
+          error: created.data?.errors?.[0]?.description
+            || (created.status === 404 ? `Asaas 404 em ${ASAAS_BASE}/customers — verifique ASAAS_BASE_URL` : `Erro ao criar cliente (HTTP ${created.status})`),
           detail: created.data,
+          asaasUrl: `${ASAAS_BASE}/customers`,
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
       customerId = created.data.id

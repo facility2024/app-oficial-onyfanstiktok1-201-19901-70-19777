@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, User, Loader2, CheckCircle, Crown, ShieldCheck, QrCode, FileText, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,6 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 const formatCpf = (v: string) => {
   const d = v.replace(/\D/g, '').slice(0, 11);
   return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-};
-
-const formatCep = (v: string) => {
-  const d = v.replace(/\D/g, '').slice(0, 8);
-  return d.replace(/(\d{5})(\d)/, '$1-$2');
 };
 
 const formatCardNumber = (v: string) => {
@@ -85,7 +80,6 @@ const CheckoutPage = () => {
   const [processing, setProcessing] = useState(false);
   const [polling, setPolling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [loadingCep, setLoadingCep] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // PIX/Boleto result

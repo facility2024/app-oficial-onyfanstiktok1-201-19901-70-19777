@@ -34,8 +34,8 @@ Deno.serve(async (req) => {
 
     // Tenta múltiplos endpoints (a API NeonPay/Pagstars varia conforme tipo)
     const endpoints = paymentIds.flatMap((id) => [
-      `https://app.pagstars.com/api/v1/gateway/pix/status/${id}`,
       `https://app.neonpay.com.br/api/v1/gateway/pix/status/${id}`,
+      `https://app.pagstars.com/api/v1/gateway/pix/status/${id}`,
       `https://app.neonpay.com.br/api/v1/gateway/transactions/${id}`,
       `https://app.neonpay.com.br/api/v1/gateway/transactions/${id}/status`,
       `https://app.neonpay.com.br/api/v1/gateway/orders/${id}`,
@@ -45,11 +45,16 @@ Deno.serve(async (req) => {
     let rStatus = 0
     let lastText = ''
     for (const url of endpoints) {
-      const r = await fetch(url, { headers })
-      rStatus = r.status
-      lastText = await r.text()
-      try { data = JSON.parse(lastText) } catch { data = { raw: lastText } }
-      if (r.ok) break
+      try {
+        const r = await fetch(url, { headers })
+        rStatus = r.status
+        lastText = await r.text()
+        try { data = JSON.parse(lastText) } catch { data = { raw: lastText } }
+        if (r.ok) break
+      } catch (e) {
+        lastText = String(e)
+        console.log('[neon-vip-status endpoint error]', url, lastText)
+      }
     }
 
     const tx = data?.transaction ?? data?.data ?? data

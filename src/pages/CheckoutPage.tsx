@@ -246,16 +246,15 @@ const CheckoutPage = () => {
     }
   };
 
-  const pollStatus = async (paymentOrSubId: string) => {
+  const pollStatus = async (paymentId: string) => {
     const maxAttempts = 60;
     let attempts = 0;
 
     const poll = async () => {
       attempts++;
       try {
-        const isPayment = paymentOrSubId.startsWith('pay_');
-        const { data } = await supabase.functions.invoke('check-payment-status', {
-          body: isPayment ? { payment_id: paymentOrSubId } : { subscription_id: paymentOrSubId },
+        const { data } = await supabase.functions.invoke('neon-vip-status', {
+          body: { payment_id: paymentId },
         });
 
         if (data?.status === 'APPROVED') {

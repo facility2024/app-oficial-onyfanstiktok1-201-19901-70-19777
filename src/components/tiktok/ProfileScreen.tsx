@@ -1164,6 +1164,63 @@ if (!isOpen) return null;
         onClose={() => setImageViewerOpen(false)}
         onIndexChange={setCurrentImageIndex}
       />
+
+      {/* Private Video Popup - permanece dentro do perfil */}
+      {privateVideoOpen && privateVideoList[privateVideoIndex] && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+          onClick={() => setPrivateVideoOpen(false)}
+        >
+          <button
+            className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white"
+            onClick={(e) => { e.stopPropagation(); setPrivateVideoOpen(false); }}
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+          <div
+            className="relative w-full h-full max-w-md mx-auto flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <video
+              key={privateVideoList[privateVideoIndex].url}
+              src={privateVideoList[privateVideoIndex].url}
+              poster={privateVideoList[privateVideoIndex].thumbnail}
+              className="w-full h-full object-contain"
+              controls
+              autoPlay
+              playsInline
+            />
+            {privateVideoList.length > 1 && (
+              <>
+                <button
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-3 text-white text-2xl"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPrivateVideoIndex((i) => (i - 1 + privateVideoList.length) % privateVideoList.length);
+                  }}
+                  aria-label="Anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-3 text-white text-2xl"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPrivateVideoIndex((i) => (i + 1) % privateVideoList.length);
+                  }}
+                  aria-label="Próximo"
+                >
+                  ›
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-xs bg-black/50 px-3 py-1 rounded-full">
+                  {privateVideoIndex + 1} / {privateVideoList.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

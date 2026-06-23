@@ -217,12 +217,16 @@ const CheckoutPage = () => {
   const pollStatus = async (paymentId: string) => {
     const maxAttempts = 240;
     let attempts = 0;
+    let finished = false;
 
     const finishApproved = () => {
+      if (finished) return;
+      finished = true;
       setPolling(false);
       setPixData(null);
       setBoletoData(null);
       setShowSuccess(true);
+      try { supabase.removeChannel(channel); } catch { /* ignore */ }
     };
 
     const hasActivePrivateAccess = async () => {
@@ -279,40 +283,47 @@ const CheckoutPage = () => {
       return false;
     };
 
+    // 🔔 Realtime: reage instantaneamente quando o webhook marca como APPROVED
+    const channel = supabase
+      .channel(`checkout-${paymentId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'payment_transactions', filter: `asaas_payment_id=eq.${paymentId}` },
+        async (payload: any) => {
+          if (payload?.new?.status === 'APPROVED') {
+            if (await hasActivePrivateAccess() || await grantPrivateAccessFromApprovedTransaction()) finishApproved();
+          } else if (payload?.new?.status === 'REJECTED') {
+            finished = true;
+            setPolling(false);
+            try { supabase.removeChannel(channel); } catch { /* ignore */ }
+            toast.error('Pagamento recusado.');
+          }
+        }
+      )
+      .subscribe();
+
     const poll = async () => {
+      if (finished) return;
       attempts++;
-      try {
-        const { data } = await supabase.functions.invoke('neon-vip-status', {
-          body: {
-            payment_id: paymentId,
-            private_model_id: privateModelId,
-            private_model_type: privateModelType,
-            plan_type: queryPlan,
-            amount: planPrice,
-          },
-        });
 
-        if (data?.status === 'APPROVED') {
-          if (await hasActivePrivateAccess() || await grantPrivateAccessFromApprovedTransaction()) finishApproved();
-          return;
-        }
-        if (data?.status === 'REJECTED') {
-          setPolling(false);
-          toast.error('Pagamento recusado.');
-          return;
-        }
-      } catch { /* continue polling */ }
-
-      // 🔁 Fallback: confirma APENAS se o payment_id ATUAL foi aprovado no banco
-      // (evita liberar VIP com base em assinatura antiga já existente).
+      // Fallback: consulta direta o banco (independe da API da Neon estar online)
       try {
         const { data: ptx } = await supabase
           .from('payment_transactions')
           .select('status, user_id')
           .or(`asaas_payment_id.eq.${paymentId},asaas_subscription_id.eq.${paymentId},asaas_customer_id.eq.${paymentId}`)
           .maybeSingle();
-        if (ptx?.status === 'APPROVED' && ptx.user_id === user?.id) {
-          if (await grantPrivateAccessFromApprovedTransaction()) finishApproved();
+        if (ptx?.status === 'APPROVED') {
+          if (await hasActivePrivateAccess() || await grantPrivateAccessFromApprovedTransaction()) {
+            finishApproved();
+            return;
+          }
+        }
+        if (ptx?.status === 'REJECTED') {
+          finished = true;
+          setPolling(false);
+          try { supabase.removeChannel(channel); } catch { /* ignore */ }
+          toast.error('Pagamento recusado.');
           return;
         }
       } catch { /* ignore */ }
@@ -323,7 +334,6 @@ const CheckoutPage = () => {
           return;
         }
       } catch { /* ignore */ }
-
 
       if (attempts < maxAttempts) {
         setTimeout(poll, 3000);

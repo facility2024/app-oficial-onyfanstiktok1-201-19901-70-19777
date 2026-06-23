@@ -851,8 +851,9 @@ export const TikTokApp = () => {
 
             console.log('✅ VIEW registrada com sucesso!');
           }
-        } catch (error) {
-          console.error('❌ Erro ao registrar view:', error);
+        } catch (error: any) {
+          if (error?.code !== '23505' && !String(error?.message || '').includes('duplicate'))
+            console.error('❌ Erro ao registrar view:', error);
         }
       }
     };

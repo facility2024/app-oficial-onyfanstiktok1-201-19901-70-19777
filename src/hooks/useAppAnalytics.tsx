@@ -119,8 +119,11 @@ export const useAppAnalytics = () => {
               user_agent: navigator.userAgent
             });
           
-          if (viewError) console.warn('❌ Erro ao registrar view:', viewError);
-          else console.log('✅ View registrado');
+          if (viewError) {
+            // 23505 = duplicate key (view already registered) → silencioso
+            if ((viewError as any).code !== '23505' && !String((viewError as any).message || '').includes('duplicate'))
+              console.warn('❌ Erro ao registrar view:', viewError);
+          } else console.log('✅ View registrado');
           break;
 
         case 'follow':

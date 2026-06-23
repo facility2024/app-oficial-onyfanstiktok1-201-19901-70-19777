@@ -33,6 +33,27 @@ Deno.serve(async (req) => {
       APPROVED.includes(rawStatus) || !!paidAt ? 'APPROVED' :
       REJECTED.includes(rawStatus) ? 'REJECTED' : 'PENDING'
 
+    // 🔁 Fallback: gateway indisponível/404 → checa banco local
+    if (status === 'PENDING' || r.status === 404 || r.status >= 500) {
+      const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+      const { data: ptx } = await admin.from('payment_transactions')
+        .select('user_id, status').eq('asaas_payment_id', payment_id).maybeSingle()
+      if (ptx?.status === 'APPROVED') {
+        status = 'APPROVED'
+      } else if (ptx?.user_id) {
+        const { data: vip } = await admin.from('premium_users')
+          .select('subscription_status, subscription_end')
+          .eq('user_id', ptx.user_id)
+          .eq('subscription_status', 'active')
+          .maybeSingle()
+        if (vip && (!vip.subscription_end || new Date(vip.subscription_end) > new Date())) {
+          status = 'APPROVED'
+        }
+      }
+      console.log('[neon-vip-status fallback]', payment_id, '→', status)
+    }
+
+
     if (status === 'APPROVED') {
       const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
       const { data: ptx } = await admin.from('payment_transactions')

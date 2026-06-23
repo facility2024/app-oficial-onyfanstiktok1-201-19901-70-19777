@@ -18,6 +18,8 @@ import { VideoManagementTable } from '@/components/creator/VideoManagementTable'
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
 import { SubscriptionPlansManager } from '@/components/creator/SubscriptionPlansManager';
 import { useGenres } from '@/hooks/useGenres';
+import NeonPayProducerSettings from '@/components/creator/NeonPayProducerSettings';
+import MySales from '@/components/creator/MySales';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),

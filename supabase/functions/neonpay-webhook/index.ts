@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     const paidAt = body.paid_at ?? body.paidAt ?? body.approved_at ?? body.approvedAt ??
       tx?.paid_at ?? tx?.paidAt ?? tx?.approved_at ?? tx?.approvedAt ?? tx?.payment_date ?? null
 
-    await supabase.from('webhook_logs').insert({
+    const webhookLog = await supabase.from('webhook_logs').insert({
       source: 'neonpay',
       webhook_type: 'neonpay_payment',
       event_type: eventType,
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       email: body.client?.email ?? body.customer?.email ?? tx?.client?.email ?? tx?.customer?.email ?? null,
       plan_type: metadata?.plan_type ?? null,
       ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? null,
-    })
+    }).select('id').maybeSingle()
 
     if (!txid) {
       console.log('[neonpay-webhook missing transaction id]', rawText.slice(0, 1000))
@@ -155,11 +155,11 @@ Deno.serve(async (req) => {
       ])
     }
 
-    await supabase.from('webhook_logs')
-      .update({ processed: true, processed_at: new Date().toISOString() })
-      .eq('source', 'neonpay')
-      .eq('event_type', eventType)
-      .contains('payload', { id: body.id })
+    if (webhookLog.data?.id) {
+      await supabase.from('webhook_logs')
+        .update({ processed: true, processed_at: new Date().toISOString() })
+        .eq('id', webhookLog.data.id)
+    }
 
     return new Response(JSON.stringify({ ok: true, txid, status, approved, lookupIds }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

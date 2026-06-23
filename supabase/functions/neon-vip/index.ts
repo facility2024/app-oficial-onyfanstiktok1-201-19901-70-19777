@@ -83,6 +83,11 @@ Deno.serve(async (req) => {
       client,
       description: `Acesso Privado ${plan_type}`,
       callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      notificationUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      postbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
+      metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
+      products: [{ name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
     }
     if (!isPix) {
       payload.card = {
@@ -124,7 +129,7 @@ Deno.serve(async (req) => {
     const approved = ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(statusRaw)
 
     // Insere transação (o trigger libera o acesso privado quando status='APPROVED')
-    await admin.from('payment_transactions').insert({
+    const insertedTx = await admin.from('payment_transactions').insert({
       user_id: user.id,
       asaas_payment_id: paymentId,
       asaas_subscription_id: orderId,
@@ -135,7 +140,8 @@ Deno.serve(async (req) => {
       checkout_url: data?.order?.url || null,
       private_model_id,
       private_model_type,
-    }).then(() => {}, (e) => console.log('[payment_transactions insert error]', String(e)))
+    })
+    if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)
 
     return new Response(JSON.stringify({
       success: true,

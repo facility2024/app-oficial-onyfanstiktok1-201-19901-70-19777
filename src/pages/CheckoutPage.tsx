@@ -215,7 +215,7 @@ const CheckoutPage = () => {
   };
 
   const pollStatus = async (paymentId: string) => {
-    const maxAttempts = 60;
+    const maxAttempts = 240;
     let attempts = 0;
 
     const finishApproved = () => {
@@ -283,7 +283,13 @@ const CheckoutPage = () => {
       attempts++;
       try {
         const { data } = await supabase.functions.invoke('neon-vip-status', {
-          body: { payment_id: paymentId },
+          body: {
+            payment_id: paymentId,
+            private_model_id: privateModelId,
+            private_model_type: privateModelType,
+            plan_type: queryPlan,
+            amount: planPrice,
+          },
         });
 
         if (data?.status === 'APPROVED') {
@@ -303,7 +309,7 @@ const CheckoutPage = () => {
         const { data: ptx } = await supabase
           .from('payment_transactions')
           .select('status, user_id')
-          .eq('asaas_payment_id', paymentId)
+          .or(`asaas_payment_id.eq.${paymentId},asaas_subscription_id.eq.${paymentId},asaas_customer_id.eq.${paymentId}`)
           .maybeSingle();
         if (ptx?.status === 'APPROVED' && ptx.user_id === user?.id) {
           if (await grantPrivateAccessFromApprovedTransaction()) finishApproved();
@@ -322,8 +328,8 @@ const CheckoutPage = () => {
       if (attempts < maxAttempts) {
         setTimeout(poll, 3000);
       } else {
-        setPolling(false);
-        toast.error('Tempo esgotado. Verifique o status do pagamento em seu perfil.');
+        setTimeout(poll, 10000);
+        toast.info('PIX ainda em verificação. Pode demorar alguns minutos; mantenha esta tela aberta.');
       }
     };
 
@@ -370,10 +376,10 @@ const CheckoutPage = () => {
             </p>
             <div className="flex items-center gap-2 text-amber-400">
               <Lock className="w-5 h-5" />
-              <span className="font-semibold">Você agora é Conteúdo Privado!</span>
+              <span className="font-semibold">Conteúdo Privado liberado!</span>
             </div>
             <Button onClick={handleSuccessClose} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold mt-2">
-              Voltar para o App
+              Voltar ao perfil
             </Button>
           </div>
         </DialogContent>

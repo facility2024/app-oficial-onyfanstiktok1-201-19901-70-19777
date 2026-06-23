@@ -24,7 +24,7 @@ interface Video {
   views_count: number;
   music_name: string;
   is_active: boolean;
-  visibility?: 'public' | 'premium';
+  visibility?: 'public' | 'private';
   created_at: string;
   model_id?: string;
   user: {
@@ -116,7 +116,7 @@ export const LiveInterface = () => {
           views_count: videoData.views_count || 0,
           music_name: 'Som Original',
           is_active: videoData.is_active,
-          visibility: videoData.visibility === 'premium' ? 'premium' : 'public',
+          visibility: videoData.visibility === 'private' ? 'private' : 'public',
           created_at: videoData.created_at,
           model_id: model.id,
           user: {

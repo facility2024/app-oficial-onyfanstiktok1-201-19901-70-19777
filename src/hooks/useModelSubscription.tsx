@@ -189,7 +189,7 @@ export const useModelSubscription = (modelId?: string) => {
   ): boolean => {
     if (visibility === 'public') return true;
     if (visibility === 'premium') return isPremium;
-    if (visibility === 'private') return isPrivateUnlockedSync(targetModelId);
+    if (visibility === 'private') return isPremium || isPrivateUnlockedSync(targetModelId);
     return false;
   }, [isPremium, isPrivateUnlockedSync]);
 

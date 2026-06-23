@@ -20,7 +20,7 @@ interface ProfileScreenProps {
   isChatActive?: boolean;
 }
 
-type ContentTab = 'public' | 'premium' | 'private';
+type ContentTab = 'public' | 'private';
 
 interface ModelContent {
   id: string;
@@ -32,7 +32,7 @@ interface ModelContent {
   likes_count: number;
   views_count: number;
   created_at: string;
-  visibility?: 'public' | 'premium' | 'private';
+  visibility?: 'public' | 'private';
 }
 
 interface ModelImage {
@@ -47,7 +47,6 @@ interface ModelImage {
 export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, onOpenChat, isChatActive = false }: ProfileScreenProps) => {
   const [contents, setContents] = useState<ModelContent[]>([]);
   const [publicContents, setPublicContents] = useState<ModelContent[]>([]);
-  const [premiumContents, setPremiumContents] = useState<ModelContent[]>([]);
   const [privateContents, setPrivateContents] = useState<ModelContent[]>([]);
   const [activeTab, setActiveTab] = useState<ContentTab>('public');
   const [loading, setLoading] = useState(false);

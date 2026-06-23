@@ -122,51 +122,16 @@ const CheckoutPage = () => {
       if ((profile as any).phone) setPhone((profile as any).phone);
       if ((profile as any).cpf) setCpf(formatCpf((profile as any).cpf));
       if ((profile as any).billing_name) setBillingName((profile as any).billing_name);
-      if ((profile as any).cep) setCep(formatCep((profile as any).cep));
-      if ((profile as any).endereco) setEndereco((profile as any).endereco);
-      if ((profile as any).numero) setNumero((profile as any).numero);
-      if ((profile as any).complemento) setComplemento((profile as any).complemento);
-      if ((profile as any).bairro) setBairro((profile as any).bairro);
-      if ((profile as any).cidade) setCidade((profile as any).cidade);
-      if ((profile as any).estado) setEstado((profile as any).estado);
     }
   }, [profile]);
-
-  // CEP auto-complete
-  const fetchCep = useCallback(async (cepValue: string) => {
-    const clean = cepValue.replace(/\D/g, '');
-    if (clean.length !== 8) return;
-    setLoadingCep(true);
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        setEndereco(data.logradouro || '');
-        setBairro(data.bairro || '');
-        setCidade(data.localidade || '');
-        setEstado(data.uf || '');
-        setComplemento(data.complemento || '');
-      }
-    } catch { /* ignore */ }
-    setLoadingCep(false);
-  }, []);
-
-  useEffect(() => {
-    const clean = cep.replace(/\D/g, '');
-    if (clean.length === 8) fetchCep(clean);
-  }, [cep, fetchCep]);
 
   // Validate form
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!validateCpf(cpf)) e.cpf = 'CPF inválido';
     if (!billingName.trim() || billingName.trim().length < 3) e.billingName = 'Nome obrigatório';
-    if (cep.replace(/\D/g, '').length !== 8) e.cep = 'CEP inválido';
-    if (!endereco.trim()) e.endereco = 'Endereço obrigatório';
-    if (!numero.trim()) e.numero = 'Número obrigatório';
-    if (!bairro.trim()) e.bairro = 'Bairro obrigatório';
-    if (!cidade.trim()) e.cidade = 'Cidade obrigatória';
-    if (!estado.trim()) e.estado = 'Estado obrigatório';
+    if (phone.replace(/\D/g, '').length < 10) e.phone = 'Telefone inválido (DDD + número)';
+
 
     // Card-only validations
     if (paymentMethod === 'CREDIT_CARD') {

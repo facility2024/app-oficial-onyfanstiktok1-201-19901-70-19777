@@ -8,6 +8,7 @@ interface PremiumContentOverlayProps {
   onClose?: () => void;
   modelName?: string;
   modelId?: string;
+  modelType?: 'model' | 'creator';
   onSubscribeClick?: () => void;
   /** mantido por compatibilidade — agora apenas "private" é suportado */
   contentType?: 'private';
@@ -18,6 +19,7 @@ export const PremiumContentOverlay = ({
   onClose,
   modelName,
   modelId,
+  modelType = 'creator',
   onSubscribeClick,
 }: PremiumContentOverlayProps) => {
   const navigate = useNavigate();
@@ -29,6 +31,7 @@ export const PremiumContentOverlay = ({
     }
     const params = new URLSearchParams();
     if (modelId) params.set('model', modelId);
+    params.set('type', modelType);
     if (modelName) params.set('name', modelName);
     navigate(`/checkout?${params.toString()}`);
   };

@@ -113,20 +113,19 @@ export const useCreatorVideos = () => {
 
   const deleteVideo = async (videoId: string) => {
     try {
-      // Soft delete: marcar como inativo e bloqueado
       const { error } = await supabase
         .from('videos')
-        .update({ is_active: false, is_blocked: true })
+        .delete()
         .eq('id', videoId);
 
       if (error) throw error;
 
-      toast.success('Vídeo removido com sucesso!');
+      toast.success('Vídeo deletado permanentemente!');
       fetchVideos();
       return true;
     } catch (error) {
       console.error('Erro ao deletar vídeo:', error);
-      toast.error('Erro ao remover vídeo');
+      toast.error('Erro ao deletar vídeo');
       return false;
     }
   };

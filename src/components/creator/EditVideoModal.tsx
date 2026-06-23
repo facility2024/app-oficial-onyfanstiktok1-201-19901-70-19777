@@ -118,14 +118,12 @@ export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) =>
               </SelectTrigger>
               <SelectContent className="z-[100003] bg-gray-800 border-gray-700">
                 <SelectItem value="public">🌐 Público</SelectItem>
-                <SelectItem value="premium">👑 Premium VIP</SelectItem>
-                <SelectItem value="private">🔒 Privado (Meus Assinantes)</SelectItem>
+                <SelectItem value="private">🔒 Privado (Acesso Pago)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-400 mt-1">
               {formData.visibility === 'public' && 'Todos podem ver este vídeo'}
-              {formData.visibility === 'premium' && 'Apenas assinantes VIP Global podem ver'}
-              {formData.visibility === 'private' && 'Apenas seus assinantes individuais podem ver'}
+              {formData.visibility === 'private' && 'Apenas usuários que pagaram pelo acesso podem ver'}
             </p>
           </div>
 

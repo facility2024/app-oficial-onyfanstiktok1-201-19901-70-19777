@@ -66,7 +66,7 @@ export default function CreatorStudio() {
     video_url: '',
     thumbnail_url: '',
     genres: [] as string[],
-    visibility: 'public' as 'public' | 'premium' | 'private',
+    visibility: 'public' as 'public' | 'private',
     is_featured: false,
   });
 

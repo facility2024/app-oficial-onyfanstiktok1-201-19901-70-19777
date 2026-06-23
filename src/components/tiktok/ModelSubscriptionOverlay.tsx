@@ -26,6 +26,7 @@ export const ModelSubscriptionOverlay: React.FC<ModelSubscriptionOverlayProps> =
     const params = new URLSearchParams();
     params.set('model', plan.model_id);
     params.set('plan', plan.plan_type);
+    params.set('type', plan.model_type);
     params.set('name', modelName);
     navigate(`/checkout?${params.toString()}`);
   };

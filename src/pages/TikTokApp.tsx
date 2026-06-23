@@ -30,7 +30,6 @@ import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
@@ -299,11 +298,6 @@ export const TikTokApp = () => {
     trackView,
     trackFollow
   });
-  const {
-    isPremium,
-    isContentUnlocked,
-    checkPremiumStatus
-  } = usePremiumStatus();
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   // Verifica se um vídeo é novo
@@ -3623,13 +3617,12 @@ export const TikTokApp = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Payment Verification Indicator - Realtime VIP Activation */}
+      {/* Payment Verification Indicator - Realtime private access activation */}
       <PaymentVerificationIndicator 
         userEmail={authUser?.email || undefined}
         userId={authUser?.id || undefined}
-        onVIPActivated={() => {
+        onPrivateAccessActivated={() => {
           console.log('🎉 Conteúdo Privado ativado! Atualizando status...');
-          checkPremiumStatus();
         }}
       />
 

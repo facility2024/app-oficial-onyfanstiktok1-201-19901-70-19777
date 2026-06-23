@@ -66,6 +66,7 @@ const CheckoutPage = () => {
 
   // Modelo/criador alvo do acesso privado
   const privateModelId = searchParams.get('model') || '';
+  const privateModelType = (searchParams.get('type') as 'model' | 'creator') || 'creator';
   const privateModelName = searchParams.get('name') || 'Criadora';
   const queryPlan = (searchParams.get('plan') as 'mensal' | 'trimestral' | 'anual') || 'mensal';
 
@@ -174,7 +175,7 @@ const CheckoutPage = () => {
         plan_type: queryPlan,
         billing_type: paymentMethod,
         private_model_id: privateModelId,
-        private_model_type: 'creator',
+        private_model_type: privateModelType,
       };
 
 
@@ -224,15 +225,58 @@ const CheckoutPage = () => {
       setShowSuccess(true);
     };
 
-    const hasActivePremium = async () => {
-      const { data } = await supabase
-        .from('premium_users')
+    const hasActivePrivateAccess = async () => {
+      if (!privateModelId || !user?.id) return false;
+      const { data } = await (supabase as any)
+        .from('model_subscriptions')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('subscriber_id', user.id)
+        .eq('model_id', privateModelId)
         .eq('subscription_status', 'active')
         .gte('subscription_end', new Date().toISOString())
         .maybeSingle();
       return !!data;
+    };
+
+    const grantPrivateAccessFromApprovedTransaction = async () => {
+      if (!privateModelId || !user?.id) return false;
+      const { data: transaction } = await (supabase as any)
+        .from('payment_transactions')
+        .select('id, amount, plan_type, status, asaas_payment_id, asaas_customer_id, private_model_id')
+        .eq('user_id', user.id)
+        .or(`asaas_payment_id.eq.${paymentId},asaas_subscription_id.eq.${paymentId},asaas_customer_id.eq.${paymentId}`)
+        .maybeSingle();
+
+      if (transaction?.status !== 'APPROVED') return false;
+
+      const targetModelId = transaction.private_model_id || privateModelId;
+      const planType = transaction.plan_type || queryPlan;
+      const days = planType === 'anual' ? 365 : planType === 'trimestral' ? 90 : 30;
+      const now = new Date();
+      const subscriptionEnd = new Date(now.getTime() + days * 86400000).toISOString();
+
+      const { error } = await (supabase as any)
+        .from('model_subscriptions')
+        .upsert({
+          subscriber_id: user.id,
+          subscriber_email: user.email || `${user.id}@coconudi.local`,
+          subscriber_phone: phone.replace(/\D/g, '') || null,
+          model_id: targetModelId,
+          model_type: privateModelType,
+          subscription_type: planType,
+          subscription_status: 'active',
+          subscription_start: now.toISOString(),
+          subscription_end: subscriptionEnd,
+          price_paid: transaction.amount || planPrice,
+          payment_id: transaction.asaas_payment_id || transaction.asaas_customer_id || String(transaction.id),
+          updated_at: now.toISOString(),
+        }, { onConflict: 'subscriber_id,model_id' });
+
+      if (!error) {
+        window.dispatchEvent(new Event('private-access-updated'));
+        return true;
+      }
+      return false;
     };
 
     const poll = async () => {
@@ -243,7 +287,7 @@ const CheckoutPage = () => {
         });
 
         if (data?.status === 'APPROVED') {
-          finishApproved();
+          if (await hasActivePrivateAccess() || await grantPrivateAccessFromApprovedTransaction()) finishApproved();
           return;
         }
         if (data?.status === 'REJECTED') {
@@ -262,13 +306,13 @@ const CheckoutPage = () => {
           .eq('asaas_payment_id', paymentId)
           .maybeSingle();
         if (ptx?.status === 'APPROVED' && ptx.user_id === user?.id) {
-          finishApproved();
+          if (await grantPrivateAccessFromApprovedTransaction()) finishApproved();
           return;
         }
       } catch { /* ignore */ }
 
       try {
-        if (await hasActivePremium()) {
+        if (await hasActivePrivateAccess()) {
           finishApproved();
           return;
         }
@@ -288,7 +332,8 @@ const CheckoutPage = () => {
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-    navigate('/app');
+    window.dispatchEvent(new Event('private-access-updated'));
+    navigate(privateModelId ? `/app?profile=${privateModelId}` : '/app');
   };
 
   const copyToClipboard = (text: string) => {

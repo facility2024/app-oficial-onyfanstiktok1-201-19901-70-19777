@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, CheckCircle2, Crown, Sparkles } from 'lucide-react';
+import { Loader2, CheckCircle2, Lock, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,16 +64,16 @@ const playCelebrationSound = () => {
 interface PaymentVerificationIndicatorProps {
   userEmail?: string;
   userId?: string;
-  onVIPActivated?: () => void;
+  onPrivateAccessActivated?: () => void;
 }
 
 export const PaymentVerificationIndicator = ({ 
   userEmail, 
   userId,
-  onVIPActivated 
+  onPrivateAccessActivated 
 }: PaymentVerificationIndicatorProps) => {
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isVIPActivated, setIsVIPActivated] = useState(false);
+  const [isPrivateAccessActivated, setIsPrivateAccessActivated] = useState(false);
   const { toast } = useToast();
   const soundPlayedRef = useRef(false);
 
@@ -91,32 +91,25 @@ export const PaymentVerificationIndicator = ({
     }
   }, []);
 
-  // Ouvir mudanças em tempo real na tabela premium_users
+  // Ouvir mudanças em tempo real na liberação de conteúdo privado
   useEffect(() => {
-    if (!userEmail && !userId) return;
+    if (!userId) return;
 
-    console.log('🔔 Configurando listener realtime para Conteúdo Privado:', { userEmail, userId });
+    console.log('🔔 Configurando listener realtime para acesso privado:', { userEmail, userId });
 
     const channel = supabase
-      .channel('vip-activation')
+      .channel(`private-access-activation-${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'premium_users'
+          table: 'model_subscriptions',
+          filter: `subscriber_id=eq.${userId}`
         },
         (payload) => {
-          console.log('🔔 Novo Conteúdo Privado detectado:', payload.new);
-          const newVIP = payload.new as any;
-          
-          // Verificar se é o usuário atual
-          if (
-            (userEmail && newVIP.email?.toLowerCase() === userEmail.toLowerCase()) ||
-            (userId && newVIP.user_id === userId)
-          ) {
-            handleVIPActivation(newVIP);
-          }
+          console.log('🔔 Novo acesso privado detectado:', payload.new);
+          handlePrivateAccessActivation(payload.new as any);
         }
       )
       .on(
@@ -124,21 +117,14 @@ export const PaymentVerificationIndicator = ({
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'premium_users'
+          table: 'model_subscriptions',
+          filter: `subscriber_id=eq.${userId}`
         },
         (payload) => {
-          console.log('🔔 Conteúdo Privado atualizado:', payload.new);
-          const updatedVIP = payload.new as any;
-          
-          // Verificar se é o usuário atual e se foi ativado
-          if (
-            updatedVIP.subscription_status === 'active' &&
-            (
-              (userEmail && updatedVIP.email?.toLowerCase() === userEmail.toLowerCase()) ||
-              (userId && updatedVIP.user_id === userId)
-            )
-          ) {
-            handleVIPActivation(updatedVIP);
+          console.log('🔔 Acesso privado atualizado:', payload.new);
+          const updatedAccess = payload.new as any;
+          if (updatedAccess.subscription_status === 'active') {
+            handlePrivateAccessActivation(updatedAccess);
           }
         }
       )
@@ -152,8 +138,8 @@ export const PaymentVerificationIndicator = ({
     };
   }, [userEmail, userId]);
 
-  const handleVIPActivation = useCallback((vipData: any) => {
-    console.log('🎉 Conteúdo Privado ATIVADO!', vipData);
+  const handlePrivateAccessActivation = useCallback((accessData: any) => {
+    console.log('🎉 Acesso privado ATIVADO!', accessData);
     
     // Evitar tocar som múltiplas vezes
     if (!soundPlayedRef.current) {
@@ -163,32 +149,27 @@ export const PaymentVerificationIndicator = ({
     
     // Atualizar estados
     setIsVerifying(false);
-    setIsVIPActivated(true);
+    setIsPrivateAccessActivated(true);
     sessionStorage.removeItem('checking_payment');
-    
-    // Salvar no localStorage
-    localStorage.setItem('premium_user', 'true');
-    if (vipData.email) {
-      localStorage.setItem('premium_email', vipData.email);
-    }
     
     // Mostrar notificação
     toast({
-      title: "🎉 Parabéns! Você é Conteúdo Privado!",
-      description: `Seu plano ${vipData.subscription_type} foi ativado com sucesso!`,
+      title: "🎉 Acesso privado liberado!",
+      description: `Seu plano ${accessData.subscription_type} foi ativado com sucesso!`,
       duration: 10000,
     });
     
     // Callback
-    onVIPActivated?.();
+    onPrivateAccessActivated?.();
+    window.dispatchEvent(new Event('private-access-updated'));
     
     // Esconder animação após alguns segundos
     setTimeout(() => {
-      setIsVIPActivated(false);
+      setIsPrivateAccessActivated(false);
     }, 5000);
-  }, [toast, onVIPActivated]);
+  }, [toast, onPrivateAccessActivated]);
 
-  if (!isVerifying && !isVIPActivated) return null;
+  if (!isVerifying && !isPrivateAccessActivated) return null;
 
   return (
     <AnimatePresence>
@@ -211,7 +192,7 @@ export const PaymentVerificationIndicator = ({
         </motion.div>
       )}
 
-      {isVIPActivated && (
+      {isPrivateAccessActivated && (
         <motion.div
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -247,14 +228,14 @@ export const PaymentVerificationIndicator = ({
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
-                <Crown className="w-20 h-20 text-white mx-auto mb-4 drop-shadow-lg" />
+                <Lock className="w-20 h-20 text-white mx-auto mb-4 drop-shadow-lg" />
               </motion.div>
               
               <h2 className="text-3xl font-bold text-white mb-2">
-                Você é Conteúdo Privado! 🎉
+                Acesso Privado Liberado! 🎉
               </h2>
               <p className="text-yellow-100/90 text-lg">
-                Acesso premium ativado com sucesso!
+                Conteúdo privado ativado com sucesso!
               </p>
               
               <motion.div

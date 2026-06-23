@@ -717,6 +717,7 @@ if (!isOpen) return null;
                               const params = new URLSearchParams();
                               params.set('model', user.id);
                               params.set('plan', plan.plan_type);
+                              params.set('type', plan.model_type);
                               params.set('name', user.username || '');
                               navigate(`/checkout?${params.toString()}`);
                             }}

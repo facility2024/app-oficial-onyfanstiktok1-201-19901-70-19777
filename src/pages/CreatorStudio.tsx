@@ -18,6 +18,8 @@ import { VideoManagementTable } from '@/components/creator/VideoManagementTable'
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
 import { SubscriptionPlansManager } from '@/components/creator/SubscriptionPlansManager';
 import { useGenres } from '@/hooks/useGenres';
+import NeonPayProducerSettings from '@/components/creator/NeonPayProducerSettings';
+import MySales from '@/components/creator/MySales';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
@@ -371,6 +373,14 @@ export default function CreatorStudio() {
             <TabsTrigger value="services" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <Settings className="w-4 h-4 mr-1" />
               Serviços
+            </TabsTrigger>
+            <TabsTrigger value="neonpay" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <CreditCard className="w-4 h-4 mr-1" />
+              NeonPay
+            </TabsTrigger>
+            <TabsTrigger value="sales" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <BarChart3 className="w-4 h-4 mr-1" />
+              Minhas Vendas
             </TabsTrigger>
           </TabsList>
 
@@ -982,6 +992,14 @@ export default function CreatorStudio() {
                 </div>
               )}
             </Card>
+          </TabsContent>
+
+          <TabsContent value="neonpay">
+            <NeonPayProducerSettings />
+          </TabsContent>
+
+          <TabsContent value="sales">
+            <MySales />
           </TabsContent>
         </Tabs>
       </div>

@@ -760,18 +760,11 @@ if (!isOpen) return null;
                       ))}
                     </ul>
                   </div>
-                  
-                  {/* Link para VIP Global */}
-                  <button
-                    onClick={() => navigate('/subscribe')}
-                    className="w-full text-center text-xs text-white/50 hover:text-amber-400 transition-colors mt-4"
-                  >
-                    Quer acessar conteúdo 👑 Premium de todas as modelos? <span className="font-semibold">Seja VIP Global →</span>
-                  </button>
                 </>
               )}
             </div>
             )}
+
 
             {/* Botão de Seguir */}
             <div className="px-4 pb-4">

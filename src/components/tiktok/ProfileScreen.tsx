@@ -149,7 +149,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
 
       setContents((prev) => patch(prev));
       setPublicContents((prev) => patch(prev));
-      setPremiumContents((prev) => patch(prev));
       setPrivateContents((prev) => patch(prev));
     };
 
@@ -450,14 +449,12 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Separar por visibilidade
+      // Separar por visibilidade (qualquer não-pública é tratada como privada)
       const publicVideos = allContent.filter(v => v.visibility === 'public' || !v.visibility);
-      const premiumVideos = allContent.filter(v => v.visibility === 'premium');
-      const privateVideos = allContent.filter(v => v.visibility === 'private');
+      const privateVideos = allContent.filter(v => v.visibility && v.visibility !== 'public');
 
       setContents(allContent);
       setPublicContents(publicVideos);
-      setPremiumContents(premiumVideos);
       setPrivateContents(privateVideos);
       
       // Cache the results for faster subsequent loads
@@ -977,33 +974,22 @@ if (!isOpen) return null;
 
             {/* Sistema de Abas de Conteúdo */}
             <div className="px-4 pb-6">
-              {/* Navegação das Abas */}
               <div className="flex gap-1 mb-4 bg-white/5 p-1 rounded-lg">
                 <button
                   onClick={() => setActiveTab('public')}
                   className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all ${
-                    activeTab === 'public' 
-                      ? 'bg-white/20 text-white' 
+                    activeTab === 'public'
+                      ? 'bg-white/20 text-white'
                       : 'text-white/60 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   🌐 Público ({publicContents.length})
                 </button>
                 <button
-                  onClick={() => setActiveTab('premium')}
-                  className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all ${
-                    activeTab === 'premium' 
-                      ? 'bg-amber-500/30 text-amber-400' 
-                      : 'text-white/60 hover:text-amber-400 hover:bg-amber-500/10'
-                  }`}
-                >
-                  👑 VIP ({premiumContents.length})
-                </button>
-                <button
                   onClick={() => setActiveTab('private')}
                   className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all ${
-                    activeTab === 'private' 
-                      ? 'bg-purple-500/30 text-purple-400' 
+                    activeTab === 'private'
+                      ? 'bg-purple-500/30 text-purple-400'
                       : 'text-white/60 hover:text-purple-400 hover:bg-purple-500/10'
                   }`}
                 >
@@ -1011,29 +997,21 @@ if (!isOpen) return null;
                 </button>
               </div>
 
-              {/* Descrição da Aba Ativa */}
               <p className="text-center text-white/50 text-xs mb-4">
                 {activeTab === 'public' && 'Conteúdo disponível para todos'}
-                {activeTab === 'premium' && 'Apenas para assinantes VIP Global'}
                 {activeTab === 'private' && `Apenas para assinantes de @${user.username}`}
               </p>
 
-              {/* Grid de Conteúdo baseado na aba ativa */}
               {(() => {
-                const currentContents = 
-                  activeTab === 'public' ? publicContents :
-                  activeTab === 'premium' ? premiumContents :
-                  privateContents;
+                const currentContents = activeTab === 'public' ? publicContents : privateContents;
 
                 if (currentContents.length === 0) {
                   return (
                     <div className="flex flex-col items-center justify-center py-8 text-white/60">
                       <div className="text-3xl mb-2">
-                        {activeTab === 'public' && '📱'}
-                        {activeTab === 'premium' && '👑'}
-                        {activeTab === 'private' && '🔒'}
+                        {activeTab === 'public' ? '📱' : '🔒'}
                       </div>
-                      <p className="text-sm">Nenhum conteúdo {activeTab === 'public' ? 'público' : activeTab === 'premium' ? 'VIP' : 'privado'}</p>
+                      <p className="text-sm">Nenhum conteúdo {activeTab === 'public' ? 'público' : 'privado'}</p>
                     </div>
                   );
                 }
@@ -1041,39 +1019,21 @@ if (!isOpen) return null;
                 return (
                   <div className="grid grid-cols-3 gap-1">
                     {currentContents.map((content) => {
-                      // Verificar acesso ao conteúdo
-                      const canAccessPremium = isPremium;
                       const canAccessPrivate = !!modelSubscription;
-                      const isLocked = 
-                        (content.visibility === 'premium' && !canAccessPremium) ||
-                        (content.visibility === 'private' && !canAccessPrivate);
+                      const isPrivate = !!content.visibility && content.visibility !== 'public';
+                      const isLocked = isPrivate && !canAccessPrivate;
 
                       return (
-                        <div 
-                          key={content.id} 
+                        <div
+                          key={content.id}
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border ${
-                            content.visibility === 'premium' ? 'border-amber-500/50' :
-                            content.visibility === 'private' ? 'border-purple-500/50' :
-                            'border-white/20'
+                            isPrivate ? 'border-purple-500/50' : 'border-white/20'
                           }`}
                           onClick={() => {
-                            // Verificar acesso antes de abrir
-                            if (content.visibility === 'premium' && !canAccessPremium) {
-                              toast.info('Conteúdo exclusivo para VIP Global', {
-                                description: 'Assine o VIP para desbloquear',
-                                action: {
-                                  label: 'Ver planos',
-                                  onClick: () => navigate('/subscribe')
-                                }
-                              });
-                              return;
-                            }
-                            
-                            if (content.visibility === 'private' && !canAccessPrivate) {
+                            if (isPrivate && !canAccessPrivate) {
                               toast.info(`Conteúdo privado para assinantes de @${user.username}`, {
-                                description: 'Assine para desbloquear conteúdo privado'
+                                description: 'Assine para desbloquear o acesso privado',
                               });
-                              // Scroll para seção de assinatura
                               const subscriptionSection = document.querySelector('[data-subscription-section]');
                               subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
                               return;
@@ -1092,7 +1052,6 @@ if (!isOpen) return null;
                             }
                           }}
                         >
-                          {/* Preview do Conteúdo */}
                           {content.type === 'video' ? (
                             <>
                               <video
@@ -1129,34 +1088,25 @@ if (!isOpen) return null;
                               }}
                             />
                           )}
-                          
-                          {/* Overlay de bloqueio */}
+
                           {isLocked && (
                             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
-                              <span className="text-2xl mb-1">
-                                {content.visibility === 'premium' ? '👑' : '🔒'}
-                              </span>
-                              <span className="text-white/80 text-[10px] font-semibold">
-                                {content.visibility === 'premium' ? 'VIP' : 'PRIVADO'}
-                              </span>
+                              <span className="text-2xl mb-1">🔒</span>
+                              <span className="text-white/80 text-[10px] font-semibold">PRIVADO</span>
                             </div>
                           )}
-                          
-                          {/* Gradient overlay */}
+
                           {!isLocked && (
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                           )}
-                          
-                          {/* Badge de visibilidade */}
-                          {content.visibility && content.visibility !== 'public' && (
-                            <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                              content.visibility === 'premium' 
-                                ? 'bg-amber-500/90 text-black' 
-                                : 'bg-purple-500/90 text-white'
-                            }`}>
-                              {content.visibility === 'premium' ? '👑 VIP' : '🔒'}
+
+                          {isPrivate && (
+                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-purple-500/90 text-white">
+                              🔒
                             </div>
                           )}
+
+
                           
                           {/* Label FOTO/VIDEO */}
                           {!isLocked && (

@@ -31,16 +31,16 @@ export default function NeonPayProducerSettings() {
       .eq("id", userId);
     setLoading(false);
     if (error) toast.error(error.message);
-    else toast.success("Chave NeonPay salva");
+    else toast.success("Chave Neon salva");
   };
 
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader>
-        <CardTitle className="text-white">Ativação NeonPay</CardTitle>
+        <CardTitle className="text-white">Ativação Neon</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Label className="text-white">Producer ID (NeonPay)</Label>
+        <Label className="text-white">Producer ID (Neon)</Label>
         <Input
           placeholder="ex: prod_abc123"
           value={producerId} onChange={(e) => setProducerId(e.target.value)}

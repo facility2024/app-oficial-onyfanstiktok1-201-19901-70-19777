@@ -116,6 +116,15 @@ Deno.serve(async (req) => {
       metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
       products: [{ id: `priv_${private_model_id}_${plan_type}`, name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
     }
+
+    // Adiciona split se o criador tiver producerId NeonPay
+    if (creatorProducerId && creatorShareReais > 0) {
+      payload.splits = [{
+        producerId: creatorProducerId,
+        amount: isPix ? creatorShareReais : Math.round(creatorShareReais * 100),
+        type: 'fixed',
+      }]
+    }
     if (!isPix) {
       payload.card = {
         number: String(card_number).replace(/\s/g, ''),

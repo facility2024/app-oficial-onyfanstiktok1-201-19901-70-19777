@@ -208,11 +208,11 @@ export const AdminVIPUsers = () => {
             className="border-green-500/50 text-green-400 hover:bg-green-500/10"
           >
             <CheckCircle className="w-4 h-4 mr-2" />
-            Ativar VIP
+            Ativar Conteúdo Privado
           </Button>
           <Button onClick={() => setShowCreateModal(true)} className="bg-amber-500 hover:bg-amber-600">
             <Plus className="w-4 h-4 mr-2" />
-            Adicionar VIP
+            Adicionar Conteúdo Privado
           </Button>
           <Button onClick={() => checkExpiredSubscriptions().then(() => fetchVIPUsers())} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -334,7 +334,7 @@ export const AdminVIPUsers = () => {
             </div>
           ) : vipUsers.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
-              Nenhum usuário VIP encontrado
+              Nenhum usuário Conteúdo Privado encontrado
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -407,7 +407,7 @@ export const AdminVIPUsers = () => {
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-white">Editar Usuário VIP</DialogTitle>
+            <DialogTitle className="text-white">Editar Usuário Conteúdo Privado</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -457,7 +457,7 @@ export const AdminVIPUsers = () => {
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Crown className="w-5 h-5 text-amber-400" />
-              Adicionar Novo VIP
+              Adicionar Novo Conteúdo Privado
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -531,7 +531,7 @@ export const AdminVIPUsers = () => {
               ) : (
                 <>
                   <Plus className="w-4 h-4 mr-2" />
-                  Criar VIP
+                  Criar Conteúdo Privado
                 </>
               )}
             </Button>
@@ -545,10 +545,10 @@ export const AdminVIPUsers = () => {
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-400" />
-              Ativar VIP Diretamente
+              Ativar Conteúdo Privado Diretamente
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Ative um usuário VIP diretamente no banco de dados.
+              Ative um usuário Conteúdo Privado diretamente no banco de dados.
             </DialogDescription>
           </DialogHeader>
           
@@ -607,7 +607,7 @@ export const AdminVIPUsers = () => {
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Ativar VIP
+                  Ativar Conteúdo Privado
                 </>
               )}
             </Button>

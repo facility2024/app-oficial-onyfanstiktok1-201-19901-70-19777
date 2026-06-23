@@ -3628,7 +3628,7 @@ export const TikTokApp = () => {
         userEmail={authUser?.email || undefined}
         userId={authUser?.id || undefined}
         onVIPActivated={() => {
-          console.log('🎉 VIP ativado! Atualizando status...');
+          console.log('🎉 Conteúdo Privado ativado! Atualizando status...');
           checkPremiumStatus();
         }}
       />

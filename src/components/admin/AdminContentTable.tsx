@@ -853,7 +853,7 @@ export const AdminContentTable = () => {
                         size="sm"
                         onClick={() => handleOffersModal(content)}
                         className="p-1 h-6 w-6 sm:h-8 sm:w-8 text-warning hover:text-warning hover:bg-warning/10"
-                        title="Criar Oferta VIP"
+                        title="Criar Oferta Conteúdo Privado"
                       >
                         <Crown className="h-3 w-3" />
                       </Button>

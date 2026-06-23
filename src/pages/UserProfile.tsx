@@ -312,7 +312,7 @@ export default function UserProfile() {
                         className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500/30 to-yellow-500/30 text-amber-400 rounded-full text-xs font-medium border border-amber-500/30 hover:from-amber-500/40 hover:to-yellow-500/40 transition-colors cursor-pointer"
                       >
                         <Crown className="w-3.5 h-3.5" />
-                        <span>VIP</span>
+                        <span>Conteúdo Privado</span>
                         {getDaysRemaining() > 0 && (
                           <span className="text-amber-300/80 ml-1">
                             • {getDaysRemaining()} {getDaysRemaining() === 1 ? 'dia' : 'dias'}
@@ -405,7 +405,7 @@ export default function UserProfile() {
                     <div>
                       <h3 className="text-sm font-medium text-white">Minhas Assinaturas</h3>
                       <p className="text-xs text-gray-400">
-                        {isPremium ? 'VIP Ativo • Veja todas suas assinaturas' : 'Gerencie suas assinaturas de modelos'}
+                        {isPremium ? 'Conteúdo Privado Ativo • Veja todas suas assinaturas' : 'Gerencie suas assinaturas de modelos'}
                       </p>
                     </div>
                   </div>

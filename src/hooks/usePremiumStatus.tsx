@@ -79,13 +79,13 @@ export const usePremiumStatus = () => {
       }
 
       if (matchedPremium) {
-        console.log('✅ Usuário é VIP! Plano:', matchedPremium.subscription_type);
+        console.log('✅ Usuário é Conteúdo Privado! Plano:', matchedPremium.subscription_type);
         localStorage.setItem('premium_user', 'true');
         localStorage.setItem('premium_email', userEmail || '');
         setIsPremium(true);
         setPremiumData(matchedPremium);
       } else {
-        console.log('❌ Usuário NÃO é VIP ou assinatura expirada');
+        console.log('❌ Usuário NÃO é Conteúdo Privado ou assinatura expirada');
         localStorage.removeItem('premium_user');
         localStorage.removeItem('premium_email');
         setIsPremium(false);

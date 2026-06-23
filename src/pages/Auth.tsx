@@ -562,7 +562,7 @@ const Auth = () => {
                   required
                   disabled={loading}
                 />
-                <p className="text-[10px] text-white/40">Use o mesmo número para pagamentos VIP</p>
+                <p className="text-[10px] text-white/40">Use o mesmo número para pagamentos Conteúdo Privado</p>
               </div>
             </>
           )}

@@ -321,11 +321,11 @@ const CheckoutPage = () => {
             </div>
             <h2 className="text-2xl font-bold text-white">Pagamento Aprovado!</h2>
             <p className="text-gray-400">
-              Sua assinatura VIP foi ativada com sucesso. Aproveite todo o conteúdo exclusivo!
+              Sua assinatura Conteúdo Privado foi ativada com sucesso. Aproveite todo o conteúdo exclusivo!
             </p>
             <div className="flex items-center gap-2 text-amber-400">
               <Lock className="w-5 h-5" />
-              <span className="font-semibold">Você agora é VIP!</span>
+              <span className="font-semibold">Você agora é Conteúdo Privado!</span>
             </div>
             <Button onClick={handleSuccessClose} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold mt-2">
               Voltar para o App
@@ -360,7 +360,7 @@ const CheckoutPage = () => {
           <div className="flex items-center gap-3">
             <Lock className="w-8 h-8 text-amber-400" />
             <div>
-              <p className="text-white font-bold">Plano VIP Mensal</p>
+              <p className="text-white font-bold">Plano Conteúdo Privado Mensal</p>
               <p className="text-gray-400 text-sm">Acesso completo por 30 dias</p>
             </div>
           </div>

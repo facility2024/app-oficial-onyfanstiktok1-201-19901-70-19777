@@ -48,7 +48,7 @@ export const AdminUsers = () => {
   const [currentModelsPage, setCurrentModelsPage] = useState(1);
   const usersPerPage = 20;
 
-  // Filtros VIP
+  // Filtros Conteúdo Privado
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -458,7 +458,7 @@ export const AdminUsers = () => {
                           <span className="font-medium text-foreground">{user.name || 'Sem nome'}</span>
                           <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                             <Crown className="w-3 h-3 text-warning" />
-                            <span>VIP</span>
+                            <span>Conteúdo Privado</span>
                           </div>
                         </div>
                       </div>
@@ -531,7 +531,7 @@ export const AdminUsers = () => {
                 )) : (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                      Nenhum usuário VIP encontrado
+                      Nenhum usuário Conteúdo Privado encontrado
                     </td>
                   </tr>
                 )}
@@ -546,7 +546,7 @@ export const AdminUsers = () => {
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Usuário VIP</DialogTitle>
+            <DialogTitle>Editar Usuário Conteúdo Privado</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

@@ -159,7 +159,7 @@ const MySubscriptionsPage = () => {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Crown className={`w-5 h-5 ${isPremium ? 'text-amber-400' : 'text-white/40'}`} />
-                <span className={isPremium ? 'text-amber-300 font-semibold' : 'text-white/60'}>VIP Global</span>
+                <span className={isPremium ? 'text-amber-300 font-semibold' : 'text-white/60'}>Conteúdo Privado Global</span>
                 {isPremium && (
                   <Badge className="ml-auto bg-amber-500/30 text-amber-200 border-amber-400/50">
                     Ativo
@@ -225,7 +225,7 @@ const MySubscriptionsPage = () => {
                     className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
                   >
                     <Crown className="w-4 h-4 mr-2" />
-                    Tornar-se VIP
+                    Tornar-se Conteúdo Privado
                   </Button>
                 </div>
               )}

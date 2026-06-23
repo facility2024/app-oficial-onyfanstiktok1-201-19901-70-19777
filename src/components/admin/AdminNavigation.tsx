@@ -30,7 +30,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
     { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },
     { id: 'money', label: 'Financeiro', icon: DollarSign, shortLabel: '💰' },
-    { id: 'vip', label: 'VIP', icon: Crown, shortLabel: '👑' },
+    { id: 'vip', label: 'Conteúdo Privado', icon: Crown, shortLabel: '👑' },
     { id: 'webhook-logs', label: 'Webhooks', icon: FileText, shortLabel: '📋' },
     { id: 'email-events', label: 'E-mails', icon: FileText, shortLabel: '📧' },
     { id: 'settings', label: 'Configurações', icon: Settings, shortLabel: '⚙️' },

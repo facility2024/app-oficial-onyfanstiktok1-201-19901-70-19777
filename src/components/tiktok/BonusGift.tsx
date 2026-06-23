@@ -204,7 +204,7 @@ export const BonusGift = ({ isMobile = false }: BonusGiftProps) => {
       // Show success notification
       toast({
         title: `Parabéns ${formData.name}!`,
-        description: "Cadastro realizado com sucesso! Agora você faz parte do grupo VIP!",
+        description: "Cadastro realizado com sucesso! Agora você faz parte do grupo Conteúdo Privado!",
         duration: 4000,
       });
       

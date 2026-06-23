@@ -111,7 +111,7 @@ const navigationGroups = [
     items: [
       { id: 'money', label: 'Financeiro', icon: DollarSign },
       { id: 'affiliates', label: 'Afiliados', icon: UserPlus },
-      { id: 'vip', label: 'Usuários VIP', icon: Crown },
+      { id: 'vip', label: 'Usuários Conteúdo Privado', icon: Crown },
       { id: 'model-subscriptions', label: 'Assinaturas Modelos', icon: Crown },
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },
       { id: 'email-events', label: 'E-mails', icon: Mail },

@@ -143,11 +143,8 @@ Deno.serve(async (req) => {
           splits.push({ producerId: normalizedCreatorProducerId, amount: toUnit(creatorNetReais) })
         }
 
-        // Split para a conta NeonPay do admin principal (comissão da plataforma),
-        // apenas quando ela não for a conta dona da API nem duplicada do criador.
-        if (ADMIN_PRODUCER_ID && platformShareReais > 0 && ADMIN_PRODUCER_ID !== normalizedCreatorProducerId) {
-          splits.push({ producerId: ADMIN_PRODUCER_ID, amount: toUnit(platformShareReais) })
-        }
+        // Não enviamos split para a conta admin/dona da API.
+        // A NeonPay já mantém automaticamente todo valor que não for dividido.
         if (splits.length > 0) p.splits = splits
       }
       if (!isPix) {

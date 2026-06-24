@@ -216,6 +216,20 @@ export const AdminUsers = () => {
     }
   };
 
+  // Excluir usuário completamente do banco
+  const handleDeleteUser = async (userId: string, name: string) => {
+    if (!window.confirm(`Excluir permanentemente "${name}"? Esta ação é irreversível.`)) return;
+    try {
+      const { error } = await (supabase as any).rpc('admin_delete_user', { p_user_id: userId });
+      if (error) throw error;
+      setAllUsers(prev => prev.filter((u: any) => u.id !== userId));
+      toast.success('Usuário excluído do banco');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao excluir: ${e.message || 'tente novamente'}`);
+    }
+  };
+
   // Funções de ação VIP
   const handleEditUser = (user: PremiumUser) => {
     setEditingUser(user);

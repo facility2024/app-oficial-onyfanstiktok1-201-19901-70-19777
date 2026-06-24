@@ -146,16 +146,16 @@ export const useFinancialData = () => {
       const thisMonthRevenue = thisMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
       const lastMonthRevenue = lastMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
 
-      // Saldo do ADMIN = soma das comissões da plataforma (platform_amount).
-      // Se não houver platform_amount, o valor inteiro é do admin.
-      const platformBalance = approved.reduce(
-        (s: number, t: any) => s + Number(t.platform_amount ?? t.amount ?? 0),
-        0
+      // Saldo do ADMIN = recalculado pela % atual de comissão (mesma regra do painel do criador).
+      // comissaoAdmin = bruto * (pct/100); liquidoCriador = bruto - comissaoAdmin
+      const platformBalance = roundMoney(
+        approved.reduce((s: number, t: any) => s + Number(t.amount || 0) * (commissionPct / 100), 0)
       );
-      // "Taxas" do ponto de vista do admin = valor repassado ao criador
-      const creatorPaid = approved.reduce(
-        (s: number, t: any) => s + Number(t.creator_amount ?? 0),
-        0
+      const creatorPaid = roundMoney(
+        approved.reduce(
+          (s: number, t: any) => s + Number(t.amount || 0) * (1 - commissionPct / 100),
+          0
+        )
       );
 
       const salesGrowth = yesterdaySales > 0 ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 : 0;

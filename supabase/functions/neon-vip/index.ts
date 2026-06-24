@@ -182,7 +182,9 @@ Deno.serve(async (req) => {
     const paymentId = data?.transactionId || data?.id || identifier
     const orderId = data?.order?.id || data?.orderId || null
     const statusRaw = String(data?.status || data?.transaction?.status || '').toLowerCase()
-    const approved = ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(statusRaw)
+    // PIX nunca é aprovado na criação — somente via webhook (TRANSACTION_PAID).
+    // Cartão pode ser aprovado imediatamente quando a NeonPay confirma.
+    const approved = !isPix && ['paid', 'approved', 'confirmed', 'completed', 'authorized'].includes(statusRaw)
 
     // Insere transação (o trigger libera o acesso privado quando status='APPROVED')
     const insertedTx = await admin.from('payment_transactions').insert({

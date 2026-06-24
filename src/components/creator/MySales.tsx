@@ -36,14 +36,16 @@ export default function MySales() {
       const pct = Number((commRes.data as any)?.value ?? 0);
       setCommissionPct(pct);
 
-      const applyPct = (gross: number) => {
-        const platform = Number((gross * (pct / 100)).toFixed(2));
-        const net = Number((gross - platform).toFixed(2));
-        return { platform, net };
-      };
-
       const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
-        const { platform, net } = applyPct(Number(p.amount || 0));
+        const gross = Number(p.amount || 0);
+        const platform = p.platform_amount != null
+          ? Number(p.platform_amount)
+          : Number((gross * (pct / 100)).toFixed(2));
+        const net = p.seller_net != null
+          ? Number(p.seller_net)
+          : p.seller_amount != null
+            ? Number(p.seller_amount)
+            : Number((gross - platform).toFixed(2));
         return { ...p, platform_amount: platform, seller_net: net };
       });
 
@@ -51,7 +53,9 @@ export default function MySales() {
         const gross = Number(t.amount || 0);
         const creatorGross = Number(t.creator_amount ?? 0);
         const creatorNet = t.creator_net_amount != null ? Number(t.creator_net_amount) : creatorGross;
-        const platform = Number((gross - creatorGross).toFixed(2));
+        const platform = t.platform_amount != null
+          ? Number(t.platform_amount)
+          : Number((gross - creatorGross).toFixed(2));
         const st = String(t.status || "").toLowerCase();
         return {
           id: `tx_${t.id}`,

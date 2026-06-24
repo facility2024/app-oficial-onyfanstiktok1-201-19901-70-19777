@@ -55,7 +55,7 @@ export default function MySales() {
       count: paid.length,
       gross: paid.reduce((s, r) => s + Number(r.amount || 0), 0),
       net: paid.reduce((s, r) => s + Number(r.seller_net ?? r.seller_amount ?? 0), 0),
-      fee: paid.reduce((s, r) => s + Number(r.neonpay_fee || 0), 0),
+      platform: paid.reduce((s, r) => s + Number(r.platform_amount || 0), 0),
     };
   }, [rows]);
 

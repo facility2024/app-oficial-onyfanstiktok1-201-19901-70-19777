@@ -70,6 +70,11 @@ export default function CreatorStudio() {
     is_featured: false,
   });
 
+  // Publicação em lote (múltiplas URLs ao mesmo tempo)
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkUrls, setBulkUrls] = useState('');
+  const [bulkPublishing, setBulkPublishing] = useState(false);
+
   useEffect(() => {
     checkCreatorRole();
   }, []);
@@ -302,6 +307,71 @@ export default function CreatorStudio() {
       }
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleBulkPublish = async () => {
+    const urls = bulkUrls
+      .split('\n')
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0);
+
+    if (urls.length === 0) {
+      toast.error('Cole ao menos uma URL de vídeo.');
+      return;
+    }
+    if (!formData.title.trim() || formData.title.trim().length < 3) {
+      toast.error('Informe um título base (mín. 3 caracteres).');
+      return;
+    }
+    if (!formData.description.trim() || formData.description.trim().length < 10) {
+      toast.error('Informe a descrição (mín. 10 caracteres).');
+      return;
+    }
+    if (formData.genres.length === 0) {
+      toast.error('Selecione pelo menos um gênero.');
+      return;
+    }
+
+    setBulkPublishing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const rows = urls.map((url, i) => ({
+        title: urls.length > 1 ? `${formData.title} #${i + 1}` : formData.title,
+        description: formData.description,
+        video_url: url,
+        thumbnail_url: formData.thumbnail_url || url.replace(/\.(mp4|mov|webm)$/i, '.jpg'),
+        creator_id: user.id,
+        model_id: null,
+        visibility: formData.visibility,
+        is_featured: formData.is_featured,
+        is_active: true,
+        duration: '00:00',
+        genres: formData.genres,
+      }));
+
+      const { error } = await supabase.from('videos').insert(rows as any[]);
+      if (error) throw error;
+
+      toast.success(`${urls.length} vídeo(s) publicado(s) com sucesso! 🎉`);
+      setBulkUrls('');
+      setBulkMode(false);
+      setFormData({
+        title: '',
+        description: '',
+        video_url: '',
+        thumbnail_url: '',
+        genres: [],
+        visibility: 'public',
+        is_featured: false,
+      });
+    } catch (err: any) {
+      console.error('Erro ao publicar em lote:', err);
+      toast.error('Erro ao publicar em lote: ' + (err?.message || 'tente novamente'));
+    } finally {
+      setBulkPublishing(false);
     }
   };
 
@@ -620,6 +690,67 @@ export default function CreatorStudio() {
                     </div>
                   </div>
                 )}
+
+                {/* Publicação em Lote (várias URLs ao mesmo tempo) */}
+                <div className="border-2 border-dashed border-amber-500/40 bg-amber-500/5 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-300 font-semibold">
+                      <List className="w-4 h-4" />
+                      Publicar várias URLs ao mesmo tempo
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={bulkMode ? 'secondary' : 'outline'}
+                      onClick={() => setBulkMode((v) => !v)}
+                      className={bulkMode ? 'bg-amber-600 text-white hover:bg-amber-700' : 'border-amber-500/40 text-amber-200 hover:bg-amber-500/10'}
+                    >
+                      {bulkMode ? 'Fechar lista' : 'Abrir lista em lote'}
+                    </Button>
+                  </div>
+
+                  {bulkMode && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-300">
+                        Cole uma URL por linha. Cada URL vira um vídeo no seu perfil usando o
+                        <span className="text-white font-semibold"> título base</span>,
+                        <span className="text-white font-semibold"> descrição</span> e
+                        <span className="text-white font-semibold"> gêneros</span> preenchidos acima.
+                        Se a thumbnail estiver vazia, será inferida da URL do vídeo.
+                      </p>
+                      <Textarea
+                        value={bulkUrls}
+                        onChange={(e) => setBulkUrls(e.target.value)}
+                        rows={6}
+                        placeholder={'https://cdn.bunny.net/video1.mp4\nhttps://cdn.bunny.net/video2.mp4\nhttps://cdn.bunny.net/video3.mp4'}
+                        className="bg-gray-900 border-gray-700 text-white text-sm font-mono"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">
+                          {bulkUrls.split('\n').filter((u) => u.trim()).length} URL(s) na lista
+                        </span>
+                        <Button
+                          type="button"
+                          onClick={handleBulkPublish}
+                          disabled={bulkPublishing}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                        >
+                          {bulkPublishing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Publicando lote...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Publicar {bulkUrls.split('\n').filter((u) => u.trim()).length} vídeo(s)
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Submit Button */}
                 <Button

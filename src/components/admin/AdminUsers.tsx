@@ -216,6 +216,20 @@ export const AdminUsers = () => {
     }
   };
 
+  // Excluir usuário completamente do banco
+  const handleDeleteUser = async (userId: string, name: string) => {
+    if (!window.confirm(`Excluir permanentemente "${name}"? Esta ação é irreversível.`)) return;
+    try {
+      const { error } = await (supabase as any).rpc('admin_delete_user', { p_user_id: userId });
+      if (error) throw error;
+      setAllUsers(prev => prev.filter((u: any) => u.id !== userId));
+      toast.success('Usuário excluído do banco');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao excluir: ${e.message || 'tente novamente'}`);
+    }
+  };
+
   // Funções de ação VIP
   const handleEditUser = (user: PremiumUser) => {
     setEditingUser(user);
@@ -599,6 +613,7 @@ export const AdminUsers = () => {
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">Telefone</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">Cadastro</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -636,11 +651,22 @@ export const AdminUsers = () => {
                               <Badge variant="secondary">Usuário</Badge>
                             )}
                           </td>
+                          <td className="py-3 px-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteUser(u.id, displayName)}
+                              title="Excluir usuário"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </td>
                         </tr>
                       );
                     }) : (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                        <td colSpan={6} className="py-8 text-center text-muted-foreground">
                           Nenhum usuário cadastrado encontrado
                         </td>
                       </tr>

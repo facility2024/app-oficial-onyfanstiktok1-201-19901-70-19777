@@ -48,15 +48,19 @@ export default function MySales() {
       });
 
       const fromTx = (txRes.data ?? []).map((t: any) => {
-        const { platform, net } = applyPct(Number(t.amount || 0));
+        const gross = Number(t.amount || 0);
+        const creatorGross = Number(t.creator_amount ?? 0);
+        const creatorNet = t.creator_net_amount != null ? Number(t.creator_net_amount) : creatorGross;
+        const platform = Number((gross - creatorGross).toFixed(2));
+        const st = String(t.status || "").toLowerCase();
         return {
           id: `tx_${t.id}`,
           created_at: t.created_at,
-          amount: t.amount,
+          amount: gross,
           platform_amount: platform,
-          seller_amount: net,
-          seller_net: net,
-          status: String(t.status || "").toLowerCase() === "approved" ? "paid" : "pending",
+          seller_amount: creatorNet,
+          seller_net: creatorNet,
+          status: (st === "approved" || st === "confirmed" || st === "paid" || st === "received") ? "paid" : "pending",
           payment_method: `privado ${t.plan_type ?? ""}`.trim(),
         };
       });

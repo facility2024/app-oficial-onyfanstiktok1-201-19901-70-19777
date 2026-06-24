@@ -691,6 +691,67 @@ export default function CreatorStudio() {
                   </div>
                 )}
 
+                {/* Publicação em Lote (várias URLs ao mesmo tempo) */}
+                <div className="border-2 border-dashed border-amber-500/40 bg-amber-500/5 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-300 font-semibold">
+                      <List className="w-4 h-4" />
+                      Publicar várias URLs ao mesmo tempo
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={bulkMode ? 'secondary' : 'outline'}
+                      onClick={() => setBulkMode((v) => !v)}
+                      className={bulkMode ? 'bg-amber-600 text-white hover:bg-amber-700' : 'border-amber-500/40 text-amber-200 hover:bg-amber-500/10'}
+                    >
+                      {bulkMode ? 'Fechar lista' : 'Abrir lista em lote'}
+                    </Button>
+                  </div>
+
+                  {bulkMode && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-300">
+                        Cole uma URL por linha. Cada URL vira um vídeo no seu perfil usando o
+                        <span className="text-white font-semibold"> título base</span>,
+                        <span className="text-white font-semibold"> descrição</span> e
+                        <span className="text-white font-semibold"> gêneros</span> preenchidos acima.
+                        Se a thumbnail estiver vazia, será inferida da URL do vídeo.
+                      </p>
+                      <Textarea
+                        value={bulkUrls}
+                        onChange={(e) => setBulkUrls(e.target.value)}
+                        rows={6}
+                        placeholder={'https://cdn.bunny.net/video1.mp4\nhttps://cdn.bunny.net/video2.mp4\nhttps://cdn.bunny.net/video3.mp4'}
+                        className="bg-gray-900 border-gray-700 text-white text-sm font-mono"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">
+                          {bulkUrls.split('\n').filter((u) => u.trim()).length} URL(s) na lista
+                        </span>
+                        <Button
+                          type="button"
+                          onClick={handleBulkPublish}
+                          disabled={bulkPublishing}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                        >
+                          {bulkPublishing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Publicando lote...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Publicar {bulkUrls.split('\n').filter((u) => u.trim()).length} vídeo(s)
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Submit Button */}
                 <Button
                   type="submit"

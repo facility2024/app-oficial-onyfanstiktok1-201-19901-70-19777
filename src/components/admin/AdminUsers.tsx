@@ -46,6 +46,9 @@ export const AdminUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [models, setModels] = useState([]);
   const [currentModelsPage, setCurrentModelsPage] = useState(1);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [usersPage, setUsersPage] = useState(1);
+  const [userSearch, setUserSearch] = useState('');
   const usersPerPage = 20;
 
   // Filtros Conteúdo Privado

@@ -8,10 +8,17 @@ import {
 const fmt = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
 
+const roundMoney = (value: number) => Number(value.toFixed(2));
+
+const calculateSaleAmounts = (gross: number, commissionPct: number) => {
+  const platform = roundMoney(gross * (commissionPct / 100));
+  const creatorNet = roundMoney(gross - platform);
+  return { platform, creatorNet };
+};
+
 export default function MySales() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commissionPct, setCommissionPct] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -34,32 +41,16 @@ export default function MySales() {
       ]);
 
       const pct = Number((commRes.data as any)?.value ?? 0);
-      setCommissionPct(pct);
 
       const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
         const gross = Number(p.amount || 0);
-        const platform = p.platform_amount != null
-          ? Number(p.platform_amount)
-          : Number((gross * (pct / 100)).toFixed(2));
-        const net = p.seller_net != null
-          ? Number(p.seller_net)
-          : p.seller_amount != null
-            ? Number(p.seller_amount)
-            : Number((gross - platform).toFixed(2));
-        return { ...p, platform_amount: platform, seller_net: net };
+        const { platform, creatorNet } = calculateSaleAmounts(gross, pct);
+        return { ...p, platform_amount: platform, seller_amount: creatorNet, seller_net: creatorNet };
       });
 
       const fromTx = (txRes.data ?? []).map((t: any) => {
         const gross = Number(t.amount || 0);
-        const platform = t.platform_amount != null
-          ? Number(t.platform_amount)
-          : Number((gross * (pct / 100)).toFixed(2));
-        const creatorGross = t.creator_amount != null
-          ? Number(t.creator_amount)
-          : Number((gross - platform).toFixed(2));
-        const creatorNet = t.creator_net_amount != null
-          ? Number(t.creator_net_amount)
-          : creatorGross;
+        const { platform, creatorNet } = calculateSaleAmounts(gross, pct);
         const st = String(t.status || "").toLowerCase();
         return {
           id: `tx_${t.id}`,

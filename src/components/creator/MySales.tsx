@@ -45,7 +45,7 @@ export default function MySales() {
       const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
         const gross = Number(p.amount || 0);
         const { platform, creatorNet } = calculateSaleAmounts(gross, pct);
-        return { ...p, platform_amount: platform, seller_net: net };
+        return { ...p, platform_amount: platform, seller_amount: creatorNet, seller_net: creatorNet };
       });
 
       const fromTx = (txRes.data ?? []).map((t: any) => {

@@ -73,11 +73,13 @@ export default function SalesReports() {
 
     const fromTx = (txRes.data ?? []).map((t: any) => {
       const gross = Number(t.amount || 0);
-      const creatorGross = Number(t.creator_amount ?? 0);
-      const creatorNet = t.creator_net_amount != null ? Number(t.creator_net_amount) : creatorGross;
       const platform = t.platform_amount != null
         ? Number(t.platform_amount)
-        : Number((gross - creatorGross).toFixed(2));
+        : Number((gross * (pct / 100)).toFixed(2));
+      const creatorGross = t.creator_amount != null
+        ? Number(t.creator_amount)
+        : Number((gross - platform).toFixed(2));
+      const creatorNet = t.creator_net_amount != null ? Number(t.creator_net_amount) : creatorGross;
       const st = String(t.status || "").toLowerCase();
       return {
         id: `tx_${t.id}`,

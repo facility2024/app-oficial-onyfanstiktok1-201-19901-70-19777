@@ -70,6 +70,11 @@ export default function CreatorStudio() {
     is_featured: false,
   });
 
+  // Publicação em lote (múltiplas URLs ao mesmo tempo)
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkUrls, setBulkUrls] = useState('');
+  const [bulkPublishing, setBulkPublishing] = useState(false);
+
   useEffect(() => {
     checkCreatorRole();
   }, []);

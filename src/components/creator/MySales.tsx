@@ -77,8 +77,9 @@ export default function MySales() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat title="Vendas pagas" value={String(totals.count)} />
         <Stat title="Bruto" value={fmt(totals.gross)} />
-        <Stat title="Taxa NeonPay" value={fmt(totals.fee)} accent="text-amber-400" />
+        <Stat title="Comissão app" value={fmt(totals.platform)} accent="text-amber-400" />
         <Stat title="Meu líquido" value={fmt(totals.net)} accent="text-green-400" />
+
       </div>
 
       <Card className="bg-gray-900 border-gray-800">

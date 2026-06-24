@@ -637,11 +637,22 @@ export const AdminUsers = () => {
                               <Badge variant="secondary">Usuário</Badge>
                             )}
                           </td>
+                          <td className="py-3 px-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteUser(u.id, displayName)}
+                              title="Excluir usuário"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </td>
                         </tr>
                       );
                     }) : (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                        <td colSpan={6} className="py-8 text-center text-muted-foreground">
                           Nenhum usuário cadastrado encontrado
                         </td>
                       </tr>

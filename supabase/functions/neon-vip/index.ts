@@ -130,8 +130,10 @@ Deno.serve(async (req) => {
         metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
         products: [{ id: `priv_${private_model_id}_${plan_type}`, name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
       }
-      if (withSplit && creatorProducerId && sellerCents > 0) {
-        p.splits = [{ producerId: creatorProducerId, amount: sellerCents }]
+      if (withSplit && creatorProducerId && creatorNetReais > 0) {
+        // PIX: amount em reais; Cartão: amount em centavos (mesma unidade do total)
+        const splitAmount = isPix ? Number(creatorNetReais.toFixed(2)) : Math.round(creatorNetReais * 100)
+        p.splits = [{ producerId: creatorProducerId, amount: splitAmount }]
       }
       if (!isPix) {
         p.card = {

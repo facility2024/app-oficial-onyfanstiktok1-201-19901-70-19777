@@ -105,16 +105,15 @@ Deno.serve(async (req) => {
 
     const url = `${NEON_BASE}/${isPix ? 'pix/receive' : 'card/receive'}`
 
-    // Split NeonPay: o valor para o criador precisa deixar margem p/ as taxas da NeonPay
-    // (taxa estimada: 5% + R$ 1,00 — fica retida na conta principal/admin).
-    const NEON_FEE_PCT = 0.05
-    const NEON_FEE_FIXED = 1.0
-    const estFeeReais = Number((price * NEON_FEE_PCT + NEON_FEE_FIXED).toFixed(2))
+    // Split NeonPay: criador recebe o valor BRUTO menos a comissão do app admin.
+    // Ex.: venda R$ 5,00 com 10% de comissão -> criador R$ 4,50 (admin R$ 0,50).
+    // As taxas da NeonPay são absorvidas pela conta principal (admin).
+    const estFeeReais = 0
     let sellerCents = 0
     let creatorNetReais = 0
     if (creatorProducerId && creatorShareReais > 0) {
-      creatorNetReais = Math.max(0, Number((creatorShareReais - estFeeReais).toFixed(2)))
-      sellerCents = Math.floor(creatorNetReais * 100)
+      creatorNetReais = creatorShareReais
+      sellerCents = Math.round(creatorNetReais * 100)
     }
 
     const buildPayload = (withSplit: boolean) => {

@@ -192,106 +192,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       }
     }, [isPrivateVideo, locked, modelId]);
 
-    useEffect(() => {
-      if (!isInView) return;
-      let cancelled = false;
-      const loadOffer = async () => {
-        try {
-          const orFilter = `video_id.eq.${video.id},and(model_id.eq.${modelId},video_id.is.null)`;
-          const { data, error } = await supabase
-            .from('offers')
-            .select('*')
-            .eq('is_active', true)
-            .or(orFilter)
-            .order('created_at', { ascending: false })
-            .limit(1);
-          if (error) throw error;
-          const o = (data && data[0]) as Offer | undefined;
-          if (!cancelled) setOffer(o && withinWindow(o) ? o : null);
-        } catch {
-          // Silently fail offer fetch
-        }
-      };
-      loadOffer();
-      return () => { cancelled = true; };
-    }, [video.id, modelId, isInView]);
-
-    useEffect(() => {
-      const channel = supabase
-        .channel('offers-realtime')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'offers' },
-          (payload) => {
-            const o = payload.new as Offer | undefined;
-            if (!o || !o.is_active) return;
-            if (o.video_id === video.id || (!o.video_id && o.model_id === modelId)) {
-              if (withinWindow(o)) {
-                clearTimers();
-                setTimesShown(0);
-                setOffer(o);
-                setShowOffer(true);
-              }
-            }
-          }
-        )
-        .subscribe();
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }, [video.id, modelId]);
-
-    useEffect(() => {
-      if (offer && checkOfferDismissed(offer.id)) {
-        setOfferDismissed(true);
-        setShowOffer(false);
-      } else {
-        setOfferDismissed(false);
-      }
-    }, [offer]);
-
-    useEffect(() => {
-      clearTimers();
-      setShowOffer(false);
-      setTimesShown(0);
-      if (!offer || !isInView || offerDismissed) return;
-
-      const now = Date.now();
-      const start = offer.start_at ? Date.parse(offer.start_at) : now;
-      const end = offer.end_at ? Date.parse(offer.end_at) : now + 24 * 3600 * 1000;
-      const duration = Math.max(1, offer.duration_seconds || 5) * 1000;
-      const totalShows = Math.max(1, offer.show_times || 1);
-
-      let shows = 0;
-      const showOnce = () => {
-        if (!offerDismissed) {
-          setShowOffer(true);
-          const hideId = window.setTimeout(() => setShowOffer(false), duration);
-          timersRef.current.push(hideId);
-        }
-      };
-
-      const scheduleNext = (delay: number) => {
-        const id = window.setTimeout(() => {
-          if (Date.now() > end) return;
-          shows += 1;
-          setTimesShown(shows);
-          showOnce();
-          if (shows < totalShows) {
-            const remainingWindow = Math.max(0, end - Date.now());
-            const remainingShows = totalShows - shows;
-            const interval = remainingShows > 0 ? Math.max(60_000, Math.floor((remainingWindow - duration) / remainingShows)) : 0;
-            if (interval > 0) scheduleNext(interval);
-          }
-        }, Math.max(0, delay));
-        timersRef.current.push(id);
-      };
-
-      const initialDelay = Math.max(0, start - now);
-      scheduleNext(initialDelay);
-
-      return () => clearTimers();
-    }, [offer, isInView, offerDismissed]);
+    // Auto-popup de ofertas desativado para não bloquear o carregamento dos vídeos.
+    // Dados da tabela `offers` permanecem intactos; apenas o modal sobreposto foi removido.
 
     const handleVideoTap = useCallback((event: React.MouseEvent) => {
       const currentTime = new Date().getTime();
@@ -387,45 +289,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {showOffer && offer && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center">
-            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
-            <div className="relative z-10 w-80 max-w-[85%] rounded-xl bg-card text-card-foreground p-4 shadow-xl">
-              <button
-                aria-label="Fechar oferta"
-                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-                onClick={() => dismissOffer(offer.id)}
-              >
-                ×
-              </button>
-              {offer.image_url && (
-                <img
-                  src={offer.image_url}
-                  alt={`Oferta: ${offer.title || ''}`}
-                  className="w-24 h-24 object-cover rounded-md mx-auto mb-3"
-                  loading="lazy"
-                />
-              )}
-              {offer.title && <h3 className="text-center font-semibold mb-1">{offer.title}</h3>}
-              {offer.description && <p className="text-center text-sm mb-3 opacity-90">{offer.description}</p>}
-              <button
-                onClick={() => handleOfferAction('button')}
-                className={`w-full py-2 rounded-md font-medium text-white ${effectClass}`}
-                style={{ backgroundColor: offer.button_color || undefined }}
-              >
-                {offer.button_text || 'Saiba mais'}
-              </button>
-              {!!offer.ad_text && !!offer.ad_text_link && (
-                <button
-                  onClick={() => handleOfferAction('ad_text')}
-                  className="mt-2 w-full text-xs underline text-muted-foreground hover:text-foreground"
-                >
-                  {offer.ad_text}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Modal de ofertas removido: estava bloqueando o carregamento dos vídeos */}
+
 
         {isInView && isBuffering && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">

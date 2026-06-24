@@ -554,6 +554,108 @@ export const AdminUsers = () => {
         </CardContent>
       </Card>
 
+      {/* Todos os Usuários Cadastrados */}
+      {(() => {
+        const vipEmails = new Set(premiumUsers.filter(p => p.subscription_status === 'active').map(p => (p.email || '').toLowerCase()));
+        const filteredAll = allUsers.filter(u => {
+          if (!userSearch) return true;
+          const q = userSearch.toLowerCase();
+          return (
+            (u.name || '').toLowerCase().includes(q) ||
+            (u.first_name || '').toLowerCase().includes(q) ||
+            (u.last_name || '').toLowerCase().includes(q) ||
+            (u.username || '').toLowerCase().includes(q) ||
+            (u.email || '').toLowerCase().includes(q) ||
+            (u.phone || '').toLowerCase().includes(q)
+          );
+        });
+        const pageData = getPaginatedData(filteredAll, usersPage);
+        return (
+          <Card className="bg-gradient-card border-border/50">
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <span>Usuários Cadastrados ({filteredAll.length})</span>
+                </CardTitle>
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome, email, telefone..."
+                    value={userSearch}
+                    onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
+                    className="pl-8 w-64 h-8 text-sm"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nome</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">Telefone</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">Cadastro</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageData.length > 0 ? pageData.map((u: any) => {
+                      const displayName = u.name || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || 'Sem nome';
+                      const isVip = vipEmails.has((u.email || '').toLowerCase());
+                      return (
+                        <tr key={u.id} className="border-b border-border/50 hover:bg-card-hover transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-3">
+                              {u.avatar_url ? (
+                                <img src={u.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center text-primary text-sm font-medium">
+                                  {displayName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <span className="font-medium text-foreground">{displayName}</span>
+                                {u.username && (
+                                  <div className="text-xs text-muted-foreground">@{u.username}</div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-muted-foreground hidden md:table-cell text-sm">{u.email || '-'}</td>
+                          <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell text-sm">{u.phone || '-'}</td>
+                          <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell text-sm">
+                            {u.created_at ? format(new Date(u.created_at), "dd/MM/yyyy", { locale: ptBR }) : '-'}
+                          </td>
+                          <td className="py-3 px-4">
+                            {isVip ? (
+                              <Badge className="bg-warning text-warning-foreground"><Crown className="w-3 h-3 mr-1" />VIP</Badge>
+                            ) : (
+                              <Badge variant="secondary">Usuário</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    }) : (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                          Nenhum usuário cadastrado encontrado
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(filteredAll.length, usersPage, setUsersPage)}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+
+
       {/* Modal de Edição */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="sm:max-w-md">

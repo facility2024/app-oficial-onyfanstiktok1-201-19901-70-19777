@@ -1038,20 +1038,15 @@ if (!isOpen) return null;
                         >
                           {content.type === 'video' ? (
                             <>
-                              <video
-                                src={isLocked ? undefined : content.video_url}
+                              {/* Usa poster/imagem como thumb (sem autoplay) para não saturar banda e abrir o player rápido */}
+                              <img
+                                src={content.thumbnail_url || '/placeholder.svg'}
+                                alt={content.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
-                                muted
-                                loop
-                                playsInline
-                                autoPlay={!isLocked}
-                                preload="metadata"
-                                poster={content.thumbnail_url}
                                 onError={(e) => {
-                                  const parent = e.currentTarget.parentElement;
-                                  if (parent) {
-                                    parent.innerHTML = `<img src="${content.thumbnail_url}" alt="${content.title}" class="w-full h-full object-cover" />`;
-                                  }
+                                  e.currentTarget.src = '/placeholder.svg';
                                 }}
                               />
                               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -1190,6 +1185,7 @@ if (!isOpen) return null;
               controls
               autoPlay
               playsInline
+              preload="auto"
             />
             {privateVideoList.length > 1 && (
               <>

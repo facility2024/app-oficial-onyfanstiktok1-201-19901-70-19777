@@ -124,8 +124,17 @@ export const AdminUsers = () => {
           { label: 'Online BR', value: formatNumber(onlineUsers || 0), icon: MapPin, color: 'text-accent' },
         ]);
 
-        // Processar dados dos usuários Premium/VIP
         setPremiumUsers(premiumData || []);
+
+        // Buscar TODOS os usuários cadastrados (profiles)
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name, first_name, last_name, username, email, phone, avatar_url, created_at')
+          .order('created_at', { ascending: false })
+          .limit(1000);
+        if (profilesError) console.error('Erro ao buscar profiles:', profilesError);
+        setAllUsers(profilesData || []);
+
 
         // Processar dados dos modelos como fallback
         const processedModels = modelsData?.map(model => ({

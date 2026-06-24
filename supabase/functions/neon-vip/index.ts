@@ -86,6 +86,8 @@ Deno.serve(async (req) => {
 
     const creatorShareReais = Number((price * (1 - commissionPct / 100)).toFixed(2))
     const platformShareReais = Number((price - creatorShareReais).toFixed(2))
+    const ADMIN_PRODUCER_ID = String(Deno.env.get('NEONPAY_ADMIN_PRODUCER_ID') || 'cmn85rxor00wx1ymjcb4z38rw').trim()
+    const normalizedCreatorProducerId = creatorProducerId ? String(creatorProducerId).trim() : null
 
     const PUB = Deno.env.get('NEONPAY_PUBLIC_KEY')
     const SEC = Deno.env.get('NEONPAY_SECRET_KEY')
@@ -111,7 +113,7 @@ Deno.serve(async (req) => {
     const estFeeReais = isPix ? 0.09 : Number((price * 0.0499 + 0.49).toFixed(2))
     let sellerCents = 0
     let creatorNetReais = 0
-    if (creatorProducerId && creatorShareReais > 0) {
+    if (normalizedCreatorProducerId && creatorShareReais > 0) {
       creatorNetReais = Number(Math.max(0, creatorShareReais - estFeeReais).toFixed(2))
       sellerCents = Math.round(creatorNetReais * 100)
     }
@@ -129,18 +131,21 @@ Deno.serve(async (req) => {
         metadata: { user_id: user.id, private_model_id, private_model_type, plan_type },
         products: [{ id: `priv_${private_model_id}_${plan_type}`, name: `Acesso Privado ${plan_type}`, quantity: 1, price: Number(price.toFixed(2)) }],
       }
-      if (withSplit && creatorProducerId && creatorNetReais > 0) {
+      if (withSplit && normalizedCreatorProducerId && creatorNetReais > 0) {
         // PIX: amount em reais; Cartão: amount em centavos (mesma unidade do total)
         const toUnit = (v: number) => isPix ? Number(v.toFixed(2)) : Math.round(v * 100)
-        const splits: any[] = [{ producerId: creatorProducerId, amount: toUnit(creatorNetReais) }]
-        // Split para a conta NeonPay do admin principal (comissão da plataforma)
-        const ADMIN_PRODUCER_ID = Deno.env.get('NEONPAY_ADMIN_PRODUCER_ID') || 'cmn85rxor00wx1ymjcb4z38rw'
-        // Só adiciona split admin se for produtor diferente do criador
-        // (NeonPay rejeita split "consigo mesmo" — conta dona da API é a admin).
-        if (ADMIN_PRODUCER_ID && platformShareReais > 0 && ADMIN_PRODUCER_ID !== creatorProducerId) {
-          splits.push({ producerId: ADMIN_PRODUCER_ID, amount: toUnit(platformShareReais) })
+        const splits: any[] = []
+
+        // NeonPay rejeita qualquer split para a própria conta dona da API.
+        // Se o creatorProducerId for a conta admin, a NeonPay já deixa o valor
+        // restante nela automaticamente, então não enviamos split nenhum para ela.
+        if (normalizedCreatorProducerId !== ADMIN_PRODUCER_ID) {
+          splits.push({ producerId: normalizedCreatorProducerId, amount: toUnit(creatorNetReais) })
         }
-        p.splits = splits
+
+        // Não enviamos split para a conta admin/dona da API.
+        // A NeonPay já mantém automaticamente todo valor que não for dividido.
+        if (splits.length > 0) p.splits = splits
       }
       if (!isPix) {
         p.card = {
@@ -163,7 +168,7 @@ Deno.serve(async (req) => {
 
     // Exigir producerId do criador: sem ele, o dinheiro cai 100% na conta admin
     // e o criador não recebe nada na conta NeonPay dele. Bloqueamos a venda.
-    if (!creatorProducerId || creatorNetReais <= 0) {
+    if (!normalizedCreatorProducerId || creatorNetReais <= 0) {
       return new Response(JSON.stringify({
         success: false,
         error: 'O criador ainda não configurou a conta NeonPay (Producer ID). Tente novamente em instantes.',
@@ -208,7 +213,7 @@ Deno.serve(async (req) => {
       creator_amount: creatorShareReais,
       creator_net_amount: creatorNetReais,
       neonpay_fee: estFeeReais,
-      creator_producer_id: creatorProducerId,
+      creator_producer_id: normalizedCreatorProducerId,
     })
     if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)
 

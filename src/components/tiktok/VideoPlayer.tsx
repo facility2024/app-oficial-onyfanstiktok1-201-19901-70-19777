@@ -289,45 +289,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {showOffer && offer && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center">
-            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
-            <div className="relative z-10 w-80 max-w-[85%] rounded-xl bg-card text-card-foreground p-4 shadow-xl">
-              <button
-                aria-label="Fechar oferta"
-                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-                onClick={() => dismissOffer(offer.id)}
-              >
-                ×
-              </button>
-              {offer.image_url && (
-                <img
-                  src={offer.image_url}
-                  alt={`Oferta: ${offer.title || ''}`}
-                  className="w-24 h-24 object-cover rounded-md mx-auto mb-3"
-                  loading="lazy"
-                />
-              )}
-              {offer.title && <h3 className="text-center font-semibold mb-1">{offer.title}</h3>}
-              {offer.description && <p className="text-center text-sm mb-3 opacity-90">{offer.description}</p>}
-              <button
-                onClick={() => handleOfferAction('button')}
-                className={`w-full py-2 rounded-md font-medium text-white ${effectClass}`}
-                style={{ backgroundColor: offer.button_color || undefined }}
-              >
-                {offer.button_text || 'Saiba mais'}
-              </button>
-              {!!offer.ad_text && !!offer.ad_text_link && (
-                <button
-                  onClick={() => handleOfferAction('ad_text')}
-                  className="mt-2 w-full text-xs underline text-muted-foreground hover:text-foreground"
-                >
-                  {offer.ad_text}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Modal de ofertas removido: estava bloqueando o carregamento dos vídeos */}
+
 
         {isInView && isBuffering && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">

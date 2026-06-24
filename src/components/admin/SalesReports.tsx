@@ -37,14 +37,65 @@ export default function SalesReports() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("purchases")
-      .select("id, created_at, seller_id, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
-      .gte("created_at", from)
-      .lte("created_at", to + "T23:59:59")
-      .order("created_at", { ascending: false });
+    const fromTs = from;
+    const toTs = to + "T23:59:59";
 
-    const list = (data ?? []) as Purchase[];
+    const [purchasesRes, txRes, commRes] = await Promise.all([
+      supabase
+        .from("purchases")
+        .select("id, created_at, seller_id, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
+        .gte("created_at", fromTs)
+        .lte("created_at", toTs)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("payment_transactions")
+        .select("id, created_at, amount, platform_amount, creator_amount, creator_net_amount, neonpay_fee, status, plan_type, private_model_id")
+        .gte("created_at", fromTs)
+        .lte("created_at", toTs)
+        .order("created_at", { ascending: false }),
+      supabase.from("platform_settings").select("value").eq("key", "commission_percentage").maybeSingle(),
+    ]);
+
+    const pct = Number((commRes.data as any)?.value ?? 0);
+
+    const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
+      const gross = Number(p.amount || 0);
+      const platform = p.platform_amount != null
+        ? Number(p.platform_amount)
+        : Number((gross * (pct / 100)).toFixed(2));
+      const net = p.seller_net != null
+        ? Number(p.seller_net)
+        : p.seller_amount != null
+          ? Number(p.seller_amount)
+          : Number((gross - platform).toFixed(2));
+      return { ...p, platform_amount: platform, seller_net: net };
+    }) as Purchase[];
+
+    const fromTx = (txRes.data ?? []).map((t: any) => {
+      const gross = Number(t.amount || 0);
+      const creatorGross = Number(t.creator_amount ?? 0);
+      const creatorNet = t.creator_net_amount != null ? Number(t.creator_net_amount) : creatorGross;
+      const platform = t.platform_amount != null
+        ? Number(t.platform_amount)
+        : Number((gross - creatorGross).toFixed(2));
+      const st = String(t.status || "").toLowerCase();
+      return {
+        id: `tx_${t.id}`,
+        created_at: t.created_at,
+        seller_id: t.private_model_id ?? null,
+        amount: gross,
+        platform_amount: platform,
+        seller_amount: creatorNet,
+        neonpay_fee: Number(t.neonpay_fee ?? 0),
+        seller_net: creatorNet,
+        status: (st === "approved" || st === "confirmed" || st === "paid" || st === "received") ? "paid" : st,
+        payment_method: `privado ${t.plan_type ?? ""}`.trim(),
+      } as Purchase;
+    });
+
+    const list = [...fromPurchases, ...fromTx].sort((a, b) =>
+      a.created_at < b.created_at ? 1 : -1
+    );
     setRows(list);
 
     const ids = Array.from(new Set(list.map(r => r.seller_id).filter(Boolean))) as string[];

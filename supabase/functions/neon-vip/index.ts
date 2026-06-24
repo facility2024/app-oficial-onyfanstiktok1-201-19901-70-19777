@@ -135,7 +135,9 @@ Deno.serve(async (req) => {
         const splits: any[] = [{ producerId: creatorProducerId, amount: toUnit(creatorNetReais) }]
         // Split para a conta NeonPay do admin principal (comissão da plataforma)
         const ADMIN_PRODUCER_ID = Deno.env.get('NEONPAY_ADMIN_PRODUCER_ID') || 'cmn85rxor00wx1ymjcb4z38rw'
-        if (ADMIN_PRODUCER_ID && platformShareReais > 0) {
+        // Só adiciona split admin se for produtor diferente do criador
+        // (NeonPay rejeita split "consigo mesmo" — conta dona da API é a admin).
+        if (ADMIN_PRODUCER_ID && platformShareReais > 0 && ADMIN_PRODUCER_ID !== creatorProducerId) {
           splits.push({ producerId: ADMIN_PRODUCER_ID, amount: toUnit(platformShareReais) })
         }
         p.splits = splits

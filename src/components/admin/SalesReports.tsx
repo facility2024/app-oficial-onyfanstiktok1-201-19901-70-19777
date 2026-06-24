@@ -25,6 +25,14 @@ type Purchase = {
 const fmt = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
 
+const roundMoney = (value: number) => Number(value.toFixed(2));
+
+const calculateSaleAmounts = (gross: number, commissionPct: number) => {
+  const platform = roundMoney(gross * (commissionPct / 100));
+  const sellerNet = roundMoney(gross - platform);
+  return { platform, sellerNet };
+};
+
 export default function SalesReports() {
   const [rows, setRows] = useState<Purchase[]>([]);
   const [sellers, setSellers] = useState<Record<string, string>>({});
@@ -60,26 +68,13 @@ export default function SalesReports() {
 
     const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
       const gross = Number(p.amount || 0);
-      const platform = p.platform_amount != null
-        ? Number(p.platform_amount)
-        : Number((gross * (pct / 100)).toFixed(2));
-      const net = p.seller_net != null
-        ? Number(p.seller_net)
-        : p.seller_amount != null
-          ? Number(p.seller_amount)
-          : Number((gross - platform).toFixed(2));
+      const { platform, sellerNet } = calculateSaleAmounts(gross, pct);
       return { ...p, platform_amount: platform, seller_net: net };
     }) as Purchase[];
 
     const fromTx = (txRes.data ?? []).map((t: any) => {
       const gross = Number(t.amount || 0);
-      const platform = t.platform_amount != null
-        ? Number(t.platform_amount)
-        : Number((gross * (pct / 100)).toFixed(2));
-      const creatorGross = t.creator_amount != null
-        ? Number(t.creator_amount)
-        : Number((gross - platform).toFixed(2));
-      const creatorNet = t.creator_net_amount != null ? Number(t.creator_net_amount) : creatorGross;
+      const { platform, sellerNet } = calculateSaleAmounts(gross, pct);
       const st = String(t.status || "").toLowerCase();
       return {
         id: `tx_${t.id}`,
@@ -87,9 +82,9 @@ export default function SalesReports() {
         seller_id: t.private_model_id ?? null,
         amount: gross,
         platform_amount: platform,
-        seller_amount: creatorNet,
+        seller_amount: sellerNet,
         neonpay_fee: Number(t.neonpay_fee ?? 0),
-        seller_net: creatorNet,
+        seller_net: sellerNet,
         status: (st === "approved" || st === "confirmed" || st === "paid" || st === "received") ? "paid" : st,
         payment_method: `privado ${t.plan_type ?? ""}`.trim(),
       } as Purchase;

@@ -11,13 +11,14 @@ const fmt = (n: number) =>
 export default function MySales() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [commissionPct, setCommissionPct] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const [purchasesRes, txRes] = await Promise.all([
+      const [purchasesRes, txRes, commRes] = await Promise.all([
         supabase
           .from("purchases")
           .select("id, created_at, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
@@ -28,21 +29,39 @@ export default function MySales() {
           .select("id, created_at, amount, platform_amount, creator_amount, creator_net_amount, neonpay_fee, status, plan_type")
           .eq("private_model_id", user.id)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("platform_settings").select("value").eq("key", "commission_percentage").maybeSingle(),
       ]);
 
-      const fromTx = (txRes.data ?? []).map((t: any) => ({
-        id: `tx_${t.id}`,
-        created_at: t.created_at,
-        amount: t.amount,
-        platform_amount: t.platform_amount,
-        seller_amount: t.creator_amount,
-        seller_net: t.creator_net_amount ?? t.creator_amount,
-        neonpay_fee: t.neonpay_fee ?? 0,
-        status: String(t.status || "").toLowerCase() === "approved" ? "paid" : "pending",
-        payment_method: `privado ${t.plan_type ?? ""}`.trim(),
-      }));
+      const pct = Number((commRes.data as any)?.value ?? 0);
+      setCommissionPct(pct);
 
-      const merged = [...(purchasesRes.data ?? []), ...fromTx]
+      const applyPct = (gross: number) => {
+        const platform = Number((gross * (pct / 100)).toFixed(2));
+        const net = Number((gross - platform).toFixed(2));
+        return { platform, net };
+      };
+
+      const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
+        const { platform, net } = applyPct(Number(p.amount || 0));
+        return { ...p, platform_amount: platform, seller_net: net };
+      });
+
+      const fromTx = (txRes.data ?? []).map((t: any) => {
+        const { platform, net } = applyPct(Number(t.amount || 0));
+        return {
+          id: `tx_${t.id}`,
+          created_at: t.created_at,
+          amount: t.amount,
+          platform_amount: platform,
+          seller_amount: net,
+          seller_net: net,
+          status: String(t.status || "").toLowerCase() === "approved" ? "paid" : "pending",
+          payment_method: `privado ${t.plan_type ?? ""}`.trim(),
+        };
+      });
+
+      const merged = [...fromPurchases, ...fromTx]
         .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
       setRows(merged);
       setLoading(false);
@@ -69,6 +88,7 @@ export default function MySales() {
     });
     return Object.values(map).sort((a, b) => a.day.localeCompare(b.day));
   }, [rows]);
+
 
   if (loading) return <div className="p-4 text-white">Carregando...</div>;
 

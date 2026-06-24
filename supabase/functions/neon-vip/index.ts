@@ -153,23 +153,20 @@ Deno.serve(async (req) => {
       body: JSON.stringify(body),
     })
 
-    let r = await doPost(buildPayload(true))
-    let text = await r.text()
+    // Exigir producerId do criador: sem ele, o dinheiro cai 100% na conta admin
+    // e o criador não recebe nada na conta NeonPay dele. Bloqueamos a venda.
+    if (!creatorProducerId || creatorNetReais <= 0) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'O criador ainda não configurou a conta NeonPay (Producer ID). Tente novamente em instantes.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    const r = await doPost(buildPayload(true))
+    const text = await r.text()
     let data: any
     try { data = JSON.parse(text) } catch { data = { raw: text } }
     console.log('[neon-vip]', r.status, url, text.slice(0, 600))
-
-    // Fallback: se a NeonPay rejeitar por causa de "splits + taxas > total",
-    // refaz sem split. O valor cai 100% na conta principal (admin) e o repasse
-    // ao criador fica registrado em payment_transactions p/ reconciliação manual.
-    const splitError = !r.ok && /splits?.*taxas|soma dos splits/i.test(String(data?.message || ''))
-    if (splitError) {
-      console.log('[neon-vip] split rejeitado pela NeonPay, tentando sem split')
-      r = await doPost(buildPayload(false))
-      text = await r.text()
-      try { data = JSON.parse(text) } catch { data = { raw: text } }
-      console.log('[neon-vip retry]', r.status, text.slice(0, 600))
-    }
 
     if (!r.ok) {
       return new Response(JSON.stringify({

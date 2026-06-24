@@ -76,20 +76,30 @@ export const useFinancialData = () => {
     try {
       setLoading(true);
 
-      // Fonte primária: payment_transactions (NeonPay)
-      const { data: rows, error } = await supabase
-        .from('payment_transactions')
-        .select(
-          'id, user_id, amount, plan_type, status, created_at, confirmed_at, asaas_payment_id, asaas_subscription_id, asaas_customer_id, private_model_id, private_model_type, commission_percentage, platform_amount, creator_amount'
-        )
-        .order('created_at', { ascending: false })
-        .limit(1000);
+      // Busca paralela: transações + percentual de comissão atual do admin
+      const [{ data: rows, error }, commRes] = await Promise.all([
+        supabase
+          .from('payment_transactions')
+          .select(
+            'id, user_id, amount, plan_type, status, created_at, confirmed_at, asaas_payment_id, asaas_subscription_id, asaas_customer_id, private_model_id, private_model_type, commission_percentage, platform_amount, creator_amount'
+          )
+          .order('created_at', { ascending: false })
+          .limit(1000),
+        supabase
+          .from('platform_settings')
+          .select('value')
+          .eq('key', 'commission_percentage')
+          .maybeSingle(),
+      ]);
 
       if (error) {
         console.error('Error fetching payment_transactions:', error);
         setLoading(false);
         return;
       }
+
+      const commissionPct = Number((commRes.data as any)?.value ?? 0);
+      const roundMoney = (n: number) => Math.round(n * 100) / 100;
 
       const all = rows || [];
       const approved = all.filter((t: any) => String(t.status).toUpperCase() === 'APPROVED');
@@ -136,16 +146,16 @@ export const useFinancialData = () => {
       const thisMonthRevenue = thisMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
       const lastMonthRevenue = lastMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
 
-      // Saldo do ADMIN = soma das comissões da plataforma (platform_amount).
-      // Se não houver platform_amount, o valor inteiro é do admin.
-      const platformBalance = approved.reduce(
-        (s: number, t: any) => s + Number(t.platform_amount ?? t.amount ?? 0),
-        0
+      // Saldo do ADMIN = recalculado pela % atual de comissão (mesma regra do painel do criador).
+      // comissaoAdmin = bruto * (pct/100); liquidoCriador = bruto - comissaoAdmin
+      const platformBalance = roundMoney(
+        approved.reduce((s: number, t: any) => s + Number(t.amount || 0) * (commissionPct / 100), 0)
       );
-      // "Taxas" do ponto de vista do admin = valor repassado ao criador
-      const creatorPaid = approved.reduce(
-        (s: number, t: any) => s + Number(t.creator_amount ?? 0),
-        0
+      const creatorPaid = roundMoney(
+        approved.reduce(
+          (s: number, t: any) => s + Number(t.amount || 0) * (1 - commissionPct / 100),
+          0
+        )
       );
 
       const salesGrowth = yesterdaySales > 0 ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 : 0;

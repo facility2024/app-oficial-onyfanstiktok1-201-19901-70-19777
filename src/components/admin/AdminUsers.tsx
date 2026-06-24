@@ -599,6 +599,7 @@ export const AdminUsers = () => {
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">Telefone</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden lg:table-cell">Cadastro</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
                   <tbody>

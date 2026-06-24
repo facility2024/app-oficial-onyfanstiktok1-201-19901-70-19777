@@ -131,8 +131,14 @@ Deno.serve(async (req) => {
       }
       if (withSplit && creatorProducerId && creatorNetReais > 0) {
         // PIX: amount em reais; Cartão: amount em centavos (mesma unidade do total)
-        const splitAmount = isPix ? Number(creatorNetReais.toFixed(2)) : Math.round(creatorNetReais * 100)
-        p.splits = [{ producerId: creatorProducerId, amount: splitAmount }]
+        const toUnit = (v: number) => isPix ? Number(v.toFixed(2)) : Math.round(v * 100)
+        const splits: any[] = [{ producerId: creatorProducerId, amount: toUnit(creatorNetReais) }]
+        // Split para a conta NeonPay do admin principal (comissão da plataforma)
+        const ADMIN_PRODUCER_ID = Deno.env.get('NEONPAY_ADMIN_PRODUCER_ID') || 'cmn85rxor00wx1ymjcb4z38rw'
+        if (ADMIN_PRODUCER_ID && platformShareReais > 0) {
+          splits.push({ producerId: ADMIN_PRODUCER_ID, amount: toUnit(platformShareReais) })
+        }
+        p.splits = splits
       }
       if (!isPix) {
         p.card = {

@@ -1185,6 +1185,7 @@ if (!isOpen) return null;
               controls
               autoPlay
               playsInline
+              preload="auto"
             />
             {privateVideoList.length > 1 && (
               <>

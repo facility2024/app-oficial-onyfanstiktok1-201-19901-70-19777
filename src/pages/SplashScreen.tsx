@@ -39,10 +39,7 @@ export const SplashScreen = () => {
     <div
       className="fixed inset-0 w-full h-full overflow-hidden"
       style={{
-        backgroundImage: 'url(https://tiktokonyfans.b-cdn.net/material%20coconudi/destbard.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        background: 'radial-gradient(ellipse at center, #6a00b8 0%, #3a0070 45%, #000000 100%)',
       }}
     >
       <div className="relative z-10 flex flex-col items-center justify-center w-full h-full gap-10">

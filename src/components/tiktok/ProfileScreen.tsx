@@ -1030,44 +1030,16 @@ if (!isOpen) return null;
                 return (
                   <div className="grid grid-cols-3 gap-1">
                     {currentContents.map((content) => {
-                      const canAccessPrivate = !!modelSubscription;
-                      const isPrivate = !!content.visibility && content.visibility !== 'public';
-                      const isLocked = isPrivate && !canAccessPrivate;
+                      const isPrivate = false;
+                      const isLocked = false;
 
                       return (
                         <div
                           key={content.id}
-                          className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border ${
-                            isPrivate ? 'border-purple-500/50' : 'border-white/20'
-                          }`}
+                          className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
-                            if (isPrivate && !canAccessPrivate) {
-                              toast.info(`Conteúdo privado para assinantes de @${user.username}`, {
-                                description: 'Assine para desbloquear o acesso privado',
-                              });
-                              const subscriptionSection = document.querySelector('[data-subscription-section]');
-                              subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
-                              return;
-                            }
-
                             if (content.type === 'video') {
-                              // Conteúdo privado pago abre em popup DENTRO do perfil
-                              if (isPrivate && canAccessPrivate) {
-                                const videoContents = currentContents.filter(
-                                  (c) => c.type === 'video' && !!c.visibility && c.visibility !== 'public'
-                                );
-                                const list = videoContents.map((c) => ({
-                                  url: c.video_url as string,
-                                  title: c.title,
-                                  thumbnail: c.thumbnail_url,
-                                }));
-                                const idx = videoContents.findIndex((c) => c.id === content.id);
-                                setPrivateVideoList(list);
-                                setPrivateVideoIndex(Math.max(0, idx));
-                                setPrivateVideoOpen(true);
-                                return;
-                              }
-                              // Vídeos públicos seguem o fluxo do feed
+                              // Sempre abre o vídeo do perfil no feed (sem popup de bloqueio)
                               onVideoSelect?.(content.id);
                               onClose();
                             } else {

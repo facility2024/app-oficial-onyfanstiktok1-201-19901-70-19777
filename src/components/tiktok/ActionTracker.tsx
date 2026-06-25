@@ -130,13 +130,14 @@ export const useActionTracker = () => {
 
       // Registrar ação no banco de dados
       const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      const dataModelId = String(modelId || '');
       const { data: actionData, error: actionError } = await supabase
         .from('user_actions')
         .insert([{
           user_id: userId,
           action_type: actionType,
           video_id: isValidUUID(dataVideoId) ? dataVideoId : null,
-          model_id: modelId || null,
+          model_id: isValidUUID(dataModelId) ? dataModelId : null,
           session_id: `session_${Date.now()}`,
           ip_address: await getClientIP(),
           user_agent: navigator.userAgent

@@ -411,7 +411,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         likes_count: likesMap[item.id] ?? item.likes_count ?? 0,
         views_count: item.views_count || 0,
         created_at: item.created_at,
-        visibility: (item.visibility as 'public' | 'premium' | 'private') || 'public'
+        visibility: 'public' as 'public' | 'premium' | 'private'
       }));
 
       // 🔧 FALLBACK 1: Buscar posts agendados/principais quando o modelo não tem entradas na tabela videos

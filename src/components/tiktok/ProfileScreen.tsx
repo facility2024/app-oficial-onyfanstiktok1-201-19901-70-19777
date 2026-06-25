@@ -1119,6 +1119,14 @@ if (!isOpen) return null;
         onIndexChange={setCurrentImageIndex}
       />
 
+      {/* Popup de vídeos do perfil com swipe esquerda/direita */}
+      <ProfileVideoModal
+        videos={publicContents.filter(c => c.type === 'video').map(c => ({ id: c.id, video_url: c.video_url, title: c.title }))}
+        initialIndex={videoModalIndex}
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+      />
+
       {/* Private Video Popup - permanece dentro do perfil */}
       {privateVideoOpen && privateVideoList[privateVideoIndex] && (
         <div

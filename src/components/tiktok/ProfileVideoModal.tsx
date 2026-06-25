@@ -63,7 +63,7 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center bg-black/70 rounded-full hover:bg-black/90"
+        className="absolute top-4 right-4 z-20 w-12 h-12 flex items-center justify-center bg-black/80 rounded-full hover:bg-black/90"
         aria-label="Fechar"
       >
         <X className="w-6 h-6 text-white" />
@@ -73,14 +73,14 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
         <>
           <button
             onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-black/60 rounded-full hover:bg-black/80"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-black/70 rounded-full hover:bg-black/80"
             aria-label="Anterior"
           >
             <ChevronLeft className="w-7 h-7 text-white" />
           </button>
           <button
             onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-black/60 rounded-full hover:bg-black/80"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-black/70 rounded-full hover:bg-black/80"
             aria-label="Próximo"
           >
             <ChevronRight className="w-7 h-7 text-white" />
@@ -97,6 +97,11 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
         loop
         playsInline
         controls
+        controlsList="nodownload noremoteplayback noplaybackrate"
+        disablePictureInPicture
+        // @ts-ignore
+        disableRemotePlayback
+        onContextMenu={(e) => e.preventDefault()}
       />
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 rounded-full px-3 py-1 text-white text-xs">

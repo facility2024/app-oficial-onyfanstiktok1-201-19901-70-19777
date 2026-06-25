@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
 interface ActionTrackerProps {
   onActionAttempt: (actionType: string, userName: string) => Promise<boolean>;
 }
@@ -126,12 +129,13 @@ export const useActionTracker = () => {
       }
 
       // Registrar ação no banco de dados
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
       const { data: actionData, error: actionError } = await supabase
         .from('user_actions')
         .insert([{
           user_id: userId,
           action_type: actionType,
-          video_id: videoId || null,
+          video_id: isValidUUID(dataVideoId) ? dataVideoId : null,
           model_id: modelId || null,
           session_id: `session_${Date.now()}`,
           ip_address: await getClientIP(),

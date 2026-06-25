@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAnalytics } from './useAnalytics';
 
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
 export const useVideoActions = () => {
   const [loading, setLoading] = useState(false);
   const { trackVideoAction } = useAnalytics();
@@ -15,6 +18,11 @@ export const useVideoActions = () => {
   ) => {
     try {
       setLoading(true);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) {
+        localStorage.setItem(`liked_${dataVideoId}`, 'true');
+        return true;
+      }
 
       // ✅ Regra de negócio: não permitir descurtir no segundo clique
       if (isCurrentlyLiked) {
@@ -77,6 +85,8 @@ export const useVideoActions = () => {
   ) => {
     try {
       setLoading(true);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) return null;
 
       const { data, error } = await supabase
         .from('comments')
@@ -144,6 +154,13 @@ export const useVideoActions = () => {
   ) => {
     try {
       setLoading(true);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) {
+        const videoUrl = `${window.location.origin}/video/${dataVideoId}`;
+        await navigator.clipboard.writeText(videoUrl);
+        toast.success('Link copiado para a área de transferência!');
+        return true;
+      }
 
       // Temporarily increment shares_count until shares table types are updated
       const { data: videoData } = await supabase
@@ -189,6 +206,8 @@ export const useVideoActions = () => {
     userId?: string
   ) => {
     try {
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) return;
       await trackVideoAction('view', videoId, modelId, userId, {
         timestamp: new Date().toISOString(),
         viewport: `${window.innerWidth}x${window.innerHeight}`

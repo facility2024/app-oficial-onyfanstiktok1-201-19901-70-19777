@@ -18,6 +18,9 @@ interface VideoPlayerProps {
   onTogglePlay: () => void;
 }
 
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
 // Oferta vinculada ao vídeo/modelo
 interface Offer {
   id: string;
@@ -120,8 +123,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     // Registrar visualização quando o vídeo entra em viewport (evita duplicar por 5 min)
     useEffect(() => {
       if (!isInView) return;
+      const persistedVideoId = String((video as any)?._originalId || (video as any)?.id || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(persistedVideoId)) return;
 
-      const key = `view_tracked_${video.id}`;
+      const key = `view_tracked_${persistedVideoId}`;
       const last = Number(sessionStorage.getItem(key) || '0');
       const THROTTLE_MS = 5 * 60 * 1000; // 5 minutos
       const now = Date.now();
@@ -145,7 +150,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           // Only pass model_id if video actually belongs to a model (not creator)
           const actualModelId = (video as any)?.model_id || null;
           await supabase.from('video_views').insert({
-            video_id: (video as any).id,
+            video_id: persistedVideoId,
             model_id: actualModelId,
             user_id: userId,
             session_id: sessionId,
@@ -160,7 +165,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       }, 2000); // considera view após 2s
 
       return () => window.clearTimeout(timeoutId);
-    }, [isInView, video.id, modelId]);
+    }, [isInView, video, modelId]);
 
     useEffect(() => {
       if (ref && 'current' in ref && ref.current) {

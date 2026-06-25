@@ -433,6 +433,9 @@ export const TikTokApp = () => {
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
   const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
   const getVideoDataId = (video?: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
+  const isValidUUID = (value?: string | null): boolean =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+  const isPersistedVideoId = (videoId?: string | null): boolean => isValidUUID(videoId);
 
   useEffect(() => {
     if (!displayVideos.length) return;
@@ -470,7 +473,7 @@ export const TikTokApp = () => {
         const watchDuration = Math.floor((Date.now() - videoWatchStartRef.current) / 1000);
         const prevVideo = displayVideos[currentVideoIndex];
 
-        if (prevVideo && !prevVideo.id.startsWith('promo-')) {
+        if (prevVideo && !prevVideo.id.startsWith('promo-') && isPersistedVideoId(lastTrackedVideoRef.current)) {
           const prevEntityId = prevVideo.creator_id || prevVideo.model_id || '';
           updateWatchDuration(lastTrackedVideoRef.current, currentUser.id, watchDuration);
 
@@ -498,10 +501,10 @@ export const TikTokApp = () => {
       }
 
       // 🎯 TRACKING: Registrar visualização no DB após 3s (via timer)
-      if (currentUser?.id && watchedVideo && !isPromoVideo && watchedVideoId) {
+      if (currentUser?.id && watchedVideo && !isPromoVideo && isPersistedVideoId(watchedVideoId)) {
         lastTrackedVideoRef.current = watchedVideoId;
         setTimeout(() => {
-          if (lastTrackedVideoRef.current === watchedVideoId) {
+          if (lastTrackedVideoRef.current === watchedVideoId && isPersistedVideoId(watchedVideoId)) {
             trackVideoEngagement(watchedVideoId, currentUser.id);
           }
         }, 3000);
@@ -1866,12 +1869,17 @@ export const TikTokApp = () => {
   const loadComments = useCallback(async (videoId: string) => {
     try {
       console.log('💬 LOADING COMMENTS for video:', videoId);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isPersistedVideoId(dataVideoId)) {
+        setComments([]);
+        return;
+      }
 
       // ✅ Buscar comentários sem JOIN problemático
       const {
         data: commentsData,
         error
-      } = await supabase.from('comments').select('*').eq('video_id', videoId).order('created_at', {
+      } = await supabase.from('comments').select('*').eq('video_id', dataVideoId).order('created_at', {
         ascending: false
       });
       if (error) {
@@ -1921,6 +1929,10 @@ export const TikTokApp = () => {
   const checkIfLiked = async (videoId: string) => {
     try {
       const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isPersistedVideoId(dataVideoId)) {
+        setIsLiked(localStorage.getItem(`liked_${dataVideoId}`) === 'true');
+        return;
+      }
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const {
         data: {
@@ -2048,6 +2060,19 @@ export const TikTokApp = () => {
     console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
     try {
       if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
+      if (!isPersistedVideoId(dataVideoId)) {
+        const wasLiked = localStorage.getItem(`liked_${dataVideoId}`) === 'true';
+        setIsLiked(true);
+        localStorage.setItem(`liked_${dataVideoId}`, 'true');
+        if (!wasLiked) {
+          setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
+            ...video,
+            likes_count: Math.max(0, (video.likes_count || 0) + 1)
+          } : video));
+          createLikeExplosion();
+        }
+        return;
+      }
       // Primeiro, verificar se já existe like para este usuário/vídeo
       const {
         data: existingLike,
@@ -2201,8 +2226,24 @@ export const TikTokApp = () => {
   const addComment = async (text: string) => {
     if (!currentVideo || !text.trim()) return;
     // ✅ Normalizar ID: usar _originalId quando for vídeo sintético/promo/clone
-    const realVideoId = (currentVideo as any)?._originalId || currentVideo.id;
+    const realVideoId = String((currentVideo as any)?._originalId || currentVideo.id || '').replace(/-block-\d+-\d+$/, '');
     console.log('💬 ADD COMMENT - Iniciando para vídeo:', realVideoId);
+    if (!isPersistedVideoId(realVideoId)) {
+      const localComment: Comment = {
+        id: `local-comment-${Date.now()}`,
+        text: text.trim(),
+        user_id: currentUser?.id || localStorage.getItem('anonymous_user_id') || 'anonymous',
+        video_id: realVideoId,
+        likes_count: 0,
+        created_at: new Date().toISOString(),
+        user: {
+          username: profile?.name || 'Você',
+          avatar_url: profile?.avatar_url || DEFAULT_AVATAR
+        }
+      };
+      setComments(prev => [localComment, ...prev]);
+      return;
+    }
     try {
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
       const {

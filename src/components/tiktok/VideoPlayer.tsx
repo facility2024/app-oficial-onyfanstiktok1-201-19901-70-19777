@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
+import { Crown } from 'lucide-react';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';

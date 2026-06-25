@@ -1594,6 +1594,9 @@ export const TikTokApp = () => {
     } else {
       // Filtrar vídeos pelo gênero selecionado
       const filteredVideos = allAvailableVideos.filter((video: any) => {
+        if (video.isHighlighted || video.source === 'scheduled_post' || video.source === 'main_post' || video.isNewModel) {
+          return true;
+        }
         const videoGenres = video.genres || [];
         return videoGenres.includes(selectedGenre);
       });

@@ -373,7 +373,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     try {
       const newFeed = await generateFeed();
       setCurrentFeed(newFeed);
-      setVideos(newFeed.videos);
+      setVideos([]);
     } catch (error) {
       console.error('Erro ao atualizar feed:', error);
     } finally {

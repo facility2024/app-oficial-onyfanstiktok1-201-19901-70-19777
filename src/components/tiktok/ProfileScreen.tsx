@@ -414,7 +414,51 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         visibility: (item.visibility as 'public' | 'premium' | 'private') || 'public'
       }));
 
-      // 🔧 FALLBACK: Se modelo não tem vídeos mas tem posting_panel_url, criar entrada virtual
+      // 🔧 FALLBACK 1: Buscar posts agendados/principais quando o modelo não tem entradas na tabela videos
+      if (transformedVideos.length === 0 && !isUserCreator) {
+        try {
+          const normalize = (u: string) => {
+            const raw = (u || '').trim();
+            if (!raw) return '';
+            if (!/^https?:\/\//i.test(raw) && /^[\w.-]+\.[\w.-]+/.test(raw)) return `https://${raw}`;
+            return raw;
+          };
+          const [{ data: agendados }, { data: principais }] = await Promise.all([
+            (supabase as any).from('posts_agendados').select('id, titulo, conteudo_url, created_at, data_publicacao').eq('modelo_id', user.id).eq('status', 'publicado').order('data_publicacao', { ascending: false }).limit(50),
+            (supabase as any).from('posts_principais').select('id, titulo, conteudo_url, created_at').eq('modelo_id', user.id).order('created_at', { ascending: false }).limit(50),
+          ]);
+          const fromAgendados = (agendados || []).map((p: any) => ({
+            id: `scheduled-${p.id}`,
+            title: p.titulo || 'Conteúdo Agendado',
+            thumbnail_url: normalize(p.conteudo_url || '') || user.avatar_url || '/placeholder.svg',
+            video_url: normalize(p.conteudo_url || ''),
+            type: 'video' as const,
+            likes_count: 0,
+            views_count: 0,
+            created_at: p.data_publicacao || p.created_at,
+            visibility: 'public' as 'public' | 'premium' | 'private',
+          })).filter((v: any) => v.video_url);
+          const fromPrincipais = (principais || []).map((p: any) => ({
+            id: `main-${p.id}`,
+            title: p.titulo || 'Conteúdo',
+            thumbnail_url: normalize(p.conteudo_url || '') || user.avatar_url || '/placeholder.svg',
+            video_url: normalize(p.conteudo_url || ''),
+            type: 'video' as const,
+            likes_count: 0,
+            views_count: 0,
+            created_at: p.created_at,
+            visibility: 'public' as 'public' | 'premium' | 'private',
+          })).filter((v: any) => v.video_url);
+          transformedVideos = [...fromAgendados, ...fromPrincipais];
+          if (transformedVideos.length > 0) {
+            console.log(`🔧 Perfil ${user.username}: ${transformedVideos.length} vídeos carregados de posts agendados/principais`);
+          }
+        } catch (e) {
+          console.warn('⚠️ Erro ao carregar posts agendados/principais no perfil:', e);
+        }
+      }
+
+      // 🔧 FALLBACK 2: Se ainda não tem vídeos mas tem posting_panel_url, criar entrada virtual
       const modelPanelUrl = modelData?.posting_panel_url;
       if (transformedVideos.length === 0 && modelPanelUrl) {
         console.log('🔧 Modelo sem vídeos na tabela videos, usando posting_panel_url como fallback');

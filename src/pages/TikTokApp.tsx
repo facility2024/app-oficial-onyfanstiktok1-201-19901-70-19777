@@ -1081,7 +1081,7 @@ export const TikTokApp = () => {
           video_url: m.posting_panel_url,
           thumbnail_url: m.avatar_url || DEFAULT_AVATAR,
           model_id: m.id,
-          visibility: m.is_premium ? 'private' : 'public',
+          visibility: 'public',
           is_active: true,
           music_name: 'Som Original'
         }));
@@ -1099,7 +1099,7 @@ export const TikTokApp = () => {
             thumbnail_url: m.avatar_url || DEFAULT_AVATAR,
             model_id: m.id,
             creator_id: null,
-            visibility: m.is_premium ? 'private' : 'public',
+            visibility: 'public',
             is_active: true,
             music_name: 'Som Original',
             created_at: m.created_at || new Date().toISOString(),

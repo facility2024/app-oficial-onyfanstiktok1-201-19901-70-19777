@@ -55,9 +55,9 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const timersRef = useRef<number[]>([]);
 
     const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
-    const rawVisibility = String((video as any)?.visibility || 'public');
-    // Compat: qualquer 'premium' legado é tratado como 'private'
-    const videoVisibility: 'public' | 'private' = rawVisibility === 'public' ? 'public' : 'private';
+    const rawVisibility = String((video as any)?.visibility || 'public').toLowerCase().trim();
+    // Só trava como privado quando o admin marca EXPLICITAMENTE como 'private'.
+    const videoVisibility: 'public' | 'private' = rawVisibility === 'private' ? 'private' : 'public';
     const isPrivateVideo = videoVisibility === 'private';
     const modelType: 'model' | 'creator' = (video as any)?.creator_id ? 'creator' : 'model';
 

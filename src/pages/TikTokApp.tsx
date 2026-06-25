@@ -2237,7 +2237,7 @@ export const TikTokApp = () => {
         likes_count: 0,
         created_at: new Date().toISOString(),
         user: {
-          username: profile?.name || 'Você',
+          username: profile?.full_name || profile?.username || 'Você',
           avatar_url: profile?.avatar_url || DEFAULT_AVATAR
         }
       };

@@ -261,7 +261,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             isMuted={isMuted}
             volume={volume}
             autoPlayOnReady={true}
-            className={locked ? 'blur-sm' : ''}
+            className=""
             onClick={handleVideoTap}
             onLoadedData={() => setIsBuffering(false)}
             onError={() => setIsBuffering(false)}

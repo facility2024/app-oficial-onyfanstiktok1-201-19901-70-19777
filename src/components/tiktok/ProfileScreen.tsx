@@ -1000,12 +1000,8 @@ if (!isOpen) return null;
                                 muted
                                 playsInline
                                 preload="metadata"
-                                poster={content.thumbnail_url || undefined}
                                 aria-label={content.title}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.poster = '/placeholder.svg';
-                                }}
+                                className="w-full h-full object-cover bg-black"
                               />
                               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                                 <div className="bg-black/40 rounded-full p-2">

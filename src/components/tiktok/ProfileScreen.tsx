@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone, Radio } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
+import { ProfileVideoModal } from './ProfileVideoModal';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
@@ -58,6 +59,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [videoModalIndex, setVideoModalIndex] = useState(0);
   const [privateVideoOpen, setPrivateVideoOpen] = useState(false);
   const [privateVideoList, setPrivateVideoList] = useState<Array<{ url: string; title?: string; thumbnail?: string }>>([]);
   const [privateVideoIndex, setPrivateVideoIndex] = useState(0);
@@ -980,9 +983,11 @@ if (!isOpen) return null;
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
                             if (content.type === 'video') {
-                              // Sempre abre o vídeo do perfil no feed (sem popup de bloqueio)
-                              onVideoSelect?.(content.id);
-                              onClose();
+                              // Abre popup com swipe esquerda/direita entre vídeos do perfil
+                              const videoContents = currentContents.filter(c => c.type === 'video');
+                              const idx = videoContents.findIndex(c => c.id === content.id);
+                              setVideoModalIndex(idx >= 0 ? idx : 0);
+                              setVideoModalOpen(true);
                             } else {
                               const imageContents = currentContents.filter(c => c.type === 'image');
                               const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
@@ -1112,6 +1117,14 @@ if (!isOpen) return null;
         isOpen={imageViewerOpen}
         onClose={() => setImageViewerOpen(false)}
         onIndexChange={setCurrentImageIndex}
+      />
+
+      {/* Popup de vídeos do perfil com swipe esquerda/direita */}
+      <ProfileVideoModal
+        videos={publicContents.filter(c => c.type === 'video').map(c => ({ id: c.id, video_url: c.video_url, title: c.title }))}
+        initialIndex={videoModalIndex}
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
       />
 
       {/* Private Video Popup - permanece dentro do perfil */}

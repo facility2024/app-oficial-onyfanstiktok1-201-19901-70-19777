@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
+import { Crown } from 'lucide-react';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
@@ -260,7 +261,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             isMuted={isMuted}
             volume={volume}
             autoPlayOnReady={true}
-            className={locked ? 'blur-sm' : ''}
+            className=""
             onClick={handleVideoTap}
             onLoadedData={() => setIsBuffering(false)}
             onError={() => setIsBuffering(false)}
@@ -269,27 +270,17 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           <div className="w-full h-full bg-black" />
         )}
 
-        {/* Overlay para vídeo PRIVADO (assinatura individual da modelo) */}
-        {lockedPrivate && !showSubscriptionOverlay && (
-          <PremiumContentOverlay 
-            thumbnailUrl={(video as any).thumbnail_url || (video as any).thumbnail_locked}
-            modelName={video.user?.username}
-            modelId={modelId}
-            modelType={modelType}
-            contentType="private"
-            onSubscribeClick={() => setShowSubscriptionOverlay(true)}
-          />
+        {/* Badge discreto para vídeo privado — não bloqueia o vídeo */}
+        {lockedPrivate && (
+          <div className="absolute top-3 left-3 z-30 pointer-events-none flex items-center gap-1.5 bg-black/55 backdrop-blur-sm border border-amber-400/40 rounded-full pl-2 pr-3 py-1 shadow-lg">
+            <Crown className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-amber-300 text-[10px] font-bold tracking-wide">PRIVADO</span>
+              <span className="text-white/80 text-[9px]">Visite meu perfil</span>
+            </div>
+          </div>
         )}
 
-        {lockedPrivate && showSubscriptionOverlay && plans.length > 0 && (
-          <ModelSubscriptionOverlay
-            modelName={video.user?.username || 'Criadora'}
-            modelAvatar={video.user?.avatar_url || DEFAULT_AVATAR}
-            plans={plans}
-            thumbnailUrl={(video as any).thumbnail_url}
-            onClose={() => setShowSubscriptionOverlay(false)}
-          />
-        )}
 
         {doubleTapHeart && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl text-red-500 pointer-events-none animate-pulse z-50">

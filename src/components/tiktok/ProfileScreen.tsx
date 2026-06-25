@@ -983,9 +983,11 @@ if (!isOpen) return null;
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
                             if (content.type === 'video') {
-                              // Sempre abre o vídeo do perfil no feed (sem popup de bloqueio)
-                              onVideoSelect?.(content.id);
-                              onClose();
+                              // Abre popup com swipe esquerda/direita entre vídeos do perfil
+                              const videoContents = currentContents.filter(c => c.type === 'video');
+                              const idx = videoContents.findIndex(c => c.id === content.id);
+                              setVideoModalIndex(idx >= 0 ? idx : 0);
+                              setVideoModalOpen(true);
                             } else {
                               const imageContents = currentContents.filter(c => c.type === 'image');
                               const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);

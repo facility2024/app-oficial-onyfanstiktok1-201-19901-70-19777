@@ -1,6 +1,9 @@
 import { useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
 /**
  * Hook para rastrear engajamento do usuário com vídeos.
  * Registra: histórico de visualização (3s+), interesses fortes (20s+ ou like),
@@ -16,14 +19,15 @@ export const useVideoTracking = () => {
    * Registra que o usuário assistiu um vídeo (chamado após 3s de visualização)
    */
   const trackView = useCallback(async (videoId: string, userId: string) => {
-    if (!videoId || !userId || trackedVideos.current.has(videoId)) return;
-    trackedVideos.current.add(videoId);
+    const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+    if (!isValidUUID(dataVideoId) || !userId || trackedVideos.current.has(dataVideoId)) return;
+    trackedVideos.current.add(dataVideoId);
 
     try {
       await supabase
         .from('historico_visualizacao')
         .upsert(
-          { user_id: userId, video_id: videoId, watch_duration_seconds: 3 },
+          { user_id: userId, video_id: dataVideoId, watch_duration_seconds: 3 },
           { onConflict: 'user_id,video_id' }
         );
     } catch (e) {
@@ -35,13 +39,14 @@ export const useVideoTracking = () => {
    * Atualiza duração de visualização (chamado periodicamente ou ao sair do vídeo)
    */
   const updateWatchDuration = useCallback(async (videoId: string, userId: string, durationSeconds: number) => {
-    if (!videoId || !userId || durationSeconds < 3) return;
+    const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+    if (!isValidUUID(dataVideoId) || !userId || durationSeconds < 3) return;
 
     try {
       await supabase
         .from('historico_visualizacao')
         .upsert(
-          { user_id: userId, video_id: videoId, watch_duration_seconds: durationSeconds },
+          { user_id: userId, video_id: dataVideoId, watch_duration_seconds: durationSeconds },
           { onConflict: 'user_id,video_id' }
         );
     } catch (e) {

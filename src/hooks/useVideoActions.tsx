@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAnalytics } from './useAnalytics';
 
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
 export const useVideoActions = () => {
   const [loading, setLoading] = useState(false);
   const { trackVideoAction } = useAnalytics();
@@ -15,6 +18,11 @@ export const useVideoActions = () => {
   ) => {
     try {
       setLoading(true);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) {
+        localStorage.setItem(`liked_${dataVideoId}`, 'true');
+        return true;
+      }
 
       // ✅ Regra de negócio: não permitir descurtir no segundo clique
       if (isCurrentlyLiked) {
@@ -25,7 +33,7 @@ export const useVideoActions = () => {
       const { error: upsertError } = await supabase
         .from('likes')
         .upsert({
-          video_id: videoId,
+          video_id: dataVideoId,
           model_id: modelId,
           user_id: userId,
           is_active: true,
@@ -44,7 +52,7 @@ export const useVideoActions = () => {
       const { count: liveLikesCount, error: countError } = await supabase
         .from('likes')
         .select('id', { count: 'exact', head: true })
-        .eq('video_id', videoId)
+        .eq('video_id', dataVideoId)
         .eq('is_active', true);
 
       if (countError) throw countError;
@@ -55,9 +63,9 @@ export const useVideoActions = () => {
       await supabase
         .from('videos')
         .update({ likes_count: safeLikeCount })
-        .eq('id', videoId);
+        .eq('id', dataVideoId);
 
-      await trackVideoAction('like', videoId, modelId, userId, { action: 'like' });
+      await trackVideoAction('like', dataVideoId, modelId, userId, { action: 'like' });
       toast.success('Vídeo curtido!');
       return true;
     } catch (error) {
@@ -77,11 +85,13 @@ export const useVideoActions = () => {
   ) => {
     try {
       setLoading(true);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) return null;
 
       const { data, error } = await supabase
         .from('comments')
         .insert([{
-          video_id: videoId,
+          video_id: dataVideoId,
           // ✅ Para vídeos de criadores, model_id será null (evita FK violation)
           model_id: modelId,
           user_id: userId,
@@ -100,7 +110,7 @@ export const useVideoActions = () => {
           const { data: simpleData, error: simpleError } = await supabase
             .from('comments')
             .insert([{
-              video_id: videoId,
+              video_id: dataVideoId,
               user_id: userId,
               content: content
             }])
@@ -109,7 +119,7 @@ export const useVideoActions = () => {
             
           if (simpleError) throw simpleError;
           
-          await trackVideoAction('comment', videoId, modelId || '', userId, { 
+          await trackVideoAction('comment', dataVideoId, modelId || '', userId, { 
             comment_length: content.length,
             rls_fallback: true
           });
@@ -121,7 +131,7 @@ export const useVideoActions = () => {
         }
       }
 
-      await trackVideoAction('comment', videoId, modelId || '', userId, { 
+      await trackVideoAction('comment', dataVideoId, modelId || '', userId, { 
         comment_length: content.length 
       });
       
@@ -144,32 +154,39 @@ export const useVideoActions = () => {
   ) => {
     try {
       setLoading(true);
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) {
+        const videoUrl = `${window.location.origin}/video/${dataVideoId}`;
+        await navigator.clipboard.writeText(videoUrl);
+        toast.success('Link copiado para a área de transferência!');
+        return true;
+      }
 
       // Temporarily increment shares_count until shares table types are updated
       const { data: videoData } = await supabase
         .from('videos')
         .select('shares_count')
-        .eq('id', videoId)
+        .eq('id', dataVideoId)
         .single();
       
       const currentShares = videoData?.shares_count || 0;
       const { error } = await supabase
         .from('videos')
         .update({ shares_count: currentShares + 1 })
-        .eq('id', videoId);
+        .eq('id', dataVideoId);
 
       if (error) {
         console.warn('Shares table not found, tracking in analytics only');
       }
 
-      await trackVideoAction('share', videoId, modelId, userId, { 
+      await trackVideoAction('share', dataVideoId, modelId, userId, { 
         platform: platform || 'web' 
       });
 
       toast.success('Vídeo compartilhado!');
       
       // Copy link to clipboard
-      const videoUrl = `${window.location.origin}/video/${videoId}`;
+      const videoUrl = `${window.location.origin}/video/${dataVideoId}`;
       await navigator.clipboard.writeText(videoUrl);
       toast.success('Link copiado para a área de transferência!');
       
@@ -189,7 +206,9 @@ export const useVideoActions = () => {
     userId?: string
   ) => {
     try {
-      await trackVideoAction('view', videoId, modelId, userId, {
+      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(dataVideoId)) return;
+      await trackVideoAction('view', dataVideoId, modelId, userId, {
         timestamp: new Date().toISOString(),
         viewport: `${window.innerWidth}x${window.innerHeight}`
       });

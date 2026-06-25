@@ -11,6 +11,11 @@ import { CounterPulse } from './CounterPulse';
 import { RealtimeIndicator } from './RealtimeIndicator';
 import { Slider } from '@/components/ui/slider';
 
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
+const getPersistedVideoId = (video: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
+
 interface EnhancedSideMenuProps {
   video: Video;
   isMuted: boolean;
@@ -79,12 +84,17 @@ export const EnhancedSideMenu = ({
   useEffect(() => {
     const checkLikeStatus = async () => {
       if (!userId) return;
+      const dataVideoId = getPersistedVideoId(video);
+      if (!isValidUUID(dataVideoId)) {
+        setIsLiked(localStorage.getItem(`liked_${dataVideoId}`) === 'true');
+        return;
+      }
       
       try {
         const { data, error } = await supabase
           .from('likes')
           .select('id')
-          .eq('video_id', video.id)
+          .eq('video_id', dataVideoId)
           .eq('user_id', userId)
           .eq('is_active', true)
           .single();
@@ -101,8 +111,9 @@ export const EnhancedSideMenu = ({
 
   // Track video view on mount
   useEffect(() => {
-    if (video.id && userId) {
-      viewVideo(video.id, video.user?.id || '', userId);
+    const dataVideoId = getPersistedVideoId(video);
+    if (isValidUUID(dataVideoId) && userId) {
+      viewVideo(dataVideoId, video.user?.id || '', userId);
     }
   }, [video.id, userId, viewVideo]);
 
@@ -118,7 +129,7 @@ export const EnhancedSideMenu = ({
     }
     
     const newLikedState = await toggleLike(
-      video.id,
+      getPersistedVideoId(video),
       video.user?.id || '',
       userId,
       isLiked
@@ -133,7 +144,7 @@ export const EnhancedSideMenu = ({
 
   const handleShare = async () => {
     const success = await shareVideo(
-      video.id,
+      getPersistedVideoId(video),
       video.user?.id || '',
       userId || 'anonymous',
       'web'
@@ -148,7 +159,7 @@ export const EnhancedSideMenu = ({
     onOpenComments();
     if (userId) {
       // Track comment interaction
-      viewVideo(video.id, video.user?.id || '', userId);
+      viewVideo(getPersistedVideoId(video), video.user?.id || '', userId);
     }
   };
 

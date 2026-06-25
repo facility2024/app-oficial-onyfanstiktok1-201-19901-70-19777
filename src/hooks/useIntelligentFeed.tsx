@@ -373,62 +373,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     try {
       const newFeed = await generateFeed();
       setCurrentFeed(newFeed);
-      
-      const videoIds = newFeed.videos.map(v => v.video_id);
-      const { data: fullVideos } = await supabase
-        .from('videos')
-        .select(`
-          *,
-          profiles:user_id(id, username, avatar_url, followers_count, video_call_active)
-        `)
-        .in('id', videoIds);
-      
-      if (fullVideos) {
-        // Enriquecer vídeos com dados das modelos se houver model_id
-        const modelIds = fullVideos.map(v => v.model_id).filter(Boolean);
-        let modelsMap: Record<string, any> = {};
-        
-        if (modelIds.length > 0) {
-          const { data: modelsData } = await supabase
-            .from('models')
-            .select('id, name, username, avatar_url')
-            .in('id', modelIds);
-          
-          if (modelsData) {
-            modelsData.forEach(m => {
-              modelsMap[m.id] = m;
-            });
-          }
-        }
-
-        const orderedVideos = videoIds
-          .map(id => {
-            const videoData = fullVideos.find((v: any) => v.id === id);
-            if (!videoData) return null;
-
-            const profile = (videoData as any).profiles;
-
-            // Se for vídeo de modelo, garante que use os dados da modelo para nome e avatar
-            if (videoData.model_id && modelsMap[videoData.model_id]) {
-              const model = modelsMap[videoData.model_id];
-              return {
-                ...videoData,
-                user: {
-                  ...profile,
-                  username: model.name || model.username || profile?.username || 'Modelo',
-                  avatar_url: model.avatar_url || profile?.avatar_url || ''
-                }
-              };
-            }
-            return {
-              ...videoData,
-              user: profile
-            };
-          })
-          .filter(Boolean);
-        
-        setVideos(orderedVideos as any);
-      }
+      setVideos([]);
     } catch (error) {
       console.error('Erro ao atualizar feed:', error);
     } finally {

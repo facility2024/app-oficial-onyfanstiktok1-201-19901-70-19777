@@ -97,6 +97,11 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
         loop
         playsInline
         controls
+        controlsList="nodownload noremoteplayback noplaybackrate"
+        disablePictureInPicture
+        // @ts-ignore
+        disableRemotePlayback
+        onContextMenu={(e) => e.preventDefault()}
       />
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 rounded-full px-3 py-1 text-white text-xs">

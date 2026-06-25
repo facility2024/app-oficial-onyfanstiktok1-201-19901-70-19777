@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { User } from '@/types/database';
 import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone, Radio } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
+import { ProfileVideoModal } from './ProfileVideoModal';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';

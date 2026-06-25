@@ -401,8 +401,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         });
       }
 
-      // Transformar vídeos para o formato de conteúdo
-      let transformedVideos = (videosData || []).map(item => ({
+      // Transformar apenas vídeos reais da tabela videos para o formato de conteúdo
+      const transformedVideos = (videosData || [])
+        .filter((item: any) => Boolean(item.video_url))
+        .map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,
         thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
@@ -413,67 +415,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         created_at: item.created_at,
         visibility: 'public' as 'public' | 'premium' | 'private'
       }));
-
-      // 🔧 FALLBACK 1: Buscar posts agendados/principais quando o modelo não tem entradas na tabela videos
-      if (transformedVideos.length === 0 && !isUserCreator) {
-        try {
-          const normalize = (u: string) => {
-            const raw = (u || '').trim();
-            if (!raw) return '';
-            if (!/^https?:\/\//i.test(raw) && /^[\w.-]+\.[\w.-]+/.test(raw)) return `https://${raw}`;
-            return raw;
-          };
-          const [{ data: agendados }, { data: principais }] = await Promise.all([
-            (supabase as any).from('posts_agendados').select('id, titulo, conteudo_url, created_at, data_publicacao').eq('modelo_id', user.id).eq('status', 'publicado').order('data_publicacao', { ascending: false }).limit(50),
-            (supabase as any).from('posts_principais').select('id, titulo, conteudo_url, created_at').eq('modelo_id', user.id).order('created_at', { ascending: false }).limit(50),
-          ]);
-          const fromAgendados = (agendados || []).map((p: any) => ({
-            id: `scheduled-${p.id}`,
-            title: p.titulo || 'Conteúdo Agendado',
-            thumbnail_url: normalize(p.conteudo_url || '') || user.avatar_url || '/placeholder.svg',
-            video_url: normalize(p.conteudo_url || ''),
-            type: 'video' as const,
-            likes_count: 0,
-            views_count: 0,
-            created_at: p.data_publicacao || p.created_at,
-            visibility: 'public' as 'public' | 'premium' | 'private',
-          })).filter((v: any) => v.video_url);
-          const fromPrincipais = (principais || []).map((p: any) => ({
-            id: `main-${p.id}`,
-            title: p.titulo || 'Conteúdo',
-            thumbnail_url: normalize(p.conteudo_url || '') || user.avatar_url || '/placeholder.svg',
-            video_url: normalize(p.conteudo_url || ''),
-            type: 'video' as const,
-            likes_count: 0,
-            views_count: 0,
-            created_at: p.created_at,
-            visibility: 'public' as 'public' | 'premium' | 'private',
-          })).filter((v: any) => v.video_url);
-          transformedVideos = [...fromAgendados, ...fromPrincipais];
-          if (transformedVideos.length > 0) {
-            console.log(`🔧 Perfil ${user.username}: ${transformedVideos.length} vídeos carregados de posts agendados/principais`);
-          }
-        } catch (e) {
-          console.warn('⚠️ Erro ao carregar posts agendados/principais no perfil:', e);
-        }
-      }
-
-      // 🔧 FALLBACK 2: Se ainda não tem vídeos mas tem posting_panel_url, criar entrada virtual
-      const modelPanelUrl = modelData?.posting_panel_url;
-      if (transformedVideos.length === 0 && modelPanelUrl) {
-        console.log('🔧 Modelo sem vídeos na tabela videos, usando posting_panel_url como fallback');
-        transformedVideos = [{
-          id: `fallback-${user.id}`,
-          title: `${user.username} - Vídeo Principal`,
-          thumbnail_url: user.avatar_url || '/placeholder.svg',
-          video_url: modelPanelUrl,
-          type: 'video' as const,
-          likes_count: 0,
-          views_count: 0,
-          created_at: user.created_at || new Date().toISOString(),
-          visibility: 'public' as 'public' | 'premium' | 'private'
-        }];
-      }
 
       // Buscar imagens específicas da modelo (usando localStorage como cache temporário)
       const modelImages = getModelImages(user.id);
@@ -1054,15 +995,16 @@ if (!isOpen) return null;
                         >
                           {content.type === 'video' ? (
                             <>
-                              {/* Usa poster/imagem como thumb (sem autoplay) para não saturar banda e abrir o player rápido */}
-                              <img
-                                src={content.thumbnail_url || '/placeholder.svg'}
-                                alt={content.title}
-                                loading="lazy"
-                                decoding="async"
+                              <video
+                                src={content.video_url}
+                                muted
+                                playsInline
+                                preload="metadata"
+                                poster={content.thumbnail_url || undefined}
+                                aria-label={content.title}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  e.currentTarget.src = '/placeholder.svg';
+                                  e.currentTarget.poster = '/placeholder.svg';
                                 }}
                               />
                               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

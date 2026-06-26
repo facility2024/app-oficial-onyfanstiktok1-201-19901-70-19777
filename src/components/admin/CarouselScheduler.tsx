@@ -68,8 +68,8 @@ export const CarouselScheduler = () => {
       }
 
       const { error } = await supabase.from('posts_agendados').insert({
-        modelo_id: model.id,
-        modelo_username: model.username,
+        modelo_id: currentModel.id,
+        modelo_username: currentModel.username,
         titulo: titulo || 'Galeria',
         descricao,
         conteudo_url: imagens[0],

@@ -123,13 +123,14 @@ export const CarouselScheduler = () => {
         </div>
 
         <div>
-          <Label>Imagens (cole URLs)</Label>
-          <div className="flex gap-2">
-            <Input value={novaImagem} onChange={(e) => setNovaImagem(e.target.value)}
-              placeholder="https://..." className="bg-gray-800 border-gray-700"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addImage())} />
-            <Button type="button" onClick={addImage}><Plus className="w-4 h-4" /></Button>
-          </div>
+          <Label>Imagens (uma URL por linha)</Label>
+          <Textarea
+            value={imagensTexto}
+            onChange={(e) => setImagensTexto(e.target.value)}
+            placeholder={"https://exemplo.com/img1.jpg\nhttps://exemplo.com/img2.jpg\nhttps://exemplo.com/img3.jpg"}
+            rows={6}
+            className="bg-gray-800 border-gray-700 font-mono text-sm"
+          />
           {imagens.length > 0 && (
             <>
               <div className="mt-2 grid grid-cols-4 gap-2">

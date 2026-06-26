@@ -43,16 +43,30 @@ export const CarouselScheduler = () => {
   };
 
   const agendar = async () => {
-    if (!model) return toast.error('Selecione uma modelo');
+    if (!model && !modelSearch.trim()) return toast.error('Informe a modelo');
     if (imagens.length === 0) return toast.error('Adicione pelo menos uma imagem');
     if (!data || !hora) return toast.error('Defina data e hora');
 
     setLoading(true);
     try {
-      // Atualiza avatar da modelo se fornecido
-      if (avatarUrl.trim()) {
-        await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', model.id);
+      let currentModel = model;
+
+      // Cria modelo nova se não houver seleção
+      if (!currentModel) {
+        const raw = modelSearch.trim().replace(/^@/, '');
+        const username = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        const { data: created, error: createErr } = await supabase
+          .from('models')
+          .insert({ username, name: raw, avatar_url: avatarUrl.trim() || null } as any)
+          .select('id, username, name')
+          .single();
+        if (createErr) throw createErr;
+        currentModel = created as ModelOption;
+        setModel(currentModel);
+      } else if (avatarUrl.trim()) {
+        await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', currentModel.id);
       }
+
       const { error } = await supabase.from('posts_agendados').insert({
         modelo_id: model.id,
         modelo_username: model.username,

@@ -53,6 +53,10 @@ export const CarouselScheduler = () => {
 
     setLoading(true);
     try {
+      // Atualiza avatar da modelo se fornecido
+      if (avatarUrl.trim()) {
+        await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', model.id);
+      }
       const { error } = await supabase.from('posts_agendados').insert({
         modelo_id: model.id,
         modelo_username: model.username,
@@ -69,7 +73,7 @@ export const CarouselScheduler = () => {
       } as any);
       if (error) throw error;
       toast.success('Carrossel agendado com sucesso!');
-      setImagens([]); setAudioUrl(''); setTitulo(''); setDescricao('');
+      setImagens([]); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao agendar');
     } finally {

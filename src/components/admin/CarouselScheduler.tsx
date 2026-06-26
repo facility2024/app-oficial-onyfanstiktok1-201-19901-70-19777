@@ -16,6 +16,7 @@ export const CarouselScheduler = () => {
   const [modelSearch, setModelSearch] = useState('');
   const [results, setResults] = useState<ModelOption[]>([]);
   const [model, setModel] = useState<ModelOption | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [imagens, setImagens] = useState<string[]>([]);

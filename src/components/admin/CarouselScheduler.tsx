@@ -69,7 +69,7 @@ export const CarouselScheduler = () => {
       } as any);
       if (error) throw error;
       toast.success('Carrossel agendado com sucesso!');
-      setImagens([]); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
+      setImagensTexto(''); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao agendar');
     } finally {

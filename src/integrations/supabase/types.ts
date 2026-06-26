@@ -5344,11 +5344,13 @@ export type Database = {
       }
       posts_agendados: {
         Row: {
+          audio_url: string | null
           conteudo_url: string
           created_at: string
           data_agendamento: string
           data_publicacao: string | null
           descricao: string | null
+          enviar_perfil_modelo: boolean
           enviar_tela_principal: boolean
           id: string
           imagens: string[] | null
@@ -5361,11 +5363,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audio_url?: string | null
           conteudo_url: string
           created_at?: string
           data_agendamento: string
           data_publicacao?: string | null
           descricao?: string | null
+          enviar_perfil_modelo?: boolean
           enviar_tela_principal?: boolean
           id?: string
           imagens?: string[] | null
@@ -5378,11 +5382,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audio_url?: string | null
           conteudo_url?: string
           created_at?: string
           data_agendamento?: string
           data_publicacao?: string | null
           descricao?: string | null
+          enviar_perfil_modelo?: boolean
           enviar_tela_principal?: boolean
           id?: string
           imagens?: string[] | null

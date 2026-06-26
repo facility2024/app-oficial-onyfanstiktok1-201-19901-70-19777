@@ -108,6 +108,16 @@ export const CarouselScheduler = () => {
         </div>
 
         <div>
+          <Label>Avatar da modelo (URL — opcional, atualiza o perfil)</Label>
+          <div className="flex gap-2 items-center">
+            {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
+            <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700" />
+          </div>
+        </div>
+
+
+        <div>
           <Label>Título</Label>
           <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="bg-gray-800 border-gray-700" />
         </div>

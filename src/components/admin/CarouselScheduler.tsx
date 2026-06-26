@@ -19,8 +19,8 @@ export const CarouselScheduler = () => {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [imagens, setImagens] = useState<string[]>([]);
-  const [novaImagem, setNovaImagem] = useState('');
+  const [imagensTexto, setImagensTexto] = useState('');
+  const imagens = imagensTexto.split('\n').map(s => s.trim()).filter(Boolean);
   const [audioUrl, setAudioUrl] = useState('');
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
@@ -38,13 +38,9 @@ export const CarouselScheduler = () => {
     setResults(data || []);
   };
 
-  const addImage = () => {
-    if (!novaImagem.trim()) return;
-    setImagens([...imagens, novaImagem.trim()]);
-    setNovaImagem('');
+  const removeImage = (i: number) => {
+    setImagensTexto(imagens.filter((_, idx) => idx !== i).join('\n'));
   };
-
-  const removeImage = (i: number) => setImagens(imagens.filter((_, idx) => idx !== i));
 
   const agendar = async () => {
     if (!model) return toast.error('Selecione uma modelo');
@@ -73,7 +69,7 @@ export const CarouselScheduler = () => {
       } as any);
       if (error) throw error;
       toast.success('Carrossel agendado com sucesso!');
-      setImagens([]); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
+      setImagensTexto(''); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao agendar');
     } finally {
@@ -127,13 +123,14 @@ export const CarouselScheduler = () => {
         </div>
 
         <div>
-          <Label>Imagens (cole URLs)</Label>
-          <div className="flex gap-2">
-            <Input value={novaImagem} onChange={(e) => setNovaImagem(e.target.value)}
-              placeholder="https://..." className="bg-gray-800 border-gray-700"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addImage())} />
-            <Button type="button" onClick={addImage}><Plus className="w-4 h-4" /></Button>
-          </div>
+          <Label>Imagens (uma URL por linha)</Label>
+          <Textarea
+            value={imagensTexto}
+            onChange={(e) => setImagensTexto(e.target.value)}
+            placeholder={"https://exemplo.com/img1.jpg\nhttps://exemplo.com/img2.jpg\nhttps://exemplo.com/img3.jpg"}
+            rows={6}
+            className="bg-gray-800 border-gray-700 font-mono text-sm"
+          />
           {imagens.length > 0 && (
             <>
               <div className="mt-2 grid grid-cols-4 gap-2">

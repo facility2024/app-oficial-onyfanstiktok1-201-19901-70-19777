@@ -16,6 +16,7 @@ export const CarouselScheduler = () => {
   const [modelSearch, setModelSearch] = useState('');
   const [results, setResults] = useState<ModelOption[]>([]);
   const [model, setModel] = useState<ModelOption | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [imagens, setImagens] = useState<string[]>([]);
@@ -52,6 +53,10 @@ export const CarouselScheduler = () => {
 
     setLoading(true);
     try {
+      // Atualiza avatar da modelo se fornecido
+      if (avatarUrl.trim()) {
+        await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', model.id);
+      }
       const { error } = await supabase.from('posts_agendados').insert({
         modelo_id: model.id,
         modelo_username: model.username,
@@ -68,7 +73,7 @@ export const CarouselScheduler = () => {
       } as any);
       if (error) throw error;
       toast.success('Carrossel agendado com sucesso!');
-      setImagens([]); setAudioUrl(''); setTitulo(''); setDescricao('');
+      setImagens([]); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao agendar');
     } finally {
@@ -101,6 +106,16 @@ export const CarouselScheduler = () => {
             </div>
           )}
         </div>
+
+        <div>
+          <Label>Avatar da modelo (URL — opcional, atualiza o perfil)</Label>
+          <div className="flex gap-2 items-center">
+            {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
+            <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700" />
+          </div>
+        </div>
+
 
         <div>
           <Label>Título</Label>

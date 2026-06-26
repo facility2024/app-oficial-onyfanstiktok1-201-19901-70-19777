@@ -19,8 +19,8 @@ export const CarouselScheduler = () => {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [imagens, setImagens] = useState<string[]>([]);
-  const [novaImagem, setNovaImagem] = useState('');
+  const [imagensTexto, setImagensTexto] = useState('');
+  const imagens = imagensTexto.split('\n').map(s => s.trim()).filter(Boolean);
   const [audioUrl, setAudioUrl] = useState('');
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');

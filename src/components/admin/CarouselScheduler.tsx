@@ -38,13 +38,9 @@ export const CarouselScheduler = () => {
     setResults(data || []);
   };
 
-  const addImage = () => {
-    if (!novaImagem.trim()) return;
-    setImagens([...imagens, novaImagem.trim()]);
-    setNovaImagem('');
+  const removeImage = (i: number) => {
+    setImagensTexto(imagens.filter((_, idx) => idx !== i).join('\n'));
   };
-
-  const removeImage = (i: number) => setImagens(imagens.filter((_, idx) => idx !== i));
 
   const agendar = async () => {
     if (!model) return toast.error('Selecione uma modelo');

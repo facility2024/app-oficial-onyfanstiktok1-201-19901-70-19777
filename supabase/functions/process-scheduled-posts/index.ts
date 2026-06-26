@@ -71,7 +71,7 @@ serve(async (req) => {
         
         if (post.tipo_conteudo === 'video') {
           // Try to activate existing inactive video for this model + URL
-          const { data: existingVideo, error: findError } = await supabase
+          const { data: existingVideo } = await supabase
             .from('videos')
             .select('id')
             .eq('model_id', post.modelo_id)
@@ -81,43 +81,34 @@ serve(async (req) => {
             .maybeSingle();
 
           if (existingVideo) {
-            // Activate the existing video
-            console.log(`🔓 Ativando vídeo existente: ${existingVideo.id}`);
-            const { error: activateError } = await supabase
-              .from('videos')
-              .update({ is_active: true, visibility: 'public' })
-              .eq('id', existingVideo.id);
-
-            if (activateError) {
-              console.error('❌ Erro ao ativar vídeo:', activateError);
-            } else {
-              console.log('✅ Vídeo ativado com sucesso');
-            }
+            await supabase.from('videos').update({ is_active: true, visibility: 'public' }).eq('id', existingVideo.id);
           } else {
-            // No existing video found, create a new one with model_id
-            console.log(`🎥 Criando novo vídeo na tabela videos...`);
-            const { error: videoError } = await supabase
-              .from('videos')
-              .insert({
-                model_id: post.modelo_id,
-                title: post.titulo || 'Novo vídeo',
-                description: post.descricao || '',
-                video_url: post.conteudo_url,
-                thumbnail_url: post.imagens?.[0] || post.conteudo_url,
-                is_active: true,
-                visibility: 'public',
-                duration: '0:00',
-                likes_count: 0,
-                comments_count: 0,
-                shares_count: 0,
-                views_count: 0
-              });
-
-            if (videoError) {
-              console.error('❌ Erro ao criar vídeo:', videoError);
-              throw videoError;
-            }
-            console.log('✅ Vídeo criado na tabela videos');
+            await supabase.from('videos').insert({
+              model_id: post.modelo_id,
+              title: post.titulo || 'Novo vídeo',
+              description: post.descricao || '',
+              video_url: post.conteudo_url,
+              thumbnail_url: post.imagens?.[0] || post.conteudo_url,
+              is_active: true,
+              visibility: 'public',
+              duration: '0:00',
+              likes_count: 0, comments_count: 0, shares_count: 0, views_count: 0
+            });
+          }
+        } else if (post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image') {
+          // Carrossel de imagens (com áudio opcional). Salva também no perfil da modelo se enviar_perfil_modelo
+          if (post.enviar_perfil_modelo && post.imagens && post.imagens.length > 0) {
+            await supabase.from('videos').insert({
+              model_id: post.modelo_id,
+              title: post.titulo || 'Galeria',
+              description: post.descricao || '',
+              video_url: post.audio_url || post.imagens[0],
+              thumbnail_url: post.imagens[0],
+              is_active: true,
+              visibility: 'public',
+              duration: '0:00',
+              likes_count: 0, comments_count: 0, shares_count: 0, views_count: 0,
+            });
           }
         }
         

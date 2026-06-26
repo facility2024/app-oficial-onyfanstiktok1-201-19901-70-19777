@@ -89,7 +89,7 @@ export const CarouselScheduler = () => {
             value={model ? `@${model.username}` : modelSearch}
             onChange={(e) => { setModel(null); searchModels(e.target.value); }}
             placeholder="Buscar modelo..."
-            className="bg-gray-800 border-gray-700"
+            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
           />
           {results.length > 0 && !model && (
             <div className="absolute z-10 bg-gray-800 border border-gray-700 w-full mt-1 rounded max-h-48 overflow-auto">
@@ -108,18 +108,18 @@ export const CarouselScheduler = () => {
           <div className="flex gap-2 items-center">
             {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
             <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700" />
+              placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
           </div>
         </div>
 
 
         <div>
           <Label>Título</Label>
-          <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="bg-gray-800 border-gray-700" />
+          <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
         </div>
         <div>
           <Label>Descrição</Label>
-          <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} className="bg-gray-800 border-gray-700" />
+          <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
         </div>
 
         <div>
@@ -129,7 +129,7 @@ export const CarouselScheduler = () => {
             onChange={(e) => setImagensTexto(e.target.value)}
             placeholder={"https://exemplo.com/img1.jpg\nhttps://exemplo.com/img2.jpg\nhttps://exemplo.com/img3.jpg"}
             rows={6}
-            className="bg-gray-800 border-gray-700 font-mono text-sm"
+            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 font-mono text-sm"
           />
           {imagens.length > 0 && (
             <>
@@ -151,13 +151,13 @@ export const CarouselScheduler = () => {
         <div>
           <Label className="flex items-center gap-2"><Music className="w-4 h-4" /> Áudio MP3 (URL — opcional)</Label>
           <Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)}
-            placeholder="https://.../audio.mp3" className="bg-gray-800 border-gray-700" />
+            placeholder="https://.../audio.mp3" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
           {audioUrl && <audio src={audioUrl} controls className="mt-2 w-full" />}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="bg-gray-800 border-gray-700" /></div>
-          <div><Label>Hora</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="bg-gray-800 border-gray-700" /></div>
+          <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" /></div>
+          <div><Label>Hora</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" /></div>
         </div>
 
         <div className="space-y-2">

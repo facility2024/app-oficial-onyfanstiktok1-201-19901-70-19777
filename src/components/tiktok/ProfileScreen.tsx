@@ -1189,6 +1189,29 @@ if (!isOpen) return null;
         onIndexChange={setCurrentImageIndex}
       />
 
+      {/* Popup de carrossel do perfil */}
+      {carouselModalContent && (
+        <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
+          <button
+            onClick={() => setCarouselModalContent(null)}
+            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center"
+            aria-label="Fechar carrossel"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="w-full max-w-md h-full max-h-screen aspect-[9/16] bg-black">
+            <MediaCarouselPlayer
+              images={carouselModalContent.images || [carouselModalContent.image_url || carouselModalContent.thumbnail_url].filter(Boolean)}
+              audioUrl={carouselModalContent.audio_url}
+              isPlaying={true}
+              isMuted={false}
+              volume={0.9}
+              objectFit="contain"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Popup de vídeos do perfil com swipe esquerda/direita */}
       <ProfileVideoModal
         videos={publicContents.filter(c => c.type === 'video').map(c => ({ id: c.id, video_url: c.video_url, title: c.title }))}

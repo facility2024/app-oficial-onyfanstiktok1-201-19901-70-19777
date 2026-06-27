@@ -459,6 +459,8 @@ export const AdminVideoScheduler = () => {
   };
 
   const handleSendNow = async (postId: string) => {
+    const currentPost = scheduledPosts.find((post) => post.id === postId);
+    const isCarousel = currentPost?.tipo_conteudo === 'carrossel' || currentPost?.tipo_conteudo === 'image';
     setLoading(true);
     
     const { data, error } = await supabase.functions.invoke('process-scheduled-posts', {
@@ -468,12 +470,12 @@ export const AdminVideoScheduler = () => {
     setLoading(false);
 
     if (error) {
-      toast.error('Erro ao publicar vídeo');
+      toast.error(isCarousel ? 'Erro ao publicar carrossel' : 'Erro ao publicar vídeo');
       console.error(error);
       return;
     }
 
-    toast.success('✅ Vídeo publicado com sucesso!');
+    toast.success(isCarousel ? '✅ Carrossel publicado com sucesso!' : '✅ Vídeo publicado com sucesso!');
     await loadScheduledPosts();
   };
 
@@ -845,7 +847,7 @@ export const AdminVideoScheduler = () => {
             <div className="max-h-[700px] overflow-y-auto">
               {scheduledPosts.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  Nenhum vídeo agendado
+                  Nenhum post agendado
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

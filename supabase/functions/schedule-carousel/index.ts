@@ -204,6 +204,14 @@ serve(async (req) => {
         conteudo_url: imagens[0],
         imagens,
         audio_url: cleanUrl(body.audio_url) || null,
+        botoes: (body.botoes || [])
+          .map((b) => ({
+            label: cleanUrl(b?.label || ''),
+            url: cleanUrl(b?.url || ''),
+            tipo: b?.tipo === 'interno' ? 'interno' : 'externo',
+            cor: cleanUrl(b?.cor || '') || null,
+          }))
+          .filter((b) => b.label && b.url),
         tipo_conteudo: "carrossel",
         data_agendamento: scheduledAt.toISOString(),
         status: "agendado",

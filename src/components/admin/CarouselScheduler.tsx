@@ -254,6 +254,65 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
           {audioUrl && <audio src={audioUrl} controls className="mt-2 w-full" />}
         </div>
 
+        <div className="space-y-2 border border-gray-800 rounded-lg p-3 bg-gray-950/50">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Botões CTA (opcional)</Label>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setBotoes([...botoes, { label: '', url: '', tipo: 'externo', cor: '' }])}
+              className="h-7 text-xs border-gray-700 bg-gray-800 text-white hover:bg-gray-700"
+            >
+              + Adicionar botão
+            </Button>
+          </div>
+          {botoes.length === 0 && (
+            <p className="text-xs text-gray-500">Nenhum botão. Cria botões com link interno (ex: /loja) ou externo (https://...)</p>
+          )}
+          {botoes.map((b, i) => (
+            <div key={i} className="grid grid-cols-12 gap-2 items-center">
+              <Input
+                value={b.label}
+                onChange={(e) => { const n = [...botoes]; n[i].label = e.target.value; setBotoes(n); }}
+                placeholder="Texto"
+                className="col-span-3 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 h-9"
+              />
+              <Input
+                value={b.url}
+                onChange={(e) => { const n = [...botoes]; n[i].url = e.target.value; setBotoes(n); }}
+                placeholder="https://... ou /rota-interna"
+                className="col-span-5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 h-9"
+              />
+              <select
+                value={b.tipo}
+                onChange={(e) => { const n = [...botoes]; n[i].tipo = e.target.value as 'externo' | 'interno'; setBotoes(n); }}
+                className="col-span-2 bg-gray-800 border border-gray-700 text-white text-xs rounded h-9 px-1"
+              >
+                <option value="externo">Externo</option>
+                <option value="interno">Interno</option>
+              </select>
+              <Input
+                type="color"
+                value={b.cor || '#7CB342'}
+                onChange={(e) => { const n = [...botoes]; n[i].cor = e.target.value; setBotoes(n); }}
+                className="col-span-1 bg-gray-800 border-gray-700 h-9 p-1"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                onClick={() => setBotoes(botoes.filter((_, idx) => idx !== i))}
+                className="col-span-1 h-9 px-2"
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+
+
         <div className="grid grid-cols-2 gap-2">
           <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" /></div>
           <div><Label>Hora</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" /></div>

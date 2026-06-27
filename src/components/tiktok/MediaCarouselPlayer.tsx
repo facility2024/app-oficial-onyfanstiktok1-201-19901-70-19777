@@ -107,7 +107,7 @@ export const MediaCarouselPlayer = ({
           <button
             type="button"
             onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/45 text-white flex items-center justify-center backdrop-blur-sm"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-lg"
             aria-label="Imagem anterior"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -115,7 +115,7 @@ export const MediaCarouselPlayer = ({
           <button
             type="button"
             onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/45 text-white flex items-center justify-center backdrop-blur-sm"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-lg"
             aria-label="Próxima imagem"
           >
             <ChevronRight className="w-6 h-6" />

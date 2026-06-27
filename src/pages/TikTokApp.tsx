@@ -1132,6 +1132,7 @@ export const TikTokApp = () => {
         return raw;
       };
       const isImageUrl = (u: string) => /\.(jpg|jpeg|png|gif|webp|avif)(\?.*)?$/i.test(u || '');
+      const isAudioUrl = (u: string) => /\.(mp3|wav|m4a|aac|ogg)(\?.*)?$/i.test(u || '');
       const normalizeImages = (value: any): string[] => {
         if (!Array.isArray(value)) return [];
         return value.map((url) => normalizeUrl(String(url || ''))).filter(Boolean);
@@ -1348,6 +1349,11 @@ export const TikTokApp = () => {
         ...v,
         video_url: normalizeUrl(v.video_url || '')
       })).filter(v => {
+        if (isImageUrl(v.video_url) || isAudioUrl(v.video_url)) {
+          console.warn(`🚫 Mídia de carrossel/áudio filtrada da tabela videos: ${v.video_url}`);
+          return false;
+        }
+
         const isValid = isValidVideoUrl(v.video_url);
         if (!isValid && v.video_url) {
           console.warn(`🚫 URL inválida filtrada: ${v.video_url}`);

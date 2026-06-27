@@ -271,6 +271,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               <MediaCarouselPlayer
                 images={carouselImages}
                 audioUrl={(video as any)?.audio_url}
+                buttons={(video as any)?.botoes}
                 isPlaying={isPlaying}
                 isMuted={isMuted}
                 volume={volume}

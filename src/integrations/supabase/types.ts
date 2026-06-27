@@ -5345,6 +5345,7 @@ export type Database = {
       posts_agendados: {
         Row: {
           audio_url: string | null
+          botoes: Json | null
           conteudo_url: string
           created_at: string
           data_agendamento: string
@@ -5364,6 +5365,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          botoes?: Json | null
           conteudo_url: string
           created_at?: string
           data_agendamento: string
@@ -5383,6 +5385,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          botoes?: Json | null
           conteudo_url?: string
           created_at?: string
           data_agendamento?: string
@@ -5419,6 +5422,7 @@ export type Database = {
       }
       posts_principais: {
         Row: {
+          botoes: Json | null
           conteudo_url: string
           created_at: string
           descricao: string | null
@@ -5433,6 +5437,7 @@ export type Database = {
           video_id: string | null
         }
         Insert: {
+          botoes?: Json | null
           conteudo_url: string
           created_at?: string
           descricao?: string | null
@@ -5447,6 +5452,7 @@ export type Database = {
           video_id?: string | null
         }
         Update: {
+          botoes?: Json | null
           conteudo_url?: string
           created_at?: string
           descricao?: string | null

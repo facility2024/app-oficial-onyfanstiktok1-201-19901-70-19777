@@ -142,6 +142,7 @@ serve(async (req) => {
               tipo_conteudo: post.tipo_conteudo,
               imagens: isCarousel ? (post.imagens || []) : null,
               audio_url: isCarousel ? (post.audio_url || null) : null,
+              botoes: isCarousel ? (post.botoes || []) : [],
               post_agendado_id: post.id,
               is_active: true
             });

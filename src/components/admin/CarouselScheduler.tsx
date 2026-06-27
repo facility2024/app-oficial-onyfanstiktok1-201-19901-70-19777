@@ -176,34 +176,38 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
           <CardTitle>Agendar Carrossel de Imagens + Áudio</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-        <div className="relative">
-          <Label>Modelo</Label>
-          <Input
-            value={model ? `@${model.username}` : modelSearch}
-            onChange={(e) => { setModel(null); searchModels(e.target.value); }}
-            placeholder="Buscar modelo..."
-            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
-          />
-          {results.length > 0 && !model && (
-            <div className="absolute z-10 bg-gray-800 border border-gray-700 w-full mt-1 rounded max-h-48 overflow-auto">
-              {results.map(r => (
-                <button key={r.id} onClick={() => { setModel(r); setResults([]); }}
-                  className="block w-full text-left px-3 py-2 hover:bg-gray-700">
-                  @{r.username} — {r.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Label>Avatar da modelo (URL — opcional, atualiza o perfil)</Label>
-          <div className="flex gap-2 items-center">
-            {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
-            <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
+        {!isCreator && (
+          <div className="relative">
+            <Label>Modelo</Label>
+            <Input
+              value={model ? `@${model.username}` : modelSearch}
+              onChange={(e) => { setModel(null); searchModels(e.target.value); }}
+              placeholder="Buscar modelo..."
+              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+            />
+            {results.length > 0 && !model && (
+              <div className="absolute z-10 bg-gray-800 border border-gray-700 w-full mt-1 rounded max-h-48 overflow-auto">
+                {results.map(r => (
+                  <button key={r.id} onClick={() => { setModel(r); setResults([]); }}
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-700">
+                    @{r.username} — {r.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {!isCreator && (
+          <div>
+            <Label>Avatar da modelo (URL — opcional, atualiza o perfil)</Label>
+            <div className="flex gap-2 items-center">
+              {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
+              <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
+            </div>
+          </div>
+        )}
 
 
         <div>

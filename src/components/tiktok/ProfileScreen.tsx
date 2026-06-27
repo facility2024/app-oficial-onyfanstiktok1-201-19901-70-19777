@@ -423,9 +423,11 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         });
       }
 
+      const isNonVideoMediaUrl = (url?: string) => /\.(jpg|jpeg|png|gif|webp|avif|mp3|wav|m4a|aac|ogg)(\?.*)?$/i.test(String(url || ''));
+
       // Transformar apenas vídeos reais da tabela videos para o formato de conteúdo
       const transformedVideos = (videosData || [])
-        .filter((item: any) => Boolean(item.video_url))
+        .filter((item: any) => Boolean(item.video_url) && !isNonVideoMediaUrl(item.video_url))
         .map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,

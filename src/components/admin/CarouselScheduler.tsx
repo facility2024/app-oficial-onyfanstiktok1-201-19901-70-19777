@@ -161,7 +161,7 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
         toast.success('Carrossel agendado com sucesso!');
       }
 
-      setImagensTexto(''); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
+      setImagensTexto(''); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl(''); setBotoes([]);
       loadScheduledCarousels();
     } catch (e: any) {
       console.error('[CarouselScheduler] erro ao agendar carrossel:', e);

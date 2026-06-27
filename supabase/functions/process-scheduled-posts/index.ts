@@ -157,6 +157,11 @@ serve(async (req) => {
       } catch (error) {
         console.error(`❌ Erro ao processar post ${post.id}:`, error);
         await supabase
+          .from('posts_agendados')
+          .update({ status: 'erro' })
+          .eq('id', post.id);
+
+        await supabase
           .from('agendamento_execucoes')
           .insert({
             post_agendado_id: post.id,

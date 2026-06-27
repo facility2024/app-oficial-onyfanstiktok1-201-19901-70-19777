@@ -24,6 +24,7 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
   const [imagensTexto, setImagensTexto] = useState('');
   const imagens = imagensTexto.split('\n').map(s => s.trim()).filter(Boolean);
   const [audioUrl, setAudioUrl] = useState('');
+  const [botoes, setBotoes] = useState<{ label: string; url: string; tipo: 'externo' | 'interno'; cor: string }[]>([]);
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
   const [enviarFeed, setEnviarFeed] = useState(true);

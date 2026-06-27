@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { VideoPlayer, MemoizedVideoPlayer } from '@/components/tiktok/VideoPlayer';
+import { MediaCarouselPlayer } from '@/components/tiktok/MediaCarouselPlayer';
 import { SideMenu } from '@/components/tiktok/SideMenu';
 import { BottomInfo } from '@/components/tiktok/BottomInfo';
 import { ProfileScreen } from '@/components/tiktok/ProfileScreen';
@@ -68,6 +69,11 @@ interface Video {
   music_name: string;
   is_active: boolean;
   visibility?: 'public' | 'private';
+  media_type?: 'video' | 'carousel';
+  tipo_conteudo?: string;
+  images?: string[];
+  imagens?: string[];
+  audio_url?: string | null;
   created_at: string;
   updated_at?: string;
   model_id?: string;
@@ -938,6 +944,7 @@ export const TikTokApp = () => {
         error: principaisError
       } = await supabase.from('posts_principais').select(`
           *,
+          post_agendado:posts_agendados(*),
           modelo:models(*)
         `).gte('created_at', today.toISOString()).order('created_at', {
         ascending: false
@@ -1125,6 +1132,11 @@ export const TikTokApp = () => {
         }
         return raw;
       };
+      const isImageUrl = (u: string) => /\.(jpg|jpeg|png|gif|webp|avif)(\?.*)?$/i.test(u || '');
+      const normalizeImages = (value: any): string[] => {
+        if (!Array.isArray(value)) return [];
+        return value.map((url) => normalizeUrl(String(url || ''))).filter(Boolean);
+      };
       const INVALID_DOMAINS = ['example.com', 'localhost', '127.0.0.1', 'test.com'];
       const isValidVideoUrl = (u: string) => {
         if (!/^https?:\/\//i.test(u)) return false;
@@ -1162,13 +1174,22 @@ export const TikTokApp = () => {
         scheduledPostsByModel[mid].push(post);
       });
 
-      const buildScheduledVideo = (post: any, model: any, contentUrl: string, nextQueueIndex: number) => ({
+      const buildScheduledVideo = (post: any, model: any, contentUrl: string, nextQueueIndex: number) => {
+        const isCarouselPost = post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image';
+        const carouselImages = normalizeImages(post.imagens);
+        return ({
         id: `scheduled-${post.id}`,
         video_url: contentUrl,
+        thumbnail_url: carouselImages[0] || contentUrl,
         title: post.titulo || 'Conteúdo Agendado',
         user_id: post.modelo_id || 'unknown',
         model_id: post.modelo_id || 'unknown',
         music_name: 'Novo Conteúdo',
+        media_type: isCarouselPost ? 'carousel' : 'video',
+        tipo_conteudo: post.tipo_conteudo,
+        images: carouselImages,
+        imagens: carouselImages,
+        audio_url: post.audio_url || null,
         visibility: 'public' as const,
         source: 'scheduled_post',
         isHighlighted: true,
@@ -1195,7 +1216,8 @@ export const TikTokApp = () => {
           bio: '',
           created_at: ''
         }
-      });
+        });
+      };
 
       const getScheduledQueueIndex = (modelId: string): number => {
         try {
@@ -1221,9 +1243,15 @@ export const TikTokApp = () => {
           for (let attempt = 0; attempt < posts.length; attempt++) {
             const idx = (queueIdx + attempt) % posts.length;
             const candidate = posts[idx];
-            const candidateUrl = normalizeUrl(candidate.conteudo_url || '');
+            const candidateImages = normalizeImages(candidate.imagens);
+            const candidateUrl = normalizeUrl(candidate.conteudo_url || candidateImages[0] || '');
+            const isCarouselPost = candidate.tipo_conteudo === 'carrossel' || candidate.tipo_conteudo === 'image';
 
-            if (!candidateUrl || (!isValidVideoUrl(candidateUrl) && !candidateUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+            if (!candidateUrl || (!isCarouselPost && !isValidVideoUrl(candidateUrl))) {
+              continue;
+            }
+
+            if (isCarouselPost && candidateImages.length === 0 && !isImageUrl(candidateUrl)) {
               continue;
             }
 
@@ -1236,8 +1264,14 @@ export const TikTokApp = () => {
         if (!selectedPost || selectedIndex === -1) return;
 
         const model = selectedPost.modelo || modelsData?.find((m: any) => m.id === selectedPost.modelo_id);
-        const contentUrl = normalizeUrl(selectedPost.conteudo_url || '');
-        if (!contentUrl || (!isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+        const selectedImages = normalizeImages(selectedPost.imagens);
+        const contentUrl = normalizeUrl(selectedPost.conteudo_url || selectedImages[0] || '');
+        const isCarouselPost = selectedPost.tipo_conteudo === 'carrossel' || selectedPost.tipo_conteudo === 'image';
+        if (!contentUrl || (!isCarouselPost && !isValidVideoUrl(contentUrl))) {
+          return;
+        }
+
+        if (isCarouselPost && selectedImages.length === 0 && !isImageUrl(contentUrl)) {
           return;
         }
 
@@ -1250,17 +1284,30 @@ export const TikTokApp = () => {
       const processedMainPosts = (postsPrincipais || []).filter(post => !viewedPosts.has(`main-${post.id}`))
       .map(post => {
         const model = post.modelo || modelsData?.find((m: any) => m.id === post.modelo_id);
-        const contentUrl = normalizeUrl(post.conteudo_url || '');
-        if (!contentUrl || !isValidVideoUrl(contentUrl) && !contentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        const scheduledSource = (post as any).post_agendado || {};
+        const isCarouselPost = post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image';
+        const carouselImages = normalizeImages(scheduledSource.imagens || (post as any).imagens);
+        const contentUrl = normalizeUrl(post.conteudo_url || carouselImages[0] || '');
+        if (!contentUrl || (!isCarouselPost && !isValidVideoUrl(contentUrl))) {
+          return null;
+        }
+
+        if (isCarouselPost && carouselImages.length === 0 && !isImageUrl(contentUrl)) {
           return null;
         }
         return {
           id: `main-${post.id}`,
           video_url: contentUrl,
+          thumbnail_url: carouselImages[0] || contentUrl,
           title: post.titulo || 'Novo Conteúdo',
           user_id: post.modelo_id || 'unknown',
           model_id: post.modelo_id || 'unknown',
           music_name: 'Novo Conteúdo',
+          media_type: isCarouselPost ? 'carousel' : 'video',
+          tipo_conteudo: post.tipo_conteudo,
+          images: carouselImages,
+          imagens: carouselImages,
+          audio_url: scheduledSource.audio_url || (post as any).audio_url || null,
           visibility: 'public' as const,
           source: 'main_post',
           isHighlighted: true,

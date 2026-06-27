@@ -49,60 +49,49 @@ export const CarouselScheduler = () => {
 
     setLoading(true);
     try {
-      let currentModel = model;
+      const scheduleIso = new Date(`${data}T${hora}:00`).toISOString();
+      const invokeSchedule = supabase.functions.invoke('schedule-carousel', {
+        body: {
+          model_search: modelSearch,
+          selected_model_id: model?.id || null,
+          avatar_url: avatarUrl.trim() || null,
+          titulo: titulo || 'Galeria',
+          descricao,
+          imagens,
+          audio_url: audioUrl.trim() || null,
+          data_agendamento: scheduleIso,
+          enviar_tela_principal: enviarFeed,
+          enviar_perfil_modelo: enviarPerfil,
+        },
+      });
 
-      // Cria modelo nova se não houver seleção
-      if (!currentModel) {
-        const raw = modelSearch.trim().replace(/^@/, '');
-        const username = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || `modelo_${Date.now()}`;
+      const timeout = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error('A conexão demorou demais. Tente novamente.')), 25000);
+      });
 
-        // Se já existir uma modelo com esse username, reaproveita
-        const { data: existing } = await supabase
-          .from('models')
-          .select('id, username, name')
-          .eq('username', username)
-          .maybeSingle();
+      const { data: response, error } = await Promise.race([invokeSchedule, timeout]);
+      if (error) throw new Error(error.message || 'Erro ao agendar');
+      if (!response?.success) throw new Error(response?.error || 'Erro ao agendar');
 
-        if (existing) {
-          currentModel = existing as ModelOption;
-          if (avatarUrl.trim()) {
-            await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', currentModel.id);
-          }
+      setModel(response.model as ModelOption);
+
+      if (new Date(scheduleIso).getTime() <= Date.now()) {
+        const { error: publishError } = await supabase.functions.invoke('process-scheduled-posts', {
+          body: { post_id: response.post.id },
+        });
+
+        if (publishError) {
+          toast.warning('Agendado, mas a publicação imediata falhou. A fila automática tentará novamente.');
         } else {
-          const { data: created, error: createErr } = await supabase
-            .from('models')
-            .insert({ username, name: raw || username, avatar_url: avatarUrl.trim() || null, is_active: true } as any)
-            .select('id, username, name')
-            .single();
-          if (createErr) {
-            console.error('[CarouselScheduler] erro ao criar modelo:', createErr);
-            throw new Error(`Falha ao criar modelo: ${createErr.message}`);
-          }
-          currentModel = created as ModelOption;
+          toast.success('Carrossel agendado e publicado com sucesso!');
         }
-        setModel(currentModel);
-      } else if (avatarUrl.trim()) {
-        await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', currentModel.id);
+      } else {
+        toast.success('Carrossel agendado com sucesso!');
       }
 
-      const { error } = await supabase.from('posts_agendados').insert({
-        modelo_id: currentModel.id,
-        modelo_username: currentModel.username,
-        titulo: titulo || 'Galeria',
-        descricao,
-        conteudo_url: imagens[0],
-        imagens,
-        audio_url: audioUrl || null,
-        tipo_conteudo: 'carrossel',
-        data_agendamento: new Date(`${data}T${hora}`).toISOString(),
-        status: 'agendado',
-        enviar_tela_principal: enviarFeed,
-        enviar_perfil_modelo: enviarPerfil,
-      } as any);
-      if (error) throw error;
-      toast.success('Carrossel agendado com sucesso!');
       setImagensTexto(''); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
     } catch (e: any) {
+      console.error('[CarouselScheduler] erro ao agendar carrossel:', e);
       toast.error(e.message || 'Erro ao agendar');
     } finally {
       setLoading(false);

@@ -52,6 +52,8 @@ export const CarouselScheduler = () => {
   const deleteCarousel = async (postId: string) => {
     if (!confirm('Deseja remover este carrossel agendado/publicado?')) return;
 
+    await supabase.from('posts_principais').delete().eq('post_agendado_id', postId);
+
     const { error } = await supabase
       .from('posts_agendados')
       .delete()
@@ -62,7 +64,6 @@ export const CarouselScheduler = () => {
       return;
     }
 
-    await supabase.from('posts_principais').delete().eq('post_agendado_id', postId);
     toast.success('Carrossel removido');
     loadScheduledCarousels();
   };

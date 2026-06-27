@@ -130,6 +130,7 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
           descricao,
           imagens,
           audio_url: audioUrl.trim() || null,
+          botoes: botoes.filter(b => b.label.trim() && b.url.trim()),
           data_agendamento: scheduleIso,
           enviar_tela_principal: enviarFeed,
           enviar_perfil_modelo: enviarPerfil,

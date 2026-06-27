@@ -12,7 +12,9 @@ import { X, Music, Send, Trash2, Images, Clock, CheckCircle, AlertCircle } from 
 
 interface ModelOption { id: string; username: string; name: string; }
 
-export const CarouselScheduler = () => {
+export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creator' } = {}) => {
+  const isCreator = mode === 'creator';
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [modelSearch, setModelSearch] = useState('');
   const [results, setResults] = useState<ModelOption[]>([]);
   const [model, setModel] = useState<ModelOption | null>(null);
@@ -30,16 +32,38 @@ export const CarouselScheduler = () => {
   const [scheduledCarousels, setScheduledCarousels] = useState<any[]>([]);
 
   useEffect(() => {
+    if (isCreator) {
+      supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
+    }
     loadScheduledCarousels();
-  }, []);
+  }, [isCreator]);
 
   const loadScheduledCarousels = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts_agendados')
-      .select('id, titulo, modelo_username, imagens, audio_url, data_agendamento, status, created_at')
+      .select('id, titulo, modelo_username, modelo_id, imagens, audio_url, data_agendamento, status, created_at')
       .in('tipo_conteudo', ['carrossel', 'image'])
       .order('data_agendamento', { ascending: false })
       .limit(30);
+
+    if (isCreator) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setScheduledCarousels([]); return; }
+      const { data: profile } = await (supabase as any)
+        .from('profiles')
+        .select('username, display_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      const baseName = profile?.username || profile?.display_name || user.email?.split('@')[0] || '';
+      const username = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      if (username) {
+        query = query.ilike('modelo_username', username);
+      } else {
+        setScheduledCarousels([]); return;
+      }
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('[CarouselScheduler] erro ao carregar carrosséis:', error);
@@ -89,7 +113,7 @@ export const CarouselScheduler = () => {
   };
 
   const agendar = async () => {
-    if (!model && !modelSearch.trim()) return toast.error('Informe a modelo');
+    if (!isCreator && !model && !modelSearch.trim()) return toast.error('Informe a modelo');
     if (imagens.length === 0) return toast.error('Adicione pelo menos uma imagem');
     if (!data || !hora) return toast.error('Defina data e hora');
 
@@ -152,34 +176,38 @@ export const CarouselScheduler = () => {
           <CardTitle>Agendar Carrossel de Imagens + Áudio</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-        <div className="relative">
-          <Label>Modelo</Label>
-          <Input
-            value={model ? `@${model.username}` : modelSearch}
-            onChange={(e) => { setModel(null); searchModels(e.target.value); }}
-            placeholder="Buscar modelo..."
-            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
-          />
-          {results.length > 0 && !model && (
-            <div className="absolute z-10 bg-gray-800 border border-gray-700 w-full mt-1 rounded max-h-48 overflow-auto">
-              {results.map(r => (
-                <button key={r.id} onClick={() => { setModel(r); setResults([]); }}
-                  className="block w-full text-left px-3 py-2 hover:bg-gray-700">
-                  @{r.username} — {r.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Label>Avatar da modelo (URL — opcional, atualiza o perfil)</Label>
-          <div className="flex gap-2 items-center">
-            {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
-            <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
+        {!isCreator && (
+          <div className="relative">
+            <Label>Modelo</Label>
+            <Input
+              value={model ? `@${model.username}` : modelSearch}
+              onChange={(e) => { setModel(null); searchModels(e.target.value); }}
+              placeholder="Buscar modelo..."
+              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+            />
+            {results.length > 0 && !model && (
+              <div className="absolute z-10 bg-gray-800 border border-gray-700 w-full mt-1 rounded max-h-48 overflow-auto">
+                {results.map(r => (
+                  <button key={r.id} onClick={() => { setModel(r); setResults([]); }}
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-700">
+                    @{r.username} — {r.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {!isCreator && (
+          <div>
+            <Label>Avatar da modelo (URL — opcional, atualiza o perfil)</Label>
+            <div className="flex gap-2 items-center">
+              {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-gray-700" />}
+              <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://.../avatar.jpg" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
+            </div>
+          </div>
+        )}
 
 
         <div>

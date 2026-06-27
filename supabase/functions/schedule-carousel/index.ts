@@ -68,20 +68,26 @@ serve(async (req) => {
       return json({ success: false, error: "Sessão inválida" }, 401);
     }
 
-    const { data: isAdmin, error: roleError } = await admin.rpc("has_role", {
+    const { data: isAdmin } = await admin.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
     });
+    const { data: isCreator } = await admin.rpc("has_role", {
+      _user_id: user.id,
+      _role: "creator",
+    });
 
-    if (roleError || !isAdmin) {
+    if (!isAdmin && !isCreator) {
       return json({ success: false, error: "Acesso negado" }, 403);
     }
+
+    const creatorMode = !isAdmin && isCreator;
 
     const body = (await req.json()) as ScheduleCarouselBody;
     const imagens = (body.imagens || []).map(cleanUrl).filter(Boolean);
     const scheduledAt = body.data_agendamento ? new Date(body.data_agendamento) : null;
 
-    if (!body.selected_model_id && !cleanUrl(body.model_search)) {
+    if (!creatorMode && !body.selected_model_id && !cleanUrl(body.model_search)) {
       return json({ success: false, error: "Informe a modelo" }, 400);
     }
 
@@ -95,7 +101,40 @@ serve(async (req) => {
 
     let currentModel: { id: string; username: string; name: string } | null = null;
 
-    if (body.selected_model_id) {
+    if (creatorMode) {
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("username, display_name, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const baseName = (profile as any)?.username || (profile as any)?.display_name || user.email?.split("@")[0] || `criador_${user.id.slice(0, 8)}`;
+      const { username, raw } = normalizeUsername(baseName);
+
+      const { data: existingModel } = await admin
+        .from("models")
+        .select("id, username, name")
+        .ilike("username", username)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingModel) {
+        currentModel = existingModel;
+      } else {
+        const { data: createdModel, error: createError } = await admin
+          .from("models")
+          .insert({
+            username,
+            name: raw || username,
+            avatar_url: cleanUrl(body.avatar_url) || (profile as any)?.avatar_url || null,
+            is_active: true,
+          })
+          .select("id, username, name")
+          .single();
+        if (createError) throw createError;
+        currentModel = createdModel;
+      }
+    } else if (body.selected_model_id) {
       const { data: existingModel, error: modelError } = await admin
         .from("models")
         .select("id, username, name")

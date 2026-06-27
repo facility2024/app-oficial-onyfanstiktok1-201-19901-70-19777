@@ -20,6 +20,7 @@ import { SubscriptionPlansManager } from '@/components/creator/SubscriptionPlans
 import { useGenres } from '@/hooks/useGenres';
 import NeonPayProducerSettings from '@/components/creator/NeonPayProducerSettings';
 import MySales from '@/components/creator/MySales';
+import { CarouselScheduler } from '@/components/admin/CarouselScheduler';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
@@ -428,6 +429,10 @@ export default function CreatorStudio() {
               <List className="w-4 h-4 mr-1" />
               Meus Vídeos
             </TabsTrigger>
+            <TabsTrigger value="carousel" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <Image className="w-4 h-4 mr-1" />
+              Carrossel + Áudio
+            </TabsTrigger>
             <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <BarChart3 className="w-4 h-4 mr-1" />
               Estatísticas
@@ -792,6 +797,11 @@ export default function CreatorStudio() {
           {/* Tab: Gerenciar Vídeos */}
           <TabsContent value="manage">
             <VideoManagementTable />
+          </TabsContent>
+
+          {/* Tab: Carrossel + Áudio */}
+          <TabsContent value="carousel">
+            <CarouselScheduler mode="creator" />
           </TabsContent>
 
           {/* Tab: Estatísticas */}

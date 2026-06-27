@@ -851,16 +851,41 @@ export const AdminVideoScheduler = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {scheduledPosts.map((post) => (
                     <div key={post.id} className="relative group border rounded-lg overflow-hidden bg-black">
-                      {/* Miniatura do Vídeo */}
-                      <video
-                        src={post.conteudo_url}
-                        className="w-full aspect-[9/16] object-cover"
-                        preload="metadata"
-                        muted
-                        playsInline
-                        onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-                        onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-                      />
+                      {/* Miniatura do Vídeo ou Carrossel */}
+                      {post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image' ? (
+                        <div className="relative w-full aspect-[9/16] bg-gradient-to-br from-purple-950 to-black overflow-hidden">
+                          <img
+                            src={post.imagens?.[0] || post.conteudo_url || '/placeholder.svg'}
+                            alt={post.titulo || 'Carrossel'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-white gap-1 pointer-events-none">
+                            <div className="rounded-full bg-black/55 p-2 backdrop-blur-sm">
+                              <Images className="w-7 h-7" />
+                            </div>
+                            <span className="text-[10px] font-bold bg-purple-600/90 px-2 py-0.5 rounded-full">
+                              CARROSSEL {post.imagens?.length ? `(${post.imagens.length})` : ''}
+                            </span>
+                            {post.audio_url && (
+                              <span className="text-[9px] font-semibold bg-black/70 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <Music className="w-2.5 h-2.5" /> MP3
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <video
+                          src={post.conteudo_url}
+                          className="w-full aspect-[9/16] object-cover"
+                          preload="metadata"
+                          muted
+                          playsInline
+                          onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                          onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                        />
+                      )}
 
                       {/* Overlay com status */}
                       <div className="absolute top-1 left-1 z-10">

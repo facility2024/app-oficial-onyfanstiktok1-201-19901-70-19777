@@ -799,6 +799,11 @@ export default function CreatorStudio() {
             <VideoManagementTable />
           </TabsContent>
 
+          {/* Tab: Carrossel + Áudio */}
+          <TabsContent value="carousel">
+            <CarouselScheduler mode="creator" />
+          </TabsContent>
+
           {/* Tab: Estatísticas */}
           <TabsContent value="stats">
             <CreatorStatsPanel />

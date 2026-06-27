@@ -61,6 +61,8 @@ import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { TikTokApp } from '@/pages/TikTokApp';
 import { AdminVideoScheduler } from './admin/AdminVideoScheduler';
+import { CarouselScheduler } from './admin/CarouselScheduler';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 // Lazy load AdminIntelligentFeed to avoid build issues
@@ -261,7 +263,16 @@ export const AdminDashboard = () => {
       case 'app':
         return <TikTokApp />;
       case 'posts':
-        return <AdminVideoScheduler />;
+        return (
+          <Tabs defaultValue="video" className="w-full">
+            <TabsList className="mb-4 bg-gray-900 border border-gray-800">
+              <TabsTrigger value="video">Vídeos</TabsTrigger>
+              <TabsTrigger value="carrossel">Carrossel + Áudio</TabsTrigger>
+            </TabsList>
+            <TabsContent value="video"><AdminVideoScheduler /></TabsContent>
+            <TabsContent value="carrossel"><CarouselScheduler /></TabsContent>
+          </Tabs>
+        );
       default:
         return <div>Seção não encontrada</div>;
     }

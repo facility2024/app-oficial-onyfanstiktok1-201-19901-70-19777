@@ -12,7 +12,9 @@ import { X, Music, Send, Trash2, Images, Clock, CheckCircle, AlertCircle } from 
 
 interface ModelOption { id: string; username: string; name: string; }
 
-export const CarouselScheduler = () => {
+export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creator' } = {}) => {
+  const isCreator = mode === 'creator';
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [modelSearch, setModelSearch] = useState('');
   const [results, setResults] = useState<ModelOption[]>([]);
   const [model, setModel] = useState<ModelOption | null>(null);

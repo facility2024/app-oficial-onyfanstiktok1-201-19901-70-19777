@@ -1190,6 +1190,7 @@ export const TikTokApp = () => {
         images: carouselImages,
         imagens: carouselImages,
         audio_url: post.audio_url || null,
+        botoes: (post as any).botoes || [],
         visibility: 'public' as const,
         source: 'scheduled_post',
         isHighlighted: true,

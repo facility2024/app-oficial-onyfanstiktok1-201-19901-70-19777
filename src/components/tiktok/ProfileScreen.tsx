@@ -36,7 +36,7 @@ interface ModelContent {
   likes_count: number;
   views_count: number;
   created_at: string;
-  visibility?: 'public' | 'private';
+  visibility?: 'public' | 'premium' | 'private';
 }
 
 interface ModelImage {

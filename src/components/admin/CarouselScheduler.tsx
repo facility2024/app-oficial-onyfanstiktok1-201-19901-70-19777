@@ -54,14 +54,32 @@ export const CarouselScheduler = () => {
       // Cria modelo nova se não houver seleção
       if (!currentModel) {
         const raw = modelSearch.trim().replace(/^@/, '');
-        const username = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-        const { data: created, error: createErr } = await supabase
+        const username = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || `modelo_${Date.now()}`;
+
+        // Se já existir uma modelo com esse username, reaproveita
+        const { data: existing } = await supabase
           .from('models')
-          .insert({ username, name: raw, avatar_url: avatarUrl.trim() || null } as any)
           .select('id, username, name')
-          .single();
-        if (createErr) throw createErr;
-        currentModel = created as ModelOption;
+          .eq('username', username)
+          .maybeSingle();
+
+        if (existing) {
+          currentModel = existing as ModelOption;
+          if (avatarUrl.trim()) {
+            await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', currentModel.id);
+          }
+        } else {
+          const { data: created, error: createErr } = await supabase
+            .from('models')
+            .insert({ username, name: raw || username, avatar_url: avatarUrl.trim() || null, is_active: true } as any)
+            .select('id, username, name')
+            .single();
+          if (createErr) {
+            console.error('[CarouselScheduler] erro ao criar modelo:', createErr);
+            throw new Error(`Falha ao criar modelo: ${createErr.message}`);
+          }
+          currentModel = created as ModelOption;
+        }
         setModel(currentModel);
       } else if (avatarUrl.trim()) {
         await supabase.from('models').update({ avatar_url: avatarUrl.trim() }).eq('id', currentModel.id);

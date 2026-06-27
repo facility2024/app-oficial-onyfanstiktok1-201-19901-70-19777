@@ -32,16 +32,38 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
   const [scheduledCarousels, setScheduledCarousels] = useState<any[]>([]);
 
   useEffect(() => {
+    if (isCreator) {
+      supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
+    }
     loadScheduledCarousels();
-  }, []);
+  }, [isCreator]);
 
   const loadScheduledCarousels = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts_agendados')
-      .select('id, titulo, modelo_username, imagens, audio_url, data_agendamento, status, created_at')
+      .select('id, titulo, modelo_username, modelo_id, imagens, audio_url, data_agendamento, status, created_at')
       .in('tipo_conteudo', ['carrossel', 'image'])
       .order('data_agendamento', { ascending: false })
       .limit(30);
+
+    if (isCreator) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setScheduledCarousels([]); return; }
+      const { data: profile } = await (supabase as any)
+        .from('profiles')
+        .select('username, display_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      const baseName = profile?.username || profile?.display_name || user.email?.split('@')[0] || '';
+      const username = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      if (username) {
+        query = query.ilike('modelo_username', username);
+      } else {
+        setScheduledCarousels([]); return;
+      }
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('[CarouselScheduler] erro ao carregar carrosséis:', error);

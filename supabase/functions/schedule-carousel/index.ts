@@ -68,14 +68,20 @@ serve(async (req) => {
       return json({ success: false, error: "Sessão inválida" }, 401);
     }
 
-    const { data: isAdmin, error: roleError } = await admin.rpc("has_role", {
+    const { data: isAdmin } = await admin.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
     });
+    const { data: isCreator } = await admin.rpc("has_role", {
+      _user_id: user.id,
+      _role: "creator",
+    });
 
-    if (roleError || !isAdmin) {
+    if (!isAdmin && !isCreator) {
       return json({ success: false, error: "Acesso negado" }, 403);
     }
+
+    const creatorMode = !isAdmin && isCreator;
 
     const body = (await req.json()) as ScheduleCarouselBody;
     const imagens = (body.imagens || []).map(cleanUrl).filter(Boolean);

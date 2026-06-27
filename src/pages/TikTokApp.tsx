@@ -3496,18 +3496,22 @@ export const TikTokApp = () => {
                 </div>
               </div>
 
-              {/* Desktop Navigation Arrows */}
-              <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Desktop Navigation Arrows - ocultas em carrossel para não conflitar com setas laterais do carrossel */}
+              {((currentVideo as any)?.media_type !== 'carousel' && (currentVideo as any)?.tipo_conteudo !== 'carrossel') && (
+                <>
+                  <div className="absolute top-1/2 left-6 transform -translate-y-1/2 z-20">
+                    <Button variant="ghost" size="sm" onClick={prevVideo} disabled={currentVideoIndex === 0} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-              <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
-                <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
+                  <div className="absolute top-1/2 right-2 md:right-4 lg:right-6 transform -translate-y-1/2 z-20">
+                    <Button variant="ghost" size="sm" onClick={nextVideo} disabled={currentVideoIndex === videos.length - 1} className="bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm rounded-full w-8 h-8 p-0 disabled:opacity-50">
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Desktop Side Menu - FORA do overflow-hidden, posicionado à direita */}

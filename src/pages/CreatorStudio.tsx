@@ -20,6 +20,7 @@ import { SubscriptionPlansManager } from '@/components/creator/SubscriptionPlans
 import { useGenres } from '@/hooks/useGenres';
 import NeonPayProducerSettings from '@/components/creator/NeonPayProducerSettings';
 import MySales from '@/components/creator/MySales';
+import { CarouselScheduler } from '@/components/admin/CarouselScheduler';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),

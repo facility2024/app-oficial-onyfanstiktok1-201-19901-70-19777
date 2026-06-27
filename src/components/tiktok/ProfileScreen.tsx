@@ -1035,6 +1035,8 @@ if (!isOpen) return null;
                               const idx = videoContents.findIndex(c => c.id === content.id);
                               setVideoModalIndex(idx >= 0 ? idx : 0);
                               setVideoModalOpen(true);
+                            } else if (content.type === 'carousel') {
+                              setCarouselModalContent(content);
                             } else {
                               const imageContents = currentContents.filter(c => c.type === 'image');
                               const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
@@ -1063,6 +1065,27 @@ if (!isOpen) return null;
                                 </div>
                               </div>
                             </>
+                          ) : content.type === 'carousel' ? (
+                            <div className="relative w-full h-full">
+                              <img
+                                src={content.thumbnail_url}
+                                alt={content.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                }}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="bg-purple-600/85 rounded-full p-2 shadow-lg">
+                                  <Images className="w-5 h-5 text-white" />
+                                </div>
+                              </div>
+                              {content.audio_url && (
+                                <div className="absolute top-2 left-2 bg-black/70 rounded-full p-1">
+                                  <Music className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <img
                               src={content.image_url || content.thumbnail_url}
@@ -1098,7 +1121,7 @@ if (!isOpen) return null;
                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
                               <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1">
                                 <span className="text-white text-[10px] font-bold uppercase block">
-                                  {content.type === 'video' ? 'VIDEO' : 'FOTO'}
+                                  {content.type === 'video' ? 'VIDEO' : content.type === 'carousel' ? 'CARROSSEL' : 'FOTO'}
                                 </span>
                               </div>
                             </div>

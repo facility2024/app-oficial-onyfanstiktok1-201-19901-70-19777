@@ -136,7 +136,7 @@ export const AdminVideoScheduler = () => {
           avatar_url
         )
       `)
-      .in('tipo_conteudo', ['video', 'carrossel'])
+      .in('tipo_conteudo', ['video', 'carrossel', 'image'])
       .order('data_agendamento', { ascending: false })
       .limit(20);
 

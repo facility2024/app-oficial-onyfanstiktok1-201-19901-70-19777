@@ -429,6 +429,10 @@ export default function CreatorStudio() {
               <List className="w-4 h-4 mr-1" />
               Meus Vídeos
             </TabsTrigger>
+            <TabsTrigger value="carousel" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <Image className="w-4 h-4 mr-1" />
+              Carrossel + Áudio
+            </TabsTrigger>
             <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <BarChart3 className="w-4 h-4 mr-1" />
               Estatísticas

@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
+type CarouselButtonInput = { label?: string; url?: string; tipo?: 'externo' | 'interno'; cor?: string };
+
 type ScheduleCarouselBody = {
   model_search?: string;
   selected_model_id?: string | null;
@@ -10,6 +12,7 @@ type ScheduleCarouselBody = {
   descricao?: string | null;
   imagens?: string[];
   audio_url?: string | null;
+  botoes?: CarouselButtonInput[];
   data_agendamento?: string;
   enviar_tela_principal?: boolean;
   enviar_perfil_modelo?: boolean;

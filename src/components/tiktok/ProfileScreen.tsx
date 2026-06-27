@@ -64,6 +64,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [videoModalIndex, setVideoModalIndex] = useState(0);
+  const [carouselModalContent, setCarouselModalContent] = useState<ModelContent | null>(null);
   const [privateVideoOpen, setPrivateVideoOpen] = useState(false);
   const [privateVideoList, setPrivateVideoList] = useState<Array<{ url: string; title?: string; thumbnail?: string }>>([]);
   const [privateVideoIndex, setPrivateVideoIndex] = useState(0);

@@ -482,6 +482,11 @@ export const AdminVideoScheduler = () => {
   const handleRemove = async (postId: string) => {
     if (!confirm('Deseja remover este agendamento?')) return;
 
+    await supabase
+      .from('posts_principais')
+      .delete()
+      .eq('post_agendado_id', postId);
+
     const { error } = await supabase
       .from('posts_agendados')
       .delete()

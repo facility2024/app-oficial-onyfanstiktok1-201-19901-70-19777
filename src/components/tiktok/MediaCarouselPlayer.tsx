@@ -98,7 +98,7 @@ export const MediaCarouselPlayer = ({
         }}
       />
 
-      {audioUrl && <audio ref={audioRef} src={audioUrl} loop preload="auto" playsInline />}
+      {audioUrl && <audio ref={audioRef} src={audioUrl} loop preload="auto" />}
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20 pointer-events-none" />
 

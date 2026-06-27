@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Images, Music } from 'lucide-react';
+import type { TouchEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface MediaCarouselPlayerProps {
@@ -56,11 +57,11 @@ export const MediaCarouselPlayer = ({
     setIndex((current) => (current - 1 + safeImages.length) % safeImages.length);
   }, [safeImages.length]);
 
-  const onTouchStart = (event: React.TouchEvent) => {
+  const onTouchStart = (event: TouchEvent) => {
     touchStartX.current = event.touches[0].clientX;
   };
 
-  const onTouchEnd = (event: React.TouchEvent) => {
+  const onTouchEnd = (event: TouchEvent) => {
     if (touchStartX.current == null) return;
     const deltaX = event.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(deltaX) > 50) {

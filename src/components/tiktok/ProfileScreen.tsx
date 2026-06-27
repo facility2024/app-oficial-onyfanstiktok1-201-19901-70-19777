@@ -323,7 +323,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       const isUserCreator = !!creatorRole;
       
       // 2️⃣ Load model data and videos in parallel for faster performance
-      const [modelDataResult, videosDataResult, imagesDataResult] = await Promise.all([
+      const [modelDataResult, videosDataResult, imagesDataResult, carouselDataResult] = await Promise.all([
         (supabase as any)
           .from('models')
           .select('posting_panel_url, hide_subscription_button')
@@ -373,7 +373,16 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
             created_at: new Date().toISOString(),
             is_active: true
           }))});
-        })
+        }),
+
+        (supabase as any)
+          .from('posts_agendados')
+          .select('id, titulo, descricao, conteudo_url, imagens, audio_url, tipo_conteudo, data_publicacao, created_at, status, modelo_id')
+          .eq('modelo_id', user.id)
+          .eq('status', 'publicado')
+          .in('tipo_conteudo', ['carrossel', 'image'])
+          .order('data_publicacao', { ascending: false })
+          .limit(50)
       ]);
 
       const modelData = modelDataResult.data;
@@ -381,6 +390,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       const videosData = videosDataResult.data;
       const videosError = videosDataResult.error;
       const imagesData = (imagesDataResult as any).data;
+      const carouselData = (carouselDataResult as any).data || [];
+      const carouselError = (carouselDataResult as any).error;
 
       if (!modelError && modelData) {
         setPanelUrl(modelData?.posting_panel_url || null);
@@ -389,6 +400,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
 
       if (videosError) {
         console.warn('⚠️ Erro ao carregar vídeos do perfil:', videosError);
+      }
+
+      if (carouselError) {
+        console.warn('⚠️ Erro ao carregar carrosséis do perfil:', carouselError);
       }
 
       // Buscar likes reais por vídeo (fonte da verdade), para não depender de likes_count defasado
@@ -439,8 +454,36 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         visibility: 'public' as const
       }));
 
+      const transformedCarousels = (carouselData || [])
+        .map((post: any) => {
+          const images = Array.isArray(post.imagens)
+            ? post.imagens.map((url: string) => String(url || '').trim()).filter(Boolean)
+            : [];
+
+          if (images.length === 0 && post.conteudo_url) {
+            images.push(post.conteudo_url);
+          }
+
+          if (images.length === 0) return null;
+
+          return {
+            id: `carousel-${post.id}`,
+            title: post.titulo || 'Carrossel',
+            thumbnail_url: images[0],
+            image_url: images[0],
+            images,
+            audio_url: post.audio_url || null,
+            type: 'carousel' as const,
+            likes_count: 0,
+            views_count: 0,
+            created_at: post.data_publicacao || post.created_at,
+            visibility: 'public' as const,
+          };
+        })
+        .filter(Boolean) as ModelContent[];
+
       // Combinar vídeos e imagens
-      const allContent = [...transformedImages, ...transformedVideos].sort((a, b) => 
+      const allContent = [...transformedCarousels, ...transformedImages, ...transformedVideos].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 

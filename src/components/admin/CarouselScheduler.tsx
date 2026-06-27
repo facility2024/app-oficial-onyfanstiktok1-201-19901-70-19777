@@ -113,7 +113,7 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
   };
 
   const agendar = async () => {
-    if (!model && !modelSearch.trim()) return toast.error('Informe a modelo');
+    if (!isCreator && !model && !modelSearch.trim()) return toast.error('Informe a modelo');
     if (imagens.length === 0) return toast.error('Adicione pelo menos uma imagem');
     if (!data || !hora) return toast.error('Defina data e hora');
 

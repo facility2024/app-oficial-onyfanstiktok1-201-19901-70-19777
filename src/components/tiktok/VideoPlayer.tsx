@@ -8,6 +8,7 @@ import { UniversalVideoPlayer } from './UniversalVideoPlayer';
 import { PremiumContentOverlay } from './PremiumContentOverlay';
 import { ModelSubscriptionOverlay } from './ModelSubscriptionOverlay';
 import { useModelSubscription } from '@/hooks/useModelSubscription';
+import { MediaCarouselPlayer } from './MediaCarouselPlayer';
 interface VideoPlayerProps {
   video: Video;
   isPlaying: boolean;
@@ -59,6 +60,12 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const timersRef = useRef<number[]>([]);
 
     const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
+    const isCarousel = (video as any)?.media_type === 'carousel' || (video as any)?.tipo_conteudo === 'carrossel';
+    const carouselImages = Array.isArray((video as any)?.images)
+      ? (video as any).images.filter(Boolean)
+      : Array.isArray((video as any)?.imagens)
+        ? (video as any).imagens.filter(Boolean)
+        : [(video as any)?.thumbnail_url, (video as any)?.video_url].filter(Boolean);
     const rawVisibility = String((video as any)?.visibility || 'public').toLowerCase().trim();
     // Só trava como privado quando o admin marca EXPLICITAMENTE como 'private'.
     const videoVisibility: 'public' | 'private' = rawVisibility === 'private' ? 'private' : 'public';
@@ -169,6 +176,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     }, [isInView, video, modelId]);
 
     useEffect(() => {
+      if (isCarousel) return;
       if (ref && 'current' in ref && ref.current) {
         const video = ref.current;
         
@@ -187,13 +195,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           video.pause();
         }
       }
-    }, [isPlaying, ref]);
+    }, [isPlaying, ref, isCarousel]);
 
     useEffect(() => {
+      if (isCarousel) return;
       if (ref && 'current' in ref && ref.current) {
         ref.current.muted = isMuted;
       }
-    }, [isMuted, ref]);
+    }, [isMuted, ref, isCarousel]);
+
+    useEffect(() => {
+      if (isCarousel) setIsBuffering(false);
+    }, [isCarousel, video.id]);
 
     useEffect(() => {
       if (isPrivateVideo && locked) {
@@ -253,6 +266,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     return (
       <div ref={containerRef} className="relative w-full h-full">
         {isInView ? (
+          isCarousel ? (
+            <div className="w-full h-full" onClick={handleVideoTap}>
+              <MediaCarouselPlayer
+                images={carouselImages}
+                audioUrl={(video as any)?.audio_url}
+                isPlaying={isPlaying}
+                isMuted={isMuted}
+                volume={volume}
+                objectFit="cover"
+              />
+            </div>
+          ) : (
           <UniversalVideoPlayer
             key={video.id}
             ref={ref}
@@ -266,6 +291,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             onLoadedData={() => setIsBuffering(false)}
             onError={() => setIsBuffering(false)}
           />
+          )
         ) : (
           <div className="w-full h-full bg-black" />
         )}
@@ -291,14 +317,14 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         {/* Modal de ofertas removido: estava bloqueando o carregamento dos vídeos */}
 
 
-        {isInView && isBuffering && (
+        {isInView && isBuffering && !isCarousel && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full" />
           </div>
         )}
 
         {/* VideoProgressBar - oculto no desktop */}
-        {isInView && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
+        {isInView && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
       </div>
     );
   }

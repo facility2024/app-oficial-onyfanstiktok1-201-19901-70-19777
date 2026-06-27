@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar, X, Video } from 'lucide-react';
+import { Play, Trash2, Send, Search, Plus, CheckCircle, Clock, AlertCircle, Copy, Share2, Link, Eye, Calendar, X, Video, Images, Music } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface Model {
@@ -28,7 +28,9 @@ interface ScheduledPost {
   modelo_username: string;
   titulo: string;
   conteudo_url: string;
-  tipo_conteudo: 'video';
+  tipo_conteudo: 'video' | 'carrossel' | 'image';
+  imagens?: string[];
+  audio_url?: string | null;
   data_agendamento: string;
   status: string;
   enviar_tela_principal: boolean;
@@ -134,7 +136,7 @@ export const AdminVideoScheduler = () => {
           avatar_url
         )
       `)
-      .in('tipo_conteudo', ['video', 'carrossel'])
+      .in('tipo_conteudo', ['video', 'carrossel', 'image'])
       .order('data_agendamento', { ascending: false })
       .limit(20);
 
@@ -457,6 +459,8 @@ export const AdminVideoScheduler = () => {
   };
 
   const handleSendNow = async (postId: string) => {
+    const currentPost = scheduledPosts.find((post) => post.id === postId);
+    const isCarousel = currentPost?.tipo_conteudo === 'carrossel' || currentPost?.tipo_conteudo === 'image';
     setLoading(true);
     
     const { data, error } = await supabase.functions.invoke('process-scheduled-posts', {
@@ -466,17 +470,22 @@ export const AdminVideoScheduler = () => {
     setLoading(false);
 
     if (error) {
-      toast.error('Erro ao publicar vídeo');
+      toast.error(isCarousel ? 'Erro ao publicar carrossel' : 'Erro ao publicar vídeo');
       console.error(error);
       return;
     }
 
-    toast.success('✅ Vídeo publicado com sucesso!');
+    toast.success(isCarousel ? '✅ Carrossel publicado com sucesso!' : '✅ Vídeo publicado com sucesso!');
     await loadScheduledPosts();
   };
 
   const handleRemove = async (postId: string) => {
     if (!confirm('Deseja remover este agendamento?')) return;
+
+    await supabase
+      .from('posts_principais')
+      .delete()
+      .eq('post_agendado_id', postId);
 
     const { error } = await supabase
       .from('posts_agendados')
@@ -843,22 +852,47 @@ export const AdminVideoScheduler = () => {
             <div className="max-h-[700px] overflow-y-auto">
               {scheduledPosts.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  Nenhum vídeo agendado
+                  Nenhum post agendado
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {scheduledPosts.map((post) => (
                     <div key={post.id} className="relative group border rounded-lg overflow-hidden bg-black">
-                      {/* Miniatura do Vídeo */}
-                      <video
-                        src={post.conteudo_url}
-                        className="w-full aspect-[9/16] object-cover"
-                        preload="metadata"
-                        muted
-                        playsInline
-                        onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-                        onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-                      />
+                      {/* Miniatura do Vídeo ou Carrossel */}
+                      {post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image' ? (
+                        <div className="relative w-full aspect-[9/16] bg-gradient-to-br from-purple-950 to-black overflow-hidden">
+                          <img
+                            src={post.imagens?.[0] || post.conteudo_url || '/placeholder.svg'}
+                            alt={post.titulo || 'Carrossel'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-white gap-1 pointer-events-none">
+                            <div className="rounded-full bg-black/55 p-2 backdrop-blur-sm">
+                              <Images className="w-7 h-7" />
+                            </div>
+                            <span className="text-[10px] font-bold bg-purple-600/90 px-2 py-0.5 rounded-full">
+                              CARROSSEL {post.imagens?.length ? `(${post.imagens.length})` : ''}
+                            </span>
+                            {post.audio_url && (
+                              <span className="text-[9px] font-semibold bg-black/70 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <Music className="w-2.5 h-2.5" /> MP3
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <video
+                          src={post.conteudo_url}
+                          className="w-full aspect-[9/16] object-cover"
+                          preload="metadata"
+                          muted
+                          playsInline
+                          onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                          onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                        />
+                      )}
 
                       {/* Overlay com status */}
                       <div className="absolute top-1 left-1 z-10">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImageCarousel } from '@/components/ui/image-carousel';
 import { toast } from 'sonner';
-import { Plus, X, Music, Send } from 'lucide-react';
+import { X, Music, Send, Trash2, Images, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ModelOption { id: string; username: string; name: string; }
 
@@ -27,6 +27,52 @@ export const CarouselScheduler = () => {
   const [enviarFeed, setEnviarFeed] = useState(true);
   const [enviarPerfil, setEnviarPerfil] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [scheduledCarousels, setScheduledCarousels] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadScheduledCarousels();
+  }, []);
+
+  const loadScheduledCarousels = async () => {
+    const { data, error } = await supabase
+      .from('posts_agendados')
+      .select('id, titulo, modelo_username, imagens, audio_url, data_agendamento, status, created_at')
+      .in('tipo_conteudo', ['carrossel', 'image'])
+      .order('data_agendamento', { ascending: false })
+      .limit(30);
+
+    if (error) {
+      console.error('[CarouselScheduler] erro ao carregar carrosséis:', error);
+      return;
+    }
+
+    setScheduledCarousels(data || []);
+  };
+
+  const deleteCarousel = async (postId: string) => {
+    if (!confirm('Deseja remover este carrossel agendado/publicado?')) return;
+
+    await supabase.from('posts_principais').delete().eq('post_agendado_id', postId);
+
+    const { error } = await supabase
+      .from('posts_agendados')
+      .delete()
+      .eq('id', postId);
+
+    if (error) {
+      toast.error('Erro ao remover carrossel');
+      return;
+    }
+
+    toast.success('Carrossel removido');
+    loadScheduledCarousels();
+  };
+
+  const getStatusIcon = (status: string) => {
+    if (status === 'publicado') return <CheckCircle className="w-3 h-3 text-green-400" />;
+    if (status === 'erro') return <AlertCircle className="w-3 h-3 text-red-400" />;
+    return <Clock className="w-3 h-3 text-yellow-400" />;
+  };
 
   const searchModels = async (term: string) => {
     setModelSearch(term);
@@ -90,6 +136,7 @@ export const CarouselScheduler = () => {
       }
 
       setImagensTexto(''); setAudioUrl(''); setTitulo(''); setDescricao(''); setAvatarUrl('');
+      loadScheduledCarousels();
     } catch (e: any) {
       console.error('[CarouselScheduler] erro ao agendar carrossel:', e);
       toast.error(e.message || 'Erro ao agendar');
@@ -99,11 +146,12 @@ export const CarouselScheduler = () => {
   };
 
   return (
-    <Card className="bg-gray-900 border-gray-800 text-white">
-      <CardHeader>
-        <CardTitle>Agendar Carrossel de Imagens + Áudio</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <Card className="bg-gray-900 border-gray-800 text-white">
+        <CardHeader>
+          <CardTitle>Agendar Carrossel de Imagens + Áudio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
         <div className="relative">
           <Label>Modelo</Label>
           <Input
@@ -195,7 +243,60 @@ export const CarouselScheduler = () => {
         <Button onClick={agendar} disabled={loading} className="w-full bg-green-600 hover:bg-green-700">
           <Send className="w-4 h-4 mr-2" /> {loading ? 'Agendando...' : 'Agendar'}
         </Button>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gray-900 border-gray-800 text-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Images className="w-5 h-5" /> Carrosséis agendados ({scheduledCarousels.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {scheduledCarousels.length === 0 ? (
+            <div className="text-center text-gray-400 py-6">Nenhum carrossel agendado</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {scheduledCarousels.map((post) => {
+                const firstImage = Array.isArray(post.imagens) ? post.imagens[0] : '';
+                return (
+                  <div key={post.id} className="relative rounded-lg overflow-hidden bg-black border border-gray-800 aspect-[9/16]">
+                    <img
+                      src={firstImage || '/placeholder.svg'}
+                      alt={post.titulo || 'Carrossel'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25" />
+                    <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold">
+                      {getStatusIcon(post.status)} {post.status}
+                    </div>
+                    <div className="absolute top-2 right-2 rounded-full bg-purple-600/90 px-2 py-1 text-[10px] font-bold">
+                      {Array.isArray(post.imagens) ? post.imagens.length : 0} fotos
+                    </div>
+                    <div className="absolute bottom-10 left-2 right-2">
+                      <p className="text-xs font-bold truncate">{post.titulo || 'Carrossel'}</p>
+                      <p className="text-[10px] text-gray-300 truncate">@{post.modelo_username}</p>
+                      <p className="text-[9px] text-yellow-300">
+                        {new Date(post.data_agendamento).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute bottom-2 right-2 h-7 px-2"
+                      onClick={() => deleteCarousel(post.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

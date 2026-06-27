@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@/types/database';
-import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone, Radio } from 'lucide-react';
+import { X, ArrowLeft, Heart, Crown, Sparkles, Share2, Phone, Radio, Images, Music } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
 import { ProfileVideoModal } from './ProfileVideoModal';
+import { MediaCarouselPlayer } from './MediaCarouselPlayer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
@@ -29,11 +30,13 @@ interface ModelContent {
   thumbnail_url: string;
   video_url?: string;
   image_url?: string;
-  type: 'video' | 'image';
+  type: 'video' | 'image' | 'carousel';
+  images?: string[];
+  audio_url?: string | null;
   likes_count: number;
   views_count: number;
   created_at: string;
-  visibility?: 'public' | 'private';
+  visibility?: 'public' | 'premium' | 'private';
 }
 
 interface ModelImage {
@@ -61,6 +64,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [currentImageArray, setCurrentImageArray] = useState<string[]>([]);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [videoModalIndex, setVideoModalIndex] = useState(0);
+  const [carouselModalContent, setCarouselModalContent] = useState<ModelContent | null>(null);
   const [privateVideoOpen, setPrivateVideoOpen] = useState(false);
   const [privateVideoList, setPrivateVideoList] = useState<Array<{ url: string; title?: string; thumbnail?: string }>>([]);
   const [privateVideoIndex, setPrivateVideoIndex] = useState(0);
@@ -319,7 +323,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       const isUserCreator = !!creatorRole;
       
       // 2️⃣ Load model data and videos in parallel for faster performance
-      const [modelDataResult, videosDataResult, imagesDataResult] = await Promise.all([
+      const [modelDataResult, videosDataResult, imagesDataResult, carouselDataResult] = await Promise.all([
         (supabase as any)
           .from('models')
           .select('posting_panel_url, hide_subscription_button')
@@ -369,7 +373,16 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
             created_at: new Date().toISOString(),
             is_active: true
           }))});
-        })
+        }),
+
+        (supabase as any)
+          .from('posts_agendados')
+          .select('id, titulo, descricao, conteudo_url, imagens, audio_url, tipo_conteudo, data_publicacao, created_at, status, modelo_id')
+          .eq('modelo_id', user.id)
+          .eq('status', 'publicado')
+          .in('tipo_conteudo', ['carrossel', 'image'])
+          .order('data_publicacao', { ascending: false })
+          .limit(50)
       ]);
 
       const modelData = modelDataResult.data;
@@ -377,6 +390,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       const videosData = videosDataResult.data;
       const videosError = videosDataResult.error;
       const imagesData = (imagesDataResult as any).data;
+      const carouselData = (carouselDataResult as any).data || [];
+      const carouselError = (carouselDataResult as any).error;
 
       if (!modelError && modelData) {
         setPanelUrl(modelData?.posting_panel_url || null);
@@ -385,6 +400,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
 
       if (videosError) {
         console.warn('⚠️ Erro ao carregar vídeos do perfil:', videosError);
+      }
+
+      if (carouselError) {
+        console.warn('⚠️ Erro ao carregar carrosséis do perfil:', carouselError);
       }
 
       // Buscar likes reais por vídeo (fonte da verdade), para não depender de likes_count defasado
@@ -404,9 +423,11 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         });
       }
 
+      const isNonVideoMediaUrl = (url?: string) => /\.(jpg|jpeg|png|gif|webp|avif|mp3|wav|m4a|aac|ogg)(\?.*)?$/i.test(String(url || ''));
+
       // Transformar apenas vídeos reais da tabela videos para o formato de conteúdo
       const transformedVideos = (videosData || [])
-        .filter((item: any) => Boolean(item.video_url))
+        .filter((item: any) => Boolean(item.video_url) && !isNonVideoMediaUrl(item.video_url))
         .map(item => ({
         id: item.id,
         title: item.title || `Vídeo ${item.id?.slice(0, 8)}`,
@@ -435,8 +456,36 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         visibility: 'public' as const
       }));
 
+      const transformedCarousels = (carouselData || [])
+        .map((post: any) => {
+          const images = Array.isArray(post.imagens)
+            ? post.imagens.map((url: string) => String(url || '').trim()).filter(Boolean)
+            : [];
+
+          if (images.length === 0 && post.conteudo_url) {
+            images.push(post.conteudo_url);
+          }
+
+          if (images.length === 0) return null;
+
+          return {
+            id: `carousel-${post.id}`,
+            title: post.titulo || 'Carrossel',
+            thumbnail_url: images[0],
+            image_url: images[0],
+            images,
+            audio_url: post.audio_url || null,
+            type: 'carousel' as const,
+            likes_count: 0,
+            views_count: 0,
+            created_at: post.data_publicacao || post.created_at,
+            visibility: 'public' as const,
+          };
+        })
+        .filter(Boolean) as ModelContent[];
+
       // Combinar vídeos e imagens
-      const allContent = [...transformedImages, ...transformedVideos].sort((a, b) => 
+      const allContent = [...transformedCarousels, ...transformedImages, ...transformedVideos].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
@@ -988,6 +1037,8 @@ if (!isOpen) return null;
                               const idx = videoContents.findIndex(c => c.id === content.id);
                               setVideoModalIndex(idx >= 0 ? idx : 0);
                               setVideoModalOpen(true);
+                            } else if (content.type === 'carousel') {
+                              setCarouselModalContent(content);
                             } else {
                               const imageContents = currentContents.filter(c => c.type === 'image');
                               const imageUrls = imageContents.map(c => c.image_url || c.thumbnail_url);
@@ -1016,6 +1067,27 @@ if (!isOpen) return null;
                                 </div>
                               </div>
                             </>
+                          ) : content.type === 'carousel' ? (
+                            <div className="relative w-full h-full">
+                              <img
+                                src={content.thumbnail_url}
+                                alt={content.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                }}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="bg-purple-600/85 rounded-full p-2 shadow-lg">
+                                  <Images className="w-5 h-5 text-white" />
+                                </div>
+                              </div>
+                              {content.audio_url && (
+                                <div className="absolute top-2 left-2 bg-black/70 rounded-full p-1">
+                                  <Music className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <img
                               src={content.image_url || content.thumbnail_url}
@@ -1051,7 +1123,7 @@ if (!isOpen) return null;
                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
                               <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1">
                                 <span className="text-white text-[10px] font-bold uppercase block">
-                                  {content.type === 'video' ? 'VIDEO' : 'FOTO'}
+                                  {content.type === 'video' ? 'VIDEO' : content.type === 'carousel' ? 'CARROSSEL' : 'FOTO'}
                                 </span>
                               </div>
                             </div>
@@ -1118,6 +1190,29 @@ if (!isOpen) return null;
         onClose={() => setImageViewerOpen(false)}
         onIndexChange={setCurrentImageIndex}
       />
+
+      {/* Popup de carrossel do perfil */}
+      {carouselModalContent && (
+        <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
+          <button
+            onClick={() => setCarouselModalContent(null)}
+            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center"
+            aria-label="Fechar carrossel"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="w-full max-w-md h-full max-h-screen aspect-[9/16] bg-black">
+            <MediaCarouselPlayer
+              images={carouselModalContent.images || [carouselModalContent.image_url || carouselModalContent.thumbnail_url].filter(Boolean)}
+              audioUrl={carouselModalContent.audio_url}
+              isPlaying={true}
+              isMuted={false}
+              volume={0.9}
+              objectFit="contain"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Popup de vídeos do perfil com swipe esquerda/direita */}
       <ProfileVideoModal

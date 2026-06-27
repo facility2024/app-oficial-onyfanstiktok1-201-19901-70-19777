@@ -96,19 +96,10 @@ serve(async (req) => {
             });
           }
         } else if (post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image') {
-          // Carrossel de imagens (com áudio opcional). Salva também no perfil da modelo se enviar_perfil_modelo
-          if (post.enviar_perfil_modelo && post.imagens && post.imagens.length > 0) {
-            await supabase.from('videos').insert({
-              model_id: post.modelo_id,
-              title: post.titulo || 'Galeria',
-              description: post.descricao || '',
-              video_url: post.audio_url || post.imagens[0],
-              thumbnail_url: post.imagens[0],
-              is_active: true,
-              visibility: 'public',
-              duration: '0:00',
-              likes_count: 0, comments_count: 0, shares_count: 0, views_count: 0,
-            });
+          // Carrossel de imagens NÃO é vídeo: fica salvo em posts_agendados/posts_principais
+          // para o app renderizar como carrossel com áudio, sem inserir na tabela videos.
+          if (!post.imagens || post.imagens.length === 0) {
+            throw new Error('Carrossel sem imagens');
           }
         }
         
@@ -138,6 +129,8 @@ serve(async (req) => {
         // Send to main screen if configured
         if (post.enviar_tela_principal) {
           console.log(`🏠 Enviando para tela principal: ${post.titulo}`);
+          const isCarousel = post.tipo_conteudo === 'carrossel' || post.tipo_conteudo === 'image';
+          const mainContentUrl = isCarousel && post.imagens?.[0] ? post.imagens[0] : post.conteudo_url;
           await supabase
             .from('posts_principais')
             .insert({
@@ -145,7 +138,7 @@ serve(async (req) => {
               modelo_username: post.modelo_username,
               titulo: post.titulo,
               descricao: post.descricao,
-              conteudo_url: post.conteudo_url,
+              conteudo_url: mainContentUrl,
               tipo_conteudo: post.tipo_conteudo,
               post_agendado_id: post.id,
               is_active: true

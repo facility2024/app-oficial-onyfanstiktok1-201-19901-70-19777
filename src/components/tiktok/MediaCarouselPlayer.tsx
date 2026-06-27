@@ -1,10 +1,19 @@
-import { ChevronLeft, ChevronRight, Images, Music } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Images, Music, ExternalLink } from 'lucide-react';
 import type { TouchEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+export interface CarouselButton {
+  label: string;
+  url: string;
+  tipo?: 'externo' | 'interno';
+  cor?: string;
+}
 
 interface MediaCarouselPlayerProps {
   images: string[];
   audioUrl?: string | null;
+  buttons?: CarouselButton[] | null;
   isPlaying?: boolean;
   isMuted?: boolean;
   volume?: number;
@@ -15,6 +24,7 @@ interface MediaCarouselPlayerProps {
 export const MediaCarouselPlayer = ({
   images,
   audioUrl,
+  buttons,
   isPlaying = true,
   isMuted = false,
   volume = 1,
@@ -24,8 +34,10 @@ export const MediaCarouselPlayer = ({
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const navigate = useNavigate();
 
   const safeImages = images.filter(Boolean);
+  const safeButtons = (buttons || []).filter((b) => b && b.label && b.url);
 
   useEffect(() => {
     setIndex(0);
@@ -34,14 +46,10 @@ export const MediaCarouselPlayer = ({
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioUrl) return;
-
     audio.muted = isMuted;
     audio.volume = Math.max(0, Math.min(1, volume));
-
     if (isPlaying) {
-      audio.play().catch(() => {
-        // Autoplay com som pode ser bloqueado pelo navegador até a primeira interação.
-      });
+      audio.play().catch(() => {});
     } else {
       audio.pause();
     }
@@ -49,25 +57,30 @@ export const MediaCarouselPlayer = ({
 
   const next = useCallback(() => {
     if (safeImages.length <= 1) return;
-    setIndex((current) => (current + 1) % safeImages.length);
+    setIndex((c) => (c + 1) % safeImages.length);
   }, [safeImages.length]);
 
   const prev = useCallback(() => {
     if (safeImages.length <= 1) return;
-    setIndex((current) => (current - 1 + safeImages.length) % safeImages.length);
+    setIndex((c) => (c - 1 + safeImages.length) % safeImages.length);
   }, [safeImages.length]);
 
-  const onTouchStart = (event: TouchEvent) => {
-    touchStartX.current = event.touches[0].clientX;
+  const onTouchStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 50) (dx < 0 ? next() : prev());
+    touchStartX.current = null;
   };
 
-  const onTouchEnd = (event: TouchEvent) => {
-    if (touchStartX.current == null) return;
-    const deltaX = event.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(deltaX) > 50) {
-      deltaX < 0 ? next() : prev();
+  const handleButtonClick = (e: React.MouseEvent, btn: CarouselButton) => {
+    e.stopPropagation();
+    const isInternal = btn.tipo === 'interno' || btn.url.startsWith('/');
+    if (isInternal) {
+      navigate(btn.url);
+    } else {
+      window.open(btn.url, '_blank', 'noopener,noreferrer');
     }
-    touchStartX.current = null;
   };
 
   if (safeImages.length === 0) {
@@ -93,9 +106,7 @@ export const MediaCarouselPlayer = ({
         alt={`Imagem ${index + 1}`}
         className={`w-full h-full ${objectFit === 'contain' ? 'object-contain' : 'object-cover'}`}
         draggable={false}
-        onError={(event) => {
-          event.currentTarget.src = '/placeholder.svg';
-        }}
+        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
       />
 
       {audioUrl && <audio ref={audioRef} src={audioUrl} loop preload="auto" />}
@@ -135,15 +146,32 @@ export const MediaCarouselPlayer = ({
       </div>
 
       {safeImages.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-          {safeImages.map((_, dotIndex) => (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+          {safeImages.map((_, i) => (
             <button
-              key={dotIndex}
+              key={i}
               type="button"
-              onClick={() => setIndex(dotIndex)}
-              className={`h-1.5 rounded-full transition-all ${dotIndex === index ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`}
-              aria-label={`Abrir imagem ${dotIndex + 1}`}
+              onClick={() => setIndex(i)}
+              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`}
+              aria-label={`Abrir imagem ${i + 1}`}
             />
+          ))}
+        </div>
+      )}
+
+      {safeButtons.length > 0 && (
+        <div className="absolute bottom-6 left-4 right-20 z-30 flex flex-wrap gap-2">
+          {safeButtons.map((btn, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => handleButtonClick(e, btn)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-105 transition-transform"
+              style={{ background: btn.cor || 'linear-gradient(135deg,#7CB342,#558B2F)' }}
+            >
+              {btn.tipo !== 'interno' && <ExternalLink className="w-3.5 h-3.5" />}
+              {btn.label}
+            </button>
           ))}
         </div>
       )}

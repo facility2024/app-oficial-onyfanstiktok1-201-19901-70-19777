@@ -71,9 +71,14 @@ export const AudioLibrary = ({
   };
 
   return (
-    <div className="space-y-2 border border-gray-800 rounded-lg p-3 bg-gray-950/50">
-      <div className="flex items-center justify-between">
-        <Label className="flex items-center gap-2 text-sm"><Music className="w-4 h-4" /> Biblioteca de Áudios</Label>
+    <div className="space-y-3 border-2 border-green-500/60 rounded-lg p-4 bg-green-950/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <Label className="flex items-center gap-2 text-base font-bold text-green-400">
+            <Music className="w-5 h-5" /> 🎵 Biblioteca de Áudios MP3
+          </Label>
+          <p className="text-[11px] text-gray-400 mt-1">Suba vários MP3s, escute a prévia e clique em "Usar" para aplicar ao carrossel.</p>
+        </div>
         <Button
           type="button"
           size="sm"

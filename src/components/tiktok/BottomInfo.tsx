@@ -12,6 +12,10 @@ interface BottomInfoProps {
 }
 
 export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate = false }: BottomInfoProps) => {
+  const [expanded, setExpanded] = useState(false);
+  const descriptionText = video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou';
+  const hasLongDescription = descriptionText.length > 60;
+
   const handleMusicClick = () => {
     const authorUrl = video.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(video.user?.username || '')}`;
     const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;

@@ -1,6 +1,7 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
 import { Coffee, Lock } from 'lucide-react';
+import { useState } from 'react';
 import { VinylRecord } from './VinylRecord';
 
 interface BottomInfoProps {

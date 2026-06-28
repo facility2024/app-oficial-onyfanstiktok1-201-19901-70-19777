@@ -1,6 +1,7 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
 import { Coffee, Lock } from 'lucide-react';
+import { useState } from 'react';
 import { VinylRecord } from './VinylRecord';
 
 interface BottomInfoProps {
@@ -11,6 +12,10 @@ interface BottomInfoProps {
 }
 
 export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate = false }: BottomInfoProps) => {
+  const [expanded, setExpanded] = useState(false);
+  const descriptionText = video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou';
+  const hasLongDescription = descriptionText.length > 60;
+
   const handleMusicClick = () => {
     const authorUrl = video.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(video.user?.username || '')}`;
     const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
@@ -43,8 +48,17 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate =
         )}
       </div>
 
-      <div className="text-white text-sm mb-2 leading-relaxed drop-shadow-lg line-clamp-2">
-        {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
+      <div className={`text-white text-sm mb-2 leading-relaxed drop-shadow-lg ${expanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
+        {descriptionText}
+        {hasLongDescription && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+            className="ml-1 text-white/80 font-semibold underline-offset-2 hover:underline"
+          >
+            {expanded ? 'menos' : '... Mais'}
+          </button>
+        )}
       </div>
 
       <div

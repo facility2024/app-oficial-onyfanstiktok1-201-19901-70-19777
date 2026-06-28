@@ -48,8 +48,17 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate =
         )}
       </div>
 
-      <div className="text-white text-sm mb-2 leading-relaxed drop-shadow-lg line-clamp-2">
-        {video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou'}
+      <div className={`text-white text-sm mb-2 leading-relaxed drop-shadow-lg ${expanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
+        {descriptionText}
+        {hasLongDescription && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+            className="ml-1 text-white/80 font-semibold underline-offset-2 hover:underline"
+          >
+            {expanded ? 'menos' : '... Mais'}
+          </button>
+        )}
       </div>
 
       <div

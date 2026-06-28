@@ -255,6 +255,8 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
           {audioUrl && <audio src={audioUrl} controls className="mt-2 w-full" />}
         </div>
 
+        <AudioLibrary selectedUrl={audioUrl} onSelect={setAudioUrl} />
+
         <div className="space-y-2 border border-gray-800 rounded-lg p-3 bg-gray-950/50">
           <div className="flex items-center justify-between">
             <Label className="text-sm">Botões CTA (opcional)</Label>

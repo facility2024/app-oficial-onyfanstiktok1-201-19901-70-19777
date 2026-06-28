@@ -3331,7 +3331,7 @@ export const TikTokApp = () => {
               <span className="text-xs text-white/60">×</span>
             </button>
           )}
-          {isAdmin && (
+          {false && isAdmin && (
             <button 
               onClick={() => navigate('/admin')} 
               className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground hover:bg-primary transition-colors" 

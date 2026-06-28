@@ -733,6 +733,28 @@ export const TikTokApp = () => {
         showToast("📱 Novo Conteúdo!", "Vídeo adicionado pelo admin");
         // Sinalizar atualização pendente para aplicar no fim do ciclo
         setPendingRefresh(true);
+      } else if (payload.eventType === 'UPDATE') {
+        // 🔄 Atualização em tempo real do feed quando criador edita o vídeo
+        const updated: any = payload.new;
+        if (!updated?.id) return;
+        setVideos(prev => prev.map((v: any) => {
+          if (v.id !== updated.id) return v;
+          return {
+            ...v,
+            title: updated.title ?? v.title,
+            description: updated.description ?? v.description,
+            video_url: updated.video_url ?? v.video_url,
+            thumbnail_url: updated.thumbnail_url ?? v.thumbnail_url,
+            visibility: updated.visibility ?? v.visibility,
+            is_active: updated.is_active ?? v.is_active,
+            is_featured: updated.is_featured ?? v.is_featured,
+            genres: updated.genres ?? v.genres,
+          };
+        }));
+      } else if (payload.eventType === 'DELETE') {
+        const removed: any = payload.old;
+        if (!removed?.id) return;
+        setVideos(prev => prev.filter((v: any) => v.id !== removed.id));
       }
     }).on('postgres_changes', {
       event: '*',

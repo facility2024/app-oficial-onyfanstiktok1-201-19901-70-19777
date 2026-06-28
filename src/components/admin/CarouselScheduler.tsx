@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImageCarousel } from '@/components/ui/image-carousel';
 import { toast } from 'sonner';
 import { X, Music, Send, Trash2, Images, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { AudioLibrary } from './AudioLibrary';
 
 interface ModelOption { id: string; username: string; name: string; }
 

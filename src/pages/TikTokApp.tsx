@@ -3070,7 +3070,7 @@ export const TikTokApp = () => {
           
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">
-            {isAdmin && (
+            {false && isAdmin && (
               <button onClick={() => navigate('/admin')} className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-colors" title="Painel Admin">
                 <Shield className="w-5 h-5 text-primary-foreground" />
               </button>

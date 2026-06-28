@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImageCarousel } from '@/components/ui/image-carousel';
 import { toast } from 'sonner';
 import { X, Music, Send, Trash2, Images, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { AudioLibrary } from './AudioLibrary';
 
 interface ModelOption { id: string; username: string; name: string; }
 
@@ -253,6 +254,8 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
             placeholder="https://.../audio.mp3" className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400" />
           {audioUrl && <audio src={audioUrl} controls className="mt-2 w-full" />}
         </div>
+
+        <AudioLibrary selectedUrl={audioUrl} onSelect={setAudioUrl} />
 
         <div className="space-y-2 border border-gray-800 rounded-lg p-3 bg-gray-950/50">
           <div className="flex items-center justify-between">

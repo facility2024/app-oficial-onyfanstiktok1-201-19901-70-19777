@@ -663,14 +663,18 @@ export const AdminFeedPromotions = () => {
           ))}
           </div>
 
-          {/* Pagination */}
+          {/* Pagination com scroll horizontal */}
           {Math.ceil(filtered.length / ITEMS_PER_PAGE) > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Anterior</Button>
-              {Array.from({ length: Math.ceil(filtered.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
-                <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={page === currentPage ? 'bg-primary text-primary-foreground' : ''}>{page}</Button>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(Math.ceil(filtered.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filtered.length / ITEMS_PER_PAGE)}>Próxima →</Button>
+            <div className="mt-6 flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="shrink-0">← Anterior</Button>
+              <div className="flex-1 overflow-x-auto scrollbar-thin scrollbar-thumb-primary/60 scrollbar-track-gray-800 py-1">
+                <div className="flex items-center gap-2 min-w-min px-1">
+                  {Array.from({ length: Math.ceil(filtered.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                    <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={`shrink-0 min-w-[40px] ${page === currentPage ? 'bg-primary text-primary-foreground' : ''}`}>{page}</Button>
+                  ))}
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(Math.ceil(filtered.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filtered.length / ITEMS_PER_PAGE)} className="shrink-0">Próxima →</Button>
             </div>
           )}
         </div>

@@ -36,7 +36,9 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
 
   if (!isOpen || videos.length === 0) return null;
 
-  const current = videos[index];
+  const safeIndex = Math.min(Math.max(index, 0), videos.length - 1);
+  const current = videos[safeIndex];
+  if (!current) return null;
 
   const next = () => setIndex((i) => (i + 1) % videos.length);
   const prev = () => setIndex((i) => (i - 1 + videos.length) % videos.length);

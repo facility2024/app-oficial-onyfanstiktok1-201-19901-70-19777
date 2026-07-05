@@ -69,22 +69,29 @@ export const useFeedPromotions = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const interval = promotions.length > 0 ? (promotions[0]?.position_interval || 5) : 0;
-  const hasPromos = promotions.length > 0 && interval > 0;
+  // Filtra promos elegíveis para o período do dia atual (manhã/tarde/noite)
+  // conforme daily_frequency (1=1x, 2=2x, 3=3x)
+  const eligiblePromotions = useMemo(() => {
+    const period = getCurrentPeriod();
+    return promotions.filter((p) => periodsForFrequency(p.daily_frequency ?? 3).includes(period));
+  }, [promotions]);
+
+  const interval = eligiblePromotions.length > 0 ? (eligiblePromotions[0]?.position_interval || 5) : 0;
+  const hasPromos = eligiblePromotions.length > 0 && interval > 0;
 
   // Retorna a promo que deve aparecer em determinada posição do feed
   const getPromoForPosition = useCallback((videoIndex: number): FeedPromotion | null => {
     if (!hasPromos) return null;
-    
+
     // Verifica se esta posição deve ter uma promo
     if (videoIndex > 0 && videoIndex % interval === 0) {
-      // Cicla entre as promos disponíveis
-      const promoIndex = Math.floor(videoIndex / interval - 1) % promotions.length;
-      return promotions[promoIndex];
+      // Cicla entre as promos elegíveis
+      const promoIndex = Math.floor(videoIndex / interval - 1) % eligiblePromotions.length;
+      return eligiblePromotions[promoIndex];
     }
-    
+
     return null;
-  }, [hasPromos, interval, promotions]);
+  }, [hasPromos, interval, eligiblePromotions]);
 
   // Convert video array index → embla slide index (accounting for promo slides)
   const videoToSlideIndex = useCallback((videoIndex: number): number => {

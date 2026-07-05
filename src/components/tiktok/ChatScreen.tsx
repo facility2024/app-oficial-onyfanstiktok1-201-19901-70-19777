@@ -223,7 +223,7 @@ export const ChatScreen = ({
 
   // Send message to AI
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isAiResponding) return;
+    if (!inputMessage.trim() || isAiResponding || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -402,17 +402,17 @@ export const ChatScreen = ({
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !isAiResponding && handleSendMessage()}
-            placeholder={isAiResponding ? `${displayName} está digitando...` : "Digite sua mensagem..."}
-            className="flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 rounded-full"
-            disabled={isAiResponding}
+            onKeyPress={(e) => e.key === 'Enter' && !isAiResponding && !isTyping && handleSendMessage()}
+            placeholder={(isAiResponding || isTyping) ? `${displayName} está digitando...` : "Digite sua mensagem..."}
+            className="flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 rounded-full disabled:opacity-60"
+            disabled={isAiResponding || isTyping}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isAiResponding}
+            disabled={!inputMessage.trim() || isAiResponding || isTyping}
             className="rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white w-10 h-10 p-0"
           >
-            {isAiResponding ? (
+            {(isAiResponding || isTyping) ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Send className="w-4 h-4" />

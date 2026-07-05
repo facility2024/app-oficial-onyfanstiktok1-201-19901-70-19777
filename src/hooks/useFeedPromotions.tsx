@@ -1,6 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+
+// Período atual do dia: 0=manhã (5-12h), 1=tarde (12-18h), 2=noite (18-5h)
+const getCurrentPeriod = (): number => {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 0;
+  if (h >= 12 && h < 18) return 1;
+  return 2;
+};
+
+// Dado freq (1-3), retorna quais períodos [0,1,2] a promo aparece
+const periodsForFrequency = (freq: number): number[] => {
+  const f = Math.max(1, Math.min(3, freq || 3));
+  if (f >= 3) return [0, 1, 2];
+  if (f === 2) return [0, 2];
+  return [1];
+};
 
 export interface FeedPromotion {
   id: string;

@@ -102,6 +102,16 @@ interface Comment {
     avatar_url: string;
   };
 }
+
+interface ActivePromoPopup {
+  displayName: string;
+  description: string | null;
+  mediaUrl: string | null;
+  mediaType: string | null;
+  ctaText: string | null;
+  ctaLink: string | null;
+}
+
 export const TikTokApp = () => {
   console.log('🎬 TikTokApp: Componente renderizado');
 
@@ -255,6 +265,7 @@ export const TikTokApp = () => {
   const [showVideoCallList, setShowVideoCallList] = useState(false);
   const [showLiveList, setShowLiveList] = useState(false);
   const [showGarotasTopModal, setShowGarotasTopModal] = useState(false);
+  const [activePromoPopup, setActivePromoPopup] = useState<ActivePromoPopup | null>(null);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
@@ -312,24 +323,47 @@ export const TikTokApp = () => {
     return /ads\s*\/\s*garotas-top/i.test(link) || /\/ads\/garotas-top/i.test(link);
   }, []);
 
-  const handlePromoCtaLink = useCallback((link?: string | null, event?: React.MouseEvent | React.PointerEvent) => {
+  const openExternalLink = useCallback((link?: string | null) => {
+    if (!link) return;
+    const normalizedLink = /^https?:\/\//i.test(link) || link.startsWith('/') ? link : `https://${link}`;
+
+    try {
+      const win = window.open(normalizedLink, '_blank', 'noopener,noreferrer');
+      if (!win) window.location.href = normalizedLink;
+    } catch {
+      window.location.href = normalizedLink;
+    }
+  }, []);
+
+  const handlePromoCtaLink = useCallback((videoOrLink?: any, event?: React.MouseEvent | React.PointerEvent) => {
     event?.preventDefault();
     event?.stopPropagation();
 
-    if (!link) return;
+    const link = typeof videoOrLink === 'string' ? videoOrLink : videoOrLink?._promoCtaLink;
+    const isPopupPromo = typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup';
 
-    if (isGarotasTopLink(link)) {
+    if (link && isGarotasTopLink(link)) {
+      setActivePromoPopup(null);
       setShowGarotasTopModal(true);
       return;
     }
 
-    try {
-      const win = window.open(link, '_blank', 'noopener,noreferrer');
-      if (!win) window.location.href = link;
-    } catch {
-      window.location.href = link;
+    if (isPopupPromo) {
+      setActivePromoPopup({
+        displayName: videoOrLink.user?.username || videoOrLink.title || 'Promoção',
+        description: videoOrLink._promoDescription || null,
+        mediaUrl: videoOrLink._promoPopupMediaUrl || videoOrLink._promoBannerUrl || videoOrLink.thumbnail_url || null,
+        mediaType: videoOrLink._promoPopupMediaType || null,
+        ctaText: videoOrLink._promoPopupCtaText || 'Ver Mais',
+        ctaLink: videoOrLink._promoPopupCtaLink || link || null,
+      });
+      return;
     }
-  }, [isGarotasTopLink]);
+
+    if (!link) return;
+
+    openExternalLink(link);
+  }, [isGarotasTopLink, openExternalLink]);
 
   // Verifica se um vídeo é novo
   const isVideoNew = (video: Video): boolean => {
@@ -444,7 +478,14 @@ export const TikTokApp = () => {
         },
         ...( {
           _promoCtaText: selectedPromo.cta_text || (selectedPromo as any).popup_cta_text || null,
-          _promoCtaLink: selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null,
+          _promoCtaLink: selectedPromo.cta_mode === 'popup'
+            ? (selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null)
+            : (selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null),
+          _promoCtaMode: selectedPromo.cta_mode || 'link',
+          _promoPopupMediaUrl: selectedPromo.popup_media_url || null,
+          _promoPopupMediaType: selectedPromo.popup_media_type || null,
+          _promoPopupCtaText: selectedPromo.popup_cta_text || null,
+          _promoPopupCtaLink: selectedPromo.popup_cta_link || null,
           _promoBannerUrl: selectedPromo.banner_url || null,
           _promoDescription: selectedPromo.description || null,
         } as any),
@@ -3250,9 +3291,10 @@ export const TikTokApp = () => {
                          </p>
                        )}
                        {/* CTA Button */}
-                       {(video as any)._promoCtaText && (video as any)._promoCtaLink && (
+                        {(video as any)._promoCtaText && ((video as any)._promoCtaLink || (video as any)._promoCtaMode === 'popup') && (
                          <button
-                            onClick={(e) => handlePromoCtaLink((video as any)._promoCtaLink, e)}
+                             onPointerUp={(e) => handlePromoCtaLink(video as any, e)}
+                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm"
                          >
                            {(video as any)._promoCtaText}
@@ -3262,7 +3304,7 @@ export const TikTokApp = () => {
                        {(video as any)._promoBannerUrl && (
                          <div 
                            className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                            onClick={(e) => handlePromoCtaLink((video as any)._promoCtaLink, e)}
+                             onPointerUp={(e) => handlePromoCtaLink(video as any, e)}
                          >
                            <img
                              src={(video as any)._promoBannerUrl}
@@ -3321,6 +3363,43 @@ export const TikTokApp = () => {
 
         {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
         <PromoPopup />
+        <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
+        {activePromoPopup && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4" onClick={() => setActivePromoPopup(null)}>
+            <div className="relative bg-gray-950 rounded-2xl overflow-hidden max-w-sm w-full max-h-[85dvh] shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setActivePromoPopup(null)}
+                aria-label="Fechar"
+                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/70 flex items-center justify-center text-white"
+              >
+                ×
+              </button>
+              {activePromoPopup.mediaUrl && (
+                <div className="w-full aspect-[9/16] max-h-[60dvh] bg-black">
+                  {(activePromoPopup.mediaType || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(activePromoPopup.mediaUrl) ? (
+                    <video src={activePromoPopup.mediaUrl} className="w-full h-full object-contain" controls autoPlay playsInline />
+                  ) : (
+                    <img src={activePromoPopup.mediaUrl} alt={activePromoPopup.displayName} className="w-full h-full object-contain" />
+                  )}
+                </div>
+              )}
+              <div className="p-4 space-y-3">
+                <p className="text-white font-bold text-center text-lg">{activePromoPopup.displayName}</p>
+                {activePromoPopup.description && <p className="text-gray-300 text-sm text-center">{activePromoPopup.description}</p>}
+                {activePromoPopup.ctaText && activePromoPopup.ctaLink && (
+                  <Button
+                    type="button"
+                    onClick={(e) => handlePromoCtaLink(activePromoPopup.ctaLink, e)}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg text-base"
+                  >
+                    {activePromoPopup.ctaText}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>;
   }
 
@@ -3514,9 +3593,10 @@ export const TikTokApp = () => {
                            {(currentVideo as any)._promoDescription}
                          </p>
                        )}
-                       {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
+                        {(currentVideo as any)._promoCtaText && ((currentVideo as any)._promoCtaLink || (currentVideo as any)._promoCtaMode === 'popup') && (
                          <button
-                            onClick={(e) => handlePromoCtaLink((currentVideo as any)._promoCtaLink, e)}
+                             onPointerUp={(e) => handlePromoCtaLink(currentVideo as any, e)}
+                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
                          >
                            {(currentVideo as any)._promoCtaText}
@@ -3525,7 +3605,7 @@ export const TikTokApp = () => {
                        {(currentVideo as any)._promoBannerUrl && (
                          <div 
                            className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                            onClick={(e) => handlePromoCtaLink((currentVideo as any)._promoCtaLink, e)}
+                             onPointerUp={(e) => handlePromoCtaLink(currentVideo as any, e)}
                          >
                            <img
                              src={(currentVideo as any)._promoBannerUrl}
@@ -3787,5 +3867,41 @@ export const TikTokApp = () => {
       {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
       <PromoPopup />
       <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
+      {activePromoPopup && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4" onClick={() => setActivePromoPopup(null)}>
+          <div className="relative bg-gray-950 rounded-2xl overflow-hidden max-w-sm w-full max-h-[85vh] shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setActivePromoPopup(null)}
+              aria-label="Fechar"
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/70 flex items-center justify-center text-white"
+            >
+              ×
+            </button>
+            {activePromoPopup.mediaUrl && (
+              <div className="w-full aspect-[9/16] max-h-[60vh] bg-black">
+                {(activePromoPopup.mediaType || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(activePromoPopup.mediaUrl) ? (
+                  <video src={activePromoPopup.mediaUrl} className="w-full h-full object-contain" controls autoPlay playsInline />
+                ) : (
+                  <img src={activePromoPopup.mediaUrl} alt={activePromoPopup.displayName} className="w-full h-full object-contain" />
+                )}
+              </div>
+            )}
+            <div className="p-4 space-y-3">
+              <p className="text-white font-bold text-center text-lg">{activePromoPopup.displayName}</p>
+              {activePromoPopup.description && <p className="text-gray-300 text-sm text-center">{activePromoPopup.description}</p>}
+              {activePromoPopup.ctaText && activePromoPopup.ctaLink && (
+                <Button
+                  type="button"
+                  onClick={(e) => handlePromoCtaLink(activePromoPopup.ctaLink, e)}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg text-base"
+                >
+                  {activePromoPopup.ctaText}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>;
 };

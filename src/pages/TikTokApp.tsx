@@ -3243,7 +3243,7 @@ export const TikTokApp = () => {
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
           setShowLiveList(true);
-        }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} />
+        }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} onOpenChat={chatActiveMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || ''] ? () => navigate(`/chat/${currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id}`) : undefined} isChatOnline={!!chatOnlineMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || '']} />
           </div>}
 
         {/* Barra de Navegação Inferior - Estilo TikTok */}

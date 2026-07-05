@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -221,14 +222,13 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         </span>
       </div>
 
-      {/* Pop-up Modal */}
-      {showPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setShowPopup(false)}>
+      {/* Pop-up Modal (via Portal para escapar de ancestrais com transform) */}
+      {showPopup && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setShowPopup(false)}>
           <div 
             className="relative bg-gray-900 rounded-2xl overflow-hidden max-w-sm w-[90%] max-h-[80vh] shadow-2xl border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button 
               onClick={() => setShowPopup(false)}
               className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
@@ -236,7 +236,6 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
               <X className="w-5 h-5" />
             </button>
 
-            {/* Popup Media */}
             {promo.popup_media_url && (
               <div className="w-full aspect-[9/16] max-h-[60vh] bg-black">
                 {isPopupVideo ? (
@@ -258,7 +257,6 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
               </div>
             )}
 
-            {/* Popup CTA */}
             <div className="p-4 space-y-3">
               <p className="text-white font-semibold text-center text-lg">{promo.display_name}</p>
               {promo.description && (
@@ -274,7 +272,8 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <AdsGarotasTopModal open={showGarotasTop} onClose={() => setShowGarotasTop(false)} />

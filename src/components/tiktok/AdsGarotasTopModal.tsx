@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
@@ -61,7 +62,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm overflow-y-auto overscroll-contain"
       onClick={onClose}
@@ -240,6 +241,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

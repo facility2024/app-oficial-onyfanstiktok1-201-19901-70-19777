@@ -266,6 +266,33 @@ export const TikTokApp = () => {
   const [showLiveList, setShowLiveList] = useState(false);
   const [showGarotasTopModal, setShowGarotasTopModal] = useState(false);
   const [activePromoPopup, setActivePromoPopup] = useState<ActivePromoPopup | null>(null);
+
+  // Trava o scroll do body quando o popup está aberto (Android/iOS)
+  useEffect(() => {
+    if (!activePromoPopup) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      touchAction: body.style.touchAction,
+    };
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      body.style.touchAction = prev.touchAction;
+      window.scrollTo(0, scrollY);
+    };
+  }, [activePromoPopup]);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo

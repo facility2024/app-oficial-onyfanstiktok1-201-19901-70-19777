@@ -38,6 +38,7 @@ const resetPasswordSchema = z.object({
 });
 
 const Auth = () => {
+  useReferralTracking('auth');
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password' | 'reset-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

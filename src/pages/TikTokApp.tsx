@@ -312,7 +312,7 @@ export const TikTokApp = () => {
     return /ads\s*\/\s*garotas-top/i.test(link) || /\/ads\/garotas-top/i.test(link);
   }, []);
 
-  const handlePromoCtaLink = useCallback((link?: string | null, event?: React.MouseEvent) => {
+  const handlePromoCtaLink = useCallback((link?: string | null, event?: React.MouseEvent | React.PointerEvent) => {
     event?.preventDefault();
     event?.stopPropagation();
 
@@ -323,7 +323,12 @@ export const TikTokApp = () => {
       return;
     }
 
-    window.open(link, '_blank', 'noopener,noreferrer');
+    try {
+      const win = window.open(link, '_blank', 'noopener,noreferrer');
+      if (!win) window.location.href = link;
+    } catch {
+      window.location.href = link;
+    }
   }, [isGarotasTopLink]);
 
   // Verifica se um vídeo é novo
@@ -438,8 +443,8 @@ export const TikTokApp = () => {
           posting_panel_url: selectedPromo.cta_link || undefined,
         },
         ...( {
-          _promoCtaText: selectedPromo.cta_text || null,
-          _promoCtaLink: selectedPromo.cta_link || null,
+          _promoCtaText: selectedPromo.cta_text || (selectedPromo as any).popup_cta_text || null,
+          _promoCtaLink: selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null,
           _promoBannerUrl: selectedPromo.banner_url || null,
           _promoDescription: selectedPromo.description || null,
         } as any),

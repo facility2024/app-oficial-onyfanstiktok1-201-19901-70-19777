@@ -62,7 +62,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm overflow-y-auto overscroll-contain"
       onClick={onClose}

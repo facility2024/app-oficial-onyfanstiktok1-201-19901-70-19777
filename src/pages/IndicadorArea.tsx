@@ -13,6 +13,7 @@ import {
   Copy, Share2, MessageCircle, Send, Twitter, Coins, DollarSign,
   Users, TrendingUp, Loader2, LogOut, ExternalLink, Save
 } from 'lucide-react';
+import { logShareClick } from '@/hooks/useReferralTracking';
 
 export default function IndicadorArea() {
   const { user, profile, loading: userLoading } = useCurrentUser();

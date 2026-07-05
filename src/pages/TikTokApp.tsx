@@ -51,6 +51,7 @@ import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedInd
 import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
 import { useVideoTracking } from '@/hooks/useVideoTracking';
+import AdsGarotasTopModal from '@/components/tiktok/AdsGarotasTopModal';
 
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
@@ -253,6 +254,7 @@ export const TikTokApp = () => {
   const [showLive, setShowLive] = useState(false);
   const [showVideoCallList, setShowVideoCallList] = useState(false);
   const [showLiveList, setShowLiveList] = useState(false);
+  const [showGarotasTopModal, setShowGarotasTopModal] = useState(false);
   const [blockedModels, setBlockedModels] = useState<string[]>([]); // Lista de modelos bloqueados
   const [showFullscreen, setShowFullscreen] = useState(false); // Estado para tela cheia
   const [fullscreenVideoTime, setFullscreenVideoTime] = useState(0); // Tempo atual do vídeo
@@ -304,6 +306,25 @@ export const TikTokApp = () => {
     trackFollow
   });
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  const isGarotasTopLink = useCallback((link?: string | null) => {
+    if (!link) return false;
+    return /ads\s*\/\s*garotas-top/i.test(link) || /\/ads\/garotas-top/i.test(link);
+  }, []);
+
+  const handlePromoCtaLink = useCallback((link?: string | null, event?: React.MouseEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (!link) return;
+
+    if (isGarotasTopLink(link)) {
+      setShowGarotasTopModal(true);
+      return;
+    }
+
+    window.open(link, '_blank', 'noopener,noreferrer');
+  }, [isGarotasTopLink]);
 
   // Verifica se um vídeo é novo
   const isVideoNew = (video: Video): boolean => {
@@ -3226,7 +3247,7 @@ export const TikTokApp = () => {
                        {/* CTA Button */}
                        {(video as any)._promoCtaText && (video as any)._promoCtaLink && (
                          <button
-                           onClick={() => window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                            onClick={(e) => handlePromoCtaLink((video as any)._promoCtaLink, e)}
                            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm"
                          >
                            {(video as any)._promoCtaText}
@@ -3236,7 +3257,7 @@ export const TikTokApp = () => {
                        {(video as any)._promoBannerUrl && (
                          <div 
                            className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                           onClick={() => (video as any)._promoCtaLink && window.open((video as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                            onClick={(e) => handlePromoCtaLink((video as any)._promoCtaLink, e)}
                          >
                            <img
                              src={(video as any)._promoBannerUrl}
@@ -3490,7 +3511,7 @@ export const TikTokApp = () => {
                        )}
                        {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
                          <button
-                           onClick={() => window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                            onClick={(e) => handlePromoCtaLink((currentVideo as any)._promoCtaLink, e)}
                            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
                          >
                            {(currentVideo as any)._promoCtaText}
@@ -3499,7 +3520,7 @@ export const TikTokApp = () => {
                        {(currentVideo as any)._promoBannerUrl && (
                          <div 
                            className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                           onClick={() => (currentVideo as any)._promoCtaLink && window.open((currentVideo as any)._promoCtaLink, '_blank', 'noopener,noreferrer')}
+                            onClick={(e) => handlePromoCtaLink((currentVideo as any)._promoCtaLink, e)}
                          >
                            <img
                              src={(currentVideo as any)._promoBannerUrl}
@@ -3618,6 +3639,10 @@ export const TikTokApp = () => {
                    <div onClick={() => {
                     const authorUrl = currentVideo.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(currentVideo.user?.username || '')}`;
                     const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
+                     if (isGarotasTopLink(url)) {
+                       setShowGarotasTopModal(true);
+                       return;
+                     }
                     window.open(url, '_blank', 'noopener,noreferrer');
                   }} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity active:scale-95 p-2 rounded-lg hover:bg-gray-100">
                      <VinylRecord isPlaying={isPlaying && !isMuted} hasMusic={true} />
@@ -3756,5 +3781,6 @@ export const TikTokApp = () => {
 
       {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
       <PromoPopup />
+      <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
     </div>;
 };

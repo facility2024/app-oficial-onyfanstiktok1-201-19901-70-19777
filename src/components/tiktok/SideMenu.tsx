@@ -1,4 +1,5 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
+import { AvatarWithFallback } from '@/components/ui/AvatarWithFallback';
 import { Video } from '@/types/database';
 import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
@@ -71,11 +72,10 @@ export const SideMenu = ({
       <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
         <div className="relative w-12 h-12 md:w-[75px] md:h-[75px] flex items-center justify-center transition-all">
           <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white overflow-hidden shrink-0 shadow-lg bg-gray-800">
-            <img 
-              src={video?.user?.avatar_url || DEFAULT_AVATAR} 
-              alt={video?.user?.username}
-              className="w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+            <AvatarWithFallback
+              src={video?.user?.avatar_url}
+              name={video?.user?.username}
+              className="w-full h-full"
             />
           </div>
           <div className="absolute -bottom-1 -right-1 w-4 h-4 md:w-6 md:h-6 bg-[#22C55E] rounded-full border-2 border-black"></div>

@@ -74,6 +74,12 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     e.stopPropagation();
     trackClick('cta');
 
+    // Detecta link do Garotas Top e abre como popup responsivo
+    if (promo.cta_link && /\/ads\/garotas-top\/?$/i.test(promo.cta_link)) {
+      setShowGarotasTop(true);
+      return;
+    }
+
     if (promo.cta_mode === 'popup') {
       setShowPopup(true);
     } else if (promo.cta_link) {

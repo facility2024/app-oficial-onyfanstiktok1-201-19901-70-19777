@@ -223,7 +223,7 @@ export const ChatScreen = ({
 
   // Send message to AI
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isAiResponding) return;
+    if (!inputMessage.trim() || isAiResponding || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),

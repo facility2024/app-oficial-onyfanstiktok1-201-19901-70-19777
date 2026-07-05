@@ -173,6 +173,11 @@ export const TikTokApp = () => {
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
   const [chatActiveMap, setChatActiveMap] = useState<Record<string, boolean>>({});
+  const [currentChatStatus, setCurrentChatStatus] = useState<{ id: string; isActive: boolean; isOnline: boolean }>({
+    id: '',
+    isActive: false,
+    isOnline: false,
+  });
   const [videoCallModels, setVideoCallModels] = useState<any[]>([]);
   const [activeVideoCallModel, setActiveVideoCallModel] = useState<any>(null);
   const [chatOnlineMap, setChatOnlineMap] = useState<Record<string, boolean>>({});
@@ -548,11 +553,15 @@ export const TikTokApp = () => {
   const currentChatTarget = getChatTarget(currentVideo);
   const isCurrentChatActive = Boolean(
     currentChatTarget.id &&
-    (chatActiveMap[currentChatTarget.id] === true || currentVideo?.user?.is_online === true)
+    (currentChatStatus.id === currentChatTarget.id
+      ? currentChatStatus.isActive
+      : chatActiveMap[currentChatTarget.id] === true || currentVideo?.user?.is_online === true)
   );
   const isCurrentChatOnline = Boolean(
     currentChatTarget.id &&
-    (chatOnlineMap[currentChatTarget.id] === true || currentVideo?.user?.is_online === true)
+    (currentChatStatus.id === currentChatTarget.id
+      ? currentChatStatus.isOnline
+      : chatOnlineMap[currentChatTarget.id] === true || currentVideo?.user?.is_online === true)
   );
   const openCurrentVideoChat = useCallback(() => {
     if (!currentChatTarget.id || !isValidUUID(currentChatTarget.id)) return;
@@ -560,9 +569,13 @@ export const TikTokApp = () => {
   }, [currentChatTarget.id, currentChatTarget.isCreator, navigate]);
 
   useEffect(() => {
-    if (!currentChatTarget.id || !isValidUUID(currentChatTarget.id)) return;
+    if (!currentChatTarget.id || !isValidUUID(currentChatTarget.id)) {
+      setCurrentChatStatus({ id: '', isActive: false, isOnline: false });
+      return;
+    }
 
     let cancelled = false;
+    setCurrentChatStatus({ id: currentChatTarget.id, isActive: false, isOnline: false });
 
     const loadCurrentChatStatus = async () => {
       try {
@@ -579,13 +592,19 @@ export const TikTokApp = () => {
         }
 
         const config = data || {};
+        const nextStatus = {
+          id: currentChatTarget.id,
+          isActive: config.is_active === true,
+          isOnline: config.is_online === true,
+        };
+        setCurrentChatStatus(nextStatus);
         setChatActiveMap(prev => ({
           ...prev,
-          [currentChatTarget.id]: config.is_active === true,
+          [currentChatTarget.id]: nextStatus.isActive,
         }));
         setChatOnlineMap(prev => ({
           ...prev,
-          [currentChatTarget.id]: config.is_online === true,
+          [currentChatTarget.id]: nextStatus.isOnline,
         }));
       } catch (error) {
         if (!cancelled) console.warn('⚠️ Erro ao verificar chat ativo:', error);

@@ -3268,7 +3268,15 @@ export const TikTokApp = () => {
           }} />
           </div>
           
-          {/* Logo removida do mobile - exibida apenas no desktop */}
+          {/* Botão LATINAS - Centro */}
+          <button
+            onClick={() => setShowLatinasModal(true)}
+            className="absolute left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full font-black text-white text-sm bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_25px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+            title="Latinas"
+          >
+            🌶️ LATINAS
+          </button>
+          
           
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">

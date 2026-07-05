@@ -24,6 +24,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'loja', label: 'Loja', icon: Store, shortLabel: '🏪' },
     { id: 'stores', label: 'Lojas SaaS', icon: Store, shortLabel: '🏬' },
     { id: 'local-businesses', label: 'Comércios', icon: MapPin, shortLabel: '📍' },
+    { id: 'ads-latinas', label: 'Latinas', icon: Megaphone, shortLabel: '🌶️' },
     { id: 'ads', label: 'Anúncios', icon: Megaphone, shortLabel: '📢' },
     { id: 'promo-ads', label: 'Promo Live', icon: Radio, shortLabel: '📺' },
     { id: 'chat-panels', label: 'Chat IA', icon: Bot, shortLabel: '🤖' },

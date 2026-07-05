@@ -52,6 +52,7 @@ import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerific
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
 import { useVideoTracking } from '@/hooks/useVideoTracking';
 import AdsGarotasTopModal from '@/components/tiktok/AdsGarotasTopModal';
+import AdsLatinasModal from '@/components/tiktok/AdsLatinasModal';
 
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
@@ -270,6 +271,7 @@ export const TikTokApp = () => {
   const [showVideoCallList, setShowVideoCallList] = useState(false);
   const [showLiveList, setShowLiveList] = useState(false);
   const [showGarotasTopModal, setShowGarotasTopModal] = useState(false);
+  const [showLatinasModal, setShowLatinasModal] = useState(false);
   const [activePromoPopup, setActivePromoPopup] = useState<ActivePromoPopup | null>(null);
 
   // Trava o scroll do body quando o popup está aberto (Android/iOS)
@@ -3266,7 +3268,15 @@ export const TikTokApp = () => {
           }} />
           </div>
           
-          {/* Logo removida do mobile - exibida apenas no desktop */}
+          {/* Botão LATINAS - Centro */}
+          <button
+            onClick={() => setShowLatinasModal(true)}
+            className="absolute left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full font-black text-white text-sm bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_25px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+            title="Latinas"
+          >
+            🌶️ LATINAS
+          </button>
+          
           
           {/* Ícones - Direita */}
           <div className="flex items-center gap-2">
@@ -3473,6 +3483,7 @@ export const TikTokApp = () => {
         {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
         <PromoPopup />
         <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
+        <AdsLatinasModal open={showLatinasModal} onClose={() => setShowLatinasModal(false)} />
         {activePromoPopup && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 overscroll-contain" style={{ touchAction: "none" }} onClick={() => setActivePromoPopup(null)} onTouchMove={(e) => e.preventDefault()}>
             <div className="relative bg-gray-950 rounded-2xl overflow-hidden max-w-sm w-full max-h-[85dvh] shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
@@ -3976,6 +3987,7 @@ export const TikTokApp = () => {
       {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
       <PromoPopup />
       <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
+      <AdsLatinasModal open={showLatinasModal} onClose={() => setShowLatinasModal(false)} />
       {activePromoPopup && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 overscroll-contain" style={{ touchAction: "none" }} onClick={() => setActivePromoPopup(null)} onTouchMove={(e) => e.preventDefault()}>
           <div className="relative bg-gray-950 rounded-2xl overflow-hidden max-w-sm w-full max-h-[85vh] shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>

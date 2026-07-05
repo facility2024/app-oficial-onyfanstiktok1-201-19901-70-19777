@@ -153,6 +153,27 @@ export const SideMenu = ({
         </span>
       </div>
 
+      {/* Chat com a Modelo (IA) - só aparece quando o painel está ativo */}
+      {onOpenChat && (
+        <div
+          className="flex flex-col items-center cursor-pointer group"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenChat(); }}
+        >
+          <div className="relative w-12 h-12 flex items-center justify-center transition-all active:scale-95">
+            <MessagesSquare
+              className={`w-8 h-8 ${isChatOnline ? 'text-[#22C55E] drop-shadow-[0_0_8px_rgba(34,197,94,0.9)]' : 'text-white md:text-gray-800'}`}
+              strokeWidth={1.5}
+            />
+            {isChatOnline && (
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#22C55E] rounded-full border-2 border-black animate-pulse" />
+            )}
+          </div>
+          <span className="text-white md:text-gray-800 text-[10px] mt-1 font-semibold">
+            {isChatOnline ? 'Online' : 'Chat'}
+          </span>
+        </div>
+      )}
+
       {/* Block Video (Eye Icon) - Só aparece quando configurado pelo admin */}
       {onBlockVideo && (
         <div className="flex flex-col items-center cursor-pointer group" onClick={onBlockVideo}>

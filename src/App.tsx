@@ -81,6 +81,7 @@ const App = () => (
           
           <Route path="/auth" element={<Auth />} />
           <Route path="/indicador/cadastro" element={<IndicadorCadastro />} />
+          <Route path="/indicador" element={<IndicadorArea />} />
           
           {/* App SEM proteção - aceita usuários anônimos */}
           <Route path="/app" element={<Index />} />

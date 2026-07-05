@@ -3701,7 +3701,7 @@ export const TikTokApp = () => {
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
                   setShowLiveList(true);
-                }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={undefined} isChatOnline={false} onExit={async () => {
+                }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={chatActiveMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || ''] ? () => navigate(`/chat/${currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id}`) : undefined} isChatOnline={!!chatOnlineMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || '']} onExit={async () => {
                   try {
                     sessionStorage.setItem('logging_out', 'true');
                     await supabase.auth.signOut();

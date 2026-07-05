@@ -88,6 +88,7 @@ export default function IndicadorArea() {
   };
 
   const share = (platform: 'whatsapp' | 'telegram' | 'twitter' | 'native') => {
+    if (user?.id && referralCode) logShareClick(user.id, referralCode, platform);
     const msg = `🥥 Cadastre-se no COCONUDI pelo meu link e vamos crescer juntos! ${link}`;
     if (platform === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     else if (platform === 'telegram') window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('🥥 COCONUDI')}`, '_blank');

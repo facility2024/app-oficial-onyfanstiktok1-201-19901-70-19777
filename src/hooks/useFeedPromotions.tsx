@@ -44,6 +44,36 @@ export interface FeedPromotion {
   popup_cta_link?: string | null;
 }
 
+// Seed único por sessão do navegador — muda quando o usuário fecha e abre de novo
+const getSessionSeed = (): number => {
+  try {
+    const KEY = '__feed_promo_session_seed';
+    let s = sessionStorage.getItem(KEY);
+    if (!s) {
+      s = String(Date.now() + Math.floor(Math.random() * 1e9));
+      sessionStorage.setItem(KEY, s);
+    }
+    return parseInt(s, 10) || Date.now();
+  } catch {
+    return Date.now();
+  }
+};
+
+// Fisher-Yates com seed determinístico (mesma sessão → mesma ordem; nova sessão → nova ordem)
+const shuffleWithSeed = <T,>(arr: T[], seed: number): T[] => {
+  const a = [...arr];
+  let s = seed;
+  const rand = () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
 export const useFeedPromotions = () => {
   const { data: promotions = [], isLoading } = useQuery({
     queryKey: ['feed-promotions'],
@@ -66,14 +96,17 @@ export const useFeedPromotions = () => {
         media_type: (promo.media_type || '').toLowerCase() === 'video' || isVideoUrl(promo.media_url) ? 'video' : 'image',
       }));
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   // Filtra promos elegíveis para o período do dia atual (manhã/tarde/noite)
-  // conforme daily_frequency (1=1x, 2=2x, 3=3x)
+  // conforme daily_frequency (1=1x, 2=2x, 3=3x) e embaralha por sessão
   const eligiblePromotions = useMemo(() => {
     const period = getCurrentPeriod();
-    return promotions.filter((p) => periodsForFrequency(p.daily_frequency ?? 3).includes(period));
+    const filtered = promotions.filter((p) => periodsForFrequency(p.daily_frequency ?? 3).includes(period));
+    return shuffleWithSeed(filtered, getSessionSeed());
   }, [promotions]);
 
   const interval = eligiblePromotions.length > 0 ? (eligiblePromotions[0]?.position_interval || 5) : 0;

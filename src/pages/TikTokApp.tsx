@@ -312,7 +312,7 @@ export const TikTokApp = () => {
     return /ads\s*\/\s*garotas-top/i.test(link) || /\/ads\/garotas-top/i.test(link);
   }, []);
 
-  const handlePromoCtaLink = useCallback((link?: string | null, event?: React.MouseEvent) => {
+  const handlePromoCtaLink = useCallback((link?: string | null, event?: React.MouseEvent | React.PointerEvent) => {
     event?.preventDefault();
     event?.stopPropagation();
 
@@ -323,7 +323,12 @@ export const TikTokApp = () => {
       return;
     }
 
-    window.open(link, '_blank', 'noopener,noreferrer');
+    try {
+      const win = window.open(link, '_blank', 'noopener,noreferrer');
+      if (!win) window.location.href = link;
+    } catch {
+      window.location.href = link;
+    }
   }, [isGarotasTopLink]);
 
   // Verifica se um vídeo é novo

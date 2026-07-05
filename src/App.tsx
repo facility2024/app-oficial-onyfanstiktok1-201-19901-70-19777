@@ -79,6 +79,7 @@ const App = () => (
           <Route path="/" element={<SplashScreen />} />
           
           <Route path="/auth" element={<Auth />} />
+          <Route path="/indicador/cadastro" element={<IndicadorCadastro />} />
           
           {/* App SEM proteção - aceita usuários anônimos */}
           <Route path="/app" element={<Index />} />

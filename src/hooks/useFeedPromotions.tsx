@@ -20,6 +20,11 @@ export interface FeedPromotion {
   clicks_count: number;
   created_at: string;
   updated_at: string;
+  cta_mode?: string;
+  popup_media_url?: string | null;
+  popup_media_type?: string | null;
+  popup_cta_text?: string | null;
+  popup_cta_link?: string | null;
 }
 
 export const useFeedPromotions = () => {

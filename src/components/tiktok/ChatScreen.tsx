@@ -116,19 +116,12 @@ export const ChatScreen = ({
     if (!entityId) return;
     
     try {
-      let query = supabase
-        .from('model_chat_panels' as any)
-        .select('is_active, is_online, greeting_message, message_delay_seconds');
+      const { data } = await (supabase as any).rpc('get_chat_panel_config', {
+        p_entity_id: entityId,
+        p_entity_type: isCreator ? 'creator' : 'model',
+      });
       
-      if (isCreator) {
-        query = query.eq('creator_id', entityId);
-      } else {
-        query = query.eq('model_id', entityId);
-      }
-      
-      const { data } = await (query.maybeSingle() as any);
-      
-      if (data) {
+      if (data && Object.keys(data).length > 0) {
         setChatConfig(data);
         
         // Show greeting message if no messages exist

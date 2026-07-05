@@ -27,6 +27,7 @@ export default function IndicadorCadastro() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const refFromLink = params.get('ref');
+  useReferralTracking('indicador-cadastro');
 
   const [form, setForm] = useState({ name: '', email: '', password: '', whatsapp: '' });
   const [loading, setLoading] = useState(false);

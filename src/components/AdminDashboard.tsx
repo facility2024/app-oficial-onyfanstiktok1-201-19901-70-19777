@@ -224,8 +224,6 @@ export const AdminDashboard = () => {
         return <AdminFeedPromotions />;
       case 'ads-garotas-top':
         return <AdminAdsGarotasTop />;
-      case 'ads-latinas':
-        return <AdminAdsLatinas />;
       case 'loja':
         return <AdminLoja />;
       case 'stores':

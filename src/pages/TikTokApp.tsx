@@ -343,6 +343,7 @@ export const TikTokApp = () => {
     const isPopupPromo = typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup';
 
     if (link && isGarotasTopLink(link)) {
+      setActivePromoPopup(null);
       setShowGarotasTopModal(true);
       return;
     }

@@ -250,6 +250,8 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
           </div>
         </div>
       )}
+
+      <AdsLatinasModal open={showLatinas} onClose={() => setShowLatinas(false)} />
     </div>,
     document.body
   );

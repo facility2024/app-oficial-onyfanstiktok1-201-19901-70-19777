@@ -30,6 +30,7 @@ export interface FeedPromotion {
   cta_text: string | null;
   cta_link: string | null;
   position_interval: number;
+  daily_frequency?: number | null;
   is_active: boolean;
   priority: number;
   views_count: number;

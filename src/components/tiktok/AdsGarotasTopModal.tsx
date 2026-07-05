@@ -29,6 +29,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
+  const [showLatinas, setShowLatinas] = useState(false);
 
   useEffect(() => {
     if (!open) return;

@@ -271,6 +271,7 @@ export const TikTokApp = () => {
   const [showVideoCallList, setShowVideoCallList] = useState(false);
   const [showLiveList, setShowLiveList] = useState(false);
   const [showGarotasTopModal, setShowGarotasTopModal] = useState(false);
+  const [showLatinasModal, setShowLatinasModal] = useState(false);
   const [activePromoPopup, setActivePromoPopup] = useState<ActivePromoPopup | null>(null);
 
   // Trava o scroll do body quando o popup está aberto (Android/iOS)

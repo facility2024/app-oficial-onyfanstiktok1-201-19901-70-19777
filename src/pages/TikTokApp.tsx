@@ -52,6 +52,7 @@ import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerific
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
 import { useVideoTracking } from '@/hooks/useVideoTracking';
 import AdsGarotasTopModal from '@/components/tiktok/AdsGarotasTopModal';
+import AdsLatinasModal from '@/components/tiktok/AdsLatinasModal';
 
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';

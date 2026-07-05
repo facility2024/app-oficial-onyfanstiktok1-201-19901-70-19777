@@ -1,4 +1,5 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
+import { AvatarWithFallback } from '@/components/ui/AvatarWithFallback';
 import { Video } from '@/types/database';
 import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';

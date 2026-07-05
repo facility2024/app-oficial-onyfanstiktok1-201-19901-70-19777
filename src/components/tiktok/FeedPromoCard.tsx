@@ -275,6 +275,8 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
           </div>
         </div>
       )}
+
+      <AdsGarotasTopModal open={showGarotasTop} onClose={() => setShowGarotasTop(false)} />
     </div>
   );
 };

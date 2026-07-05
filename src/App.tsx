@@ -50,6 +50,7 @@ import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
 import StoreCartPage from "./pages/StoreCartPage";
 import AdsGarotasTopPage from "./pages/AdsGarotasTopPage";
 import IndicadorCadastro from "./pages/IndicadorCadastro";
+import IndicadorArea from "./pages/IndicadorArea";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
@@ -80,6 +81,7 @@ const App = () => (
           
           <Route path="/auth" element={<Auth />} />
           <Route path="/indicador/cadastro" element={<IndicadorCadastro />} />
+          <Route path="/indicador" element={<IndicadorArea />} />
           
           {/* App SEM proteção - aceita usuários anônimos */}
           <Route path="/app" element={<Index />} />

@@ -82,7 +82,11 @@ serve(async (req) => {
     console.log('🤖 Provider:', chatPanel.ai_provider);
 
     let aiResponse = '';
-    const systemPrompt = chatPanel.prompt || 'Você é um assistente prestativo.';
+    const rawPrompt = (chatPanel.prompt || '').trim();
+    console.log('📝 Prompt configurado (len):', rawPrompt.length, 'preview:', rawPrompt.slice(0, 120));
+    const systemPrompt = rawPrompt
+      ? `${rawPrompt}\n\n=== REGRAS OBRIGATÓRIAS ===\n1. Siga RIGOROSAMENTE as instruções acima em TODAS as mensagens.\n2. NUNCA quebre o personagem definido acima.\n3. Se instruções acima definirem seu nome, personalidade, ou como responder — obedeça sempre.\n4. Responda SEMPRE em português brasileiro, de forma natural e humana.\n5. Use o histórico da conversa para manter contexto e coerência.`
+      : 'Você é uma assistente prestativa, simpática e responde sempre em português brasileiro.';
 
     if (chatPanel.ai_provider === 'gemini') {
       aiResponse = await callGemini(

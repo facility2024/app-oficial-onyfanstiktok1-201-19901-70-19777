@@ -197,7 +197,10 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         )}
         {promo.cta_text && (promo.cta_link || promo.cta_mode === 'popup') && (
           <Button
+            type="button"
             onClick={handleCtaClick}
+            onTouchEnd={(e) => { e.preventDefault(); handleCtaClick(e as any); }}
+            style={{ touchAction: 'manipulation' }}
             className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-3 rounded-lg shadow-lg mb-3"
           >
             {promo.cta_text}

@@ -49,6 +49,7 @@ import StoreProfilePage from "./pages/StoreProfilePage";
 import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
 import StoreCartPage from "./pages/StoreCartPage";
 import AdsGarotasTopPage from "./pages/AdsGarotasTopPage";
+import IndicadorCadastro from "./pages/IndicadorCadastro";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance

@@ -343,6 +343,11 @@ export const TikTokApp = () => {
 
     if (!link) return;
 
+    if (isGarotasTopLink(link)) {
+      setShowGarotasTopModal(true);
+      return;
+    }
+
     if (typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup') {
       setActivePromoPopup({
         displayName: videoOrLink.user?.username || videoOrLink.title || 'Promoção',
@@ -352,11 +357,6 @@ export const TikTokApp = () => {
         ctaText: videoOrLink._promoPopupCtaText || 'Ver Mais',
         ctaLink: videoOrLink._promoPopupCtaLink || link,
       });
-      return;
-    }
-
-    if (isGarotasTopLink(link)) {
-      setShowGarotasTopModal(true);
       return;
     }
 
@@ -477,7 +477,7 @@ export const TikTokApp = () => {
         ...( {
           _promoCtaText: selectedPromo.cta_text || (selectedPromo as any).popup_cta_text || null,
           _promoCtaLink: selectedPromo.cta_mode === 'popup'
-            ? ((selectedPromo as any).popup_cta_link || selectedPromo.cta_link || (selectedPromo as any).popup_url || null)
+            ? (selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null)
             : (selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null),
           _promoCtaMode: selectedPromo.cta_mode || 'link',
           _promoPopupMediaUrl: selectedPromo.popup_media_url || null,
@@ -3388,7 +3388,7 @@ export const TikTokApp = () => {
                 {activePromoPopup.ctaText && activePromoPopup.ctaLink && (
                   <Button
                     type="button"
-                    onClick={() => openExternalLink(activePromoPopup.ctaLink)}
+                    onClick={(e) => handlePromoCtaLink(activePromoPopup.ctaLink, e)}
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg text-base"
                   >
                     {activePromoPopup.ctaText}
@@ -3891,7 +3891,7 @@ export const TikTokApp = () => {
               {activePromoPopup.ctaText && activePromoPopup.ctaLink && (
                 <Button
                   type="button"
-                  onClick={() => openExternalLink(activePromoPopup.ctaLink)}
+                  onClick={(e) => handlePromoCtaLink(activePromoPopup.ctaLink, e)}
                   className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg text-base"
                 >
                   {activePromoPopup.ctaText}

@@ -5795,6 +5795,7 @@ export type Database = {
           first_name: string | null
           followers_count: number | null
           id: string
+          is_referrer_only: boolean | null
           last_name: string | null
           live_active: boolean | null
           live_url: string | null
@@ -5827,6 +5828,7 @@ export type Database = {
           first_name?: string | null
           followers_count?: number | null
           id: string
+          is_referrer_only?: boolean | null
           last_name?: string | null
           live_active?: boolean | null
           live_url?: string | null
@@ -5859,6 +5861,7 @@ export type Database = {
           first_name?: string | null
           followers_count?: number | null
           id?: string
+          is_referrer_only?: boolean | null
           last_name?: string | null
           live_active?: boolean | null
           live_url?: string | null
@@ -6195,10 +6198,80 @@ export type Database = {
           },
         ]
       }
+      referral_link_clicks: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          referral_code: string | null
+          referrer_id: string | null
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          referral_code?: string | null
+          referrer_id?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          referral_code?: string | null
+          referrer_id?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      referral_program_config: {
+        Row: {
+          bonus_percentage: number
+          cocon_value_brl: number
+          cocons_per_referral: number
+          created_at: string
+          id: string
+          neon_official_link: string | null
+          program_active: boolean
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          bonus_percentage?: number
+          cocon_value_brl?: number
+          cocons_per_referral?: number
+          created_at?: string
+          id?: string
+          neon_official_link?: string | null
+          program_active?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          bonus_percentage?: number
+          cocon_value_brl?: number
+          cocons_per_referral?: number
+          created_at?: string
+          id?: string
+          neon_official_link?: string | null
+          program_active?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           bonus_amount: number | null
           bonus_paid: boolean | null
+          cancelled_at: string | null
+          cocons_awarded: number | null
           completed_at: string | null
           created_at: string | null
           id: string
@@ -6209,8 +6282,12 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           bonus_amount?: number | null
           bonus_paid?: boolean | null
+          cancelled_at?: string | null
+          cocons_awarded?: number | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
@@ -6221,8 +6298,12 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           bonus_amount?: number | null
           bonus_paid?: boolean | null
+          cancelled_at?: string | null
+          cocons_awarded?: number | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
@@ -6231,6 +6312,51 @@ export type Database = {
           referred_id?: string | null
           referrer_id?: string
           status?: string | null
+        }
+        Relationships: []
+      }
+      referrer_payout_info: {
+        Row: {
+          bank_account: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          cpf: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          neon_id: string | null
+          pix_key: string | null
+          pix_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          neon_id?: string | null
+          pix_key?: string | null
+          pix_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          neon_id?: string | null
+          pix_key?: string | null
+          pix_type?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -8489,6 +8615,7 @@ export type Database = {
       }
       admin_delete_model: { Args: { p_model_id: string }; Returns: undefined }
       admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
+      approve_referral: { Args: { p_referral_id: string }; Returns: boolean }
       atualizar_localizacao_usuario: {
         Args: {
           endereco?: string
@@ -8516,6 +8643,7 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      cancel_referral: { Args: { p_referral_id: string }; Returns: boolean }
       check_empresa_exists: {
         Args: { check_email: string; check_whatsapp: string }
         Returns: Json

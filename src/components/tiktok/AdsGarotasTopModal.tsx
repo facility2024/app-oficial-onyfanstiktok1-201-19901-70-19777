@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import { Sparkles, ChevronLeft, ChevronRight, Loader2, X, Flame } from "lucide-react";
+import AdsLatinasModal from "./AdsLatinasModal";
 
 interface Card {
   id: string;

@@ -3,6 +3,7 @@ import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import AdsGarotasTopModal from './AdsGarotasTopModal';
 
 interface FeedPromotion {
   id: string;
@@ -36,6 +37,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [isPlaying, setIsPlaying] = useState(false);
   const [localMuted, setLocalMuted] = useState(isMuted);
   const [showPopup, setShowPopup] = useState(false);
+  const [showGarotasTop, setShowGarotasTop] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
@@ -71,6 +73,12 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const handleCtaClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     trackClick('cta');
+
+    // Detecta link do Garotas Top e abre como popup responsivo
+    if (promo.cta_link && /\/ads\/garotas-top\/?$/i.test(promo.cta_link)) {
+      setShowGarotasTop(true);
+      return;
+    }
 
     if (promo.cta_mode === 'popup') {
       setShowPopup(true);
@@ -267,6 +275,8 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
           </div>
         </div>
       )}
+
+      <AdsGarotasTopModal open={showGarotasTop} onClose={() => setShowGarotasTop(false)} />
     </div>
   );
 };

@@ -102,31 +102,68 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
       // Auto-ativa chat + online quando há IA configurada (provider + chave)
       const hasAIConfig = !!panel.ai_provider && !!panel.api_key_encrypted?.trim();
       const payload = {
-        ...panel,
         model_id: modelId,
         is_active: hasAIConfig ? true : panel.is_active,
         is_online: hasAIConfig ? true : panel.is_online,
+        ai_provider: panel.ai_provider,
+        api_key_encrypted: panel.api_key_encrypted || '',
+        prompt: panel.prompt || '',
+        greeting_message: panel.greeting_message || '',
+        greeting_image_url: panel.greeting_image_url || '',
+        greeting_description: panel.greeting_description || '',
+        greeting_link: panel.greeting_link || '',
+        message_delay_seconds: panel.message_delay_seconds || 2,
+        can_read_images: panel.can_read_images,
+        can_send_audio: panel.can_send_audio,
+        can_send_images: panel.can_send_images,
+        can_send_links: panel.can_send_links,
+        audio_url: panel.audio_url || '',
+        image_url: panel.image_url || '',
+        whatsapp_number: panel.whatsapp_number || '',
+        custom_link: panel.custom_link || '',
+        creator_id: null,
       };
 
-      if (panel.id) {
-        const { error } = await (supabase as any)
+      const { data: existingPanel, error: lookupError } = await (supabase as any)
+        .from('model_chat_panels')
+        .select('id')
+        .eq('model_id', modelId)
+        .maybeSingle();
+
+      if (lookupError) throw lookupError;
+
+      let savedPanel: ChatPanel | null = null;
+
+      if (existingPanel?.id) {
+        const { data, error } = await (supabase as any)
           .from('model_chat_panels')
           .update(payload)
-          .eq('id', panel.id);
+          .eq('id', existingPanel.id)
+          .select('*')
+          .single();
         if (error) throw error;
+        savedPanel = data as ChatPanel;
       } else {
-        const { error } = await (supabase as any)
+        const { data, error } = await (supabase as any)
           .from('model_chat_panels')
-          .insert([payload]);
+          .insert([payload])
+          .select('*')
+          .single();
         if (error) throw error;
+        savedPanel = data as ChatPanel;
       }
-      setPanel(payload);
+
+      if (!savedPanel || savedPanel.is_active !== payload.is_active || savedPanel.is_online !== payload.is_online) {
+        throw new Error('O painel não confirmou o status salvo. Tente novamente.');
+      }
+
+      setPanel(savedPanel);
       toast.success(
         hasAIConfig
           ? 'Painel salvo! Chat ativo e online no feed. ✨'
           : 'Painel salvo! Ative "Habilitar Chat" e "Aparecer Online" para aparecer no feed.'
       );
-      await fetchPanel();
+      onClose();
     } catch (error: any) {
       console.error('Erro ao salvar painel:', error);
       toast.error(`Erro: ${error.message}`);
@@ -160,7 +197,7 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0f1729] border-gray-800 p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-3 text-white">

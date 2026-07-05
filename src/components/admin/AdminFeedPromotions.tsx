@@ -860,9 +860,9 @@ export const AdminFeedPromotions = () => {
                 <Input type="number" value={form.position_interval} onChange={(e) => setForm({ ...form, position_interval: parseInt(e.target.value) || 5 })} className={modalInputClass} />
               </div>
               <div>
-                <Label>Vezes por dia no feed</Label>
-                <Input type="number" min={0} value={form.daily_frequency} onChange={(e) => setForm({ ...form, daily_frequency: parseInt(e.target.value) || 0 })} className={modalInputClass} />
-                <p className="text-xs text-gray-500 mt-1">0 = ilimitado</p>
+                <Label>Vezes por dia no feed (máx 3)</Label>
+                <Input type="number" min={1} max={3} value={form.daily_frequency || 3} onChange={(e) => setForm({ ...form, daily_frequency: Math.min(3, Math.max(1, parseInt(e.target.value) || 3)) })} className={modalInputClass} />
+                <p className="text-xs text-gray-500 mt-1">1 = tarde • 2 = manhã e noite • 3 = manhã, tarde e noite</p>
               </div>
               <div>
                 <Label>Prioridade</Label>

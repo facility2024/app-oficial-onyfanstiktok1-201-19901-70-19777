@@ -71,9 +71,9 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     }
   };
 
-  const handleCtaClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleCtaClick = (e?: any) => {
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
     trackClick('cta');
 
     // Detecta link do Garotas Top e abre como popup responsivo
@@ -196,15 +196,15 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
           <p className="text-white/90 text-sm mb-3 line-clamp-2">{promo.description}</p>
         )}
         {promo.cta_text && (promo.cta_link || promo.cta_mode === 'popup') && (
-          <Button
+          <button
             type="button"
-            onClick={handleCtaClick}
-            onTouchEnd={(e) => { e.preventDefault(); handleCtaClick(e as any); }}
-            style={{ touchAction: 'manipulation' }}
-            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-3 rounded-lg shadow-lg mb-3"
+            onPointerUp={(e) => { e.stopPropagation(); handleCtaClick(e as any); }}
+            onClick={(e) => { e.stopPropagation(); }}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            className="w-full bg-gradient-to-r from-pink-500 to-red-500 active:from-pink-600 active:to-red-600 text-white font-bold py-3 rounded-lg shadow-lg mb-3 cursor-pointer select-none"
           >
             {promo.cta_text}
-          </Button>
+          </button>
         )}
         {promo.banner_url && (
           <div className="w-full rounded-lg overflow-hidden shadow-lg" onClick={handleCtaClick}>

@@ -37,6 +37,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [isPlaying, setIsPlaying] = useState(false);
   const [localMuted, setLocalMuted] = useState(isMuted);
   const [showPopup, setShowPopup] = useState(false);
+  const [showGarotasTop, setShowGarotasTop] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');

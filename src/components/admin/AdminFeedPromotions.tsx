@@ -206,16 +206,23 @@ export const AdminFeedPromotions = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('feed_promotions')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select('id');
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Nada foi excluído. Verifique se você está logado como admin (RLS bloqueou o DELETE).');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-feed-promotions'] });
       queryClient.invalidateQueries({ queryKey: ['feed-promotions'] });
-      toast.success('Promoção excluída!');
+      toast.success('Promoção excluída do banco!');
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao excluir: ' + (error?.message || 'desconhecido'));
     },
   });
 

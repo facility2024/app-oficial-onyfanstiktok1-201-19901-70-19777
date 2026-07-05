@@ -213,25 +213,18 @@ export default function ModelChat() {
 
       setEntity(entityData);
 
-      // Buscar configuração do chat panel
-      let panelQuery = supabase
-        .from('model_chat_panels' as any)
-        .select('is_active, is_online, ai_provider, greeting_message, greeting_image_url, greeting_link, greeting_description, can_read_images, can_send_audio, can_send_images, can_send_links, message_delay_seconds');
-
-      if (isCreator) {
-        panelQuery = panelQuery.eq('creator_id', entityId);
-      } else {
-        panelQuery = panelQuery.eq('model_id', entityId);
-      }
-
-      const { data: panel, error: panelError } = await panelQuery.maybeSingle();
+      // Buscar configuração pública do chat via RPC segura, sem expor chaves do painel
+      const { data: panel, error: panelError } = await (supabase as any).rpc('get_chat_panel_config', {
+        p_entity_id: entityId,
+        p_entity_type: isCreator ? 'creator' : 'model',
+      });
 
       if (panelError) {
         console.error('Erro ao buscar chat panel:', panelError);
       }
 
       const panelData = panel as any;
-      if (panelData) {
+      if (panelData && Object.keys(panelData).length > 0) {
         setChatPanel({
           ...panelData,
           message_delay_seconds: panelData.message_delay_seconds || 1

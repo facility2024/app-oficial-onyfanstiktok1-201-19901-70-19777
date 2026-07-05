@@ -535,6 +535,69 @@ export const TikTokApp = () => {
   const isValidUUID = (value?: string | null): boolean =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
   const isPersistedVideoId = (videoId?: string | null): boolean => isValidUUID(videoId);
+  const getChatTarget = useCallback((video?: any) => {
+    const creatorId = video?.creator_id;
+    const modelId = video?.model_id;
+    const fallbackUserId = video?.user?.id;
+    const id = creatorId || modelId || (isValidUUID(fallbackUserId) ? fallbackUserId : '');
+    return {
+      id,
+      isCreator: Boolean(creatorId),
+    };
+  }, []);
+  const currentChatTarget = getChatTarget(currentVideo);
+  const isCurrentChatActive = Boolean(
+    currentChatTarget.id &&
+    (chatActiveMap[currentChatTarget.id] === true || currentVideo?.user?.is_online === true)
+  );
+  const isCurrentChatOnline = Boolean(
+    currentChatTarget.id &&
+    (chatOnlineMap[currentChatTarget.id] === true || currentVideo?.user?.is_online === true)
+  );
+  const openCurrentVideoChat = useCallback(() => {
+    if (!currentChatTarget.id || !isValidUUID(currentChatTarget.id)) return;
+    navigate(`/chat/${currentChatTarget.id}${currentChatTarget.isCreator ? '?type=creator' : ''}`);
+  }, [currentChatTarget.id, currentChatTarget.isCreator, navigate]);
+
+  useEffect(() => {
+    if (!currentChatTarget.id || !isValidUUID(currentChatTarget.id)) return;
+
+    let cancelled = false;
+
+    const loadCurrentChatStatus = async () => {
+      try {
+        const { data, error } = await (supabase as any).rpc('get_chat_panel_config', {
+          p_entity_id: currentChatTarget.id,
+          p_entity_type: currentChatTarget.isCreator ? 'creator' : 'model',
+        });
+
+        if (cancelled) return;
+
+        if (error) {
+          console.warn('⚠️ Erro ao carregar status do chat ativo:', error);
+          return;
+        }
+
+        const config = data || {};
+        setChatActiveMap(prev => ({
+          ...prev,
+          [currentChatTarget.id]: config.is_active === true,
+        }));
+        setChatOnlineMap(prev => ({
+          ...prev,
+          [currentChatTarget.id]: config.is_online === true,
+        }));
+      } catch (error) {
+        if (!cancelled) console.warn('⚠️ Erro ao verificar chat ativo:', error);
+      }
+    };
+
+    loadCurrentChatStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentChatTarget.id, currentChatTarget.isCreator]);
 
   useEffect(() => {
     if (!displayVideos.length) return;
@@ -3243,7 +3306,7 @@ export const TikTokApp = () => {
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
           setShowLiveList(true);
-        }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} onOpenChat={chatActiveMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || ''] ? () => navigate(`/chat/${currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id}`) : undefined} isChatOnline={!!chatOnlineMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || '']} />
+        }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onShare={shareVideo} onOpenChat={isCurrentChatActive ? openCurrentVideoChat : undefined} isChatOnline={isCurrentChatOnline} />
           </div>}
 
         {/* Barra de Navegação Inferior - Estilo TikTok */}
@@ -3355,7 +3418,7 @@ export const TikTokApp = () => {
       }} />}
 
         {/* Profile Screen */}
-        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={!!chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id]} onVideoSelect={videoId => {
+        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onVideoSelect={videoId => {
         openSelectedVideo(videoId);
       }} onOpenChat={() => {
         handleCloseProfile();
@@ -3701,7 +3764,7 @@ export const TikTokApp = () => {
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
                   setShowLiveList(true);
-                }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={chatActiveMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || ''] ? () => navigate(`/chat/${currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id}`) : undefined} isChatOnline={!!chatOnlineMap[currentVideo?.creator_id || currentVideo?.model_id || currentVideo?.user?.id || '']} onExit={async () => {
+        }} onBlockVideo={undefined} onFullscreen={handleFullscreen} onOpenChat={isCurrentChatActive ? openCurrentVideoChat : undefined} isChatOnline={isCurrentChatOnline} onExit={async () => {
                   try {
                     sessionStorage.setItem('logging_out', 'true');
                     await supabase.auth.signOut();
@@ -3795,7 +3858,7 @@ export const TikTokApp = () => {
       {/* Desktop Profile Screen */}
       <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
       openSelectedVideo(videoId);
-    }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={!!chatActiveMap[currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id]} onOpenChat={() => {
+    }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onOpenChat={() => {
       handleCloseProfile();
       setShowChat(true);
     }} />

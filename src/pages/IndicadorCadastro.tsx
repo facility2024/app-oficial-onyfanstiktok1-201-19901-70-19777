@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, Coins, Share2, DollarSign, Gift } from 'lucide-react';
 import { z } from 'zod';
+import { useReferralTracking } from '@/hooks/useReferralTracking';
 
 const schema = z.object({
   name: z.string().trim().min(2, 'Nome muito curto').max(80),
@@ -26,6 +27,7 @@ export default function IndicadorCadastro() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const refFromLink = params.get('ref');
+  useReferralTracking('indicador-cadastro');
 
   const [form, setForm] = useState({ name: '', email: '', password: '', whatsapp: '' });
   const [loading, setLoading] = useState(false);

@@ -12,6 +12,7 @@ import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import loginBackground from '@/assets/login-background.png';
 import loginBackgroundMobile from '@/assets/login-background-mobile.png';
 import { Loader2, Mail, RefreshCw } from 'lucide-react';
+import { useReferralTracking } from '@/hooks/useReferralTracking';
 
 // Schema de validação
 const loginSchema = z.object({
@@ -37,6 +38,7 @@ const resetPasswordSchema = z.object({
 });
 
 const Auth = () => {
+  useReferralTracking('auth');
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password' | 'reset-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

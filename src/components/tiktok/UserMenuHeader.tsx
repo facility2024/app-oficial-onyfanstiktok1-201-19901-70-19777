@@ -1,4 +1,5 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
+import { AvatarWithFallback } from '@/components/ui/AvatarWithFallback';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';

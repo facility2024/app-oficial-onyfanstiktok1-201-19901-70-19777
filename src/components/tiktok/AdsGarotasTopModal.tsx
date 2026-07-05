@@ -241,6 +241,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

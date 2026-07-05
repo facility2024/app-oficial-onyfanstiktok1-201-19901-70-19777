@@ -443,8 +443,8 @@ export const TikTokApp = () => {
           posting_panel_url: selectedPromo.cta_link || undefined,
         },
         ...( {
-          _promoCtaText: selectedPromo.cta_text || null,
-          _promoCtaLink: selectedPromo.cta_link || null,
+          _promoCtaText: selectedPromo.cta_text || (selectedPromo as any).popup_cta_text || null,
+          _promoCtaLink: selectedPromo.cta_link || (selectedPromo as any).popup_cta_link || (selectedPromo as any).popup_url || null,
           _promoBannerUrl: selectedPromo.banner_url || null,
           _promoDescription: selectedPromo.description || null,
         } as any),

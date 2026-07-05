@@ -3,6 +3,7 @@ import { Video } from '@/types/database';
 import { Coffee, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { VinylRecord } from './VinylRecord';
+import AdsGarotasTopModal from './AdsGarotasTopModal';
 
 interface BottomInfoProps {
   video: Video;
@@ -13,15 +14,21 @@ interface BottomInfoProps {
 
 export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate = false }: BottomInfoProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [showGarotasTopModal, setShowGarotasTopModal] = useState(false);
   const descriptionText = video.description || '🔥 Conteúdo exclusivo para você! Curta e compartilhe ❤️ #viral #trending #foryou';
   const hasLongDescription = descriptionText.length > 60;
 
   const handleMusicClick = () => {
     const authorUrl = video.user?.posting_panel_url || `https://www.google.com/search?q=${encodeURIComponent(video.user?.username || '')}`;
     const url = /^(https?:)?\/\//i.test(authorUrl) ? authorUrl : `https://${authorUrl}`;
+    if (/ads\s*\/\s*garotas-top/i.test(url) || /\/ads\/garotas-top/i.test(url)) {
+      setShowGarotasTopModal(true);
+      return;
+    }
     window.open(url, '_blank', 'noopener,noreferrer');
   };
   return (
+    <>
     <div className="absolute bottom-16 left-0 right-20 pb-2 px-4">
       {isNew && (
         <div className="mb-2 inline-flex bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full shadow-lg animate-pulse font-bold text-sm items-center gap-1.5">
@@ -77,5 +84,7 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate =
         </div>
       </div>
     </div>
+    <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
+    </>
   );
 };

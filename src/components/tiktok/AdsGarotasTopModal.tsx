@@ -100,7 +100,14 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
             <p className="mt-2 text-sm sm:text-base md:text-lg text-purple-200/80 font-medium px-4">
               Chinesas e as mais quentes das redes
             </p>
+            <button
+              onClick={() => setShowLatinas(true)}
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+            >
+              <Flame className="w-4 h-4" /> Ver LATINAS 🌶️
+            </button>
           </header>
+
 
           {loading ? (
             <div className="flex justify-center py-20">

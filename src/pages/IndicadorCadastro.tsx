@@ -115,7 +115,14 @@ export default function IndicadorCadastro() {
   const valorPorIndicacao = cfg ? (cfg.cocons_per_referral * cfg.cocon_value_brl).toFixed(2) : '1,00';
 
   return (
-    <div className="min-h-[100dvh] bg-gray-950 text-white flex flex-col items-center justify-center p-4">
+    <div
+      className="min-h-[100dvh] text-white flex flex-col items-center justify-center p-4 bg-gray-950 bg-cover bg-center bg-no-repeat bg-fixed relative"
+      style={{
+        backgroundImage:
+          "linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)), url('https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png')",
+      }}
+    >
+
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-green-500 mb-4">

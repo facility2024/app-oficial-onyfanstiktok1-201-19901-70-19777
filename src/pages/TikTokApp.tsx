@@ -3483,6 +3483,7 @@ export const TikTokApp = () => {
         {/* Promo Popup - Anúncios de Live/Vídeo Chamada */}
         <PromoPopup />
         <AdsGarotasTopModal open={showGarotasTopModal} onClose={() => setShowGarotasTopModal(false)} />
+        <AdsLatinasModal open={showLatinasModal} onClose={() => setShowLatinasModal(false)} />
         {activePromoPopup && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 overscroll-contain" style={{ touchAction: "none" }} onClick={() => setActivePromoPopup(null)} onTouchMove={(e) => e.preventDefault()}>
             <div className="relative bg-gray-950 rounded-2xl overflow-hidden max-w-sm w-full max-h-[85dvh] shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>

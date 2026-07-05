@@ -71,9 +71,9 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     }
   };
 
-  const handleCtaClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleCtaClick = (e?: any) => {
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
     trackClick('cta');
 
     // Detecta link do Garotas Top e abre como popup responsivo

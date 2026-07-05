@@ -241,6 +241,8 @@ export const AdminDashboard = () => {
         return <AdminMoney />;
       case 'affiliates':
         return <AdminAffiliates />;
+      case 'referral-program':
+        return <AdminReferralProgram />;
       case 'video-call':
         return <AdminVideoCall />;
       case 'live':

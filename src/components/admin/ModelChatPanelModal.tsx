@@ -99,21 +99,34 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Auto-ativa chat + online quando há IA configurada (provider + chave)
+      const hasAIConfig = !!panel.ai_provider && !!panel.api_key_encrypted?.trim();
+      const payload = {
+        ...panel,
+        model_id: modelId,
+        is_active: hasAIConfig ? true : panel.is_active,
+        is_online: hasAIConfig ? true : panel.is_online,
+      };
+
       if (panel.id) {
         const { error } = await (supabase as any)
           .from('model_chat_panels')
-          .update(panel)
+          .update(payload)
           .eq('id', panel.id);
         if (error) throw error;
-        toast.success('Painel atualizado com sucesso!');
       } else {
         const { error } = await (supabase as any)
           .from('model_chat_panels')
-          .insert([{ ...panel, model_id: modelId }]);
+          .insert([payload]);
         if (error) throw error;
-        toast.success('Painel criado com sucesso!');
-        await fetchPanel();
       }
+      setPanel(payload);
+      toast.success(
+        hasAIConfig
+          ? 'Painel salvo! Chat ativo e online no feed. ✨'
+          : 'Painel salvo! Ative "Habilitar Chat" e "Aparecer Online" para aparecer no feed.'
+      );
+      await fetchPanel();
     } catch (error: any) {
       console.error('Erro ao salvar painel:', error);
       toast.error(`Erro: ${error.message}`);

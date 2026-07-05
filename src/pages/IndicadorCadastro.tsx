@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, Coins, Share2, DollarSign, Gift } from 'lucide-react';
 import { z } from 'zod';
+import { useReferralTracking } from '@/hooks/useReferralTracking';
 
 const schema = z.object({
   name: z.string().trim().min(2, 'Nome muito curto').max(80),

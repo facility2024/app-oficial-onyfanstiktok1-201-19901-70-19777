@@ -340,25 +340,26 @@ export const TikTokApp = () => {
     event?.stopPropagation();
 
     const link = typeof videoOrLink === 'string' ? videoOrLink : videoOrLink?._promoCtaLink;
+    const isPopupPromo = typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup';
 
-    if (!link) return;
-
-    if (isGarotasTopLink(link)) {
+    if (link && isGarotasTopLink(link)) {
       setShowGarotasTopModal(true);
       return;
     }
 
-    if (typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup') {
+    if (isPopupPromo) {
       setActivePromoPopup({
         displayName: videoOrLink.user?.username || videoOrLink.title || 'Promoção',
         description: videoOrLink._promoDescription || null,
         mediaUrl: videoOrLink._promoPopupMediaUrl || videoOrLink._promoBannerUrl || videoOrLink.thumbnail_url || null,
         mediaType: videoOrLink._promoPopupMediaType || null,
         ctaText: videoOrLink._promoPopupCtaText || 'Ver Mais',
-        ctaLink: videoOrLink._promoPopupCtaLink || link,
+        ctaLink: videoOrLink._promoPopupCtaLink || link || null,
       });
       return;
     }
+
+    if (!link) return;
 
     openExternalLink(link);
   }, [isGarotasTopLink, openExternalLink]);
@@ -3289,7 +3290,7 @@ export const TikTokApp = () => {
                          </p>
                        )}
                        {/* CTA Button */}
-                       {(video as any)._promoCtaText && (video as any)._promoCtaLink && (
+                        {(video as any)._promoCtaText && ((video as any)._promoCtaLink || (video as any)._promoCtaMode === 'popup') && (
                          <button
                              onPointerUp={(e) => handlePromoCtaLink(video as any, e)}
                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -3591,7 +3592,7 @@ export const TikTokApp = () => {
                            {(currentVideo as any)._promoDescription}
                          </p>
                        )}
-                       {(currentVideo as any)._promoCtaText && (currentVideo as any)._promoCtaLink && (
+                        {(currentVideo as any)._promoCtaText && ((currentVideo as any)._promoCtaLink || (currentVideo as any)._promoCtaMode === 'popup') && (
                          <button
                              onPointerUp={(e) => handlePromoCtaLink(currentVideo as any, e)}
                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}

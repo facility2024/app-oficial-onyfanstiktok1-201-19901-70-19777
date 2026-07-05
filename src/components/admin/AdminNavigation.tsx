@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio, Store } from 'lucide-react';
+import { Home, Users, Gamepad2, Play, DollarSign, Settings, BookOpen, Shield, Sparkles, MapPin, Bot, Tags, Brain, Crown, FileText, Megaphone, Radio, Store, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -30,6 +30,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     { id: 'gamification', label: 'Gamificação', icon: Gamepad2, shortLabel: '🎮' },
     { id: 'roles', label: 'Roles', icon: Shield, shortLabel: '🛡️' },
     { id: 'money', label: 'Financeiro', icon: DollarSign, shortLabel: '💰' },
+    { id: 'referral-program', label: 'Indicações', icon: Coins, shortLabel: '🪙' },
     { id: 'vip', label: 'Conteúdo Privado', icon: Crown, shortLabel: '👑' },
     { id: 'webhook-logs', label: 'Webhooks', icon: FileText, shortLabel: '📋' },
     { id: 'email-events', label: 'E-mails', icon: FileText, shortLabel: '📧' },

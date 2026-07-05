@@ -42,6 +42,7 @@ import { AdminEmailEvents } from './admin/AdminEmailEvents';
 import { AdminActivateVIP } from './admin/AdminActivateVIP';
 import { AdminModelSubscriptions } from './admin/AdminModelSubscriptions';
 import { AdminAffiliates } from './admin/AdminAffiliates';
+import { AdminReferralProgram } from './admin/AdminReferralProgram';
 import { AdminVideoCall } from './admin/AdminVideoCall';
 import { AdminAds } from './admin/AdminAds';
 import { AdminMarketplaceBanners } from './admin/AdminMarketplaceBanners';
@@ -240,6 +241,8 @@ export const AdminDashboard = () => {
         return <AdminMoney />;
       case 'affiliates':
         return <AdminAffiliates />;
+      case 'referral-program':
+        return <AdminReferralProgram />;
       case 'video-call':
         return <AdminVideoCall />;
       case 'live':

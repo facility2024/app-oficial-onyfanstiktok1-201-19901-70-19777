@@ -1,71 +1,53 @@
-# Sistema de Bonificação por Indicação (Cocons)
 
-Vou entregar em **5 partes independentes**. Cada parte só será implementada após você responder **"produzir parte X"**. Assim tudo flui sem quebrar nada do que já existe.
+# Plano: Order Bump no Checkout PIX
 
----
+## Objetivo
+Adicionar uma seção de "ofertas adicionais" (order bump) no `PixCheckoutModal`, gerenciada pelo Admin. Ao marcar um item extra, o valor do PIX é recalculado automaticamente (soma do valor base + itens marcados) antes de gerar o QR Code.
 
-## PARTE 1 — Banco de Dados (fundação)
+## O que muda
 
-Criar/ajustar tabelas via migration:
+### 1. Banco de dados (nova tabela `checkout_order_bumps`)
+Migration com:
+- `id` (uuid, pk)
+- `titulo` (text) — ex: "Pacote Extra de Fotos"
+- `descricao` (text, opcional)
+- `valor` (numeric) — valor adicional em R$
+- `imagem_url` (text, opcional)
+- `ativo` (boolean, default true)
+- `ordem` (int, default 0)
+- `created_at`, `updated_at`
 
-- **`referral_program_config`** (singleton, admin): `cocon_value_brl`, `cocons_per_referral`, `bonus_percentage`, `program_active`, `neon_official_link`.
-- **`referrals`** (ajustar): garantir campos `status` (`pending` | `approved` | `cancelled`), `cocons_awarded`, `approved_at`, `cancelled_at`, `approved_by`.
-- **`referral_link_clicks`**: rastreia cada acesso ao link (`referrer_id`, `ip`, `user_agent`, `created_at`).
-- **`referrer_payout_info`**: dados de recebimento do indicador (`user_id`, `pix_key`, `pix_type`, `neon_id`, `full_name`, `cpf`).
-- **`profiles`**: flag `is_referrer_only` (cadastro só para divulgar).
+GRANTs: `SELECT` para `anon` + `authenticated` (leitura pública no checkout); `ALL` para `service_role`.
+RLS: leitura pública quando `ativo=true`; escrita apenas para `admin` via `has_role`.
 
-RLS: indicador vê o próprio; admin vê tudo; insert de clicks é público (anon).
-Trigger: ao criar `profiles.referred_by`, cria `referrals` com `status='pending'` (não credita ainda — aprovação manual pelo admin, conforme requisito).
+### 2. Painel Admin (novo componente)
+`src/components/admin/AdminCheckoutOrderBumps.tsx`:
+- Listar todos os bumps
+- Criar / editar / excluir (título, descrição, valor R$, imagem opcional, ativo, ordem)
+- Mesmo estilo visual dos outros admins (alto contraste)
 
----
+Integrar no menu do Admin (adicionar aba/entrada onde ficam as outras configs de checkout).
 
-## PARTE 2 — Painel Admin do Programa
+### 3. Checkout (`PixCheckoutModal.tsx`)
+- Buscar `checkout_order_bumps` onde `ativo=true`, ordenado por `ordem`
+- Renderizar cada bump como um card com checkbox (estilo neon/roxo já existente, casando com o header do timer)
+- Estado local `selectedBumps: string[]`
+- `finalAmount = amount + sum(bumps.filter(selected).valor)`
+- Substituir todos os usos de `amount` (exibição do valor, geração do PIX, texto do botão) por `finalAmount`
+- Mostrar breakdown: "Produto: R$ X + Extras: R$ Y = **Total: R$ Z**"
 
-Nova aba em `/admin` → **"Programa de Indicação"**:
+### 4. Preservação
+- Não altera lógica de cronômetro, cores, imagem CDN, fluxo Asaas/NeonPay, coleta de dados, rodapé.
+- Não altera o campo `valor` já criado por card (segue sendo o valor base).
 
-- Configurações: valor do Cocon, Cocons por indicação, %, ativar/desativar programa, link oficial Neon.
-- Lista de indicadores: nome, total indicados, aprovados, Cocons, valor R$, dados PIX/Neon.
-- Lista de indicações: indicador, indicado, data, status, botões **Aprovar / Cancelar**.
-- Ao aprovar: credita `cocons_per_referral` na `user_wallets` do indicador usando o valor vigente.
+## Arquivos afetados
+- `supabase/migrations/<nova>.sql` (nova tabela + RLS + GRANTs)
+- `src/components/admin/AdminCheckoutOrderBumps.tsx` (novo)
+- Registro do novo componente no dashboard admin existente
+- `src/components/PixCheckoutModal.tsx` (fetch + UI dos bumps + soma)
 
----
+## Fora do escopo
+- Rastrear quais bumps foram comprados (pode ser adicionado depois na tabela `pix_payments` como coluna `bumps_selecionados jsonb`, se quiser).
+- Order bump condicional por produto (nesta v1 é global; se quiser por card, viramos escopo).
 
-## PARTE 3 — Página Pública de Cadastro do Indicador
-
-- Rota **`/indicador/cadastro`** (também aceita `?ref=CODIGO`).
-- Formulário simplificado: nome, email, senha, WhatsApp.
-- Marca `is_referrer_only = true` e gera `referral_code` único.
-- Redireciona para `/indicador` (área do membro).
-
----
-
-## PARTE 4 — Área do Indicador
-
-Rota **`/indicador`** (protegida):
-
-- Link exclusivo + botão copiar + share (WhatsApp, Telegram, X, nativo).
-- Cards: links compartilhados, cadastros recebidos, aprovados, Cocons, saldo R$.
-- Tabela: nome do indicado, data, status (Pendente/Aprovada).
-- Seção **Dados de Recebimento**: PIX, ID Neon, CPF, nome.
-- Banner com link oficial Neon (vindo da config admin).
-
----
-
-## PARTE 5 — Rastreamento e Vinculação Automática
-
-- Middleware em `/auth` e `/indicador/cadastro`: detecta `?ref=`, grava em `referral_link_clicks`, salva em `localStorage` (`pending_referral`).
-- Ao concluir cadastro: vincula `profiles.referred_by = referrer_id` → trigger cria `referrals` pending.
-- Contador de "links compartilhados" incrementado no clique de share.
-- Desativar demais fluxos de bônus (missões, gamification credit) mantendo código, apenas com flag `program_active` do admin cortando novos créditos que não sejam de indicação.
-
----
-
-## Detalhes técnicos
-
-- Cálculo do saldo é **snapshot no momento da aprovação** (`cocons_awarded` gravado na `referrals`), mas o **display do valor R$** usa sempre `cocon_value_brl` atual — atende o exemplo da regra (100 Cocons × novo valor).
-- Reutiliza `user_wallets`, `wallet_transactions`, `useReferralSystem`, `useNudixWallet` existentes.
-- Nenhuma alteração no feed, vídeos, VIP ou marketplace.
-
----
-
-Responda **"produzir parte 1"** para eu começar pela migration do banco.
+Confirma que posso executar? Ou quer que os bumps sejam **por card** (cada produto tem seus próprios bumps) em vez de globais?

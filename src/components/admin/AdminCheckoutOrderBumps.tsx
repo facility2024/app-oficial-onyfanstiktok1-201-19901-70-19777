@@ -122,6 +122,7 @@ export const AdminCheckoutOrderBumps = () => {
       descricao: form.descricao.trim() || null,
       valor: valorNum,
       imagem_url: form.imagem_url.trim() || null,
+      link_acesso: form.link_acesso.trim() || null,
       ativo: form.ativo,
       ordem: Number(form.ordem) || 0,
     };

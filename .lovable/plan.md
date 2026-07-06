@@ -1,53 +1,51 @@
-
-# Plano: Order Bump no Checkout PIX
-
 ## Objetivo
-Adicionar uma seção de "ofertas adicionais" (order bump) no `PixCheckoutModal`, gerenciada pelo Admin. Ao marcar um item extra, o valor do PIX é recalculado automaticamente (soma do valor base + itens marcados) antes de gerar o QR Code.
 
-## O que muda
+Adicionar liberação automática de conteúdo após pagamento PIX aprovado, com dois tipos de acesso: **link do produto principal (vídeos)** e **link do Order Bump (oferta extra)**, ambos gerenciados pelo painel admin.
 
-### 1. Banco de dados (nova tabela `checkout_order_bumps`)
-Migration com:
-- `id` (uuid, pk)
-- `titulo` (text) — ex: "Pacote Extra de Fotos"
-- `descricao` (text, opcional)
-- `valor` (numeric) — valor adicional em R$
-- `imagem_url` (text, opcional)
-- `ativo` (boolean, default true)
-- `ordem` (int, default 0)
-- `created_at`, `updated_at`
+## Regras de liberação
 
-GRANTs: `SELECT` para `anon` + `authenticated` (leitura pública no checkout); `ALL` para `service_role`.
-RLS: leitura pública quando `ativo=true`; escrita apenas para `admin` via `has_role`.
+Na tela de confirmação (`PaymentConfirmation.tsx`), após o pagamento ser aprovado:
 
-### 2. Painel Admin (novo componente)
-`src/components/admin/AdminCheckoutOrderBumps.tsx`:
-- Listar todos os bumps
-- Criar / editar / excluir (título, descrição, valor R$, imagem opcional, ativo, ordem)
-- Mesmo estilo visual dos outros admins (alto contraste)
+- **Comprou só o produto principal** → aparece **1 botão**: "Clique aqui para acessar seus vídeos"
+- **Comprou principal + Order Bump(s)** → aparecem **2 botões**:
+  1. "Meu acesso aos vídeos" (link principal)
+  2. "Acesso à minha oferta" (link do bump comprado)
 
-Integrar no menu do Admin (adicionar aba/entrada onde ficam as outras configs de checkout).
+## Mudanças no banco
 
-### 3. Checkout (`PixCheckoutModal.tsx`)
-- Buscar `checkout_order_bumps` onde `ativo=true`, ordenado por `ordem`
-- Renderizar cada bump como um card com checkbox (estilo neon/roxo já existente, casando com o header do timer)
-- Estado local `selectedBumps: string[]`
-- `finalAmount = amount + sum(bumps.filter(selected).valor)`
-- Substituir todos os usos de `amount` (exibição do valor, geração do PIX, texto do botão) por `finalAmount`
-- Mostrar breakdown: "Produto: R$ X + Extras: R$ Y = **Total: R$ Z**"
+1. Nova coluna em `checkout_order_bumps`:
+   - `link_acesso` (text) — URL liberada quando o usuário compra aquele bump.
+2. Nova entrada em `admin_settings`:
+   - `key = 'checkout_main_access_link'` → URL do produto principal (vídeos).
 
-### 4. Preservação
-- Não altera lógica de cronômetro, cores, imagem CDN, fluxo Asaas/NeonPay, coleta de dados, rodapé.
-- Não altera o campo `valor` já criado por card (segue sendo o valor base).
+## Mudanças no Admin
+
+**`AdminCheckoutOrderBumps.tsx`**
+- Adicionar campo "Link de acesso liberado" no editor de cada bump (input URL).
+
+**Novo bloco no admin (dentro do mesmo componente ou em `AdminSettings`)**
+- Campo "Link de acesso — Produto principal (vídeos)" salvando em `admin_settings.checkout_main_access_link`.
+
+## Mudanças no Checkout
+
+**`PixCheckoutModal.tsx`**
+- Ao gerar o PIX, salvar em `sessionStorage`:
+  - `purchased_main_link` (link principal)
+  - `purchased_bump_links` (array com os links dos bumps selecionados)
+
+## Mudanças na Confirmação
+
+**`PaymentConfirmation.tsx`**
+- Quando `status === 'CONFIRMED'`, ler do `sessionStorage` os links salvos e renderizar:
+  - Sempre: botão "🎬 Meu acesso aos vídeos" → abre `purchased_main_link`
+  - Se `purchased_bump_links.length > 0`: botão(ões) "🎁 Acesso à minha oferta" → abre cada link
+- Limpar `sessionStorage` após exibir.
 
 ## Arquivos afetados
-- `supabase/migrations/<nova>.sql` (nova tabela + RLS + GRANTs)
-- `src/components/admin/AdminCheckoutOrderBumps.tsx` (novo)
-- Registro do novo componente no dashboard admin existente
-- `src/components/PixCheckoutModal.tsx` (fetch + UI dos bumps + soma)
 
-## Fora do escopo
-- Rastrear quais bumps foram comprados (pode ser adicionado depois na tabela `pix_payments` como coluna `bumps_selecionados jsonb`, se quiser).
-- Order bump condicional por produto (nesta v1 é global; se quiser por card, viramos escopo).
+- `supabase/migrations/*` (nova migration — coluna + setting)
+- `src/components/admin/AdminCheckoutOrderBumps.tsx`
+- `src/components/PixCheckoutModal.tsx`
+- `src/pages/PaymentConfirmation.tsx`
 
-Confirma que posso executar? Ou quer que os bumps sejam **por card** (cada produto tem seus próprios bumps) em vez de globais?
+Aguardo o comando **"produzir"** para aplicar.

@@ -82,6 +82,15 @@ export default function PixCheckoutModal({
     setQrImage(null);
     setPaid(false);
     setCopied(false);
+    setSelectedBumps({});
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("checkout_order_bumps")
+        .select("id,titulo,descricao,valor,imagem_url,ordem")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      setBumps(data || []);
+    })();
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };

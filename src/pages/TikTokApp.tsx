@@ -170,11 +170,6 @@ export const TikTokApp = () => {
     isCreator: boolean;
   } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const visibleComments = useMemo(() => {
-    const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
-    if (!activeVideoId) return [];
-    return comments.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === activeVideoId);
-  }, [comments, currentVideo]);
   const [isLiked, setIsLiked] = useState(false);
   const isTogglingLikeRef = useRef(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
@@ -544,6 +539,11 @@ export const TikTokApp = () => {
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
   const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
+  const visibleComments = useMemo(() => {
+    const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
+    if (!activeVideoId) return [];
+    return comments.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === activeVideoId);
+  }, [comments, currentVideo]);
 
   // 🎯 Registra exibição de promo (cap diário conforme daily_frequency)
   useEffect(() => {

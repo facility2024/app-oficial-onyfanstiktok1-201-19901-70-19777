@@ -105,6 +105,17 @@ export default function AdsGarotasTopPage() {
           <p className="mt-3 text-lg md:text-xl text-purple-200/80 font-medium">
             Chinesas e as mais quentes das redes
           </p>
+          <p className="mt-3 text-sm md:text-base text-purple-100/90 max-w-2xl mx-auto leading-relaxed">
+            São vários vídeos atualizados todas as semanas com as mais lindas da internet.
+          </p>
+          <div className="mt-5 inline-flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/30 to-purple-600/30 border border-fuchsia-400/50 shadow-[0_0_30px_rgba(217,70,239,0.4)]">
+            <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">
+              Tudo isso por <span className="text-yellow-300">R$ 14,97</span>
+            </span>
+            <span className="text-[11px] md:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse">
+              🔥 Promoção por tempo limitado 🔥
+            </span>
+          </div>
         </header>
 
         {/* Grid */}

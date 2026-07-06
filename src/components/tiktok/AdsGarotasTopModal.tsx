@@ -268,6 +268,14 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       )}
 
       <AdsLatinasModal open={showLatinas} onClose={() => setShowLatinas(false)} />
+      <PixCheckoutModal
+        open={showPix}
+        onClose={() => setShowPix(false)}
+        amount={14.97}
+        productName="Assinatura Garotas Top 10"
+        storageFlag="garotas_top_paid"
+        redirectTo="/garotas-top-vip"
+      />
     </div>,
     document.body
   );

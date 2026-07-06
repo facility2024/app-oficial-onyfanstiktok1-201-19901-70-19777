@@ -2624,6 +2624,7 @@ export const TikTokApp = () => {
         title: "Comentário adicionado!",
         description: "Seu comentário foi publicado"
       });
+      triggerModelAutoReply();
 
     } catch (error) {
       console.error('❌ ADD COMMENT - Erro:', error);

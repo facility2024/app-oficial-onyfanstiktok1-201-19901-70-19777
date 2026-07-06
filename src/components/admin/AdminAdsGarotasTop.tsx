@@ -269,13 +269,19 @@ export const AdminAdsGarotasTop = () => {
                 />
               </div>
               <div>
-                <Label className="text-white">Link do CTA</Label>
+                <Label className="text-white">Valor (R$) *</Label>
                 <Input
-                  value={form.cta_link}
-                  onChange={(e) => setForm({ ...form, cta_link: e.target.value })}
-                  placeholder="/subscribe"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.valor}
+                  onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                  placeholder="14.97"
                   className="bg-gray-800 text-white border-gray-700"
                 />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Preço exibido no checkout PIX ao clicar neste card.
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Switch

@@ -10,6 +10,7 @@ import {
 import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
 import { useNavigate } from "react-router-dom";
+import PixCheckoutModal from "@/components/PixCheckoutModal";
 
 interface Card {
   id: string;
@@ -33,6 +34,7 @@ export default function AdsGarotasTopPage() {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
+  const [showPix, setShowPix] = useState(false);
 
   const fetchCards = async () => {
     setLoading(true);
@@ -108,14 +110,17 @@ export default function AdsGarotasTopPage() {
           <p className="mt-3 text-sm md:text-base text-purple-100/90 max-w-2xl mx-auto leading-relaxed">
             São vários vídeos atualizados todas as semanas com as mais lindas da internet.
           </p>
-          <div className="mt-5 inline-flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/30 to-purple-600/30 border border-fuchsia-400/50 shadow-[0_0_30px_rgba(217,70,239,0.4)]">
+          <button
+            onClick={() => setShowPix(true)}
+            className="mt-5 inline-flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+          >
             <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">
               Tudo isso por <span className="text-yellow-300">R$ 14,97</span>
             </span>
             <span className="text-[11px] md:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse">
-              🔥 Promoção por tempo limitado 🔥
+              🔥 Pagar com PIX — acesso imediato 🔥
             </span>
-          </div>
+          </button>
         </header>
 
         {/* Grid */}
@@ -248,6 +253,15 @@ export default function AdsGarotasTopPage() {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <PixCheckoutModal
+        open={showPix}
+        onClose={() => setShowPix(false)}
+        amount={14.97}
+        productName="Assinatura Garotas Top 10"
+        storageFlag="garotas_top_paid"
+        redirectTo="/garotas-top-vip"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2, X, Flame } from "lucide-react";
 import AdsLatinasModal from "./AdsLatinasModal";
+import PixCheckoutModal from "@/components/PixCheckoutModal";
 
 interface Card {
   id: string;
@@ -30,6 +31,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
   const [showLatinas, setShowLatinas] = useState(false);
+  const [showPix, setShowPix] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -103,14 +105,17 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
             <p className="mt-3 text-xs sm:text-sm md:text-base text-purple-100/90 px-4 max-w-2xl mx-auto leading-relaxed">
               São vários vídeos atualizados todas as semanas com as mais lindas da internet.
             </p>
-            <div className="mt-4 inline-flex flex-col items-center gap-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/30 to-purple-600/30 border border-fuchsia-400/50 shadow-[0_0_25px_rgba(217,70,239,0.4)]">
+            <button
+              onClick={() => setShowPix(true)}
+              className="mt-4 inline-flex flex-col items-center gap-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_25px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+            >
               <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">
                 Tudo isso por <span className="text-yellow-300">R$ 14,97</span>
               </span>
               <span className="text-[10px] sm:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse">
-                🔥 Promoção por tempo limitado 🔥
+                🔥 Pagar com PIX — acesso imediato 🔥
               </span>
-            </div>
+            </button>
             <button
               onClick={() => setShowLatinas(true)}
               className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
@@ -263,6 +268,14 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       )}
 
       <AdsLatinasModal open={showLatinas} onClose={() => setShowLatinas(false)} />
+      <PixCheckoutModal
+        open={showPix}
+        onClose={() => setShowPix(false)}
+        amount={14.97}
+        productName="Assinatura Garotas Top 10"
+        storageFlag="garotas_top_paid"
+        redirectTo="/garotas-top-vip"
+      />
     </div>,
     document.body
   );

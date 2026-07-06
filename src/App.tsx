@@ -49,6 +49,7 @@ import StoreProfilePage from "./pages/StoreProfilePage";
 import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
 import StoreCartPage from "./pages/StoreCartPage";
 import AdsGarotasTopPage from "./pages/AdsGarotasTopPage";
+import GarotasTopVipPage from "./pages/GarotasTopVipPage";
 import IndicadorCadastro from "./pages/IndicadorCadastro";
 import IndicadorArea from "./pages/IndicadorArea";
 import { CartProvider } from "./contexts/CartContext";
@@ -89,6 +90,7 @@ const App = () => (
           <Route path="/home" element={<Index />} />
           <Route path="/index" element={<Index />} />
           <Route path="/main" element={<Index />} />
+          <Route path="/garotas-top-vip" element={<GarotasTopVipPage />} />
 
           {/* Perfil do usuário */}
           <Route path="/profile" element={

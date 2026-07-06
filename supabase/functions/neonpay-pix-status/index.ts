@@ -55,13 +55,27 @@ Deno.serve(async (req) => {
           headers: { 'x-public-key': publicKey, 'x-secret-key': secretKey },
         })
         const text = await response.text()
-        let data: any
+        let data: Record<string, unknown>
         try { data = JSON.parse(text) } catch { data = { raw: text } }
 
         if (response.ok) {
+          const transaction = data.transaction && typeof data.transaction === 'object'
+            ? data.transaction as Record<string, unknown>
+            : {}
+          const payment = data.payment && typeof data.payment === 'object'
+            ? data.payment as Record<string, unknown>
+            : {}
+          const status = typeof data.status === 'string'
+            ? data.status
+            : typeof transaction.status === 'string'
+              ? transaction.status
+              : typeof payment.status === 'string'
+                ? payment.status
+                : 'PENDING'
+
           return jsonResponse({
             transaction_id: transactionId,
-            status: data?.status ?? data?.transaction?.status ?? data?.payment?.status ?? 'PENDING',
+            status,
             raw: data,
           })
         }

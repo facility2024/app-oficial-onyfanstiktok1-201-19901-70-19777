@@ -2,6 +2,9 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
 const NEONPAY_URL = 'https://app.neonpay.com.br/api/v1/gateway/pix/receive'
 
+const getText = (value: unknown) => typeof value === 'string' && value.trim() ? value.trim() : undefined
+const getObject = (value: unknown) => value && typeof value === 'object' ? value as Record<string, unknown> : {}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -45,7 +48,7 @@ Deno.serve(async (req) => {
     })
 
     const text = await r.text()
-    let data: any
+    let data: Record<string, unknown>
     try { data = JSON.parse(text) } catch { data = { raw: text } }
 
     if (!r.ok) {
@@ -55,11 +58,14 @@ Deno.serve(async (req) => {
       })
     }
 
+    const pix = getObject(data.pix)
+    const transaction = getObject(data.transaction)
+
     return new Response(JSON.stringify({
-      transaction_id: data.transactionId,
-      status: data.status,
-      pix_code: data?.pix?.code,
-      pix_image: data?.pix?.image,
+      transaction_id: getText(data.transactionId) ?? getText(data.id) ?? getText(transaction.id),
+      status: getText(data.status) ?? getText(transaction.status),
+      pix_code: getText(pix.code) ?? getText(pix.qr_code) ?? getText(data.pixCode) ?? getText(data.qr_code),
+      pix_image: getText(pix.image) ?? getText(pix.qr_image) ?? getText(data.pixImage) ?? getText(data.qr_image),
       identifier,
       amount,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

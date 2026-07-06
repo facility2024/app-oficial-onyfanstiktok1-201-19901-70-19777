@@ -73,6 +73,8 @@ export default function PixCheckoutModal({
   const buildQrImage = async (pixCode: string, apiImage?: string) => {
     if (apiImage) {
       const normalizedImage = apiImage.startsWith("data:image")
+        || apiImage.startsWith("http")
+        || apiImage.startsWith("blob:")
         ? apiImage
         : `data:image/png;base64,${apiImage}`;
       setQrImage(normalizedImage);

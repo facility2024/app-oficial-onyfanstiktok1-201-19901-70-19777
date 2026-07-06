@@ -158,6 +158,7 @@ export const TikTokApp = () => {
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
   const [videos, setVideos] = useState<Video[]>([]);
+  const promoViewTrackedRef = useRef<Set<string>>(new Set());
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showComments, setShowComments] = useState(false);

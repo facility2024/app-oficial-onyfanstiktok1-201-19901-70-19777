@@ -12,7 +12,7 @@ interface Card {
   imagem_url: string;
   video_url: string | null;
   cta_texto: string;
-  cta_link: string | null;
+  valor: number | null;
   ordem: number;
   is_active: boolean;
 }

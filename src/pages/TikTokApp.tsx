@@ -2516,6 +2516,7 @@ export const TikTokApp = () => {
         }
       };
       setComments(prev => [localComment, ...prev]);
+      triggerModelAutoReply();
       return;
     }
     try {

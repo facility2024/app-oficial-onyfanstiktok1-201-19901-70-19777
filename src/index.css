@@ -534,3 +534,23 @@ div[style*="Edit with Lovable"],
 #lovable-badge {
   display: none !important;
 }
+
+/* Barra de rolagem visível para modais de Ads (desktop) */
+.ads-modal-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: #d946ef #1a0b2e;
+}
+.ads-modal-scroll::-webkit-scrollbar {
+  width: 14px;
+}
+.ads-modal-scroll::-webkit-scrollbar-track {
+  background: #1a0b2e;
+}
+.ads-modal-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a855f7, #d946ef);
+  border-radius: 8px;
+  border: 2px solid #1a0b2e;
+}
+.ads-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #c084fc, #f0abfc);
+}

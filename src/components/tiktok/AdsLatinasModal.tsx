@@ -31,7 +31,9 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
   const [showPix, setShowPix] = useState(false);
-  const { price } = useCheckoutPrice("latinas");
+  const { price: fallbackPrice } = useCheckoutPrice("latinas");
+  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
+  const price = fallbackPrice;
 
   useEffect(() => {
     if (!open) return;

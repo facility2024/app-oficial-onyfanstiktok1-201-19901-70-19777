@@ -54,10 +54,11 @@ export default function PixCheckoutModal({
       if (!data?.pix_code) throw new Error("PIX não retornado");
       setPix(data);
       startPolling(data.transaction_id);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Tente novamente em instantes.";
       toast({
         title: "Erro ao gerar PIX",
-        description: e?.message || "Tente novamente em instantes.",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -95,7 +96,9 @@ export default function PixCheckoutModal({
     setPaid(true);
     try {
       localStorage.setItem(storageFlag, "1");
-    } catch {}
+    } catch (error) {
+      void error;
+    }
     toast({ title: "Pagamento confirmado!", description: "Liberando conteúdo..." });
     setTimeout(() => {
       onClose();

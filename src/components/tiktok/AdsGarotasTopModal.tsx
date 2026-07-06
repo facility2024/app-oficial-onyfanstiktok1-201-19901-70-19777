@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2, X, Flame } from "lucide-react";
 import AdsLatinasModal from "./AdsLatinasModal";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
+import { useCheckoutPrice } from "@/hooks/useCheckoutPrice";
 
 interface Card {
   id: string;
@@ -32,6 +33,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
   const [showLatinas, setShowLatinas] = useState(false);
   const [showPix, setShowPix] = useState(false);
+  const { price } = useCheckoutPrice("garotas_top");
 
   useEffect(() => {
     if (!open) return;
@@ -255,13 +257,12 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
             )}
             <Button
               onClick={() => {
-                if (selected.cta_link) {
-                  window.open(selected.cta_link, "_blank", "noopener,noreferrer");
-                }
+                setSelected(null);
+                setShowPix(true);
               }}
               className="w-full mt-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(168,85,247,0.6)]"
             >
-              {selected.cta_texto || "Assinar Conteúdo"}
+              Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
             </Button>
           </div>
         </div>
@@ -271,7 +272,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}
-        amount={14.97}
+        amount={price}
         productName="Assinatura Garotas Top 10"
         storageFlag="garotas_top_paid"
         redirectTo="/garotas-top-vip"

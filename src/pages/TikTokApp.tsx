@@ -2536,7 +2536,7 @@ export const TikTokApp = () => {
                 },
               } as any;
               setComments(prev => [autoComment, ...prev]);
-            }, 900);
+            }, 4000);
           }
         }
       } catch {}
@@ -2641,7 +2641,7 @@ export const TikTokApp = () => {
                 user: { username: modelName, avatar_url: modelAvatar },
               } as any;
               setComments(prev => [autoComment, ...prev]);
-            }, 900);
+            }, 4000);
           }
         }
       } catch (e) {

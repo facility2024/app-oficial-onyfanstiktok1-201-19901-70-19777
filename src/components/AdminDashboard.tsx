@@ -225,6 +225,8 @@ export const AdminDashboard = () => {
         return <AdminFeedPromotions />;
       case 'ads-garotas-top':
         return <AdminAdsGarotasTop />;
+      case 'checkout-order-bumps':
+        return <AdminCheckoutOrderBumps />;
       case 'loja':
         return <AdminLoja />;
       case 'stores':

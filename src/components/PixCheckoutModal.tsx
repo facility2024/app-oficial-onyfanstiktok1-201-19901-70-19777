@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
+import coconudiLogo from "@/assets/coconudi-logo.png";
 
 interface Props {
   open: boolean;

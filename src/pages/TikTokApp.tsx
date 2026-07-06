@@ -2592,34 +2592,6 @@ export const TikTokApp = () => {
         description: "Seu comentário foi publicado"
       });
 
-      // 🤖 AUTO-RESPOSTA DA MODELO (uma única vez por usuário+modelo)
-      try {
-        const AUTO_REPLY_TEXT = '🥰 oi meu amor, obrigado pelo comentário. 🤗 Aqui você vai ver tudo que as redes do TikTok e Instagram não mostram.';
-        const ownerId = (currentVideo as any)?.creator_id || (currentVideo as any)?.model_id || currentVideo?.user?.id;
-        const commenterId = currentUserId;
-        if (ownerId && commenterId) {
-          const autoKey = `autoreply_${ownerId}_${commenterId}`;
-          if (!localStorage.getItem(autoKey)) {
-            localStorage.setItem(autoKey, '1');
-            setTimeout(() => {
-              const modelName = currentVideo?.user?.username || 'Modelo';
-              const modelAvatar = currentVideo?.user?.avatar_url || DEFAULT_AVATAR;
-              const autoComment: Comment = {
-                id: `autoreply-${ownerId}-${Date.now()}`,
-                text: AUTO_REPLY_TEXT,
-                user_id: ownerId,
-                video_id: activeVideoId,
-                likes_count: 0,
-                created_at: new Date().toISOString(),
-                user: { username: modelName, avatar_url: modelAvatar },
-              } as any;
-              setComments(prev => [autoComment, ...prev]);
-            }, 4000);
-          }
-        }
-      } catch (e) {
-        console.warn('auto-reply falhou:', e);
-      }
     } catch (error) {
       console.error('❌ ADD COMMENT - Erro:', error);
       toast({

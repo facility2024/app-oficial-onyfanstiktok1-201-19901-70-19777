@@ -7187,6 +7187,27 @@ export type Database = {
           },
         ]
       }
+      user_ad_history: {
+        Row: {
+          ad_id: string
+          id: string
+          user_id: string
+          visualizado_em: string
+        }
+        Insert: {
+          ad_id: string
+          id?: string
+          user_id: string
+          visualizado_em?: string
+        }
+        Update: {
+          ad_id?: string
+          id?: string
+          user_id?: string
+          visualizado_em?: string
+        }
+        Relationships: []
+      }
       user_favorites: {
         Row: {
           created_at: string | null
@@ -7563,6 +7584,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_video_history: {
+        Row: {
+          id: string
+          session_seed: string | null
+          user_id: string
+          video_id: string
+          visualizado_em: string
+        }
+        Insert: {
+          id?: string
+          session_seed?: string | null
+          user_id: string
+          video_id: string
+          visualizado_em?: string
+        }
+        Update: {
+          id?: string
+          session_seed?: string | null
+          user_id?: string
+          video_id?: string
+          visualizado_em?: string
+        }
+        Relationships: []
       }
       user_wallets: {
         Row: {
@@ -8794,6 +8839,91 @@ export type Database = {
       get_live_views_48h: { Args: { p_config_id: string }; Returns: number }
       get_payment_credentials: { Args: { p_provider: string }; Returns: Json }
       get_referrer_by_code: { Args: { p_code: string }; Returns: string }
+      get_smart_ads: {
+        Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
+        Returns: {
+          avatar_url: string | null
+          banner_url: string | null
+          clicks_count: number | null
+          created_at: string | null
+          cta_link: string | null
+          cta_mode: string
+          cta_text: string | null
+          daily_frequency: number | null
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          media_type: string
+          media_url: string
+          model_id: string | null
+          popup_cta_link: string | null
+          popup_cta_text: string | null
+          popup_media_type: string | null
+          popup_media_url: string | null
+          position_interval: number | null
+          priority: number | null
+          schedule_date: string | null
+          schedule_status: string | null
+          shareable_link: string | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "feed_promotions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_smart_feed: {
+        Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
+        Returns: {
+          aspect_ratio: string | null
+          button_color: string
+          button_text: string
+          category: string | null
+          comments_count: number | null
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          display_order: number
+          duration: string
+          file_size: number | null
+          genres: string[] | null
+          id: string
+          is_active: boolean | null
+          is_blocked: boolean | null
+          is_featured: boolean
+          is_image_post: boolean | null
+          is_live: boolean | null
+          is_premium: boolean | null
+          likes_count: number | null
+          live_video_url: string | null
+          model_id: string | null
+          profile_link_url: string | null
+          quality: string | null
+          redirect_link: string | null
+          shares_count: number | null
+          show_in_feed: boolean
+          show_redirect_button: boolean
+          tags: string[] | null
+          thumbnail_url: string
+          title: string
+          updated_at: string | null
+          upload_source: string | null
+          video_url: string
+          views_count: number | null
+          visibility: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "videos"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_by_email: {
         Args: { email_input: string }
         Returns: {

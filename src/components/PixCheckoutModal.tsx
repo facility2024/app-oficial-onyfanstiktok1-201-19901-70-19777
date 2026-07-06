@@ -171,17 +171,20 @@ export default function PixCheckoutModal({
       void error;
     }
 
-    // Buscar link do produto principal (admin_settings)
+    // Prioridade: redirectTo do card (link_acesso específico) > admin_settings global > fallback
     let mainLink = redirectTo;
-    try {
-      const { data } = await (supabase as any)
-        .from("admin_settings")
-        .select("setting_value")
-        .eq("setting_key", "checkout_main_access_link")
-        .maybeSingle();
-      const v = data?.setting_value;
-      if (typeof v === "string" && v.trim()) mainLink = v.trim();
-    } catch { /* usa fallback */ }
+    const usingCardLink = !!redirectTo && redirectTo !== "/garotas-top-vip";
+    if (!usingCardLink) {
+      try {
+        const { data } = await (supabase as any)
+          .from("admin_settings")
+          .select("setting_value")
+          .eq("setting_key", "checkout_main_access_link")
+          .maybeSingle();
+        const v = data?.setting_value;
+        if (typeof v === "string" && v.trim()) mainLink = v.trim();
+      } catch { /* usa fallback */ }
+    }
 
     // Links dos bumps comprados
     const purchasedBumps = bumps

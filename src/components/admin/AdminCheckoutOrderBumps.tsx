@@ -189,6 +189,38 @@ export const AdminCheckoutOrderBumps = () => {
         )}
       </div>
 
+      {/* Link de acesso ao produto principal */}
+      <Card className="bg-gray-900 border-green-700">
+        <CardHeader>
+          <CardTitle className="text-white text-lg">
+            🎬 Link de acesso — Produto principal (vídeos)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Label className="text-white">
+            URL que o usuário verá após pagamento aprovado (botão "Meu acesso aos vídeos")
+          </Label>
+          <Input
+            value={mainLink}
+            onChange={(e) => setMainLink(e.target.value)}
+            placeholder="https://exemplo.com/area-vip ou /garotas-top-vip"
+            className="bg-gray-800 text-white border-gray-700"
+          />
+          <Button
+            onClick={saveMainLink}
+            disabled={mainLinkSaving}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold"
+          >
+            {mainLinkSaving ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Salvar link principal
+          </Button>
+        </CardContent>
+      </Card>
+
       {(isCreating || editingId) && (
         <Card className="bg-gray-900 border-purple-700">
           <CardHeader>
@@ -245,6 +277,18 @@ export const AdminCheckoutOrderBumps = () => {
                 placeholder="https://..."
                 className="bg-gray-800 text-white border-gray-700"
               />
+            </div>
+            <div>
+              <Label className="text-white">🔗 Link de acesso liberado ao comprar este bump *</Label>
+              <Input
+                value={form.link_acesso}
+                onChange={(e) => setForm({ ...form, link_acesso: e.target.value })}
+                placeholder="https://exemplo.com/minha-oferta-extra"
+                className="bg-gray-800 text-white border-gray-700"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Após o pagamento aprovado, o usuário verá o botão "Acesso à minha oferta" apontando para este link.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Switch

@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flame, ChevronLeft, ChevronRight, Loader2, X, Home } from "lucide-react";
+import PixCheckoutModal from "@/components/PixCheckoutModal";
+import { useCheckoutPrice } from "@/hooks/useCheckoutPrice";
 
 interface Card {
   id: string;
@@ -28,6 +30,8 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
+  const [showPix, setShowPix] = useState(false);
+  const { price } = useCheckoutPrice("latinas");
 
   useEffect(() => {
     if (!open) return;
@@ -235,17 +239,25 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
             )}
             <Button
               onClick={() => {
-                if (selected.cta_link) {
-                  window.open(selected.cta_link, "_blank", "noopener,noreferrer");
-                }
+                setSelected(null);
+                setShowPix(true);
               }}
               className="w-full mt-4 bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-500 hover:to-red-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(236,72,153,0.6)]"
             >
-              {selected.cta_texto || "Assinar Conteúdo"}
+              Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
             </Button>
           </div>
         </div>
       )}
+
+      <PixCheckoutModal
+        open={showPix}
+        onClose={() => setShowPix(false)}
+        amount={price}
+        productName="Assinatura Latinas 🌶️"
+        storageFlag="latinas_paid"
+        redirectTo="/garotas-top-vip"
+      />
     </div>,
     document.body
   );

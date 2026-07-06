@@ -1,6 +1,43 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+
+// ============ Contador diário de exibições por promo (localStorage) ============
+const DAILY_VIEWS_KEY = 'promo_daily_views_v1';
+const todayKey = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+type DailyMap = Record<string, Record<string, number>>; // { 'YYYY-MM-DD': { [promoId]: count } }
+
+const readDailyViews = (): Record<string, number> => {
+  try {
+    const raw = localStorage.getItem(DAILY_VIEWS_KEY);
+    const parsed: DailyMap = raw ? JSON.parse(raw) : {};
+    const today = todayKey();
+    // Limpa dias anteriores automaticamente
+    const cleaned: DailyMap = { [today]: parsed[today] || {} };
+    if (raw !== JSON.stringify(cleaned)) {
+      localStorage.setItem(DAILY_VIEWS_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned[today] || {};
+  } catch {
+    return {};
+  }
+};
+
+const incrementDailyView = (promoId: string): Record<string, number> => {
+  try {
+    const today = todayKey();
+    const raw = localStorage.getItem(DAILY_VIEWS_KEY);
+    const parsed: DailyMap = raw ? JSON.parse(raw) : {};
+    const dayMap = { ...(parsed[today] || {}) };
+    dayMap[promoId] = (dayMap[promoId] || 0) + 1;
+    const next: DailyMap = { [today]: dayMap };
+    localStorage.setItem(DAILY_VIEWS_KEY, JSON.stringify(next));
+    return dayMap;
+  } catch {
+    return {};
+  }
+};
 
 // Período atual do dia: 0=manhã (5-12h), 1=tarde (12-18h), 2=noite (18-5h)
 const getCurrentPeriod = (): number => {

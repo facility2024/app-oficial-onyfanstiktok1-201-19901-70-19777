@@ -29,6 +29,7 @@ interface CardItem {
   valor: number | null;
   ordem: number;
   is_active: boolean;
+  link_acesso: string | null;
   _categoria: Categoria;
 }
 
@@ -40,6 +41,7 @@ const emptyForm = {
   valor: "",
   ordem: 0,
   is_active: true,
+  link_acesso: "",
   categoria: "garotas_top" as Categoria,
 };
 
@@ -91,6 +93,7 @@ export const AdminAdsGarotasTop = () => {
       valor: c.valor != null ? String(c.valor) : "",
       ordem: c.ordem,
       is_active: c.is_active,
+      link_acesso: c.link_acesso || "",
       categoria: c._categoria,
     });
   };
@@ -109,6 +112,7 @@ export const AdminAdsGarotasTop = () => {
       valor: form.valor !== "" && !Number.isNaN(Number(form.valor)) ? Number(form.valor) : null,
       ordem: editingId ? Number(form.ordem) || 0 : 0,
       is_active: form.is_active,
+      link_acesso: form.link_acesso.trim() || null,
     };
 
     let error: any;
@@ -281,6 +285,18 @@ export const AdminAdsGarotasTop = () => {
                 />
                 <p className="text-[11px] text-gray-400 mt-1">
                   Preço exibido no checkout PIX ao clicar neste card.
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white">🔗 Link de acesso liberado após pagamento *</Label>
+                <Input
+                  value={form.link_acesso}
+                  onChange={(e) => setForm({ ...form, link_acesso: e.target.value })}
+                  placeholder="https://exemplo.com/area-vip ou /garotas-top-vip"
+                  className="bg-gray-800 text-white border-gray-700"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Ao pagar apenas o acesso aos vídeos deste card, o botão "Clique aqui para acessar seus vídeos" abrirá este link.
                 </p>
               </div>
               <div className="flex items-center gap-3">

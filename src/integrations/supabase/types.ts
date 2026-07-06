@@ -206,6 +206,7 @@ export type Database = {
           id: string
           imagem_url: string
           is_active: boolean
+          link_acesso: string | null
           nome: string
           ordem: number
           updated_at: string
@@ -219,6 +220,7 @@ export type Database = {
           id?: string
           imagem_url: string
           is_active?: boolean
+          link_acesso?: string | null
           nome: string
           ordem?: number
           updated_at?: string
@@ -232,6 +234,7 @@ export type Database = {
           id?: string
           imagem_url?: string
           is_active?: boolean
+          link_acesso?: string | null
           nome?: string
           ordem?: number
           updated_at?: string
@@ -248,6 +251,7 @@ export type Database = {
           id: string
           imagem_url: string
           is_active: boolean
+          link_acesso: string | null
           nome: string
           ordem: number
           updated_at: string
@@ -261,6 +265,7 @@ export type Database = {
           id?: string
           imagem_url: string
           is_active?: boolean
+          link_acesso?: string | null
           nome: string
           ordem?: number
           updated_at?: string
@@ -274,6 +279,7 @@ export type Database = {
           id?: string
           imagem_url?: string
           is_active?: boolean
+          link_acesso?: string | null
           nome?: string
           ordem?: number
           updated_at?: string

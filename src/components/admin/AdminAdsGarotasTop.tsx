@@ -333,7 +333,14 @@ export const AdminAdsGarotasTop = () => {
               </div>
               <CardContent className="p-3 space-y-2">
                 <h3 className="text-white font-bold truncate">{c.nome}</h3>
-                <p className="text-xs text-gray-400">Ordem: {c.ordem}</p>
+                <p className="text-xs text-gray-400">
+                  Ordem: {c.ordem}
+                  {c.valor != null && (
+                    <span className="ml-2 text-green-400 font-bold">
+                      R$ {Number(c.valor).toFixed(2).replace(".", ",")}
+                    </span>
+                  )}
+                </p>
                 <div className="flex items-center justify-between gap-2">
                   <Switch checked={c.is_active} onCheckedChange={() => toggleActive(c)} />
                   <div className="flex gap-1">

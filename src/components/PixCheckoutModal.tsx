@@ -70,13 +70,8 @@ export default function PixCheckoutModal({
     if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(async () => {
       try {
-        const { data } = await supabase.functions.invoke("neonpay-pix-status", {
-          body: {},
-          // Passa como query via headers - fallback: usar URL manual
-        } as any);
-        // fallback direto via fetch para query param
         const res = await fetch(
-          `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/neonpay-pix-status?transactionId=${transactionId}`,
+          `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/neonpay-pix-status?transactionId=${encodeURIComponent(transactionId)}`,
           {
             headers: {
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -84,8 +79,8 @@ export default function PixCheckoutModal({
             },
           }
         );
-        const json = await res.json();
-        const status = String(json?.status || data?.status || "").toUpperCase();
+        const json = await res.json().catch(() => ({}));
+        const status = String(json?.status || "").toUpperCase();
         if (["OK", "PAID", "APPROVED", "CONFIRMED", "COMPLETED"].includes(status)) {
           handleConfirmed();
         }

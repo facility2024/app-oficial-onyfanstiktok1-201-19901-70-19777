@@ -36,7 +36,9 @@ export default function AdsGarotasTopPage() {
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
   const [showPix, setShowPix] = useState(false);
-  const { price } = useCheckoutPrice("garotas_top");
+  const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
+  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
+  const price = fallbackPrice;
 
   const fetchCards = async () => {
     setLoading(true);

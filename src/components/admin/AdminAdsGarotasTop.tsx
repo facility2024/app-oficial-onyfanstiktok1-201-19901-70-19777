@@ -88,7 +88,7 @@ export const AdminAdsGarotasTop = () => {
       imagem_url: c.imagem_url,
       video_url: c.video_url || "",
       cta_texto: c.cta_texto,
-      cta_link: c.cta_link || "",
+      valor: c.valor != null ? String(c.valor) : "",
       ordem: c.ordem,
       is_active: c.is_active,
       categoria: c._categoria,

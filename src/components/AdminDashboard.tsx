@@ -57,6 +57,7 @@ import { AdminStores } from './admin/AdminStores';
 import CommissionSettings from './admin/CommissionSettings';
 import SalesReports from './admin/SalesReports';
 import { AdminAdsGarotasTop } from './admin/AdminAdsGarotasTop';
+import { AdminCheckoutOrderBumps } from './admin/AdminCheckoutOrderBumps';
 
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';

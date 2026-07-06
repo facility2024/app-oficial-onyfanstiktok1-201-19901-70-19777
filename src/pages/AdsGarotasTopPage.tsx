@@ -11,6 +11,7 @@ import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, Loader2, ArrowLeft } fr
 import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
 import { useNavigate } from "react-router-dom";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
+import { useCheckoutPrice } from "@/hooks/useCheckoutPrice";
 
 interface Card {
   id: string;
@@ -35,6 +36,7 @@ export default function AdsGarotasTopPage() {
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
   const [showPix, setShowPix] = useState(false);
+  const { price } = useCheckoutPrice("garotas_top");
 
   const fetchCards = async () => {
     setLoading(true);
@@ -115,7 +117,7 @@ export default function AdsGarotasTopPage() {
             className="mt-5 inline-flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
           >
             <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">
-              Tudo isso por <span className="text-yellow-300">R$ 14,97</span>
+              Tudo isso por <span className="text-yellow-300">R$ {price.toFixed(2).replace(".", ",")}</span>
             </span>
             <span className="text-[11px] md:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse">
               🔥 Pagar com PIX — acesso imediato 🔥

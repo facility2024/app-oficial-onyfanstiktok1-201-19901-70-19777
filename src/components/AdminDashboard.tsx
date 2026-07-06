@@ -158,7 +158,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions','ads-garotas-top'];
+    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions','ads-garotas-top','checkout-order-bumps'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }

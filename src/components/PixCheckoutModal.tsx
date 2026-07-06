@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -28,6 +29,7 @@ export default function PixCheckoutModal({
     pix_code?: string;
     pix_image?: string;
   } | null>(null);
+  const [qrImage, setQrImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [paid, setPaid] = useState(false);
   const pollRef = useRef<number | null>(null);
@@ -35,6 +37,7 @@ export default function PixCheckoutModal({
   useEffect(() => {
     if (!open) return;
     setPix(null);
+    setQrImage(null);
     setPaid(false);
     setCopied(false);
     generate();
@@ -53,6 +56,7 @@ export default function PixCheckoutModal({
       if (error) throw error;
       if (!data?.pix_code) throw new Error("PIX não retornado");
       setPix(data);
+      await buildQrImage(String(data.pix_code), data.pix_image);
       startPolling(data.transaction_id);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Tente novamente em instantes.";
@@ -64,6 +68,29 @@ export default function PixCheckoutModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const buildQrImage = async (pixCode: string, apiImage?: string) => {
+    if (apiImage) {
+      const normalizedImage = apiImage.startsWith("data:image")
+        || apiImage.startsWith("http")
+        || apiImage.startsWith("blob:")
+        ? apiImage
+        : `data:image/png;base64,${apiImage}`;
+      setQrImage(normalizedImage);
+      return;
+    }
+
+    const generatedImage = await QRCode.toDataURL(pixCode, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 256,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
+    setQrImage(generatedImage);
   };
 
   const startPolling = (transactionId?: string) => {
@@ -168,10 +195,10 @@ export default function PixCheckoutModal({
 
         {!loading && !paid && pix?.pix_code && (
           <div className="mt-5 space-y-4">
-            {pix.pix_image ? (
+            {qrImage ? (
               <div className="bg-white p-3 rounded-xl flex justify-center">
                 <img
-                  src={pix.pix_image}
+                  src={qrImage}
                   alt="QR Code PIX"
                   className="w-48 h-48 object-contain"
                 />

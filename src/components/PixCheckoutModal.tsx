@@ -24,7 +24,7 @@ export default function PixCheckoutModal({
   amount = 14.97,
   productName = "Meu acesso vip Orientais /Latinas",
   productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
-  productImage = "/lovable-uploads/default-cover.jpg",
+  productImage = "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png",
   sellerName = "Otavio gomes dos santos",
   storageFlag = "garotas_top_paid",
   redirectTo = "/garotas-top-vip",
@@ -39,6 +39,25 @@ export default function PixCheckoutModal({
   const [copied, setCopied] = useState(false);
   const [paid, setPaid] = useState(false);
   const pollRef = useRef<number | null>(null);
+  const [countdown, setCountdown] = useState("00:00:00");
+
+  useEffect(() => {
+    if (!open) return;
+    const tick = () => {
+      const now = new Date();
+      const end = new Date(now);
+      end.setHours(24, 0, 0, 0); // próxima meia-noite (reset a cada 24h)
+      const diff = Math.max(0, end.getTime() - now.getTime());
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1000);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setCountdown(`${pad(h)}:${pad(m)}:${pad(s)}`);
+    };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -154,9 +173,9 @@ export default function PixCheckoutModal({
       >
         {/* Timer header */}
         <div className="relative bg-[#EF4E5C] text-white text-center py-4 px-4">
-          <div className="text-2xl sm:text-3xl font-black tracking-wider">00:00:00</div>
+          <div className="text-2xl sm:text-3xl font-black tracking-wider tabular-nums">{countdown}</div>
           <div className="text-xs sm:text-sm font-semibold opacity-95">
-            Oferta Válida por tempo indeterminado
+            Oferta acaba em breve — não perca!
           </div>
           <button
             onClick={onClose}

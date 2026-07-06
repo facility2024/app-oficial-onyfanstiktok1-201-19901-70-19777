@@ -252,22 +252,26 @@ export default function PixCheckoutModal({
 
         {/* Selo de segurança */}
         <div className="bg-white border-b border-gray-200 py-3 px-4 flex flex-col items-center justify-center gap-2">
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             <img
               src={coconudiLogo}
               alt="Coconudi"
-              className="h-8 w-auto object-contain"
+              width={250}
+              height={100}
+              className="object-contain"
+              style={{ width: "250px", height: "100px" }}
             />
             <img
-              src="https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%2026%20de%20jun.%20de%202026%2C%2019_59_51%20-%20Editado.png"
+              src="https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/Design%20sem%20nome.png"
               alt="Selo de segurança"
-              className="h-10 w-auto object-contain"
+              className="h-16 sm:h-20 w-auto object-contain"
             />
           </div>
           <p className="text-xs sm:text-sm font-semibold text-gray-700 text-center">
             Pagamento seguro pela plataforma coconudi.com
           </p>
         </div>
+
 
 
         {/* Body */}

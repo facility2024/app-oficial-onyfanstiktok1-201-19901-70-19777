@@ -246,7 +246,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
               }}
               className="w-full mt-4 bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-500 hover:to-red-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(236,72,153,0.6)]"
             >
-              Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
+              Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
             </Button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
+import coconudiLogo from "@/assets/coconudi-logo.png";
 
 interface Props {
   open: boolean;
@@ -248,6 +249,26 @@ export default function PixCheckoutModal({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Selo de segurança */}
+        <div className="bg-white border-b border-gray-200 py-3 px-4 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-3">
+            <img
+              src={coconudiLogo}
+              alt="Coconudi"
+              className="h-8 w-auto object-contain"
+            />
+            <img
+              src="https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%2026%20de%20jun.%20de%202026%2C%2019_59_51%20-%20Editado.png"
+              alt="Selo de segurança"
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+          <p className="text-xs sm:text-sm font-semibold text-gray-700 text-center">
+            Pagamento seguro pela plataforma coconudi.com
+          </p>
+        </div>
+
 
         {/* Body */}
         <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">

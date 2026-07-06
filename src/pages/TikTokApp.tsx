@@ -539,6 +539,11 @@ export const TikTokApp = () => {
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
   const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
+  const visibleComments = useMemo(() => {
+    const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
+    if (!activeVideoId) return [];
+    return comments.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === activeVideoId);
+  }, [comments, currentVideo]);
 
   // 🎯 Registra exibição de promo (cap diário conforme daily_frequency)
   useEffect(() => {
@@ -2501,17 +2506,17 @@ export const TikTokApp = () => {
   const triggerModelAutoReply = () => {
     if (!currentVideo) return;
     const ownerId = (currentVideo as any)?.creator_id || (currentVideo as any)?.model_id;
-    const chatVideoId = (currentVideo as any)?._originalId || currentVideo?.id;
+    const chatVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
     const commenterId = currentUser?.id || localStorage.getItem('anonymous_user_id');
     if (!ownerId || !commenterId || !chatVideoId) return;
-    const autoKey = `autoreply_${ownerId}_${commenterId}`;
+    const autoKey = `autoreply_${ownerId}_${chatVideoId}_${commenterId}`;
     if (localStorage.getItem(autoKey)) return;
     localStorage.setItem(autoKey, '1');
     const modelName = currentVideo?.user?.username || 'Modelo';
     const modelAvatar = currentVideo?.user?.avatar_url || DEFAULT_AVATAR;
     setTimeout(() => {
       const stillSameChat =
-        ((currentVideo as any)?._originalId || currentVideo?.id) === chatVideoId;
+        String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '') === chatVideoId;
       if (!stillSameChat) return;
       const autoComment = {
         id: `autoreply-${ownerId}-${Date.now()}`,
@@ -2522,7 +2527,10 @@ export const TikTokApp = () => {
         created_at: new Date().toISOString(),
         user: { username: modelName, avatar_url: modelAvatar },
       } as any;
-      setComments(prev => [autoComment, ...prev]);
+      setComments(prev => {
+        const onlyThisVideo = prev.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === chatVideoId);
+        return [autoComment, ...onlyThisVideo];
+      });
     }, 4000);
   };
 
@@ -2544,7 +2552,7 @@ export const TikTokApp = () => {
           avatar_url: profile?.avatar_url || DEFAULT_AVATAR
         }
       };
-      setComments(prev => [localComment, ...prev]);
+      setComments(prev => [localComment, ...prev.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === realVideoId)]);
       triggerModelAutoReply();
       return;
     }
@@ -3498,7 +3506,7 @@ export const TikTokApp = () => {
       }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url || DEFAULT_AVATAR} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
         {/* Comments Screen */}
-        <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
+        <CommentsScreen comments={visibleComments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
         
         {/* Search Modal */}
         <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={async modelId => {
@@ -3937,7 +3945,7 @@ export const TikTokApp = () => {
     }} modelName={chatEntity?.name || currentVideo.user.username} modelAvatar={chatEntity?.avatar || currentVideo.user.avatar_url || DEFAULT_AVATAR} entityId={chatEntity?.id || currentVideo.creator_id || currentVideo.model_id || currentVideo.user.id} isCreator={chatEntity?.isCreator || !!currentVideo.creator_id} />
 
       {/* Desktop Comments Screen */}
-      <CommentsScreen comments={comments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
+      <CommentsScreen comments={visibleComments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
 
       {/* Desktop Search Modal */}
       <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={async modelId => {

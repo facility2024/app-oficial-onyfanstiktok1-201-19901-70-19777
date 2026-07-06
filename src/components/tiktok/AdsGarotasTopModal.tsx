@@ -33,7 +33,9 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
   const [showLatinas, setShowLatinas] = useState(false);
   const [showPix, setShowPix] = useState(false);
-  const { price } = useCheckoutPrice("garotas_top");
+  const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
+  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
+  const price = fallbackPrice;
 
   useEffect(() => {
     if (!open) return;

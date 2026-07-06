@@ -22,6 +22,7 @@ interface Card {
   valor: number | null;
   ordem: number;
   is_active: boolean;
+  link_acesso: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -263,9 +264,9 @@ export default function AdsGarotasTopPage() {
         open={showPix}
         onClose={() => setShowPix(false)}
         amount={checkoutAmount}
-        productName="Assinatura Garotas Top 10"
+        productName={selected?.nome ? `Assinatura ${selected.nome}` : "Assinatura Garotas Top 10"}
         storageFlag="garotas_top_paid"
-        redirectTo="/garotas-top-vip"
+        redirectTo={selected?.link_acesso || "/garotas-top-vip"}
       />
     </div>
   );

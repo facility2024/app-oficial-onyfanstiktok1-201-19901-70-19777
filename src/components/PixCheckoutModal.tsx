@@ -172,8 +172,8 @@ export default function PixCheckoutModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Timer header */}
-        <div className="relative bg-[#EF4E5C] text-white text-center py-4 px-4">
-          <div className="text-2xl sm:text-3xl font-black tracking-wider tabular-nums">{countdown}</div>
+        <div className="relative bg-gradient-to-r from-[#1a1a1a] via-[#6b21a8] to-[#1a1a1a] text-white text-center py-4 px-4 border-b border-purple-900/60">
+          <div className="text-2xl sm:text-3xl font-black tracking-wider tabular-nums drop-shadow-[0_0_10px_rgba(168,85,247,0.6)]">{countdown}</div>
           <div className="text-xs sm:text-sm font-semibold opacity-95">
             Oferta acaba em breve — não perca!
           </div>

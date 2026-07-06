@@ -24,7 +24,7 @@ export default function PixCheckoutModal({
   amount = 14.97,
   productName = "Meu acesso vip Orientais /Latinas",
   productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
-  productImage = "/lovable-uploads/default-cover.jpg",
+  productImage = "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png",
   sellerName = "Otavio gomes dos santos",
   storageFlag = "garotas_top_paid",
   redirectTo = "/garotas-top-vip",

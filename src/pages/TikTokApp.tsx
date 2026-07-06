@@ -153,7 +153,7 @@ export const TikTokApp = () => {
   const lastTrackedVideoRef = useRef<string>('');
 
   // 📢 PROMOÇÕES NO FEED
-  const { promotions } = useFeedPromotions();
+  const { promotions, registerPromoView } = useFeedPromotions();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);

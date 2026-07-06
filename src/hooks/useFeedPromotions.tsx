@@ -154,13 +154,20 @@ export const useFeedPromotions = () => {
     refetchOnWindowFocus: true,
   });
 
-  // Filtra promos elegíveis para o período do dia atual (manhã/tarde/noite)
-  // conforme daily_frequency (1=1x, 2=2x, 3=3x) e embaralha por sessão
+  const promotionsTyped = rawPromotions as FeedPromotion[];
+
+  // Filtra promos elegíveis para o período do dia atual (manhã/tarde/noite),
+  // respeita o cap diário (daily_frequency = máx exibições no dia) e embaralha por sessão
   const eligiblePromotions = useMemo(() => {
     const period = getCurrentPeriod();
-    const filtered = promotions.filter((p) => periodsForFrequency(p.daily_frequency ?? 3).includes(period));
+    const filtered = promotionsTyped.filter((p) => {
+      const cap = Math.max(1, Math.min(3, p.daily_frequency ?? 3));
+      const seen = dailyViews[p.id] || 0;
+      if (seen >= cap) return false;
+      return periodsForFrequency(cap).includes(period);
+    });
     return shuffleWithSeed(filtered, getSessionSeed());
-  }, [promotions]);
+  }, [promotionsTyped, dailyViews]);
 
   const interval = eligiblePromotions.length > 0 ? (eligiblePromotions[0]?.position_interval || 5) : 0;
   const hasPromos = eligiblePromotions.length > 0 && interval > 0;
@@ -168,40 +175,41 @@ export const useFeedPromotions = () => {
   // Retorna a promo que deve aparecer em determinada posição do feed
   const getPromoForPosition = useCallback((videoIndex: number): FeedPromotion | null => {
     if (!hasPromos) return null;
-
-    // Verifica se esta posição deve ter uma promo
     if (videoIndex > 0 && videoIndex % interval === 0) {
-      // Cicla entre as promos elegíveis
       const promoIndex = Math.floor(videoIndex / interval - 1) % eligiblePromotions.length;
       return eligiblePromotions[promoIndex];
     }
-
     return null;
   }, [hasPromos, interval, eligiblePromotions]);
 
-  // Convert video array index → embla slide index (accounting for promo slides)
   const videoToSlideIndex = useCallback((videoIndex: number): number => {
     if (!hasPromos) return videoIndex;
     const promoCount = videoIndex > 0 ? Math.floor(videoIndex / interval) : 0;
     return videoIndex + promoCount;
   }, [hasPromos, interval]);
 
-  // Convert embla slide index → video array index (or -1 if it's a promo slide)
   const slideToVideoIndex = useCallback((slideIndex: number): { isPromo: boolean; videoIndex: number } => {
     if (!hasPromos) return { isPromo: false, videoIndex: slideIndex };
     if (slideIndex < interval) return { isPromo: false, videoIndex: slideIndex };
-    
     const adjusted = slideIndex - interval;
-    const blockSize = interval + 1; // interval videos + 1 promo per block
+    const blockSize = interval + 1;
     const block = Math.floor(adjusted / blockSize);
     const offset = adjusted % blockSize;
-    
     if (offset === 0) {
-      // This is a promo slide - return the video index that follows it
       return { isPromo: true, videoIndex: interval + block * interval };
     }
     return { isPromo: false, videoIndex: interval + block * interval + offset - 1 };
   }, [hasPromos, interval]);
 
-  return { promotions, isLoading, getPromoForPosition, videoToSlideIndex, slideToVideoIndex };
+  // Expõe SOMENTE promos elegíveis (respeita cap diário) como `promotions`
+  // para que o TikTokApp já receba a lista filtrada sem mudanças estruturais.
+  return {
+    promotions: eligiblePromotions,
+    allPromotions: promotionsTyped,
+    isLoading,
+    getPromoForPosition,
+    videoToSlideIndex,
+    slideToVideoIndex,
+    registerPromoView,
+  };
 };

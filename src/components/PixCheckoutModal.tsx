@@ -41,6 +41,23 @@ export default function PixCheckoutModal({
   const pollRef = useRef<number | null>(null);
   const [countdown, setCountdown] = useState("00:00:00");
 
+  interface Bump {
+    id: string;
+    titulo: string;
+    descricao: string | null;
+    valor: number;
+    imagem_url: string | null;
+    ordem: number;
+  }
+  const [bumps, setBumps] = useState<Bump[]>([]);
+  const [selectedBumps, setSelectedBumps] = useState<Record<string, boolean>>({});
+
+  const bumpsTotal = bumps.reduce(
+    (sum, b) => (selectedBumps[b.id] ? sum + Number(b.valor || 0) : sum),
+    0
+  );
+  const finalAmount = Number((amount + bumpsTotal).toFixed(2));
+
   useEffect(() => {
     if (!open) return;
     const tick = () => {
@@ -65,6 +82,15 @@ export default function PixCheckoutModal({
     setQrImage(null);
     setPaid(false);
     setCopied(false);
+    setSelectedBumps({});
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("checkout_order_bumps")
+        .select("id,titulo,descricao,valor,imagem_url,ordem")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      setBumps(data || []);
+    })();
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
@@ -73,8 +99,12 @@ export default function PixCheckoutModal({
   const generate = async () => {
     setLoading(true);
     try {
+      const selectedList = bumps.filter((b) => selectedBumps[b.id]).map((b) => b.titulo);
+      const productWithBumps = selectedList.length
+        ? `${productName} + ${selectedList.join(" + ")}`
+        : productName;
       const { data, error } = await supabase.functions.invoke("neonpay-pix-gateway", {
-        body: { amount, product_name: productName },
+        body: { amount: finalAmount, product_name: productWithBumps },
       });
       if (error) throw error;
       if (!data?.pix_code) throw new Error("PIX não retornado");
@@ -160,7 +190,10 @@ export default function PixCheckoutModal({
 
   if (!open) return null;
 
-  const priceFmt = `R$ ${amount.toFixed(2).replace(".", ",")}`;
+  const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+  const priceFmt = fmt(amount);
+  const bumpsFmt = fmt(bumpsTotal);
+  const totalFmt = fmt(finalAmount);
 
   return createPortal(
     <div
@@ -198,6 +231,58 @@ export default function PixCheckoutModal({
                 <span className="text-gray-800 font-semibold">Pix</span>
               </div>
             </div>
+
+            {/* Order Bumps */}
+            {bumps.length > 0 && !pix && !paid && (
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <h3 className="text-gray-900 font-bold text-lg mb-1">
+                  ⚡ Turbine seu pedido
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Adicione ofertas exclusivas com desconto só nesta compra:
+                </p>
+                <div className="space-y-3">
+                  {bumps.map((b) => {
+                    const checked = !!selectedBumps[b.id];
+                    return (
+                      <label
+                        key={b.id}
+                        className={`flex gap-3 p-3 rounded-xl border-2 cursor-pointer transition ${
+                          checked
+                            ? "border-purple-600 bg-purple-50"
+                            : "border-gray-200 hover:border-purple-300 bg-white"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) =>
+                            setSelectedBumps((s) => ({ ...s, [b.id]: e.target.checked }))
+                          }
+                          className="mt-1 w-5 h-5 accent-purple-600 shrink-0"
+                        />
+                        {b.imagem_url && (
+                          <img
+                            src={b.imagem_url}
+                            alt={b.titulo}
+                            className="w-16 h-16 rounded-lg object-cover shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-gray-900">{b.titulo}</div>
+                          {b.descricao && (
+                            <div className="text-xs text-gray-600 mt-0.5">{b.descricao}</div>
+                          )}
+                          <div className="text-sm font-black text-purple-700 mt-1">
+                            + {fmt(Number(b.valor))}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* PIX area */}
             {(loading || pix || paid) && (
@@ -305,8 +390,21 @@ export default function PixCheckoutModal({
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Subtotal</span><span>{priceFmt}</span>
               </div>
-              <div className="flex justify-between text-base font-bold text-gray-900">
-                <span>Total</span><span>{priceFmt}</span>
+              {bumpsTotal > 0 && (
+                <>
+                  {bumps.filter((b) => selectedBumps[b.id]).map((b) => (
+                    <div key={b.id} className="flex justify-between text-xs text-purple-700">
+                      <span className="truncate pr-2">+ {b.titulo}</span>
+                      <span>{fmt(Number(b.valor))}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm text-gray-700 border-t border-gray-200 pt-1.5">
+                    <span>Extras</span><span>{bumpsFmt}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-200 pt-1.5">
+                <span>Total</span><span>{totalFmt}</span>
               </div>
             </div>
 

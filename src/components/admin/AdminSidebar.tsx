@@ -92,6 +92,7 @@ const navigationGroups = [
       { id: 'local-businesses', label: 'Comércios Locais', icon: MapPin },
       { id: 'ads', label: 'Anúncios', icon: Megaphone },
       { id: 'ads-garotas-top', label: 'Feed de Ofertas', icon: Sparkles },
+      { id: 'checkout-order-bumps', label: 'Order Bumps (Checkout)', icon: Sparkles },
       { id: 'marketplace-banners', label: 'Banners Marketplace', icon: Megaphone },
       { id: 'feed-promotions', label: 'Promos no Feed', icon: Megaphone },
       { id: 'video-call', label: 'Vídeo Chamada', icon: Phone },

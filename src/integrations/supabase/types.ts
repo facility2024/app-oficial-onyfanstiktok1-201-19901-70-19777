@@ -1130,6 +1130,42 @@ export type Database = {
           },
         ]
       }
+      checkout_order_bumps: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          imagem_url: string | null
+          ordem: number
+          titulo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          ordem?: number
+          titulo: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       cocoflix_content: {
         Row: {
           category: string

@@ -253,6 +253,15 @@ export default function AdsGarotasTopPage() {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <PixCheckoutModal
+        open={showPix}
+        onClose={() => setShowPix(false)}
+        amount={14.97}
+        productName="Assinatura Garotas Top 10"
+        storageFlag="garotas_top_paid"
+        redirectTo="/garotas-top-vip"
+      />
     </div>
   );
 }

@@ -390,8 +390,21 @@ export default function PixCheckoutModal({
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Subtotal</span><span>{priceFmt}</span>
               </div>
-              <div className="flex justify-between text-base font-bold text-gray-900">
-                <span>Total</span><span>{priceFmt}</span>
+              {bumpsTotal > 0 && (
+                <>
+                  {bumps.filter((b) => selectedBumps[b.id]).map((b) => (
+                    <div key={b.id} className="flex justify-between text-xs text-purple-700">
+                      <span className="truncate pr-2">+ {b.titulo}</span>
+                      <span>{fmt(Number(b.valor))}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm text-gray-700 border-t border-gray-200 pt-1.5">
+                    <span>Extras</span><span>{bumpsFmt}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-200 pt-1.5">
+                <span>Total</span><span>{totalFmt}</span>
               </div>
             </div>
 

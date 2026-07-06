@@ -112,7 +112,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
               className="mt-4 inline-flex flex-col items-center gap-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_25px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
             >
               <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">
-                Tudo isso por <span className="text-yellow-300">R$ 14,97</span>
+                Tudo isso por <span className="text-yellow-300">R$ {price.toFixed(2).replace(".", ",")}</span>
               </span>
               <span className="text-[10px] sm:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse">
                 🔥 Pagar com PIX — acesso imediato 🔥

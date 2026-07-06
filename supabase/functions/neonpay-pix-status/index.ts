@@ -14,10 +14,17 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url)
-    const transactionId = url.searchParams.get('transactionId')
+    let transactionId = url.searchParams.get('transactionId')
+    if (!transactionId && (req.method === 'POST' || req.method === 'PUT')) {
+      try {
+        const body = await req.json()
+        transactionId = body?.transactionId ?? body?.transaction_id ?? null
+      } catch { /* ignore */ }
+    }
     if (!transactionId) {
-      return new Response(JSON.stringify({ error: 'transactionId required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      // Sem ID → responde PENDING sem erro (evita 400 quebrar o polling)
+      return new Response(JSON.stringify({ status: 'PENDING' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -44,8 +51,14 @@ Deno.serve(async (req) => {
       lastError = { status: r.status, data }
     }
 
-    return new Response(JSON.stringify({ error: 'status_lookup_failed', detail: lastError }), {
-      status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Nenhum endpoint respondeu OK → devolve PENDING silenciosamente
+    // (a NeonPay ainda não expôs status consultável para esta transação)
+    return new Response(JSON.stringify({
+      transaction_id: transactionId,
+      status: 'PENDING',
+      detail: lastError,
+    }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {

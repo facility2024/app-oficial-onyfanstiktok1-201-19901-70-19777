@@ -15,6 +15,7 @@ interface Bump {
   descricao: string | null;
   valor: number;
   imagem_url: string | null;
+  link_acesso: string | null;
   ativo: boolean;
   ordem: number;
 }
@@ -24,6 +25,7 @@ const empty = {
   descricao: "",
   valor: "",
   imagem_url: "",
+  link_acesso: "",
   ativo: true,
   ordem: 0,
 };
@@ -35,6 +37,8 @@ export const AdminCheckoutOrderBumps = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [mainLink, setMainLink] = useState("");
+  const [mainLinkSaving, setMainLinkSaving] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -51,8 +55,35 @@ export const AdminCheckoutOrderBumps = () => {
     setLoading(false);
   };
 
+  const fetchMainLink = async () => {
+    const { data } = await (supabase as any)
+      .from("admin_settings")
+      .select("setting_value")
+      .eq("setting_key", "checkout_main_access_link")
+      .maybeSingle();
+    const v = data?.setting_value;
+    setMainLink(typeof v === "string" ? v : (v ?? ""));
+  };
+
+  const saveMainLink = async () => {
+    setMainLinkSaving(true);
+    const { error } = await (supabase as any)
+      .from("admin_settings")
+      .upsert(
+        { setting_key: "checkout_main_access_link", setting_value: mainLink.trim() },
+        { onConflict: "setting_key" }
+      );
+    setMainLinkSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar link: " + error.message);
+      return;
+    }
+    toast.success("Link do produto principal salvo!");
+  };
+
   useEffect(() => {
     fetchItems();
+    fetchMainLink();
   }, []);
 
   const resetForm = () => {
@@ -69,6 +100,7 @@ export const AdminCheckoutOrderBumps = () => {
       descricao: b.descricao || "",
       valor: String(b.valor ?? ""),
       imagem_url: b.imagem_url || "",
+      link_acesso: b.link_acesso || "",
       ativo: b.ativo,
       ordem: b.ordem,
     });

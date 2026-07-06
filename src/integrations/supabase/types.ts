@@ -1137,6 +1137,7 @@ export type Database = {
           descricao: string | null
           id: string
           imagem_url: string | null
+          link_acesso: string | null
           ordem: number
           titulo: string
           updated_at: string
@@ -1148,6 +1149,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           imagem_url?: string | null
+          link_acesso?: string | null
           ordem?: number
           titulo: string
           updated_at?: string
@@ -1159,6 +1161,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           imagem_url?: string | null
+          link_acesso?: string | null
           ordem?: number
           titulo?: string
           updated_at?: string

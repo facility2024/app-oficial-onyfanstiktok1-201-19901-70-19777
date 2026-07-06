@@ -2137,34 +2137,8 @@ export const TikTokApp = () => {
     }
     // Mantém o vídeo atual sem mudar o índice
   };
-  // 🤖 Auto-resposta da modelo: dispara ao abrir o chat, uma única vez por modelo+usuário
-  useEffect(() => {
-    if (!showComments || !currentVideo) return;
-    const ownerId = (currentVideo as any)?.creator_id || (currentVideo as any)?.model_id;
-    const commenterId = currentUser?.id || localStorage.getItem('anonymous_user_id');
-    if (!ownerId || !commenterId) return;
-    const autoKey = `autoreply_${ownerId}_${commenterId}`;
-    if (localStorage.getItem(autoKey)) return;
-    localStorage.setItem(autoKey, '1');
-    const timer = setTimeout(() => {
-      const videoId = (currentVideo as any)?._originalId || currentVideo.id;
-      const autoComment = {
-        id: `autoreply-${ownerId}-${Date.now()}`,
-        text: '🥰 oi meu amor, obrigado pelo comentário. 🤗 Aqui você vai ver tudo que as redes do TikTok e Instagram não mostram.',
-        user_id: ownerId,
-        video_id: videoId,
-        likes_count: 0,
-        created_at: new Date().toISOString(),
-        user: {
-          username: currentVideo?.user?.username || 'Modelo',
-          avatar_url: currentVideo?.user?.avatar_url || DEFAULT_AVATAR,
-        },
-      } as any;
-      setComments(prev => [autoComment, ...prev]);
-    }, 4000);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showComments, currentVideo?.id]);
+
+
 
   const loadComments = useCallback(async (videoId: string) => {
     try {
@@ -2523,6 +2497,35 @@ export const TikTokApp = () => {
       document.body.removeChild(heart);
     }, 1200);
   };
+  // 🤖 Auto-resposta individual da modelo — só dispara no envio do usuário nesse chat
+  const triggerModelAutoReply = () => {
+    if (!currentVideo) return;
+    const ownerId = (currentVideo as any)?.creator_id || (currentVideo as any)?.model_id;
+    const chatVideoId = (currentVideo as any)?._originalId || currentVideo?.id;
+    const commenterId = currentUser?.id || localStorage.getItem('anonymous_user_id');
+    if (!ownerId || !commenterId || !chatVideoId) return;
+    const autoKey = `autoreply_${ownerId}_${commenterId}`;
+    if (localStorage.getItem(autoKey)) return;
+    localStorage.setItem(autoKey, '1');
+    const modelName = currentVideo?.user?.username || 'Modelo';
+    const modelAvatar = currentVideo?.user?.avatar_url || DEFAULT_AVATAR;
+    setTimeout(() => {
+      const stillSameChat =
+        ((currentVideo as any)?._originalId || currentVideo?.id) === chatVideoId;
+      if (!stillSameChat) return;
+      const autoComment = {
+        id: `autoreply-${ownerId}-${Date.now()}`,
+        text: '🥰 oi meu amor, obrigado pelo comentário. 🤗 Aqui você vai ver tudo que as redes do TikTok e Instagram não mostram.',
+        user_id: ownerId,
+        video_id: chatVideoId,
+        likes_count: 0,
+        created_at: new Date().toISOString(),
+        user: { username: modelName, avatar_url: modelAvatar },
+      } as any;
+      setComments(prev => [autoComment, ...prev]);
+    }, 4000);
+  };
+
   const addComment = async (text: string) => {
     if (!currentVideo || !text.trim()) return;
     // ✅ Normalizar ID: usar _originalId quando for vídeo sintético/promo/clone
@@ -2542,6 +2545,7 @@ export const TikTokApp = () => {
         }
       };
       setComments(prev => [localComment, ...prev]);
+      triggerModelAutoReply();
       return;
     }
     try {
@@ -2620,6 +2624,7 @@ export const TikTokApp = () => {
         title: "Comentário adicionado!",
         description: "Seu comentário foi publicado"
       });
+      triggerModelAutoReply();
 
     } catch (error) {
       console.error('❌ ADD COMMENT - Erro:', error);

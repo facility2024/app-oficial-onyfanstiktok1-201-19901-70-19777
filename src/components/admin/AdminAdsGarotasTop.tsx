@@ -26,7 +26,7 @@ interface CardItem {
   imagem_url: string;
   video_url: string | null;
   cta_texto: string;
-  cta_link: string | null;
+  valor: number | null;
   ordem: number;
   is_active: boolean;
   _categoria: Categoria;
@@ -37,7 +37,7 @@ const emptyForm = {
   imagem_url: "",
   video_url: "",
   cta_texto: "Assinar Conteúdo",
-  cta_link: "",
+  valor: "",
   ordem: 0,
   is_active: true,
   categoria: "garotas_top" as Categoria,

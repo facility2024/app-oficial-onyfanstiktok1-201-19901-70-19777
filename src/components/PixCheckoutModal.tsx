@@ -254,7 +254,7 @@ export default function PixCheckoutModal({
         <div className="bg-white border-b border-gray-200 py-3 px-4 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center justify-center gap-3">
             <img
-              src="/src/assets/coconudi-logo.png"
+              src={coconudiLogo}
               alt="Coconudi"
               className="h-8 w-auto object-contain"
             />

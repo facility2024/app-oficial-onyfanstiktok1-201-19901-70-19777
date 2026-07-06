@@ -2513,33 +2513,6 @@ export const TikTokApp = () => {
         }
       };
       setComments(prev => [localComment, ...prev]);
-      // 🤖 Auto-resposta local (uma vez por usuário+modelo)
-      try {
-        const AUTO_REPLY_TEXT = '🥰 oi meu amor, obrigado pelo comentário. 🤗 Aqui você vai ver tudo que as redes do TikTok e Instagram não mostram.';
-        const ownerId = (currentVideo as any)?.creator_id || (currentVideo as any)?.model_id || currentVideo?.user?.id;
-        const commenterId = currentUser?.id || localStorage.getItem('anonymous_user_id') || 'anonymous';
-        if (ownerId) {
-          const autoKey = `autoreply_${ownerId}_${commenterId}`;
-          if (!localStorage.getItem(autoKey)) {
-            localStorage.setItem(autoKey, '1');
-            setTimeout(() => {
-              const autoComment: Comment = {
-                id: `autoreply-${ownerId}-${Date.now()}`,
-                text: AUTO_REPLY_TEXT,
-                user_id: ownerId,
-                video_id: realVideoId,
-                likes_count: 0,
-                created_at: new Date().toISOString(),
-                user: {
-                  username: currentVideo?.user?.username || 'Modelo',
-                  avatar_url: currentVideo?.user?.avatar_url || DEFAULT_AVATAR,
-                },
-              } as any;
-              setComments(prev => [autoComment, ...prev]);
-            }, 4000);
-          }
-        }
-      } catch {}
       return;
     }
     try {

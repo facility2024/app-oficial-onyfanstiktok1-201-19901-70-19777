@@ -15,6 +15,7 @@ interface Bump {
   descricao: string | null;
   valor: number;
   imagem_url: string | null;
+  link_acesso: string | null;
   ativo: boolean;
   ordem: number;
 }
@@ -24,6 +25,7 @@ const empty = {
   descricao: "",
   valor: "",
   imagem_url: "",
+  link_acesso: "",
   ativo: true,
   ordem: 0,
 };
@@ -35,6 +37,8 @@ export const AdminCheckoutOrderBumps = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [mainLink, setMainLink] = useState("");
+  const [mainLinkSaving, setMainLinkSaving] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -51,8 +55,35 @@ export const AdminCheckoutOrderBumps = () => {
     setLoading(false);
   };
 
+  const fetchMainLink = async () => {
+    const { data } = await (supabase as any)
+      .from("admin_settings")
+      .select("setting_value")
+      .eq("setting_key", "checkout_main_access_link")
+      .maybeSingle();
+    const v = data?.setting_value;
+    setMainLink(typeof v === "string" ? v : (v ?? ""));
+  };
+
+  const saveMainLink = async () => {
+    setMainLinkSaving(true);
+    const { error } = await (supabase as any)
+      .from("admin_settings")
+      .upsert(
+        { setting_key: "checkout_main_access_link", setting_value: mainLink.trim() },
+        { onConflict: "setting_key" }
+      );
+    setMainLinkSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar link: " + error.message);
+      return;
+    }
+    toast.success("Link do produto principal salvo!");
+  };
+
   useEffect(() => {
     fetchItems();
+    fetchMainLink();
   }, []);
 
   const resetForm = () => {
@@ -69,6 +100,7 @@ export const AdminCheckoutOrderBumps = () => {
       descricao: b.descricao || "",
       valor: String(b.valor ?? ""),
       imagem_url: b.imagem_url || "",
+      link_acesso: b.link_acesso || "",
       ativo: b.ativo,
       ordem: b.ordem,
     });
@@ -90,6 +122,7 @@ export const AdminCheckoutOrderBumps = () => {
       descricao: form.descricao.trim() || null,
       valor: valorNum,
       imagem_url: form.imagem_url.trim() || null,
+      link_acesso: form.link_acesso.trim() || null,
       ativo: form.ativo,
       ordem: Number(form.ordem) || 0,
     };
@@ -156,6 +189,38 @@ export const AdminCheckoutOrderBumps = () => {
         )}
       </div>
 
+      {/* Link de acesso ao produto principal */}
+      <Card className="bg-gray-900 border-green-700">
+        <CardHeader>
+          <CardTitle className="text-white text-lg">
+            🎬 Link de acesso — Produto principal (vídeos)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Label className="text-white">
+            URL que o usuário verá após pagamento aprovado (botão "Meu acesso aos vídeos")
+          </Label>
+          <Input
+            value={mainLink}
+            onChange={(e) => setMainLink(e.target.value)}
+            placeholder="https://exemplo.com/area-vip ou /garotas-top-vip"
+            className="bg-gray-800 text-white border-gray-700"
+          />
+          <Button
+            onClick={saveMainLink}
+            disabled={mainLinkSaving}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold"
+          >
+            {mainLinkSaving ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Salvar link principal
+          </Button>
+        </CardContent>
+      </Card>
+
       {(isCreating || editingId) && (
         <Card className="bg-gray-900 border-purple-700">
           <CardHeader>
@@ -212,6 +277,18 @@ export const AdminCheckoutOrderBumps = () => {
                 placeholder="https://..."
                 className="bg-gray-800 text-white border-gray-700"
               />
+            </div>
+            <div>
+              <Label className="text-white">🔗 Link de acesso liberado ao comprar este bump *</Label>
+              <Input
+                value={form.link_acesso}
+                onChange={(e) => setForm({ ...form, link_acesso: e.target.value })}
+                placeholder="https://exemplo.com/minha-oferta-extra"
+                className="bg-gray-800 text-white border-gray-700"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Após o pagamento aprovado, o usuário verá o botão "Acesso à minha oferta" apontando para este link.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Switch

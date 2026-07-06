@@ -47,6 +47,7 @@ export default function PixCheckoutModal({
     descricao: string | null;
     valor: number;
     imagem_url: string | null;
+    link_acesso: string | null;
     ordem: number;
   }
   const [bumps, setBumps] = useState<Bump[]>([]);
@@ -86,7 +87,7 @@ export default function PixCheckoutModal({
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_order_bumps")
-        .select("id,titulo,descricao,valor,imagem_url,ordem")
+        .select("id,titulo,descricao,valor,imagem_url,link_acesso,ordem")
         .eq("ativo", true)
         .order("ordem", { ascending: true });
       setBumps(data || []);
@@ -161,7 +162,7 @@ export default function PixCheckoutModal({
     }, 4000) as unknown as number;
   };
 
-  const handleConfirmed = () => {
+  const handleConfirmed = async () => {
     if (pollRef.current) window.clearInterval(pollRef.current);
     setPaid(true);
     try {
@@ -169,10 +170,36 @@ export default function PixCheckoutModal({
     } catch (error) {
       void error;
     }
+
+    // Buscar link do produto principal (admin_settings)
+    let mainLink = redirectTo;
+    try {
+      const { data } = await (supabase as any)
+        .from("admin_settings")
+        .select("setting_value")
+        .eq("setting_key", "checkout_main_access_link")
+        .maybeSingle();
+      const v = data?.setting_value;
+      if (typeof v === "string" && v.trim()) mainLink = v.trim();
+    } catch { /* usa fallback */ }
+
+    // Links dos bumps comprados
+    const purchasedBumps = bumps
+      .filter((b) => selectedBumps[b.id] && b.link_acesso)
+      .map((b) => ({ titulo: b.titulo, link: b.link_acesso as string }));
+
+    try {
+      sessionStorage.setItem("purchased_main_link", mainLink);
+      sessionStorage.setItem("purchased_bump_links", JSON.stringify(purchasedBumps));
+      if (pix?.transaction_id) {
+        sessionStorage.setItem("pending_payment_id", String(pix.transaction_id));
+      }
+    } catch { /* ignore */ }
+
     toast({ title: "Pagamento confirmado!", description: "Liberando conteúdo..." });
     setTimeout(() => {
       onClose();
-      window.location.href = redirectTo;
+      window.location.href = "/payment-confirmation";
     }, 1200);
   };
 

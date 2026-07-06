@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Crown, CheckCircle, Clock, ArrowRight, Sparkles, AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { Crown, CheckCircle, Clock, ArrowRight, Sparkles, AlertTriangle, RefreshCw, Home, PlayCircle, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
@@ -13,6 +13,26 @@ const PaymentConfirmation = () => {
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [message, setMessage] = useState('');
   const [checkCount, setCheckCount] = useState(0);
+  const [mainLink, setMainLink] = useState<string>('');
+  const [bumpLinks, setBumpLinks] = useState<Array<{ titulo: string; link: string }>>([]);
+
+  useEffect(() => {
+    try {
+      const ml = sessionStorage.getItem('purchased_main_link') || '';
+      const bl = sessionStorage.getItem('purchased_bump_links');
+      setMainLink(ml);
+      if (bl) setBumpLinks(JSON.parse(bl));
+    } catch { /* ignore */ }
+  }, []);
+
+  const openLink = (url: string) => {
+    if (!url) return;
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, '_blank', 'noopener');
+    } else {
+      navigate(url);
+    }
+  };
 
   const verifyPayment = useCallback(async () => {
     try {
@@ -145,14 +165,37 @@ const PaymentConfirmation = () => {
                 </ul>
               </motion.div>
 
-              <Button
-                onClick={() => navigate('/app')}
-                className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold py-6 text-lg"
-              >
-                <Home className="w-5 h-5 mr-2" />
-                Voltar para Home
-              </Button>
+              <div className="space-y-3">
+                {mainLink && (
+                  <Button
+                    onClick={() => openLink(mainLink)}
+                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold py-6 text-lg"
+                  >
+                    <PlayCircle className="w-5 h-5 mr-2" />
+                    Clique aqui para acessar seus vídeos
+                  </Button>
+                )}
+                {bumpLinks.map((b, i) => (
+                  <Button
+                    key={i}
+                    onClick={() => openLink(b.link)}
+                    className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white font-bold py-6 text-lg"
+                  >
+                    <Gift className="w-5 h-5 mr-2" />
+                    Clique aqui para acessar sua oferta{bumpLinks.length > 1 ? `: ${b.titulo}` : ''}
+                  </Button>
+                ))}
+                <Button
+                  onClick={() => navigate('/app')}
+                  variant="ghost"
+                  className="w-full text-gray-400 hover:text-white"
+                >
+                  <Home className="w-5 h-5 mr-2" />
+                  Voltar para Home
+                </Button>
+              </div>
             </div>
+
 
           ) : status === 'PENDING' ? (
             /* Aguardando Confirmação */

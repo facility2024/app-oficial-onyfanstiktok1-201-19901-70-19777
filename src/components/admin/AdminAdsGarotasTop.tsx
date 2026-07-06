@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, X, Loader2 } from "lucide-react";
-import AdminCheckoutPrices from "./AdminCheckoutPrices";
+
 
 type Categoria = "garotas_top" | "latinas";
 const TABLE_BY_CAT: Record<Categoria, string> = {

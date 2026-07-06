@@ -274,7 +274,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}
-        amount={price}
+        amount={checkoutAmount}
         productName="Assinatura Garotas Top 10"
         storageFlag="garotas_top_paid"
         redirectTo="/garotas-top-vip"

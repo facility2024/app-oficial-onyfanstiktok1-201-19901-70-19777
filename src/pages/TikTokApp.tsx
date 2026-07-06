@@ -539,6 +539,20 @@ export const TikTokApp = () => {
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
   const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
+
+  // 🎯 Registra exibição de promo (cap diário conforme daily_frequency)
+  useEffect(() => {
+    const vid = currentVideo as any;
+    if (!vid?.id || typeof vid.id !== 'string' || !vid.id.startsWith('promo-')) return;
+    // extrai id real: "promo-<uuid>-slot-<n>"
+    const match = vid.id.match(/^promo-([0-9a-f-]{36})/i);
+    const promoId = match?.[1];
+    if (!promoId) return;
+    // dedup por slot na sessão (evita contar re-render do mesmo slide)
+    if (promoViewTrackedRef.current.has(vid.id)) return;
+    promoViewTrackedRef.current.add(vid.id);
+    registerPromoView(promoId);
+  }, [currentVideo, registerPromoView]);
   const getVideoDataId = (video?: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
   const isValidUUID = (value?: string | null): boolean =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));

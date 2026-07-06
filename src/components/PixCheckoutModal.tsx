@@ -41,6 +41,23 @@ export default function PixCheckoutModal({
   const pollRef = useRef<number | null>(null);
   const [countdown, setCountdown] = useState("00:00:00");
 
+  interface Bump {
+    id: string;
+    titulo: string;
+    descricao: string | null;
+    valor: number;
+    imagem_url: string | null;
+    ordem: number;
+  }
+  const [bumps, setBumps] = useState<Bump[]>([]);
+  const [selectedBumps, setSelectedBumps] = useState<Record<string, boolean>>({});
+
+  const bumpsTotal = bumps.reduce(
+    (sum, b) => (selectedBumps[b.id] ? sum + Number(b.valor || 0) : sum),
+    0
+  );
+  const finalAmount = Number((amount + bumpsTotal).toFixed(2));
+
   useEffect(() => {
     if (!open) return;
     const tick = () => {

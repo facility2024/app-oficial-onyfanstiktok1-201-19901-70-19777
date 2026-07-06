@@ -106,7 +106,7 @@ export const AdminAdsGarotasTop = () => {
       imagem_url: form.imagem_url,
       video_url: form.video_url || null,
       cta_texto: form.cta_texto || "Assinar Conteúdo",
-      cta_link: form.cta_link || null,
+      valor: form.valor !== "" && !Number.isNaN(Number(form.valor)) ? Number(form.valor) : null,
       ordem: editingId ? Number(form.ordem) || 0 : 0,
       is_active: form.is_active,
     };

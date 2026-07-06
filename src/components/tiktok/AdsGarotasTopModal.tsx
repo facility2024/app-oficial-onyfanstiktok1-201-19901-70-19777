@@ -264,7 +264,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
               }}
               className="w-full mt-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(168,85,247,0.6)]"
             >
-              Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
+              Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
             </Button>
           </div>
         </div>

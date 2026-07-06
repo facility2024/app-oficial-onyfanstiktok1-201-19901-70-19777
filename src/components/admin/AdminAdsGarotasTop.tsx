@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, X, Loader2 } from "lucide-react";
+import AdminCheckoutPrices from "./AdminCheckoutPrices";
 
 type Categoria = "garotas_top" | "latinas";
 const TABLE_BY_CAT: Record<Categoria, string> = {
@@ -164,6 +165,8 @@ export const AdminAdsGarotasTop = () => {
 
   return (
     <div className="space-y-6">
+      <AdminCheckoutPrices />
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-black text-white">Ads Garotas Top / Latinas</h1>

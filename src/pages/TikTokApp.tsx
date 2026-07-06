@@ -3384,15 +3384,8 @@ export const TikTokApp = () => {
                      </div>
                    )}
 
-                   {/* Badge "NOVO" alinhado à ESQUERDA (mobile) - abaixo da top bar */}
-                   {index === currentVideoIndex && isVideoNew(video) && (
-                     <div className="absolute left-3 z-30" style={{ top: isPromoVideo ? '5.5rem' : '4rem' }}>
-                       <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg animate-pulse flex items-center gap-1">
-                         <span className="text-xs">✨</span>
-                         <span>NOVO</span>
-                       </span>
-                     </div>
-                   )}
+                   {/* NOVO badge é renderizado dentro de BottomInfo (evita duplicação) */}
+
 
                    {/* Promo overlay: description + CTA + banner */}
                    {index === currentVideoIndex && isPromoVideo && (

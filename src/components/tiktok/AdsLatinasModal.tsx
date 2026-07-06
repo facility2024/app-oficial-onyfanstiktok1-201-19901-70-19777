@@ -255,7 +255,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}
-        amount={price}
+        amount={checkoutAmount}
         productName="Assinatura Latinas 🌶️"
         storageFlag="latinas_paid"
         redirectTo="/garotas-top-vip"

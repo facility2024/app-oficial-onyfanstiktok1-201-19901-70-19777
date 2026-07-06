@@ -173,9 +173,9 @@ export default function PixCheckoutModal({
       >
         {/* Timer header */}
         <div className="relative bg-[#EF4E5C] text-white text-center py-4 px-4">
-          <div className="text-2xl sm:text-3xl font-black tracking-wider">00:00:00</div>
+          <div className="text-2xl sm:text-3xl font-black tracking-wider tabular-nums">{countdown}</div>
           <div className="text-xs sm:text-sm font-semibold opacity-95">
-            Oferta Válida por tempo indeterminado
+            Oferta acaba em breve — não perca!
           </div>
           <button
             onClick={onClose}

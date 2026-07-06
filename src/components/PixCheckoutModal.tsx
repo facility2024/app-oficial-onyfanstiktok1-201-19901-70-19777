@@ -99,8 +99,12 @@ export default function PixCheckoutModal({
   const generate = async () => {
     setLoading(true);
     try {
+      const selectedList = bumps.filter((b) => selectedBumps[b.id]).map((b) => b.titulo);
+      const productWithBumps = selectedList.length
+        ? `${productName} + ${selectedList.join(" + ")}`
+        : productName;
       const { data, error } = await supabase.functions.invoke("neonpay-pix-gateway", {
-        body: { amount, product_name: productName },
+        body: { amount: finalAmount, product_name: productWithBumps },
       });
       if (error) throw error;
       if (!data?.pix_code) throw new Error("PIX não retornado");

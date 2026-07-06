@@ -19,7 +19,7 @@ interface Card {
   imagem_url: string;
   video_url: string | null;
   cta_texto: string;
-  cta_link: string | null;
+  valor: number | null;
   ordem: number;
   is_active: boolean;
 }
@@ -36,7 +36,9 @@ export default function AdsGarotasTopPage() {
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
   const [showPix, setShowPix] = useState(false);
-  const { price } = useCheckoutPrice("garotas_top");
+  const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
+  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
+  const price = fallbackPrice;
 
   const fetchCards = async () => {
     setLoading(true);
@@ -252,7 +254,7 @@ export default function AdsGarotasTopPage() {
             }}
             className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(168,85,247,0.6)]"
           >
-            Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
+            Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
           </Button>
         </DialogContent>
       </Dialog>
@@ -260,7 +262,7 @@ export default function AdsGarotasTopPage() {
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}
-        amount={price}
+        amount={checkoutAmount}
         productName="Assinatura Garotas Top 10"
         storageFlag="garotas_top_paid"
         redirectTo="/garotas-top-vip"

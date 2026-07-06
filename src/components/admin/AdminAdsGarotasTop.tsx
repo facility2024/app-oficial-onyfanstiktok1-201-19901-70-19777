@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, X, Loader2 } from "lucide-react";
-import AdminCheckoutPrices from "./AdminCheckoutPrices";
+
 
 type Categoria = "garotas_top" | "latinas";
 const TABLE_BY_CAT: Record<Categoria, string> = {
@@ -26,7 +26,7 @@ interface CardItem {
   imagem_url: string;
   video_url: string | null;
   cta_texto: string;
-  cta_link: string | null;
+  valor: number | null;
   ordem: number;
   is_active: boolean;
   _categoria: Categoria;
@@ -37,7 +37,7 @@ const emptyForm = {
   imagem_url: "",
   video_url: "",
   cta_texto: "Assinar Conteúdo",
-  cta_link: "",
+  valor: "",
   ordem: 0,
   is_active: true,
   categoria: "garotas_top" as Categoria,
@@ -88,7 +88,7 @@ export const AdminAdsGarotasTop = () => {
       imagem_url: c.imagem_url,
       video_url: c.video_url || "",
       cta_texto: c.cta_texto,
-      cta_link: c.cta_link || "",
+      valor: c.valor != null ? String(c.valor) : "",
       ordem: c.ordem,
       is_active: c.is_active,
       categoria: c._categoria,
@@ -106,7 +106,7 @@ export const AdminAdsGarotasTop = () => {
       imagem_url: form.imagem_url,
       video_url: form.video_url || null,
       cta_texto: form.cta_texto || "Assinar Conteúdo",
-      cta_link: form.cta_link || null,
+      valor: form.valor !== "" && !Number.isNaN(Number(form.valor)) ? Number(form.valor) : null,
       ordem: editingId ? Number(form.ordem) || 0 : 0,
       is_active: form.is_active,
     };
@@ -165,7 +165,7 @@ export const AdminAdsGarotasTop = () => {
 
   return (
     <div className="space-y-6">
-      <AdminCheckoutPrices />
+
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -269,13 +269,19 @@ export const AdminAdsGarotasTop = () => {
                 />
               </div>
               <div>
-                <Label className="text-white">Link do CTA</Label>
+                <Label className="text-white">Valor (R$) *</Label>
                 <Input
-                  value={form.cta_link}
-                  onChange={(e) => setForm({ ...form, cta_link: e.target.value })}
-                  placeholder="/subscribe"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.valor}
+                  onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                  placeholder="14.97"
                   className="bg-gray-800 text-white border-gray-700"
                 />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Preço exibido no checkout PIX ao clicar neste card.
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Switch
@@ -327,7 +333,14 @@ export const AdminAdsGarotasTop = () => {
               </div>
               <CardContent className="p-3 space-y-2">
                 <h3 className="text-white font-bold truncate">{c.nome}</h3>
-                <p className="text-xs text-gray-400">Ordem: {c.ordem}</p>
+                <p className="text-xs text-gray-400">
+                  Ordem: {c.ordem}
+                  {c.valor != null && (
+                    <span className="ml-2 text-green-400 font-bold">
+                      R$ {Number(c.valor).toFixed(2).replace(".", ",")}
+                    </span>
+                  )}
+                </p>
                 <div className="flex items-center justify-between gap-2">
                   <Switch checked={c.is_active} onCheckedChange={() => toggleActive(c)} />
                   <div className="flex gap-1">

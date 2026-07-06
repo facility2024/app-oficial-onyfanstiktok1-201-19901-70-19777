@@ -12,7 +12,7 @@ interface Card {
   imagem_url: string;
   video_url: string | null;
   cta_texto: string;
-  cta_link: string | null;
+  valor: number | null;
   ordem: number;
   is_active: boolean;
 }
@@ -31,7 +31,9 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
   const [showPix, setShowPix] = useState(false);
-  const { price } = useCheckoutPrice("latinas");
+  const { price: fallbackPrice } = useCheckoutPrice("latinas");
+  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
+  const price = fallbackPrice;
 
   useEffect(() => {
     if (!open) return;
@@ -244,7 +246,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
               }}
               className="w-full mt-4 bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-500 hover:to-red-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(236,72,153,0.6)]"
             >
-              Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
+              Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
             </Button>
           </div>
         </div>
@@ -253,7 +255,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}
-        amount={price}
+        amount={checkoutAmount}
         productName="Assinatura Latinas 🌶️"
         storageFlag="latinas_paid"
         redirectTo="/garotas-top-vip"

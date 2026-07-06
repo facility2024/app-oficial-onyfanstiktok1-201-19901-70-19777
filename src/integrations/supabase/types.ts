@@ -209,6 +209,7 @@ export type Database = {
           nome: string
           ordem: number
           updated_at: string
+          valor: number | null
           video_url: string | null
         }
         Insert: {
@@ -221,6 +222,7 @@ export type Database = {
           nome: string
           ordem?: number
           updated_at?: string
+          valor?: number | null
           video_url?: string | null
         }
         Update: {
@@ -233,6 +235,7 @@ export type Database = {
           nome?: string
           ordem?: number
           updated_at?: string
+          valor?: number | null
           video_url?: string | null
         }
         Relationships: []
@@ -248,6 +251,7 @@ export type Database = {
           nome: string
           ordem: number
           updated_at: string
+          valor: number | null
           video_url: string | null
         }
         Insert: {
@@ -260,6 +264,7 @@ export type Database = {
           nome: string
           ordem?: number
           updated_at?: string
+          valor?: number | null
           video_url?: string | null
         }
         Update: {
@@ -272,6 +277,7 @@ export type Database = {
           nome?: string
           ordem?: number
           updated_at?: string
+          valor?: number | null
           video_url?: string | null
         }
         Relationships: []

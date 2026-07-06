@@ -10,6 +10,7 @@ import {
 import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
 import { useNavigate } from "react-router-dom";
+import PixCheckoutModal from "@/components/PixCheckoutModal";
 
 interface Card {
   id: string;

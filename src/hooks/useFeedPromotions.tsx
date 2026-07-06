@@ -112,7 +112,23 @@ const shuffleWithSeed = <T,>(arr: T[], seed: number): T[] => {
 };
 
 export const useFeedPromotions = () => {
-  const { data: promotions = [], isLoading } = useQuery({
+  const [dailyViews, setDailyViews] = useState<Record<string, number>>(() => readDailyViews());
+
+  // Recarrega o contador diariamente (virada do dia)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDailyViews(readDailyViews());
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const registerPromoView = useCallback((promoId: string) => {
+    if (!promoId) return;
+    const updated = incrementDailyView(promoId);
+    setDailyViews(updated);
+  }, []);
+
+  const { data: rawPromotions = [], isLoading } = useQuery({
     queryKey: ['feed-promotions'],
     queryFn: async () => {
       const { data, error } = await (supabase as any)

@@ -298,7 +298,34 @@ export const AdminAdsGarotasTop = () => {
                 <p className="text-[11px] text-gray-400 mt-1">
                   Ao pagar apenas o acesso aos vídeos deste card, o botão "Clique aqui para acessar seus vídeos" abrirá este link.
                 </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 border-purple-500 text-purple-300 hover:bg-purple-900/40"
+                  disabled={!form.link_acesso.trim() || saving}
+                  onClick={async () => {
+                    const link = form.link_acesso.trim();
+                    if (!link) return;
+                    if (!confirm(`Aplicar o link "${link}" a TODOS os cards de Garotas Top e Latinas?`)) return;
+                    setSaving(true);
+                    const [a, b] = await Promise.all([
+                      (supabase as any).from("ads_garotas_top").update({ link_acesso: link }).not("id", "is", null),
+                      (supabase as any).from("ads_latinas").update({ link_acesso: link }).not("id", "is", null),
+                    ]);
+                    setSaving(false);
+                    if (a.error || b.error) {
+                      toast.error("Erro ao aplicar em todos");
+                    } else {
+                      toast.success("Link aplicado a todos os cards");
+                      fetchCards();
+                    }
+                  }}
+                >
+                  Aplicar este link a todos os cards
+                </Button>
               </div>
+
               <div className="flex items-center gap-3">
                 <Switch
                   checked={form.is_active}

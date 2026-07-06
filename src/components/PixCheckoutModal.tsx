@@ -232,6 +232,58 @@ export default function PixCheckoutModal({
               </div>
             </div>
 
+            {/* Order Bumps */}
+            {bumps.length > 0 && !pix && !paid && (
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <h3 className="text-gray-900 font-bold text-lg mb-1">
+                  ⚡ Turbine seu pedido
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Adicione ofertas exclusivas com desconto só nesta compra:
+                </p>
+                <div className="space-y-3">
+                  {bumps.map((b) => {
+                    const checked = !!selectedBumps[b.id];
+                    return (
+                      <label
+                        key={b.id}
+                        className={`flex gap-3 p-3 rounded-xl border-2 cursor-pointer transition ${
+                          checked
+                            ? "border-purple-600 bg-purple-50"
+                            : "border-gray-200 hover:border-purple-300 bg-white"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) =>
+                            setSelectedBumps((s) => ({ ...s, [b.id]: e.target.checked }))
+                          }
+                          className="mt-1 w-5 h-5 accent-purple-600 shrink-0"
+                        />
+                        {b.imagem_url && (
+                          <img
+                            src={b.imagem_url}
+                            alt={b.titulo}
+                            className="w-16 h-16 rounded-lg object-cover shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-gray-900">{b.titulo}</div>
+                          {b.descricao && (
+                            <div className="text-xs text-gray-600 mt-0.5">{b.descricao}</div>
+                          )}
+                          <div className="text-sm font-black text-purple-700 mt-1">
+                            + {fmt(Number(b.valor))}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* PIX area */}
             {(loading || pix || paid) && (
               <div className="bg-white rounded-xl shadow-sm p-5">

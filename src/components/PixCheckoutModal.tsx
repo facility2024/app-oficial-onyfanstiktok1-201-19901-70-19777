@@ -190,7 +190,10 @@ export default function PixCheckoutModal({
 
   if (!open) return null;
 
-  const priceFmt = `R$ ${amount.toFixed(2).replace(".", ",")}`;
+  const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+  const priceFmt = fmt(amount);
+  const bumpsFmt = fmt(bumpsTotal);
+  const totalFmt = fmt(finalAmount);
 
   return createPortal(
     <div

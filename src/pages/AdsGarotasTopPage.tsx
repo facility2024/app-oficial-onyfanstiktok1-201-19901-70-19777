@@ -247,11 +247,12 @@ export default function AdsGarotasTopPage() {
           ) : null}
           <Button
             onClick={() => {
-              if (selected?.cta_link) window.location.href = selected.cta_link;
+              setSelected(null);
+              setShowPix(true);
             }}
             className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(168,85,247,0.6)]"
           >
-            {selected?.cta_texto || "Assinar Conteúdo"}
+            Assinar por R$ {price.toFixed(2).replace(".", ",")} via PIX
           </Button>
         </DialogContent>
       </Dialog>
@@ -259,7 +260,7 @@ export default function AdsGarotasTopPage() {
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}
-        amount={14.97}
+        amount={price}
         productName="Assinatura Garotas Top 10"
         storageFlag="garotas_top_paid"
         redirectTo="/garotas-top-vip"

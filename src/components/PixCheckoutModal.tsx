@@ -39,6 +39,25 @@ export default function PixCheckoutModal({
   const [copied, setCopied] = useState(false);
   const [paid, setPaid] = useState(false);
   const pollRef = useRef<number | null>(null);
+  const [countdown, setCountdown] = useState("00:00:00");
+
+  useEffect(() => {
+    if (!open) return;
+    const tick = () => {
+      const now = new Date();
+      const end = new Date(now);
+      end.setHours(24, 0, 0, 0); // próxima meia-noite (reset a cada 24h)
+      const diff = Math.max(0, end.getTime() - now.getTime());
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1000);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setCountdown(`${pad(h)}:${pad(m)}:${pad(s)}`);
+    };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

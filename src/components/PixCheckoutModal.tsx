@@ -277,7 +277,7 @@ export default function PixCheckoutModal({
         {/* Body */}
         <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
           {/* Left column */}
-          <div className="space-y-5">
+          <div className="space-y-5 order-2 lg:order-1">
             {/* Payment method */}
             <div className="bg-white rounded-xl shadow-sm p-5">
               <h3 className="text-gray-900 font-bold text-lg mb-4">Método de pagamento</h3>

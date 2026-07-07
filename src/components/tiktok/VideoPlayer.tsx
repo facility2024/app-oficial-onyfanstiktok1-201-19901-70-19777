@@ -304,6 +304,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             isMuted={isMuted}
             volume={volume}
             autoPlayOnReady={isPlaying}
+            audioUrl={(video as any).audio_url || undefined}
             className=""
             onClick={handleVideoTap}
             onLoadedData={() => setIsBuffering(false)}

@@ -8103,6 +8103,7 @@ export type Database = {
       videos: {
         Row: {
           aspect_ratio: string | null
+          audio_url: string | null
           button_color: string
           button_text: string
           category: string | null
@@ -8141,6 +8142,7 @@ export type Database = {
         }
         Insert: {
           aspect_ratio?: string | null
+          audio_url?: string | null
           button_color?: string
           button_text?: string
           category?: string | null
@@ -8179,6 +8181,7 @@ export type Database = {
         }
         Update: {
           aspect_ratio?: string | null
+          audio_url?: string | null
           button_color?: string
           button_text?: string
           category?: string | null
@@ -8935,6 +8938,7 @@ export type Database = {
         Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
         Returns: {
           aspect_ratio: string | null
+          audio_url: string | null
           button_color: string
           button_text: string
           category: string | null

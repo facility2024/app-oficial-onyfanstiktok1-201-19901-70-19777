@@ -67,6 +67,7 @@ export default function CreatorStudio() {
     description: '',
     video_url: '',
     thumbnail_url: '',
+    audio_url: '',
     genres: [] as string[],
     visibility: 'public' as 'public' | 'private',
     is_featured: false,

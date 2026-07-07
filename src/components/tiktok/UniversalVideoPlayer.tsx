@@ -306,8 +306,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const handleLoadStart = useCallback(() => {
       setIsBuffering(true);
-      pauseOtherVideos();
-    }, [pauseOtherVideos]);
+      // NÃO pausar outros vídeos aqui — durante o scroll adjacentes carregam
+      // e pausar todos causa flicker/travamento no mobile.
+    }, []);
     
     // Removido: o desbloqueio global estava escondendo o botão de play antes da interação
     

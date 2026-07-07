@@ -935,9 +935,13 @@ export const TikTokApp = () => {
         // 🔄 Atualização em tempo real do feed quando criador edita o vídeo
         const updated: any = payload.new;
         if (!updated?.id) return;
-        setVideos(prev => prev.map((v: any) => {
-          if (v.id !== updated.id) return v;
-          return {
+        setVideos(prev => {
+          // Só cria novo array se o vídeo realmente estiver no feed atual
+          const idx = prev.findIndex((v: any) => v.id === updated.id);
+          if (idx === -1) return prev;
+          const next = prev.slice();
+          const v: any = next[idx];
+          next[idx] = {
             ...v,
             title: updated.title ?? v.title,
             description: updated.description ?? v.description,
@@ -948,11 +952,15 @@ export const TikTokApp = () => {
             is_featured: updated.is_featured ?? v.is_featured,
             genres: updated.genres ?? v.genres,
           };
-        }));
+          return next;
+        });
       } else if (payload.eventType === 'DELETE') {
         const removed: any = payload.old;
         if (!removed?.id) return;
-        setVideos(prev => prev.filter((v: any) => v.id !== removed.id));
+        setVideos(prev => {
+          if (!prev.some((v: any) => v.id === removed.id)) return prev;
+          return prev.filter((v: any) => v.id !== removed.id);
+        });
       }
     }).on('postgres_changes', {
       event: '*',

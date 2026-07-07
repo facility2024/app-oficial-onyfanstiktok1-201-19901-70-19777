@@ -1283,7 +1283,17 @@ export const TikTokApp = () => {
         if (creatorsError) {
           console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
         }
-        creatorsData = creatorsProfiles || [];
+        // Fallback: alguns criadores têm avatar apenas em `models` (mesmo id) — buscar e mesclar
+        const { data: creatorsAsModels } = await supabase
+          .from('models')
+          .select('id, avatar_url')
+          .in('id', creatorIds);
+        const modelAvatarById: Record<string, string | null> = {};
+        (creatorsAsModels || []).forEach((m: any) => { modelAvatarById[m.id] = m.avatar_url || null; });
+        creatorsData = (creatorsProfiles || []).map((p: any) => ({
+          ...p,
+          avatar_url: p.avatar_url || modelAvatarById[p.id] || null,
+        }));
       }
       console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
 

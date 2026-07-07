@@ -96,6 +96,8 @@ const CheckoutPage = () => {
     const fetchPlanPrice = async () => {
       try {
         if (privateModelId) {
+          // Checkout de criadora específica: exigir plano ativo dela.
+          // NÃO cair no fallback global (admin_settings.vip_plans) que é o VIP da plataforma.
           const { data } = await (supabase as any)
             .from('model_subscription_plans')
             .select('price')
@@ -103,7 +105,13 @@ const CheckoutPage = () => {
             .eq('plan_type', queryPlan)
             .eq('is_active', true)
             .maybeSingle();
-          if (data?.price) { setPlanPrice(Number(data.price)); return; }
+          if (data?.price) {
+            setPlanPrice(Number(data.price));
+          } else {
+            toast.error('Esta criadora não possui plano de assinatura ativo no momento.');
+            setTimeout(() => navigate(-1), 1500);
+          }
+          return;
         }
         const { data } = await supabase
           .from('admin_settings')

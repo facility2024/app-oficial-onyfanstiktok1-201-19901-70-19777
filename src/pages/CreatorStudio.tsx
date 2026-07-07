@@ -656,20 +656,7 @@ export default function CreatorStudio() {
                   )}
                 </div>
 
-                {/* Toggle PRODUTOS EM ALTA */}
-                <div className="flex items-center justify-between p-4 rounded-lg border-2 border-orange-500/30 bg-orange-500/5">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🔥</span>
-                    <div>
-                      <Label className="text-white font-semibold">Marcar como PRODUTOS EM ALTA</Label>
-                      <p className="text-xs text-gray-400 mt-0.5">Seu conteúdo aparecerá em destaque na home do Marketplace</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.is_featured}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                  />
-                </div>
+                {/* Toggle PRODUTOS EM ALTA — removido do criador (sem marketplace) */}
 
                 {/* Preview */}
                 {formData.video_url && formData.thumbnail_url && (

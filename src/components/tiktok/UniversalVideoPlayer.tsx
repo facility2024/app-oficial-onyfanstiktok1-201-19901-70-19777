@@ -17,6 +17,23 @@ interface UniversalVideoPlayerProps {
   autoPlayOnReady?: boolean; // Nova prop para reprodução automática
 }
 
+const BUNNY_STREAM_LIBRARY_ID = '558340';
+
+const getBunnyStreamEmbedUrl = (src?: string): string | null => {
+  try {
+    const url = new URL(src || '');
+    const isBunnyStreamCdn = /^vz-[a-z0-9-]+\.b-cdn\.net$/i.test(url.hostname);
+    if (!isBunnyStreamCdn) return null;
+
+    const guid = url.pathname.split('/').filter(Boolean)[0];
+    if (!/^[0-9a-f-]{36}$/i.test(guid || '')) return null;
+
+    return `https://iframe.mediadelivery.net/embed/${BUNNY_STREAM_LIBRARY_ID}/${guid}?autoplay=true&muted=true&loop=true&playsinline=true`;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Player de vídeo universal que funciona em todos os dispositivos
  * Otimizado para iOS, Android e Desktop
@@ -49,6 +66,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
     const userGestureUnlockedRef = useRef(false);
+    const bunnyStreamEmbedUrl = getBunnyStreamEmbedUrl(src);
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -361,26 +379,38 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     return (
       <div className="relative w-full h-full bg-black">
-        <video
-          ref={internalRef}
-          src={src}
-          poster={poster}
-          className={`w-full h-full object-contain sm:object-cover ${className}`}
-          style={{ backgroundColor: '#000', ...style }}
-          autoPlay={false}
-          loop={true}
-          muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
-          playsInline={true}
-          preload="auto"
-          controls={false}
-           onClick={handleUserClick}
-          onLoadedData={handleLoadedData}
-          onError={handleError}
-          onWaiting={handleWaiting}
-          onCanPlay={handleCanPlay}
-          onLoadStart={handleLoadStart}
-          
-        />
+        {bunnyStreamEmbedUrl && hasError ? (
+          <iframe
+            src={bunnyStreamEmbedUrl}
+            className={`w-full h-full border-0 ${className}`}
+            style={{ backgroundColor: '#000', ...style }}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            loading="eager"
+            title="Vídeo"
+          />
+        ) : (
+          <video
+            ref={internalRef}
+            src={src}
+            poster={poster}
+            className={`w-full h-full object-contain sm:object-cover ${className}`}
+            style={{ backgroundColor: '#000', ...style }}
+            autoPlay={false}
+            loop={true}
+            muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
+            playsInline={true}
+            preload="auto"
+            controls={false}
+             onClick={handleUserClick}
+            onLoadedData={handleLoadedData}
+            onError={handleError}
+            onWaiting={handleWaiting}
+            onCanPlay={handleCanPlay}
+            onLoadStart={handleLoadStart}
+            
+          />
+        )}
         
         {/* Botão de play para primeira interação - escondido quando playing */}
         {needsUserInteraction && !hasError && (
@@ -396,14 +426,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         )}
         
         {/* Indicador de carregamento */}
-        {isBuffering && !hasError && (
+        {isBuffering && !hasError && !bunnyStreamEmbedUrl && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         
         {/* Indicador de erro */}
-        {hasError && (
+        {hasError && !bunnyStreamEmbedUrl && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80">
             <div className="text-white text-center p-4">
               <div className="text-3xl mb-2">⚠️</div>

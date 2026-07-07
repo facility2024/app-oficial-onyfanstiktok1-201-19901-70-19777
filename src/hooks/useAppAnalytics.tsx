@@ -44,12 +44,12 @@ export const useAppAnalytics = () => {
         };
 
         // Diferenciar model_id vs creator_id
-        if (modelId) {
+        if (additionalData?.creator_id) {
+          // Se for um criador, nunca preencher model_id com id de usuário
+          analyticsData.creator_id = additionalData.creator_id;
+        } else if (modelId) {
           // Se for um modelo estático, usar model_id
           analyticsData.model_id = modelId;
-        } else if (additionalData?.creator_id) {
-          // Se for um criador, usar creator_id
-          analyticsData.creator_id = additionalData.creator_id;
         }
 
         const { error: analyticsError } = await supabase
@@ -112,7 +112,8 @@ export const useAppAnalytics = () => {
             .from('video_views')
             .insert({
               video_id: videoId,
-              model_id: modelId || null,
+              model_id: additionalData?.creator_id ? null : (modelId || null),
+              creator_id: additionalData?.creator_id || null,
               user_id: currentUserId,
               session_id: localStorage.getItem('session_id') || currentUserId,
               device_type: /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',

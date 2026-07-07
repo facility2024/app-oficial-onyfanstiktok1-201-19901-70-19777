@@ -250,37 +250,55 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
     // Calcular scores com dados de recomendação
     const scoredVideos = unseenVideos.map(v => calculateScore(v, memory, strongInterests, tagPreferences));
     
+    // ============= PILAR 0: PINNED - Vídeos de criadores <24h no TOPO =============
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const pinnedFresh = scoredVideos
+      .filter(v => {
+        const isCreator = !!(v.video as any).creator_id;
+        const age = now - new Date(v.video.data_postagem).getTime();
+        return isCreator && age <= DAY_MS;
+      })
+      .sort((a, b) =>
+        new Date(b.video.data_postagem).getTime() -
+        new Date(a.video.data_postagem).getTime()
+      );
+    const pinnedIds = new Set(pinnedFresh.map(v => v.video.video_id));
+    const remainingScored = scoredVideos.filter(v => !pinnedIds.has(v.video.video_id));
+
     // ============= PILAR 1: Prioridade por Interesse Forte =============
-    // Separar: vídeos de modelos com interesse forte vs outros
-    const interestVideos = scoredVideos.filter(v => strongInterests.includes(v.video.modelo_id));
-    const otherVideos = scoredVideos.filter(v => !strongInterests.includes(v.video.modelo_id));
+    const interestVideos = remainingScored.filter(v => strongInterests.includes(v.video.modelo_id));
+    const otherVideos = remainingScored.filter(v => !strongInterests.includes(v.video.modelo_id));
     
-    // Ordenar ambos por score
     interestVideos.sort((a, b) => b.score - a.score);
     otherVideos.sort((a, b) => b.score - a.score);
     
     // ============= PILAR 2: Regra de Exploração (12% aleatórios) =============
-    const totalSlots = Math.min(finalConfig.maxVideos, unseenVideos.length);
-    const explorationCount = Math.max(2, Math.floor(totalSlots * EXPLORATION_RATIO));
-    const interestCount = Math.min(interestVideos.length, Math.floor(totalSlots * 0.4));
-    const remainingCount = totalSlots - interestCount - explorationCount;
+    const remainingSlots = Math.max(0, Math.min(finalConfig.maxVideos, remainingScored.length) );
+    const explorationCount = Math.max(2, Math.floor(remainingSlots * EXPLORATION_RATIO));
+    const interestCount = Math.min(interestVideos.length, Math.floor(remainingSlots * 0.4));
+    const remainingCount = Math.max(0, remainingSlots - interestCount - explorationCount);
     
-    // Selecionar vídeos de exploração (totalmente aleatórios, não vistos)
     const shuffledOthers = [...otherVideos].sort(() => Math.random() - 0.5);
     const explorationVideos = shuffledOthers.slice(0, explorationCount);
     const fillerVideos = otherVideos
       .filter(v => !explorationVideos.includes(v))
       .slice(0, remainingCount);
     
-    // Combinar
-    let finalSelection = [
+    // Combinar restante (sem pinned) e evitar modelos consecutivas
+    const restCombined = [
       ...interestVideos.slice(0, interestCount),
       ...fillerVideos,
       ...explorationVideos,
     ];
-    
-    // Reorganizar para evitar modelos consecutivas
-    finalSelection = avoidConsecutiveModels(finalSelection, memory, finalConfig.maxVideos);
+    const restReordered = avoidConsecutiveModels(
+      restCombined,
+      memory,
+      Math.max(0, finalConfig.maxVideos - pinnedFresh.length)
+    );
+
+    // Pinned SEMPRE no topo, sem passar por avoidConsecutiveModels
+    let finalSelection = [...pinnedFresh, ...restReordered];
     
     // Categorizar para o indicador
     const novos = finalSelection.filter(v => v.reason === 'novo').length;

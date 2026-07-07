@@ -277,6 +277,7 @@ export default function CreatorStudio() {
           description: validatedData.description,
           video_url: validatedData.video_url,
           thumbnail_url: validatedData.thumbnail_url,
+          audio_url: formData.audio_url || null,
           creator_id: user.id,  // ID do criador autenticado (oculto)
           model_id: null,       // NULL para criadores
           visibility: formData.visibility,
@@ -296,6 +297,7 @@ export default function CreatorStudio() {
         description: '',
         video_url: '',
         thumbnail_url: '',
+        audio_url: '',
         genres: [],
         visibility: 'public',
         is_featured: false,

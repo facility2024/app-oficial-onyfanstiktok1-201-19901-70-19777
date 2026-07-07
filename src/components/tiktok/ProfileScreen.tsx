@@ -720,7 +720,7 @@ if (!isOpen) return null;
               </div>
 
             {/* Seção de Assinatura Individual - Apenas para Criadoras de Conteúdo */}
-            {isCreator && !hideSubscriptionSection && (
+            {isCreator && !hideSubscriptionSection && (loadingPlans || modelSubscription || modelPlans.length > 0) && (
             <div className="px-4 pb-6" data-subscription-section>
               {/* Status de assinatura da modelo */}
               {modelSubscription ? (

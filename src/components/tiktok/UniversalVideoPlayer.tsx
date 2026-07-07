@@ -17,6 +17,21 @@ interface UniversalVideoPlayerProps {
   autoPlayOnReady?: boolean; // Nova prop para reprodução automática
 }
 
+const getBunnyStreamMp4Url = (src?: string): string | null => {
+  try {
+    const url = new URL(src || '');
+    const isBunnyStreamCdn = /^vz-[a-z0-9-]+\.b-cdn\.net$/i.test(url.hostname);
+    if (!isBunnyStreamCdn) return null;
+
+    const guid = url.pathname.split('/').filter(Boolean)[0];
+    if (!/^[0-9a-f-]{36}$/i.test(guid || '')) return null;
+
+    return `${url.origin}/${guid}/play_720p.mp4`;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Player de vídeo universal que funciona em todos os dispositivos
  * Otimizado para iOS, Android e Desktop
@@ -48,6 +63,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const autoRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
+    const userGestureUnlockedRef = useRef(false);
+    const bunnyStreamMp4Url = getBunnyStreamMp4Url(src);
+    const playbackSrc = bunnyStreamMp4Url || src;
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -71,9 +89,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.setAttribute('x5-playsinline', 'true'); // Android WebView/QQ
       video.setAttribute('x5-video-player-type', 'h5'); // Android WebView
       
-      // Respeitar a preferência do usuário para mute
-      // No mobile, só forçar mute se o usuário ainda não interagiu (autoplay policy)
-      const shouldMute = isMuted || (isMobile && !userStarted);
+      // Respeitar a preferência do usuário para mute.
+      // No mobile, autoplay inicial precisa ficar mutado até uma ação real do usuário.
+      const shouldMute = isMuted || (isMobile && !userGestureUnlockedRef.current);
       video.muted = shouldMute;
       if (shouldMute) {
         video.setAttribute('muted', 'true');
@@ -100,7 +118,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Hardware acceleration
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
-    }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted, userStarted]);
+    }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted]);
 
     // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {
@@ -135,10 +153,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       try {
         pauseOtherVideos();
         
-        // iOS/Android: não resetar currentTime para evitar bloqueios
-        // Após interação bem-sucedida, desmutar se o usuário não quer mute
-        if (!isMuted) {
+        // iOS/Android: autoplay inicial sempre mutado; só desmuta após gesto real.
+        if (!isMuted && (!isMobile || userGestureUnlockedRef.current)) {
           video.muted = false;
+        } else {
+          video.muted = true;
         }
         await video.play();
         
@@ -238,7 +257,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-    }, [src, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
+      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -314,6 +333,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
+      userGestureUnlockedRef.current = true;
       const nativeEvt: any = (event as any).nativeEvent;
       const shouldBlock = needsUserInteraction && nativeEvt?.cancelable;
       if (shouldBlock) {
@@ -360,13 +380,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       <div className="relative w-full h-full bg-black">
         <video
           ref={internalRef}
-          src={src}
+          src={playbackSrc}
           poster={poster}
           className={`w-full h-full object-contain sm:object-cover ${className}`}
           style={{ backgroundColor: '#000', ...style }}
           autoPlay={false}
           loop={true}
-          muted={isMuted}
+          muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
           playsInline={true}
           preload="auto"
           controls={false}
@@ -380,7 +400,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         />
         
         {/* Botão de play para primeira interação - escondido quando playing */}
-        {needsUserInteraction && !hasError && !isPlaying && (
+        {needsUserInteraction && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none transition-opacity duration-300">
             <button
               onClick={handleUserClick}

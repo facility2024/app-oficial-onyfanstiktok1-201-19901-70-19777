@@ -625,7 +625,7 @@ export const AdminFeedPromotions = () => {
             <Card key={promo.id} className="bg-gray-900 border-gray-700 overflow-hidden">
               <div className="aspect-video bg-gray-800 relative">
                 {promo.media_type === 'video' ? (
-                  <video src={promo.media_url} className="w-full h-full object-cover" muted />
+                  <video src={promo.media_url} className="w-full h-full object-cover" autoPlay muted loop playsInline preload="auto" />
                 ) : (
                   <img src={promo.media_url} alt={promo.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
                 )}

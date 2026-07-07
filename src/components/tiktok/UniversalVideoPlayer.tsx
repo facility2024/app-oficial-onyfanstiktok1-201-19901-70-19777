@@ -389,7 +389,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
           playsInline={true}
           preload="auto"
-          referrerPolicy="origin"
           controls={false}
            onClick={handleUserClick}
           onLoadedData={handleLoadedData}

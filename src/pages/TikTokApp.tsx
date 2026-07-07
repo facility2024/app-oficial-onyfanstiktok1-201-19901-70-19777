@@ -3415,7 +3415,7 @@ export const TikTokApp = () => {
         </div>
 
         {/* Vertical Carousel Container */}
-        <div className="embla" style={{ height: 'calc(100dvh - 64px)' }} ref={emblaRef}>
+        <div className="embla overflow-hidden overscroll-none touch-pan-y" style={{ height: 'calc(100dvh - 64px)', touchAction: 'pan-y' }} ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
             {displayVideos.map((video, index) => {
               const isPromoVideo = video.id.startsWith('promo-');

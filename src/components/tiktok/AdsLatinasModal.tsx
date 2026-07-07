@@ -70,7 +70,8 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm overflow-y-scroll overscroll-contain ads-modal-scroll"
+      data-modal-root
+      className="fixed inset-0 z-[10030] bg-black/90 backdrop-blur-sm overflow-y-scroll overscroll-contain ads-modal-scroll"
       onClick={onClose}
     >
       <div
@@ -80,7 +81,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
         <button
           onClick={onClose}
           aria-label="Voltar para Home"
-          className="fixed top-3 left-3 z-[210] flex items-center gap-1.5 px-3 h-11 rounded-full bg-black/80 border border-pink-500/50 text-white hover:bg-pink-800/70 shadow-[0_0_20px_rgba(236,72,153,0.5)] text-sm font-semibold"
+          className="fixed top-3 left-3 z-[10040] flex items-center gap-1.5 px-3 h-11 rounded-full bg-black/80 border border-pink-500/50 text-white hover:bg-pink-800/70 shadow-[0_0_20px_rgba(236,72,153,0.5)] text-sm font-semibold"
         >
           <Home className="w-4 h-4" /> Home
         </button>
@@ -88,7 +89,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
         <button
           onClick={onClose}
           aria-label="Fechar"
-          className="fixed top-3 right-3 z-[210] w-11 h-11 flex items-center justify-center rounded-full bg-black/80 border border-pink-500/50 text-white hover:bg-pink-800/70 shadow-[0_0_20px_rgba(236,72,153,0.5)]"
+          className="fixed top-3 right-3 z-[10040] w-11 h-11 flex items-center justify-center rounded-full bg-black/80 border border-pink-500/50 text-white hover:bg-pink-800/70 shadow-[0_0_20px_rgba(236,72,153,0.5)]"
         >
           <X className="w-5 h-5" />
         </button>

@@ -113,7 +113,6 @@ export const useAppAnalytics = () => {
             .insert({
               video_id: videoId,
               model_id: additionalData?.creator_id ? null : (modelId || null),
-              creator_id: additionalData?.creator_id || null,
               user_id: currentUserId,
               session_id: localStorage.getItem('session_id') || currentUserId,
               device_type: /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',

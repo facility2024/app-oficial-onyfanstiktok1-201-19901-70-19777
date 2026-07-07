@@ -280,10 +280,11 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             key={video.id}
             ref={ref}
             src={(video as any).video_url}
+            poster={(video as any).thumbnail_url || undefined}
             isPlaying={isPlaying}
             isMuted={isMuted}
             volume={volume}
-            autoPlayOnReady={true}
+            autoPlayOnReady={isPlaying}
             className=""
             onClick={handleVideoTap}
             onLoadedData={() => setIsBuffering(false)}

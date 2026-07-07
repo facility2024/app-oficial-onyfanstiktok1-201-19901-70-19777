@@ -82,6 +82,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
   if (!open) return null;
 
   return createPortal(
+    <>
     <div
       data-modal-root
       className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-sm overflow-y-scroll overscroll-contain ads-modal-scroll"
@@ -227,15 +228,17 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
         </div>
       </div>
 
-      {/* Sub-modal do card selecionado */}
+    </div>,
+      {/* Sub-modal fora da área rolável: sempre centralizado no viewport */}
       {selected && (
         <div
           data-modal-root
-          className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 overflow-y-auto overscroll-contain"
+          style={{ minHeight: "100dvh" }}
           onClick={() => setSelected(null)}
         >
           <div
-            className="relative w-full max-w-md bg-gradient-to-br from-purple-950 to-black border border-purple-500/40 rounded-2xl p-4 sm:p-6"
+            className="relative w-full max-w-md max-h-[calc(100dvh-24px)] overflow-y-auto bg-gradient-to-br from-purple-950 to-black border border-purple-500/40 rounded-2xl p-4 sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -261,13 +264,13 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
                 onError={() =>
                   setVideoFallbacks((prev) => ({ ...prev, [selected.id]: true }))
                 }
-                className="w-full rounded-xl aspect-[9/16] object-cover bg-black"
+                className="w-full rounded-xl max-h-[65dvh] aspect-[9/16] object-contain bg-black"
               />
             ) : (
               <img
                 src={selected.imagem_url}
                 alt={selected.nome}
-                className="w-full rounded-xl aspect-[9/16] object-cover"
+                className="w-full rounded-xl max-h-[65dvh] aspect-[9/16] object-contain bg-black"
               />
             )}
             <Button
@@ -292,7 +295,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
         storageFlag="garotas_top_paid"
         redirectTo={selected?.link_acesso || "/garotas-top-vip"}
       />
-    </div>,
+    </>,
     document.body
   );
 }

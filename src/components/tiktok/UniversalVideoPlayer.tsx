@@ -48,6 +48,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const autoRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
+    const userGestureUnlockedRef = useRef(false);
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -71,9 +72,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.setAttribute('x5-playsinline', 'true'); // Android WebView/QQ
       video.setAttribute('x5-video-player-type', 'h5'); // Android WebView
       
-      // Respeitar a preferência do usuário para mute
-      // No mobile, só forçar mute se o usuário ainda não interagiu (autoplay policy)
-      const shouldMute = isMuted || (isMobile && !userStarted);
+      // Respeitar a preferência do usuário para mute.
+      // No mobile, autoplay inicial precisa ficar mutado até uma ação real do usuário.
+      const shouldMute = isMuted || (isMobile && !userGestureUnlockedRef.current);
       video.muted = shouldMute;
       if (shouldMute) {
         video.setAttribute('muted', 'true');
@@ -135,10 +136,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       try {
         pauseOtherVideos();
         
-        // iOS/Android: não resetar currentTime para evitar bloqueios
-        // Após interação bem-sucedida, desmutar se o usuário não quer mute
-        if (!isMuted) {
+        // iOS/Android: autoplay inicial sempre mutado; só desmuta após gesto real.
+        if (!isMuted && (!isMobile || userGestureUnlockedRef.current)) {
           video.muted = false;
+        } else {
+          video.muted = true;
         }
         await video.play();
         
@@ -314,6 +316,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
+      userGestureUnlockedRef.current = true;
       const nativeEvt: any = (event as any).nativeEvent;
       const shouldBlock = needsUserInteraction && nativeEvt?.cancelable;
       if (shouldBlock) {
@@ -366,7 +369,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           style={{ backgroundColor: '#000', ...style }}
           autoPlay={false}
           loop={true}
-          muted={isMuted}
+          muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
           playsInline={true}
           preload="auto"
           controls={false}
@@ -380,7 +383,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         />
         
         {/* Botão de play para primeira interação - escondido quando playing */}
-        {needsUserInteraction && !hasError && !isPlaying && (
+        {needsUserInteraction && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-50 pointer-events-none transition-opacity duration-300">
             <button
               onClick={handleUserClick}

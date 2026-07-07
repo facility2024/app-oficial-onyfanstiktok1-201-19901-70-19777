@@ -1163,7 +1163,7 @@ export const TikTokApp = () => {
       } = await supabase.from('posts_agendados').select(`
           *,
           modelo:models(*)
-        `).eq('status', 'publicado').order('data_publicacao', {
+        `).eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', {
         ascending: false
       }).limit(50);
       const {
@@ -1930,8 +1930,16 @@ export const TikTokApp = () => {
       console.log(`📋 Mostrando todos: ${firstBlock.length} vídeos`);
     } else {
       // Filtrar vídeos pelo gênero selecionado
+      const freshCreatorWindowMs = 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const isFreshCreatorContent = (video: any) => {
+        if (!video?.creator_id) return false;
+        const createdAt = video.created_at ? new Date(video.created_at).getTime() : 0;
+        return createdAt > 0 && now - createdAt <= freshCreatorWindowMs;
+      };
+
       const filteredVideos = allAvailableVideos.filter((video: any) => {
-        if (video.isHighlighted || video.source === 'scheduled_post' || video.source === 'main_post' || video.isNewModel) {
+        if (video.isHighlighted || video.source === 'scheduled_post' || video.source === 'main_post' || video.isNewModel || isFreshCreatorContent(video)) {
           return true;
         }
         const videoGenres = video.genres || [];

@@ -378,9 +378,19 @@ export const AdminFeedPromotions = () => {
   };
 
   const handleSave = async () => {
-    if (!form.display_name || !form.media_url) {
-      toast.error('Preencha nome e URL da mídia');
+    const trimmedName = (form.display_name || '').trim();
+    const trimmedMedia = (form.media_url || '').trim();
+    if (!trimmedName) {
+      toast.error('Preencha o Nome de Exibição');
       return;
+    }
+    if (!trimmedMedia) {
+      toast.error('Preencha a URL da Mídia (Imagem/Vídeo)');
+      return;
+    }
+    if (trimmedMedia !== form.media_url || trimmedName !== form.display_name) {
+      form.media_url = trimmedMedia;
+      form.display_name = trimmedName;
     }
     if (!form.send_now && (!form.schedule_date || !form.schedule_time)) {
       toast.error('Selecione data e hora do agendamento');

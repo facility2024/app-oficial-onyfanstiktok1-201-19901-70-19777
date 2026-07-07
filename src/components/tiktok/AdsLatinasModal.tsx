@@ -227,7 +227,11 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
                 playsInline
                 controls
                 muted
+                loop
                 preload="auto"
+                onLoadedMetadata={(e) => e.currentTarget.play().catch(() => {})}
+                onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
+                onPause={(e) => { if (!e.currentTarget.ended) e.currentTarget.play().catch(() => {}); }}
                 onError={() =>
                   setVideoFallbacks((prev) => ({ ...prev, [selected.id]: true }))
                 }

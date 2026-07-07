@@ -53,13 +53,23 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
     })();
   }, [open]);
 
-  // Lock body scroll when open
+  // Lock body scroll + pause feed videos when open
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Pause and mute all videos outside any modal (feed videos)
+    const pauseFeedVideos = () => {
+      document.querySelectorAll("video").forEach((v) => {
+        if ((v as HTMLElement).closest("[data-modal-root]")) return;
+        try { v.pause(); v.muted = true; } catch {}
+      });
+    };
+    pauseFeedVideos();
+    const interval = window.setInterval(pauseFeedVideos, 500);
     return () => {
       document.body.style.overflow = prev;
+      window.clearInterval(interval);
     };
   }, [open]);
 
@@ -73,7 +83,8 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm overflow-y-scroll overscroll-contain ads-modal-scroll"
+      data-modal-root
+      className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-sm overflow-y-scroll overscroll-contain ads-modal-scroll"
       onClick={onClose}
     >
       <div
@@ -84,7 +95,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
         <button
           onClick={onClose}
           aria-label="Fechar"
-          className="fixed top-3 right-3 z-[210] w-11 h-11 flex items-center justify-center rounded-full bg-black/80 border border-purple-500/50 text-white hover:bg-purple-800/70 shadow-[0_0_20px_rgba(168,85,247,0.5)]"
+          className="fixed top-3 right-3 z-[10010] w-11 h-11 flex items-center justify-center rounded-full bg-black/80 border border-purple-500/50 text-white hover:bg-purple-800/70 shadow-[0_0_20px_rgba(168,85,247,0.5)]"
         >
           <X className="w-5 h-5" />
         </button>
@@ -219,7 +230,8 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       {/* Sub-modal do card selecionado */}
       {selected && (
         <div
-          className="fixed inset-0 z-[220] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
+          data-modal-root
+          className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
           onClick={() => setSelected(null)}
         >
           <div

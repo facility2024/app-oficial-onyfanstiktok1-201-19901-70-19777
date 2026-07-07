@@ -53,13 +53,23 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
     })();
   }, [open]);
 
-  // Lock body scroll when open
+  // Lock body scroll + pause feed videos when open
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Pause and mute all videos outside any modal (feed videos)
+    const pauseFeedVideos = () => {
+      document.querySelectorAll("video").forEach((v) => {
+        if ((v as HTMLElement).closest("[data-modal-root]")) return;
+        try { v.pause(); v.muted = true; } catch {}
+      });
+    };
+    pauseFeedVideos();
+    const interval = window.setInterval(pauseFeedVideos, 500);
     return () => {
       document.body.style.overflow = prev;
+      window.clearInterval(interval);
     };
   }, [open]);
 

@@ -230,7 +230,8 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       {/* Sub-modal do card selecionado */}
       {selected && (
         <div
-          className="fixed inset-0 z-[220] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
+          data-modal-root
+          className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
           onClick={() => setSelected(null)}
         >
           <div

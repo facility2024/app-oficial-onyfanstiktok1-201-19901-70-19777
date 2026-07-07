@@ -71,7 +71,7 @@ const emptyForm = {
   schedule_time: '',
   send_now: true,
   create_model: false,
-  daily_frequency: 0,
+  daily_frequency: 3,
   cta_mode: 'link',
   popup_media_url: '',
   popup_media_type: 'image',

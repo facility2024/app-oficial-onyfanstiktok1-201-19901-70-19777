@@ -379,12 +379,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     return (
       <div className="relative w-full h-full bg-black">
-        {bunnyStreamEmbedUrl && hasError ? (
+        {bunnyStreamEmbedUrl ? (
           <iframe
             src={bunnyStreamEmbedUrl}
             className={`w-full h-full border-0 ${className}`}
             style={{ backgroundColor: '#000', ...style }}
-            allow="autoplay; fullscreen; picture-in-picture"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
             allowFullScreen
             loading="eager"
             title="Vídeo"

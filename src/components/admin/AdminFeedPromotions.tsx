@@ -13,6 +13,18 @@ import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Eye, Image, Video, ExternalLink, Calendar, Clock, Copy, Share2, Link, CheckCircle, Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Detecta se uma URL é vídeo — tolerante a Bunny.net, HLS, paths codificados e querystring
+const detectIsVideo = (raw: string): boolean => {
+  if (!raw) return false;
+  let url = raw.trim();
+  try { url = decodeURIComponent(url); } catch {}
+  const path = url.split('?')[0].split('#')[0].toLowerCase();
+  if (/\.(mp4|webm|ogg|mov|m4v|mkv|avi|m3u8|ts)$/i.test(path)) return true;
+  // Bunny.net stream/pull zones: qualquer indício de vídeo no path
+  if (/b-cdn\.net/i.test(url) && /(mp4|webm|mov|m3u8|\/video\/|\/videos\/|\/stream\/|\/play)/i.test(path)) return true;
+  return false;
+};
+
 interface FeedPromotion {
   id: string;
   title: string;

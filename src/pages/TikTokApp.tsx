@@ -3415,12 +3415,12 @@ export const TikTokApp = () => {
         </div>
 
         {/* Vertical Carousel Container */}
-        <div className="embla h-screen" ref={emblaRef}>
+        <div className="embla" style={{ height: 'calc(100dvh - 64px)' }} ref={emblaRef}>
           <div className="embla__container h-full flex flex-col">
             {displayVideos.map((video, index) => {
               const isPromoVideo = video.id.startsWith('promo-');
               return (
-                <div key={video.id} className="embla__slide flex-shrink-0 w-full relative" style={{ height: '100dvh' }}>
+                <div key={video.id} className="embla__slide flex-shrink-0 w-full relative" style={{ height: 'calc(100dvh - 64px)' }}>
                   <MemoizedVideoPlayer ref={index === currentVideoIndex ? videoRef : null} video={video} isPlaying={isPlaying && index === currentVideoIndex} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
                   
                   {/* Bottom Info - only show for current video */}

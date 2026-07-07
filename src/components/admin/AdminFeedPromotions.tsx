@@ -848,7 +848,7 @@ export const AdminFeedPromotions = () => {
                     <Label>URL da Mídia do Pop-up (Imagem/Vídeo)</Label>
                     <Input value={form.popup_media_url} onChange={(e) => {
                       const url = e.target.value;
-                      const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                      const isVideo = detectIsVideo(url);
                       setForm({ ...form, popup_media_url: url, popup_media_type: isVideo ? 'video' : 'image' });
                     }} placeholder="https://..." className={modalInputClass} />
                   </div>

@@ -765,20 +765,7 @@ export default function CreatorStudio() {
               </form>
             </Card>
 
-            {/* Instruções */}
-            <Card className="mt-6 bg-blue-500/10 border-blue-500/30 p-4">
-              <h3 className="text-white font-semibold mb-2 flex items-center">
-                <Video className="w-4 h-4 mr-2" />
-                Como usar o Bunny.net
-              </h3>
-              <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
-                <li>Faça upload do seu vídeo no Bunny.net</li>
-                <li>Faça upload da thumbnail (imagem de capa)</li>
-                <li>Copie as URLs públicas geradas</li>
-                <li>Cole as URLs nos campos acima</li>
-                <li>Clique em "Publicar Vídeo"</li>
-              </ol>
-            </Card>
+            {/* Instruções do Bunny removidas — upload é feito diretamente pelo botão "Enviar para Bunny.net" */}
           </TabsContent>
 
           {/* Tab: Gerenciar Vídeos */}

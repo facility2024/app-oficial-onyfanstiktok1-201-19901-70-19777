@@ -227,6 +227,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
           )}
         </div>
       </div>
+      </div>
       {/* Sub-modal fora da área rolável: sempre centralizado no viewport */}
       {selected && (
         <div

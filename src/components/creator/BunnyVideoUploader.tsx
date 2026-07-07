@@ -145,7 +145,7 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
       for (let i = 0; i < 24; i++) {
         setProgress(72 + Math.min(i * 1.1, 26));
         try {
-          // testa se o MP4 transcodificado já está acessível no CDN
+          // testa se a playlist HLS transcodificada já está acessível no CDN
           const head = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
           if (head.ok) {
             encoded = true;

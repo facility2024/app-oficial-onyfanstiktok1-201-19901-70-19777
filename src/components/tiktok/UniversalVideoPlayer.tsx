@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Play, RefreshCw } from 'lucide-react';
+import Hls from 'hls.js';
 
 interface UniversalVideoPlayerProps {
   src: string;
@@ -19,7 +20,7 @@ interface UniversalVideoPlayerProps {
 
 const BUNNY_STREAM_LIBRARY_ID = '558340';
 
-const getBunnyStreamEmbedUrl = (src?: string): string | null => {
+const getBunnyStreamPlaylistUrl = (src?: string): string | null => {
   try {
     const url = new URL(src || '');
     const isBunnyStreamCdn = /^vz-[a-z0-9-]+\.b-cdn\.net$/i.test(url.hostname);
@@ -28,7 +29,7 @@ const getBunnyStreamEmbedUrl = (src?: string): string | null => {
     const guid = url.pathname.split('/').filter(Boolean)[0];
     if (!/^[0-9a-f-]{36}$/i.test(guid || '')) return null;
 
-    return `https://iframe.mediadelivery.net/embed/${BUNNY_STREAM_LIBRARY_ID}/${guid}?autoplay=true&muted=true&loop=true&playsinline=true`;
+    return `${url.origin}/${guid}/playlist.m3u8`;
   } catch {
     return null;
   }
@@ -66,7 +67,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
     const userGestureUnlockedRef = useRef(false);
-    const bunnyStreamEmbedUrl = getBunnyStreamEmbedUrl(src);
+    const bunnyStreamPlaylistUrl = getBunnyStreamPlaylistUrl(src);
+    const playbackSrc = bunnyStreamPlaylistUrl || src;
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -119,7 +121,41 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Hardware acceleration
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
-    }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted, userStarted]);
+    }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted]);
+
+    useEffect(() => {
+      if (!internalRef || !('current' in internalRef) || !internalRef.current) return;
+      const video = internalRef.current;
+      let hls: Hls | null = null;
+
+      if (playbackSrc.endsWith('.m3u8')) {
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = playbackSrc;
+        } else if (Hls.isSupported()) {
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false,
+            maxBufferLength: 30,
+          });
+          hls.loadSource(playbackSrc);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              setHasError(true);
+              setIsBuffering(false);
+            }
+          });
+        } else {
+          video.src = src;
+        }
+      } else {
+        video.src = playbackSrc;
+      }
+
+      return () => {
+        if (hls) hls.destroy();
+      };
+    }, [playbackSrc, src, internalRef]);
 
     // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {
@@ -258,7 +294,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-    }, [src, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
+      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -379,38 +415,25 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     return (
       <div className="relative w-full h-full bg-black">
-        {bunnyStreamEmbedUrl ? (
-          <iframe
-            src={bunnyStreamEmbedUrl}
-            className={`w-full h-full border-0 ${className}`}
-            style={{ backgroundColor: '#000', ...style }}
-            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-            allowFullScreen
-            loading="eager"
-            title="Vídeo"
-          />
-        ) : (
-          <video
-            ref={internalRef}
-            src={src}
-            poster={poster}
-            className={`w-full h-full object-contain sm:object-cover ${className}`}
-            style={{ backgroundColor: '#000', ...style }}
-            autoPlay={false}
-            loop={true}
-            muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
-            playsInline={true}
-            preload="auto"
-            controls={false}
-             onClick={handleUserClick}
-            onLoadedData={handleLoadedData}
-            onError={handleError}
-            onWaiting={handleWaiting}
-            onCanPlay={handleCanPlay}
-            onLoadStart={handleLoadStart}
-            
-          />
-        )}
+        <video
+          ref={internalRef}
+          poster={poster}
+          className={`w-full h-full object-contain sm:object-cover ${className}`}
+          style={{ backgroundColor: '#000', ...style }}
+          autoPlay={false}
+          loop={true}
+          muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
+          playsInline={true}
+          preload="auto"
+          controls={false}
+           onClick={handleUserClick}
+          onLoadedData={handleLoadedData}
+          onError={handleError}
+          onWaiting={handleWaiting}
+          onCanPlay={handleCanPlay}
+          onLoadStart={handleLoadStart}
+          
+        />
         
         {/* Botão de play para primeira interação - escondido quando playing */}
         {needsUserInteraction && !hasError && (
@@ -426,14 +449,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         )}
         
         {/* Indicador de carregamento */}
-        {isBuffering && !hasError && !bunnyStreamEmbedUrl && (
+        {isBuffering && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         
         {/* Indicador de erro */}
-        {hasError && !bunnyStreamEmbedUrl && (
+        {hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80">
             <div className="text-white text-center p-4">
               <div className="text-3xl mb-2">⚠️</div>

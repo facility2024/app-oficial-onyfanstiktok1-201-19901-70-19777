@@ -189,7 +189,7 @@ serve(async (req) => {
       `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoGuid}`,
     );
 
-    const videoUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/play_720p.mp4`;
+    const videoUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/playlist.m3u8`;
     const thumbnailUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`;
 
     console.log(

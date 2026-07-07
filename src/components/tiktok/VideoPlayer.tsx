@@ -64,7 +64,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isInView, setIsInView] = useState(false);
-    const [isBuffering, setIsBuffering] = useState(true);
+    const [isBuffering, setIsBuffering] = useState(false);
 
     const [offer, setOffer] = useState<Offer | null>(null);
     const [showOffer, setShowOffer] = useState(false);

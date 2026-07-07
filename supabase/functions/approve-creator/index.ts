@@ -187,51 +187,45 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Create/update user account
-    let tempPassword: string | null = generatePassword()
+    // Create/update user account — PRESERVE existing password (user's chosen one)
+    let tempPassword: string | null = null
     let accountCreated = false
+    let userAlreadyExisted = false
 
     console.log(`[approve-creator] Processando conta para: ${email}`)
 
-    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: { full_name: fullName, nickname },
-    })
+    // Check if user already exists first (they may have signed up via the application form)
+    let existingUserId: string | null = userId
+    if (!existingUserId) {
+      const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+      const existingUser = listData?.users?.find(
+        (u: any) => u.email?.toLowerCase() === email
+      )
+      if (existingUser) existingUserId = existingUser.id
+    }
 
-    if (createError) {
-      console.log(`[approve-creator] Create error: ${createError.message}`)
-      if (createError.message?.includes('already been registered')) {
-        const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
-        const existingUser = listData?.users?.find(
-          (u: any) => u.email?.toLowerCase() === email
-        )
-
-        if (existingUser) {
-          userId = existingUser.id
-          const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
-            password: tempPassword,
-            email_confirm: true,
-          })
-          if (updateError) {
-            console.error('[approve-creator] Falha ao atualizar senha:', updateError)
-            tempPassword = null
-          } else {
-            console.log(`[approve-creator] Senha atualizada para ${email}`)
-          }
-        } else {
-          return new Response(JSON.stringify({ error: 'Usuário existe mas não foi encontrado na listagem' }), {
-            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          })
-        }
-      } else {
-        return new Response(JSON.stringify({ error: 'Falha ao criar usuário: ' + createError.message }), {
+    if (existingUserId) {
+      // Existing account: DO NOT reset password — keep the one user created at signup
+      userId = existingUserId
+      userAlreadyExisted = true
+      // Ensure email is confirmed so they can log in
+      await adminClient.auth.admin.updateUserById(userId, { email_confirm: true })
+      console.log(`[approve-creator] Conta já existe. Mantendo senha original de ${email}`)
+    } else {
+      // No account yet: create with a generated password (only case we include senha in email)
+      tempPassword = generatePassword()
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: fullName, nickname },
+      })
+      if (createError || !newUser?.user) {
+        return new Response(JSON.stringify({ error: 'Falha ao criar usuário: ' + (createError?.message || 'unknown') }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
-    } else {
-      userId = newUser.user!.id
+      userId = newUser.user.id
       accountCreated = true
       console.log(`[approve-creator] Novo usuário criado: ${userId}`)
 
@@ -262,40 +256,41 @@ Deno.serve(async (req) => {
         .eq('id', application_id)
     }
 
-    // Send approval email with credentials + retry
+    // Send approval email
     let emailSent = false
     let emailError = ''
 
-    if (tempPassword) {
-      const appUrl = 'https://coconudi.com'
-      const whatsappText = encodeURIComponent(`Olá, preciso de ajuda com meu acesso COCONUDI. Meu email: ${email}`)
-      const emailBody = `<p>Olá ${fullName}! 🎉</p>
+    const appUrl = 'https://coconudi.com'
+    const credentialsBlock = tempPassword
+      ? `<p style="margin:4px 0;">📧 <strong>Email:</strong> ${email}</p>
+<p style="margin:4px 0;">🔑 <strong>Senha provisória:</strong> ${tempPassword}</p>`
+      : `<p style="margin:4px 0;">📧 <strong>Email:</strong> ${email}</p>
+<p style="margin:4px 0;">🔑 <strong>Senha:</strong> use a senha que você criou no cadastro</p>`
+
+    const importantNote = tempPassword
+      ? `<p style="color:#dc2626;">⚠️ <strong>IMPORTANTE:</strong> Troque sua senha no primeiro acesso!</p>`
+      : ``
+
+    const emailBody = `<p>Olá ${fullName}! 🎉</p>
 <p>Sua candidatura foi <strong>APROVADA!</strong></p>
 <p>Aqui estão seus dados de acesso:</p>
 <div style="background:#f3f4f6;padding:16px;border-radius:8px;border-left:4px solid #8B5CF6;margin:16px 0;">
-<p style="margin:4px 0;">📧 <strong>Email:</strong> ${email}</p>
-<p style="margin:4px 0;">🔑 <strong>Senha provisória:</strong> ${tempPassword}</p>
+${credentialsBlock}
 </div>
-<p style="color:#dc2626;">⚠️ <strong>IMPORTANTE:</strong> Troque sua senha no primeiro acesso!</p>
+${importantNote}
 <p>Acesse nosso aplicativo: <a href="${appUrl}/auth">${appUrl.replace('https://', '')}</a></p>
-<hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 24px;" />
-<p style="font-size:14px;color:#333;font-weight:bold;line-height:1.6;">SE NÃO CONSEGUIR ACESSAR, ENTRE EM CONTATO COM O SUPORTE COCONUDI RESPONDENDO ESTE EMAIL OU SE PREFERIR NO WHATSAPP 11 98296-9676</p>
-<div style="text-align:center;margin:24px 0;">
-<a href="https://wa.me/5511982969676?text=${whatsappText}" style="display:inline-block;background-color:#25D366;color:#ffffff;font-weight:bold;font-size:16px;padding:14px 32px;border-radius:8px;text-decoration:none;">📲 Falar no WhatsApp (11) 98296-9676</a>
-</div>
 <p style="margin-top:24px;text-align:center;font-weight:bold;">Equipe COCONUDI 🌴</p>`
 
-      const result = await sendEmailWithRetry(
-        supabaseUrl,
-        serviceRoleKey,
-        email,
-        '🎉 Bem-vindo(a) à família COCONUDI! Seus dados de acesso',
-        emailBody,
-      )
+    const result = await sendEmailWithRetry(
+      supabaseUrl,
+      serviceRoleKey,
+      email,
+      '🎉 Bem-vindo(a) à família COCONUDI! Seus dados de acesso',
+      emailBody,
+    )
 
-      emailSent = result.success
-      emailError = result.error || ''
-    }
+    emailSent = result.success
+    emailError = result.error || ''
 
     console.log(`[approve-creator] ✅ Concluído! email=${email}, conta=${accountCreated ? 'NOVA' : 'EXISTENTE'}, emailEnviado=${emailSent}`)
 

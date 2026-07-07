@@ -83,7 +83,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
 
   return createPortal(
     <>
-    <div
+      <div
       data-modal-root
       className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-sm overflow-y-scroll overscroll-contain ads-modal-scroll"
       onClick={onClose}
@@ -228,7 +228,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
         </div>
       </div>
 
-    </div>,
+      </div>
       {/* Sub-modal fora da área rolável: sempre centralizado no viewport */}
       {selected && (
         <div

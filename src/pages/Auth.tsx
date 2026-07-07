@@ -748,14 +748,11 @@ const Auth = () => {
 
   return (
     <>
-      {/* Background para Mobile */}
+      {/* Background para Mobile — mesma cor da tela de abertura (splash) */}
       <div 
         className="md:hidden min-h-screen flex items-center justify-center p-4"
         style={{
-          backgroundImage: `url(${loginBackgroundMobile})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
+          background: 'radial-gradient(ellipse at center, #6a00b8 0%, #3a0070 45%, #000000 100%)',
           minHeight: '100vh',
           width: '100%'
         }}
@@ -767,12 +764,11 @@ const Auth = () => {
         </div>
       </div>
       
-      {/* Background para Desktop */}
+      {/* Background para Desktop — mesma cor da tela de abertura (splash) */}
       <div 
-        className="hidden md:flex min-h-screen items-center justify-center p-4 bg-cover bg-center bg-no-repeat will-change-contents"
+        className="hidden md:flex min-h-screen items-center justify-center p-4"
         style={{
-          backgroundImage: `url(${loginBackground})`,
-          imageRendering: 'crisp-edges'
+          background: 'radial-gradient(ellipse at center, #6a00b8 0%, #3a0070 45%, #000000 100%)'
         }}
       >
         <div className="relative p-1 rounded-lg will-change-transform" style={{

@@ -69,6 +69,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const userGestureUnlockedRef = useRef(false);
     const bunnyStreamPlaylistUrl = getBunnyStreamPlaylistUrl(src);
     const playbackSrc = bunnyStreamPlaylistUrl || src;
+    const isHlsPlayback = playbackSrc.endsWith('.m3u8');
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -128,7 +129,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = internalRef.current;
       let hls: Hls | null = null;
 
-      if (playbackSrc.endsWith('.m3u8')) {
+      if (isHlsPlayback) {
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = playbackSrc;
         } else if (Hls.isSupported()) {
@@ -155,7 +156,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       return () => {
         if (hls) hls.destroy();
       };
-    }, [playbackSrc, src, internalRef]);
+    }, [playbackSrc, src, internalRef, isHlsPlayback]);
 
     // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {
@@ -284,7 +285,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       retryCountRef.current = 0;
       abortRetryCountRef.current = 0;
       // Forçar commit do src no iOS/Android
-      if (internalRef && 'current' in internalRef && internalRef.current) {
+      if (!isHlsPlayback && internalRef && 'current' in internalRef && internalRef.current) {
         try { internalRef.current.load(); } catch {}
       }
       
@@ -294,7 +295,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
+      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted, isHlsPlayback]);
 
     // Controlar reprodução
     useEffect(() => {

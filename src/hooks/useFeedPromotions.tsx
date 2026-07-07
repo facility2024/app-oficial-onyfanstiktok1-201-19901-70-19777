@@ -161,7 +161,9 @@ export const useFeedPromotions = () => {
   const eligiblePromotions = useMemo(() => {
     const period = getCurrentPeriod();
     const filtered = promotionsTyped.filter((p) => {
-      const cap = Math.max(1, Math.min(3, p.daily_frequency ?? 3));
+      // Se daily_frequency for 0/null/undefined, tratar como 3 (padrão: 3x/dia em todos os períodos)
+      const rawFreq = p.daily_frequency;
+      const cap = !rawFreq || rawFreq <= 0 ? 3 : Math.max(1, Math.min(3, rawFreq));
       const seen = dailyViews[p.id] || 0;
       if (seen >= cap) return false;
       return periodsForFrequency(cap).includes(period);

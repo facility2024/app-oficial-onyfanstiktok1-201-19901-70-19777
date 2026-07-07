@@ -543,6 +543,15 @@ export default function CreatorStudio() {
                   </div>
                 )}
 
+                {/* Áudio de fundo opcional */}
+                <div className="border border-purple-500/30 bg-purple-500/5 rounded-lg p-4">
+                  <AudioUploader
+                    value={formData.audio_url}
+                    onChange={(url) => setFormData((prev) => ({ ...prev, audio_url: url }))}
+                  />
+                </div>
+
+
                 {/* Seleção de Gêneros */}
                 <div>
                   <label className="text-white font-semibold mb-2 block">

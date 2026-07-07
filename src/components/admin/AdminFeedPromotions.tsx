@@ -13,6 +13,18 @@ import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Eye, Image, Video, ExternalLink, Calendar, Clock, Copy, Share2, Link, CheckCircle, Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Detecta se uma URL é vídeo — tolerante a Bunny.net, HLS, paths codificados e querystring
+const detectIsVideo = (raw: string): boolean => {
+  if (!raw) return false;
+  let url = raw.trim();
+  try { url = decodeURIComponent(url); } catch {}
+  const path = url.split('?')[0].split('#')[0].toLowerCase();
+  if (/\.(mp4|webm|ogg|mov|m4v|mkv|avi|m3u8|ts)$/i.test(path)) return true;
+  // Bunny.net stream/pull zones: qualquer indício de vídeo no path
+  if (/b-cdn\.net/i.test(url) && /(mp4|webm|mov|m3u8|\/video\/|\/videos\/|\/stream\/|\/play)/i.test(path)) return true;
+  return false;
+};
+
 interface FeedPromotion {
   id: string;
   title: string;
@@ -485,7 +497,7 @@ export const AdminFeedPromotions = () => {
     if (modelData) modelId = modelData.id;
 
     for (const url of urls) {
-      const isVideo = /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(url);
+      const isVideo = detectIsVideo(url);
       let scheduleDateValue: string | null = null;
       if (!form.send_now && form.schedule_date && form.schedule_time) {
         scheduleDateValue = `${form.schedule_date}T${form.schedule_time}:00`;
@@ -789,7 +801,7 @@ export const AdminFeedPromotions = () => {
                 <Label>URL da Mídia (Imagem/Vídeo) *</Label>
                 <Input value={form.media_url} onChange={(e) => {
                   const url = e.target.value;
-                  const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                  const isVideo = detectIsVideo(url);
                   setForm({ ...form, media_url: url, media_type: isVideo ? 'video' : 'image' });
                 }} placeholder="https://cdn.example.com/media.mp4" className={modalInputClass} />
                 <p className="text-xs text-gray-500 mt-1">Recomendado: 1080x1920px (9:16 vertical)</p>
@@ -836,7 +848,7 @@ export const AdminFeedPromotions = () => {
                     <Label>URL da Mídia do Pop-up (Imagem/Vídeo)</Label>
                     <Input value={form.popup_media_url} onChange={(e) => {
                       const url = e.target.value;
-                      const isVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                      const isVideo = detectIsVideo(url);
                       setForm({ ...form, popup_media_url: url, popup_media_type: isVideo ? 'video' : 'image' });
                     }} placeholder="https://..." className={modalInputClass} />
                   </div>

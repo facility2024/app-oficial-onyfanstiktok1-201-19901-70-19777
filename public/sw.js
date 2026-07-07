@@ -27,13 +27,9 @@ self.addEventListener('activate', (event) => {
         const cacheNames = await caches.keys();
         const appCaches = cacheNames.filter(isAppCache);
         await Promise.allSettled(appCaches.map((name) => caches.delete(name)));
-
-        await self.clients.claim();
-
-        const windowClients = await self.clients.matchAll({ type: 'window' });
-        await Promise.allSettled(
-          windowClients.map((client) => client.navigate(client.url))
-        );
+        // NÃO chamar client.navigate aqui — causava flash + reinício do app
+        // no iOS/Android toda vez que o SW antigo ativava. O index.html já
+        // desregistra qualquer SW no próximo carregamento.
       } finally {
         await self.registration.unregister();
       }

@@ -201,7 +201,7 @@ export default function AdsLatinasModal({ open, onClose }: Props) {
 
       {selected && (
         <div
-          className="fixed inset-0 z-[220] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
           onClick={() => setSelected(null)}
         >
           <div

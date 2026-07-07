@@ -20,8 +20,13 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const BUNNY_LIBRARY_ID = "558340"; // público (aparece nas URLs do CDN)
-const BUNNY_CDN_HOSTNAME = "vz-2342b018-2d3.b-cdn.net"; // público
+const FALLBACK_BUNNY_LIBRARY_ID = "558340"; // público (aparece nas URLs do CDN)
+const FALLBACK_BUNNY_CDN_HOSTNAME = "vz-2342b018-2d3.b-cdn.net"; // público
+
+function normalizeCdnHostname(value: string | undefined | null): string {
+  const raw = (value || FALLBACK_BUNNY_CDN_HOSTNAME).trim();
+  return raw.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+}
 
 async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
@@ -37,7 +42,15 @@ serve(async (req) => {
   }
 
   try {
-    const BUNNY_API_KEY = Deno.env.get("BUNNY_API_KEY");
+    // Bunny Stream usa uma chave por biblioteca. Priorize o secret específico
+    // de Stream para não confundir com Storage Zone/API global.
+    const BUNNY_API_KEY =
+      Deno.env.get("BUNNY_STREAM_API_KEY") || Deno.env.get("BUNNY_API_KEY");
+    const BUNNY_LIBRARY_ID =
+      Deno.env.get("BUNNY_STREAM_LIBRARY_ID") || FALLBACK_BUNNY_LIBRARY_ID;
+    const BUNNY_CDN_HOSTNAME = normalizeCdnHostname(
+      Deno.env.get("BUNNY_STREAM_CDN_URL"),
+    );
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
@@ -150,7 +163,12 @@ serve(async (req) => {
       const txt = await createRes.text();
       console.error("[bunny-video-upload] Falha ao criar vídeo:", txt);
       return new Response(
-        JSON.stringify({ error: "Falha ao criar vídeo no Bunny" }),
+        JSON.stringify({
+          error:
+            createRes.status === 401
+              ? "Chave Bunny Stream inválida para esta biblioteca"
+              : "Falha ao criar vídeo no Bunny",
+        }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

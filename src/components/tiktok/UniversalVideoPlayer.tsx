@@ -1,6 +1,5 @@
 import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Play, RefreshCw } from 'lucide-react';
-import Hls from 'hls.js';
 
 interface UniversalVideoPlayerProps {
   src: string;
@@ -18,9 +17,7 @@ interface UniversalVideoPlayerProps {
   autoPlayOnReady?: boolean; // Nova prop para reprodução automática
 }
 
-const BUNNY_STREAM_LIBRARY_ID = '558340';
-
-const getBunnyStreamPlaylistUrl = (src?: string): string | null => {
+const getBunnyStreamMp4Url = (src?: string): string | null => {
   try {
     const url = new URL(src || '');
     const isBunnyStreamCdn = /^vz-[a-z0-9-]+\.b-cdn\.net$/i.test(url.hostname);
@@ -29,7 +26,7 @@ const getBunnyStreamPlaylistUrl = (src?: string): string | null => {
     const guid = url.pathname.split('/').filter(Boolean)[0];
     if (!/^[0-9a-f-]{36}$/i.test(guid || '')) return null;
 
-    return `${url.origin}/${guid}/playlist.m3u8`;
+    return `${url.origin}/${guid}/play_720p.mp4`;
   } catch {
     return null;
   }
@@ -67,9 +64,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
     const userGestureUnlockedRef = useRef(false);
-    const bunnyStreamPlaylistUrl = getBunnyStreamPlaylistUrl(src);
-    const playbackSrc = bunnyStreamPlaylistUrl || src;
-    const isHlsPlayback = playbackSrc.endsWith('.m3u8');
+    const bunnyStreamMp4Url = getBunnyStreamMp4Url(src);
+    const playbackSrc = bunnyStreamMp4Url || src;
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -123,40 +119,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
     }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted]);
-
-    useEffect(() => {
-      if (!internalRef || !('current' in internalRef) || !internalRef.current) return;
-      const video = internalRef.current;
-      let hls: Hls | null = null;
-
-      if (isHlsPlayback) {
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = playbackSrc;
-        } else if (Hls.isSupported()) {
-          hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: false,
-            maxBufferLength: 30,
-          });
-          hls.loadSource(playbackSrc);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.ERROR, (_event, data) => {
-            if (data.fatal) {
-              setHasError(true);
-              setIsBuffering(false);
-            }
-          });
-        } else {
-          video.src = src;
-        }
-      } else {
-        video.src = playbackSrc;
-      }
-
-      return () => {
-        if (hls) hls.destroy();
-      };
-    }, [playbackSrc, src, internalRef, isHlsPlayback]);
 
     // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {
@@ -285,7 +247,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       retryCountRef.current = 0;
       abortRetryCountRef.current = 0;
       // Forçar commit do src no iOS/Android
-      if (!isHlsPlayback && internalRef && 'current' in internalRef && internalRef.current) {
+      if (internalRef && 'current' in internalRef && internalRef.current) {
         try { internalRef.current.load(); } catch {}
       }
       
@@ -295,7 +257,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted, isHlsPlayback]);
+      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -418,6 +380,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       <div className="relative w-full h-full bg-black">
         <video
           ref={internalRef}
+          src={playbackSrc}
           poster={poster}
           className={`w-full h-full object-contain sm:object-cover ${className}`}
           style={{ backgroundColor: '#000', ...style }}
@@ -426,6 +389,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
           playsInline={true}
           preload="auto"
+          referrerPolicy="origin"
           controls={false}
            onClick={handleUserClick}
           onLoadedData={handleLoadedData}

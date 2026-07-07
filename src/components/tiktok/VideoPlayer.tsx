@@ -64,7 +64,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isInView, setIsInView] = useState(false);
-    const [isBuffering, setIsBuffering] = useState(true);
+    const [isBuffering, setIsBuffering] = useState(false);
 
     const [offer, setOffer] = useState<Offer | null>(null);
     const [showOffer, setShowOffer] = useState(false);
@@ -135,7 +135,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             setIsInView(visible);
           });
         },
-        { root: null, rootMargin: '400px 0px', threshold: [0, 0.1, 0.5, 1] }
+        { root: null, rootMargin: '1500px 0px', threshold: [0, 0.01] }
       );
       observer.observe(el);
       return () => observer.disconnect();

@@ -15,6 +15,7 @@ interface UniversalVideoPlayerProps {
   className?: string;
   style?: React.CSSProperties;
   autoPlayOnReady?: boolean; // Nova prop para reprodução automática
+  audioUrl?: string; // Áudio opcional sobreposto (MP3) — silencia o áudio original
 }
 
 const getBunnyStreamMp4Url = (src?: string): string | null => {

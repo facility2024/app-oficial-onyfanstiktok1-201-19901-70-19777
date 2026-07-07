@@ -102,15 +102,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.backfaceVisibility = 'hidden';
     }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted, userStarted]);
 
-    // Pausar outros vídeos quando este for reproduzido
+    // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {
       const allVideos = document.querySelectorAll('video');
       const currentVideo = internalRef && typeof internalRef === 'object' ? internalRef.current : null;
-      
+
       allVideos.forEach(video => {
         if (video !== currentVideo && !video.paused) {
-          video.pause();
-          video.currentTime = 0;
+          try { video.pause(); } catch {}
         }
       });
     }, [internalRef]);

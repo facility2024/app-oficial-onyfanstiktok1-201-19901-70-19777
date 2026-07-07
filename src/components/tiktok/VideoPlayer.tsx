@@ -9,6 +9,19 @@ import { PremiumContentOverlay } from './PremiumContentOverlay';
 import { ModelSubscriptionOverlay } from './ModelSubscriptionOverlay';
 import { useModelSubscription } from '@/hooks/useModelSubscription';
 import { MediaCarouselPlayer } from './MediaCarouselPlayer';
+
+const getSafeVideoPoster = (thumbnailUrl?: string | null): string | undefined => {
+  const raw = String(thumbnailUrl || '').trim();
+  if (!raw) return undefined;
+
+  const normalized = raw.toLowerCase();
+  if (normalized === '/default-avatar.svg' || normalized.endsWith('/default-avatar.svg')) {
+    return undefined;
+  }
+
+  return raw;
+};
+
 interface VideoPlayerProps {
   video: Video;
   isPlaying: boolean;
@@ -280,7 +293,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             key={video.id}
             ref={ref}
             src={(video as any).video_url}
-            poster={(video as any).thumbnail_url || undefined}
+            poster={getSafeVideoPoster((video as any).thumbnail_url)}
             isPlaying={isPlaying}
             isMuted={isMuted}
             volume={volume}

@@ -2924,13 +2924,29 @@ export const TikTokApp = () => {
       return;
     }
 
-    // Verificar se é um criador primeiro
+    // Verificar se é um criador primeiro (fonte da verdade: videos.creator_id)
     try {
-      console.log('🔍 Verificando se é criador...');
+      console.log('🔍 Verificando se é criador via videos.creator_id...');
       const {
-        data: creatorCheck
-      } = await supabase.from('user_roles' as any).select('user_id').eq('user_id', modelId).eq('role', 'creator').maybeSingle();
-      const isCreator = !!creatorCheck;
+        data: creatorVideoCheck
+      } = await (supabase as any)
+        .from('videos')
+        .select('id')
+        .eq('creator_id', modelId)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      let isCreator = !!creatorVideoCheck;
+      if (!isCreator) {
+        // Fallback: verificar user_roles
+        const { data: roleCheck } = await supabase
+          .from('user_roles' as any)
+          .select('user_id')
+          .eq('user_id', modelId)
+          .eq('role', 'creator')
+          .maybeSingle();
+        isCreator = !!roleCheck;
+      }
       console.log('🎯 É criador?', isCreator);
       if (isCreator) {
         // Buscar perfil do criador

@@ -124,13 +124,19 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     useEffect(() => {
       const el = containerRef.current;
       if (!el) return;
-      // Pré-monta o player antes do vídeo entrar totalmente na viewport
-      // para que o buffer comece cedo e a abertura seja instantânea.
+
+      // Fallback imediato: se o elemento já está visível na montagem
+      // (caso do primeiro vídeo), marca isInView sem esperar o observer.
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      if (rect.bottom > -1500 && rect.top < vh + 1500) {
+        setIsInView(true);
+      }
+
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             const ratio = entry.intersectionRatio || 0;
-            // Mantém montado assim que qualquer parte aparece (preload agressivo)
             const visible = entry.isIntersecting && ratio > 0;
             setIsInView(visible);
           });

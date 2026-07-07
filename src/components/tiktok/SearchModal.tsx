@@ -65,21 +65,27 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
         is_verified: m.is_verified ?? false,
       }));
 
-      // Buscar criadores (via user_roles)
-      console.log('🔍 Buscando criadores...');
-      const { data: creatorRoles, error: rolesError } = await (supabase as any)
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'creator');
+      // 🔥 Buscar criadores diretamente pelos vídeos ativos (fonte da verdade)
+      console.log('🔍 Buscando criadores via videos.creator_id...');
+      const { data: creatorVideoRows, error: creatorVideosError } = await supabase
+        .from('videos')
+        .select('creator_id')
+        .eq('is_active', true)
+        .not('creator_id', 'is', null);
 
-      console.log('📋 Criadores encontrados:', creatorRoles?.length || 0, creatorRoles);
-      if (rolesError) {
-        console.error('❌ Erro ao buscar criadores (RLS?):', rolesError);
+      if (creatorVideosError) {
+        console.error('❌ Erro ao buscar criadores via videos:', creatorVideosError);
       }
 
+      const creatorIdsSet = new Set<string>(
+        (creatorVideoRows || [])
+          .map((r: any) => r.creator_id)
+          .filter((id: string | null) => !!id)
+      );
+
       let creatorsData: any[] = [];
-      if (creatorRoles && creatorRoles.length > 0) {
-        const creatorIds = creatorRoles.map((r: any) => r.user_id);
+      if (creatorIdsSet.size > 0) {
+        const creatorIds = Array.from(creatorIdsSet);
         const { data: creatorsProfiles, error: creatorsError } = await supabase
           .from('profiles')
           .select('id, name, email, avatar_url, bio')
@@ -88,9 +94,10 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
         if (creatorsError) {
           console.error('Error loading creator profiles:', creatorsError);
         }
-        
+
         creatorsData = creatorsProfiles || [];
       }
+      console.log('📋 Criadores encontrados:', creatorsData.length);
 
       // Transformar criadores para formato Model
       const creators = (creatorsData || []).map((c: any) => {

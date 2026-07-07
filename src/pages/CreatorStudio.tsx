@@ -25,8 +25,8 @@ import { CarouselScheduler } from '@/components/admin/CarouselScheduler';
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres').max(500),
-  video_url: z.string().url('URL do vídeo inválida'),
-  thumbnail_url: z.string().url('URL da thumbnail inválida'),
+  video_url: z.string().min(1, 'Envie o vídeo pelo Bunny.net antes de publicar'),
+  thumbnail_url: z.string().optional().or(z.literal('')),
   genres: z.array(z.string()).min(1, 'Selecione pelo menos um gênero'),
 });
 
@@ -656,20 +656,7 @@ export default function CreatorStudio() {
                   )}
                 </div>
 
-                {/* Toggle PRODUTOS EM ALTA */}
-                <div className="flex items-center justify-between p-4 rounded-lg border-2 border-orange-500/30 bg-orange-500/5">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🔥</span>
-                    <div>
-                      <Label className="text-white font-semibold">Marcar como PRODUTOS EM ALTA</Label>
-                      <p className="text-xs text-gray-400 mt-0.5">Seu conteúdo aparecerá em destaque na home do Marketplace</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.is_featured}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                  />
-                </div>
+                {/* Toggle PRODUTOS EM ALTA — removido do criador (sem marketplace) */}
 
                 {/* Preview */}
                 {formData.video_url && formData.thumbnail_url && (
@@ -778,20 +765,7 @@ export default function CreatorStudio() {
               </form>
             </Card>
 
-            {/* Instruções */}
-            <Card className="mt-6 bg-blue-500/10 border-blue-500/30 p-4">
-              <h3 className="text-white font-semibold mb-2 flex items-center">
-                <Video className="w-4 h-4 mr-2" />
-                Como usar o Bunny.net
-              </h3>
-              <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
-                <li>Faça upload do seu vídeo no Bunny.net</li>
-                <li>Faça upload da thumbnail (imagem de capa)</li>
-                <li>Copie as URLs públicas geradas</li>
-                <li>Cole as URLs nos campos acima</li>
-                <li>Clique em "Publicar Vídeo"</li>
-              </ol>
-            </Card>
+            {/* Instruções do Bunny removidas — upload é feito diretamente pelo botão "Enviar para Bunny.net" */}
           </TabsContent>
 
           {/* Tab: Gerenciar Vídeos */}

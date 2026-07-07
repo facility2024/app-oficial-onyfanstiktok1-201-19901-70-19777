@@ -228,7 +228,8 @@ export default function PixCheckoutModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm overflow-y-auto"
+      data-modal-root
+      className="fixed inset-0 z-[10030] bg-black/70 backdrop-blur-sm overflow-y-auto"
       onClick={onClose}
     >
       <div

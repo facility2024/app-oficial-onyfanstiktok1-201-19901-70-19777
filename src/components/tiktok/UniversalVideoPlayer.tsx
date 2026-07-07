@@ -51,7 +51,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     onClick, 
     className = '',
     style = {},
-    autoPlayOnReady = false
+    autoPlayOnReady = false,
+    audioUrl
   }, ref) => {
     const [isBuffering, setIsBuffering] = useState(false);
     const [hasError, setHasError] = useState(false);

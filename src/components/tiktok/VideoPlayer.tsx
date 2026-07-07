@@ -178,21 +178,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     useEffect(() => {
       if (isCarousel) return;
       if (ref && 'current' in ref && ref.current) {
-        const video = ref.current;
-        
-        // Pausar todos os outros vídeos primeiro para evitar conflitos de áudio
-        const allVideos = document.querySelectorAll('video');
-        allVideos.forEach(v => {
-          if (v !== video && !v.paused) {
-            v.pause();
-            v.currentTime = 0;
-          }
-        });
-        
+        const videoEl = ref.current;
+
         if (isPlaying) {
-          video.play().catch(() => {});
+          // Pausa apenas outros vídeos (sem resetar currentTime — evita flicker)
+          document.querySelectorAll('video').forEach((v) => {
+            if (v !== videoEl && !v.paused) {
+              try { v.pause(); } catch {}
+            }
+          });
+          videoEl.play().catch(() => {});
         } else {
-          video.pause();
+          videoEl.pause();
         }
       }
     }, [isPlaying, ref, isCarousel]);

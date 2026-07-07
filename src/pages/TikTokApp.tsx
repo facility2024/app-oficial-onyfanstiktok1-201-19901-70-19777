@@ -1809,17 +1809,32 @@ export const TikTokApp = () => {
           }
         } catch {}
 
-        // 🆕 PIN: vídeos de criadores autenticados nas últimas 24h SEMPRE no topo
-        const DAY_MS = 24 * 60 * 60 * 1000;
+        // 🆕 PIN: vídeos de criadores autenticados recentes SEMPRE no topo
+        // Janela ampliada para 7 dias para garantir que o usuário logado veja
+        // vídeos novos de criadores em várias sessões do dia, mesmo se já viu.
+        const FRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
         const nowTs = Date.now();
         const isFreshCreator = (v: any) => {
           if (!v?.creator_id) return false;
           const t = v.created_at ? new Date(v.created_at).getTime() : 0;
-          return t > 0 && (nowTs - t) <= DAY_MS;
+          return t > 0 && (nowTs - t) <= FRESH_WINDOW_MS;
         };
-        const pinnedFresh = [...rotatedUnwatched, ...watchedCatalog]
+        let pinnedFresh = [...rotatedUnwatched, ...watchedCatalog]
           .filter(isFreshCreator)
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // Rotação por abertura para variar qual vídeo novo aparece primeiro
+        if (pinnedFresh.length > 1) {
+          try {
+            const openCount = parseInt(localStorage.getItem('feed_open_count') || '0', 10) + 1;
+            localStorage.setItem('feed_open_count', String(openCount));
+            const off = openCount % pinnedFresh.length;
+            if (off > 0) {
+              pinnedFresh = [...pinnedFresh.slice(off), ...pinnedFresh.slice(0, off)];
+            }
+          } catch {}
+        }
+
         const pinnedIds = new Set(pinnedFresh.map((v: any) => (v as any)._originalId || v.id));
         const restUnwatched = rotatedUnwatched.filter(
           (v: any) => !pinnedIds.has((v as any)._originalId || v.id)
@@ -1831,6 +1846,7 @@ export const TikTokApp = () => {
         const ordered: any[] = [...pinnedFresh, ...restUnwatched, ...restWatched];
 
         const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
+
 
 
         // Persistir o novo vídeo inicial para evitar repetição na próxima abertura

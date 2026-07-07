@@ -102,15 +102,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.backfaceVisibility = 'hidden';
     }, [internalRef, isIOS, isAndroid, isMobile, src, isMuted, userStarted]);
 
-    // Pausar outros vídeos quando este for reproduzido
+    // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {
       const allVideos = document.querySelectorAll('video');
       const currentVideo = internalRef && typeof internalRef === 'object' ? internalRef.current : null;
-      
+
       allVideos.forEach(video => {
         if (video !== currentVideo && !video.paused) {
-          video.pause();
-          video.currentTime = 0;
+          try { video.pause(); } catch {}
         }
       });
     }, [internalRef]);
@@ -307,8 +306,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const handleLoadStart = useCallback(() => {
       setIsBuffering(true);
-      pauseOtherVideos();
-    }, [pauseOtherVideos]);
+      // NÃO pausar outros vídeos aqui — durante o scroll adjacentes carregam
+      // e pausar todos causa flicker/travamento no mobile.
+    }, []);
     
     // Removido: o desbloqueio global estava escondendo o botão de play antes da interação
     

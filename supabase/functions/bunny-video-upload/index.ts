@@ -87,7 +87,52 @@ serve(async (req) => {
       });
     }
 
-    // ====== Cria o vídeo no Bunny ======
+    // ====== Coleção do criador (organiza vídeos por criador na Bunny) ======
+    let collectionId: string | null = null;
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("bunny_collection_id, username, full_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      collectionId = (profile as any)?.bunny_collection_id || null;
+
+      if (!collectionId) {
+        const creatorName =
+          (profile as any)?.username ||
+          (profile as any)?.full_name ||
+          userId.slice(0, 8);
+        const colRes = await fetch(
+          `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/collections`,
+          {
+            method: "POST",
+            headers: {
+              AccessKey: BUNNY_API_KEY,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ name: `creator-${creatorName}-${userId.slice(0, 8)}` }),
+          },
+        );
+        if (colRes.ok) {
+          const colJson = await colRes.json();
+          collectionId = colJson?.guid || null;
+          if (collectionId) {
+            await supabase
+              .from("profiles")
+              .update({ bunny_collection_id: collectionId })
+              .eq("id", userId);
+          }
+        } else {
+          console.error("[bunny-video-upload] Falha ao criar coleção:", await colRes.text());
+        }
+      }
+    } catch (e) {
+      console.error("[bunny-video-upload] Erro na coleção:", (e as any)?.message || e);
+    }
+
+    // ====== Cria o vídeo no Bunny (dentro da coleção do criador) ======
     const createRes = await fetch(
       `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
       {
@@ -97,7 +142,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify(collectionId ? { title, collectionId } : { title }),
       },
     );
 

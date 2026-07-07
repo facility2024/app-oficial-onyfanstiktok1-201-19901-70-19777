@@ -5874,6 +5874,7 @@ export type Database = {
           bairro: string | null
           billing_name: string | null
           bio: string | null
+          bunny_collection_id: string | null
           cep: string | null
           cidade: string | null
           complemento: string | null
@@ -5907,6 +5908,7 @@ export type Database = {
           bairro?: string | null
           billing_name?: string | null
           bio?: string | null
+          bunny_collection_id?: string | null
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
@@ -5940,6 +5942,7 @@ export type Database = {
           bairro?: string | null
           billing_name?: string | null
           bio?: string | null
+          bunny_collection_id?: string | null
           cep?: string | null
           cidade?: string | null
           complemento?: string | null

@@ -129,6 +129,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
         return {
           video_id: video.id,
           modelo_id: ownerId,
+          creator_id: video.creator_id || null,
           url_bunny: video.video_url,
           data_postagem: video.created_at,
           popularidade: calculatePopularity(video),
@@ -139,7 +140,7 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
           views_count: video.views_count || 0,
           comments_count: video.comments_count || 0,
           tags: video.tags || [],
-        };
+        } as any;
       });
 
       return feedItems;

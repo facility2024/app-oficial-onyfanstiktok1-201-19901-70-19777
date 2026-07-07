@@ -1809,9 +1809,29 @@ export const TikTokApp = () => {
           }
         } catch {}
 
-        const ordered: any[] = [...rotatedUnwatched, ...watchedCatalog];
+        // 🆕 PIN: vídeos de criadores autenticados nas últimas 24h SEMPRE no topo
+        const DAY_MS = 24 * 60 * 60 * 1000;
+        const nowTs = Date.now();
+        const isFreshCreator = (v: any) => {
+          if (!v?.creator_id) return false;
+          const t = v.created_at ? new Date(v.created_at).getTime() : 0;
+          return t > 0 && (nowTs - t) <= DAY_MS;
+        };
+        const pinnedFresh = [...rotatedUnwatched, ...watchedCatalog]
+          .filter(isFreshCreator)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const pinnedIds = new Set(pinnedFresh.map((v: any) => (v as any)._originalId || v.id));
+        const restUnwatched = rotatedUnwatched.filter(
+          (v: any) => !pinnedIds.has((v as any)._originalId || v.id)
+        );
+        const restWatched = watchedCatalog.filter(
+          (v: any) => !pinnedIds.has((v as any)._originalId || v.id)
+        );
+
+        const ordered: any[] = [...pinnedFresh, ...restUnwatched, ...restWatched];
 
         const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
+
 
         // Persistir o novo vídeo inicial para evitar repetição na próxima abertura
         try {

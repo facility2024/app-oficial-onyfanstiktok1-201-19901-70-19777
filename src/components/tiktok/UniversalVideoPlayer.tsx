@@ -15,6 +15,7 @@ interface UniversalVideoPlayerProps {
   className?: string;
   style?: React.CSSProperties;
   autoPlayOnReady?: boolean; // Nova prop para reprodução automática
+  audioUrl?: string; // Áudio opcional sobreposto (MP3) — silencia o áudio original
 }
 
 const getBunnyStreamMp4Url = (src?: string): string | null => {
@@ -50,7 +51,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     onClick, 
     className = '',
     style = {},
-    autoPlayOnReady = false
+    autoPlayOnReady = false,
+    audioUrl
   }, ref) => {
     const [isBuffering, setIsBuffering] = useState(false);
     const [hasError, setHasError] = useState(false);
@@ -58,6 +60,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const [isReady, setIsReady] = useState(false);
     const [userStarted, setUserStarted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const hasAudioOverlay = !!(audioUrl && audioUrl.trim());
     const retryCountRef = useRef(0);
     const maxRetries = 5;
     const autoRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -376,6 +380,36 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }, 500);
     }, [internalRef, isPlaying, attemptPlay]);
 
+    // Sincronizar áudio sobreposto (MP3) com o estado do vídeo
+    useEffect(() => {
+      if (!hasAudioOverlay) return;
+      const audio = audioRef.current;
+      const video = (internalRef && 'current' in internalRef) ? internalRef.current : null;
+      if (!audio || !video) return;
+
+      audio.loop = true;
+      audio.volume = Math.max(0, Math.min(1, volume));
+      audio.muted = isMuted;
+
+      const sync = () => { try { audio.currentTime = video.currentTime; } catch {} };
+      const onPlayEv = () => { sync(); audio.play().catch(() => {}); };
+      const onPauseEv = () => { audio.pause(); };
+      const onSeekEv = () => sync();
+
+      video.addEventListener('play', onPlayEv);
+      video.addEventListener('pause', onPauseEv);
+      video.addEventListener('seeked', onSeekEv);
+
+      if (!video.paused) onPlayEv();
+
+      return () => {
+        video.removeEventListener('play', onPlayEv);
+        video.removeEventListener('pause', onPauseEv);
+        video.removeEventListener('seeked', onSeekEv);
+        audio.pause();
+      };
+    }, [hasAudioOverlay, audioUrl, isMuted, volume, internalRef]);
+
     return (
       <div className="relative w-full h-full bg-black">
         <video
@@ -386,7 +420,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           style={{ backgroundColor: '#000', ...style }}
           autoPlay={false}
           loop={true}
-          muted={isMuted || (isMobile && !userGestureUnlockedRef.current)}
+          muted={hasAudioOverlay ? true : (isMuted || (isMobile && !userGestureUnlockedRef.current))}
           playsInline={true}
           preload="auto"
           controls={false}
@@ -398,6 +432,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           onLoadStart={handleLoadStart}
           
         />
+        {hasAudioOverlay && (
+          <audio ref={audioRef} src={audioUrl} preload="auto" loop />
+        )}
         
         {/* Botão de play para primeira interação - escondido quando playing */}
         {needsUserInteraction && !hasError && (

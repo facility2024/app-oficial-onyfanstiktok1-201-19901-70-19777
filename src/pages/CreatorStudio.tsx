@@ -13,6 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard, Phone, Radio, Settings } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
+import { AudioUploader } from '@/components/creator/AudioUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
 import { CreatorStatsPanel } from '@/components/creator/CreatorStatsPanel';
@@ -66,6 +67,7 @@ export default function CreatorStudio() {
     description: '',
     video_url: '',
     thumbnail_url: '',
+    audio_url: '',
     genres: [] as string[],
     visibility: 'public' as 'public' | 'private',
     is_featured: false,
@@ -275,6 +277,7 @@ export default function CreatorStudio() {
           description: validatedData.description,
           video_url: validatedData.video_url,
           thumbnail_url: validatedData.thumbnail_url,
+          audio_url: formData.audio_url || null,
           creator_id: user.id,  // ID do criador autenticado (oculto)
           model_id: null,       // NULL para criadores
           visibility: formData.visibility,
@@ -294,6 +297,7 @@ export default function CreatorStudio() {
         description: '',
         video_url: '',
         thumbnail_url: '',
+        audio_url: '',
         genres: [],
         visibility: 'public',
         is_featured: false,
@@ -344,6 +348,7 @@ export default function CreatorStudio() {
         description: formData.description,
         video_url: url,
         thumbnail_url: formData.thumbnail_url || url.replace(/\.(mp4|mov|webm)$/i, '.jpg'),
+        audio_url: formData.audio_url || null,
         creator_id: user.id,
         model_id: null,
         visibility: formData.visibility,
@@ -364,6 +369,7 @@ export default function CreatorStudio() {
         description: '',
         video_url: '',
         thumbnail_url: '',
+        audio_url: '',
         genres: [],
         visibility: 'public',
         is_featured: false,
@@ -536,6 +542,15 @@ export default function CreatorStudio() {
                     </div>
                   </div>
                 )}
+
+                {/* Áudio de fundo opcional */}
+                <div className="border border-purple-500/30 bg-purple-500/5 rounded-lg p-4">
+                  <AudioUploader
+                    value={formData.audio_url}
+                    onChange={(url) => setFormData((prev) => ({ ...prev, audio_url: url }))}
+                  />
+                </div>
+
 
                 {/* Seleção de Gêneros */}
                 <div>

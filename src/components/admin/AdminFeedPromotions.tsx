@@ -497,7 +497,7 @@ export const AdminFeedPromotions = () => {
     if (modelData) modelId = modelData.id;
 
     for (const url of urls) {
-      const isVideo = /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(url);
+      const isVideo = detectIsVideo(url);
       let scheduleDateValue: string | null = null;
       if (!form.send_now && form.schedule_date && form.schedule_time) {
         scheduleDateValue = `${form.schedule_date}T${form.schedule_time}:00`;

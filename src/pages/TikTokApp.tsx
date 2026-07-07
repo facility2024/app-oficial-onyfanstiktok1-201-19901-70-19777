@@ -1809,31 +1809,45 @@ export const TikTokApp = () => {
           }
         } catch {}
 
-        // 🆕 PIN: vídeos de criadores autenticados recentes SEMPRE no topo
-        // Janela ampliada para 7 dias para garantir que o usuário logado veja
-        // vídeos novos de criadores em várias sessões do dia, mesmo se já viu.
+        // 🆕 PIN: vídeos recém-enviados por criadoras autenticadas SEMPRE no topo
+        // Isso evita que modelos recém-criadas/sugeridas (ex: catálogo) passem na frente
+        // de um vídeo real que acabou de ser publicado por uma criadora.
         const FRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+        const BRAND_NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
         const nowTs = Date.now();
         const isFreshCreator = (v: any) => {
           if (!v?.creator_id) return false;
           const t = v.created_at ? new Date(v.created_at).getTime() : 0;
           return t > 0 && (nowTs - t) <= FRESH_WINDOW_MS;
         };
+        const isBrandNewCreator = (v: any) => {
+          if (!v?.creator_id) return false;
+          const t = v.created_at ? new Date(v.created_at).getTime() : 0;
+          return t > 0 && (nowTs - t) <= BRAND_NEW_WINDOW_MS;
+        };
         let pinnedFresh = [...rotatedUnwatched, ...watchedCatalog]
           .filter(isFreshCreator)
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          .sort((a, b) => {
+            const brandNewDiff = Number(isBrandNewCreator(b)) - Number(isBrandNewCreator(a));
+            if (brandNewDiff !== 0) return brandNewDiff;
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
 
-        // Rotação por abertura para variar qual vídeo novo aparece primeiro
-        if (pinnedFresh.length > 1) {
+        // Rotação por abertura só para criadoras recentes antigas; vídeos das últimas 24h
+        // ficam fixos primeiro para aparecer também em guia anônima/celular.
+        const brandNewPinned = pinnedFresh.filter(isBrandNewCreator);
+        let rotatingPinned = pinnedFresh.filter((v: any) => !isBrandNewCreator(v));
+        if (rotatingPinned.length > 1) {
           try {
             const openCount = parseInt(localStorage.getItem('feed_open_count') || '0', 10) + 1;
             localStorage.setItem('feed_open_count', String(openCount));
-            const off = openCount % pinnedFresh.length;
+            const off = openCount % rotatingPinned.length;
             if (off > 0) {
-              pinnedFresh = [...pinnedFresh.slice(off), ...pinnedFresh.slice(0, off)];
+              rotatingPinned = [...rotatingPinned.slice(off), ...rotatingPinned.slice(0, off)];
             }
           } catch {}
         }
+        pinnedFresh = [...brandNewPinned, ...rotatingPinned];
 
         const pinnedIds = new Set(pinnedFresh.map((v: any) => (v as any)._originalId || v.id));
         const restUnwatched = rotatedUnwatched.filter(

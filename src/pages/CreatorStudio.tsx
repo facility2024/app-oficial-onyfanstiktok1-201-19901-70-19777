@@ -13,6 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard, Phone, Radio, Settings } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
+import { BunnyBatchUploader } from '@/components/creator/BunnyBatchUploader';
 import { AudioUploader } from '@/components/creator/AudioUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';
@@ -504,15 +505,42 @@ export default function CreatorStudio() {
                     <Video className="w-4 h-4 inline mr-2" />
                     Upload do Vídeo *
                   </label>
-                  <BunnyVideoUploader
-                    onUploadComplete={(videoUrl, thumbnailUrl) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        video_url: videoUrl,
-                        thumbnail_url: thumbnailUrl,
-                      }));
-                    }}
-                  />
+                  <Tabs defaultValue="single" className="w-full">
+                    <TabsList className="grid grid-cols-2 bg-gray-700 mb-3">
+                      <TabsTrigger value="single">1 Vídeo</TabsTrigger>
+                      <TabsTrigger value="batch">🚀 Lote (vários)</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="single">
+                      <BunnyVideoUploader
+                        onUploadComplete={(videoUrl, thumbnailUrl) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            video_url: videoUrl,
+                            thumbnail_url: thumbnailUrl,
+                          }));
+                        }}
+                      />
+                    </TabsContent>
+                    <TabsContent value="batch">
+                      <div className="bg-purple-500/5 border border-purple-500/30 rounded-lg p-3 mb-3">
+                        <p className="text-xs text-purple-300">
+                          ⚡ Envie vários vídeos de uma vez. Cada arquivo vira uma publicação usando o
+                          <strong> título base</strong>, <strong>descrição</strong>, <strong>gêneros</strong> e
+                          <strong> visibilidade</strong> definidos acima. Os vídeos vão para a sua pasta no Bunny.
+                        </p>
+                      </div>
+                      <BunnyBatchUploader
+                        meta={{
+                          titleBase: formData.title,
+                          description: formData.description,
+                          genres: formData.genres,
+                          visibility: formData.visibility,
+                          is_featured: formData.is_featured,
+                          audio_url: formData.audio_url,
+                        }}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </div>
 
                 {/* URLs Preenchidas (readonly) */}

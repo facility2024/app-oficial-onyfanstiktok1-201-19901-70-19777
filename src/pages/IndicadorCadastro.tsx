@@ -129,7 +129,7 @@ export default function IndicadorCadastro() {
           <div className="relative inline-flex items-center justify-center mb-4">
             <div className="absolute inset-0 rounded-full bg-yellow-400/30 blur-3xl animate-pulse" />
             <img
-              src="https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/ChatGPT%20Image%207%20de%20jul.%20de%202026%2C%2022_36_41.png"
+              src="https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/ChatGPT%20Image%207%20de%20jul.%20de%202026%2C%2022_36_54.png"
               alt="Cocon"
               className="relative w-40 h-40 md:w-48 md:h-48 object-contain drop-shadow-[0_0_30px_rgba(250,204,21,0.7)]"
             />

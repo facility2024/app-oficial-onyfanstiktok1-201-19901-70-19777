@@ -13,6 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard, Phone, Radio, Settings } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
+import { BunnyBatchUploader } from '@/components/creator/BunnyBatchUploader';
 import { AudioUploader } from '@/components/creator/AudioUploader';
 import { z } from 'zod';
 import { VideoManagementTable } from '@/components/creator/VideoManagementTable';

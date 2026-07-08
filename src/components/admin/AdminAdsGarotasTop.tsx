@@ -190,6 +190,7 @@ export const AdminAdsGarotasTop = () => {
               <SelectItem value="all">Todas categorias</SelectItem>
               <SelectItem value="garotas_top">Garotas Top</SelectItem>
               <SelectItem value="latinas">Latinas 🌶️</SelectItem>
+              <SelectItem value="novidades">Novidades 🔥</SelectItem>
             </SelectContent>
           </Select>
           {!isCreating && !editingId && (

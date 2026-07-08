@@ -115,6 +115,9 @@ const CheckoutPage = () => {
         body: {
           amount: planPrice,
           product_name: `Assinatura ${queryPlan} - @${privateModelName}`,
+          private_model_id: privateModelId,
+          private_model_type: privateModelType,
+          plan_type: queryPlan,
         },
       });
       if (error) throw error;

@@ -361,12 +361,20 @@ export const AdminReferralProgram = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-4 text-sm">
+                  <div className="flex gap-4 text-sm items-center">
                     <div className="text-center"><div className="text-gray-400 text-xs">Total</div><div className="font-bold text-white">{r.total}</div></div>
                     <div className="text-center"><div className="text-gray-400 text-xs">Aprov.</div><div className="font-bold text-green-400">{r.approved}</div></div>
                     <div className="text-center"><div className="text-gray-400 text-xs">Pend.</div><div className="font-bold text-yellow-400">{r.pending}</div></div>
                     <div className="text-center"><div className="text-gray-400 text-xs">Cocons</div><div className="font-bold text-yellow-400">{r.cocons}</div></div>
                     <div className="text-center"><div className="text-gray-400 text-xs">R$</div><div className="font-bold text-green-400">{r.amount.toFixed(2)}</div></div>
+                    <Button
+                      size="sm"
+                      onClick={() => deleteReferrer(r.user_id, r.name)}
+                      variant="outline"
+                      className="border-red-600 text-red-400 hover:bg-red-950"
+                    >
+                      <X className="w-4 h-4 mr-1" /> Excluir
+                    </Button>
                   </div>
                 </div>
               </Card>

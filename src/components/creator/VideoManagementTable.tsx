@@ -3,12 +3,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe, Flame } from 'lucide-react';
+import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe, Flame, Loader2 } from 'lucide-react';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { EditVideoModal } from './EditVideoModal';
 import { DeleteVideoDialog } from './DeleteVideoDialog';
+import { toast } from 'sonner';
 
 export const VideoManagementTable = () => {
   const {
@@ -23,10 +25,38 @@ export const VideoManagementTable = () => {
     toggleVideoActive,
     toggleVideoPremium,
     toggleVideoFeatured,
+    deleteVideo,
   } = useCreatorVideos();
 
   const [editingVideo, setEditingVideo] = useState<CreatorVideo | null>(null);
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState(false);
+
+  const allSelected = videos.length > 0 && selectedIds.size === videos.length;
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(videos.map((v) => v.id)));
+  };
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    let ok = 0, fail = 0;
+    for (const id of Array.from(selectedIds)) {
+      const success = await deleteVideo(id);
+      success ? ok++ : fail++;
+    }
+    setBulkDeleting(false);
+    setConfirmBulk(false);
+    setSelectedIds(new Set());
+    toast.success(`${ok} vídeo(s) excluído(s)${fail ? ` — ${fail} falharam` : ''}`);
+  };
 
   if (loading) {
     return (
@@ -95,9 +125,38 @@ export const VideoManagementTable = () => {
         </Card>
       ) : (
         <div className="space-y-4">
+          {/* Barra de seleção em massa */}
+          <Card className="p-3 bg-gray-800/50 border-gray-700 flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
+              <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+              Selecionar todos ({videos.length})
+            </label>
+            {selectedIds.size > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={bulkDeleting}
+                onClick={() => setConfirmBulk(true)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {bulkDeleting ? (
+                  <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Excluindo...</>
+                ) : (
+                  <><Trash2 className="w-3 h-3 mr-1" /> Excluir selecionados ({selectedIds.size})</>
+                )}
+              </Button>
+            )}
+          </Card>
+
           {videos.map((video) => (
-            <Card key={video.id} className="p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
+            <Card key={video.id} className={`p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors ${selectedIds.has(video.id) ? 'ring-2 ring-red-500/50' : ''}`}>
               <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex items-start pt-1">
+                  <Checkbox
+                    checked={selectedIds.has(video.id)}
+                    onCheckedChange={() => toggleOne(video.id)}
+                  />
+                </div>
                 {/* Thumbnail */}
                 <div className="w-full md:w-32 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-900">
                   <video
@@ -252,6 +311,27 @@ export const VideoManagementTable = () => {
           open={!!deletingVideoId}
           onClose={() => setDeletingVideoId(null)}
         />
+      )}
+
+      {confirmBulk && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => !bulkDeleting && setConfirmBulk(false)}>
+          <Card className="p-6 bg-gray-800 border-gray-700 max-w-md w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> Excluir {selectedIds.size} vídeo(s)?
+            </h3>
+            <p className="text-sm text-gray-300">
+              Esta ação é permanente e removerá os vídeos do banco de dados.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmBulk(false)} disabled={bulkDeleting} className="border-gray-600 text-white">
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-red-600 hover:bg-red-700">
+                {bulkDeleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Excluindo...</> : 'Confirmar exclusão'}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );

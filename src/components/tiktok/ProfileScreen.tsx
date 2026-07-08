@@ -354,12 +354,9 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
             .order('created_at', { ascending: false })
             .limit(50);
 
-          // Aplicar filtro correto baseado no tipo
-          if (isUserCreator) {
-            videosQuery = videosQuery.eq('creator_id', user.id);
-          } else {
-            videosQuery = videosQuery.eq('model_id', user.id);
-          }
+          // Aceitar tanto creator_id quanto model_id (independente de RLS em user_roles)
+          videosQuery = videosQuery.or(`creator_id.eq.${user.id},model_id.eq.${user.id}`);
+
 
           return await videosQuery;
         })(),

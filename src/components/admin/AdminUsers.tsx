@@ -225,11 +225,44 @@ export const AdminUsers = () => {
       const { error } = await (supabase as any).rpc('admin_delete_user', { p_user_id: userId });
       if (error) throw error;
       setAllUsers(prev => prev.filter((u: any) => u.id !== userId));
+      setSelectedUserIds(prev => { const n = new Set(prev); n.delete(userId); return n; });
       toast.success('Usuário excluído do banco');
     } catch (e: any) {
       console.error(e);
       toast.error(`Erro ao excluir: ${e.message || 'tente novamente'}`);
     }
+  };
+
+  const toggleUserSelected = (id: string) => {
+    setSelectedUserIds(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+
+  const toggleSelectAllOnPage = (ids: string[], checked: boolean) => {
+    setSelectedUserIds(prev => {
+      const n = new Set(prev);
+      ids.forEach(id => { checked ? n.add(id) : n.delete(id); });
+      return n;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedUserIds);
+    if (!ids.length) return;
+    if (!window.confirm(`Excluir permanentemente ${ids.length} usuário(s) do banco? Ação irreversível.`)) return;
+    setBulkDeleting(true);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      const { error } = await (supabase as any).rpc('admin_delete_user', { p_user_id: id });
+      if (error) { fail++; console.error('Falha ao excluir', id, error); } else ok++;
+    }
+    setAllUsers(prev => prev.filter((u: any) => !selectedUserIds.has(u.id)));
+    setSelectedUserIds(new Set());
+    setBulkDeleting(false);
+    toast.success(`${ok} excluído(s)${fail ? ` · ${fail} falha(s)` : ''}`);
   };
 
   // Funções de ação VIP

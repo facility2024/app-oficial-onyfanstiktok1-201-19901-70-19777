@@ -1026,8 +1026,8 @@ if (!isOpen) return null;
                 return (
                   <div className="grid grid-cols-3 gap-1">
                     {currentContents.map((content) => {
-                      const isPrivate = false;
-                      const isLocked = false;
+                      const isPrivate = activeTab === 'private';
+                      const isLocked = isPrivate && !isPremium && !isOwnProfile;
                       const bunnyEmbedUrl = toBunnyStreamEmbedUrl(content.video_url, {
                         autoplay: false,
                         muted: true,

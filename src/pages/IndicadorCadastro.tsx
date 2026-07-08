@@ -117,7 +117,7 @@ export default function IndicadorCadastro() {
 
   return (
     <div
-      className="min-h-[100dvh] text-white flex flex-col items-center justify-center p-4 bg-gray-950 bg-cover bg-center bg-no-repeat bg-fixed relative"
+      className="min-h-[100dvh] w-full overflow-y-auto text-white flex flex-col items-center px-4 py-6 sm:py-10 bg-gray-950 bg-cover bg-center bg-no-repeat relative"
       style={{
         backgroundImage:
           "linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)), url('https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png')",

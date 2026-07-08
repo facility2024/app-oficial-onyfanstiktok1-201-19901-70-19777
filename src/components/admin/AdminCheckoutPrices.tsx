@@ -78,6 +78,16 @@ export default function AdminCheckoutPrices() {
                   className="bg-black/40 border-fuchsia-500/40 text-white"
                 />
               </div>
+              <div>
+                <Label className="text-white">Novidades 🔥 (R$)</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={novidades}
+                  onChange={(e) => setNovidades(e.target.value)}
+                  className="bg-black/40 border-fuchsia-500/40 text-white"
+                />
+              </div>
             </div>
             <Button
               onClick={save}

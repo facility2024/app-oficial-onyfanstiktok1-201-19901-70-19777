@@ -146,6 +146,40 @@ export const ModelSubscriptionOverlay: React.FC<ModelSubscriptionOverlayProps> =
                   )}
                 </div>
               </div>
+        {isLoggedIn === false && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-3 flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.35)]"
+          >
+            <LogIn className="w-4 h-4 shrink-0" />
+            <p className="text-xs font-semibold">
+              🔒 Faça login para desbloquear o acesso. Você voltará para este vídeo depois.
+            </p>
+          </motion.div>
+        )}
+
+        <div className="space-y-2 mb-4">
+          {plans.map((plan, index) => (
+            <motion.button
+              key={plan.id}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 + index * 0.1 }}
+              onClick={() => handleSubscribe(plan)}
+              className="w-full p-3 rounded-xl border transition-all duration-200 flex items-center justify-between bg-gradient-to-r from-purple-500/20 to-purple-600/20 border-purple-500 hover:border-purple-400"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-purple-500">
+                  <Lock className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-medium">{getPlanLabel(plan.plan_type)}</p>
+                  {plan.discount_label && (
+                    <span className="text-xs text-green-400">{plan.discount_label}</span>
+                  )}
+                </div>
+              </div>
               <span className="text-lg font-bold text-white">{formatPrice(plan.price)}</span>
             </motion.button>
           ))}

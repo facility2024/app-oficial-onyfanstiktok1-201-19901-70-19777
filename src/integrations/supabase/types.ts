@@ -8758,6 +8758,7 @@ export type Database = {
         Returns: string
       }
       admin_delete_model: { Args: { p_model_id: string }; Returns: undefined }
+      admin_delete_referrer: { Args: { p_user_id: string }; Returns: undefined }
       admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
       approve_referral: { Args: { p_referral_id: string }; Returns: boolean }
       atualizar_localizacao_usuario: {

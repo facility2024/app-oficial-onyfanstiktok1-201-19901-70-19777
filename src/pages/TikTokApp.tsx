@@ -2970,7 +2970,7 @@ export const TikTokApp = () => {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
       emblaApi?.scrollTo(modelVideoIndex);
-      setShowProfile(true);
+      // Não abre perfil — busca leva direto ao vídeo no feed
       return;
     }
 
@@ -3056,9 +3056,8 @@ export const TikTokApp = () => {
         const newVideos = [enrichedVideo, ...videos];
         setVideos(newVideos as Video[]);
         setCurrentVideoIndex(0);
-        emblaApi?.scrollTo(0);
-        setShowProfile(true);
-        console.log('✅ Vídeo do criador carregado e perfil aberto');
+        setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+        console.log('✅ Vídeo do criador carregado direto no feed');
         return;
       }
 
@@ -3126,9 +3125,8 @@ export const TikTokApp = () => {
           const newVideos = [enrichedVideo, ...videos];
           setVideos(newVideos as Video[]);
           setCurrentVideoIndex(0);
-          emblaApi?.scrollTo(0);
-          setShowProfile(true);
-          console.log('✅ Post agendado carregado e perfil aberto');
+          setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+          console.log('✅ Post agendado carregado direto no feed');
           return;
         }
 
@@ -3177,9 +3175,8 @@ export const TikTokApp = () => {
           const newVideos = [enrichedVideo, ...videos];
           setVideos(newVideos as Video[]);
           setCurrentVideoIndex(0);
-          emblaApi?.scrollTo(0);
-          setShowProfile(true);
-          console.log('✅ Post principal carregado e perfil aberto');
+          setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+          console.log('✅ Post principal carregado direto no feed');
           return;
         }
 
@@ -3214,9 +3211,8 @@ export const TikTokApp = () => {
         const newVideos = [placeholderVideo, ...videos];
         setVideos(newVideos as Video[]);
         setCurrentVideoIndex(0);
-        emblaApi?.scrollTo(0);
-        setShowProfile(true);
-        console.log('✅ Perfil da modelo aberto (sem vídeo)');
+        setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+        console.log('✅ Placeholder carregado direto no feed (sem vídeo)');
         return;
       }
 
@@ -3253,9 +3249,8 @@ export const TikTokApp = () => {
       const newVideos = [enrichedVideo, ...videos];
       setVideos(newVideos as Video[]);
       setCurrentVideoIndex(0);
-      emblaApi?.scrollTo(0);
-      setShowProfile(true);
-      console.log('✅ Vídeo da modelo carregado e perfil aberto');
+      setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+      console.log('✅ Vídeo da modelo carregado direto no feed');
     } catch (error) {
       console.error('❌ Erro ao carregar vídeo da modelo:', error);
     }

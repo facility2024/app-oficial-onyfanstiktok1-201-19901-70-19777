@@ -300,6 +300,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       )}
 
       <AdsLatinasModal open={showLatinas} onClose={() => setShowLatinas(false)} />
+      <AdsNovidadesModal open={showNovidades} onClose={() => setShowNovidades(false)} />
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}

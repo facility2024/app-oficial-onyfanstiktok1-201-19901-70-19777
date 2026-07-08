@@ -3056,7 +3056,7 @@ export const TikTokApp = () => {
         const newVideos = [enrichedVideo, ...videos];
         setVideos(newVideos as Video[]);
         setCurrentVideoIndex(0);
-        emblaApi?.scrollTo(0);
+        setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
         console.log('✅ Vídeo do criador carregado direto no feed');
         return;
       }
@@ -3125,7 +3125,7 @@ export const TikTokApp = () => {
           const newVideos = [enrichedVideo, ...videos];
           setVideos(newVideos as Video[]);
           setCurrentVideoIndex(0);
-          emblaApi?.scrollTo(0);
+          setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
           console.log('✅ Post agendado carregado direto no feed');
           return;
         }
@@ -3175,7 +3175,7 @@ export const TikTokApp = () => {
           const newVideos = [enrichedVideo, ...videos];
           setVideos(newVideos as Video[]);
           setCurrentVideoIndex(0);
-          emblaApi?.scrollTo(0);
+          setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
           console.log('✅ Post principal carregado direto no feed');
           return;
         }
@@ -3211,7 +3211,7 @@ export const TikTokApp = () => {
         const newVideos = [placeholderVideo, ...videos];
         setVideos(newVideos as Video[]);
         setCurrentVideoIndex(0);
-        emblaApi?.scrollTo(0);
+        setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
         console.log('✅ Placeholder carregado direto no feed (sem vídeo)');
         return;
       }
@@ -3249,7 +3249,7 @@ export const TikTokApp = () => {
       const newVideos = [enrichedVideo, ...videos];
       setVideos(newVideos as Video[]);
       setCurrentVideoIndex(0);
-      emblaApi?.scrollTo(0);
+      setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
       console.log('✅ Vídeo da modelo carregado direto no feed');
     } catch (error) {
       console.error('❌ Erro ao carregar vídeo da modelo:', error);

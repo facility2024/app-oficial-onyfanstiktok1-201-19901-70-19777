@@ -11,6 +11,7 @@ import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
+import { ModelSubscriptionOverlay } from '@/components/tiktok/ModelSubscriptionOverlay';
 
 
 interface ProfileScreenProps {

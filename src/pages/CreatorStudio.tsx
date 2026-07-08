@@ -736,17 +736,14 @@ export default function CreatorStudio() {
                       </div>
                       <div className="w-24">
                         <p className="text-xs text-gray-400 mb-1">Thumb:</p>
-                        {previewBunnyEmbedUrl ? (
-                          <div className="w-24 h-40 rounded-md bg-gray-900 flex items-center justify-center border border-gray-700">
-                            <Video className="w-8 h-8 text-green-400" />
-                          </div>
-                        ) : (
-                          <img
-                            src={formData.thumbnail_url}
-                            alt="Preview"
-                            className="w-24 h-40 object-cover rounded-md bg-black"
-                          />
-                        )}
+                        <img
+                          src={formData.thumbnail_url}
+                          alt="Preview"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                          className="w-24 h-40 object-cover rounded-md bg-black"
+                        />
                       </div>
                     </div>
                   </div>

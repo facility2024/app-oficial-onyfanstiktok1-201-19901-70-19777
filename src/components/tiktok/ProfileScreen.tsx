@@ -308,7 +308,10 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         const age = Date.now() - parseInt(cacheTime);
         if (age < 30000) {
           const cachedData = JSON.parse(cached);
-          setContents(cachedData.contents);
+          const cachedContents = Array.isArray(cachedData.contents) ? cachedData.contents : [];
+          setContents(cachedContents);
+          setPublicContents(cachedData.publicContents || cachedContents.filter((v: ModelContent) => v.visibility === 'public' || !v.visibility));
+          setPrivateContents(cachedData.privateContents || cachedContents.filter((v: ModelContent) => v.visibility && v.visibility !== 'public'));
           setPanelUrl(cachedData.panelUrl);
           // mantém dados em tela, mas continua buscando do banco para atualizar likes em tempo real
         }
@@ -350,7 +353,6 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
               visibility
             `)
             .eq('is_active', true)
-            .or('visibility.eq.public,visibility.is.null')
             .order('created_at', { ascending: false })
             .limit(50);
 
@@ -436,7 +438,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         likes_count: likesMap[item.id] ?? item.likes_count ?? 0,
         views_count: item.views_count || 0,
         created_at: item.created_at,
-        visibility: 'public' as 'public' | 'premium' | 'private'
+        visibility: (item.visibility || 'public') as 'public' | 'premium' | 'private'
       }));
 
       // Buscar imagens específicas da modelo (usando localStorage como cache temporário)
@@ -499,6 +501,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       // Cache the results for faster subsequent loads
       sessionStorage.setItem(cacheKey, JSON.stringify({
         contents: allContent,
+        publicContents: publicVideos,
+        privateContents: privateVideos,
         panelUrl: modelData?.posting_panel_url || null
       }));
       sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
@@ -1233,7 +1237,9 @@ if (!isOpen) return null;
 
       {/* Popup de vídeos do perfil com swipe esquerda/direita */}
       <ProfileVideoModal
-        videos={publicContents.filter(c => c.type === 'video').map(c => ({ id: c.id, video_url: c.video_url, title: c.title }))}
+        videos={(activeTab === 'private' ? privateContents : publicContents)
+          .filter(c => c.type === 'video')
+          .map(c => ({ id: c.id, video_url: c.video_url, title: c.title }))}
         initialIndex={videoModalIndex}
         isOpen={videoModalOpen}
         onClose={() => setVideoModalOpen(false)}

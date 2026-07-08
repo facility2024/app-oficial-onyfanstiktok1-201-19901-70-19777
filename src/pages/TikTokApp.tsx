@@ -1191,6 +1191,7 @@ export const TikTokApp = () => {
           .from('videos')
           .select('*')
           .eq('is_active', true)
+          .or('visibility.eq.public,visibility.is.null')
           .order('created_at', { ascending: false })
           .range(0, 999);
         if (err1) {
@@ -1203,6 +1204,7 @@ export const TikTokApp = () => {
               .from('videos')
               .select('*')
               .eq('is_active', true)
+              .or('visibility.eq.public,visibility.is.null')
               .order('created_at', { ascending: false })
               .range(1000, 1999);
             if (batch2 && batch2.length > 0) {

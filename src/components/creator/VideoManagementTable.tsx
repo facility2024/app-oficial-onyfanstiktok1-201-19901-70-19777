@@ -312,6 +312,27 @@ export const VideoManagementTable = () => {
           onClose={() => setDeletingVideoId(null)}
         />
       )}
+
+      {confirmBulk && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => !bulkDeleting && setConfirmBulk(false)}>
+          <Card className="p-6 bg-gray-800 border-gray-700 max-w-md w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> Excluir {selectedIds.size} vídeo(s)?
+            </h3>
+            <p className="text-sm text-gray-300">
+              Esta ação é permanente e removerá os vídeos do banco de dados.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmBulk(false)} disabled={bulkDeleting} className="border-gray-600 text-white">
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-red-600 hover:bg-red-700">
+                {bulkDeleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Excluindo...</> : 'Confirmar exclusão'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

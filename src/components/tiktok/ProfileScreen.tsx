@@ -349,6 +349,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
               visibility
             `)
             .eq('is_active', true)
+            .or('visibility.eq.public,visibility.is.null')
             .order('created_at', { ascending: false })
             .limit(50);
 

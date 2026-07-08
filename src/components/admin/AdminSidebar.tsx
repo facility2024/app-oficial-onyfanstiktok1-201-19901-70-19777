@@ -22,7 +22,8 @@ import {
   Phone,
   Megaphone,
   Radio,
-  Mail
+  Mail,
+  Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -112,6 +113,7 @@ const navigationGroups = [
     items: [
       { id: 'money', label: 'Financeiro', icon: DollarSign },
       { id: 'affiliates', label: 'Afiliados', icon: UserPlus },
+      { id: 'referral-program', label: 'Programa de Indicação (Cocons)', icon: Coins },
       { id: 'vip', label: 'Usuários Conteúdo Privado', icon: Crown },
       { id: 'model-subscriptions', label: 'Assinaturas Modelos', icon: Crown },
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },

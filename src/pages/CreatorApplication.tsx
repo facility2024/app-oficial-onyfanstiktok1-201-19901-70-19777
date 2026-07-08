@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useCreatorRole } from '@/hooks/useUserRoles';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,6 +84,8 @@ export default function CreatorApplication() {
   const { user, profile, loading: userLoading } = useCurrentUser();
   const { isCreator, loading: roleLoading } = useCreatorRole();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref');
   const [loading, setLoading] = useState(false);
   const [existingApplication, setExistingApplication] = useState<any>(null);
   const [showTerms, setShowTerms] = useState(false);

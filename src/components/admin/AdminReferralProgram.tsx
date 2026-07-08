@@ -158,6 +158,21 @@ export const AdminReferralProgram = () => {
     loadAll();
   };
 
+  const deleteReferrer = async (userId: string, name: string) => {
+    if (!confirm(`Excluir o indicador "${name}"?\n\nIsso removerá TODAS as indicações e dados de pagamento dele do banco de dados. Ação irreversível.`)) return;
+    try {
+      await (supabase as any).from('referrals').delete().eq('referrer_id', userId);
+      await (supabase as any).from('referral_link_clicks').delete().eq('referrer_id', userId);
+      await (supabase as any).from('referrer_payout_info').delete().eq('user_id', userId);
+      const { error } = await supabase.from('profiles').update({ referral_code: null } as any).eq('id', userId);
+      if (error) throw error;
+      toast.success('Indicador excluído do programa.');
+      loadAll();
+    } catch (e: any) {
+      toast.error('Erro ao excluir: ' + e.message);
+    }
+  };
+
   const filtered = referrals.filter(r => filter === 'all' || r.status === filter);
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;

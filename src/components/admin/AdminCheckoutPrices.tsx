@@ -12,12 +12,14 @@ export default function AdminCheckoutPrices() {
   const [saving, setSaving] = useState(false);
   const [garotas, setGarotas] = useState("14.97");
   const [latinas, setLatinas] = useState("14.97");
+  const [novidades, setNovidades] = useState("14.97");
 
   useEffect(() => {
     (async () => {
       const p = await fetchCheckoutPrices();
       setGarotas(p.garotas_top.toFixed(2));
       setLatinas(p.latinas.toFixed(2));
+      setNovidades(p.novidades.toFixed(2));
       setLoading(false);
     })();
   }, []);
@@ -25,13 +27,14 @@ export default function AdminCheckoutPrices() {
   const save = async () => {
     const g = Number(garotas.replace(",", "."));
     const l = Number(latinas.replace(",", "."));
-    if (!(g > 0) || !(l > 0)) {
+    const n = Number(novidades.replace(",", "."));
+    if (!(g > 0) || !(l > 0) || !(n > 0)) {
       toast.error("Informe valores maiores que zero");
       return;
     }
     setSaving(true);
     try {
-      await saveCheckoutPrices({ garotas_top: g, latinas: l });
+      await saveCheckoutPrices({ garotas_top: g, latinas: l, novidades: n });
       toast.success("Preços atualizados!");
     } catch (e: any) {
       toast.error(e?.message || "Erro ao salvar");

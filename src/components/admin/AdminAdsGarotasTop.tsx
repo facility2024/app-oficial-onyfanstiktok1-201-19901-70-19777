@@ -10,14 +10,16 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, X, Loader2 } from "lucide-react";
 
 
-type Categoria = "garotas_top" | "latinas";
+type Categoria = "garotas_top" | "latinas" | "novidades";
 const TABLE_BY_CAT: Record<Categoria, string> = {
   garotas_top: "ads_garotas_top",
   latinas: "ads_latinas",
+  novidades: "ads_novidades",
 };
 const CAT_LABEL: Record<Categoria, string> = {
   garotas_top: "Garotas Top",
   latinas: "Latinas 🌶️",
+  novidades: "Novidades 🔥",
 };
 
 interface CardItem {

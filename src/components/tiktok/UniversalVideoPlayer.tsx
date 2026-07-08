@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Play, RefreshCw } from 'lucide-react';
+import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 
 interface UniversalVideoPlayerProps {
   src: string;
@@ -17,21 +18,6 @@ interface UniversalVideoPlayerProps {
   autoPlayOnReady?: boolean; // Nova prop para reprodução automática
   audioUrl?: string; // Áudio opcional sobreposto (MP3) — silencia o áudio original
 }
-
-const getBunnyStreamMp4Url = (src?: string): string | null => {
-  try {
-    const url = new URL(src || '');
-    const isBunnyStreamCdn = /^vz-[a-z0-9-]+\.b-cdn\.net$/i.test(url.hostname);
-    if (!isBunnyStreamCdn) return null;
-
-    const guid = url.pathname.split('/').filter(Boolean)[0];
-    if (!/^[0-9a-f-]{36}$/i.test(guid || '')) return null;
-
-    return `${url.origin}/${guid}/play_720p.mp4`;
-  } catch {
-    return null;
-  }
-};
 
 /**
  * Player de vídeo universal que funciona em todos os dispositivos
@@ -68,8 +54,15 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
     const userGestureUnlockedRef = useRef(false);
-    const bunnyStreamMp4Url = getBunnyStreamMp4Url(src);
-    const playbackSrc = bunnyStreamMp4Url || src;
+    const bunnyEmbedUrl = toBunnyStreamEmbedUrl(src, {
+      autoplay: isPlaying || autoPlayOnReady,
+      muted: isMuted || isMobile,
+      loop: true,
+      preload: isPlaying || autoPlayOnReady,
+      responsive: true,
+      compactControls: true,
+    });
+    const playbackSrc = src;
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
@@ -238,6 +231,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Configurar vídeo quando o src mudar
     useEffect(() => {
+      if (bunnyEmbedUrl) return;
       setupVideo();
       setIsReady(false);
       setHasError(false);
@@ -261,10 +255,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted]);
+      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted, bunnyEmbedUrl]);
 
     // Controlar reprodução
     useEffect(() => {
+      if (bunnyEmbedUrl) return;
       if (!internalRef || !('current' in internalRef) || !internalRef.current) return;
 
       const video = internalRef.current;
@@ -276,15 +271,20 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady]);
+    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady, bunnyEmbedUrl]);
 
     // Controlar mute e volume
     useEffect(() => {
+      if (bunnyEmbedUrl) return;
       if (internalRef && 'current' in internalRef && internalRef.current) {
         internalRef.current.muted = isMuted;
         internalRef.current.volume = volume;
       }
-    }, [isMuted, volume, internalRef]);
+    }, [isMuted, volume, internalRef, bunnyEmbedUrl]);
+
+    if (bunnyEmbedUrl) {
+      return (
+        <div className=
 
     // Event handlers
     const handleLoadedData = useCallback(() => {

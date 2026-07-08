@@ -11,8 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 // assinatura TUS de uso único (expira em 1h). O upload resumable acontece
 // direto do navegador para o Bunny usando essa assinatura — a chave nunca
 // é exposta ao client.
-const BUNNY_CDN_HOSTNAME = 'vz-2342b018-2d3.b-cdn.net'; // público (aparece nas URLs do CDN)
-
 interface BunnyVideoUploaderProps {
   onUploadComplete: (videoUrl: string, thumbnailUrl: string) => void;
   onUploadStart?: () => void;
@@ -141,24 +139,9 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
       setUploadStatus('success');
       toast.success('Vídeo enviado! Já está no painel — o Bunny finaliza o processamento em segundo plano. 🎉');
 
-      // Devolve as URLs imediatamente para o painel do criador. O playlist.m3u8
-      // e a thumbnail.jpg ficam válidos assim que o Bunny termina o encoding
-      // (poucos segundos após o upload) — não bloqueamos a UI esperando.
+      // Devolve o link do player oficial imediatamente. Link direto playlist.m3u8
+      // pode dar 403 quando Direct Play está bloqueado na Bunny.
       onUploadComplete(videoUrl, thumbnailUrl);
-
-      // Verificação opcional em segundo plano — apenas informa quando pronto.
-      (async () => {
-        for (let i = 0; i < 24; i++) {
-          try {
-            const head = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
-            if (head.ok) {
-              toast.success('Vídeo transcodificado e disponível no CDN!');
-              return;
-            }
-          } catch {}
-          await new Promise((r) => setTimeout(r, 5000));
-        }
-      })();
     } catch (error: any) {
       console.error('Erro no upload:', error);
       setUploadStatus('error');

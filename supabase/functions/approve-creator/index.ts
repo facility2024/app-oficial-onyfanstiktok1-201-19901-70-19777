@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     let nickname: string
     let whatsapp: string
     let userId: string | null = null
+    let referredBy: string | null = null
 
     if (application_id) {
       const { data: application, error: appError } = await adminClient
@@ -164,6 +165,7 @@ Deno.serve(async (req) => {
       nickname = application.nickname
       whatsapp = application.whatsapp
       userId = application.user_id
+      referredBy = application.referred_by || null
     } else if (directEmail) {
       email = normalizeEmail(directEmail)
       fullName = directName || email.split('@')[0]
@@ -254,6 +256,24 @@ Deno.serve(async (req) => {
           user_id: userId,
         })
         .eq('id', application_id)
+    }
+
+    // Creditar bônus ao indicador (Cocons/Nudix) se houver referred_by
+    if (referredBy && userId) {
+      try {
+        const { data: rpcData, error: rpcErr } = await adminClient.rpc('process_referral_completion', {
+          p_referrer_id: referredBy,
+          p_referred_id: userId,
+          p_referred_email: email,
+        })
+        if (rpcErr) {
+          console.error('[approve-creator] ❌ Erro ao processar bônus indicação:', rpcErr.message)
+        } else {
+          console.log(`[approve-creator] 💰 Bônus creditado ao indicador ${referredBy}. RPC=${JSON.stringify(rpcData)}`)
+        }
+      } catch (e: any) {
+        console.error('[approve-creator] ❌ Exceção bônus indicação:', e.message)
+      }
     }
 
     // Send approval email

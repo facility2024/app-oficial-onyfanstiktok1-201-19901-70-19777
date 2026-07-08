@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useCreatorRole } from '@/hooks/useUserRoles';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,6 +84,8 @@ export default function CreatorApplication() {
   const { user, profile, loading: userLoading } = useCurrentUser();
   const { isCreator, loading: roleLoading } = useCreatorRole();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref');
   const [loading, setLoading] = useState(false);
   const [existingApplication, setExistingApplication] = useState<any>(null);
   const [showTerms, setShowTerms] = useState(false);
@@ -110,6 +112,10 @@ export default function CreatorApplication() {
       }, 1500);
     }
   }, [isCreator, roleLoading, navigate]);
+
+  useEffect(() => {
+    if (refCode) localStorage.setItem('pending_referral_code', refCode.toUpperCase());
+  }, [refCode]);
 
   useEffect(() => {
     // Aguardar o carregamento do usuário antes de verificar
@@ -242,6 +248,15 @@ export default function CreatorApplication() {
     try {
       const validatedData = applicationSchema.parse(formData);
 
+      // Resolver indicador via ?ref=CODE
+      let referrerId: string | null = null;
+      const code = refCode || localStorage.getItem('pending_referral_code');
+      if (code) {
+        const { data: ref } = await (supabase as any)
+          .from('profiles').select('id').ilike('referral_code', code).maybeSingle();
+        if (ref) referrerId = ref.id;
+      }
+
       const { error: insertError } = await (supabase as any)
         .from('creator_applications')
         .insert({
@@ -253,6 +268,7 @@ export default function CreatorApplication() {
           bio: validatedData.bio,
           gender: validatedData.gender,
           status: 'pending',
+          referred_by: referrerId,
         });
 
       if (insertError) throw insertError;

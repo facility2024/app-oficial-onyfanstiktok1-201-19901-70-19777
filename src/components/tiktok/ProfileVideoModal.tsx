@@ -1,5 +1,6 @@
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 
 interface ProfileVideo {
   id: string;
@@ -39,6 +40,13 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
   const safeIndex = Math.min(Math.max(index, 0), videos.length - 1);
   const current = videos[safeIndex];
   if (!current) return null;
+  const bunnyEmbedUrl = toBunnyStreamEmbedUrl(current.video_url, {
+    autoplay: true,
+    muted: false,
+    loop: true,
+    preload: true,
+    responsive: true,
+  });
 
   const next = () => setIndex((i) => (i + 1) % videos.length);
   const prev = () => setIndex((i) => (i - 1 + videos.length) % videos.length);
@@ -90,21 +98,33 @@ export const ProfileVideoModal = ({ videos, initialIndex, isOpen, onClose }: Pro
         </>
       )}
 
-      <video
-        key={current.id}
-        ref={videoRef}
-        src={current.video_url}
-        className="w-full h-full object-contain"
-        autoPlay
-        loop
-        playsInline
-        controls
-        controlsList="nodownload noremoteplayback noplaybackrate"
-        disablePictureInPicture
-        // @ts-ignore
-        disableRemotePlayback
-        onContextMenu={(e) => e.preventDefault()}
-      />
+      {bunnyEmbedUrl ? (
+        <iframe
+          key={current.id}
+          src={bunnyEmbedUrl}
+          title={current.title || 'Vídeo Bunny Stream'}
+          loading="eager"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          className="w-full h-full border-0"
+        />
+      ) : (
+        <video
+          key={current.id}
+          ref={videoRef}
+          src={current.video_url}
+          className="w-full h-full object-contain"
+          autoPlay
+          loop
+          playsInline
+          controls
+          controlsList="nodownload noremoteplayback noplaybackrate"
+          disablePictureInPicture
+          // @ts-ignore
+          disableRemotePlayback
+          onContextMenu={(e) => e.preventDefault()}
+        />
+      )}
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 rounded-full px-3 py-1 text-white text-xs">
         {index + 1} / {videos.length}

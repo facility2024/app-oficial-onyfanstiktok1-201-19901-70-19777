@@ -11,6 +11,7 @@ import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { EditVideoModal } from './EditVideoModal';
 import { DeleteVideoDialog } from './DeleteVideoDialog';
 import { toast } from 'sonner';
+import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 
 export const VideoManagementTable = () => {
   const {
@@ -148,7 +149,17 @@ export const VideoManagementTable = () => {
             )}
           </Card>
 
-          {videos.map((video) => (
+          {videos.map((video) => {
+            const bunnyEmbedUrl = toBunnyStreamEmbedUrl(video.video_url || video.thumbnail_url, {
+              autoplay: false,
+              muted: true,
+              loop: true,
+              preload: false,
+              responsive: true,
+              compactControls: true,
+            });
+
+            return (
             <Card key={video.id} className={`p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors ${selectedIds.has(video.id) ? 'ring-2 ring-red-500/50' : ''}`}>
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex items-start pt-1">
@@ -159,17 +170,27 @@ export const VideoManagementTable = () => {
                 </div>
                 {/* Thumbnail */}
                 <div className="w-full md:w-32 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-900">
-                  <video
-                    src={video.video_url}
-                    poster={video.thumbnail_url}
-                    className="w-full h-full object-cover"
-                    muted
-                    playsInline
-                    preload="metadata"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLVideoElement).style.display = 'none';
-                    }}
-                  />
+                  {bunnyEmbedUrl ? (
+                    <iframe
+                      src={bunnyEmbedUrl}
+                      title={video.title}
+                      loading="lazy"
+                      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                      className="w-full h-full border-0 pointer-events-none"
+                    />
+                  ) : (
+                    <video
+                      src={video.video_url}
+                      poster={video.thumbnail_url}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLVideoElement).style.display = 'none';
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* Informações */}
@@ -292,7 +313,8 @@ export const VideoManagementTable = () => {
                 </div>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 

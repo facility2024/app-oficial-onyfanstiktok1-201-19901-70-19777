@@ -380,6 +380,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     // Sincronizar áudio sobreposto (MP3) com o estado do vídeo
     useEffect(() => {
       if (!hasAudioOverlay) return;
+      if (bunnyEmbedUrl) return;
       const audio = audioRef.current;
       const video = (internalRef && 'current' in internalRef) ? internalRef.current : null;
       if (!audio || !video) return;
@@ -405,7 +406,23 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         video.removeEventListener('seeked', onSeekEv);
         audio.pause();
       };
-    }, [hasAudioOverlay, audioUrl, isMuted, volume, internalRef]);
+    }, [hasAudioOverlay, audioUrl, isMuted, volume, internalRef, bunnyEmbedUrl]);
+
+    if (bunnyEmbedUrl) {
+      return (
+        <div className="relative w-full h-full bg-black">
+          <iframe
+            src={bunnyEmbedUrl}
+            title="Vídeo Bunny Stream"
+            loading={isPlaying ? 'eager' : 'lazy'}
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className={`w-full h-full border-0 ${className}`}
+            style={style}
+          />
+        </div>
+      );
+    }
 
     return (
       <div className="relative w-full h-full bg-black">

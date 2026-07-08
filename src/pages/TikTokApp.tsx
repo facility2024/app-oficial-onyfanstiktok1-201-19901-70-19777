@@ -1933,13 +1933,13 @@ export const TikTokApp = () => {
   useEffect(() => {
     if (allAvailableVideos.length === 0 || !selectedGenre) return;
     console.log('🎬 Filtrando por gênero:', selectedGenre);
-    if (selectedGenre === 'Todos') {
-      // Mostrar todos os vídeos
+    if (selectedGenre === 'Todos' || selectedGenre === 'Hétero') {
+      // Mostrar feed geral para o padrão do app
       const firstBlock = allAvailableVideos.slice(0, VIDEOS_PER_BLOCK);
       setVideos(firstBlock);
       setCurrentVideoIndex(0);
       setHasMoreVideos(allAvailableVideos.length > VIDEOS_PER_BLOCK);
-      console.log(`📋 Mostrando todos: ${firstBlock.length} vídeos`);
+      console.log(`📋 Mostrando feed geral: ${firstBlock.length} vídeos`);
     } else {
       // Filtrar vídeos pelo gênero selecionado
       const freshCreatorWindowMs = 7 * 24 * 60 * 60 * 1000;

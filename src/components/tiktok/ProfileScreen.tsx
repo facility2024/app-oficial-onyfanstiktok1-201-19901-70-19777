@@ -54,6 +54,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [contents, setContents] = useState<ModelContent[]>([]);
   const [publicContents, setPublicContents] = useState<ModelContent[]>([]);
   const [privateContents, setPrivateContents] = useState<ModelContent[]>([]);
+  const [showSubscribeOverlay, setShowSubscribeOverlay] = useState(false);
   const [activeTab, setActiveTab] = useState<ContentTab>('public');
   const [loading, setLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);

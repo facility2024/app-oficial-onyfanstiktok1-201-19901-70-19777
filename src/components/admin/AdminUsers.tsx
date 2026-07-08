@@ -49,6 +49,8 @@ export const AdminUsers = () => {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [usersPage, setUsersPage] = useState(1);
   const [userSearch, setUserSearch] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const usersPerPage = 20;
 
   // Filtros Conteúdo Privado
@@ -223,11 +225,44 @@ export const AdminUsers = () => {
       const { error } = await (supabase as any).rpc('admin_delete_user', { p_user_id: userId });
       if (error) throw error;
       setAllUsers(prev => prev.filter((u: any) => u.id !== userId));
+      setSelectedUserIds(prev => { const n = new Set(prev); n.delete(userId); return n; });
       toast.success('Usuário excluído do banco');
     } catch (e: any) {
       console.error(e);
       toast.error(`Erro ao excluir: ${e.message || 'tente novamente'}`);
     }
+  };
+
+  const toggleUserSelected = (id: string) => {
+    setSelectedUserIds(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+
+  const toggleSelectAllOnPage = (ids: string[], checked: boolean) => {
+    setSelectedUserIds(prev => {
+      const n = new Set(prev);
+      ids.forEach(id => { checked ? n.add(id) : n.delete(id); });
+      return n;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedUserIds);
+    if (!ids.length) return;
+    if (!window.confirm(`Excluir permanentemente ${ids.length} usuário(s) do banco? Ação irreversível.`)) return;
+    setBulkDeleting(true);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      const { error } = await (supabase as any).rpc('admin_delete_user', { p_user_id: id });
+      if (error) { fail++; console.error('Falha ao excluir', id, error); } else ok++;
+    }
+    setAllUsers(prev => prev.filter((u: any) => !selectedUserIds.has(u.id)));
+    setSelectedUserIds(new Set());
+    setBulkDeleting(false);
+    toast.success(`${ok} excluído(s)${fail ? ` · ${fail} falha(s)` : ''}`);
   };
 
   // Funções de ação VIP
@@ -584,6 +619,8 @@ export const AdminUsers = () => {
           );
         });
         const pageData = getPaginatedData(filteredAll, usersPage);
+        const pageIds = pageData.map((u: any) => u.id);
+        const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedUserIds.has(id));
         return (
           <Card className="bg-gradient-card border-border/50">
             <CardHeader>
@@ -592,14 +629,28 @@ export const AdminUsers = () => {
                   <Users className="w-5 h-5 text-primary" />
                   <span>Usuários Cadastrados ({filteredAll.length})</span>
                 </CardTitle>
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome, email, telefone..."
-                    value={userSearch}
-                    onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
-                    className="pl-8 w-64 h-8 text-sm"
-                  />
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selectedUserIds.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      disabled={bulkDeleting}
+                      className="h-8"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Excluir selecionados ({selectedUserIds.size})
+                    </Button>
+                  )}
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nome, email, telefone..."
+                      value={userSearch}
+                      onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
+                      className="pl-8 w-64 h-8 text-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -608,6 +659,15 @@ export const AdminUsers = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="py-3 px-2 w-8">
+                        <input
+                          type="checkbox"
+                          checked={allPageSelected}
+                          onChange={(e) => toggleSelectAllOnPage(pageIds, e.target.checked)}
+                          className="w-4 h-4 accent-primary cursor-pointer"
+                          title="Selecionar página"
+                        />
+                      </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nome</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden md:table-cell">Email</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground hidden sm:table-cell">Telefone</th>
@@ -620,8 +680,17 @@ export const AdminUsers = () => {
                     {pageData.length > 0 ? pageData.map((u: any) => {
                       const displayName = u.name || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || 'Sem nome';
                       const isVip = vipEmails.has((u.email || '').toLowerCase());
+                      const checked = selectedUserIds.has(u.id);
                       return (
-                        <tr key={u.id} className="border-b border-border/50 hover:bg-card-hover transition-colors">
+                        <tr key={u.id} className={`border-b border-border/50 hover:bg-card-hover transition-colors ${checked ? 'bg-primary/5' : ''}`}>
+                          <td className="py-3 px-2">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleUserSelected(u.id)}
+                              className="w-4 h-4 accent-primary cursor-pointer"
+                            />
+                          </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center space-x-3">
                               {u.avatar_url ? (
@@ -666,7 +735,7 @@ export const AdminUsers = () => {
                       );
                     }) : (
                       <tr>
-                        <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                        <td colSpan={7} className="py-8 text-center text-muted-foreground">
                           Nenhum usuário cadastrado encontrado
                         </td>
                       </tr>

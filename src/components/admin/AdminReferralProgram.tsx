@@ -57,17 +57,21 @@ export const AdminReferralProgram = () => {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [{ data: cfg }, { data: refs }, { data: payouts }] = await Promise.all([
+      const [{ data: cfg }, { data: refs }, { data: payouts }, { data: allIndicadores }] = await Promise.all([
         (supabase as any).from('referral_program_config').select('*').limit(1).maybeSingle(),
         (supabase as any).from('referrals').select('*').order('created_at', { ascending: false }).limit(500),
         (supabase as any).from('referrer_payout_info').select('*'),
+        (supabase as any).from('profiles').select('id, name, email, referral_code').not('referral_code', 'is', null),
       ]);
 
       setConfig(cfg);
 
       const refsList: ReferralRow[] = refs || [];
-      // Enriquecer com nomes
-      const ids = Array.from(new Set(refsList.flatMap(r => [r.referrer_id, r.referred_id]).filter(Boolean)));
+      // Enriquecer com nomes (referrers + referred)
+      const ids = Array.from(new Set([
+        ...refsList.flatMap(r => [r.referrer_id, r.referred_id]).filter(Boolean),
+        ...(allIndicadores || []).map((p: any) => p.id),
+      ]));
       const { data: profs } = ids.length
         ? await supabase.from('profiles').select('id, name, email').in('id', ids)
         : { data: [] as any[] };
@@ -78,9 +82,17 @@ export const AdminReferralProgram = () => {
         referred_name: (map.get(r.referred_id) as any)?.name || r.referred_email || '—',
       })));
 
-      // Agrupar por indicador
-      const cValue = cfg?.cocon_value_brl || 1;
+      // Começar pela lista completa de possíveis indicadores (todos com referral_code)
       const grouped = new Map<string, ReferrerStat>();
+      for (const p of (allIndicadores || []) as any[]) {
+        grouped.set(p.id, {
+          user_id: p.id,
+          name: p.name || '—',
+          email: p.email || '',
+          total: 0, approved: 0, pending: 0, cocons: 0, amount: 0,
+        });
+      }
+      // Somar indicações de cada indicador
       for (const r of refsList) {
         const g = grouped.get(r.referrer_id) || {
           user_id: r.referrer_id,
@@ -102,7 +114,7 @@ export const AdminReferralProgram = () => {
         pix_key: (payoutMap.get(g.user_id) as any)?.pix_key,
         neon_id: (payoutMap.get(g.user_id) as any)?.neon_id,
       }));
-      list.sort((a, b) => b.approved - a.approved);
+      list.sort((a, b) => (b.approved - a.approved) || (b.total - a.total) || a.name.localeCompare(b.name));
       setReferrers(list);
     } catch (e: any) {
       toast.error('Erro ao carregar: ' + e.message);

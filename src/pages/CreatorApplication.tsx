@@ -244,6 +244,15 @@ export default function CreatorApplication() {
     try {
       const validatedData = applicationSchema.parse(formData);
 
+      // Resolver indicador via ?ref=CODE
+      let referrerId: string | null = null;
+      const code = refCode || localStorage.getItem('pending_referral_code');
+      if (code) {
+        const { data: ref } = await (supabase as any)
+          .from('profiles').select('id').ilike('referral_code', code).maybeSingle();
+        if (ref) referrerId = ref.id;
+      }
+
       const { error: insertError } = await (supabase as any)
         .from('creator_applications')
         .insert({
@@ -255,6 +264,7 @@ export default function CreatorApplication() {
           bio: validatedData.bio,
           gender: validatedData.gender,
           status: 'pending',
+          referred_by: referrerId,
         });
 
       if (insertError) throw insertError;

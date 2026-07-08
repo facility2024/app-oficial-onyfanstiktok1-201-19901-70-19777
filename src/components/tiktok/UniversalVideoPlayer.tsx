@@ -54,6 +54,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
     const userGestureUnlockedRef = useRef(false);
+
+    // Detectar tipo de dispositivo
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
+
     const bunnyEmbedUrl = toBunnyStreamEmbedUrl(src, {
       autoplay: isPlaying || autoPlayOnReady,
       muted: isMuted || isMobile,
@@ -66,12 +73,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
-
-    // Detectar tipo de dispositivo
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isMobile = isIOS || isAndroid;
-    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
 
     // Configuração inicial do vídeo
     const setupVideo = useCallback(() => {
@@ -281,10 +282,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         internalRef.current.volume = volume;
       }
     }, [isMuted, volume, internalRef, bunnyEmbedUrl]);
-
-    if (bunnyEmbedUrl) {
-      return (
-        <div className=
 
     // Event handlers
     const handleLoadedData = useCallback(() => {

@@ -193,7 +193,9 @@ serve(async (req) => {
     // na biblioteca Bunny, esse link retorna 403. O player oficial do Bunny
     // funciona mesmo com o CDN direto bloqueado.
     const videoUrl = `https://player.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoGuid}`;
-    const thumbnailUrl = `https://player.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoGuid}`;
+    // Thumbnail real (JPG servida pelo CDN) — funciona em <img> no preview,
+    // no feed, na busca e no painel do criador. O player embed continua no video_url.
+    const thumbnailUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`;
 
     console.log(
       `[bunny-video-upload] User ${userId} criou vídeo ${videoGuid} (${title})`,

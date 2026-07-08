@@ -11,6 +11,7 @@ import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
+import { ModelSubscriptionOverlay } from '@/components/tiktok/ModelSubscriptionOverlay';
 
 
 interface ProfileScreenProps {
@@ -53,6 +54,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   const [contents, setContents] = useState<ModelContent[]>([]);
   const [publicContents, setPublicContents] = useState<ModelContent[]>([]);
   const [privateContents, setPrivateContents] = useState<ModelContent[]>([]);
+  const [showSubscribeOverlay, setShowSubscribeOverlay] = useState(false);
   const [activeTab, setActiveTab] = useState<ContentTab>('public');
   const [loading, setLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -1043,7 +1045,7 @@ if (!isOpen) return null;
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
                             if (isLocked) {
-                              navigate('/subscribe');
+                              setShowSubscribeOverlay(true);
                               return;
                             }
                             if (content.type === 'video') {
@@ -1215,6 +1217,15 @@ if (!isOpen) return null;
         onClose={() => setImageViewerOpen(false)}
         onIndexChange={setCurrentImageIndex}
       />
+
+      {showSubscribeOverlay && (
+        <ModelSubscriptionOverlay
+          modelName={user.username || 'Criador'}
+          modelAvatar={freshAvatar || user.avatar_url}
+          plans={modelPlans}
+          onClose={() => setShowSubscribeOverlay(false)}
+        />
+      )}
 
       {/* Popup de carrossel do perfil */}
       {carouselModalContent && (

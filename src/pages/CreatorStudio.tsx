@@ -23,6 +23,7 @@ import { useGenres } from '@/hooks/useGenres';
 import NeonPayProducerSettings from '@/components/creator/NeonPayProducerSettings';
 import MySales from '@/components/creator/MySales';
 import { CarouselScheduler } from '@/components/admin/CarouselScheduler';
+import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
@@ -72,6 +73,14 @@ export default function CreatorStudio() {
     genres: [] as string[],
     visibility: 'public' as 'public' | 'private',
     is_featured: false,
+  });
+  const previewBunnyEmbedUrl = toBunnyStreamEmbedUrl(formData.video_url, {
+    autoplay: false,
+    muted: true,
+    loop: true,
+    preload: false,
+    responsive: true,
+    compactControls: true,
   });
 
   // Publicação em lote (múltiplas URLs ao mesmo tempo)
@@ -708,20 +717,36 @@ export default function CreatorStudio() {
                     <div className="flex items-start gap-3">
                       <div className="w-24">
                         <p className="text-xs text-gray-400 mb-1">Vídeo:</p>
-                        <video
-                          src={formData.video_url}
-                          muted
-                          playsInline
-                          className="w-24 h-40 object-cover rounded-md bg-black"
-                        />
+                        {previewBunnyEmbedUrl ? (
+                          <iframe
+                            src={previewBunnyEmbedUrl}
+                            title="Preview do vídeo"
+                            loading="lazy"
+                            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                            className="w-24 h-40 rounded-md bg-black border-0"
+                          />
+                        ) : (
+                          <video
+                            src={formData.video_url}
+                            muted
+                            playsInline
+                            className="w-24 h-40 object-cover rounded-md bg-black"
+                          />
+                        )}
                       </div>
                       <div className="w-24">
                         <p className="text-xs text-gray-400 mb-1">Thumb:</p>
-                        <img
-                          src={formData.thumbnail_url}
-                          alt="Preview"
-                          className="w-24 h-40 object-cover rounded-md bg-black"
-                        />
+                        {previewBunnyEmbedUrl ? (
+                          <div className="w-24 h-40 rounded-md bg-gray-900 flex items-center justify-center border border-gray-700">
+                            <Video className="w-8 h-8 text-green-400" />
+                          </div>
+                        ) : (
+                          <img
+                            src={formData.thumbnail_url}
+                            alt="Preview"
+                            className="w-24 h-40 object-cover rounded-md bg-black"
+                          />
+                        )}
                       </div>
                     </div>
                   </div>

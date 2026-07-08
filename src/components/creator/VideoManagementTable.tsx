@@ -125,9 +125,38 @@ export const VideoManagementTable = () => {
         </Card>
       ) : (
         <div className="space-y-4">
+          {/* Barra de seleção em massa */}
+          <Card className="p-3 bg-gray-800/50 border-gray-700 flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
+              <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+              Selecionar todos ({videos.length})
+            </label>
+            {selectedIds.size > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={bulkDeleting}
+                onClick={() => setConfirmBulk(true)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {bulkDeleting ? (
+                  <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Excluindo...</>
+                ) : (
+                  <><Trash2 className="w-3 h-3 mr-1" /> Excluir selecionados ({selectedIds.size})</>
+                )}
+              </Button>
+            )}
+          </Card>
+
           {videos.map((video) => (
-            <Card key={video.id} className="p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
+            <Card key={video.id} className={`p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors ${selectedIds.has(video.id) ? 'ring-2 ring-red-500/50' : ''}`}>
               <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex items-start pt-1">
+                  <Checkbox
+                    checked={selectedIds.has(video.id)}
+                    onCheckedChange={() => toggleOne(video.id)}
+                  />
+                </div>
                 {/* Thumbnail */}
                 <div className="w-full md:w-32 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-900">
                   <video

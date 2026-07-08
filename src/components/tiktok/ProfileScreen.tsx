@@ -1072,7 +1072,7 @@ if (!isOpen) return null;
                                   title={content.title}
                                   loading="lazy"
                                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-                                  className="w-full h-full border-0 pointer-events-none bg-black"
+                                  className={`w-full h-full border-0 pointer-events-none bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
                                 />
                               ) : (
                                 <video

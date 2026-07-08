@@ -1045,7 +1045,7 @@ if (!isOpen) return null;
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
                             if (isLocked) {
-                              navigate('/subscribe');
+                              setShowSubscribeOverlay(true);
                               return;
                             }
                             if (content.type === 'video') {

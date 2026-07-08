@@ -23,6 +23,7 @@ import {
   Megaphone,
   Radio,
   Mail
+  Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';

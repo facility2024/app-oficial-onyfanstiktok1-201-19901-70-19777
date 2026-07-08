@@ -1042,6 +1042,10 @@ if (!isOpen) return null;
                           key={content.id}
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
+                            if (isLocked) {
+                              navigate('/subscribe');
+                              return;
+                            }
                             if (content.type === 'video') {
                               // Abre popup com swipe esquerda/direita entre vídeos do perfil
                               const videoContents = currentContents.filter(c => c.type === 'video');

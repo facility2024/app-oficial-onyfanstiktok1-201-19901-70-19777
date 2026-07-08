@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Check, X, Sparkles } from 'lucide-react';
+import { Lock, Check, X, Sparkles, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { ModelPlan } from '@/hooks/useModelSubscription';
 
 interface ModelSubscriptionOverlayProps {
@@ -20,15 +21,38 @@ export const ModelSubscriptionOverlay: React.FC<ModelSubscriptionOverlayProps> =
   thumbnailUrl,
 }) => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  const handleSubscribe = (plan: ModelPlan) => {
-    // Sempre direciona ao checkout interno (Acesso Privado)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIsLoggedIn(!!session);
+    });
+    return () => { sub.subscription.unsubscribe(); };
+  }, []);
+
+  const handleSubscribe = async (plan: ModelPlan) => {
     const params = new URLSearchParams();
     params.set('model', plan.model_id);
     params.set('plan', plan.plan_type);
     params.set('type', plan.model_type);
     params.set('name', modelName);
-    navigate(`/checkout?${params.toString()}`);
+    const checkoutUrl = `/checkout?${params.toString()}`;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Guardar destino para voltar após login (checkout) e origem (vídeo atual)
+      const currentPath = window.location.pathname + window.location.search;
+      localStorage.setItem('returnTo', checkoutUrl);
+      sessionStorage.setItem('post_login_origin', currentPath);
+      localStorage.setItem('requiresLogin', 'true');
+      navigate('/auth');
+      return;
+    }
+
+    navigate(checkoutUrl);
   };
 
   const formatPrice = (price: number) =>
@@ -100,6 +124,19 @@ export const ModelSubscriptionOverlay: React.FC<ModelSubscriptionOverlayProps> =
         <p className="text-gray-300 text-sm text-center mb-4">
           Desbloqueie o conteúdo privado de <span className="text-purple-400 font-semibold">{modelName}</span>
         </p>
+
+        {isLoggedIn === false && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-3 flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.35)]"
+          >
+            <LogIn className="w-4 h-4 shrink-0" />
+            <p className="text-xs font-semibold">
+              🔒 Faça login para desbloquear o acesso. Você voltará para este vídeo depois.
+            </p>
+          </motion.div>
+        )}
 
         <div className="space-y-2 mb-4">
           {plans.map((plan, index) => (

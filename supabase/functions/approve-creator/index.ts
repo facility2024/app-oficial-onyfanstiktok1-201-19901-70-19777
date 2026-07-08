@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     let nickname: string
     let whatsapp: string
     let userId: string | null = null
+    let referredBy: string | null = null
 
     if (application_id) {
       const { data: application, error: appError } = await adminClient
@@ -164,6 +165,7 @@ Deno.serve(async (req) => {
       nickname = application.nickname
       whatsapp = application.whatsapp
       userId = application.user_id
+      referredBy = application.referred_by || null
     } else if (directEmail) {
       email = normalizeEmail(directEmail)
       fullName = directName || email.split('@')[0]

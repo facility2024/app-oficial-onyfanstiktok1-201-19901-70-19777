@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Check, X, Sparkles } from 'lucide-react';
+import { Lock, Check, X, Sparkles, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { ModelPlan } from '@/hooks/useModelSubscription';
 
 interface ModelSubscriptionOverlayProps {
@@ -20,15 +21,38 @@ export const ModelSubscriptionOverlay: React.FC<ModelSubscriptionOverlayProps> =
   thumbnailUrl,
 }) => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  const handleSubscribe = (plan: ModelPlan) => {
-    // Sempre direciona ao checkout interno (Acesso Privado)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIsLoggedIn(!!session);
+    });
+    return () => { sub.subscription.unsubscribe(); };
+  }, []);
+
+  const handleSubscribe = async (plan: ModelPlan) => {
     const params = new URLSearchParams();
     params.set('model', plan.model_id);
     params.set('plan', plan.plan_type);
     params.set('type', plan.model_type);
     params.set('name', modelName);
-    navigate(`/checkout?${params.toString()}`);
+    const checkoutUrl = `/checkout?${params.toString()}`;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Guardar destino para voltar após login (checkout) e origem (vídeo atual)
+      const currentPath = window.location.pathname + window.location.search;
+      localStorage.setItem('returnTo', checkoutUrl);
+      sessionStorage.setItem('post_login_origin', currentPath);
+      localStorage.setItem('requiresLogin', 'true');
+      navigate('/auth');
+      return;
+    }
+
+    navigate(checkoutUrl);
   };
 
   const formatPrice = (price: number) =>

@@ -3,12 +3,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe, Flame } from 'lucide-react';
+import { Edit, Pause, Play, Trash2, Eye, Heart, MessageCircle, Share2, Search, Crown, Lock, Globe, Flame, Loader2 } from 'lucide-react';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { EditVideoModal } from './EditVideoModal';
 import { DeleteVideoDialog } from './DeleteVideoDialog';
+import { toast } from 'sonner';
 
 export const VideoManagementTable = () => {
   const {

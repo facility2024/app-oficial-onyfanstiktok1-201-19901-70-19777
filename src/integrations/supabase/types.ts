@@ -1671,6 +1671,7 @@ export type Database = {
           gender: string
           id: string
           nickname: string
+          referred_by: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -1690,6 +1691,7 @@ export type Database = {
           gender: string
           id?: string
           nickname: string
+          referred_by?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1709,6 +1711,7 @@ export type Database = {
           gender?: string
           id?: string
           nickname?: string
+          referred_by?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null

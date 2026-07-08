@@ -73,7 +73,7 @@ export default function IndicadorArea() {
   useEffect(() => { if (user?.id) load(); /* eslint-disable-next-line */ }, [user?.id]);
 
   const referralCode = (profile as any)?.referral_code;
-  const link = referralCode ? `${window.location.origin}/indicador/cadastro?ref=${referralCode}` : '';
+  const link = referralCode ? `${window.location.origin}/creator-application?ref=${referralCode}` : '';
 
   const approved = referrals.filter(r => r.status === 'approved' || r.status === 'completed');
   const pending = referrals.filter(r => r.status === 'pending');
@@ -89,7 +89,7 @@ export default function IndicadorArea() {
 
   const share = (platform: 'whatsapp' | 'telegram' | 'twitter' | 'native') => {
     if (user?.id && referralCode) logShareClick(user.id, referralCode, platform);
-    const msg = `🥥 Cadastre-se no COCONUDI pelo meu link e vamos crescer juntos! ${link}`;
+    const msg = `🥥 Torne-se criador(a) de conteúdo no COCONUDI pelo meu link e comece a ganhar! ${link}`;
     if (platform === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     else if (platform === 'telegram') window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('🥥 COCONUDI')}`, '_blank');
     else if (platform === 'twitter') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}`, '_blank');

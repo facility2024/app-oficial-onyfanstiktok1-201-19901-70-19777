@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, CheckCircle, Lock, ShieldCheck, QrCode, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ const CheckoutPage = () => {
   const [polling, setPolling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [pixData, setPixData] = useState<{ payload?: string; qrCodeUrl?: string } | null>(null);
+  const postPaymentDestinationRef = useRef<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -50,25 +51,18 @@ const CheckoutPage = () => {
     toast.success('Copiado!');
   };
 
-  const grantAccess = async (paymentId: string) => {
-    if (!user) return;
-    const days = queryPlan === 'anual' ? 365 : queryPlan === 'trimestral' ? 90 : 30;
-    const now = new Date();
-    const end = new Date(now.getTime() + days * 86400000).toISOString();
-    await (supabase as any).from('model_subscriptions').upsert({
-      subscriber_id: user.id,
-      subscriber_email: user.email || `${user.id}@coconudi.local`,
-      model_id: privateModelId,
-      model_type: privateModelType,
-      subscription_type: queryPlan,
-      subscription_status: 'active',
-      subscription_start: now.toISOString(),
-      subscription_end: end,
-      price_paid: planPrice,
-      payment_id: paymentId,
-      updated_at: now.toISOString(),
-    }, { onConflict: 'subscriber_id,model_id' });
-    window.dispatchEvent(new Event('private-access-updated'));
+  const getPostPaymentDestination = () => {
+    if (postPaymentDestinationRef.current) return postPaymentDestinationRef.current;
+
+    const origin = sessionStorage.getItem('post_login_origin');
+    sessionStorage.removeItem('post_login_origin');
+
+    const destination = origin && origin.startsWith('/app')
+      ? origin
+      : privateModelId ? `/app?profile=${privateModelId}` : '/app';
+
+    postPaymentDestinationRef.current = destination;
+    return destination;
   };
 
   const pollNeonStatus = (txId: string) => {
@@ -76,25 +70,37 @@ const CheckoutPage = () => {
     const interval = window.setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch(
-          `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/neonpay-pix-status?transactionId=${encodeURIComponent(txId)}`,
-          {
-            headers: {
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-          }
-        );
-        const json = await res.json().catch(() => ({}));
-        const status = String(json?.status || '').toUpperCase();
-        if (['OK', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'].includes(status)) {
+        const { data, error } = await supabase.functions.invoke('neon-vip-status', {
+          body: {
+            payment_id: txId,
+            private_model_id: privateModelId,
+            private_model_type: privateModelType,
+            plan_type: queryPlan,
+            amount: planPrice,
+          },
+        });
+        if (error) throw error;
+
+        const status = String(data?.status || '').toUpperCase();
+        if (status === 'APPROVED') {
           window.clearInterval(interval);
-          await grantAccess(txId);
           setPolling(false);
           setShowSuccess(true);
+          window.dispatchEvent(new Event('private-access-updated'));
+          toast.success('Acesso liberado!');
+          window.setTimeout(() => navigate(getPostPaymentDestination()), 1800);
+        }
+        if (status === 'REJECTED') {
+          window.clearInterval(interval);
+          setPolling(false);
+          toast.error('Pagamento não aprovado. Gere um novo PIX para tentar novamente.');
         }
       } catch { /* ignore */ }
-      if (attempts > 300) window.clearInterval(interval);
+      if (attempts > 300) {
+        window.clearInterval(interval);
+        setPolling(false);
+        toast.info('Ainda aguardando confirmação. Você pode voltar depois que pagar.');
+      }
     }, 4000);
   };
 
@@ -109,6 +115,9 @@ const CheckoutPage = () => {
         body: {
           amount: planPrice,
           product_name: `Assinatura ${queryPlan} - @${privateModelName}`,
+          private_model_id: privateModelId,
+          private_model_type: privateModelType,
+          plan_type: queryPlan,
         },
       });
       if (error) throw error;
@@ -121,7 +130,7 @@ const CheckoutPage = () => {
 
       setPixData({ payload: data.pix_code, qrCodeUrl });
       setPolling(true);
-      pollNeonStatus(data.transaction_id);
+      pollNeonStatus(String(data.transaction_id || data.identifier));
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar PIX');
     } finally {
@@ -132,7 +141,7 @@ const CheckoutPage = () => {
   const handleSuccessClose = () => {
     setShowSuccess(false);
     window.dispatchEvent(new Event('private-access-updated'));
-    navigate(privateModelId ? `/app?profile=${privateModelId}` : '/app');
+    navigate(getPostPaymentDestination());
   };
 
   if (!user) {
@@ -156,14 +165,14 @@ const CheckoutPage = () => {
             </div>
             <h2 className="text-2xl font-bold text-white">Pagamento Aprovado!</h2>
             <p className="text-gray-400">
-              Sua assinatura Conteúdo Privado foi ativada. Aproveite!
+              Sua assinatura de @{privateModelName} foi ativada. Aproveite!
             </p>
             <div className="flex items-center gap-2 text-amber-400">
               <Lock className="w-5 h-5" />
               <span className="font-semibold">Conteúdo Privado liberado</span>
             </div>
             <Button onClick={handleSuccessClose} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold mt-2">
-              Voltar ao perfil
+              Ver conteúdo liberado
             </Button>
           </div>
         </DialogContent>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 
@@ -11,8 +11,19 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const isLoggingOut = useRef(false);
   const sessionChecked = useRef(false);
+
+  const redirectUnauthenticated = () => {
+    if (location.pathname === '/checkout') {
+      localStorage.setItem('returnTo', location.pathname + location.search);
+      localStorage.setItem('requiresLogin', 'true');
+      navigate('/auth', { replace: true });
+      return;
+    }
+    navigate('/', { replace: true });
+  };
 
   useEffect(() => {
     // Listener de estado de auth
@@ -26,7 +37,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             setSession(null);
             isLoggingOut.current = false;
             sessionStorage.removeItem('logging_out');
-            navigate('/', { replace: true });
+            redirectUnauthenticated();
           }
           return;
         }
@@ -54,7 +65,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
                       } else {
                         console.log('[ProtectedRoute] Refresh falhou, redirecionando...');
                         setSession(null);
-                        navigate('/', { replace: true });
+                        redirectUnauthenticated();
                       }
                     });
                     return;
@@ -64,7 +75,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
                 }
               }
               setSession(null);
-              navigate('/', { replace: true });
+              redirectUnauthenticated();
             }
           });
           return;
@@ -88,14 +99,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         if (existingSession) {
           setSession(existingSession);
         } else {
-          navigate('/', { replace: true });
+          redirectUnauthenticated();
         }
         setLoading(false);
       });
     }
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [location.pathname, location.search, navigate]);
 
   if (loading) {
     return (

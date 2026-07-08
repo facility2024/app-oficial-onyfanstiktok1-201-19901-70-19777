@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Sparkles, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PremiumContentOverlayProps {
   thumbnailUrl?: string;
@@ -24,7 +25,7 @@ export const PremiumContentOverlay = ({
 }: PremiumContentOverlayProps) => {
   const navigate = useNavigate();
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     if (onSubscribeClick) {
       onSubscribeClick();
       return;
@@ -33,7 +34,18 @@ export const PremiumContentOverlay = ({
     if (modelId) params.set('model', modelId);
     params.set('type', modelType);
     if (modelName) params.set('name', modelName);
-    navigate(`/checkout?${params.toString()}`);
+    const checkoutUrl = `/checkout?${params.toString()}`;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      localStorage.setItem('returnTo', checkoutUrl);
+      sessionStorage.setItem('post_login_origin', window.location.pathname + window.location.search);
+      localStorage.setItem('requiresLogin', 'true');
+      navigate('/auth');
+      return;
+    }
+
+    navigate(checkoutUrl);
   };
 
   return (

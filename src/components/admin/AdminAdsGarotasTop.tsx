@@ -372,6 +372,8 @@ export const AdminAdsGarotasTop = () => {
                 <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   c._categoria === "latinas"
                     ? "bg-pink-600 text-white"
+                    : c._categoria === "novidades"
+                    ? "bg-cyan-600 text-white"
                     : "bg-purple-600 text-white"
                 }`}>
                   {CAT_LABEL[c._categoria]}

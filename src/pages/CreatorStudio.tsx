@@ -705,21 +705,22 @@ export default function CreatorStudio() {
                 {formData.video_url && formData.thumbnail_url && (
                   <div className="border border-gray-700 rounded-lg p-4">
                     <h3 className="text-white font-semibold mb-3">Preview</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-400 mb-2">Vídeo:</p>
+                    <div className="flex items-start gap-3">
+                      <div className="w-24">
+                        <p className="text-xs text-gray-400 mb-1">Vídeo:</p>
                         <video
                           src={formData.video_url}
-                          controls
-                          className="w-full rounded-lg"
+                          muted
+                          playsInline
+                          className="w-24 h-40 object-cover rounded-md bg-black"
                         />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-400 mb-2">Thumbnail:</p>
+                      <div className="w-24">
+                        <p className="text-xs text-gray-400 mb-1">Thumb:</p>
                         <img
                           src={formData.thumbnail_url}
                           alt="Preview"
-                          className="w-full rounded-lg"
+                          className="w-24 h-40 object-cover rounded-md bg-black"
                         />
                       </div>
                     </div>

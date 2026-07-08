@@ -35,6 +35,8 @@ export default function IndicadorCadastro() {
   const [cfg, setCfg] = useState<{ cocon_value_brl: number; cocons_per_referral: number; program_active: boolean } | null>(null);
 
   useEffect(() => {
+    document.documentElement.classList.add('allow-scroll');
+
     (async () => {
       const { data } = await (supabase as any)
         .from('referral_program_config').select('*').limit(1).maybeSingle();
@@ -44,6 +46,10 @@ export default function IndicadorCadastro() {
       sessionStorage.setItem('referral_code', refFromLink.toUpperCase());
       localStorage.setItem('pending_referral_code', refFromLink.toUpperCase());
     }
+
+    return () => {
+      document.documentElement.classList.remove('allow-scroll');
+    };
   }, [refFromLink]);
 
   const submit = async (e: React.FormEvent) => {
@@ -117,25 +123,25 @@ export default function IndicadorCadastro() {
 
   return (
     <div
-      className="min-h-[100dvh] w-full overflow-y-auto text-white flex flex-col items-center px-4 py-6 sm:py-10 bg-gray-950 bg-cover bg-center bg-no-repeat relative"
+      className="h-[100dvh] w-full overflow-y-auto overscroll-contain text-white flex flex-col items-center px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:py-10 bg-gray-950 bg-cover bg-center bg-no-repeat relative"
       style={{
         backgroundImage:
           "linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)), url('https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png')",
       }}
     >
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md shrink-0 space-y-4 sm:space-y-6">
         <div className="text-center">
-          <div className="relative inline-flex items-center justify-center mb-4">
+          <div className="relative inline-flex items-center justify-center mb-3 sm:mb-4">
             <div className="absolute inset-0 rounded-full bg-yellow-400/30 blur-3xl animate-pulse" />
             <img
               src="https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/20.png"
               alt="Cocon"
-              className="relative w-40 h-40 md:w-48 md:h-48 object-contain drop-shadow-[0_0_30px_rgba(250,204,21,0.7)]"
+              className="relative w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain drop-shadow-[0_0_30px_rgba(250,204,21,0.7)]"
             />
           </div>
-          <h1 className="text-3xl font-black">Vire um Indicador</h1>
-          <p className="text-gray-400 mt-2">Ganhe Cocons a cada indicação aprovada</p>
+          <h1 className="text-2xl sm:text-3xl font-black">Vire um Indicador</h1>
+          <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Ganhe Cocons a cada indicação aprovada</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -165,7 +171,7 @@ export default function IndicadorCadastro() {
           </Card>
         )}
 
-        <Card className="p-6 bg-gray-900 border-gray-700">
+        <Card className="p-4 sm:p-6 bg-gray-900 border-gray-700">
           <form onSubmit={submit} className="space-y-4">
             <div>
               <Label className="text-white">Nome completo</Label>

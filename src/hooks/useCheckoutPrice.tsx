@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type CheckoutKey = "garotas_top" | "latinas";
+export type CheckoutKey = "garotas_top" | "latinas" | "novidades";
 
 const DEFAULTS: Record<CheckoutKey, number> = {
   garotas_top: 14.97,
   latinas: 14.97,
+  novidades: 14.97,
 };
 
 const SETTING_KEY = "checkout_prices";
@@ -41,6 +42,7 @@ export async function fetchCheckoutPrices(): Promise<Record<CheckoutKey, number>
   return {
     garotas_top: Number(v?.garotas_top) > 0 ? Number(v.garotas_top) : DEFAULTS.garotas_top,
     latinas: Number(v?.latinas) > 0 ? Number(v.latinas) : DEFAULTS.latinas,
+    novidades: Number(v?.novidades) > 0 ? Number(v.novidades) : DEFAULTS.novidades,
   };
 }
 

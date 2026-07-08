@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2, X, Flame } from "lucide-react";
 import AdsLatinasModal from "./AdsLatinasModal";
+import AdsNovidadesModal from "./AdsNovidadesModal";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import { useCheckoutPrice } from "@/hooks/useCheckoutPrice";
 
@@ -33,6 +34,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
   const [selected, setSelected] = useState<Card | null>(null);
   const [videoFallbacks, setVideoFallbacks] = useState<Record<string, boolean>>({});
   const [showLatinas, setShowLatinas] = useState(false);
+  const [showNovidades, setShowNovidades] = useState(false);
   const [showPix, setShowPix] = useState(false);
   const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
   const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
@@ -133,12 +135,20 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
                 🔥 Pagar com PIX — acesso imediato 🔥
               </span>
             </button>
-            <button
-              onClick={() => setShowLatinas(true)}
-              className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
-            >
-              <Flame className="w-4 h-4" /> Ver LATINAS 🌶️
-            </button>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => setShowLatinas(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+              >
+                <Flame className="w-4 h-4" /> Ver LATINAS 🌶️
+              </button>
+              <button
+                onClick={() => setShowNovidades(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-cyan-600 to-blue-600 shadow-[0_0_30px_rgba(34,211,238,0.7)] border border-cyan-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+              >
+                <Sparkles className="w-4 h-4" /> Ver NOVIDADES 🔥
+              </button>
+            </div>
           </header>
 
 
@@ -290,6 +300,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
       )}
 
       <AdsLatinasModal open={showLatinas} onClose={() => setShowLatinas(false)} />
+      <AdsNovidadesModal open={showNovidades} onClose={() => setShowNovidades(false)} />
       <PixCheckoutModal
         open={showPix}
         onClose={() => setShowPix(false)}

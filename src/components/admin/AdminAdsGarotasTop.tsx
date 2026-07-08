@@ -10,14 +10,16 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, X, Loader2 } from "lucide-react";
 
 
-type Categoria = "garotas_top" | "latinas";
+type Categoria = "garotas_top" | "latinas" | "novidades";
 const TABLE_BY_CAT: Record<Categoria, string> = {
   garotas_top: "ads_garotas_top",
   latinas: "ads_latinas",
+  novidades: "ads_novidades",
 };
 const CAT_LABEL: Record<Categoria, string> = {
   garotas_top: "Garotas Top",
   latinas: "Latinas 🌶️",
+  novidades: "Novidades 🔥",
 };
 
 interface CardItem {
@@ -57,16 +59,19 @@ export const AdminAdsGarotasTop = () => {
 
   const fetchCards = async () => {
     setLoading(true);
-    const [gt, lt] = await Promise.all([
+    const [gt, lt, nv] = await Promise.all([
       (supabase as any).from("ads_garotas_top").select("*")
         .order("ordem", { ascending: true }).order("created_at", { ascending: false }),
       (supabase as any).from("ads_latinas").select("*")
         .order("ordem", { ascending: true }).order("created_at", { ascending: false }),
+      (supabase as any).from("ads_novidades").select("*")
+        .order("ordem", { ascending: true }).order("created_at", { ascending: false }),
     ]);
-    if (gt.error || lt.error) toast.error("Erro ao carregar cards");
+    if (gt.error || lt.error || nv.error) toast.error("Erro ao carregar cards");
     const merged: CardItem[] = [
       ...((gt.data || []).map((c: any) => ({ ...c, _categoria: "garotas_top" as Categoria }))),
       ...((lt.data || []).map((c: any) => ({ ...c, _categoria: "latinas" as Categoria }))),
+      ...((nv.data || []).map((c: any) => ({ ...c, _categoria: "novidades" as Categoria }))),
     ];
     setCards(merged);
     setLoading(false);
@@ -185,6 +190,7 @@ export const AdminAdsGarotasTop = () => {
               <SelectItem value="all">Todas categorias</SelectItem>
               <SelectItem value="garotas_top">Garotas Top</SelectItem>
               <SelectItem value="latinas">Latinas 🌶️</SelectItem>
+              <SelectItem value="novidades">Novidades 🔥</SelectItem>
             </SelectContent>
           </Select>
           {!isCreating && !editingId && (
@@ -219,6 +225,7 @@ export const AdminAdsGarotasTop = () => {
                   <SelectContent>
                     <SelectItem value="garotas_top">{CAT_LABEL.garotas_top}</SelectItem>
                     <SelectItem value="latinas">{CAT_LABEL.latinas}</SelectItem>
+                    <SelectItem value="novidades">{CAT_LABEL.novidades}</SelectItem>
                   </SelectContent>
                 </Select>
                 {editingId && editingCat && editingCat !== form.categoria && (
@@ -307,14 +314,15 @@ export const AdminAdsGarotasTop = () => {
                   onClick={async () => {
                     const link = form.link_acesso.trim();
                     if (!link) return;
-                    if (!confirm(`Aplicar o link "${link}" a TODOS os cards de Garotas Top e Latinas?`)) return;
+                    if (!confirm(`Aplicar o link "${link}" a TODOS os cards de Garotas Top, Latinas e Novidades?`)) return;
                     setSaving(true);
-                    const [a, b] = await Promise.all([
+                    const [a, b, c] = await Promise.all([
                       (supabase as any).from("ads_garotas_top").update({ link_acesso: link }).not("id", "is", null),
                       (supabase as any).from("ads_latinas").update({ link_acesso: link }).not("id", "is", null),
+                      (supabase as any).from("ads_novidades").update({ link_acesso: link }).not("id", "is", null),
                     ]);
                     setSaving(false);
-                    if (a.error || b.error) {
+                    if (a.error || b.error || c.error) {
                       toast.error("Erro ao aplicar em todos");
                     } else {
                       toast.success("Link aplicado a todos os cards");
@@ -364,6 +372,8 @@ export const AdminAdsGarotasTop = () => {
                 <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   c._categoria === "latinas"
                     ? "bg-pink-600 text-white"
+                    : c._categoria === "novidades"
+                    ? "bg-cyan-600 text-white"
                     : "bg-purple-600 text-white"
                 }`}>
                   {CAT_LABEL[c._categoria]}

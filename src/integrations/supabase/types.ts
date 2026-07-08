@@ -288,6 +288,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ads_novidades: {
+        Row: {
+          created_at: string
+          cta_link: string | null
+          cta_texto: string | null
+          id: string
+          imagem_url: string
+          is_active: boolean
+          link_acesso: string | null
+          nome: string
+          ordem: number
+          updated_at: string
+          valor: number | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta_link?: string | null
+          cta_texto?: string | null
+          id?: string
+          imagem_url: string
+          is_active?: boolean
+          link_acesso?: string | null
+          nome: string
+          ordem?: number
+          updated_at?: string
+          valor?: number | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta_link?: string | null
+          cta_texto?: string | null
+          id?: string
+          imagem_url?: string
+          is_active?: boolean
+          link_acesso?: string | null
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          valor?: number | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       agendamento_execucoes: {
         Row: {
           created_at: string

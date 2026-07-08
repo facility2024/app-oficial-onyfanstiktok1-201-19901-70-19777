@@ -29,7 +29,8 @@ export const useCreatorVideos = () => {
   const fetchVideos = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('Usuário não autenticado');
 
       let query = (supabase as any)

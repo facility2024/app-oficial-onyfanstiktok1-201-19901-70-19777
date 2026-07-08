@@ -314,14 +314,15 @@ export const AdminAdsGarotasTop = () => {
                   onClick={async () => {
                     const link = form.link_acesso.trim();
                     if (!link) return;
-                    if (!confirm(`Aplicar o link "${link}" a TODOS os cards de Garotas Top e Latinas?`)) return;
+                    if (!confirm(`Aplicar o link "${link}" a TODOS os cards de Garotas Top, Latinas e Novidades?`)) return;
                     setSaving(true);
-                    const [a, b] = await Promise.all([
+                    const [a, b, c] = await Promise.all([
                       (supabase as any).from("ads_garotas_top").update({ link_acesso: link }).not("id", "is", null),
                       (supabase as any).from("ads_latinas").update({ link_acesso: link }).not("id", "is", null),
+                      (supabase as any).from("ads_novidades").update({ link_acesso: link }).not("id", "is", null),
                     ]);
                     setSaving(false);
-                    if (a.error || b.error) {
+                    if (a.error || b.error || c.error) {
                       toast.error("Erro ao aplicar em todos");
                     } else {
                       toast.success("Link aplicado a todos os cards");

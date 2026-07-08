@@ -80,9 +80,9 @@ export const AdminUsers = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Total de usuários
+        // Total de usuários cadastrados (profiles evita acessar public.users, que contém campos sensíveis)
         const { count: totalUsers } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*', { count: 'exact', head: true });
 
         // Usuários online (usar tabela online_users)
@@ -96,7 +96,7 @@ export const AdminUsers = () => {
         today.setHours(0, 0, 0, 0);
         
         const { count: newUsersToday } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*', { count: 'exact', head: true })
           .gte('created_at', today.toISOString());
 

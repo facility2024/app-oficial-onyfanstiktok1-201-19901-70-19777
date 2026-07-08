@@ -225,6 +225,7 @@ export const AdminAdsGarotasTop = () => {
                   <SelectContent>
                     <SelectItem value="garotas_top">{CAT_LABEL.garotas_top}</SelectItem>
                     <SelectItem value="latinas">{CAT_LABEL.latinas}</SelectItem>
+                    <SelectItem value="novidades">{CAT_LABEL.novidades}</SelectItem>
                   </SelectContent>
                 </Select>
                 {editingId && editingCat && editingCat !== form.categoria && (

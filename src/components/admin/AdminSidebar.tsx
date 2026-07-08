@@ -22,7 +22,7 @@ import {
   Phone,
   Megaphone,
   Radio,
-  Mail
+  Mail,
   Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';

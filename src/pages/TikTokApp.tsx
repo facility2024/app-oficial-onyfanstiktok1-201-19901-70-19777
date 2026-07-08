@@ -1758,6 +1758,33 @@ export const TikTokApp = () => {
           });
         });
 
+        // 🔁 Rotação persistente por modelo/criadora:
+        // se uma autora tem 2+ vídeos públicos, apenas 1 entra em cada ciclo do feed.
+        // Ao atualizar/reabrir o app, o próximo vídeo dela assume a vaga e o anterior vai para o fim.
+        const OWNER_VIDEO_CURSOR_KEY = 'feed_owner_video_rotation_cursors_v1';
+        let ownerVideoCursors: Record<string, number> = {};
+        try {
+          ownerVideoCursors = JSON.parse(localStorage.getItem(OWNER_VIDEO_CURSOR_KEY) || '{}') || {};
+        } catch {
+          ownerVideoCursors = {};
+        }
+
+        const nextOwnerVideoCursors: Record<string, number> = { ...ownerVideoCursors };
+        Object.entries(contentByOwner).forEach(([ownerId, queue]) => {
+          if (queue.length <= 1) return;
+
+          const cursor = Math.abs(Number(ownerVideoCursors[ownerId]) || 0) % queue.length;
+          if (cursor > 0) {
+            contentByOwner[ownerId] = [...queue.slice(cursor), ...queue.slice(0, cursor)];
+          }
+
+          nextOwnerVideoCursors[ownerId] = (cursor + 1) % queue.length;
+        });
+
+        try {
+          localStorage.setItem(OWNER_VIDEO_CURSOR_KEY, JSON.stringify(nextOwnerVideoCursors));
+        } catch {}
+
         const orderedOwners = Object.keys(contentByOwner).sort((a, b) => {
           const aTop = contentByOwner[a]?.[0];
           const bTop = contentByOwner[b]?.[0];
@@ -1795,8 +1822,7 @@ export const TikTokApp = () => {
         console.log(`📊 Feed: ${unwatchedCatalog.length} não-assistidos + ${watchedCatalog.length} já assistidos`);
 
         // 🆕 ANTI-REPETIÇÃO DO VÍDEO INICIAL:
-        // 1) Excluir do topo o último "vídeo inicial" da sessão anterior
-        // 2) Aplicar rotação suave baseada em hora para variar a entrada
+        // mover apenas o último vídeo inicial para o fim, sem quebrar a fila por autora.
         let rotatedUnwatched = [...unwatchedCatalog];
         try {
           const lastInitialId = localStorage.getItem('last_initial_video_id') || '';
@@ -1810,59 +1836,10 @@ export const TikTokApp = () => {
               rotatedUnwatched.push(prev);
             }
           }
-          if (rotatedUnwatched.length > 2) {
-            const offset = Math.floor(Date.now() / 3600000) % rotatedUnwatched.length;
-            if (offset > 0) {
-              rotatedUnwatched = [
-                ...rotatedUnwatched.slice(offset),
-                ...rotatedUnwatched.slice(0, offset),
-              ];
-            }
-          }
         } catch {}
 
-        // 🆕 PIN: vídeos recém-enviados por criadoras autenticadas SEMPRE no topo
-        // Isso evita que modelos recém-criadas/sugeridas (ex: catálogo) passem na frente
-        // de um vídeo real que acabou de ser publicado por uma criadora.
-        const FRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-        const BRAND_NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
-        const nowTs = Date.now();
-        const isFreshCreator = (v: any) => {
-          if (!v?.creator_id) return false;
-          const t = v.created_at ? new Date(v.created_at).getTime() : 0;
-          return t > 0 && (nowTs - t) <= FRESH_WINDOW_MS;
-        };
-        const isBrandNewCreator = (v: any) => {
-          if (!v?.creator_id) return false;
-          const t = v.created_at ? new Date(v.created_at).getTime() : 0;
-          return t > 0 && (nowTs - t) <= BRAND_NEW_WINDOW_MS;
-        };
-        let pinnedFresh = [...rotatedUnwatched, ...watchedCatalog]
-          .filter(isFreshCreator)
-          .sort((a, b) => {
-            const brandNewDiff = Number(isBrandNewCreator(b)) - Number(isBrandNewCreator(a));
-            if (brandNewDiff !== 0) return brandNewDiff;
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          });
-
-        // Rotação por abertura só para criadoras recentes antigas; vídeos das últimas 24h
-        // ficam fixos primeiro para aparecer também em guia anônima/celular.
-        const brandNewPinned = pinnedFresh.filter(isBrandNewCreator);
-        let rotatingPinned = pinnedFresh.filter((v: any) => !isBrandNewCreator(v));
-        if (rotatingPinned.length > 1) {
-          try {
-            const openCount = parseInt(localStorage.getItem('feed_open_count') || '0', 10) + 1;
-            localStorage.setItem('feed_open_count', String(openCount));
-            const off = openCount % rotatingPinned.length;
-            if (off > 0) {
-              rotatingPinned = [...rotatingPinned.slice(off), ...rotatingPinned.slice(0, off)];
-            }
-          } catch {}
-        }
-        pinnedFresh = [...brandNewPinned, ...rotatingPinned];
-
         // 🔁 ROUND-ROBIN por criador/modelo: evita 2+ vídeos da mesma criadora
-        // seguidos no topo do feed. Agrupa por autor e intercala 1 a 1.
+        // seguidos no feed. Agrupa por autor e intercala 1 a 1.
         const roundRobinByAuthor = (list: any[]): any[] => {
           const groups = new Map<string, any[]>();
           list.forEach((v: any) => {
@@ -1884,17 +1861,10 @@ export const TikTokApp = () => {
           }
           return result;
         };
-        pinnedFresh = roundRobinByAuthor(pinnedFresh);
-
-        const pinnedIds = new Set(pinnedFresh.map((v: any) => (v as any)._originalId || v.id));
-        const restUnwatched = roundRobinByAuthor(
-          rotatedUnwatched.filter((v: any) => !pinnedIds.has((v as any)._originalId || v.id))
-        );
-        const restWatched = roundRobinByAuthor(
-          watchedCatalog.filter((v: any) => !pinnedIds.has((v as any)._originalId || v.id))
-        );
-
-        const ordered: any[] = [...pinnedFresh, ...restUnwatched, ...restWatched];
+        const ordered: any[] = [
+          ...roundRobinByAuthor(rotatedUnwatched),
+          ...roundRobinByAuthor(watchedCatalog),
+        ];
 
         const firstBlock = ordered.slice(0, VIDEOS_PER_BLOCK);
 

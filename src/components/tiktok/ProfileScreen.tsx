@@ -1081,7 +1081,7 @@ if (!isOpen) return null;
                                   playsInline
                                   preload="metadata"
                                   aria-label={content.title}
-                                  className="w-full h-full object-cover bg-black"
+                                  className={`w-full h-full object-cover bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
                                 />
                               )}
                               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

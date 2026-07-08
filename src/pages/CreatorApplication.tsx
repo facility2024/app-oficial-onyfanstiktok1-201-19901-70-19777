@@ -114,6 +114,10 @@ export default function CreatorApplication() {
   }, [isCreator, roleLoading, navigate]);
 
   useEffect(() => {
+    if (refCode) localStorage.setItem('pending_referral_code', refCode.toUpperCase());
+  }, [refCode]);
+
+  useEffect(() => {
     // Aguardar o carregamento do usuário antes de verificar
     if (userLoading) return;
     

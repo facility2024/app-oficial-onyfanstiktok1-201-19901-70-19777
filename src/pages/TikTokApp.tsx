@@ -1861,12 +1861,37 @@ export const TikTokApp = () => {
         }
         pinnedFresh = [...brandNewPinned, ...rotatingPinned];
 
+        // 🔁 ROUND-ROBIN por criador/modelo: evita 2+ vídeos da mesma criadora
+        // seguidos no topo do feed. Agrupa por autor e intercala 1 a 1.
+        const roundRobinByAuthor = (list: any[]): any[] => {
+          const groups = new Map<string, any[]>();
+          list.forEach((v: any) => {
+            const key = String(v.creator_id || v.model_id || v.id);
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(v);
+          });
+          const queues = Array.from(groups.values());
+          const result: any[] = [];
+          let hasMore = true;
+          while (hasMore) {
+            hasMore = false;
+            for (const q of queues) {
+              if (q.length > 0) {
+                result.push(q.shift());
+                hasMore = true;
+              }
+            }
+          }
+          return result;
+        };
+        pinnedFresh = roundRobinByAuthor(pinnedFresh);
+
         const pinnedIds = new Set(pinnedFresh.map((v: any) => (v as any)._originalId || v.id));
-        const restUnwatched = rotatedUnwatched.filter(
-          (v: any) => !pinnedIds.has((v as any)._originalId || v.id)
+        const restUnwatched = roundRobinByAuthor(
+          rotatedUnwatched.filter((v: any) => !pinnedIds.has((v as any)._originalId || v.id))
         );
-        const restWatched = watchedCatalog.filter(
-          (v: any) => !pinnedIds.has((v as any)._originalId || v.id)
+        const restWatched = roundRobinByAuthor(
+          watchedCatalog.filter((v: any) => !pinnedIds.has((v as any)._originalId || v.id))
         );
 
         const ordered: any[] = [...pinnedFresh, ...restUnwatched, ...restWatched];

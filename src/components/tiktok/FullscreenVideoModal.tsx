@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 
 interface FullscreenVideoModalProps {
   videoUrl: string;
@@ -16,6 +17,13 @@ export const FullscreenVideoModal = ({
 }: FullscreenVideoModalProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const bunnyEmbedUrl = toBunnyStreamEmbedUrl(videoUrl, {
+    autoplay: true,
+    muted: false,
+    loop: true,
+    preload: true,
+    responsive: true,
+  });
 
   // Reset loading state quando modal abre
   useEffect(() => {
@@ -76,8 +84,17 @@ export const FullscreenVideoModal = ({
           </div>
         )}
 
-        {/* Vídeo - sempre renderizado se tiver URL */}
-        {videoUrl ? (
+        {bunnyEmbedUrl ? (
+          <iframe
+            src={bunnyEmbedUrl}
+            title="Vídeo Bunny Stream"
+            loading="eager"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className="w-full h-full border-0"
+            onLoad={() => setIsLoading(false)}
+          />
+        ) : videoUrl ? (
           <video
             ref={videoRef}
             src={videoUrl}

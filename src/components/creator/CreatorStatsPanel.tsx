@@ -3,6 +3,7 @@ import { Eye, Heart, MessageCircle, Share2, TrendingUp, Award, Loader2, RefreshC
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCreatorStats, TopVideo, StatsPeriod } from '@/hooks/useCreatorStats';
+import { isBunnyStreamUrl } from '@/utils/bunnyStream';
 
 const PERIOD_OPTIONS: { value: StatsPeriod; label: string }[] = [
   { value: 7, label: '7 dias' },
@@ -218,14 +219,22 @@ interface TopVideoItemProps {
 }
 
 function TopVideoItem({ video, rank }: TopVideoItemProps) {
+  const isBunnyVideo = isBunnyStreamUrl(video.thumbnail_url);
+
   return (
     <div className="flex items-center gap-4 p-3 bg-gray-900/50 rounded-lg hover:bg-gray-900/70 transition-colors">
       <span className="text-2xl font-bold text-gray-500 w-8">#{rank}</span>
-      <img 
-        src={video.thumbnail_url} 
-        alt={video.title}
-        className="w-16 h-10 object-cover rounded"
-      />
+      {isBunnyVideo ? (
+        <div className="w-16 h-10 rounded bg-gray-800 flex items-center justify-center shrink-0">
+          <PlayMiniIcon />
+        </div>
+      ) : (
+        <img 
+          src={video.thumbnail_url} 
+          alt={video.title}
+          className="w-16 h-10 object-cover rounded"
+        />
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-white text-sm font-medium truncate">{video.title}</p>
         <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
@@ -247,6 +256,14 @@ function TopVideoItem({ video, rank }: TopVideoItemProps) {
         <p className="text-xs text-gray-500">engajamento</p>
       </div>
     </div>
+  );
+}
+
+function PlayMiniIcon() {
+  return (
+    <svg className="w-5 h-5 text-white/80" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8 5v14l11-7z" />
+    </svg>
   );
 }
 

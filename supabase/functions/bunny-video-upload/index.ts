@@ -189,8 +189,11 @@ serve(async (req) => {
       `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoGuid}`,
     );
 
-    const videoUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/playlist.m3u8`;
-    const thumbnailUrl = `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`;
+    // Não devolva o playlist.m3u8 direto: quando "Direct Play" está desativado
+    // na biblioteca Bunny, esse link retorna 403. O player oficial do Bunny
+    // funciona mesmo com o CDN direto bloqueado.
+    const videoUrl = `https://player.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoGuid}`;
+    const thumbnailUrl = `https://player.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoGuid}`;
 
     console.log(
       `[bunny-video-upload] User ${userId} criou vídeo ${videoGuid} (${title})`,
@@ -205,6 +208,8 @@ serve(async (req) => {
         expirationTime,
         videoUrl,
         thumbnailUrl,
+        cdnPlaylistUrl: `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/playlist.m3u8`,
+        cdnThumbnailUrl: `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

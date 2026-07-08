@@ -6,6 +6,7 @@ import { CategoryMenu } from "@/components/tiktok/CategoryMenu";
 import { FullscreenVideoModal } from "@/components/tiktok/FullscreenVideoModal";
 import { toast } from "sonner";
 import coconudiLogo from '@/assets/coconudi-logo-new.png';
+import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 
 interface ExploreVideo {
   id: string;
@@ -320,29 +321,57 @@ const ExplorePage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 p-1">
-              {filteredVideos.map((video) => (
+              {filteredVideos.map((video) => {
+                const bunnyEmbedUrl = toBunnyStreamEmbedUrl(video.video_url, {
+                  autoplay: false,
+                  muted: true,
+                  loop: true,
+                  preload: false,
+                  responsive: true,
+                  compactControls: true,
+                });
+
+                return (
                 <div 
                   key={video.id}
                   className="relative group overflow-hidden bg-gray-900 aspect-[3/4]"
                 >
                   {/* Vídeo com Preview */}
-                  <video
-                    src={video.video_url}
-                    poster={video.thumbnail_url}
-                    className="w-full h-full object-cover cursor-pointer"
-                    muted
-                    loop
-                    playsInline
-                    onMouseEnter={(e) => {
-                      const p = e.currentTarget.play();
-                      if (p && typeof p.catch === 'function') p.catch(() => {});
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.pause();
-                      e.currentTarget.currentTime = 0;
-                    }}
-                    onClick={() => handleVideoClick(video)}
-                  />
+                  {bunnyEmbedUrl ? (
+                    <iframe
+                      src={bunnyEmbedUrl}
+                      title={video.title || 'Vídeo Bunny Stream'}
+                      loading="lazy"
+                      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                      className="w-full h-full border-0 pointer-events-none"
+                    />
+                  ) : (
+                    <video
+                      src={video.video_url}
+                      poster={video.thumbnail_url}
+                      className="w-full h-full object-cover cursor-pointer"
+                      muted
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => {
+                        const p = e.currentTarget.play();
+                        if (p && typeof p.catch === 'function') p.catch(() => {});
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.pause();
+                        e.currentTarget.currentTime = 0;
+                      }}
+                      onClick={() => handleVideoClick(video)}
+                    />
+                  )}
+                  {bunnyEmbedUrl && (
+                    <button
+                      type="button"
+                      aria-label="Abrir vídeo"
+                      className="absolute inset-0 z-10"
+                      onClick={() => handleVideoClick(video)}
+                    />
+                  )}
 
                   {/* Play Icon Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity">
@@ -412,7 +441,8 @@ const ExplorePage = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

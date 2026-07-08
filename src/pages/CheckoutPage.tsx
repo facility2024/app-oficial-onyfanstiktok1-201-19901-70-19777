@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, CheckCircle, Lock, ShieldCheck, QrCode, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ const CheckoutPage = () => {
   const [polling, setPolling] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [pixData, setPixData] = useState<{ payload?: string; qrCodeUrl?: string } | null>(null);
+  const postPaymentDestinationRef = useRef<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -51,11 +52,17 @@ const CheckoutPage = () => {
   };
 
   const getPostPaymentDestination = () => {
+    if (postPaymentDestinationRef.current) return postPaymentDestinationRef.current;
+
     const origin = sessionStorage.getItem('post_login_origin');
     sessionStorage.removeItem('post_login_origin');
 
-    if (origin && origin.startsWith('/app')) return origin;
-    return privateModelId ? `/app?profile=${privateModelId}` : '/app';
+    const destination = origin && origin.startsWith('/app')
+      ? origin
+      : privateModelId ? `/app?profile=${privateModelId}` : '/app';
+
+    postPaymentDestinationRef.current = destination;
+    return destination;
   };
 
   const pollNeonStatus = (txId: string) => {
@@ -81,6 +88,7 @@ const CheckoutPage = () => {
           setShowSuccess(true);
           window.dispatchEvent(new Event('private-access-updated'));
           toast.success('Acesso liberado!');
+          window.setTimeout(() => navigate(getPostPaymentDestination()), 1800);
         }
         if (status === 'REJECTED') {
           window.clearInterval(interval);
@@ -119,7 +127,7 @@ const CheckoutPage = () => {
 
       setPixData({ payload: data.pix_code, qrCodeUrl });
       setPolling(true);
-      pollNeonStatus(data.transaction_id);
+      pollNeonStatus(String(data.transaction_id || data.identifier));
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar PIX');
     } finally {

@@ -59,16 +59,19 @@ export const AdminAdsGarotasTop = () => {
 
   const fetchCards = async () => {
     setLoading(true);
-    const [gt, lt] = await Promise.all([
+    const [gt, lt, nv] = await Promise.all([
       (supabase as any).from("ads_garotas_top").select("*")
         .order("ordem", { ascending: true }).order("created_at", { ascending: false }),
       (supabase as any).from("ads_latinas").select("*")
         .order("ordem", { ascending: true }).order("created_at", { ascending: false }),
+      (supabase as any).from("ads_novidades").select("*")
+        .order("ordem", { ascending: true }).order("created_at", { ascending: false }),
     ]);
-    if (gt.error || lt.error) toast.error("Erro ao carregar cards");
+    if (gt.error || lt.error || nv.error) toast.error("Erro ao carregar cards");
     const merged: CardItem[] = [
       ...((gt.data || []).map((c: any) => ({ ...c, _categoria: "garotas_top" as Categoria }))),
       ...((lt.data || []).map((c: any) => ({ ...c, _categoria: "latinas" as Categoria }))),
+      ...((nv.data || []).map((c: any) => ({ ...c, _categoria: "novidades" as Categoria }))),
     ];
     setCards(merged);
     setLoading(false);

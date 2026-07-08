@@ -1218,6 +1218,15 @@ if (!isOpen) return null;
         onIndexChange={setCurrentImageIndex}
       />
 
+      {showSubscribeOverlay && (
+        <ModelSubscriptionOverlay
+          modelName={user.username || 'Criador'}
+          modelAvatar={freshAvatar || user.avatar_url}
+          plans={modelPlans}
+          onClose={() => setShowSubscribeOverlay(false)}
+        />
+      )}
+
       {/* Popup de carrossel do perfil */}
       {carouselModalContent && (
         <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">

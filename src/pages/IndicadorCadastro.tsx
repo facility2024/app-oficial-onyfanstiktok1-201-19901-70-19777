@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, Coins, Share2, DollarSign, Gift } from 'lucide-react';
 import { z } from 'zod';
 import { useReferralTracking } from '@/hooks/useReferralTracking';
+import coconCoin from '@/assets/cocon-coin.png.asset.json';
 
 const schema = z.object({
   name: z.string().trim().min(2, 'Nome muito curto').max(80),
@@ -125,8 +126,13 @@ export default function IndicadorCadastro() {
 
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-green-500 mb-4">
-            <Coins className="w-8 h-8 text-gray-900" />
+          <div className="relative inline-flex items-center justify-center mb-4">
+            <div className="absolute inset-0 rounded-full bg-yellow-400/30 blur-3xl animate-pulse" />
+            <img
+              src={coconCoin.url}
+              alt="Cocon"
+              className="relative w-40 h-40 md:w-48 md:h-48 object-contain drop-shadow-[0_0_30px_rgba(250,204,21,0.7)]"
+            />
           </div>
           <h1 className="text-3xl font-black">Vire um Indicador</h1>
           <p className="text-gray-400 mt-2">Ganhe Cocons a cada indicação aprovada</p>

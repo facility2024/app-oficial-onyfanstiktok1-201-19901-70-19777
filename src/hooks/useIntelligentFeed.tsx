@@ -297,8 +297,10 @@ export const useIntelligentFeed = (config: Partial<FeedConfig> = {}) => {
       Math.max(0, finalConfig.maxVideos - pinnedFresh.length)
     );
 
-    // Pinned SEMPRE no topo, sem passar por avoidConsecutiveModels
-    let finalSelection = [...pinnedFresh, ...restReordered];
+    // Pinned no topo, mas em fila (round-robin por criador) — 1 vídeo por criador
+    // por rodada, exatamente como o resto do feed faz com modelos antigas.
+    const pinnedReordered = avoidConsecutiveModels(pinnedFresh, memory, pinnedFresh.length);
+    let finalSelection = [...pinnedReordered, ...restReordered];
     
     // Categorizar para o indicador
     const novos = finalSelection.filter(v => v.reason === 'novo').length;

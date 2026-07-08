@@ -1026,8 +1026,8 @@ if (!isOpen) return null;
                 return (
                   <div className="grid grid-cols-3 gap-1">
                     {currentContents.map((content) => {
-                      const isPrivate = false;
-                      const isLocked = false;
+                      const isPrivate = activeTab === 'private';
+                      const isLocked = isPrivate && !isPremium;
                       const bunnyEmbedUrl = toBunnyStreamEmbedUrl(content.video_url, {
                         autoplay: false,
                         muted: true,
@@ -1042,6 +1042,10 @@ if (!isOpen) return null;
                           key={content.id}
                           className={`relative bg-gray-900 aspect-square overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 shadow-lg border border-white/20`}
                           onClick={() => {
+                            if (isLocked) {
+                              navigate('/subscribe');
+                              return;
+                            }
                             if (content.type === 'video') {
                               // Abre popup com swipe esquerda/direita entre vídeos do perfil
                               const videoContents = currentContents.filter(c => c.type === 'video');
@@ -1068,7 +1072,7 @@ if (!isOpen) return null;
                                   title={content.title}
                                   loading="lazy"
                                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-                                  className="w-full h-full border-0 pointer-events-none bg-black"
+                                  className={`w-full h-full border-0 pointer-events-none bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
                                 />
                               ) : (
                                 <video
@@ -1077,7 +1081,7 @@ if (!isOpen) return null;
                                   playsInline
                                   preload="metadata"
                                   aria-label={content.title}
-                                  className="w-full h-full object-cover bg-black"
+                                  className={`w-full h-full object-cover bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
                                 />
                               )}
                               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

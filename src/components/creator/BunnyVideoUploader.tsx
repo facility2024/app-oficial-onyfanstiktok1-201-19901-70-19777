@@ -137,39 +137,28 @@ export function BunnyVideoUploader({ onUploadComplete, onUploadStart }: BunnyVid
         upload.start();
       });
 
-      setProgress(72);
-      toast.info('Vídeo enviado! Aguardando processamento no servidor...', { duration: 5000 });
-
-      // Step 3: aguardar encoding ficar pronto (status público — não precisa de chave)
-      let encoded = false;
-      for (let i = 0; i < 24; i++) {
-        setProgress(72 + Math.min(i * 1.1, 26));
-        try {
-          // testa se a playlist HLS transcodificada já está acessível no CDN
-          const head = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
-          if (head.ok) {
-            encoded = true;
-            break;
-          }
-        } catch (e) {
-          // ignora — vamos tentar de novo
-        }
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-
       setProgress(100);
       setUploadStatus('success');
+      toast.success('Vídeo enviado! Já está no painel — o Bunny finaliza o processamento em segundo plano. 🎉');
 
-      if (encoded) {
-        toast.success('Vídeo processado e pronto para exibição! 🎉');
-      } else {
-        toast.warning(
-          'Vídeo enviado, mas ainda está sendo processado. Pode levar alguns minutos para aparecer no feed.',
-          { duration: 8000 },
-        );
-      }
-
+      // Devolve as URLs imediatamente para o painel do criador. O playlist.m3u8
+      // e a thumbnail.jpg ficam válidos assim que o Bunny termina o encoding
+      // (poucos segundos após o upload) — não bloqueamos a UI esperando.
       onUploadComplete(videoUrl, thumbnailUrl);
+
+      // Verificação opcional em segundo plano — apenas informa quando pronto.
+      (async () => {
+        for (let i = 0; i < 24; i++) {
+          try {
+            const head = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
+            if (head.ok) {
+              toast.success('Vídeo transcodificado e disponível no CDN!');
+              return;
+            }
+          } catch {}
+          await new Promise((r) => setTimeout(r, 5000));
+        }
+      })();
     } catch (error: any) {
       console.error('Erro no upload:', error);
       setUploadStatus('error');

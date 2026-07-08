@@ -99,11 +99,17 @@ export const VideoManagementTable = () => {
             <Card key={video.id} className="p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Thumbnail */}
-                <div className="w-full md:w-32 h-20 rounded-lg overflow-hidden shrink-0">
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
+                <div className="w-full md:w-32 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-900">
+                  <video
+                    src={video.video_url}
+                    poster={video.thumbnail_url}
                     className="w-full h-full object-cover"
+                    muted
+                    playsInline
+                    preload="metadata"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLVideoElement).style.display = 'none';
+                    }}
                   />
                 </div>
 

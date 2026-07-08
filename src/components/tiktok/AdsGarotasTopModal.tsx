@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2, X, Flame } from "lucide-react";
 import AdsLatinasModal from "./AdsLatinasModal";
+import AdsNovidadesModal from "./AdsNovidadesModal";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import { useCheckoutPrice } from "@/hooks/useCheckoutPrice";
 

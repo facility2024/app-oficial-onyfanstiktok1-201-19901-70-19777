@@ -25,10 +25,38 @@ export const VideoManagementTable = () => {
     toggleVideoActive,
     toggleVideoPremium,
     toggleVideoFeatured,
+    deleteVideo,
   } = useCreatorVideos();
 
   const [editingVideo, setEditingVideo] = useState<CreatorVideo | null>(null);
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState(false);
+
+  const allSelected = videos.length > 0 && selectedIds.size === videos.length;
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(videos.map((v) => v.id)));
+  };
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    let ok = 0, fail = 0;
+    for (const id of Array.from(selectedIds)) {
+      const success = await deleteVideo(id);
+      success ? ok++ : fail++;
+    }
+    setBulkDeleting(false);
+    setConfirmBulk(false);
+    setSelectedIds(new Set());
+    toast.success(`${ok} vídeo(s) excluído(s)${fail ? ` — ${fail} falharam` : ''}`);
+  };
 
   if (loading) {
     return (

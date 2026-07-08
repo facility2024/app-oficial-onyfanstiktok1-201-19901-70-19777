@@ -82,20 +82,19 @@ export const BulkEmailModal = ({ isOpen, onClose }: BulkEmailModalProps) => {
       });
 
 
-      // Buscar usuários regulares com email válido e formato correto
+      // Buscar usuários cadastrados com email válido e formato correto
       const { count: regularCount } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
         .not('email', 'is', null)
         .neq('email', '')
         .like('email', '%@%')
-        .like('email', '%.%')
-        .eq('is_active', true);
+        .like('email', '%.%');
 
       groups.push({
-        id: 'users',
-        name: 'Usuários Regulares',
-        table: 'users',
+        id: 'profiles',
+        name: 'Usuários Cadastrados',
+        table: 'profiles',
         count: regularCount || 0,
         selected: true
       });
@@ -167,15 +166,14 @@ export const BulkEmailModal = ({ isOpen, onClose }: BulkEmailModalProps) => {
             .like('email', '%.%')
             .eq('status', 'active');
           users = data || [];
-        } else if (group.table === 'users') {
+        } else if (group.table === 'profiles') {
           const { data } = await supabase
-            .from('users')
-            .select('email, name')
+            .from('profiles')
+            .select('email, name, first_name, username')
             .not('email', 'is', null)
             .neq('email', '')
             .like('email', '%@%')
-            .like('email', '%.%')
-            .eq('is_active', true);
+            .like('email', '%.%');
           users = data || [];
         }
 
@@ -187,7 +185,7 @@ export const BulkEmailModal = ({ isOpen, onClose }: BulkEmailModalProps) => {
             
             const promises = batch.map(user => {
               // Extrair apenas o primeiro nome
-              const firstName = user.name ? user.name.split(' ')[0] : 'Usuário';
+              const firstName = (user.name || user.first_name || user.username || 'Usuário').split(' ')[0];
               
               return supabase.functions.invoke('send-email', {
                 body: {

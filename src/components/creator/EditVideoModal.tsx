@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
+import { isBunnyStreamUrl } from '@/utils/bunnyStream';
 
 const editVideoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),
@@ -26,6 +27,7 @@ interface EditVideoModalProps {
 export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) => {
   const { updateVideo } = useCreatorVideos();
   const [loading, setLoading] = useState(false);
+  const isBunnyVideo = isBunnyStreamUrl(video.video_url || video.thumbnail_url);
   const [formData, setFormData] = useState({
     title: video.title,
     description: video.description,
@@ -97,11 +99,17 @@ export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) =>
             />
             {formData.thumbnail_url && (
               <div className="mt-2">
-                <img
-                  src={formData.thumbnail_url}
-                  alt="Preview"
-                  className="w-32 h-20 object-cover rounded"
-                />
+                {isBunnyVideo ? (
+                  <div className="w-32 h-20 rounded bg-gray-900 border border-gray-700 flex items-center justify-center text-xs text-gray-300">
+                    Bunny Stream
+                  </div>
+                ) : (
+                  <img
+                    src={formData.thumbnail_url}
+                    alt="Preview"
+                    className="w-32 h-20 object-cover rounded"
+                  />
+                )}
               </div>
             )}
           </div>

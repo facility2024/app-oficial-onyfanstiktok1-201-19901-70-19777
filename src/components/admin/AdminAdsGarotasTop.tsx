@@ -80,6 +80,15 @@ export const AdminAdsGarotasTop = () => {
 
   useEffect(() => { fetchCards(); }, []);
 
+  // Realtime: recarrega automaticamente quando qualquer card muda em qualquer categoria
+  useAdsGarotasRealtime(() => { fetchCards(); });
+
+  // Fallback: auto-refresh a cada 20s
+  useEffect(() => {
+    const id = setInterval(() => { fetchCards(); }, 20000);
+    return () => clearInterval(id);
+  }, []);
+
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);

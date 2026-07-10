@@ -30,10 +30,13 @@ export const AgeGate = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center px-6"
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-6 bg-black"
       style={{
-        background:
-          'radial-gradient(ellipse at center, #6a00b8 0%, #3a0070 45%, #000000 100%)',
+        backgroundImage:
+          "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url('https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/%26.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
       }}
     >
       <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl p-8 text-center shadow-[0_0_60px_rgba(180,80,255,0.35)]">

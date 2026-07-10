@@ -748,13 +748,17 @@ const Auth = () => {
 
   return (
     <>
-      {/* Background para Mobile — mesma cor da tela de abertura (splash) */}
-      <div 
+      {/* Background para Mobile — mesma imagem da tela de abertura */}
+      <div
         className="md:hidden min-h-screen flex items-center justify-center p-4"
         style={{
-          background: 'radial-gradient(ellipse at center, #6a00b8 0%, #3a0070 45%, #000000 100%)',
+          backgroundImage:
+            "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url('https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/%26.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           minHeight: '100vh',
-          width: '100%'
+          width: '100%',
         }}
       >
         <div className="relative p-1 rounded-lg" style={{
@@ -763,12 +767,16 @@ const Auth = () => {
           {awaitingConfirmation ? renderAwaitingConfirmation() : renderCard()}
         </div>
       </div>
-      
-      {/* Background para Desktop — mesma cor da tela de abertura (splash) */}
-      <div 
+
+      {/* Background para Desktop — mesma imagem da tela de abertura */}
+      <div
         className="hidden md:flex min-h-screen items-center justify-center p-4"
         style={{
-          background: 'radial-gradient(ellipse at center, #6a00b8 0%, #3a0070 45%, #000000 100%)'
+          backgroundImage:
+            "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url('https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/%26.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         <div className="relative p-1 rounded-lg will-change-transform" style={{

@@ -7,7 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Save, X, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, Loader2, RefreshCw } from "lucide-react";
+import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
 
 
 type Categoria = "garotas_top" | "latinas" | "novidades";
@@ -78,6 +79,15 @@ export const AdminAdsGarotasTop = () => {
   };
 
   useEffect(() => { fetchCards(); }, []);
+
+  // Realtime: recarrega automaticamente quando qualquer card muda em qualquer categoria
+  useAdsGarotasRealtime(() => { fetchCards(); });
+
+  // Fallback: auto-refresh a cada 20s
+  useEffect(() => {
+    const id = setInterval(() => { fetchCards(); }, 20000);
+    return () => clearInterval(id);
+  }, []);
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -194,12 +204,22 @@ export const AdminAdsGarotasTop = () => {
             </SelectContent>
           </Select>
           {!isCreating && !editingId && (
-            <Button
-              onClick={() => { setIsCreating(true); setForm(emptyForm); }}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Novo Card
-            </Button>
+            <>
+              <Button
+                onClick={() => fetchCards()}
+                variant="outline"
+                className="border-gray-600 text-white hover:bg-gray-800"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Atualizar
+              </Button>
+              <Button
+                onClick={() => { setIsCreating(true); setForm(emptyForm); }}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Novo Card
+              </Button>
+            </>
           )}
         </div>
       </div>

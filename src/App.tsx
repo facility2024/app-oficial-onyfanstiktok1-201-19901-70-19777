@@ -85,11 +85,11 @@ const App = () => (
           <Route path="/indicador" element={<IndicadorArea />} />
           
           {/* App SEM proteção - aceita usuários anônimos */}
-          <Route path="/app" element={<Index />} />
-          <Route path="/tiktok" element={<Index />} />
-          <Route path="/home" element={<Index />} />
-          <Route path="/index" element={<Index />} />
-          <Route path="/main" element={<Index />} />
+          <Route path="/app" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/tiktok" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/home" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/index" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/main" element={<AgeGate><Index /></AgeGate>} />
           <Route path="/garotas-top-vip" element={<GarotasTopVipPage />} />
 
           {/* Perfil do usuário */}

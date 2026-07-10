@@ -34,6 +34,7 @@ import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
 import ModelChat from "./pages/ModelChat";
 import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
+import AgeGate from "./components/AgeGate";
 import ProfilePage from "./pages/ProfilePage";
 import { VideoCallPage } from "./pages/VideoCallPage";
 import AtualizacoesPage from "./pages/AtualizacoesPage";

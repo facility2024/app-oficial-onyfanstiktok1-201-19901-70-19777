@@ -111,6 +111,20 @@ export default function AdsNovidadesModal({ open, onClose }: Props) {
             <p className="mt-2 text-sm sm:text-base md:text-lg text-cyan-200/80 font-medium px-4">
               As mais recentes adicionadas à plataforma
             </p>
+            <p className="mt-3 text-xs sm:text-sm md:text-base text-cyan-100/90 px-4 max-w-2xl mx-auto leading-relaxed">
+              São vários vídeos atualizados todas as semanas com as mais lindas da internet.
+            </p>
+            <button
+              onClick={() => setShowPix(true)}
+              className="mt-4 inline-flex flex-col items-center gap-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-cyan-600/40 to-blue-600/40 hover:from-cyan-500/60 hover:to-blue-500/60 border border-cyan-400/60 shadow-[0_0_25px_rgba(34,211,238,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+            >
+              <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]">
+                Tudo isso por <span className="text-yellow-300">R$ {price.toFixed(2).replace(".", ",")}</span>
+              </span>
+              <span className="text-[10px] sm:text-xs uppercase tracking-widest text-cyan-200 font-bold animate-pulse">
+                🔥 Pagar com PIX — acesso imediato 🔥
+              </span>
+            </button>
           </header>
 
           {loading ? (

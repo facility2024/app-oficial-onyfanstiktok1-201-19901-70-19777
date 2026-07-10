@@ -6,10 +6,26 @@ export function useAdsGarotasRealtime(onChange?: () => void) {
 
   useEffect(() => {
     const channel = supabase
-      .channel("ads_garotas_top_realtime")
+      .channel("ads_categorias_realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ads_garotas_top" },
+        () => {
+          setHasUpdate(true);
+          onChange?.();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ads_latinas" },
+        () => {
+          setHasUpdate(true);
+          onChange?.();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ads_novidades" },
         () => {
           setHasUpdate(true);
           onChange?.();

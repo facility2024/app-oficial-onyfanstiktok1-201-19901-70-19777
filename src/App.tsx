@@ -34,6 +34,7 @@ import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
 import ModelChat from "./pages/ModelChat";
 import ChatListPage from "./pages/ChatListPage";
 import SplashScreen from "./pages/SplashScreen";
+import AgeGate from "./components/AgeGate";
 import ProfilePage from "./pages/ProfilePage";
 import { VideoCallPage } from "./pages/VideoCallPage";
 import AtualizacoesPage from "./pages/AtualizacoesPage";
@@ -85,11 +86,11 @@ const App = () => (
           <Route path="/indicador" element={<IndicadorArea />} />
           
           {/* App SEM proteção - aceita usuários anônimos */}
-          <Route path="/app" element={<Index />} />
-          <Route path="/tiktok" element={<Index />} />
-          <Route path="/home" element={<Index />} />
-          <Route path="/index" element={<Index />} />
-          <Route path="/main" element={<Index />} />
+          <Route path="/app" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/tiktok" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/home" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/index" element={<AgeGate><Index /></AgeGate>} />
+          <Route path="/main" element={<AgeGate><Index /></AgeGate>} />
           <Route path="/garotas-top-vip" element={<GarotasTopVipPage />} />
 
           {/* Perfil do usuário */}

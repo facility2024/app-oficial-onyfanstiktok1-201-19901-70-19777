@@ -204,12 +204,22 @@ export const AdminAdsGarotasTop = () => {
             </SelectContent>
           </Select>
           {!isCreating && !editingId && (
-            <Button
-              onClick={() => { setIsCreating(true); setForm(emptyForm); }}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Novo Card
-            </Button>
+            <>
+              <Button
+                onClick={() => fetchCards()}
+                variant="outline"
+                className="border-gray-600 text-white hover:bg-gray-800"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Atualizar
+              </Button>
+              <Button
+                onClick={() => { setIsCreating(true); setForm(emptyForm); }}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Novo Card
+              </Button>
+            </>
           )}
         </div>
       </div>

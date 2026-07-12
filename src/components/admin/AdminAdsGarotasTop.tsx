@@ -57,6 +57,55 @@ export const AdminAdsGarotasTop = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | Categoria>("all");
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkCat, setBulkCat] = useState<Categoria>("garotas_top");
+  const [bulkUrls, setBulkUrls] = useState("");
+  const [bulkImage, setBulkImage] = useState("");
+  const [bulkValor, setBulkValor] = useState("");
+  const [bulkLink, setBulkLink] = useState("");
+  const [bulkCta, setBulkCta] = useState("Assinar Conteúdo");
+  const [bulkNomePrefix, setBulkNomePrefix] = useState("Modelo");
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  const handleBulkImport = async () => {
+    const urls = bulkUrls
+      .split(/\s|,|;/)
+      .map((u) => u.trim())
+      .filter((u) => /^https?:\/\//i.test(u));
+    if (urls.length === 0) {
+      toast.error("Cole ao menos uma URL de vídeo válida");
+      return;
+    }
+    if (!bulkImage.trim()) {
+      toast.error("Informe uma URL de imagem/capa padrão");
+      return;
+    }
+    setBulkSaving(true);
+    const payload = urls.map((video_url, i) => ({
+      nome: `${bulkNomePrefix || "Modelo"} ${i + 1}`,
+      imagem_url: bulkImage.trim(),
+      video_url,
+      cta_texto: bulkCta || "Assinar Conteúdo",
+      valor:
+        bulkValor !== "" && !Number.isNaN(Number(bulkValor))
+          ? Number(bulkValor)
+          : null,
+      ordem: 0,
+      is_active: true,
+      link_acesso: bulkLink.trim() || null,
+    }));
+    const { error } = await (supabase as any)
+      .from(TABLE_BY_CAT[bulkCat])
+      .insert(payload);
+    setBulkSaving(false);
+    if (error) {
+      toast.error("Erro no cadastro em massa: " + error.message);
+      return;
+    }
+    toast.success(`${urls.length} card(s) criado(s) em ${CAT_LABEL[bulkCat]}`);
+    setBulkUrls("");
+    fetchCards();
+  };
 
   const fetchCards = async () => {
     setLoading(true);
@@ -219,10 +268,118 @@ export const AdminAdsGarotasTop = () => {
               >
                 <Plus className="w-4 h-4 mr-2" /> Novo Card
               </Button>
+              <Button
+                onClick={() => setBulkOpen((v) => !v)}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-bold"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Cadastro em massa
+              </Button>
             </>
           )}
         </div>
       </div>
+
+      {bulkOpen && !isCreating && !editingId && (
+        <Card className="bg-gray-900 border-orange-500/40">
+          <CardHeader>
+            <CardTitle className="text-white">
+              Cadastro em massa por URLs (Bunny)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Categoria de destino *</Label>
+                <Select value={bulkCat} onValueChange={(v) => setBulkCat(v as Categoria)}>
+                  <SelectTrigger className="bg-gray-800 text-white border-gray-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="garotas_top">{CAT_LABEL.garotas_top}</SelectItem>
+                    <SelectItem value="latinas">{CAT_LABEL.latinas}</SelectItem>
+                    <SelectItem value="novidades">{CAT_LABEL.novidades}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-white">Prefixo do nome dos cards</Label>
+                <Input
+                  value={bulkNomePrefix}
+                  onChange={(e) => setBulkNomePrefix(e.target.value)}
+                  placeholder="Modelo"
+                  className="bg-gray-800 text-white border-gray-700"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white">URL da imagem/capa padrão *</Label>
+                <Input
+                  value={bulkImage}
+                  onChange={(e) => setBulkImage(e.target.value)}
+                  placeholder="https://..."
+                  className="bg-gray-800 text-white border-gray-700"
+                />
+              </div>
+              <div>
+                <Label className="text-white">Valor (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={bulkValor}
+                  onChange={(e) => setBulkValor(e.target.value)}
+                  placeholder="14.97"
+                  className="bg-gray-800 text-white border-gray-700"
+                />
+              </div>
+              <div>
+                <Label className="text-white">Texto do CTA</Label>
+                <Input
+                  value={bulkCta}
+                  onChange={(e) => setBulkCta(e.target.value)}
+                  className="bg-gray-800 text-white border-gray-700"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white">Link de acesso após pagamento</Label>
+                <Input
+                  value={bulkLink}
+                  onChange={(e) => setBulkLink(e.target.value)}
+                  placeholder="https://exemplo.com/area-vip"
+                  className="bg-gray-800 text-white border-gray-700"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white">
+                  URLs dos vídeos Bunny (uma por linha) *
+                </Label>
+                <textarea
+                  value={bulkUrls}
+                  onChange={(e) => setBulkUrls(e.target.value)}
+                  rows={8}
+                  placeholder={"https://.../video1.mp4\nhttps://.../video2.mp4"}
+                  className="w-full rounded-md bg-gray-800 text-white border border-gray-700 p-2 font-mono text-sm"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Será criado um card por URL na categoria selecionada, usando a mesma lógica dos cards atuais.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleBulkImport}
+                disabled={bulkSaving}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {bulkSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Criar cards em massa
+              </Button>
+              <Button onClick={() => setBulkOpen(false)} variant="outline">
+                <X className="w-4 h-4 mr-2" /> Fechar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {(isCreating || editingId) && (
         <Card className="bg-gray-900 border-purple-500/40">

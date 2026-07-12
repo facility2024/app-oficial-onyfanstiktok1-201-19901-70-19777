@@ -57,6 +57,55 @@ export const AdminAdsGarotasTop = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | Categoria>("all");
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkCat, setBulkCat] = useState<Categoria>("garotas_top");
+  const [bulkUrls, setBulkUrls] = useState("");
+  const [bulkImage, setBulkImage] = useState("");
+  const [bulkValor, setBulkValor] = useState("");
+  const [bulkLink, setBulkLink] = useState("");
+  const [bulkCta, setBulkCta] = useState("Assinar Conteúdo");
+  const [bulkNomePrefix, setBulkNomePrefix] = useState("Modelo");
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  const handleBulkImport = async () => {
+    const urls = bulkUrls
+      .split(/\s|,|;/)
+      .map((u) => u.trim())
+      .filter((u) => /^https?:\/\//i.test(u));
+    if (urls.length === 0) {
+      toast.error("Cole ao menos uma URL de vídeo válida");
+      return;
+    }
+    if (!bulkImage.trim()) {
+      toast.error("Informe uma URL de imagem/capa padrão");
+      return;
+    }
+    setBulkSaving(true);
+    const payload = urls.map((video_url, i) => ({
+      nome: `${bulkNomePrefix || "Modelo"} ${i + 1}`,
+      imagem_url: bulkImage.trim(),
+      video_url,
+      cta_texto: bulkCta || "Assinar Conteúdo",
+      valor:
+        bulkValor !== "" && !Number.isNaN(Number(bulkValor))
+          ? Number(bulkValor)
+          : null,
+      ordem: 0,
+      is_active: true,
+      link_acesso: bulkLink.trim() || null,
+    }));
+    const { error } = await (supabase as any)
+      .from(TABLE_BY_CAT[bulkCat])
+      .insert(payload);
+    setBulkSaving(false);
+    if (error) {
+      toast.error("Erro no cadastro em massa: " + error.message);
+      return;
+    }
+    toast.success(`${urls.length} card(s) criado(s) em ${CAT_LABEL[bulkCat]}`);
+    setBulkUrls("");
+    fetchCards();
+  };
 
   const fetchCards = async () => {
     setLoading(true);

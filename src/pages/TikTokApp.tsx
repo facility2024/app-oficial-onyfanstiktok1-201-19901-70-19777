@@ -1219,6 +1219,16 @@ export const TikTokApp = () => {
         throw videosError;
       }
 
+      // 🧹 Filtra vídeos sem URL válida (evita card "Erro ao carregar vídeo" no feed)
+      const beforeFilter = videosData.length;
+      videosData = (videosData as any[]).filter((v: any) => {
+        const url = String(v?.video_url || '').trim();
+        return url.length > 0 && /^https?:\/\//i.test(url);
+      });
+      if (beforeFilter !== videosData.length) {
+        console.log(`🧹 Removidos ${beforeFilter - videosData.length} vídeos sem URL válida`);
+      }
+
       // 🔍 DEBUG DETALHADO - Verificar dados dos vídeos
       console.log('🔍 Query videos result:', {
         total: videosData?.length || 0,

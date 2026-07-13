@@ -43,6 +43,16 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
 
       if (modelsError) throw modelsError;
 
+      // 🧹 Buscar IDs de modelos que TÊM vídeo ativo (para não mostrar modelos vazias)
+      const { data: modelVideoRows } = await supabase
+        .from('videos')
+        .select('model_id')
+        .eq('is_active', true)
+        .not('model_id', 'is', null);
+      const modelsWithVideoSet = new Set<string>(
+        (modelVideoRows || []).map((r: any) => r.model_id).filter(Boolean)
+      );
+
       // 🔥 Buscar painéis de chat para verificar status online
       const { data: chatPanelsData, error: chatPanelsError } = await supabase
         .from('model_chat_panels' as any)
@@ -57,13 +67,16 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
         chatPanelsMap[panel.model_id] = panel.is_online;
       });
 
-      // Atualizar modelos com status online do chat panel
-      const modelsWithChatStatus = (modelsData || []).map((m: any) => ({
-        ...m,
-        followers_count: m.followers_count ?? 0,
-        is_live: chatPanelsMap[m.id] || false,
-        is_verified: m.is_verified ?? false,
-      }));
+      // Atualizar modelos com status online do chat panel + filtrar sem vídeo
+      const modelsWithChatStatus = (modelsData || [])
+        .filter((m: any) => modelsWithVideoSet.has(m.id))
+        .map((m: any) => ({
+          ...m,
+          followers_count: m.followers_count ?? 0,
+          is_live: chatPanelsMap[m.id] || false,
+          is_verified: m.is_verified ?? false,
+        }));
+
 
       // 🔥 Buscar criadores diretamente pelos vídeos ativos (fonte da verdade)
       console.log('🔍 Buscando criadores via videos.creator_id...');

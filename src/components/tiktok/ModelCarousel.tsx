@@ -59,6 +59,16 @@ export const ModelCarousel = ({
         .order('followers_count', { ascending: false });
 
       if (data && !error) {
+        // 🧹 Filtrar apenas modelos que possuem vídeo ativo (evita story quebrado)
+        const { data: videoRows } = await supabase
+          .from('videos')
+          .select('model_id')
+          .eq('is_active', true)
+          .not('model_id', 'is', null);
+        const modelsWithVideo = new Set<string>(
+          (videoRows || []).map((r: any) => r.model_id).filter(Boolean)
+        );
+
         // Buscar painéis de chat para verificar status online
         const { data: chatPanelsData } = await supabase
           .from('model_chat_panels' as any)
@@ -69,11 +79,14 @@ export const ModelCarousel = ({
           chatPanelsMap[panel.model_id] = panel.is_online;
         });
 
-        // Atualizar modelos com status online
-        const allModels = (data as Model[]).map((m: Model) => ({
-          ...m,
-          is_live: chatPanelsMap[m.id] || false
-        }));
+        // Atualizar modelos com status online (somente as que têm vídeo)
+        const allModels = (data as Model[])
+          .filter((m: Model) => modelsWithVideo.has(m.id))
+          .map((m: Model) => ({
+            ...m,
+            is_live: chatPanelsMap[m.id] || false
+          }));
+
         
         // Dividir em duas partes iguais
         const halfPoint = Math.ceil(allModels.length / 2);

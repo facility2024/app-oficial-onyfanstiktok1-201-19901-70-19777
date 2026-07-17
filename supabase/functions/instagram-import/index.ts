@@ -291,41 +291,44 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const visibility: 'public' | 'private' = body?.visibility === 'private' ? 'private' : 'public';
     const rawList: string[] = Array.isArray(body?.urls) ? body.urls : (body?.url ? [body.url] : []);
+    const providedUsername = extractUsername(body?.username ?? '');
 
-    // Separa em shortcodes (post/reel) e usernames (perfis).
-    const shortcodes: string[] = [];
-    const profileUsernames: string[] = [];
-    for (const raw of rawList) {
-      const sc = extractShortcode(raw);
-      if (sc) { shortcodes.push(sc); continue; }
-      const un = extractUsername(raw);
-      if (un) profileUsernames.push(un);
-    }
-    const uniqSc = Array.from(new Set(shortcodes));
-    const uniqUn = Array.from(new Set(profileUsernames));
-
-    if (uniqSc.length === 0 && uniqUn.length === 0) {
-      return new Response(JSON.stringify({ error: 'Envie link /p/ /reel/ OU um perfil instagram.com/<username>.' }), {
+    if (!providedUsername) {
+      return new Response(JSON.stringify({ error: 'Campo "username" da modelo é obrigatório (o instagram120/mediaByShortcode não retorna o dono).' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Só extrai shortcodes dos links.
+    const shortcodes: string[] = [];
+    for (const raw of rawList) {
+      const sc = extractShortcode(raw);
+      if (sc) shortcodes.push(sc);
+    }
+    const uniqSc = Array.from(new Set(shortcodes));
+
     const results: any[] = [];
     let imported = 0, skipped = 0, failed = 0;
 
-    // 1) Perfis puros — só garante ig_models (sem baixar posts).
-    for (const un of uniqUn) {
-      try {
-        const model = await ensureModel(admin, un, {}, visibility);
-        results.push({ username: un, status: 'model_ready', model_id: model.id, slug: model.slug });
-      } catch (e: any) {
-        failed++;
-        results.push({ username: un, status: 'error', error: e?.message ?? String(e) });
-      }
+    // 1) Garante o perfil da modelo (1 chamada userInfo só na primeira vez).
+    let model: { id: string; slug: string };
+    try {
+      model = await ensureModel(admin, providedUsername, {}, visibility);
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: `Falha ao preparar perfil @${providedUsername}: ${e?.message ?? e}` }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (uniqSc.length === 0) {
+      return new Response(
+        JSON.stringify({ ok: true, imported: 0, skipped: 0, failed: 0, total: 0, results: [{ username: providedUsername, status: 'model_ready', model_id: model.id, slug: model.slug }] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
     // 2) Shortcodes — dedup ANTES de chamar RapidAPI.
-    if (uniqSc.length > 0) {
+    {
       const { data: existingRows } = await admin
         .from('ig_feed_videos')
         .select('ig_shortcode')
@@ -340,15 +343,10 @@ Deno.serve(async (req) => {
         }
         try {
           const raw = await fetchMediaByShortcode(sc);
-          const owner = extractOwner(raw);
-          if (!owner.username) {
-            console.error('[ig-import] payload sem username. Top-level keys:', Object.keys(raw ?? {}), 'preview:', JSON.stringify(raw).slice(0, 800));
-            throw new Error('Post sem username do dono (payload em formato inesperado)');
-          }
           const media = collectMedia(raw);
           if (media.length === 0) throw new Error('Post sem mídia utilizável');
 
-          const model = await ensureModel(admin, owner.username, owner, visibility);
+          // Usa o `model` garantido antes do loop (evita nova chamada userInfo).
           const post_type: 'video' | 'image' | 'carousel' =
             media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
 
@@ -412,7 +410,7 @@ Deno.serve(async (req) => {
           imported++;
           results.push({
             shortcode: sc, status: 'ok', id: inserted.id,
-            username: owner.username, slug: model.slug, post_type, media_count: mediaOut.length,
+            username: providedUsername, slug: model.slug, post_type, media_count: mediaOut.length,
           });
         } catch (e: any) {
           failed++;
@@ -423,7 +421,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, imported, skipped, failed, total: uniqSc.length + uniqUn.length, results }),
+      JSON.stringify({ ok: true, imported, skipped, failed, total: uniqSc.length, username: providedUsername, slug: model.slug, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (e: any) {

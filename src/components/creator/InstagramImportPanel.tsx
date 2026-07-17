@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Instagram, Loader2, RefreshCw, Trash2, Eye, EyeOff, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,7 @@ function extractShortcode(input: string): string | null {
 
 export default function InstagramImportPanel() {
   const [rawInput, setRawInput] = useState("");
+  const [username, setUsername] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -74,6 +76,10 @@ export default function InstagramImportPanel() {
   useEffect(() => { load(); }, []);
 
   const runImport = async () => {
+    const cleanUser = username.trim().replace(/^@/, "").toLowerCase();
+    if (!cleanUser) {
+      return toast.error("Informe o @username da modelo (obrigatório).");
+    }
     if (parsedShortcodes.length === 0) {
       return toast.error("Cole ao menos um link do Instagram (/p/ ou /reel/).");
     }
@@ -92,7 +98,7 @@ export default function InstagramImportPanel() {
       for (const chunk of chunks) {
         setProgressLabel(`Processando ${done + 1}–${done + chunk.length} de ${parsedShortcodes.length}`);
         const { data, error } = await supabase.functions.invoke("instagram-import", {
-          body: { urls: chunk, visibility },
+          body: { urls: chunk, visibility, username: cleanUser },
         });
         if (error) throw new Error(error.message);
         const r: any = data;
@@ -143,6 +149,20 @@ export default function InstagramImportPanel() {
               <b> antes </b> de bater na RapidAPI (sem cobrança dupla). Cada mídia é copiada para a Bunny.
             </p>
           </div>
+        </div>
+
+        <div className="mb-3">
+          <Label className="text-white text-xs">@username da modelo (obrigatório)</Label>
+          <Input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="ex: nomedamodelo"
+            className="bg-gray-900 border-gray-700 text-white mt-1"
+            disabled={running}
+          />
+          <p className="text-[11px] text-gray-500 mt-1">
+            O provider <code>instagram120/mediaByShortcode</code> não retorna o dono do post — por isso o username é obrigatório. Fazemos 1 chamada <code>userInfo</code> só na primeira vez.
+          </p>
         </div>
 
         <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>

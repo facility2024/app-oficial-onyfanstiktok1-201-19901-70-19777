@@ -2754,6 +2754,119 @@ export type Database = {
           },
         ]
       }
+      ig_feed_videos: {
+        Row: {
+          bunny_path: string
+          caption: string | null
+          created_at: string
+          duration_seconds: number | null
+          height: number | null
+          id: string
+          ig_media_id: string | null
+          ig_model_id: string | null
+          ig_shortcode: string | null
+          imported_by: string | null
+          is_active: boolean
+          metadata: Json | null
+          source_url: string | null
+          thumbnail_url: string | null
+          updated_at: string
+          video_url: string
+          visibility: string
+          width: number | null
+        }
+        Insert: {
+          bunny_path: string
+          caption?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          ig_media_id?: string | null
+          ig_model_id?: string | null
+          ig_shortcode?: string | null
+          imported_by?: string | null
+          is_active?: boolean
+          metadata?: Json | null
+          source_url?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          video_url: string
+          visibility?: string
+          width?: number | null
+        }
+        Update: {
+          bunny_path?: string
+          caption?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          ig_media_id?: string | null
+          ig_model_id?: string | null
+          ig_shortcode?: string | null
+          imported_by?: string | null
+          is_active?: boolean
+          metadata?: Json | null
+          source_url?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          video_url?: string
+          visibility?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ig_feed_videos_ig_model_id_fkey"
+            columns: ["ig_model_id"]
+            isOneToOne: false
+            referencedRelation: "ig_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ig_models: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          default_visibility: string
+          display_name: string | null
+          id: string
+          ig_user_id: string | null
+          ig_username: string
+          is_active: boolean
+          metadata: Json | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          default_visibility?: string
+          display_name?: string | null
+          id?: string
+          ig_user_id?: string | null
+          ig_username: string
+          is_active?: boolean
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          default_visibility?: string
+          display_name?: string | null
+          id?: string
+          ig_user_id?: string | null
+          ig_username?: string
+          is_active?: boolean
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           configuration: Json

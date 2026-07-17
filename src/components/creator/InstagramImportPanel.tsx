@@ -43,9 +43,24 @@ export default function InstagramImportPanel() {
   };
   useEffect(() => { load(); }, []);
 
+  const parseUsername = (raw: string): string | null => {
+    let s = raw.trim();
+    if (!s) return null;
+    // Bloqueia URLs de post/reel — não contêm o @username
+    if (/instagram\.com\/(reel|reels|p|tv)\//i.test(s)) return null;
+    // Extrai username de URL tipo instagram.com/usuario/
+    const m = s.match(/instagram\.com\/([A-Za-z0-9._]+)/i);
+    if (m) s = m[1];
+    s = s.replace(/^@/, "").replace(/\/+$/, "").toLowerCase();
+    if (!/^[a-z0-9._]{1,30}$/.test(s)) return null;
+    return s;
+  };
+
   const runImport = async (useMaxId: string) => {
-    const u = username.trim().replace(/^@/, "").toLowerCase();
-    if (!u) return toast.error("Digite o @username");
+    const u = parseUsername(username);
+    if (!u) {
+      return toast.error("Digite apenas o @username do perfil (ex: @keke). URLs de /reel/ ou /p/ não funcionam aqui — precisa ser o nome do perfil.");
+    }
     setRunning(true);
     try {
       const { data, error } = await supabase.functions.invoke("instagram-import", {
@@ -56,7 +71,7 @@ export default function InstagramImportPanel() {
       if (r?.error) throw new Error(r.error);
       setLastStats({ imported: r.imported, skipped: r.skipped, failed: r.failed });
       setNextMaxId(r.nextMaxId ?? "");
-      toast.success(`Importados: ${r.imported} • Duplicados: ${r.skipped} • Falhas: ${r.failed}`);
+      toast.success(`@${u} • Importados: ${r.imported} • Duplicados: ${r.skipped} • Falhas: ${r.failed}`);
       load();
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao importar");

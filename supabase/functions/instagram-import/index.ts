@@ -346,8 +346,7 @@ Deno.serve(async (req) => {
           const media = collectMedia(raw);
           if (media.length === 0) throw new Error('Post sem mídia utilizável');
 
-          // model já garantido acima com providedUsername
-          const post_type_: any = null; // placeholder for indentation
+          // Usa o `model` garantido antes do loop (evita nova chamada userInfo).
           const post_type: 'video' | 'image' | 'carousel' =
             media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
 

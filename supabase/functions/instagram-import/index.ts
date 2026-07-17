@@ -421,7 +421,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, imported, skipped, failed, total: uniqSc.length + uniqUn.length, results }),
+      JSON.stringify({ ok: true, imported, skipped, failed, total: uniqSc.length, username: providedUsername, slug: model.slug, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (e: any) {

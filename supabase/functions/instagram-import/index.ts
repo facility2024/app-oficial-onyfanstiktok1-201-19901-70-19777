@@ -410,7 +410,7 @@ Deno.serve(async (req) => {
           imported++;
           results.push({
             shortcode: sc, status: 'ok', id: inserted.id,
-            username: owner.username, slug: model.slug, post_type, media_count: mediaOut.length,
+            username: providedUsername, slug: model.slug, post_type, media_count: mediaOut.length,
           });
         } catch (e: any) {
           failed++;

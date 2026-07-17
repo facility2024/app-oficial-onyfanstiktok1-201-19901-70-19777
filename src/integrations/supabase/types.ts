@@ -2756,7 +2756,7 @@ export type Database = {
       }
       ig_feed_videos: {
         Row: {
-          bunny_path: string
+          bunny_path: string | null
           caption: string | null
           created_at: string
           duration_seconds: number | null
@@ -2778,7 +2778,7 @@ export type Database = {
           width: number | null
         }
         Insert: {
-          bunny_path: string
+          bunny_path?: string | null
           caption?: string | null
           created_at?: string
           duration_seconds?: number | null
@@ -2800,7 +2800,7 @@ export type Database = {
           width?: number | null
         }
         Update: {
-          bunny_path?: string
+          bunny_path?: string | null
           caption?: string | null
           created_at?: string
           duration_seconds?: number | null

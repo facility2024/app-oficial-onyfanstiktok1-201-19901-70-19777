@@ -147,30 +147,33 @@ export default function InstagramImportPanel() {
     setRunning(true);
     setProgress(0);
     setLastStats(null);
+    setProgressLabel("Buscando posts no Instagram…");
 
     try {
-      setProgressLabel("Buscando posts no Instagram…");
       const { data, error } = await supabase.functions.invoke("instagram-import", {
         body: { urls: parsed.map((entry) => entry.raw), visibility, maxPages },
       });
       if (error) throw new Error(error.message);
       const result: any = data;
       if (result?.error) throw new Error(result.error);
-      const { data: job } = await supabase
-        .from("ig_import_jobs")
-        .select("id, status, total_items, processed_items, imported_items, skipped_items, failed_items, last_error, created_at")
-        .eq("id", result.jobId)
-        .single();
-      if (job) setActiveJob(job as ImportJob);
-      setLastStats({ imported: 0, skipped: result.skipped ?? 0, failed: result.failed ?? 0 });
-      toast.success(`${result.queued ?? 0} posts enviados para a fila. Você pode sair desta tela.`);
+      setLastStats({
+        imported: result.imported ?? 0,
+        skipped: result.skipped ?? 0,
+        failed: result.failed ?? 0,
+      });
+      setProgress(100);
+      setProgressLabel("Concluído");
+      toast.success(`${result.imported ?? 0} vídeos importados • ${result.skipped ?? 0} duplicados${result.failed ? ` • ${result.failed} falhas` : ''}`);
       setRawInput("");
+      await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao importar");
-      setRunning(false);
       setProgressLabel("");
+    } finally {
+      setRunning(false);
     }
   };
+
 
   const toggleVisibility = async (v: IgVideo) => {
     const next = v.visibility === "public" ? "private" : "public";

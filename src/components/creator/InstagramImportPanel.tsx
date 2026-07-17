@@ -151,10 +151,6 @@ export default function InstagramImportPanel() {
           </div>
         </div>
 
-        <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
-        <Textarea
-          value={rawInput}
-          onChange={(e) => setRawInput(e.target.value)}
         <div className="mb-3">
           <Label className="text-white text-xs">@username da modelo (obrigatório)</Label>
           <Input

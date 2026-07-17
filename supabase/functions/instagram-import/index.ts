@@ -400,23 +400,23 @@ async function ensureAppModel(
 
 async function pushToAppFeed(
   admin: any,
-  appModelId: string,
+  creatorId: string,
   shortcode: string,
   videoUrl: string,
   thumbUrl: string | null,
   caption: string | null,
   durationSec: number | null,
-  width: number | null,
-  height: number | null,
+  _width: number | null,
+  _height: number | null,
   visibility: 'public' | 'private',
 ) {
-  // evita duplicar se já postamos esse shortcode antes
+  // evita duplicar se já postamos esse shortcode antes para o mesmo criador
   const { data: dup } = await admin
     .from('videos')
     .select('id')
-    .eq('model_id', appModelId)
+    .eq('creator_id', creatorId)
     .eq('upload_source', 'instagram')
-    .ilike('description', `%${shortcode}%`)
+    .ilike('description', `%[ig:${shortcode}]%`)
     .maybeSingle();
   if (dup) return dup.id;
 
@@ -428,7 +428,7 @@ async function pushToAppFeed(
   const { data: v, error } = await admin
     .from('videos')
     .insert({
-      model_id: appModelId,
+      creator_id: creatorId,
       title,
       description: `[ig:${shortcode}] ${caption ?? ''}`.trim(),
       thumbnail_url: thumbUrl || videoUrl,

@@ -712,14 +712,11 @@ Deno.serve(async (req) => {
     const maxPages: number = Math.min(Math.max(parseInt(body?.maxPages ?? '1', 10) || 1, 1), 5);
     const rawList: string[] = Array.isArray(body?.urls) ? body.urls : (body?.url ? [body.url] : []);
 
-    // Separa entradas em usernames e shortcodes soltos
-    const usernames = new Set<string>();
+    // Aceita SOMENTE shortcodes (links de post/reel). Perfis foram desativados.
     const looseShortcodes = new Set<string>();
     for (const raw of rawList) {
       const sc = extractShortcode(raw);
-      if (sc) { looseShortcodes.add(sc); continue; }
-      const un = extractUsername(raw);
-      if (un) usernames.add(un);
+      if (sc) looseShortcodes.add(sc);
     }
 
     const { data: job, error: jobError } = await admin.from('ig_import_jobs').insert({
@@ -763,44 +760,6 @@ Deno.serve(async (req) => {
         media: mediaOut,
         imported_by: userId,
       };
-    }
-
-    // ===== 1) Perfis (fluxo principal) =====
-    for (const username of usernames) {
-      try {
-        const model = await ensureModel(admin, username, {}, visibility);
-
-        let maxId = '';
-        let pagesDone = 0;
-        while (pagesDone < maxPages) {
-          const page = await fetchUserPosts(username, maxId);
-          const { items, nextMaxId } = extractPostsPage(page);
-          if (items.length === 0) break;
-
-          const codes = items.map((it) => it.code || it.shortcode).filter(Boolean);
-          const { data: exist } = await admin
-            .from('ig_feed_videos')
-            .select('ig_shortcode')
-            .in('ig_shortcode', codes);
-          const existSet = new Set((exist ?? []).map((r: any) => r.ig_shortcode));
-
-          for (const item of items) {
-            const sc = item.code || item.shortcode;
-            if (!sc) continue;
-            if (existSet.has(sc)) { skipped++; continue; }
-            const row = buildDirectRow(model, sc, item);
-            if (row) directInserts.push(row);
-            else failed++;
-          }
-
-          pagesDone++;
-          if (!nextMaxId) break;
-          maxId = nextMaxId;
-        }
-      } catch (e: any) {
-        failed++;
-        console.error('[ig-import] username', username, e?.message ?? e);
-      }
     }
 
     // ===== 2) Shortcodes soltos =====

@@ -155,6 +155,24 @@ export default function InstagramImportPanel() {
         <Textarea
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
+        <div className="mb-3">
+          <Label className="text-white text-xs">@username da modelo (obrigatório)</Label>
+          <Input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="ex: nomedamodelo"
+            className="bg-gray-900 border-gray-700 text-white mt-1"
+            disabled={running}
+          />
+          <p className="text-[11px] text-gray-500 mt-1">
+            O provider <code>instagram120/mediaByShortcode</code> não retorna o dono do post — por isso o username é obrigatório. Fazemos 1 chamada <code>userInfo</code> só na primeira vez.
+          </p>
+        </div>
+
+        <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
+        <Textarea
+          value={rawInput}
+          onChange={(e) => setRawInput(e.target.value)}
           placeholder={"https://www.instagram.com/reel/DZ-6MYwNTo-/\nhttps://www.instagram.com/p/ABC123xyz/"}
           rows={6}
           className="bg-gray-900 border-gray-700 text-white font-mono text-sm"

@@ -146,18 +146,11 @@ export default function InstagramImportPanel() {
         </div>
 
         <div className="mb-3">
-          <Label className="text-white text-xs">@username da modelo (obrigatório)</Label>
-          <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="ex: nomedamodelo"
-            className="bg-gray-900 border-gray-700 text-white mt-1"
-            disabled={running}
-          />
-          <p className="text-[11px] text-gray-500 mt-1">
-            O provider <code>instagram120/mediaByShortcode</code> não retorna o dono do post — por isso o username é obrigatório. Fazemos 1 chamada <code>userInfo</code> só na primeira vez.
+          <p className="text-xs text-gray-400">
+            Cole os links — o sistema detecta a modelo automaticamente pelo próprio post e cria o perfil (nome, foto HD, bio) na 1ª vez. Cobrança RapidAPI é única por shortcode.
           </p>
         </div>
+
 
         <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
         <Textarea

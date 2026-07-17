@@ -526,28 +526,21 @@ async function persistPost(
     .single();
   if (iErr) throw new Error(iErr.message);
 
-  // Espelha no feed principal do app (tabela videos) — só vídeos
+  // Espelha no feed principal do app (tabela videos) como vídeo do CRIADOR autenticado
   if (post_type === 'video' && mainVideoUrl) {
     try {
-      const appModelId = await ensureAppModel(admin, model, {
-        ig_username: (postNode?.owner?.username || model.slug),
-        display_name: postNode?.owner?.full_name ?? null,
-        avatar_url: postNode?.owner?.profile_pic_url ?? null,
-      });
-      if (appModelId) {
-        await pushToAppFeed(
-          admin,
-          appModelId,
-          shortcode,
-          mainVideoUrl,
-          mainThumbUrl,
-          extractCaption(postNode) ?? null,
-          media[0]?.duration ?? null,
-          media[0]?.width ?? null,
-          media[0]?.height ?? null,
-          visibility,
-        );
-      }
+      await pushToAppFeed(
+        admin,
+        userId,
+        shortcode,
+        mainVideoUrl,
+        mainThumbUrl,
+        extractCaption(postNode) ?? null,
+        media[0]?.duration ?? null,
+        media[0]?.width ?? null,
+        media[0]?.height ?? null,
+        visibility,
+      );
     } catch (e) {
       console.warn('[ig-import] espelhar no feed falhou:', (e as Error).message);
     }

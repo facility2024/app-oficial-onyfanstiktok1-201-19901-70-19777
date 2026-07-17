@@ -76,6 +76,10 @@ export default function InstagramImportPanel() {
   useEffect(() => { load(); }, []);
 
   const runImport = async () => {
+    const cleanUser = username.trim().replace(/^@/, "").toLowerCase();
+    if (!cleanUser) {
+      return toast.error("Informe o @username da modelo (obrigatório).");
+    }
     if (parsedShortcodes.length === 0) {
       return toast.error("Cole ao menos um link do Instagram (/p/ ou /reel/).");
     }

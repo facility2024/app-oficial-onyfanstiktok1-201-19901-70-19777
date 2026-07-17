@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard, Phone, Radio, Settings } from 'lucide-react';
+import { Upload, Video, Image, ArrowLeft, Loader2, List, BarChart3, Film, MessageCircle, Key, Bot, Clock, Link, Crown, Lock, Globe, CreditCard, Phone, Radio, Settings, Instagram } from 'lucide-react';
 import { BunnyVideoUploader } from '@/components/creator/BunnyVideoUploader';
 import { BunnyBatchUploader } from '@/components/creator/BunnyBatchUploader';
 import { AudioUploader } from '@/components/creator/AudioUploader';
@@ -472,6 +472,12 @@ export default function CreatorStudio() {
             <TabsTrigger value="sales" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
               <BarChart3 className="w-4 h-4 mr-1" />
               Minhas Vendas
+            </TabsTrigger>
+            <TabsTrigger value="instagram" className="data-[state=active]:bg-gray-700 flex-shrink-0 text-xs md:text-sm px-2 md:px-3">
+              <span className="w-4 h-4 mr-1 rounded-[4px] flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
+                <Instagram className="w-3 h-3 text-white" />
+              </span>
+              Perfil do Instagram
             </TabsTrigger>
           </TabsList>
 
@@ -1161,6 +1167,19 @@ export default function CreatorStudio() {
 
           <TabsContent value="sales">
             <MySales />
+          </TabsContent>
+
+          <TabsContent value="instagram">
+            <Card className="bg-gray-800/50 border-gray-700 p-8 text-center">
+              <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 mb-4">
+                <Instagram className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Perfil do Instagram</h2>
+              <p className="text-gray-300 max-w-md mx-auto">
+                Área para gerenciar seu perfil do Instagram. O conteúdo desta seção
+                será construído em seguida.
+              </p>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

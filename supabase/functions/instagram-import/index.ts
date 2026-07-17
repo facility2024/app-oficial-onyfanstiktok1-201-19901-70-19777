@@ -246,6 +246,20 @@ Deno.serve(async (req) => {
     );
   } catch (e: any) {
     console.error('[instagram-import]', e);
+    // Falhas do provider (perfil não encontrado, link expirado, rate limit) retornam 200
+    // com fallback:true para não gerar 500/blank-screen no frontend.
+    if (e?.providerFail) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          fallback: true,
+          error: e.message,
+          hint: 'O provider RapidAPI não retornou dados desse perfil (link expirado, perfil privado ou inexistente). Tente outro @username ou aguarde alguns minutos.',
+          imported: 0, skipped: 0, failed: 0, nextMaxId: null,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
     return new Response(JSON.stringify({ error: e?.message ?? String(e) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

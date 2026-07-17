@@ -98,24 +98,62 @@ function collectMedia(root: any): Array<{ kind: 'video' | 'image'; url: string; 
     out.push({ kind: 'image', url: u, width: w, height: h });
   }
 
-  function walk(node: any) {
+  function firstUrl(value: any): string | undefined {
+    if (typeof value === 'string' && /^https?:\/\//i.test(value)) return value;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = firstUrl(item);
+        if (found) return found;
+      }
+    }
+    if (value && typeof value === 'object') {
+      for (const key of ['url', 'src', 'uri', 'download_url', 'downloadUrl']) {
+        const found = firstUrl(value[key]);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+
+  function walk(node: any, parentKey = '') {
     if (!node) return;
-    if (Array.isArray(node)) { for (const n of node) walk(n); return; }
+    if (Array.isArray(node)) { for (const n of node) walk(n, parentKey); return; }
     if (typeof node !== 'object') return;
 
     const vurl = node.video_url
-      || (Array.isArray(node.video_versions) ? node.video_versions[0]?.url : undefined);
+      || node.videoUrl
+      || node.video_uri
+      || node.videoUri
+      || node.play_url
+      || node.playUrl
+      || node.download_url
+      || node.downloadUrl
+      || firstUrl(node.video_versions)
+      || firstUrl(node.videoVersions)
+      || ((node.media_type === 2 || node.mediaType === 2 || node.type === 'video') ? firstUrl(node.url ?? node.src ?? node.uri) : undefined);
     if (vurl && typeof vurl === 'string') {
       const thumb = node.thumbnail_url
+        || node.thumbnailUrl
         || node.display_url
+        || node.displayUrl
+        || node.cover_url
+        || node.coverUrl
         || node.image_versions2?.candidates?.[0]?.url
+        || node.imageVersions2?.candidates?.[0]?.url
         || node.thumbnail_src;
       pushVideo(vurl, thumb, node.original_width || node.width, node.original_height || node.height, node.video_duration || node.duration);
     }
 
     if (!vurl) {
       const iurl = node.display_url
+        || node.displayUrl
+        || node.image_url
+        || node.imageUrl
+        || node.thumbnail_url
+        || node.thumbnailUrl
         || node.image_versions2?.candidates?.[0]?.url
+        || node.imageVersions2?.candidates?.[0]?.url
+        || firstUrl(node.images)
         || node.thumbnail_src;
       if (iurl && typeof iurl === 'string' && /^https?:/.test(iurl)) {
         if (!/profile_pic|s150x150|s320x320/i.test(iurl)) {
@@ -126,7 +164,16 @@ function collectMedia(root: any): Array<{ kind: 'video' | 'image'; url: string; 
 
     for (const k of Object.keys(node)) {
       const v = node[k];
-      if (v && (Array.isArray(v) || typeof v === 'object')) walk(v);
+      const normalizedKey = k.replace(/[^a-z]/gi, '').toLowerCase();
+      if (typeof v === 'string' && /^https?:\/\//i.test(v)) {
+        if (/video|play|download/.test(normalizedKey) || (/url|src|uri/.test(normalizedKey) && /video|clips?|reels?/.test(parentKey))) {
+          pushVideo(v);
+        } else if (/image|display|thumbnail|cover|photo/.test(normalizedKey) && !/profile|avatar/.test(normalizedKey)) {
+          pushImage(v);
+        }
+      } else if (v && (Array.isArray(v) || typeof v === 'object')) {
+        walk(v, `${parentKey}.${normalizedKey}`);
+      }
     }
   }
 

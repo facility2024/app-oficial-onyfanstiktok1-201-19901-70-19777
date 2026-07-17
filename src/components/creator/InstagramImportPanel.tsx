@@ -98,7 +98,7 @@ export default function InstagramImportPanel() {
       for (const chunk of chunks) {
         setProgressLabel(`Processando ${done + 1}–${done + chunk.length} de ${parsedShortcodes.length}`);
         const { data, error } = await supabase.functions.invoke("instagram-import", {
-          body: { urls: chunk, visibility },
+          body: { urls: chunk, visibility, username: cleanUser },
         });
         if (error) throw new Error(error.message);
         const r: any = data;

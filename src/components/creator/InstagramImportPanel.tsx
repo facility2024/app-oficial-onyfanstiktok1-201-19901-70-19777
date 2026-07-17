@@ -43,14 +43,14 @@ type Entry =
 function parseEntry(input: string): Entry | null {
   const s = input.trim();
   if (!s) return null;
+  // Aceita SOMENTE links completos do Instagram (não @username, não nome solto).
+  if (!/^https?:\/\/(www\.)?instagram\.com\//i.test(s)) return null;
   const sc = s.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
   if (sc) return { kind: "shortcode", value: sc[1], raw: s };
   const un = s.match(/instagram\.com\/([A-Za-z0-9._]{1,30})\/?/i);
-  if (un && !/^(reel|reels|p|tv|explore|stories)$/i.test(un[1])) {
+  if (un && !/^(reel|reels|p|tv|explore|stories|accounts)$/i.test(un[1])) {
     return { kind: "username", value: un[1].toLowerCase(), raw: s };
   }
-  if (/^@[A-Za-z0-9._]{1,30}$/.test(s)) return { kind: "username", value: s.slice(1).toLowerCase(), raw: s };
-  if (/^[A-Za-z0-9._]{2,30}$/.test(s) && !s.includes("/")) return { kind: "username", value: s.toLowerCase(), raw: s };
   return null;
 }
 

@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown, Radio } from "lucide-react";
+import { Menu, Phone, Users, ShoppingBag, MapPin, BookmarkPlus, Sparkles, LogOut, Bot, Crown, Radio, Instagram } from "lucide-react";
 import { useState } from "react";
 import coconutIcon from "@/assets/coconudi-icon.png";
 import { UserMenuHeader } from "./UserMenuHeader";
@@ -72,6 +72,23 @@ export const CategoryMenu = ({
 
   // Construir menuItems dinamicamente
   const baseMenuItems: MenuItemProps[] = [];
+
+  // Perfil do Instagram (nova aba)
+  baseMenuItems.push({
+    id: "instagram-profile",
+    name: "Perfil do Instagram",
+    icon: (
+      <span className="w-5 h-5 rounded-md flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
+        <Instagram className="w-3.5 h-3.5 text-white" />
+      </span>
+    ),
+    onClick: () => {
+      setOpen(false);
+      requestAnimationFrame(() => {
+        navigate('/perfil-instagram');
+      });
+    }
+  });
 
 
 

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Instagram, Loader2, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react";
+import { Instagram, Loader2, RefreshCw, Trash2, Eye, EyeOff, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,15 +21,14 @@ type IgVideo = {
   ig_model_id: string | null;
 };
 
-const CONCURRENCY = 3;
-
 export default function InstagramImportPanel() {
-  const [urls, setUrls] = useState("");
+  const [username, setUsername] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
-  const [importing, setImporting] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const [nextMaxId, setNextMaxId] = useState<string>("");
+  const [running, setRunning] = useState(false);
   const [videos, setVideos] = useState<IgVideo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [lastStats, setLastStats] = useState<{ imported: number; skipped: number; failed: number } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -42,43 +41,28 @@ export default function InstagramImportPanel() {
     else setVideos((data ?? []) as IgVideo[]);
     setLoading(false);
   };
-
   useEffect(() => { load(); }, []);
 
-  const importOne = async (url: string) => {
-    const { data, error } = await supabase.functions.invoke("instagram-import", {
-      body: { url, visibility },
-    });
-    if (error) throw new Error(error.message);
-    if ((data as any)?.error) throw new Error((data as any).error);
-    return data;
-  };
-
-  const handleImport = async () => {
-    const list = urls.split(/\s|,|\n/g).map((s) => s.trim()).filter(Boolean);
-    if (!list.length) return toast.error("Cole ao menos uma URL do Instagram");
-    setImporting(true);
-    setProgress({ done: 0, total: list.length });
-    let ok = 0, skip = 0, fail = 0;
-    const queue = [...list];
-    const workers = Array.from({ length: Math.min(CONCURRENCY, list.length) }, async () => {
-      while (queue.length) {
-        const url = queue.shift()!;
-        try {
-          const r: any = await importOne(url);
-          if (r?.skipped) skip++; else ok++;
-        } catch (e: any) {
-          fail++;
-          console.error(url, e);
-        }
-        setProgress((p) => ({ ...p, done: p.done + 1 }));
-      }
-    });
-    await Promise.all(workers);
-    setImporting(false);
-    toast.success(`Importado: ${ok} • Duplicados: ${skip} • Falhas: ${fail}`);
-    setUrls("");
-    load();
+  const runImport = async (useMaxId: string) => {
+    const u = username.trim().replace(/^@/, "").toLowerCase();
+    if (!u) return toast.error("Digite o @username");
+    setRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("instagram-import", {
+        body: { username: u, visibility, maxId: useMaxId },
+      });
+      if (error) throw new Error(error.message);
+      const r: any = data;
+      if (r?.error) throw new Error(r.error);
+      setLastStats({ imported: r.imported, skipped: r.skipped, failed: r.failed });
+      setNextMaxId(r.nextMaxId ?? "");
+      toast.success(`Importados: ${r.imported} • Duplicados: ${r.skipped} • Falhas: ${r.failed}`);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao importar");
+    } finally {
+      setRunning(false);
+    }
   };
 
   const toggleVisibility = async (v: IgVideo) => {
@@ -103,35 +87,48 @@ export default function InstagramImportPanel() {
             <Instagram className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Importar do Instagram</h3>
-            <p className="text-sm text-gray-400">Cole uma ou várias URLs de reels/posts (uma por linha)</p>
+            <h3 className="text-xl font-bold text-white">Importar do Instagram (por @username)</h3>
+            <p className="text-sm text-gray-400">1 requisição por página. Já importados são pulados automaticamente (sem cobrança).</p>
           </div>
         </div>
 
-        <Textarea
-          value={urls}
-          onChange={(e) => setUrls(e.target.value)}
-          placeholder={"https://www.instagram.com/reel/XXXXXXXXX/\nhttps://www.instagram.com/p/YYYYYYYYY/"}
-          className="min-h-[140px] bg-gray-900 border-gray-700 text-white font-mono text-sm"
-          disabled={importing}
-        />
-
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2">
-            <Switch id="vis" checked={visibility === "private"} onCheckedChange={(c) => setVisibility(c ? "private" : "public")} disabled={importing} />
-            <Label htmlFor="vis" className="text-white">
-              {visibility === "private" ? "🔒 Privado (VIP)" : "🌍 Público"}
-            </Label>
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1">
+            <Label className="text-white text-xs">Username</Label>
+            <Input
+              value={username}
+              onChange={(e) => { setUsername(e.target.value); setNextMaxId(""); }}
+              placeholder="@keke"
+              className="bg-gray-900 border-gray-700 text-white"
+              disabled={running}
+            />
           </div>
-
-          <Button onClick={handleImport} disabled={importing} className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white font-bold ml-auto">
-            {importing ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importando {progress.done}/{progress.total}...</>
-            ) : (
-              <><Instagram className="w-4 h-4 mr-2" /> Importar</>
+          <div className="flex items-end gap-3">
+            <div className="flex items-center gap-2">
+              <Switch id="vis" checked={visibility === "private"} onCheckedChange={(c) => setVisibility(c ? "private" : "public")} disabled={running} />
+              <Label htmlFor="vis" className="text-white text-sm">
+                {visibility === "private" ? "🔒 VIP" : "🌍 Público"}
+              </Label>
+            </div>
+            <Button onClick={() => runImport("")} disabled={running} className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white font-bold">
+              {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              Importar posts
+            </Button>
+            {nextMaxId && (
+              <Button variant="outline" onClick={() => runImport(nextMaxId)} disabled={running}>
+                Carregar mais
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
+
+        {lastStats && (
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            <Badge className="bg-green-600">Importados: {lastStats.imported}</Badge>
+            <Badge className="bg-yellow-600">Duplicados: {lastStats.skipped}</Badge>
+            {lastStats.failed > 0 && <Badge className="bg-red-600">Falhas: {lastStats.failed}</Badge>}
+          </div>
+        )}
       </Card>
 
       <Card className="bg-gray-800/50 border-gray-700 p-6">

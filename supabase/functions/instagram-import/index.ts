@@ -1,6 +1,7 @@
-// Edge Function: instagram-import
-// Recebe uma URL/shortcode do Instagram, extrai o vídeo via RapidAPI,
-// faz stream para uma zona Bunny SEPARADA e registra em public.ig_feed_videos.
+// Edge Function: instagram-import (provider: instagram120)
+// Fluxo: 1 requisição no RapidAPI por página; para cada item que já existe (ig_shortcode),
+// pulamos ANTES de baixar (não gera custo extra); os novos vão direto pro Bunny
+// porque as URLs do Instagram expiram rápido.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -10,80 +11,88 @@ const corsHeaders = {
 };
 
 const RAPIDAPI_KEY = Deno.env.get('RAPIDAPI_KEY')!;
+const RAPIDAPI_HOST = 'instagram120.p.rapidapi.com';
 const BUNNY_ZONE = Deno.env.get('BUNNY_IG_STORAGE_ZONE')!;
-const BUNNY_HOST = Deno.env.get('BUNNY_IG_STORAGE_REGION_HOST')!; // storage.bunnycdn.com
+const BUNNY_HOST = Deno.env.get('BUNNY_IG_STORAGE_REGION_HOST')!;
 const BUNNY_KEY = Deno.env.get('BUNNY_IG_STORAGE_ACCESS_KEY')!;
-const BUNNY_PULL = Deno.env.get('BUNNY_IG_PULL_ZONE_HOST')!; // xxx.b-cdn.net
+const BUNNY_PULL = Deno.env.get('BUNNY_IG_PULL_ZONE_HOST')!;
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-function extractShortcode(input: string): string | null {
-  if (!input) return null;
-  const clean = input.trim();
-  const m = clean.match(/instagram\.com\/(?:reel|p|tv)\/([A-Za-z0-9_-]+)/i);
-  if (m) return m[1];
-  if (/^[A-Za-z0-9_-]{5,20}$/.test(clean)) return clean;
-  return null;
+function cleanUsername(s: string): string {
+  return (s || '').trim().replace(/^@/, '').toLowerCase();
 }
 
-async function fetchFromRapidApi(shortcode: string) {
-  // Provider: instagram-scraper-api2 (rocketapi) — genérico. Se usar outro, ajuste o host/path.
-  const url = `https://instagram-scraper-api2.p.rapidapi.com/v1/post_info?code_or_id_or_url=${encodeURIComponent(shortcode)}`;
-  const res = await fetch(url, {
+async function fetchPosts(username: string, maxId: string) {
+  const res = await fetch(`https://${RAPIDAPI_HOST}/api/instagram/posts`, {
+    method: 'POST',
     headers: {
-      'X-RapidAPI-Key': RAPIDAPI_KEY,
-      'X-RapidAPI-Host': 'instagram-scraper-api2.p.rapidapi.com',
+      'Content-Type': 'application/json',
+      'x-rapidapi-host': RAPIDAPI_HOST,
+      'x-rapidapi-key': RAPIDAPI_KEY,
     },
+    body: JSON.stringify({ username, maxId: maxId || '' }),
   });
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`RapidAPI ${res.status}: ${t.slice(0, 200)}`);
+    throw new Error(`RapidAPI ${res.status}: ${t.slice(0, 300)}`);
   }
   return res.json();
 }
 
-function pickVideoUrl(data: any): { videoUrl?: string; thumb?: string; caption?: string; user?: any; mediaId?: string; width?: number; height?: number; duration?: number } {
-  const d = data?.data ?? data;
+// Normaliza um item de post do instagram120 em algo estável.
+function normalizeItem(it: any) {
+  const shortcode = it?.code || it?.shortcode || it?.pk || null;
+  const mediaId = it?.id || it?.pk ? String(it?.id || it?.pk) : null;
   const videoUrl =
-    d?.video_url ||
-    d?.video_versions?.[0]?.url ||
-    d?.videos?.[0]?.url ||
-    d?.media?.video_versions?.[0]?.url;
+    it?.video_url ||
+    it?.video_versions?.[0]?.url ||
+    it?.videos?.[0]?.url ||
+    null;
   const thumb =
-    d?.thumbnail_url ||
-    d?.display_url ||
-    d?.image_versions2?.candidates?.[0]?.url ||
-    d?.thumbnail_src;
+    it?.thumbnail_url ||
+    it?.display_url ||
+    it?.image_versions2?.candidates?.[0]?.url ||
+    null;
   const caption =
-    d?.caption?.text ||
-    (typeof d?.caption === 'string' ? d.caption : '') ||
-    d?.edge_media_to_caption?.edges?.[0]?.node?.text ||
+    it?.caption?.text ||
+    (typeof it?.caption === 'string' ? it.caption : '') ||
     '';
-  const user = d?.user || d?.owner || {};
-  const mediaId = d?.id || d?.pk || d?.media_id;
-  return {
-    videoUrl,
-    thumb,
-    caption,
-    user,
-    mediaId: mediaId ? String(mediaId) : undefined,
-    width: d?.original_width || d?.dimensions?.width,
-    height: d?.original_height || d?.dimensions?.height,
-    duration: d?.video_duration || d?.duration,
-  };
+  const width = it?.original_width || it?.width || null;
+  const height = it?.original_height || it?.height || null;
+  const duration = it?.video_duration || it?.duration || null;
+  const user = it?.user || it?.owner || {};
+  return { shortcode, mediaId, videoUrl, thumb, caption, width, height, duration, user };
+}
+
+// A resposta pode vir em vários formatos; tentamos os mais comuns.
+function extractList(raw: any): { items: any[]; nextMaxId: string | null; owner: any } {
+  const d = raw?.data ?? raw?.result ?? raw;
+  const items =
+    d?.items ||
+    d?.data?.items ||
+    d?.user?.edge_owner_to_timeline_media?.edges?.map((e: any) => e.node) ||
+    d?.edges?.map((e: any) => e.node) ||
+    (Array.isArray(d) ? d : []) ||
+    [];
+  const nextMaxId =
+    d?.next_max_id ||
+    d?.max_id ||
+    d?.paging?.cursors?.after ||
+    d?.user?.edge_owner_to_timeline_media?.page_info?.end_cursor ||
+    null;
+  const owner = d?.user || items?.[0]?.user || items?.[0]?.owner || {};
+  return { items: Array.isArray(items) ? items : [], nextMaxId, owner };
 }
 
 async function streamToBunny(sourceUrl: string, bunnyPath: string): Promise<void> {
   const src = await fetch(sourceUrl);
-  if (!src.ok || !src.body) throw new Error(`fetch video ${src.status}`);
+  if (!src.ok || !src.body) throw new Error(`fetch media ${src.status}`);
   const put = await fetch(`https://${BUNNY_HOST}/${BUNNY_ZONE}/${bunnyPath}`, {
     method: 'PUT',
-    headers: {
-      AccessKey: BUNNY_KEY,
-      'Content-Type': 'application/octet-stream',
-    },
+    headers: { AccessKey: BUNNY_KEY, 'Content-Type': 'application/octet-stream' },
     body: src.body,
   });
   if (!put.ok) {
@@ -94,7 +103,6 @@ async function streamToBunny(sourceUrl: string, bunnyPath: string): Promise<void
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -110,7 +118,6 @@ Deno.serve(async (req) => {
     }
     const userId = claims.claims.sub;
 
-    // Admin check
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: isAdmin } = await admin.rpc('has_role', { _user_id: userId, _role: 'admin' });
     if (!isAdmin) {
@@ -118,39 +125,23 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const input: string = body?.url ?? body?.shortcode ?? '';
+    const username = cleanUsername(body?.username ?? '');
+    const maxId: string = body?.maxId ?? '';
     const visibility: 'public' | 'private' = body?.visibility === 'private' ? 'private' : 'public';
-    const shortcode = extractShortcode(input);
-    if (!shortcode) {
-      return new Response(JSON.stringify({ error: 'URL/shortcode inválido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!username) {
+      return new Response(JSON.stringify({ error: 'username é obrigatório' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Deduplicação
-    const { data: existing } = await admin
-      .from('ig_feed_videos')
-      .select('id')
-      .eq('ig_shortcode', shortcode)
-      .maybeSingle();
-    if (existing) {
-      return new Response(JSON.stringify({ ok: true, skipped: true, id: existing.id, shortcode }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // 1 REQUISIÇÃO no RapidAPI por chamada (evita cobrança dupla)
+    const raw = await fetchPosts(username, maxId);
+    const { items, nextMaxId, owner } = extractList(raw);
 
-    // RapidAPI
-    const raw = await fetchFromRapidApi(shortcode);
-    const picked = pickVideoUrl(raw);
-    if (!picked.videoUrl) {
-      return new Response(JSON.stringify({ error: 'Post sem vídeo/reel', raw: raw?.data ? 'ok' : raw }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    // ig_model upsert
-    const igUsername: string = picked.user?.username || 'unknown';
+    // Garante/atualiza ig_model
     let igModelId: string | null = null;
     const { data: existingModel } = await admin
       .from('ig_models')
       .select('id')
-      .eq('ig_username', igUsername)
+      .eq('ig_username', username)
       .maybeSingle();
     if (existingModel) {
       igModelId = existingModel.id;
@@ -158,10 +149,10 @@ Deno.serve(async (req) => {
       const { data: newModel, error: mErr } = await admin
         .from('ig_models')
         .insert({
-          ig_username: igUsername,
-          ig_user_id: picked.user?.pk ? String(picked.user.pk) : picked.user?.id ? String(picked.user.id) : null,
-          display_name: picked.user?.full_name || igUsername,
-          avatar_url: picked.user?.profile_pic_url || picked.user?.profile_pic_url_hd || null,
+          ig_username: username,
+          ig_user_id: owner?.pk ? String(owner.pk) : owner?.id ? String(owner.id) : null,
+          display_name: owner?.full_name || username,
+          avatar_url: owner?.profile_pic_url || owner?.profile_pic_url_hd || null,
           default_visibility: visibility,
         })
         .select('id')
@@ -170,45 +161,83 @@ Deno.serve(async (req) => {
       igModelId = newModel.id;
     }
 
-    // Upload no Bunny
-    const bunnyPath = `${igUsername}/${shortcode}.mp4`;
-    await streamToBunny(picked.videoUrl, bunnyPath);
-    const cdnUrl = `https://${BUNNY_PULL}/${bunnyPath}`;
+    // Filtra apenas itens de vídeo
+    const normalized = items.map(normalizeItem).filter((n) => n.videoUrl && n.shortcode);
 
-    // Thumb (opcional, best effort)
-    let thumbUrl: string | null = null;
-    if (picked.thumb) {
-      try {
-        const thumbPath = `${igUsername}/${shortcode}.jpg`;
-        await streamToBunny(picked.thumb, thumbPath);
-        thumbUrl = `https://${BUNNY_PULL}/${thumbPath}`;
-      } catch (_) { /* ignora falha de thumb */ }
+    // Deduplicação em lote — checa quais shortcodes JÁ existem antes de baixar
+    const shortcodes = normalized.map((n) => n.shortcode as string);
+    let existingSet = new Set<string>();
+    if (shortcodes.length) {
+      const { data: existingRows } = await admin
+        .from('ig_feed_videos')
+        .select('ig_shortcode')
+        .in('ig_shortcode', shortcodes);
+      existingSet = new Set((existingRows ?? []).map((r: any) => r.ig_shortcode));
     }
 
-    const { data: inserted, error: iErr } = await admin
-      .from('ig_feed_videos')
-      .insert({
-        ig_model_id: igModelId,
-        ig_shortcode: shortcode,
-        ig_media_id: picked.mediaId ?? null,
-        source_url: `https://www.instagram.com/reel/${shortcode}/`,
-        bunny_path: bunnyPath,
-        video_url: cdnUrl,
-        thumbnail_url: thumbUrl,
-        caption: picked.caption ?? null,
-        duration_seconds: picked.duration ?? null,
-        width: picked.width ?? null,
-        height: picked.height ?? null,
-        visibility,
-        imported_by: userId,
-      })
-      .select()
-      .single();
-    if (iErr) throw new Error(`insert video: ${iErr.message}`);
+    let imported = 0, skipped = 0, failed = 0;
+    const results: any[] = [];
 
-    return new Response(JSON.stringify({ ok: true, video: inserted }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    for (const n of normalized) {
+      if (existingSet.has(n.shortcode as string)) {
+        skipped++;
+        continue;
+      }
+      try {
+        const bunnyPath = `${username}/${n.shortcode}.mp4`;
+        await streamToBunny(n.videoUrl as string, bunnyPath);
+        const cdnUrl = `https://${BUNNY_PULL}/${bunnyPath}`;
+
+        let thumbUrl: string | null = null;
+        if (n.thumb) {
+          try {
+            const thumbPath = `${username}/${n.shortcode}.jpg`;
+            await streamToBunny(n.thumb, thumbPath);
+            thumbUrl = `https://${BUNNY_PULL}/${thumbPath}`;
+          } catch (_) { /* thumb é best-effort */ }
+        }
+
+        const { data: inserted, error: iErr } = await admin
+          .from('ig_feed_videos')
+          .insert({
+            ig_model_id: igModelId,
+            ig_shortcode: n.shortcode,
+            ig_media_id: n.mediaId,
+            source_url: `https://www.instagram.com/reel/${n.shortcode}/`,
+            bunny_path: bunnyPath,
+            video_url: cdnUrl,
+            thumbnail_url: thumbUrl,
+            caption: n.caption ?? null,
+            duration_seconds: n.duration ?? null,
+            width: n.width ?? null,
+            height: n.height ?? null,
+            visibility,
+            imported_by: userId,
+          })
+          .select('id')
+          .single();
+        if (iErr) throw new Error(iErr.message);
+        imported++;
+        results.push({ shortcode: n.shortcode, id: inserted.id });
+      } catch (e: any) {
+        failed++;
+        console.error('[ig-import]', n.shortcode, e?.message ?? e);
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        username,
+        imported,
+        skipped,
+        failed,
+        totalInPage: normalized.length,
+        nextMaxId,
+        results,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
   } catch (e: any) {
     console.error('[instagram-import]', e);
     return new Response(JSON.stringify({ error: e?.message ?? String(e) }), {

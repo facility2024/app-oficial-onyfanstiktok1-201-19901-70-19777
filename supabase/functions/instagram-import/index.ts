@@ -498,7 +498,8 @@ async function processNextItem(admin: any, jobId: string) {
     .maybeSingle();
 
   if (!item) {
-    await refreshJobTotals(admin, jobId);
+    const pending = await refreshJobTotals(admin, jobId);
+    if (pending) EdgeRuntime.waitUntil(dispatchWorker(jobId, 11000));
     return false;
   }
 

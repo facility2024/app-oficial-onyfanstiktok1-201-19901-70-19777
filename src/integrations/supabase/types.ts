@@ -2831,6 +2831,154 @@ export type Database = {
           },
         ]
       }
+      ig_import_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          ig_model_id: string | null
+          job_id: string
+          last_error: string | null
+          locked_at: string | null
+          max_attempts: number
+          next_attempt_at: string
+          result_video_id: string | null
+          shortcode: string
+          source_payload: Json | null
+          status: string
+          updated_at: string
+          username: string | null
+          visibility: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          ig_model_id?: string | null
+          job_id: string
+          last_error?: string | null
+          locked_at?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          result_video_id?: string | null
+          shortcode: string
+          source_payload?: Json | null
+          status?: string
+          updated_at?: string
+          username?: string | null
+          visibility?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          ig_model_id?: string | null
+          job_id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          result_video_id?: string | null
+          shortcode?: string
+          source_payload?: Json | null
+          status?: string
+          updated_at?: string
+          username?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ig_import_items_ig_model_id_fkey"
+            columns: ["ig_model_id"]
+            isOneToOne: false
+            referencedRelation: "ig_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ig_import_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "ig_import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ig_import_items_result_video_id_fkey"
+            columns: ["result_video_id"]
+            isOneToOne: false
+            referencedRelation: "ig_feed_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ig_import_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          failed_items: number
+          finished_at: string | null
+          id: string
+          imported_items: number
+          inputs: Json
+          last_error: string | null
+          locked_at: string | null
+          max_attempts: number
+          max_pages: number
+          next_attempt_at: string
+          processed_items: number
+          requested_by: string
+          skipped_items: number
+          started_at: string | null
+          status: string
+          total_items: number
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          failed_items?: number
+          finished_at?: string | null
+          id?: string
+          imported_items?: number
+          inputs?: Json
+          last_error?: string | null
+          locked_at?: string | null
+          max_attempts?: number
+          max_pages?: number
+          next_attempt_at?: string
+          processed_items?: number
+          requested_by: string
+          skipped_items?: number
+          started_at?: string | null
+          status?: string
+          total_items?: number
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          failed_items?: number
+          finished_at?: string | null
+          id?: string
+          imported_items?: number
+          inputs?: Json
+          last_error?: string | null
+          locked_at?: string | null
+          max_attempts?: number
+          max_pages?: number
+          next_attempt_at?: string
+          processed_items?: number
+          requested_by?: string
+          skipped_items?: number
+          started_at?: string | null
+          status?: string
+          total_items?: number
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       ig_models: {
         Row: {
           avatar_url: string | null

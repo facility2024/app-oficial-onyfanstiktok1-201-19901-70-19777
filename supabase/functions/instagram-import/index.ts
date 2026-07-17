@@ -341,7 +341,10 @@ Deno.serve(async (req) => {
         try {
           const raw = await fetchMediaByShortcode(sc);
           const owner = extractOwner(raw);
-          if (!owner.username) throw new Error('Post sem username do dono');
+          if (!owner.username) {
+            console.error('[ig-import] payload sem username. Top-level keys:', Object.keys(raw ?? {}), 'preview:', JSON.stringify(raw).slice(0, 800));
+            throw new Error('Post sem username do dono (payload em formato inesperado)');
+          }
           const media = collectMedia(raw);
           if (media.length === 0) throw new Error('Post sem mídia utilizável');
 

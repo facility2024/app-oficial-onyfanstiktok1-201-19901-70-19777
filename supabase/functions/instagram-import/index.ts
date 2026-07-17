@@ -60,6 +60,7 @@ async function rapidPost(path: string, body: Record<string, unknown>) {
       'content-type': 'application/json',
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(20000),
   });
   const text = await res.text();
   let json: any = null;
@@ -254,12 +255,13 @@ function findPostByShortcode(payload: any, shortcode: string): any | null {
 
 // ============ Bunny ============
 async function streamToBunny(sourceUrl: string, bunnyPath: string): Promise<void> {
-  const src = await fetch(sourceUrl);
+  const src = await fetch(sourceUrl, { signal: AbortSignal.timeout(20000) });
   if (!src.ok || !src.body) throw new Error(`fetch media ${src.status}`);
   const put = await fetch(`https://${BUNNY_HOST}/${BUNNY_ZONE}/${bunnyPath}`, {
     method: 'PUT',
     headers: { AccessKey: BUNNY_KEY, 'Content-Type': 'application/octet-stream' },
     body: src.body,
+    signal: AbortSignal.timeout(30000),
   });
   if (!put.ok) {
     const t = await put.text();
@@ -442,6 +444,101 @@ function extractPostsPage(payload: any): { items: any[]; nextMaxId: string | nul
   return { items, nextMaxId: nextMaxId ? String(nextMaxId) : null };
 }
 
+async function refreshJobTotals(admin: any, jobId: string) {
+  const { data: items } = await admin
+    .from('ig_import_items')
+    .select('status')
+    .eq('job_id', jobId);
+  const rows = items ?? [];
+  const imported = rows.filter((x: any) => x.status === 'imported').length;
+  const skipped = rows.filter((x: any) => x.status === 'skipped').length;
+  const failed = rows.filter((x: any) => x.status === 'failed').length;
+  const processed = imported + skipped + failed;
+  const pending = rows.some((x: any) => ['pending', 'retry', 'processing'].includes(x.status));
+  await admin.from('ig_import_jobs').update({
+    total_items: rows.length,
+    processed_items: processed,
+    imported_items: imported,
+    skipped_items: skipped,
+    failed_items: failed,
+    status: pending ? 'processing' : (failed > 0 ? 'completed_with_errors' : 'completed'),
+    finished_at: pending ? null : new Date().toISOString(),
+  }).eq('id', jobId);
+  return pending;
+}
+
+async function dispatchWorker(jobId: string, delayMs = 500) {
+  if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/instagram-import`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${SERVICE_ROLE}`,
+      apikey: SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'x-instagram-worker': 'internal',
+    },
+    body: JSON.stringify({ action: 'process', jobId }),
+  });
+  await response.text();
+}
+
+async function processNextItem(admin: any, jobId: string) {
+  const now = new Date().toISOString();
+  const { data: job } = await admin.from('ig_import_jobs').select('*').eq('id', jobId).maybeSingle();
+  if (!job || ['completed', 'completed_with_errors', 'failed', 'cancelled'].includes(job.status)) return false;
+
+  const { data: item } = await admin
+    .from('ig_import_items')
+    .select('*')
+    .eq('job_id', jobId)
+    .in('status', ['pending', 'retry'])
+    .lte('next_attempt_at', now)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!item) {
+    const pending = await refreshJobTotals(admin, jobId);
+    if (pending) EdgeRuntime.waitUntil(dispatchWorker(jobId, 11000));
+    return false;
+  }
+
+  await admin.from('ig_import_items').update({
+    status: 'processing', locked_at: now, attempts: item.attempts + 1,
+  }).eq('id', item.id).in('status', ['pending', 'retry']);
+  await admin.from('ig_import_jobs').update({ status: 'processing', started_at: job.started_at ?? now }).eq('id', jobId);
+
+  try {
+    const { data: duplicate } = await admin.from('ig_feed_videos').select('id').eq('ig_shortcode', item.shortcode).maybeSingle();
+    if (duplicate) {
+      await admin.from('ig_import_items').update({ status: 'skipped', result_video_id: duplicate.id, last_error: null }).eq('id', item.id);
+    } else {
+      let model: { id: string; slug: string } | null = null;
+      if (item.ig_model_id) {
+        const { data } = await admin.from('ig_models').select('id, slug').eq('id', item.ig_model_id).maybeSingle();
+        model = data;
+      }
+      if (!model && item.username) model = await ensureModel(admin, item.username, {}, item.visibility);
+      if (!model) throw new Error('Modelo não encontrada para o post');
+      const out = await persistPost(admin, model, item.shortcode, item.source_payload, item.visibility, job.requested_by);
+      await admin.from('ig_import_items').update({ status: 'imported', result_video_id: out.id, last_error: null }).eq('id', item.id);
+    }
+  } catch (error: any) {
+    const attempts = item.attempts + 1;
+    const retry = attempts < item.max_attempts;
+    await admin.from('ig_import_items').update({
+      status: retry ? 'retry' : 'failed',
+      next_attempt_at: new Date(Date.now() + Math.min(60_000, 5000 * (2 ** (attempts - 1)))).toISOString(),
+      last_error: error?.message ?? String(error),
+      locked_at: null,
+    }).eq('id', item.id);
+  }
+
+  const pending = await refreshJobTotals(admin, jobId);
+  if (pending) EdgeRuntime.waitUntil(dispatchWorker(jobId, 5500));
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -449,6 +546,15 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const body = await req.json();
+    const isInternal = req.headers.get('x-instagram-worker') === 'internal'
+      && authHeader === `Bearer ${SERVICE_ROLE}`;
+    if (isInternal && body?.action === 'process' && typeof body?.jobId === 'string') {
+      await processNextItem(admin, body.jobId);
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const supaUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -458,14 +564,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const userId = claims.claims.sub;
-
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: isAdmin } = await admin.rpc('has_role', { _user_id: userId, _role: 'admin' });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const body = await req.json();
     const visibility: 'public' | 'private' = body?.visibility === 'private' ? 'private' : 'public';
     const maxPages: number = Math.min(Math.max(parseInt(body?.maxPages ?? '1', 10) || 1, 1), 5);
     const rawList: string[] = Array.isArray(body?.urls) ? body.urls : (body?.url ? [body.url] : []);
@@ -480,8 +583,18 @@ Deno.serve(async (req) => {
       if (un) usernames.add(un);
     }
 
-    const results: any[] = [];
-    let imported = 0, skipped = 0, failed = 0;
+    const { data: job, error: jobError } = await admin.from('ig_import_jobs').insert({
+      requested_by: userId,
+      inputs: rawList,
+      visibility,
+      max_pages: maxPages,
+      status: 'discovering',
+      started_at: new Date().toISOString(),
+    }).select('id').single();
+    if (jobError) throw new Error(`Fila: ${jobError.message}`);
+
+    const queued: any[] = [];
+    let skipped = 0, failed = 0;
 
     // ===== 1) Perfis (fluxo principal) =====
     for (const username of usernames) {
@@ -509,18 +622,9 @@ Deno.serve(async (req) => {
             if (!sc) continue;
             if (existSet.has(sc)) {
               skipped++;
-              results.push({ username, shortcode: sc, status: 'skipped' });
               continue;
             }
-            try {
-              const out = await persistPost(admin, model, sc, item, visibility, userId);
-              imported++;
-              results.push({ username, slug: model.slug, shortcode: sc, status: 'ok', ...out });
-            } catch (e: any) {
-              failed++;
-              console.error('[ig-import] post', sc, e?.message ?? e);
-              results.push({ username, shortcode: sc, status: 'error', error: e?.message ?? String(e) });
-            }
+            queued.push({ job_id: job.id, ig_model_id: model.id, username, shortcode: sc, source_payload: item, visibility });
           }
 
           pagesDone++;
@@ -530,7 +634,7 @@ Deno.serve(async (req) => {
       } catch (e: any) {
         failed++;
         console.error('[ig-import] username', username, e?.message ?? e);
-        results.push({ username, status: 'error', error: e?.message ?? String(e) });
+        console.error('[ig-import] discovery username', username, e?.message ?? e);
       }
     }
 
@@ -547,7 +651,6 @@ Deno.serve(async (req) => {
       for (const sc of scArr) {
         if (existSet.has(sc)) {
           skipped++;
-          results.push({ shortcode: sc, status: 'skipped' });
           continue;
         }
         try {
@@ -571,24 +674,34 @@ Deno.serve(async (req) => {
             const postsPayload = await fetchUserPosts(owner.username, '');
             postNode = findPostByShortcode(postsPayload, sc) ?? extractPostNode(postsPayload);
           }
-          const out = await persistPost(admin, model, sc, postNode, visibility, userId);
-          imported++;
-          results.push({ username: owner.username, slug: model.slug, shortcode: sc, status: 'ok', ...out });
+          queued.push({ job_id: job.id, ig_model_id: model.id, username: owner.username, shortcode: sc, source_payload: postNode, visibility });
         } catch (e: any) {
           failed++;
           console.error('[ig-import] loose', sc, e?.message ?? e);
-          results.push({ shortcode: sc, status: 'error', error: e?.message ?? String(e) });
+          console.error('[ig-import] discovery loose', sc, e?.message ?? e);
         }
       }
     }
 
+    if (queued.length > 0) {
+      const { error: itemsError } = await admin.from('ig_import_items').insert(queued);
+      if (itemsError) throw new Error(`Itens da fila: ${itemsError.message}`);
+    }
+    await admin.from('ig_import_jobs').update({
+      status: queued.length > 0 ? 'queued' : (failed > 0 ? 'completed_with_errors' : 'completed'),
+      total_items: queued.length,
+      skipped_items: skipped,
+      failed_items: failed,
+      processed_items: skipped + failed,
+      finished_at: queued.length > 0 ? null : new Date().toISOString(),
+    }).eq('id', job.id);
+    if (queued.length > 0) EdgeRuntime.waitUntil(dispatchWorker(job.id));
+
     return new Response(
       JSON.stringify({
-        ok: true,
-        imported, skipped, failed,
-        total: imported + skipped + failed,
+        ok: true, queued: queued.length, skipped, failed, jobId: job.id,
+        total: queued.length + skipped + failed,
         usernames: Array.from(usernames),
-        results,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );

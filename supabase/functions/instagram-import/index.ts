@@ -334,7 +334,124 @@ async function ensureModel(
   return { id: newModel.id, slug: newModel.slug };
 }
 
+// ============ Vincula ig_model a um models (feed do app) ============
+async function ensureAppModel(
+  admin: any,
+  igModel: { id: string; slug: string },
+  hint: { ig_username: string; display_name?: string | null; avatar_url?: string | null },
+): Promise<string | null> {
+  // 1) já existe vínculo salvo no metadata?
+  const { data: current } = await admin
+    .from('ig_models')
+    .select('metadata, display_name, avatar_url, ig_username')
+    .eq('id', igModel.id)
+    .maybeSingle();
+
+  const linkedId = current?.metadata?.linked_model_id;
+  if (linkedId) {
+    // mantém avatar/nome sincronizados
+    await admin.from('models').update({
+      avatar_url: current?.avatar_url ?? hint.avatar_url ?? null,
+      name: current?.display_name || hint.display_name || hint.ig_username,
+      updated_at: new Date().toISOString(),
+    }).eq('id', linkedId);
+    return linkedId;
+  }
+
+  // 2) tenta achar um models existente com o mesmo username (ig_<slug>)
+  const appUsername = `ig_${igModel.slug}`.slice(0, 40);
+  const displayName = current?.display_name || hint.display_name || hint.ig_username;
+  const avatar = current?.avatar_url || hint.avatar_url || null;
+
+  let modelRow: any = null;
+  const { data: found } = await admin
+    .from('models')
+    .select('id')
+    .eq('username', appUsername)
+    .maybeSingle();
+  if (found) {
+    modelRow = found;
+  } else {
+    const { data: created, error } = await admin
+      .from('models')
+      .insert({
+        name: displayName,
+        username: appUsername,
+        avatar_url: avatar,
+        bio: current?.bio ?? null,
+        category: 'Instagram',
+        is_active: true,
+      })
+      .select('id')
+      .single();
+    if (error) {
+      console.warn('[ig-import] models insert falhou:', error.message);
+      return null;
+    }
+    modelRow = created;
+  }
+
+  // 3) grava o vínculo em ig_models.metadata para não repetir lookup
+  const meta = { ...(current?.metadata ?? {}), linked_model_id: modelRow.id };
+  await admin.from('ig_models').update({ metadata: meta }).eq('id', igModel.id);
+
+  return modelRow.id as string;
+}
+
+async function pushToAppFeed(
+  admin: any,
+  appModelId: string,
+  shortcode: string,
+  videoUrl: string,
+  thumbUrl: string | null,
+  caption: string | null,
+  durationSec: number | null,
+  width: number | null,
+  height: number | null,
+  visibility: 'public' | 'private',
+) {
+  // evita duplicar se já postamos esse shortcode antes
+  const { data: dup } = await admin
+    .from('videos')
+    .select('id')
+    .eq('model_id', appModelId)
+    .eq('upload_source', 'instagram')
+    .ilike('description', `%${shortcode}%`)
+    .maybeSingle();
+  if (dup) return dup.id;
+
+  const title = (caption || '').replace(/\s+/g, ' ').trim().slice(0, 80) || `Instagram · ${shortcode}`;
+  const dur = durationSec && durationSec > 0
+    ? `${Math.floor(durationSec / 60)}:${String(Math.round(durationSec % 60)).padStart(2, '0')}`
+    : '0:15';
+
+  const { data: v, error } = await admin
+    .from('videos')
+    .insert({
+      model_id: appModelId,
+      title,
+      description: `[ig:${shortcode}] ${caption ?? ''}`.trim(),
+      thumbnail_url: thumbUrl || videoUrl,
+      video_url: videoUrl,
+      duration: dur,
+      aspect_ratio: '9:16',
+      is_active: true,
+      is_premium: visibility === 'private',
+      visibility: visibility === 'private' ? 'private' : 'public',
+      category: 'Instagram',
+      upload_source: 'instagram',
+    })
+    .select('id')
+    .single();
+  if (error) {
+    console.warn('[ig-import] videos insert falhou:', error.message);
+    return null;
+  }
+  return v.id as string;
+}
+
 // ============ Persistência de UM post ============
+
 async function persistPost(
   admin: any,
   model: { id: string; slug: string },
@@ -408,8 +525,37 @@ async function persistPost(
     .select('id')
     .single();
   if (iErr) throw new Error(iErr.message);
+
+  // Espelha no feed principal do app (tabela videos) — só vídeos
+  if (post_type === 'video' && mainVideoUrl) {
+    try {
+      const appModelId = await ensureAppModel(admin, model, {
+        ig_username: (postNode?.owner?.username || model.slug),
+        display_name: postNode?.owner?.full_name ?? null,
+        avatar_url: postNode?.owner?.profile_pic_url ?? null,
+      });
+      if (appModelId) {
+        await pushToAppFeed(
+          admin,
+          appModelId,
+          shortcode,
+          mainVideoUrl,
+          mainThumbUrl,
+          extractCaption(postNode) ?? null,
+          media[0]?.duration ?? null,
+          media[0]?.width ?? null,
+          media[0]?.height ?? null,
+          visibility,
+        );
+      }
+    } catch (e) {
+      console.warn('[ig-import] espelhar no feed falhou:', (e as Error).message);
+    }
+  }
+
   return { id: inserted.id, post_type, media_count: mediaOut.length };
 }
+
 
 // Extrai lista de posts + próximo maxId de qualquer shape que o instagram120 devolver.
 function extractPostsPage(payload: any): { items: any[]; nextMaxId: string | null } {

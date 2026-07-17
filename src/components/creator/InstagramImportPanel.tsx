@@ -44,7 +44,6 @@ function extractShortcode(input: string): string | null {
 
 export default function InstagramImportPanel() {
   const [rawInput, setRawInput] = useState("");
-  const [username, setUsername] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -76,10 +75,6 @@ export default function InstagramImportPanel() {
   useEffect(() => { load(); }, []);
 
   const runImport = async () => {
-    const cleanUser = username.trim().replace(/^@/, "").toLowerCase();
-    if (!cleanUser) {
-      return toast.error("Informe o @username da modelo (obrigatório).");
-    }
     if (parsedShortcodes.length === 0) {
       return toast.error("Cole ao menos um link do Instagram (/p/ ou /reel/).");
     }
@@ -87,7 +82,6 @@ export default function InstagramImportPanel() {
     setProgress(0);
     setLastStats(null);
 
-    // Divide em chunks pra respeitar a concorrência do provider e mostrar progresso.
     const chunks: string[][] = [];
     for (let i = 0; i < parsedShortcodes.length; i += CONCURRENCY) {
       chunks.push(parsedShortcodes.slice(i, i + CONCURRENCY));
@@ -98,7 +92,7 @@ export default function InstagramImportPanel() {
       for (const chunk of chunks) {
         setProgressLabel(`Processando ${done + 1}–${done + chunk.length} de ${parsedShortcodes.length}`);
         const { data, error } = await supabase.functions.invoke("instagram-import", {
-          body: { urls: chunk, visibility, username: cleanUser },
+          body: { urls: chunk, visibility },
         });
         if (error) throw new Error(error.message);
         const r: any = data;

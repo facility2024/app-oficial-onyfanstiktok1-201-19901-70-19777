@@ -853,12 +853,50 @@ Deno.serve(async (req) => {
       const { data: ins, error: insErr } = await admin
         .from('ig_feed_videos')
         .insert(directInserts)
-        .select('id');
+        .select('id, ig_shortcode, ig_model_id, video_url, thumbnail_url, caption, duration_seconds, width, height, post_type, visibility');
       if (insErr) {
         console.error('[ig-import] direct insert', insErr.message);
         failed += directInserts.length;
       } else {
         imported = ins?.length ?? directInserts.length;
+
+        // ===== Espelha no feed principal (tabela videos) =====
+        try {
+          const modelIds = Array.from(new Set((ins ?? []).map((r: any) => r.ig_model_id).filter(Boolean)));
+          if (modelIds.length > 0) {
+            const { data: igModels } = await admin
+              .from('ig_models')
+              .select('id, slug, ig_username, display_name, avatar_url')
+              .in('id', modelIds);
+            const byId = new Map<string, any>((igModels ?? []).map((m: any) => [m.id, m]));
+
+            for (const row of ins ?? []) {
+              if (row.post_type !== 'video' || !row.video_url) continue;
+              const ig = byId.get(row.ig_model_id);
+              if (!ig) continue;
+              const appModelId = await ensureAppModel(admin, { id: ig.id, slug: ig.slug }, {
+                ig_username: ig.ig_username,
+                display_name: ig.display_name,
+                avatar_url: ig.avatar_url,
+              });
+              if (!appModelId) continue;
+              await pushToAppFeed(
+                admin,
+                appModelId,
+                row.ig_shortcode,
+                row.video_url,
+                row.thumbnail_url,
+                row.caption,
+                row.duration_seconds,
+                row.width,
+                row.height,
+                row.visibility,
+              );
+            }
+          }
+        } catch (mirrorErr: any) {
+          console.warn('[ig-import] mirror feed falhou:', mirrorErr?.message ?? mirrorErr);
+        }
       }
     }
 

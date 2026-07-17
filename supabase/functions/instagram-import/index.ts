@@ -291,15 +291,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const visibility: 'public' | 'private' = body?.visibility === 'private' ? 'private' : 'public';
     const rawList: string[] = Array.isArray(body?.urls) ? body.urls : (body?.url ? [body.url] : []);
-    const providedUsername = extractUsername(body?.username ?? '');
 
-    if (!providedUsername) {
-      return new Response(JSON.stringify({ error: 'Campo "username" da modelo é obrigatório (o instagram120/mediaByShortcode não retorna o dono).' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Só extrai shortcodes dos links.
+    // Extrai shortcodes dos links.
     const shortcodes: string[] = [];
     for (const raw of rawList) {
       const sc = extractShortcode(raw);
@@ -310,118 +303,125 @@ Deno.serve(async (req) => {
     const results: any[] = [];
     let imported = 0, skipped = 0, failed = 0;
 
-    // 1) Garante o perfil da modelo (1 chamada userInfo só na primeira vez).
-    let model: { id: string; slug: string };
-    try {
-      model = await ensureModel(admin, providedUsername, {}, visibility);
-    } catch (e: any) {
-      return new Response(JSON.stringify({ error: `Falha ao preparar perfil @${providedUsername}: ${e?.message ?? e}` }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     if (uniqSc.length === 0) {
       return new Response(
-        JSON.stringify({ ok: true, imported: 0, skipped: 0, failed: 0, total: 0, results: [{ username: providedUsername, status: 'model_ready', model_id: model.id, slug: model.slug }] }),
+        JSON.stringify({ ok: true, imported: 0, skipped: 0, failed: 0, total: 0, results: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    // 2) Shortcodes — dedup ANTES de chamar RapidAPI.
-    {
-      const { data: existingRows } = await admin
-        .from('ig_feed_videos')
-        .select('ig_shortcode')
-        .in('ig_shortcode', uniqSc);
-      const existingSet = new Set((existingRows ?? []).map((r: any) => r.ig_shortcode));
+    // Dedup ANTES de chamar RapidAPI — garante cobrança única.
+    const { data: existingRows } = await admin
+      .from('ig_feed_videos')
+      .select('ig_shortcode')
+      .in('ig_shortcode', uniqSc);
+    const existingSet = new Set((existingRows ?? []).map((r: any) => r.ig_shortcode));
 
-      for (const sc of uniqSc) {
-        if (existingSet.has(sc)) {
-          skipped++;
-          results.push({ shortcode: sc, status: 'skipped' });
-          continue;
+    // Cache de modelos processados neste batch (evita userInfo repetido).
+    const modelCache = new Map<string, { id: string; slug: string }>();
+
+    for (const sc of uniqSc) {
+      if (existingSet.has(sc)) {
+        skipped++;
+        results.push({ shortcode: sc, status: 'skipped' });
+        continue;
+      }
+      try {
+        const raw = await fetchMediaByShortcode(sc);
+        const media = collectMedia(raw);
+        if (media.length === 0) throw new Error('Post sem mídia utilizável');
+
+        // Extrai dono do próprio payload (deep-search).
+        const owner = extractOwner(raw);
+        if (!owner.username) {
+          throw new Error('Não foi possível identificar o dono do post neste payload.');
         }
-        try {
-          const raw = await fetchMediaByShortcode(sc);
-          const media = collectMedia(raw);
-          if (media.length === 0) throw new Error('Post sem mídia utilizável');
 
-          // Usa o `model` garantido antes do loop (evita nova chamada userInfo).
-          const post_type: 'video' | 'image' | 'carousel' =
-            media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
+        // Garante perfil da modelo (userInfo só na 1ª vez).
+        let model = modelCache.get(owner.username);
+        if (!model) {
+          model = await ensureModel(admin, owner.username, {
+            full_name: owner.full_name,
+            pic: owner.pic,
+            pk: owner.pk,
+          }, visibility);
+          modelCache.set(owner.username, model);
+        }
 
-          const mediaOut: any[] = [];
-          let mainVideoUrl: string | null = null;
-          let mainThumbUrl: string | null = null;
-          let mainBunnyPath: string | null = null;
+        const post_type: 'video' | 'image' | 'carousel' =
+          media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
 
-          for (let i = 0; i < media.length; i++) {
-            const m = media[i];
-            const suffix = media.length > 1 ? `_${i + 1}` : '';
-            const ext = m.kind === 'video' ? 'mp4' : 'jpg';
-            const subdir = m.kind === 'video' ? 'videos' : 'posters';
-            const path = `${BUNNY_ROOT}/${model.slug}/${subdir}/${sc}${suffix}.${ext}`;
-            await streamToBunny(m.url, path);
-            const cdn = `https://${BUNNY_PULL}/${path}`;
+        const mediaOut: any[] = [];
+        let mainVideoUrl: string | null = null;
+        let mainThumbUrl: string | null = null;
+        let mainBunnyPath: string | null = null;
 
-            let thumbCdn: string | undefined;
-            if (m.kind === 'video' && m.thumb) {
-              try {
-                const tp = `${BUNNY_ROOT}/${model.slug}/posters/${sc}${suffix}.jpg`;
-                await streamToBunny(m.thumb, tp);
-                thumbCdn = `https://${BUNNY_PULL}/${tp}`;
-              } catch (_) { /* best-effort */ }
-            }
+        for (let i = 0; i < media.length; i++) {
+          const m = media[i];
+          const suffix = media.length > 1 ? `_${i + 1}` : '';
+          const ext = m.kind === 'video' ? 'mp4' : 'jpg';
+          const subdir = m.kind === 'video' ? 'videos' : 'posters';
+          const path = `${BUNNY_ROOT}/${model.slug}/${subdir}/${sc}${suffix}.${ext}`;
+          await streamToBunny(m.url, path);
+          const cdn = `https://${BUNNY_PULL}/${path}`;
 
-            mediaOut.push({
-              kind: m.kind, url: cdn, thumb: thumbCdn ?? null,
-              width: m.width ?? null, height: m.height ?? null, duration: m.duration ?? null,
-            });
-
-            if (!mainVideoUrl) {
-              mainVideoUrl = cdn;
-              mainThumbUrl = thumbCdn ?? (m.kind === 'image' ? cdn : null);
-              mainBunnyPath = path;
-            }
+          let thumbCdn: string | undefined;
+          if (m.kind === 'video' && m.thumb) {
+            try {
+              const tp = `${BUNNY_ROOT}/${model.slug}/posters/${sc}${suffix}.jpg`;
+              await streamToBunny(m.thumb, tp);
+              thumbCdn = `https://${BUNNY_PULL}/${tp}`;
+            } catch (_) { /* best-effort */ }
           }
 
-          const { data: inserted, error: iErr } = await admin
-            .from('ig_feed_videos')
-            .insert({
-              ig_model_id: model.id,
-              ig_shortcode: sc,
-              ig_media_id: extractMediaId(raw) ?? null,
-              source_url: `https://www.instagram.com/p/${sc}/`,
-              bunny_path: mainBunnyPath,
-              video_url: mainVideoUrl,
-              thumbnail_url: mainThumbUrl,
-              caption: extractCaption(raw) ?? null,
-              duration_seconds: media[0]?.duration ?? null,
-              width: media[0]?.width ?? null,
-              height: media[0]?.height ?? null,
-              visibility,
-              post_type,
-              media: mediaOut,
-              imported_by: userId,
-            })
-            .select('id')
-            .single();
-          if (iErr) throw new Error(iErr.message);
-          imported++;
-          results.push({
-            shortcode: sc, status: 'ok', id: inserted.id,
-            username: providedUsername, slug: model.slug, post_type, media_count: mediaOut.length,
+          mediaOut.push({
+            kind: m.kind, url: cdn, thumb: thumbCdn ?? null,
+            width: m.width ?? null, height: m.height ?? null, duration: m.duration ?? null,
           });
-        } catch (e: any) {
-          failed++;
-          console.error('[ig-import]', sc, e?.message ?? e);
-          results.push({ shortcode: sc, status: 'error', error: e?.message ?? String(e) });
+
+          if (!mainVideoUrl) {
+            mainVideoUrl = cdn;
+            mainThumbUrl = thumbCdn ?? (m.kind === 'image' ? cdn : null);
+            mainBunnyPath = path;
+          }
         }
+
+        const { data: inserted, error: iErr } = await admin
+          .from('ig_feed_videos')
+          .insert({
+            ig_model_id: model.id,
+            ig_shortcode: sc,
+            ig_media_id: extractMediaId(raw) ?? null,
+            source_url: `https://www.instagram.com/p/${sc}/`,
+            bunny_path: mainBunnyPath,
+            video_url: mainVideoUrl,
+            thumbnail_url: mainThumbUrl,
+            caption: extractCaption(raw) ?? null,
+            duration_seconds: media[0]?.duration ?? null,
+            width: media[0]?.width ?? null,
+            height: media[0]?.height ?? null,
+            visibility,
+            post_type,
+            media: mediaOut,
+            imported_by: userId,
+          })
+          .select('id')
+          .single();
+        if (iErr) throw new Error(iErr.message);
+        imported++;
+        results.push({
+          shortcode: sc, status: 'ok', id: inserted.id,
+          username: owner.username, slug: model.slug, post_type, media_count: mediaOut.length,
+        });
+      } catch (e: any) {
+        failed++;
+        console.error('[ig-import]', sc, e?.message ?? e);
+        results.push({ shortcode: sc, status: 'error', error: e?.message ?? String(e) });
       }
     }
 
     return new Response(
-      JSON.stringify({ ok: true, imported, skipped, failed, total: uniqSc.length, username: providedUsername, slug: model.slug, results }),
+      JSON.stringify({ ok: true, imported, skipped, failed, total: uniqSc.length, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (e: any) {

@@ -44,7 +44,6 @@ function extractShortcode(input: string): string | null {
 
 export default function InstagramImportPanel() {
   const [rawInput, setRawInput] = useState("");
-  const [username, setUsername] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -76,10 +75,6 @@ export default function InstagramImportPanel() {
   useEffect(() => { load(); }, []);
 
   const runImport = async () => {
-    const cleanUser = username.trim().replace(/^@/, "").toLowerCase();
-    if (!cleanUser) {
-      return toast.error("Informe o @username da modelo (obrigatório).");
-    }
     if (parsedShortcodes.length === 0) {
       return toast.error("Cole ao menos um link do Instagram (/p/ ou /reel/).");
     }
@@ -87,7 +82,6 @@ export default function InstagramImportPanel() {
     setProgress(0);
     setLastStats(null);
 
-    // Divide em chunks pra respeitar a concorrência do provider e mostrar progresso.
     const chunks: string[][] = [];
     for (let i = 0; i < parsedShortcodes.length; i += CONCURRENCY) {
       chunks.push(parsedShortcodes.slice(i, i + CONCURRENCY));
@@ -98,7 +92,7 @@ export default function InstagramImportPanel() {
       for (const chunk of chunks) {
         setProgressLabel(`Processando ${done + 1}–${done + chunk.length} de ${parsedShortcodes.length}`);
         const { data, error } = await supabase.functions.invoke("instagram-import", {
-          body: { urls: chunk, visibility, username: cleanUser },
+          body: { urls: chunk, visibility },
         });
         if (error) throw new Error(error.message);
         const r: any = data;
@@ -152,18 +146,11 @@ export default function InstagramImportPanel() {
         </div>
 
         <div className="mb-3">
-          <Label className="text-white text-xs">@username da modelo (obrigatório)</Label>
-          <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="ex: nomedamodelo"
-            className="bg-gray-900 border-gray-700 text-white mt-1"
-            disabled={running}
-          />
-          <p className="text-[11px] text-gray-500 mt-1">
-            O provider <code>instagram120/mediaByShortcode</code> não retorna o dono do post — por isso o username é obrigatório. Fazemos 1 chamada <code>userInfo</code> só na primeira vez.
+          <p className="text-xs text-gray-400">
+            Cole os links — o sistema detecta a modelo automaticamente pelo próprio post e cria o perfil (nome, foto HD, bio) na 1ª vez. Cobrança RapidAPI é única por shortcode.
           </p>
         </div>
+
 
         <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
         <Textarea

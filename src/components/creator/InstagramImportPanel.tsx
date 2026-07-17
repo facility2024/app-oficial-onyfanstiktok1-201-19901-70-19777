@@ -68,6 +68,11 @@ export default function InstagramImportPanel() {
       });
       if (error) throw new Error(error.message);
       const r: any = data;
+      if (r?.fallback) {
+        toast.warning(r.hint ?? r.error ?? "Provider indisponível — tente outro perfil.");
+        setLastStats({ imported: 0, skipped: 0, failed: 0 });
+        return;
+      }
       if (r?.error) throw new Error(r.error);
       setLastStats({ imported: r.imported, skipped: r.skipped, failed: r.failed });
       setNextMaxId(r.nextMaxId ?? "");

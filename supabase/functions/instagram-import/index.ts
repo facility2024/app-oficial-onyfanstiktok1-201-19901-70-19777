@@ -35,11 +35,17 @@ async function fetchPosts(username: string, maxId: string) {
     },
     body: JSON.stringify({ username, maxId: maxId || '' }),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`RapidAPI ${res.status}: ${t.slice(0, 300)}`);
+  const text = await res.text();
+  let json: any = null;
+  try { json = JSON.parse(text); } catch (_) {}
+  if (!res.ok || json?.success === false) {
+    const msg = json?.message || text.slice(0, 300);
+    const err: any = new Error(`Provider: ${msg}`);
+    err.providerFail = true;
+    err.status = res.status;
+    throw err;
   }
-  return res.json();
+  return json;
 }
 
 // Normaliza um item de post do instagram120 em algo estável.
@@ -240,6 +246,20 @@ Deno.serve(async (req) => {
     );
   } catch (e: any) {
     console.error('[instagram-import]', e);
+    // Falhas do provider (perfil não encontrado, link expirado, rate limit) retornam 200
+    // com fallback:true para não gerar 500/blank-screen no frontend.
+    if (e?.providerFail) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          fallback: true,
+          error: e.message,
+          hint: 'O provider RapidAPI não retornou dados desse perfil (link expirado, perfil privado ou inexistente). Tente outro @username ou aguarde alguns minutos.',
+          imported: 0, skipped: 0, failed: 0, nextMaxId: null,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
     return new Response(JSON.stringify({ error: e?.message ?? String(e) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

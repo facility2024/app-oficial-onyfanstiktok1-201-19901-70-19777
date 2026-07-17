@@ -729,12 +729,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        ok: true, queued: queued.length, skipped, failed, jobId: job.id,
-        total: queued.length + skipped + failed,
+        ok: true, queued: 0, imported, skipped, failed, jobId: job.id,
+        total: imported + skipped + failed,
         usernames: Array.from(usernames),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
+
   } catch (e: any) {
     console.error('[instagram-import]', e);
     return new Response(JSON.stringify({ error: e?.message ?? String(e) }), {

@@ -136,9 +136,31 @@ function collectMedia(root: any): Array<{ kind: 'video' | 'image'; url: string; 
 }
 
 function extractOwner(root: any): { username: string; full_name?: string; pic?: string; pk?: string } {
+  const candidates: any[] = [];
   const d = root?.data ?? root;
-  const item = d?.items?.[0] ?? d?.item ?? d?.shortcode_media ?? d;
-  const u = item?.user ?? item?.owner ?? d?.user ?? d?.owner ?? {};
+  const item = d?.items?.[0] ?? d?.item ?? d?.shortcode_media ?? d?.media ?? d;
+  candidates.push(item?.user, item?.owner, item?.caption?.user, d?.user, d?.owner, root?.user, root?.owner);
+
+  // Deep search fallback: procura qualquer objeto com username
+  function findUser(node: any, depth = 0): any {
+    if (!node || depth > 6 || typeof node !== 'object') return null;
+    if (typeof node.username === 'string' && node.username.length > 0 && (node.profile_pic_url || node.pk || node.id || node.full_name !== undefined)) {
+      return node;
+    }
+    for (const k of Object.keys(node)) {
+      const v = node[k];
+      if (v && typeof v === 'object') {
+        const found = findUser(v, depth + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  let u: any = candidates.find((c) => c && typeof c.username === 'string' && c.username);
+  if (!u) u = findUser(root);
+  u = u ?? {};
+
   return {
     username: (u?.username || '').toLowerCase(),
     full_name: u?.full_name,
@@ -319,7 +341,10 @@ Deno.serve(async (req) => {
         try {
           const raw = await fetchMediaByShortcode(sc);
           const owner = extractOwner(raw);
-          if (!owner.username) throw new Error('Post sem username do dono');
+          if (!owner.username) {
+            console.error('[ig-import] payload sem username. Top-level keys:', Object.keys(raw ?? {}), 'preview:', JSON.stringify(raw).slice(0, 800));
+            throw new Error('Post sem username do dono (payload em formato inesperado)');
+          }
           const media = collectMedia(raw);
           if (media.length === 0) throw new Error('Post sem mídia utilizável');
 

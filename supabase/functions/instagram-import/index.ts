@@ -467,7 +467,8 @@ async function refreshJobTotals(admin: any, jobId: string) {
   return pending;
 }
 
-async function dispatchWorker(jobId: string) {
+async function dispatchWorker(jobId: string, delayMs = 500) {
+  if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
   const response = await fetch(`${SUPABASE_URL}/functions/v1/instagram-import`, {
     method: 'POST',
     headers: {
@@ -533,7 +534,7 @@ async function processNextItem(admin: any, jobId: string) {
   }
 
   const pending = await refreshJobTotals(admin, jobId);
-  if (pending) EdgeRuntime.waitUntil(dispatchWorker(jobId));
+  if (pending) EdgeRuntime.waitUntil(dispatchWorker(jobId, 5500));
   return true;
 }
 

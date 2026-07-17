@@ -24,6 +24,18 @@ type IgVideo = {
   ig_model_id: string | null;
 };
 
+type ImportJob = {
+  id: string;
+  status: "queued" | "discovering" | "processing" | "completed" | "completed_with_errors" | "failed" | "cancelled";
+  total_items: number;
+  processed_items: number;
+  imported_items: number;
+  skipped_items: number;
+  failed_items: number;
+  last_error: string | null;
+  created_at: string;
+};
+
 type Entry =
   | { kind: "username"; value: string; raw: string }
   | { kind: "shortcode"; value: string; raw: string };
@@ -52,6 +64,7 @@ export default function InstagramImportPanel() {
   const [videos, setVideos] = useState<IgVideo[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastStats, setLastStats] = useState<{ imported: number; skipped: number; failed: number } | null>(null);
+  const [activeJob, setActiveJob] = useState<ImportJob | null>(null);
 
   const parsed = useMemo(() => {
     const lines = rawInput.split(/\s+/).map((l) => l.trim()).filter(Boolean);
@@ -88,6 +101,45 @@ export default function InstagramImportPanel() {
   };
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    const loadLatestJob = async () => {
+      const { data } = await supabase
+        .from("ig_import_jobs")
+        .select("id, status, total_items, processed_items, imported_items, skipped_items, failed_items, last_error, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) setActiveJob(data as ImportJob);
+    };
+    loadLatestJob();
+    const channel = supabase
+      .channel("ig-import-job-progress")
+      .on("postgres_changes", { event: "*", schema: "public", table: "ig_import_jobs" }, (payload) => {
+        const next = payload.new as ImportJob;
+        if (!next?.id) return;
+        setActiveJob((current) => !current || current.id === next.id || next.created_at > current.created_at ? next : current);
+        setLastStats({ imported: next.imported_items, skipped: next.skipped_items, failed: next.failed_items });
+        if (["completed", "completed_with_errors", "failed"].includes(next.status)) {
+          setRunning(false);
+          setProgressLabel("");
+          load();
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  useEffect(() => {
+    if (!activeJob) return;
+    const total = Math.max(activeJob.total_items, 1);
+    setProgress(Math.round((activeJob.processed_items / total) * 100));
+    setLastStats({ imported: activeJob.imported_items, skipped: activeJob.skipped_items, failed: activeJob.failed_items });
+    if (["queued", "discovering", "processing"].includes(activeJob.status)) {
+      setRunning(true);
+      setProgressLabel(activeJob.status === "discovering" ? "Buscando posts no Instagram…" : "Processando mídia em segundo plano…");
+    }
+  }, [activeJob]);
+
   const runImport = async () => {
     if (parsed.length === 0) {
       return toast.error("Cole @username, link do perfil ou link de /reel/ /p/.");
@@ -96,35 +148,25 @@ export default function InstagramImportPanel() {
     setProgress(0);
     setLastStats(null);
 
-    // Processa 1 entrada por vez (perfis podem ser pesados; a paginação já baixa vários posts)
-    const entries = parsed;
-    let done = 0, imp = 0, skp = 0, fail = 0;
     try {
-      for (const e of entries) {
-        setProgressLabel(
-          e.kind === "username"
-            ? `Perfil @${e.value} — baixando posts…`
-            : `Post ${e.value}…`,
-        );
-        const { data, error } = await supabase.functions.invoke("instagram-import", {
-          body: { urls: [e.raw], visibility, maxPages },
-        });
-        if (error) throw new Error(error.message);
-        const r: any = data;
-        if (r?.error) throw new Error(r.error);
-        imp += r.imported ?? 0;
-        skp += r.skipped ?? 0;
-        fail += r.failed ?? 0;
-        done++;
-        setProgress(Math.round((done / entries.length) * 100));
-        setLastStats({ imported: imp, skipped: skp, failed: fail });
-      }
-      toast.success(`Importados: ${imp} • Duplicados: ${skp} • Falhas: ${fail}`);
+      setProgressLabel("Buscando posts no Instagram…");
+      const { data, error } = await supabase.functions.invoke("instagram-import", {
+        body: { urls: parsed.map((entry) => entry.raw), visibility, maxPages },
+      });
+      if (error) throw new Error(error.message);
+      const result: any = data;
+      if (result?.error) throw new Error(result.error);
+      const { data: job } = await supabase
+        .from("ig_import_jobs")
+        .select("id, status, total_items, processed_items, imported_items, skipped_items, failed_items, last_error, created_at")
+        .eq("id", result.jobId)
+        .single();
+      if (job) setActiveJob(job as ImportJob);
+      setLastStats({ imported: 0, skipped: result.skipped ?? 0, failed: result.failed ?? 0 });
+      toast.success(`${result.queued ?? 0} posts enviados para a fila. Você pode sair desta tela.`);
       setRawInput("");
-      load();
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao importar");
-    } finally {
       setRunning(false);
       setProgressLabel("");
     }
@@ -206,10 +248,14 @@ export default function InstagramImportPanel() {
           </Button>
         </div>
 
-        {running && (
+        {(running || activeJob) && (
           <div className="mt-4 space-y-2">
             <Progress value={progress} />
-            <p className="text-xs text-gray-400">{progressLabel} • {progress}%</p>
+            <div className="flex items-center justify-between gap-3 text-xs text-gray-400">
+              <p>{progressLabel || "Última importação concluída"} • {progress}%</p>
+              {activeJob && <Badge className={activeJob.status === "completed" ? "bg-green-600" : activeJob.status === "failed" ? "bg-red-600" : "bg-blue-600"}>{activeJob.status}</Badge>}
+            </div>
+            {activeJob?.last_error && <p className="text-xs text-red-400">{activeJob.last_error}</p>}
           </div>
         )}
 

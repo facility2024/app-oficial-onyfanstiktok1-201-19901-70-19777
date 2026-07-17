@@ -24,27 +24,28 @@ type IgVideo = {
   ig_model_id: string | null;
 };
 
-const CONCURRENCY = 2;
+type Entry =
+  | { kind: "username"; value: string; raw: string }
+  | { kind: "shortcode"; value: string; raw: string };
 
-function parseEntry(input: string): { kind: "shortcode" | "username"; value: string } | null {
+function parseEntry(input: string): Entry | null {
   const s = input.trim();
   if (!s) return null;
   const sc = s.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
-  if (sc) return { kind: "shortcode", value: sc[1] };
+  if (sc) return { kind: "shortcode", value: sc[1], raw: s };
   const un = s.match(/instagram\.com\/([A-Za-z0-9._]{1,30})\/?/i);
-  if (un && !/^(reel|reels|p|tv|explore|stories)$/i.test(un[1])) return { kind: "username", value: un[1].toLowerCase() };
-  if (/^@[A-Za-z0-9._]{1,30}$/.test(s)) return { kind: "username", value: s.slice(1).toLowerCase() };
-  if (/^[A-Za-z0-9_-]{5,20}$/.test(s) && !s.includes("/")) return { kind: "shortcode", value: s };
+  if (un && !/^(reel|reels|p|tv|explore|stories)$/i.test(un[1])) {
+    return { kind: "username", value: un[1].toLowerCase(), raw: s };
+  }
+  if (/^@[A-Za-z0-9._]{1,30}$/.test(s)) return { kind: "username", value: s.slice(1).toLowerCase(), raw: s };
+  if (/^[A-Za-z0-9._]{2,30}$/.test(s) && !s.includes("/")) return { kind: "username", value: s.toLowerCase(), raw: s };
   return null;
-}
-function extractShortcode(input: string): string | null {
-  const e = parseEntry(input);
-  return e ? e.value : null;
 }
 
 export default function InstagramImportPanel() {
   const [rawInput, setRawInput] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
+  const [maxPages, setMaxPages] = useState(1);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
@@ -52,14 +53,27 @@ export default function InstagramImportPanel() {
   const [loading, setLoading] = useState(false);
   const [lastStats, setLastStats] = useState<{ imported: number; skipped: number; failed: number } | null>(null);
 
-  const parsedShortcodes = useMemo(() => {
-    const lines = rawInput.split(/[\s,]+/).map((l) => l.trim()).filter(Boolean);
-    return Array.from(new Set(lines.map(extractShortcode).filter((s): s is string => !!s)));
+  const parsed = useMemo(() => {
+    const lines = rawInput.split(/\s+/).map((l) => l.trim()).filter(Boolean);
+    const out: Entry[] = [];
+    const seen = new Set<string>();
+    for (const ln of lines) {
+      const e = parseEntry(ln);
+      if (!e) continue;
+      const key = `${e.kind}:${e.value}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(e);
+    }
+    return out;
   }, [rawInput]);
+
+  const usernames = useMemo(() => parsed.filter((p) => p.kind === "username"), [parsed]);
+  const shortcodes = useMemo(() => parsed.filter((p) => p.kind === "shortcode"), [parsed]);
   const invalidCount = useMemo(() => {
-    const lines = rawInput.split(/[\s,]+/).map((l) => l.trim()).filter(Boolean);
-    return lines.length - parsedShortcodes.length;
-  }, [rawInput, parsedShortcodes.length]);
+    const lines = rawInput.split(/\s+/).map((l) => l.trim()).filter(Boolean);
+    return lines.length - parsed.length;
+  }, [rawInput, parsed.length]);
 
   const load = async () => {
     setLoading(true);
@@ -75,24 +89,25 @@ export default function InstagramImportPanel() {
   useEffect(() => { load(); }, []);
 
   const runImport = async () => {
-    if (parsedShortcodes.length === 0) {
-      return toast.error("Cole ao menos um link do Instagram (/p/ ou /reel/).");
+    if (parsed.length === 0) {
+      return toast.error("Cole @username, link do perfil ou link de /reel/ /p/.");
     }
     setRunning(true);
     setProgress(0);
     setLastStats(null);
 
-    const chunks: string[][] = [];
-    for (let i = 0; i < parsedShortcodes.length; i += CONCURRENCY) {
-      chunks.push(parsedShortcodes.slice(i, i + CONCURRENCY));
-    }
-
+    // Processa 1 entrada por vez (perfis podem ser pesados; a paginação já baixa vários posts)
+    const entries = parsed;
     let done = 0, imp = 0, skp = 0, fail = 0;
     try {
-      for (const chunk of chunks) {
-        setProgressLabel(`Processando ${done + 1}–${done + chunk.length} de ${parsedShortcodes.length}`);
+      for (const e of entries) {
+        setProgressLabel(
+          e.kind === "username"
+            ? `Perfil @${e.value} — baixando posts…`
+            : `Post ${e.value}…`,
+        );
         const { data, error } = await supabase.functions.invoke("instagram-import", {
-          body: { urls: chunk, visibility },
+          body: { urls: [e.raw], visibility, maxPages },
         });
         if (error) throw new Error(error.message);
         const r: any = data;
@@ -100,8 +115,8 @@ export default function InstagramImportPanel() {
         imp += r.imported ?? 0;
         skp += r.skipped ?? 0;
         fail += r.failed ?? 0;
-        done += chunk.length;
-        setProgress(Math.round((done / parsedShortcodes.length) * 100));
+        done++;
+        setProgress(Math.round((done / entries.length) * 100));
         setLastStats({ imported: imp, skipped: skp, failed: fail });
       }
       toast.success(`Importados: ${imp} • Duplicados: ${skp} • Falhas: ${fail}`);
@@ -137,34 +152,44 @@ export default function InstagramImportPanel() {
             <Instagram className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Importar posts do Instagram (por link)</h3>
+            <h3 className="text-xl font-bold text-white">Importar do Instagram (por perfil)</h3>
             <p className="text-sm text-gray-400">
-              Cole links <code>/p/</code> ou <code>/reel/</code> — um por linha. Já importados são pulados
-              <b> antes </b> de bater na RapidAPI (sem cobrança dupla). Cada mídia é copiada para a Bunny.
+              Cole o link do perfil (<code>instagram.com/nomedamodelo</code>) ou <code>@username</code>.
+              O sistema baixa todos os posts recentes de uma vez, cria a modelo automaticamente e envia mídia para a Bunny.
+              Já importados são <b>pulados sem cobrar</b>.
             </p>
           </div>
         </div>
 
-        <div className="mb-3">
-          <p className="text-xs text-gray-400">
-            Cole os links — o sistema detecta a modelo automaticamente pelo próprio post e cria o perfil (nome, foto HD, bio) na 1ª vez. Cobrança RapidAPI é única por shortcode.
-          </p>
-        </div>
-
-
-        <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
+        <Label className="text-white text-xs">Perfis ou links (um por linha)</Label>
         <Textarea
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
-          placeholder={"https://www.instagram.com/reel/DZ-6MYwNTo-/\nhttps://www.instagram.com/p/ABC123xyz/"}
+          placeholder={"https://instagram.com/nomedamodelo\n@outra_modelo\nhttps://www.instagram.com/reel/DZ-6MYwNTo-/"}
           rows={6}
           className="bg-gray-900 border-gray-700 text-white font-mono text-sm"
           disabled={running}
         />
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Badge className="bg-blue-600">Válidos: {parsedShortcodes.length}</Badge>
+          <Badge className="bg-blue-600">Perfis: {usernames.length}</Badge>
+          <Badge className="bg-purple-600">Posts avulsos: {shortcodes.length}</Badge>
           {invalidCount > 0 && <Badge className="bg-red-600">Ignorados: {invalidCount}</Badge>}
+
+          <div className="flex items-center gap-2">
+            <Label className="text-white text-xs">Páginas por perfil</Label>
+            <Input
+              type="number"
+              min={1}
+              max={5}
+              value={maxPages}
+              onChange={(e) => setMaxPages(Math.min(5, Math.max(1, parseInt(e.target.value || "1", 10))))}
+              className="w-16 h-8 bg-gray-900 border-gray-700 text-white"
+              disabled={running}
+            />
+            <span className="text-xs text-gray-400">(~12 posts/pg)</span>
+          </div>
+
           <div className="flex items-center gap-2 ml-auto">
             <Switch id="vis" checked={visibility === "private"} onCheckedChange={(c) => setVisibility(c ? "private" : "public")} disabled={running} />
             <Label htmlFor="vis" className="text-white text-sm">
@@ -173,11 +198,11 @@ export default function InstagramImportPanel() {
           </div>
           <Button
             onClick={runImport}
-            disabled={running || parsedShortcodes.length === 0}
+            disabled={running || parsed.length === 0}
             className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white font-bold"
           >
             {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-            Importar {parsedShortcodes.length > 0 ? `(${parsedShortcodes.length})` : ""}
+            Importar {parsed.length > 0 ? `(${parsed.length})` : ""}
           </Button>
         </div>
 

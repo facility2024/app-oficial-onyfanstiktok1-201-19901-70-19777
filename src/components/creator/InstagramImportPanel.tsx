@@ -25,12 +25,20 @@ type IgVideo = {
 
 const CONCURRENCY = 2;
 
-function extractShortcode(input: string): string | null {
+function parseEntry(input: string): { kind: "shortcode" | "username"; value: string } | null {
   const s = input.trim();
   if (!s) return null;
-  if (/^[A-Za-z0-9_-]{5,20}$/.test(s) && !s.includes("/")) return s;
-  const m = s.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
-  return m ? m[1] : null;
+  const sc = s.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
+  if (sc) return { kind: "shortcode", value: sc[1] };
+  const un = s.match(/instagram\.com\/([A-Za-z0-9._]{1,30})\/?/i);
+  if (un && !/^(reel|reels|p|tv|explore|stories)$/i.test(un[1])) return { kind: "username", value: un[1].toLowerCase() };
+  if (/^@[A-Za-z0-9._]{1,30}$/.test(s)) return { kind: "username", value: s.slice(1).toLowerCase() };
+  if (/^[A-Za-z0-9_-]{5,20}$/.test(s) && !s.includes("/")) return { kind: "shortcode", value: s };
+  return null;
+}
+function extractShortcode(input: string): string | null {
+  const e = parseEntry(input);
+  return e ? e.value : null;
 }
 
 export default function InstagramImportPanel() {

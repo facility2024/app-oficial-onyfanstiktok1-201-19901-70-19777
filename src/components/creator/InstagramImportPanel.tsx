@@ -135,12 +135,12 @@ export default function InstagramImportPanel() {
 
   const runImport = async () => {
     if (parsed.length === 0) {
-      return toast.error("Cole apenas LINKS completos do Instagram (perfil, /reel/ ou /p/). @username não é aceito.");
+      return toast.error("Cole apenas LINKS de post/reel do Instagram (/reel/... ou /p/...).");
     }
     setRunning(true);
     setProgress(0);
     setLastStats(null);
-    setProgressLabel("Buscando posts no Instagram…");
+    setProgressLabel("Buscando vídeos no Instagram…");
 
     try {
       const { data, error } = await supabase.functions.invoke("instagram-import", {
@@ -190,28 +190,26 @@ export default function InstagramImportPanel() {
             <Instagram className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Importar do Instagram (por perfil)</h3>
+            <h3 className="text-xl font-bold text-white">Importar vídeos do Instagram</h3>
             <p className="text-sm text-gray-400">
-              Cole o <b>link completo</b> do perfil (<code>https://instagram.com/nomedamodelo</code>) ou do post/reel
-              (<code>/reel/…</code>, <code>/p/…</code>). A modelo é criada automaticamente a partir do link.
-              Já importados são <b>pulados sem cobrar</b>. <b>@username não é aceito</b>.
+              Cole apenas <b>links de post/reel</b> (<code>/reel/…</code> ou <code>/p/…</code>).
+              Já importados são <b>pulados sem cobrar</b>.
             </p>
           </div>
         </div>
 
-        <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
+        <Label className="text-white text-xs">Links de vídeos (um por linha)</Label>
         <Textarea
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
-          placeholder={"https://instagram.com/nomedamodelo\nhttps://www.instagram.com/reel/DZ-6MYwNTo-/\nhttps://www.instagram.com/p/DAbcXYZ123/"}
+          placeholder={"https://www.instagram.com/reel/DZ-6MYwNTo-/\nhttps://www.instagram.com/p/DAbcXYZ123/"}
           rows={6}
           className="bg-gray-900 border-gray-700 text-white font-mono text-sm"
           disabled={running}
         />
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Badge className="bg-blue-600">Perfis: {usernames.length}</Badge>
-          <Badge className="bg-purple-600">Posts avulsos: {shortcodes.length}</Badge>
+          <Badge className="bg-purple-600">Vídeos: {shortcodes.length}</Badge>
           {invalidCount > 0 && <Badge className="bg-red-600">Ignorados: {invalidCount}</Badge>}
 
           <div className="flex items-center gap-2">

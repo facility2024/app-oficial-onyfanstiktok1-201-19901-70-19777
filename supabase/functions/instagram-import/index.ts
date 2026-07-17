@@ -210,6 +210,48 @@ function extractCaption(node: any): string {
     ?? '';
 }
 
+// O instagram120 muda o envelope entre versões. Nunca selecionar `media`
+// quando ele for apenas uma string (ex.: "video"), pois isso descartava o
+// objeto real que contém video_versions/image_versions2.
+function extractPostNode(payload: any): any {
+  const candidates = [
+    payload?.data?.xdt_shortcode_media,
+    payload?.data?.shortcode_media,
+    payload?.data?.items?.[0],
+    payload?.data?.item,
+    payload?.data?.media,
+    payload?.result?.xdt_shortcode_media,
+    payload?.result?.shortcode_media,
+    payload?.result?.items?.[0],
+    payload?.items?.[0],
+    payload?.item,
+    payload?.shortcode_media,
+    payload?.media,
+  ];
+  return candidates.find((candidate) => candidate && typeof candidate === 'object') ?? payload;
+}
+
+function findPostByShortcode(payload: any, shortcode: string): any | null {
+  let match: any = null;
+  function walk(node: any, depth = 0) {
+    if (match || !node || depth > 10 || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item, depth + 1);
+      return;
+    }
+    const code = node.code ?? node.shortcode;
+    if (code === shortcode) {
+      match = node;
+      return;
+    }
+    for (const value of Object.values(node)) {
+      if (value && typeof value === 'object') walk(value, depth + 1);
+    }
+  }
+  walk(payload);
+  return match;
+}
+
 // ============ Bunny ============
 async function streamToBunny(sourceUrl: string, bunnyPath: string): Promise<void> {
   const src = await fetch(sourceUrl);
@@ -519,9 +561,16 @@ Deno.serve(async (req) => {
             }, visibility);
             modelCache.set(owner.username, model);
           }
-          // O payload do mediaByShortcode costuma ter items[0] ou shortcode_media como nó do post
-          const d = raw?.data ?? raw;
-          const postNode = d?.items?.[0] ?? d?.item ?? d?.shortcode_media ?? d?.media ?? d;
+          // Mantém o objeto completo quando o provider usa envelopes novos.
+          let postNode = extractPostNode(raw);
+
+          // Alguns retornos de mediaByShortcode trazem somente metadados. Como
+          // o dono já foi identificado, consulta /posts e localiza o mesmo
+          // shortcode, sem depender do formato quebrado do primeiro envelope.
+          if (collectMedia(postNode).length === 0) {
+            const postsPayload = await fetchUserPosts(owner.username, '');
+            postNode = findPostByShortcode(postsPayload, sc) ?? extractPostNode(postsPayload);
+          }
           const out = await persistPost(admin, model, sc, postNode, visibility, userId);
           imported++;
           results.push({ username: owner.username, slug: model.slug, shortcode: sc, status: 'ok', ...out });

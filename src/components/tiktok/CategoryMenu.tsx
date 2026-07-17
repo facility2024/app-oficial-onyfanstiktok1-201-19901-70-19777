@@ -73,22 +73,6 @@ export const CategoryMenu = ({
   // Construir menuItems dinamicamente
   const baseMenuItems: MenuItemProps[] = [];
 
-  // Perfil do Instagram (nova aba)
-  baseMenuItems.push({
-    id: "instagram-profile",
-    name: "Perfil do Instagram",
-    icon: (
-      <span className="w-5 h-5 rounded-md flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
-        <Instagram className="w-3.5 h-3.5 text-white" />
-      </span>
-    ),
-    onClick: () => {
-      setOpen(false);
-      requestAnimationFrame(() => {
-        navigate('/perfil-instagram');
-      });
-    }
-  });
 
 
 

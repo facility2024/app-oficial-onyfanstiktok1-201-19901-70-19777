@@ -36,21 +36,15 @@ type ImportJob = {
   created_at: string;
 };
 
-type Entry =
-  | { kind: "username"; value: string; raw: string }
-  | { kind: "shortcode"; value: string; raw: string };
+type Entry = { kind: "shortcode"; value: string; raw: string };
 
 function parseEntry(input: string): Entry | null {
   const s = input.trim();
   if (!s) return null;
-  // Aceita SOMENTE links completos do Instagram (não @username, não nome solto).
+  // Aceita SOMENTE links de post/reel do Instagram. Perfis não são mais aceitos.
   if (!/^https?:\/\/(www\.)?instagram\.com\//i.test(s)) return null;
   const sc = s.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
   if (sc) return { kind: "shortcode", value: sc[1], raw: s };
-  const un = s.match(/instagram\.com\/([A-Za-z0-9._]{1,30})\/?/i);
-  if (un && !/^(reel|reels|p|tv|explore|stories|accounts)$/i.test(un[1])) {
-    return { kind: "username", value: un[1].toLowerCase(), raw: s };
-  }
   return null;
 }
 
@@ -81,8 +75,7 @@ export default function InstagramImportPanel() {
     return out;
   }, [rawInput]);
 
-  const usernames = useMemo(() => parsed.filter((p) => p.kind === "username"), [parsed]);
-  const shortcodes = useMemo(() => parsed.filter((p) => p.kind === "shortcode"), [parsed]);
+  const shortcodes = parsed;
   const invalidCount = useMemo(() => {
     const lines = rawInput.split(/\s+/).map((l) => l.trim()).filter(Boolean);
     return lines.length - parsed.length;

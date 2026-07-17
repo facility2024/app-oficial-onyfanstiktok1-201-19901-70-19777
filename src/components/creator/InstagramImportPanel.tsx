@@ -212,19 +212,6 @@ export default function InstagramImportPanel() {
           <Badge className="bg-purple-600">Vídeos: {shortcodes.length}</Badge>
           {invalidCount > 0 && <Badge className="bg-red-600">Ignorados: {invalidCount}</Badge>}
 
-          <div className="flex items-center gap-2">
-            <Label className="text-white text-xs">Páginas por perfil</Label>
-            <Input
-              type="number"
-              min={1}
-              max={5}
-              value={maxPages}
-              onChange={(e) => setMaxPages(Math.min(5, Math.max(1, parseInt(e.target.value || "1", 10))))}
-              className="w-16 h-8 bg-gray-900 border-gray-700 text-white"
-              disabled={running}
-            />
-            <span className="text-xs text-gray-400">(~12 posts/pg)</span>
-          </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <Switch id="vis" checked={visibility === "private"} onCheckedChange={(c) => setVisibility(c ? "private" : "public")} disabled={running} />

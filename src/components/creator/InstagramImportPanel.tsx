@@ -199,18 +199,18 @@ export default function InstagramImportPanel() {
           <div>
             <h3 className="text-xl font-bold text-white">Importar do Instagram (por perfil)</h3>
             <p className="text-sm text-gray-400">
-              Cole o link do perfil (<code>instagram.com/nomedamodelo</code>) ou <code>@username</code>.
-              O sistema baixa todos os posts recentes de uma vez, cria a modelo automaticamente e envia mídia para a Bunny.
-              Já importados são <b>pulados sem cobrar</b>.
+              Cole o <b>link completo</b> do perfil (<code>https://instagram.com/nomedamodelo</code>) ou do post/reel
+              (<code>/reel/…</code>, <code>/p/…</code>). A modelo é criada automaticamente a partir do link.
+              Já importados são <b>pulados sem cobrar</b>. <b>@username não é aceito</b>.
             </p>
           </div>
         </div>
 
-        <Label className="text-white text-xs">Perfis ou links (um por linha)</Label>
+        <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
         <Textarea
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
-          placeholder={"https://instagram.com/nomedamodelo\n@outra_modelo\nhttps://www.instagram.com/reel/DZ-6MYwNTo-/"}
+          placeholder={"https://instagram.com/nomedamodelo\nhttps://www.instagram.com/reel/DZ-6MYwNTo-/\nhttps://www.instagram.com/p/DAbcXYZ123/"}
           rows={6}
           className="bg-gray-900 border-gray-700 text-white font-mono text-sm"
           disabled={running}

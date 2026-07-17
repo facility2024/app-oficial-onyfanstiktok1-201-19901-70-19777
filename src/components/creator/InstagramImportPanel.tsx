@@ -142,7 +142,7 @@ export default function InstagramImportPanel() {
 
   const runImport = async () => {
     if (parsed.length === 0) {
-      return toast.error("Cole @username, link do perfil ou link de /reel/ /p/.");
+      return toast.error("Cole apenas LINKS completos do Instagram (perfil, /reel/ ou /p/). @username não é aceito.");
     }
     setRunning(true);
     setProgress(0);

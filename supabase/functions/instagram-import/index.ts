@@ -594,12 +594,41 @@ Deno.serve(async (req) => {
     if (jobError) throw new Error(`Fila: ${jobError.message}`);
 
     const queued: any[] = [];
-    let skipped = 0, failed = 0;
+    const directInserts: any[] = [];
+    let skipped = 0, failed = 0, imported = 0;
+
+    function buildDirectRow(model: { id: string }, shortcode: string, postNode: any) {
+      const media = collectMedia(postNode);
+      if (media.length === 0) return null;
+      const post_type: 'video' | 'image' | 'carousel' =
+        media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
+      const first = media[0];
+      const mediaOut = media.map((m) => ({
+        kind: m.kind, url: m.url, thumb: m.thumb ?? null,
+        width: m.width ?? null, height: m.height ?? null, duration: m.duration ?? null,
+      }));
+      return {
+        ig_model_id: model.id,
+        ig_shortcode: shortcode,
+        ig_media_id: postNode?.id ? String(postNode.id) : postNode?.pk ? String(postNode.pk) : null,
+        source_url: `https://www.instagram.com/p/${shortcode}/`,
+        bunny_path: null,
+        video_url: first.url,
+        thumbnail_url: first.thumb ?? (first.kind === 'image' ? first.url : null),
+        caption: extractCaption(postNode) ?? null,
+        duration_seconds: first.duration ?? null,
+        width: first.width ?? null,
+        height: first.height ?? null,
+        visibility,
+        post_type,
+        media: mediaOut,
+        imported_by: userId,
+      };
+    }
 
     // ===== 1) Perfis (fluxo principal) =====
     for (const username of usernames) {
       try {
-        // Só precisamos do model antes de iterar posts
         const model = await ensureModel(admin, username, {}, visibility);
 
         let maxId = '';
@@ -609,7 +638,6 @@ Deno.serve(async (req) => {
           const { items, nextMaxId } = extractPostsPage(page);
           if (items.length === 0) break;
 
-          // Dedup ANTES de baixar mídia (economiza banda; RapidAPI já foi paga na página)
           const codes = items.map((it) => it.code || it.shortcode).filter(Boolean);
           const { data: exist } = await admin
             .from('ig_feed_videos')
@@ -620,11 +648,10 @@ Deno.serve(async (req) => {
           for (const item of items) {
             const sc = item.code || item.shortcode;
             if (!sc) continue;
-            if (existSet.has(sc)) {
-              skipped++;
-              continue;
-            }
-            queued.push({ job_id: job.id, ig_model_id: model.id, username, shortcode: sc, source_payload: item, visibility });
+            if (existSet.has(sc)) { skipped++; continue; }
+            const row = buildDirectRow(model, sc, item);
+            if (row) directInserts.push(row);
+            else failed++;
           }
 
           pagesDone++;
@@ -634,11 +661,10 @@ Deno.serve(async (req) => {
       } catch (e: any) {
         failed++;
         console.error('[ig-import] username', username, e?.message ?? e);
-        console.error('[ig-import] discovery username', username, e?.message ?? e);
       }
     }
 
-    // ===== 2) Shortcodes soltos (compatibilidade — mediaByShortcode) =====
+    // ===== 2) Shortcodes soltos =====
     if (looseShortcodes.size > 0) {
       const scArr = Array.from(looseShortcodes);
       const { data: existRows } = await admin
@@ -649,10 +675,7 @@ Deno.serve(async (req) => {
 
       const modelCache = new Map<string, { id: string; slug: string }>();
       for (const sc of scArr) {
-        if (existSet.has(sc)) {
-          skipped++;
-          continue;
-        }
+        if (existSet.has(sc)) { skipped++; continue; }
         try {
           const raw = await fetchMediaByShortcode(sc);
           const owner = extractOwner(raw);
@@ -664,38 +687,45 @@ Deno.serve(async (req) => {
             }, visibility);
             modelCache.set(owner.username, model);
           }
-          // Mantém o objeto completo quando o provider usa envelopes novos.
           let postNode = extractPostNode(raw);
-
-          // Alguns retornos de mediaByShortcode trazem somente metadados. Como
-          // o dono já foi identificado, consulta /posts e localiza o mesmo
-          // shortcode, sem depender do formato quebrado do primeiro envelope.
           if (collectMedia(postNode).length === 0) {
             const postsPayload = await fetchUserPosts(owner.username, '');
             postNode = findPostByShortcode(postsPayload, sc) ?? extractPostNode(postsPayload);
           }
-          queued.push({ job_id: job.id, ig_model_id: model.id, username: owner.username, shortcode: sc, source_payload: postNode, visibility });
+          const row = buildDirectRow(model, sc, postNode);
+          if (row) directInserts.push(row);
+          else { failed++; console.error('[ig-import] loose sem mídia', sc); }
         } catch (e: any) {
           failed++;
           console.error('[ig-import] loose', sc, e?.message ?? e);
-          console.error('[ig-import] discovery loose', sc, e?.message ?? e);
         }
       }
     }
 
-    if (queued.length > 0) {
-      const { error: itemsError } = await admin.from('ig_import_items').insert(queued);
-      if (itemsError) throw new Error(`Itens da fila: ${itemsError.message}`);
+    // Insert direto — vídeos aparecem imediatamente
+    if (directInserts.length > 0) {
+      const { data: ins, error: insErr } = await admin
+        .from('ig_feed_videos')
+        .insert(directInserts)
+        .select('id');
+      if (insErr) {
+        console.error('[ig-import] direct insert', insErr.message);
+        failed += directInserts.length;
+      } else {
+        imported = ins?.length ?? directInserts.length;
+      }
     }
+
     await admin.from('ig_import_jobs').update({
-      status: queued.length > 0 ? 'queued' : (failed > 0 ? 'completed_with_errors' : 'completed'),
-      total_items: queued.length,
+      status: failed > 0 ? 'completed_with_errors' : 'completed',
+      total_items: imported + skipped + failed,
+      imported_items: imported,
       skipped_items: skipped,
       failed_items: failed,
-      processed_items: skipped + failed,
-      finished_at: queued.length > 0 ? null : new Date().toISOString(),
+      processed_items: imported + skipped + failed,
+      finished_at: new Date().toISOString(),
     }).eq('id', job.id);
-    if (queued.length > 0) EdgeRuntime.waitUntil(dispatchWorker(job.id));
+
 
     return new Response(
       JSON.stringify({

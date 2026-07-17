@@ -35,11 +35,17 @@ async function fetchPosts(username: string, maxId: string) {
     },
     body: JSON.stringify({ username, maxId: maxId || '' }),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`RapidAPI ${res.status}: ${t.slice(0, 300)}`);
+  const text = await res.text();
+  let json: any = null;
+  try { json = JSON.parse(text); } catch (_) {}
+  if (!res.ok || json?.success === false) {
+    const msg = json?.message || text.slice(0, 300);
+    const err: any = new Error(`Provider: ${msg}`);
+    err.providerFail = true;
+    err.status = res.status;
+    throw err;
   }
-  return res.json();
+  return json;
 }
 
 // Normaliza um item de post do instagram120 em algo estável.

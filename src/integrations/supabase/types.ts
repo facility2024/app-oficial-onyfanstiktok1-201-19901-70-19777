@@ -2767,7 +2767,9 @@ export type Database = {
           ig_shortcode: string | null
           imported_by: string | null
           is_active: boolean
+          media: Json
           metadata: Json | null
+          post_type: string
           source_url: string | null
           thumbnail_url: string | null
           updated_at: string
@@ -2787,7 +2789,9 @@ export type Database = {
           ig_shortcode?: string | null
           imported_by?: string | null
           is_active?: boolean
+          media?: Json
           metadata?: Json | null
+          post_type?: string
           source_url?: string | null
           thumbnail_url?: string | null
           updated_at?: string
@@ -2807,7 +2811,9 @@ export type Database = {
           ig_shortcode?: string | null
           imported_by?: string | null
           is_active?: boolean
+          media?: Json
           metadata?: Json | null
+          post_type?: string
           source_url?: string | null
           thumbnail_url?: string | null
           updated_at?: string
@@ -2837,6 +2843,7 @@ export type Database = {
           ig_username: string
           is_active: boolean
           metadata: Json | null
+          slug: string | null
           updated_at: string
         }
         Insert: {
@@ -2850,6 +2857,7 @@ export type Database = {
           ig_username: string
           is_active?: boolean
           metadata?: Json | null
+          slug?: string | null
           updated_at?: string
         }
         Update: {
@@ -2863,6 +2871,7 @@ export type Database = {
           ig_username?: string
           is_active?: boolean
           metadata?: Json | null
+          slug?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -1168,6 +1168,19 @@ export default function CreatorStudio() {
           <TabsContent value="sales">
             <MySales />
           </TabsContent>
+
+          <TabsContent value="instagram">
+            <Card className="bg-gray-800/50 border-gray-700 p-8 text-center">
+              <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 mb-4">
+                <Instagram className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Perfil do Instagram</h2>
+              <p className="text-gray-300 max-w-md mx-auto">
+                Área para gerenciar seu perfil do Instagram. O conteúdo desta seção
+                será construído em seguida.
+              </p>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

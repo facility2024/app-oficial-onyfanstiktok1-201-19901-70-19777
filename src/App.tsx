@@ -54,6 +54,7 @@ import GarotasTopVipPage from "./pages/GarotasTopVipPage";
 import IndicadorCadastro from "./pages/IndicadorCadastro";
 import IndicadorArea from "./pages/IndicadorArea";
 import InstagramProfilePage from "./pages/InstagramProfilePage";
+import InstagramModelFeed from "./pages/InstagramModelFeed";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
@@ -218,6 +219,7 @@ const App = () => (
           <Route path="/garotas" element={<AdsGarotasTopPage />} />
           <Route path="/ads/garotas-top" element={<AdsGarotasTopPage />} />
           <Route path="/perfil-instagram" element={<InstagramProfilePage />} />
+          <Route path="/perfil-instagram/:slug" element={<InstagramModelFeed />} />
 
           {/* Admin protegido por AdminRoute - apenas admins podem acessar */}
           <Route path="/admin" element={

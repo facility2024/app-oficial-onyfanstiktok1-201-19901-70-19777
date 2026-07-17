@@ -109,11 +109,11 @@ export default function InstagramImportPanel() {
 
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1">
-            <Label className="text-white text-xs">Username</Label>
+            <Label className="text-white text-xs">Username do perfil (não cole URL de reel)</Label>
             <Input
               value={username}
               onChange={(e) => { setUsername(e.target.value); setNextMaxId(""); }}
-              placeholder="@keke"
+              placeholder="@keke   (só o nome do perfil, não link de vídeo)"
               className="bg-gray-900 border-gray-700 text-white"
               disabled={running}
             />

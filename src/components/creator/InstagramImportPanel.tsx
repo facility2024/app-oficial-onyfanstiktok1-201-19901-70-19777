@@ -43,14 +43,14 @@ type Entry =
 function parseEntry(input: string): Entry | null {
   const s = input.trim();
   if (!s) return null;
+  // Aceita SOMENTE links completos do Instagram (não @username, não nome solto).
+  if (!/^https?:\/\/(www\.)?instagram\.com\//i.test(s)) return null;
   const sc = s.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
   if (sc) return { kind: "shortcode", value: sc[1], raw: s };
   const un = s.match(/instagram\.com\/([A-Za-z0-9._]{1,30})\/?/i);
-  if (un && !/^(reel|reels|p|tv|explore|stories)$/i.test(un[1])) {
+  if (un && !/^(reel|reels|p|tv|explore|stories|accounts)$/i.test(un[1])) {
     return { kind: "username", value: un[1].toLowerCase(), raw: s };
   }
-  if (/^@[A-Za-z0-9._]{1,30}$/.test(s)) return { kind: "username", value: s.slice(1).toLowerCase(), raw: s };
-  if (/^[A-Za-z0-9._]{2,30}$/.test(s) && !s.includes("/")) return { kind: "username", value: s.toLowerCase(), raw: s };
   return null;
 }
 
@@ -142,7 +142,7 @@ export default function InstagramImportPanel() {
 
   const runImport = async () => {
     if (parsed.length === 0) {
-      return toast.error("Cole @username, link do perfil ou link de /reel/ /p/.");
+      return toast.error("Cole apenas LINKS completos do Instagram (perfil, /reel/ ou /p/). @username não é aceito.");
     }
     setRunning(true);
     setProgress(0);
@@ -199,18 +199,18 @@ export default function InstagramImportPanel() {
           <div>
             <h3 className="text-xl font-bold text-white">Importar do Instagram (por perfil)</h3>
             <p className="text-sm text-gray-400">
-              Cole o link do perfil (<code>instagram.com/nomedamodelo</code>) ou <code>@username</code>.
-              O sistema baixa todos os posts recentes de uma vez, cria a modelo automaticamente e envia mídia para a Bunny.
-              Já importados são <b>pulados sem cobrar</b>.
+              Cole o <b>link completo</b> do perfil (<code>https://instagram.com/nomedamodelo</code>) ou do post/reel
+              (<code>/reel/…</code>, <code>/p/…</code>). A modelo é criada automaticamente a partir do link.
+              Já importados são <b>pulados sem cobrar</b>. <b>@username não é aceito</b>.
             </p>
           </div>
         </div>
 
-        <Label className="text-white text-xs">Perfis ou links (um por linha)</Label>
+        <Label className="text-white text-xs">Links do Instagram (um por linha)</Label>
         <Textarea
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
-          placeholder={"https://instagram.com/nomedamodelo\n@outra_modelo\nhttps://www.instagram.com/reel/DZ-6MYwNTo-/"}
+          placeholder={"https://instagram.com/nomedamodelo\nhttps://www.instagram.com/reel/DZ-6MYwNTo-/\nhttps://www.instagram.com/p/DAbcXYZ123/"}
           rows={6}
           className="bg-gray-900 border-gray-700 text-white font-mono text-sm"
           disabled={running}

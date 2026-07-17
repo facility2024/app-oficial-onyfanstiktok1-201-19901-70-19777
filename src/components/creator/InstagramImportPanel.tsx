@@ -44,6 +44,7 @@ function extractShortcode(input: string): string | null {
 
 export default function InstagramImportPanel() {
   const [rawInput, setRawInput] = useState("");
+  const [username, setUsername] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);

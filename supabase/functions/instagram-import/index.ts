@@ -400,23 +400,23 @@ async function ensureAppModel(
 
 async function pushToAppFeed(
   admin: any,
-  appModelId: string,
+  creatorId: string,
   shortcode: string,
   videoUrl: string,
   thumbUrl: string | null,
   caption: string | null,
   durationSec: number | null,
-  width: number | null,
-  height: number | null,
+  _width: number | null,
+  _height: number | null,
   visibility: 'public' | 'private',
 ) {
-  // evita duplicar se já postamos esse shortcode antes
+  // evita duplicar se já postamos esse shortcode antes para o mesmo criador
   const { data: dup } = await admin
     .from('videos')
     .select('id')
-    .eq('model_id', appModelId)
+    .eq('creator_id', creatorId)
     .eq('upload_source', 'instagram')
-    .ilike('description', `%${shortcode}%`)
+    .ilike('description', `%[ig:${shortcode}]%`)
     .maybeSingle();
   if (dup) return dup.id;
 
@@ -428,7 +428,7 @@ async function pushToAppFeed(
   const { data: v, error } = await admin
     .from('videos')
     .insert({
-      model_id: appModelId,
+      creator_id: creatorId,
       title,
       description: `[ig:${shortcode}] ${caption ?? ''}`.trim(),
       thumbnail_url: thumbUrl || videoUrl,
@@ -526,28 +526,21 @@ async function persistPost(
     .single();
   if (iErr) throw new Error(iErr.message);
 
-  // Espelha no feed principal do app (tabela videos) — só vídeos
+  // Espelha no feed principal do app (tabela videos) como vídeo do CRIADOR autenticado
   if (post_type === 'video' && mainVideoUrl) {
     try {
-      const appModelId = await ensureAppModel(admin, model, {
-        ig_username: (postNode?.owner?.username || model.slug),
-        display_name: postNode?.owner?.full_name ?? null,
-        avatar_url: postNode?.owner?.profile_pic_url ?? null,
-      });
-      if (appModelId) {
-        await pushToAppFeed(
-          admin,
-          appModelId,
-          shortcode,
-          mainVideoUrl,
-          mainThumbUrl,
-          extractCaption(postNode) ?? null,
-          media[0]?.duration ?? null,
-          media[0]?.width ?? null,
-          media[0]?.height ?? null,
-          visibility,
-        );
-      }
+      await pushToAppFeed(
+        admin,
+        userId,
+        shortcode,
+        mainVideoUrl,
+        mainThumbUrl,
+        extractCaption(postNode) ?? null,
+        media[0]?.duration ?? null,
+        media[0]?.width ?? null,
+        media[0]?.height ?? null,
+        visibility,
+      );
     } catch (e) {
       console.warn('[ig-import] espelhar no feed falhou:', (e as Error).message);
     }
@@ -860,39 +853,22 @@ Deno.serve(async (req) => {
       } else {
         imported = ins?.length ?? directInserts.length;
 
-        // ===== Espelha no feed principal (tabela videos) =====
+        // ===== Espelha no feed principal (tabela videos) como vídeos do CRIADOR =====
         try {
-          const modelIds = Array.from(new Set((ins ?? []).map((r: any) => r.ig_model_id).filter(Boolean)));
-          if (modelIds.length > 0) {
-            const { data: igModels } = await admin
-              .from('ig_models')
-              .select('id, slug, ig_username, display_name, avatar_url')
-              .in('id', modelIds);
-            const byId = new Map<string, any>((igModels ?? []).map((m: any) => [m.id, m]));
-
-            for (const row of ins ?? []) {
-              if (row.post_type !== 'video' || !row.video_url) continue;
-              const ig = byId.get(row.ig_model_id);
-              if (!ig) continue;
-              const appModelId = await ensureAppModel(admin, { id: ig.id, slug: ig.slug }, {
-                ig_username: ig.ig_username,
-                display_name: ig.display_name,
-                avatar_url: ig.avatar_url,
-              });
-              if (!appModelId) continue;
-              await pushToAppFeed(
-                admin,
-                appModelId,
-                row.ig_shortcode,
-                row.video_url,
-                row.thumbnail_url,
-                row.caption,
-                row.duration_seconds,
-                row.width,
-                row.height,
-                row.visibility,
-              );
-            }
+          for (const row of ins ?? []) {
+            if (row.post_type !== 'video' || !row.video_url) continue;
+            await pushToAppFeed(
+              admin,
+              userId,
+              row.ig_shortcode,
+              row.video_url,
+              row.thumbnail_url,
+              row.caption,
+              row.duration_seconds,
+              row.width,
+              row.height,
+              row.visibility,
+            );
           }
         } catch (mirrorErr: any) {
           console.warn('[ig-import] mirror feed falhou:', mirrorErr?.message ?? mirrorErr);

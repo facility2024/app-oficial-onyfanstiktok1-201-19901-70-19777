@@ -24,6 +24,7 @@ import NeonPayProducerSettings from '@/components/creator/NeonPayProducerSetting
 import MySales from '@/components/creator/MySales';
 import { CarouselScheduler } from '@/components/admin/CarouselScheduler';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
+import InstagramImportPanel from '@/components/creator/InstagramImportPanel';
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(100),

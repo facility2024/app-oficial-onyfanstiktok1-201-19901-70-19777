@@ -83,27 +83,25 @@ export const AdminCheckoutPagePix = () => {
     }
     setSavingAsTemplate(true);
     try {
-      const baseName = `Checkout R$ ${amount.toFixed(2).replace(".", ",")}`;
-      const baseSlug = slugify(`${baseName}-${Date.now().toString(36)}`);
-      const { error } = await (supabase as any).from("checkout_templates").insert({
-        nome: baseName,
-        slug: baseSlug,
+      // Envia rascunho pré-preenchido pro editor da aba "Modelos de checkout"
+      // O admin dá o nome da página e salva manualmente.
+      setInitialDraft({
+        nome: "",
+        slug: "",
         amount,
         product_name: "Acesso Coconudi",
         product_description: "Pagamento seguro via PIX",
         product_image_url: form.product_image_url || "",
         redirect_to: "/app",
-        storage_flag: `checkout_${baseSlug}_paid`,
+        storage_flag: `checkout_${slugify(`pix-${Date.now().toString(36)}`)}_paid`,
         ativo: true,
         ordem: 0,
         model_id: null,
+        _stamp: Date.now(),
       });
-      if (error) throw error;
-      toast.success("Novo modelo criado!", { description: "Aparece na aba Modelos de checkout como miniatura editável." });
       setTemplatesRefresh((n) => n + 1);
       setActiveTab("templates");
-    } catch (e: any) {
-      toast.error("Erro ao gerar modelo", { description: e?.message });
+      toast.success("Editor aberto", { description: "Dê um nome à página e clique em Salvar." });
     } finally {
       setSavingAsTemplate(false);
     }

@@ -795,7 +795,11 @@ Deno.serve(async (req) => {
           }
           const row = buildDirectRow(model, sc, postNode);
           if (row) directInserts.push(row);
-           else { failed++; console.error('[ig-import] link sem vídeo', sc); }
+           else {
+             failed++;
+             console.error('[ig-import] link sem vídeo', sc, 'keys:', Object.keys(postNode || {}).slice(0, 40).join(','));
+             try { console.error('[ig-import] payload sample', JSON.stringify(postNode).slice(0, 2000)); } catch {}
+           }
         } catch (e: any) {
           failed++;
           console.error('[ig-import] loose', sc, e?.message ?? e);

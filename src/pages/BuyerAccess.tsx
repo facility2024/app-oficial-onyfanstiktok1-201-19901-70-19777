@@ -62,7 +62,7 @@ export default function BuyerAccess() {
           value={maskWa(wa)}
           onChange={(e) => setWa(e.target.value)}
           inputMode="tel"
-          className="text-white bg-gray-950/60 border-gray-700"
+          className="text-white placeholder:text-gray-500 bg-gray-950/80 border-gray-700 caret-white"
         />
         <Button
           className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold"

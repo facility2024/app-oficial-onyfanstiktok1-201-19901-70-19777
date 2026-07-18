@@ -305,6 +305,37 @@ export const AdminCheckoutOrderBumps = () => {
                 Após o pagamento aprovado, o usuário verá o botão "Acesso à minha oferta" apontando para este link.
               </p>
             </div>
+            <div>
+              <Label className="text-white">🎯 Exibir apenas nestes Modelos de Checkout (opcional)</Label>
+              <p className="text-xs text-gray-400 mb-2">
+                Deixe todos desmarcados para exibir este bump em <b>todos</b> os checkouts (global + qualquer modelo).
+              </p>
+              <div className="max-h-40 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-800 space-y-1">
+                {templates.length === 0 && (
+                  <div className="text-xs text-gray-500">Nenhum modelo de checkout cadastrado.</div>
+                )}
+                {templates.map((t) => {
+                  const checked = form.template_ids.includes(t.id);
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 text-sm text-white cursor-pointer hover:bg-gray-700 px-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...form.template_ids, t.id]
+                            : form.template_ids.filter((id) => id !== t.id);
+                          setForm({ ...form, template_ids: next });
+                        }}
+                        className="w-4 h-4 accent-purple-500"
+                      />
+                      <span className="font-semibold">{t.nome}</span>
+                      <span className="text-xs text-gray-400">/{t.slug}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={form.ativo}

@@ -130,6 +130,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: form.link_acesso.trim() || null,
       ativo: form.ativo,
       ordem: Number(form.ordem) || 0,
+      template_ids: form.template_ids.length ? form.template_ids : null,
     };
     const q = editingId
       ? (supabase as any).from("checkout_order_bumps").update(payload).eq("id", editingId)

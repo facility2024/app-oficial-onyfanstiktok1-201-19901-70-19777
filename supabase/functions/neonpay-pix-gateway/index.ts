@@ -44,6 +44,20 @@ Deno.serve(async (req) => {
     const rawPhone = getText(body?.customer_whatsapp) ?? getText(body?.client?.phone) ?? '(11) 99999-9999'
     const phoneDigits = rawPhone.replace(/\D/g, '')
 
+    // Itens de compra do novo sistema (produtos/liberações)
+    const rawItems = Array.isArray(body?.items) ? body.items : []
+    const purchaseItems = rawItems
+      .map((it: any) => ({
+        product_id: getText(it?.product_id),
+        price: Number(it?.price ?? 0),
+        snapshot_name: getText(it?.snapshot_name) ?? productName,
+      }))
+      .filter((it) => !!it.product_id) as Array<{ product_id: string; price: number; snapshot_name: string }>
+
+    const templateId = getText(body?.template_id) ?? null
+    const templateSlug = getText(body?.template_slug) ?? null
+    const customerEmail = getText(body?.customer_email) ?? getText(body?.client?.email) ?? null
+
     const payload = {
       identifier,
       amount,
@@ -88,12 +102,13 @@ Deno.serve(async (req) => {
 
     const transactionId = getText(payment.transactionId) ?? getText(payment.id) ?? getText(transaction.id) ?? identifier
 
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
     // Persistir WhatsApp em pix_payments para o webhook liberar acesso depois
     try {
-      const admin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      )
       await admin.from('pix_payments').insert({
         transaction_id: transactionId,
         amount,
@@ -105,11 +120,36 @@ Deno.serve(async (req) => {
       console.log('[neonpay-pix-gateway pix_payments insert]', String(persistErr))
     }
 
+    // CRÍTICO: cria checkout_purchases + items ANTES de retornar, para o webhook
+    // sempre encontrar o registro e liberar acesso automaticamente.
+    if (purchaseItems.length > 0) {
+      try {
+        const { data: purchase, error: pErr } = await admin
+          .from('checkout_purchases')
+          .insert({
+            user_id: authUserId,
+            customer_whatsapp: phoneDigits,
+            customer_email: customerEmail,
+            total_amount: amount,
+            status: 'pending',
+            gateway: 'neonpay',
+            gateway_payment_id: transactionId,
+            metadata: { template_id: templateId, template_slug: templateSlug },
+          })
+          .select('id')
+          .maybeSingle()
+        if (pErr) console.log('[gateway checkout_purchases insert]', pErr.message)
+        if (purchase?.id) {
+          const rows = purchaseItems.map((it) => ({ ...it, purchase_id: purchase.id }))
+          const { error: iErr } = await admin.from('checkout_purchase_items').insert(rows)
+          if (iErr) console.log('[gateway checkout_purchase_items insert]', iErr.message)
+        }
+      } catch (e) {
+        console.log('[gateway checkout_purchases block]', String(e))
+      }
+    }
+
     if (authUserId && privateModelId) {
-      const admin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      )
       const inserted = await admin.from('payment_transactions').insert({
         user_id: authUserId,
         asaas_payment_id: transactionId,
@@ -122,6 +162,7 @@ Deno.serve(async (req) => {
       })
       if (inserted.error) console.log('[neonpay-pix-gateway payment_transactions insert]', inserted.error.message)
     }
+
 
     return new Response(JSON.stringify({
       transaction_id: transactionId,

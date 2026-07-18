@@ -89,6 +89,14 @@ export const AdminCheckoutOrderBumps = () => {
   useEffect(() => {
     fetchItems();
     fetchMainLink();
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("checkout_templates")
+        .select("id,nome,slug")
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
+      setTemplates(data || []);
+    })();
   }, []);
 
   const resetForm = () => {

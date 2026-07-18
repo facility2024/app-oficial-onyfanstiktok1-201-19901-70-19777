@@ -18,7 +18,10 @@ interface Bump {
   link_acesso: string | null;
   ativo: boolean;
   ordem: number;
+  template_ids: string[] | null;
 }
+
+interface TemplateOpt { id: string; nome: string; slug: string }
 
 const empty = {
   titulo: "",
@@ -28,6 +31,7 @@ const empty = {
   link_acesso: "",
   ativo: true,
   ordem: 0,
+  template_ids: [] as string[],
 };
 
 export const AdminCheckoutOrderBumps = () => {
@@ -39,6 +43,7 @@ export const AdminCheckoutOrderBumps = () => {
   const [saving, setSaving] = useState(false);
   const [mainLink, setMainLink] = useState("");
   const [mainLinkSaving, setMainLinkSaving] = useState(false);
+  const [templates, setTemplates] = useState<TemplateOpt[]>([]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -84,6 +89,14 @@ export const AdminCheckoutOrderBumps = () => {
   useEffect(() => {
     fetchItems();
     fetchMainLink();
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("checkout_templates")
+        .select("id,nome,slug")
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
+      setTemplates(data || []);
+    })();
   }, []);
 
   const resetForm = () => {
@@ -103,6 +116,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: b.link_acesso || "",
       ativo: b.ativo,
       ordem: b.ordem,
+      template_ids: b.template_ids || [],
     });
   };
 
@@ -125,6 +139,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: form.link_acesso.trim() || null,
       ativo: form.ativo,
       ordem: Number(form.ordem) || 0,
+      template_ids: form.template_ids.length ? form.template_ids : null,
     };
     const q = editingId
       ? (supabase as any).from("checkout_order_bumps").update(payload).eq("id", editingId)
@@ -289,6 +304,37 @@ export const AdminCheckoutOrderBumps = () => {
               <p className="text-xs text-gray-400 mt-1">
                 Após o pagamento aprovado, o usuário verá o botão "Acesso à minha oferta" apontando para este link.
               </p>
+            </div>
+            <div>
+              <Label className="text-white">🎯 Exibir apenas nestes Modelos de Checkout (opcional)</Label>
+              <p className="text-xs text-gray-400 mb-2">
+                Deixe todos desmarcados para exibir este bump em <b>todos</b> os checkouts (global + qualquer modelo).
+              </p>
+              <div className="max-h-40 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-800 space-y-1">
+                {templates.length === 0 && (
+                  <div className="text-xs text-gray-500">Nenhum modelo de checkout cadastrado.</div>
+                )}
+                {templates.map((t) => {
+                  const checked = form.template_ids.includes(t.id);
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 text-sm text-white cursor-pointer hover:bg-gray-700 px-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...form.template_ids, t.id]
+                            : form.template_ids.filter((id) => id !== t.id);
+                          setForm({ ...form, template_ids: next });
+                        }}
+                        className="w-4 h-4 accent-purple-500"
+                      />
+                      <span className="font-semibold">{t.nome}</span>
+                      <span className="text-xs text-gray-400">/{t.slug}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Switch

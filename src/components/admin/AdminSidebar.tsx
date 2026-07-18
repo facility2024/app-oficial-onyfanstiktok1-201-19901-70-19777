@@ -121,7 +121,7 @@ const navigationGroups = [
       { id: 'neonpay', label: 'NeonPay (Comissão)', icon: DollarSign },
       { id: 'checkout-page-pix', label: 'Página de Checkout (PIX)', icon: DollarSign },
       { id: 'products', label: 'Produtos & Liberações', icon: DollarSign },
-      { id: 'access-pages', label: 'Páginas de Acesso', icon: DollarSign },
+      // 'Páginas de Acesso' removido — acesse via botão "Conteúdo" em cada produto
       { id: 'sales-reports', label: 'Relatórios de Vendas', icon: DollarSign },
     ]
   },

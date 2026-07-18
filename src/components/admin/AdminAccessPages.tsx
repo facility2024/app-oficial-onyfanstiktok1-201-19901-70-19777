@@ -146,7 +146,7 @@ export default function AdminAccessPages() {
   );
 }
 
-function PageEditor({ page, products, onBack }: { page: AccessPage; products: Product[]; onBack: () => void; }) {
+export function PageEditor({ page, products, onBack }: { page: AccessPage; products: Product[]; onBack: () => void; }) {
   const [form, setForm] = useState<AccessPage>(page);
   const [cards, setCards] = useState<AccessCard[]>([]);
   const [videos, setVideos] = useState<AccessVideo[]>([]);

@@ -97,7 +97,7 @@ export default function ProductAccessPage() {
         </Button>
         <h1 className="text-white font-bold flex-1 truncate">{page.title}</h1>
         {isAdmin && (
-          <Button size="sm" onClick={() => navigate("/admin?tab=access-pages")}>
+          <Button size="sm" onClick={() => navigate(`/admin?tab=product-content&product=${productId}`)}>
             <Pencil className="w-4 h-4 mr-1" /> Editar
           </Button>
         )}

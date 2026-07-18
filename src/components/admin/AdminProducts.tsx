@@ -88,9 +88,7 @@ export default function AdminProducts() {
     <div className="p-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-white">Produtos (Catálogo)</h2>
-        <Button onClick={() => navigate("/admin?tab=access-pages")} className="bg-emerald-600 hover:bg-emerald-700">
-          <Video className="w-4 h-4 mr-2" /> Cadastrar vídeos dos produtos
-        </Button>
+        <p className="text-xs text-gray-400">Clique em <b>Conteúdo</b> em cada produto para adicionar seus cards/módulos.</p>
       </div>
       <p className="text-white/60 text-sm">
         Cada checkout, order bump ou assinatura é um produto. Vendas geram liberações individuais
@@ -163,7 +161,7 @@ export default function AdminProducts() {
               onClick={() => patch(p.id, { is_active: !p.is_active })}>
               {p.is_active ? "Desativar" : "Ativar"}
             </Button>
-            <Button size="sm" onClick={() => navigate(`/admin?tab=access-pages&product=${p.id}`)}>
+            <Button size="sm" onClick={() => navigate(`/admin?tab=product-content&product=${p.id}`)}>
               <Video className="w-4 h-4 mr-1" /> Conteúdo
             </Button>
             <Button size="sm" variant="destructive" onClick={() => remove(p.id)}>

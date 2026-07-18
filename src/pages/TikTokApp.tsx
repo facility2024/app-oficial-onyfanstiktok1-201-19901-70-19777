@@ -2214,14 +2214,11 @@ export const TikTokApp = () => {
   // Abre e renderiza o perfil no mesmo evento do toque. As chamadas de
   // analytics só começam depois que o React já exibiu a tela do perfil.
   const openCurrentProfileInstantly = useCallback(() => {
-    if (profileOpeningRef.current) return;
-
     const snap = currentVideo?.user ? { ...currentVideo.user } : null;
     if (!snap) return;
 
     const videoId = currentVideo?.id;
     const userId = currentVideo?.user?.id;
-    profileOpeningRef.current = true;
 
     flushSync(() => {
       setProfileUserSnapshot(snap);

@@ -601,8 +601,12 @@ export const TikTokApp = () => {
       } as Video);
     });
 
+    // Prepend promo compartilhada por link (se não já presente)
+    if (sharedPromoVideo && !result.some(v => v.id === sharedPromoVideo.id)) {
+      return [sharedPromoVideo, ...result];
+    }
     return result;
-  }, [videos, promotions]);
+  }, [videos, promotions, sharedPromoVideo]);
 
   useEffect(() => {
     if (displayVideos.length === 0) return;

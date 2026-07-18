@@ -92,7 +92,7 @@ export const AdminCheckoutOrderBumps = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("id,nome,slug")
+        .select("id,nome,slug,model_id")
         .eq("ativo", true)
         .order("nome", { ascending: true });
       setTemplates(data || []);

@@ -69,7 +69,16 @@ export const SideMenu = ({
   return (
     <div className="flex flex-col gap-4 z-[9999] pointer-events-auto touch-manipulation">
       {/* Profile */}
-      <div className="flex flex-col items-center cursor-pointer group" onClick={onOpenProfile}>
+      <div
+        className="flex flex-col items-center cursor-pointer group"
+        onPointerDown={(event) => {
+          // O carousel pode segurar o evento click enquanto finaliza a rolagem.
+          // Abrir no pointerdown torna o perfil instantâneo após o toque.
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenProfile();
+        }}
+      >
         <div className="relative w-12 h-12 md:w-[75px] md:h-[75px] flex items-center justify-center transition-all">
           <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white overflow-hidden shrink-0 shadow-lg bg-gray-800">
             <img

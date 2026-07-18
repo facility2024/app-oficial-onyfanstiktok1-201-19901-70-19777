@@ -1,5 +1,6 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -165,6 +166,7 @@ export const TikTokApp = () => {
   // durante o await das ações de tracking, o feed avança e o ProfileScreen
   // acaba abrindo o perfil do vídeo seguinte em vez do que foi clicado.
   const [profileUserSnapshot, setProfileUserSnapshot] = useState<any | null>(null);
+  const profileOpeningRef = useRef(false);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatEntity, setChatEntity] = useState<{
@@ -2200,6 +2202,7 @@ export const TikTokApp = () => {
   // 🔗 Handler para fechar perfil e restaurar URL /app
   const handleCloseProfile = useCallback(() => {
     console.log('❌ Fechando perfil');
+    profileOpeningRef.current = false;
     setShowProfile(false);
     setProfileUserSnapshot(null);
     // Restaurar URL para /app
@@ -2207,6 +2210,29 @@ export const TikTokApp = () => {
       window.history.replaceState({}, '', '/app');
     }
   }, []);
+
+  // Abre e renderiza o perfil no mesmo evento do toque. As chamadas de
+  // analytics só começam depois que o React já exibiu a tela do perfil.
+  const openCurrentProfileInstantly = useCallback(() => {
+    if (profileOpeningRef.current) return;
+
+    const snap = currentVideo?.user ? { ...currentVideo.user } : null;
+    if (!snap) return;
+
+    const videoId = currentVideo?.id;
+    const userId = currentVideo?.user?.id;
+    profileOpeningRef.current = true;
+
+    flushSync(() => {
+      setProfileUserSnapshot(snap);
+      setShowProfile(true);
+    });
+
+    window.setTimeout(() => {
+      void checkAndTrackAction('profile_view', videoId, userId).catch(() => {});
+      void trackFollow(userId || '').catch(() => {});
+    }, 0);
+  }, [currentVideo, checkAndTrackAction, trackFollow]);
 
   const goToHome = () => {
     console.log('🏠 Voltando para a tela inicial');
@@ -3478,18 +3504,9 @@ export const TikTokApp = () => {
           await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
           await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
           setShowComments(true);
-        }} onOpenProfile={async () => {
+        }} onOpenProfile={() => {
           console.log('Mobile profile clicked via SideMenu');
-          // 1) Congela o usuário do vídeo atual ANTES de qualquer await, senão
-          // o feed pode avançar durante o tracking e o perfil abre errado.
-          const snap = currentVideo?.user ? { ...currentVideo.user } : null;
-          const vId = currentVideo?.id;
-          const uId = currentVideo?.user?.id;
-          setProfileUserSnapshot(snap);
-          setShowProfile(true);
-          // 2) Tracking em background (não bloqueia a abertura).
-          checkAndTrackAction('profile_view', vId, uId).catch(() => {});
-          trackFollow(uId || '').catch(() => {});
+          openCurrentProfileInstantly();
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
           setShowLiveList(true);
@@ -3937,15 +3954,9 @@ export const TikTokApp = () => {
                   await checkAndTrackAction('comment', currentVideo?.id, currentVideo?.user?.id);
                   await trackComment(currentVideo?.id || '', currentVideo?.user?.id || '');
                   setShowComments(true);
-                }} onOpenProfile={async () => {
+                }} onOpenProfile={() => {
                   console.log('Desktop profile clicked');
-                  const snap = currentVideo?.user ? { ...currentVideo.user } : null;
-                  const vId = currentVideo?.id;
-                  const uId = currentVideo?.user?.id;
-                  setProfileUserSnapshot(snap);
-                  setShowProfile(true);
-                  checkAndTrackAction('profile_view', vId, uId).catch(() => {});
-                  trackFollow(uId || '').catch(() => {});
+                  openCurrentProfileInstantly();
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
                   setShowLiveList(true);

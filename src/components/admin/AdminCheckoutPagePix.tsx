@@ -83,8 +83,7 @@ export const AdminCheckoutPagePix = () => {
     }
     setSavingAsTemplate(true);
     try {
-      // Envia rascunho pré-preenchido pro editor da aba "Modelos de checkout"
-      // O admin dá o nome da página e salva manualmente.
+      // Envia rascunho pré-preenchido pro editor — clona 100% da página global (aparência + valor + imagem)
       setInitialDraft({
         nome: "",
         slug: "",
@@ -97,10 +96,23 @@ export const AdminCheckoutPagePix = () => {
         ativo: true,
         ordem: 0,
         model_id: null,
+        // ▼ overrides visuais herdados da página global
+        timer_label: form.timer_label,
+        security_text: form.security_text,
+        security_banner_url: form.security_banner_url,
+        logo_url: form.logo_url,
+        finalize_button_label: form.finalize_button_label,
+        finalize_button_color: form.finalize_button_color,
+        legal_text: form.legal_text,
+        footer_security_text: form.footer_security_text,
+        author_label: form.author_label,
+        whatsapp_label: form.whatsapp_label,
+        whatsapp_placeholder: form.whatsapp_placeholder,
       });
       setTemplatesRefresh((n) => n + 1);
       setActiveTab("templates");
-      toast.success("Editor aberto", { description: "Dê um nome à página e clique em Salvar." });
+      toast.success("Editor aberto — página duplicada 100%", { description: "Dê um nome à página e clique em Salvar." });
+
     } finally {
       setSavingAsTemplate(false);
     }

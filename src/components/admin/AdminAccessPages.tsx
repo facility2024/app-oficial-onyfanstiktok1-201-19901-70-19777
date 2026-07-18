@@ -333,23 +333,27 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
             const isOpen = openCards[card.id] ?? true;
             return (
               <div key={card.id} className="rounded-lg border border-gray-800 bg-gray-900 overflow-hidden">
-                <div className="p-3 flex items-center gap-2 bg-gray-950/50">
+                <div className="p-3 flex items-center gap-2 bg-gray-950/50 flex-wrap">
                   <Button size="icon" variant="ghost" onClick={() => setOpenCards({ ...openCards, [card.id]: !isOpen })}>
                     {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </Button>
-                  <span className="text-xs text-gray-500">#{ci + 1}</span>
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">CARD #{ci + 1}</span>
                   <Input value={card.title}
                     onChange={(e) => updateCard(card.id, { title: e.target.value })}
                     placeholder="Título do módulo"
-                    className="flex-1 bg-gray-950 border-gray-700 text-white font-bold" />
+                    className="flex-1 min-w-[180px] bg-gray-950 border-gray-700 text-white font-bold" />
                   <span className="text-xs text-gray-400 whitespace-nowrap">{cardVideos.length} vídeo(s)</span>
-                  <Button size="icon" variant="ghost" onClick={() => moveCard(ci, -1)}><ArrowUp className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => moveCard(ci, 1)}><ArrowDown className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => updateCard(card.id, { is_published: !card.is_published })}
-                    title={card.is_published ? "Publicado" : "Rascunho"}>
-                    {card.is_published ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-500" />}
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded ${card.is_published ? "bg-emerald-600 text-white" : "bg-yellow-600 text-white"}`}>
+                    {card.is_published ? "PUBLICADO" : "RASCUNHO"}
+                  </span>
+                  <Button size="icon" variant="ghost" onClick={() => moveCard(ci, -1)} title="Subir"><ArrowUp className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => moveCard(ci, 1)} title="Descer"><ArrowDown className="w-4 h-4" /></Button>
+                  <Button size="sm" variant={card.is_published ? "secondary" : "default"}
+                    className={card.is_published ? "" : "bg-emerald-600 hover:bg-emerald-700"}
+                    onClick={() => updateCard(card.id, { is_published: !card.is_published })}>
+                    {card.is_published ? (<><EyeOff className="w-4 h-4 mr-1" />Despublicar</>) : (<><Eye className="w-4 h-4 mr-1" />Publicar</>)}
                   </Button>
-                  <Button size="icon" variant="destructive" onClick={() => removeCard(card.id)}>
+                  <Button size="icon" variant="destructive" onClick={() => removeCard(card.id)} title="Excluir">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>

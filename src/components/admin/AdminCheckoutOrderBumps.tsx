@@ -21,7 +21,7 @@ interface Bump {
   template_ids: string[] | null;
 }
 
-interface TemplateOpt { id: string; nome: string; slug: string }
+interface TemplateOpt { id: string; nome: string; slug: string; model_id: string | null }
 
 const empty = {
   titulo: "",
@@ -92,7 +92,7 @@ export const AdminCheckoutOrderBumps = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("id,nome,slug")
+        .select("id,nome,slug,model_id")
         .eq("ativo", true)
         .order("nome", { ascending: true });
       setTemplates(data || []);
@@ -306,15 +306,34 @@ export const AdminCheckoutOrderBumps = () => {
               </p>
             </div>
             <div>
-              <Label className="text-white">🎯 Exibir apenas nestes Modelos de Checkout (opcional)</Label>
+              <Label className="text-white">🎯 Onde exibir este Order Bump (opcional)</Label>
               <p className="text-xs text-gray-400 mb-2">
-                Deixe todos desmarcados para exibir este bump em <b>todos</b> os checkouts (global + qualquer modelo).
+                Deixe <b>tudo desmarcado</b> para exibir em <b>todos</b> os checkouts (global + qualquer página PIX + modelos).
+                Ou marque abaixo para restringir a páginas específicas.
               </p>
-              <div className="max-h-40 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-800 space-y-1">
-                {templates.length === 0 && (
-                  <div className="text-xs text-gray-500">Nenhum modelo de checkout cadastrado.</div>
+              <div className="max-h-56 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-800 space-y-2">
+                {/* Página global /checkout */}
+                <label className="flex items-center gap-2 text-sm text-white cursor-pointer hover:bg-gray-700 px-1 rounded border-b border-gray-700 pb-2">
+                  <input
+                    type="checkbox"
+                    checked={form.template_ids.includes("__global__")}
+                    onChange={(e) => {
+                      const next = e.target.checked
+                        ? [...form.template_ids, "__global__"]
+                        : form.template_ids.filter((id) => id !== "__global__");
+                      setForm({ ...form, template_ids: next });
+                    }}
+                    className="w-4 h-4 accent-green-500"
+                  />
+                  <span className="font-semibold">🌐 Página global /checkout</span>
+                </label>
+
+                {/* Páginas PIX standalone (sem modelo) */}
+                <div className="text-xs text-purple-300 font-semibold mt-2">📄 Páginas PIX criadas</div>
+                {templates.filter(t => !t.model_id).length === 0 && (
+                  <div className="text-xs text-gray-500 pl-2">Nenhuma página PIX standalone.</div>
                 )}
-                {templates.map((t) => {
+                {templates.filter(t => !t.model_id).map((t) => {
                   const checked = form.template_ids.includes(t.id);
                   return (
                     <label key={t.id} className="flex items-center gap-2 text-sm text-white cursor-pointer hover:bg-gray-700 px-1 rounded">
@@ -330,7 +349,33 @@ export const AdminCheckoutOrderBumps = () => {
                         className="w-4 h-4 accent-purple-500"
                       />
                       <span className="font-semibold">{t.nome}</span>
-                      <span className="text-xs text-gray-400">/{t.slug}</span>
+                      <span className="text-xs text-gray-400">/checkout/{t.slug}</span>
+                    </label>
+                  );
+                })}
+
+                {/* Páginas vinculadas a modelos */}
+                <div className="text-xs text-pink-300 font-semibold mt-2">👤 Vinculadas a modelos</div>
+                {templates.filter(t => t.model_id).length === 0 && (
+                  <div className="text-xs text-gray-500 pl-2">Nenhuma vinculada a modelo.</div>
+                )}
+                {templates.filter(t => t.model_id).map((t) => {
+                  const checked = form.template_ids.includes(t.id);
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 text-sm text-white cursor-pointer hover:bg-gray-700 px-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...form.template_ids, t.id]
+                            : form.template_ids.filter((id) => id !== t.id);
+                          setForm({ ...form, template_ids: next });
+                        }}
+                        className="w-4 h-4 accent-pink-500"
+                      />
+                      <span className="font-semibold">{t.nome}</span>
+                      <span className="text-xs text-gray-400">/checkout/{t.slug}</span>
                     </label>
                   );
                 })}

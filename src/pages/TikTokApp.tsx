@@ -331,6 +331,74 @@ export const TikTokApp = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const targetVideoId = searchParams.get('video');
+  const [sharedPromoVideo, setSharedPromoVideo] = useState<Video | null>(null);
+
+  // 🔗 Link compartilhado de promo: busca a promo direto (ignora filtros de cap/período)
+  useEffect(() => {
+    if (!targetVideoId || typeof targetVideoId !== 'string' || !targetVideoId.startsWith('promo-')) {
+      setSharedPromoVideo(null);
+      return;
+    }
+    const match = targetVideoId.match(/^promo-([0-9a-f-]{36})/i);
+    const promoId = match?.[1];
+    if (!promoId) return;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from('feed_promotions')
+        .select('*')
+        .eq('id', promoId)
+        .maybeSingle();
+
+      if (error || !data) {
+        toast({
+          title: 'Conteúdo indisponível',
+          description: 'Esse anúncio não está mais ativo.',
+          variant: 'destructive',
+        });
+        setSearchParams({});
+        return;
+      }
+
+      const promo = data as any;
+      setSharedPromoVideo({
+        id: targetVideoId,
+        title: promo.title || promo.display_name,
+        description: promo.description || '',
+        video_url: promo.media_url,
+        thumbnail_url: promo.banner_url || '',
+        user_id: `promo-${promo.id}`,
+        likes_count: 0,
+        comments_count: 0,
+        shares_count: 0,
+        views_count: promo.views_count || 0,
+        music_name: `${promo.display_name} • Patrocinado`,
+        is_active: true,
+        visibility: 'public',
+        created_at: promo.updated_at || promo.created_at || new Date().toISOString(),
+        user: {
+          id: `promo-${promo.id}`,
+          username: promo.display_name,
+          avatar_url: promo.avatar_url || DEFAULT_AVATAR,
+          followers_count: 0,
+          following_count: 0,
+          is_online: false,
+          created_at: promo.created_at || new Date().toISOString(),
+          bio: promo.description || '',
+          posting_panel_url: promo.cta_link || undefined,
+        },
+        _promoCtaText: promo.cta_text || promo.popup_cta_text || null,
+        _promoCtaLink: promo.cta_link || promo.popup_cta_link || promo.popup_url || null,
+        _promoCtaMode: promo.cta_mode || 'link',
+        _promoPopupMediaUrl: promo.popup_media_url || null,
+        _promoPopupMediaType: promo.popup_media_type || null,
+        _promoPopupCtaText: promo.popup_cta_text || null,
+        _promoPopupCtaLink: promo.popup_cta_link || null,
+        _promoBannerUrl: promo.banner_url || null,
+        _promoDescription: promo.description || null,
+      } as any);
+    })();
+  }, [targetVideoId]);
   const targetProfileId = searchParams.get('profile');
   
   // 🔗 URL amigável: receber profileId via state (de ProfilePage)
@@ -533,8 +601,12 @@ export const TikTokApp = () => {
       } as Video);
     });
 
+    // Prepend promo compartilhada por link (se não já presente)
+    if (sharedPromoVideo && !result.some(v => v.id === sharedPromoVideo.id)) {
+      return [sharedPromoVideo, ...result];
+    }
     return result;
-  }, [videos, promotions]);
+  }, [videos, promotions, sharedPromoVideo]);
 
   useEffect(() => {
     if (displayVideos.length === 0) return;
@@ -1996,20 +2068,18 @@ export const TikTokApp = () => {
 
   // 🎯 Posicionar no vídeo específico quando vindo de coleções ou links diretos
   useEffect(() => {
-    if (!targetVideoId || videos.length === 0) return;
-    const videoIndex = videos.findIndex(v => v.id === targetVideoId);
+    if (!targetVideoId || displayVideos.length === 0) return;
+    const videoIndex = displayVideos.findIndex(v => v.id === targetVideoId);
     console.log('🎯 Procurando vídeo:', targetVideoId, 'Encontrado no índice:', videoIndex);
     if (videoIndex >= 0) {
       console.log('✅ Posicionando no vídeo:', videoIndex);
       setCurrentVideoIndex(videoIndex);
-      // Scroll do carousel para o vídeo específico
       if (emblaApi) {
-        emblaApi.scrollTo(videoIndex);
+        emblaApi.scrollTo(videoIndex, true);
       }
-      // Limpar parâmetro da URL após posicionar
       setSearchParams({});
     }
-  }, [targetVideoId, videos, emblaApi, setSearchParams]);
+  }, [targetVideoId, displayVideos, emblaApi, setSearchParams]);
 
   // 🎯 Abrir perfil quando vindo de /app?profile=... OU via state (URL amigável)
   useEffect(() => {

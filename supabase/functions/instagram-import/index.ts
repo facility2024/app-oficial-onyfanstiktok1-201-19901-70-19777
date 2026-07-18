@@ -1,13 +1,7 @@
 // Edge Function: instagram-import
 // Provider: instagram120 (RapidAPI)
-// Fluxo NOVO (username-first):
-//   1) Recebe links de perfil (ou @username / URLs de reel/post)
-//   2) Para cada username:
-//        - ensureModel() → userInfo 1x (só na 1ª aparição do @) + avatar no Bunny
-//        - fetchUserPosts(username, maxId) → lista posts, pagina até maxPages
-//        - dedup por ig_shortcode ANTES de gastar RapidAPI de novo
-//        - baixa mídia (video/imagem/carrossel) → Bunny → insere ig_feed_videos
-//   3) Se receber links de reel/post individuais, também aceita (mediaByShortcode)
+// Fluxo: recebe somente links individuais de post/reel, consulta uma vez por
+// shortcode e importa apenas quando a API devolve exatamente o post solicitado.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -254,6 +248,19 @@ function findPostByShortcode(payload: any, shortcode: string): any | null {
   }
   walk(payload);
   return match;
+}
+
+function postShortcode(node: any): string | null {
+  const value = node?.code ?? node?.shortcode;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function exactPostFromPayload(payload: any, shortcode: string): any | null {
+  const matched = findPostByShortcode(payload, shortcode);
+  if (matched) return matched;
+
+  const extracted = extractPostNode(payload);
+  return postShortcode(extracted) === shortcode ? extracted : null;
 }
 
 // ============ Bunny ============
@@ -788,11 +795,13 @@ Deno.serve(async (req) => {
             }, visibility);
             modelCache.set(owner.username, model);
           }
-          let postNode = extractPostNode(raw);
-           if (!collectMedia(postNode).some((item) => item.kind === 'video')) {
-            const postsPayload = await fetchUserPosts(owner.username, '');
-            postNode = findPostByShortcode(postsPayload, sc) ?? extractPostNode(postsPayload);
-          }
+           // Nunca use o primeiro item de uma lista como fallback: o provedor
+           // pode devolver uma página genérica de posts e isso importava uma
+           // foto de outro shortcode no lugar do Reel solicitado.
+           const postNode = exactPostFromPayload(raw, sc);
+           if (!postNode) {
+             throw new Error(`A API não devolveu o post solicitado (${sc}).`);
+           }
           const row = buildDirectRow(model, sc, postNode);
           if (row) directInserts.push(row);
            else {

@@ -285,7 +285,7 @@ export default function PixCheckoutModal({
       });
       if (error) throw error;
       const status = String(data?.status || "").toLowerCase();
-      if (["paid", "approved", "confirmed", "completed"].includes(status)) {
+      if (["paid", "approved", "confirmed", "completed", "authorized", "received", "success"].includes(status)) {
         handleConfirmed();
         return true;
       }
@@ -311,7 +311,7 @@ export default function PixCheckoutModal({
         },
         (payload: any) => {
           const status = String(payload?.new?.status || "").toLowerCase();
-          if (["paid", "approved", "confirmed", "completed"].includes(status)) {
+          if (["paid", "approved", "confirmed", "completed", "authorized", "received", "success"].includes(status)) {
             handleConfirmed();
           }
         }

@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       .eq('gateway_payment_id', transactionId)
       .maybeSingle()
     const localStatus = String(localPurchase?.status ?? '').toLowerCase()
-    if (['paid', 'approved', 'confirmed', 'completed'].includes(localStatus)) {
+    if (['paid', 'approved', 'confirmed', 'completed', 'authorized', 'received', 'success'].includes(localStatus)) {
       return jsonResponse({ transaction_id: transactionId, status: 'PAID', source: 'database' })
     }
 
@@ -108,7 +108,9 @@ Deno.serve(async (req) => {
 
           return jsonResponse({
             transaction_id: transactionId,
-            status,
+            status: ['paid', 'approved', 'confirmed', 'completed', 'authorized', 'received', 'success'].includes(normalized)
+              ? 'PAID'
+              : status,
             raw: data,
           })
         }

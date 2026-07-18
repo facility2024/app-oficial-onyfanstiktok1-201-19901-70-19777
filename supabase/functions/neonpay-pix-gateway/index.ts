@@ -100,7 +100,10 @@ Deno.serve(async (req) => {
     const pix = getObject(payment.pix)
     const transaction = getObject(payment.transaction)
 
-    const transactionId = getText(payment.transactionId) ?? getText(payment.id) ?? getText(transaction.id) ?? identifier
+    // Prefere o ID da transação que a NeonPay repete no webhook. `payment.id`
+    // pode representar outro recurso (pedido/cobrança) e não casar no callback.
+    const transactionId = getText(payment.transactionId) ?? getText(pix.transactionId) ??
+      getText(transaction.id) ?? getText(payment.id) ?? identifier
 
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,

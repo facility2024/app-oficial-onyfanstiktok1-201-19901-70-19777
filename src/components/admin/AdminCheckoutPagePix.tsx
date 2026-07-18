@@ -368,6 +368,7 @@ export const AdminCheckoutPagePix = () => {
           amount={Number(form.default_amount) || 14.97}
           productImage={form.product_image_url || undefined}
           sellerName={form.author_label}
+          sideMediaOverride={form.side_media}
         />
       )}
     </div>

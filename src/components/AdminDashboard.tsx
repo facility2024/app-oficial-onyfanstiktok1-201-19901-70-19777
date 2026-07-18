@@ -231,6 +231,8 @@ export const AdminDashboard = () => {
         return <AdminCheckoutOrderBumps />;
       case 'checkout-page-pix':
         return <AdminCheckoutPagePix />;
+      case 'products':
+        return <AdminProducts />;
       case 'loja':
         return <AdminLoja />;
       case 'stores':

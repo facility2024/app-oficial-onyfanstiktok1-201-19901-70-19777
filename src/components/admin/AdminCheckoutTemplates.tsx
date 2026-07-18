@@ -35,6 +35,7 @@ interface Template {
   author_label: string;
   whatsapp_label: string;
   whatsapp_placeholder: string;
+  side_media: SideMediaItem[];
 }
 
 interface ModelOption { id: string; username: string; avatar_url: string | null; }

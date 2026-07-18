@@ -128,15 +128,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Persistir WhatsApp em pix_payments para o webhook liberar acesso depois
+    // Mantém compatibilidade com o histórico PIX. Os nomes anteriores
+    // (transaction_id/customer_phone) não existem nessa tabela e faziam o
+    // registro falhar silenciosamente.
     try {
-      await admin.from('pix_payments').insert({
-        transaction_id: transactionId,
+      const { error: pixPaymentError } = await admin.from('pix_payments').insert({
+        txid: transactionId,
         amount,
-        status: 'PENDING',
-        customer_phone: rawPhone,
+        status: 'pending',
+        whatsapp: rawPhone,
         customer_whatsapp: phoneDigits,
       })
+      if (pixPaymentError) console.log('[neonpay-pix-gateway pix_payments insert]', pixPaymentError.message)
     } catch (persistErr) {
       console.log('[neonpay-pix-gateway pix_payments insert]', String(persistErr))
     }

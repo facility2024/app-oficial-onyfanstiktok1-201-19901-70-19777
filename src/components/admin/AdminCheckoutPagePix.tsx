@@ -97,7 +97,6 @@ export const AdminCheckoutPagePix = () => {
         ativo: true,
         ordem: 0,
         model_id: null,
-        _stamp: Date.now(),
       });
       setTemplatesRefresh((n) => n + 1);
       setActiveTab("templates");

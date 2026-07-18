@@ -4041,7 +4041,7 @@ export const TikTokApp = () => {
        </div>
 
       {/* Desktop Profile Screen */}
-      <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
+      <ProfileScreen user={profileUserSnapshot || currentVideo.user} onVideoSelect={videoId => {
       openSelectedVideo(videoId);
     }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onOpenChat={() => {
       handleCloseProfile();

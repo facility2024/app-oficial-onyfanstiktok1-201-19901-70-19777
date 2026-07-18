@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
 import coconudiLogo from "@/assets/coconudi-logo.png";
+import { useCheckoutPixSettings } from "@/hooks/useCheckoutPixSettings";
 
 interface Props {
   open: boolean;
@@ -26,10 +27,12 @@ export default function PixCheckoutModal({
   productName = "Meu acesso vip Orientais /Latinas",
   productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
   productImage = "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png",
-  sellerName = "Otavio gomes dos santos",
+  sellerName,
   storageFlag = "garotas_top_paid",
   redirectTo = "/garotas-top-vip",
 }: Props) {
+  const { settings: pixSettings } = useCheckoutPixSettings();
+  const effectiveSellerName = sellerName || pixSettings.author_label;
   const [loading, setLoading] = useState(false);
   const [pix, setPix] = useState<{
     transaction_id?: string;

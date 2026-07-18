@@ -3938,9 +3938,13 @@ export const TikTokApp = () => {
                   setShowComments(true);
                 }} onOpenProfile={async () => {
                   console.log('Desktop profile clicked');
-                  await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-                  await trackFollow(currentVideo?.user?.id || '');
+                  const snap = currentVideo?.user ? { ...currentVideo.user } : null;
+                  const vId = currentVideo?.id;
+                  const uId = currentVideo?.user?.id;
+                  setProfileUserSnapshot(snap);
                   setShowProfile(true);
+                  checkAndTrackAction('profile_view', vId, uId).catch(() => {});
+                  trackFollow(uId || '').catch(() => {});
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
                   setShowLiveList(true);

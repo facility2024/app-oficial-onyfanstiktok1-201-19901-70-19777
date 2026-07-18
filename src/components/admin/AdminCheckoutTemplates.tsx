@@ -400,6 +400,20 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
               </div>
             </details>
 
+            <details className="bg-gray-900/60 border border-white/10 rounded-lg p-3">
+              <summary className="cursor-pointer text-white font-semibold">🎬 Mídia lateral (imagens e vídeos)</summary>
+              <div className="mt-3">
+                <CheckoutSideMediaManager
+                  value={editing.side_media}
+                  onChange={(next) => setEditing({ ...editing, side_media: next })}
+                />
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Se vazio, usa as mídias/imagem da página global.
+                </p>
+              </div>
+            </details>
+
+
             <label className="flex items-center gap-2 text-white font-semibold">
               <input type="checkbox" checked={editing.ativo}
                 onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}

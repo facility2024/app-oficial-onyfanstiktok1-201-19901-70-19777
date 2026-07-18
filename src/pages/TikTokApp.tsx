@@ -3598,7 +3598,7 @@ export const TikTokApp = () => {
       }} />}
 
         {/* Profile Screen */}
-        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onVideoSelect={videoId => {
+        <ProfileScreen user={profileUserSnapshot || currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onVideoSelect={videoId => {
         openSelectedVideo(videoId);
       }} onOpenChat={() => {
         handleCloseProfile();

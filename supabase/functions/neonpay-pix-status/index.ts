@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -43,7 +44,24 @@ Deno.serve(async (req) => {
       return jsonResponse({ status: 'PENDING', error: 'transactionId required', fallback: false })
     }
 
+    // A consulta fica no servidor porque checkout_purchases contém WhatsApp/PII
+    // e, corretamente, não é legível por visitantes anônimos.
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+    const { data: localPurchase } = await admin
+      .from('checkout_purchases')
+      .select('status, paid_at')
+      .eq('gateway_payment_id', transactionId)
+      .maybeSingle()
+    const localStatus = String(localPurchase?.status ?? '').toLowerCase()
+    if (['paid', 'approved', 'confirmed', 'completed'].includes(localStatus)) {
+      return jsonResponse({ transaction_id: transactionId, status: 'PAID', source: 'database' })
+    }
+
     const endpoints = [
+      `https://app.neonpay.com.br/api/v1/gateway/pix/receive/${encodeURIComponent(transactionId)}`,
       `https://app.neonpay.com.br/api/v1/gateway/transactions/${encodeURIComponent(transactionId)}`,
       `https://app.neonpay.com.br/api/v1/transactions/${encodeURIComponent(transactionId)}`,
     ]
@@ -59,19 +77,34 @@ Deno.serve(async (req) => {
         try { data = JSON.parse(text) } catch { data = { raw: text } }
 
         if (response.ok) {
-          const transaction = data.transaction && typeof data.transaction === 'object'
-            ? data.transaction as Record<string, unknown>
+          const responseData = data.data && typeof data.data === 'object'
+            ? data.data as Record<string, unknown>
+            : data
+          const transaction = responseData.transaction && typeof responseData.transaction === 'object'
+            ? responseData.transaction as Record<string, unknown>
             : {}
-          const payment = data.payment && typeof data.payment === 'object'
-            ? data.payment as Record<string, unknown>
+          const payment = responseData.payment && typeof responseData.payment === 'object'
+            ? responseData.payment as Record<string, unknown>
             : {}
-          const status = typeof data.status === 'string'
-            ? data.status
+          const status = typeof responseData.status === 'string'
+            ? responseData.status
             : typeof transaction.status === 'string'
               ? transaction.status
               : typeof payment.status === 'string'
                 ? payment.status
                 : 'PENDING'
+
+          const normalized = status.toLowerCase()
+          if (['paid', 'approved', 'confirmed', 'completed', 'authorized', 'received', 'success'].includes(normalized)) {
+            const { data: purchases } = await admin
+              .from('checkout_purchases')
+              .update({ status: 'paid', paid_at: new Date().toISOString() })
+              .eq('gateway_payment_id', transactionId)
+              .select('id')
+            for (const purchase of purchases ?? []) {
+              await admin.rpc('grant_entitlements_for_purchase', { _purchase_id: purchase.id })
+            }
+          }
 
           return jsonResponse({
             transaction_id: transactionId,
@@ -81,7 +114,7 @@ Deno.serve(async (req) => {
         }
 
         lastError = { status: response.status, data }
-        if (response.status === 404) break
+        if (response.status === 404) continue
       } catch (error) {
         lastError = { message: String(error) }
       }

@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
     const payload = {
       identifier,
       amount,
+      callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
       client: {
         name: body?.client?.name || 'Cliente Coconudi',
         email: body?.client?.email || 'cliente@coconudi.com',
@@ -79,10 +80,13 @@ Deno.serve(async (req) => {
       })
     }
 
-    const pix = getObject(data.pix)
-    const transaction = getObject(data.transaction)
+    // Alguns gateways compatíveis retornam o pagamento dentro de `data`.
+    const responseData = getObject(data.data)
+    const payment = Object.keys(responseData).length > 0 ? responseData : data
+    const pix = getObject(payment.pix)
+    const transaction = getObject(payment.transaction)
 
-    const transactionId = getText(data.transactionId) ?? getText(data.id) ?? getText(transaction.id) ?? identifier
+    const transactionId = getText(payment.transactionId) ?? getText(payment.id) ?? getText(transaction.id) ?? identifier
 
     // Persistir WhatsApp em pix_payments para o webhook liberar acesso depois
     try {
@@ -121,9 +125,9 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       transaction_id: transactionId,
-      status: getText(data.status) ?? getText(transaction.status),
-      pix_code: getText(pix.code) ?? getText(pix.qr_code) ?? getText(data.pixCode) ?? getText(data.qr_code),
-      pix_image: getText(pix.image) ?? getText(pix.qr_image) ?? getText(data.pixImage) ?? getText(data.qr_image),
+      status: getText(payment.status) ?? getText(transaction.status),
+      pix_code: getText(pix.code) ?? getText(pix.copy_paste) ?? getText(pix.qr_code) ?? getText(payment.pixCode) ?? getText(payment.qr_code),
+      pix_image: getText(pix.image) ?? getText(pix.qr_code_base64) ?? getText(pix.qr_image) ?? getText(payment.pixImage) ?? getText(payment.qr_image),
       identifier,
       amount,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

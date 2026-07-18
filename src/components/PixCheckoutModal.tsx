@@ -216,7 +216,6 @@ export default function PixCheckoutModal({
       if (!data?.pix_code) throw new Error("PIX não retornado");
       setPix(data);
       await buildQrImage(String(data.pix_code), data.pix_image);
-      startPolling(data.transaction_id);
 
       // Registra compra + itens no novo sistema de produtos/liberações
       try {
@@ -269,6 +268,8 @@ export default function PixCheckoutModal({
       } catch (regErr) {
         console.warn("[registro compra falhou]", regErr);
       }
+      // Só começa a verificar após o registro local existir.
+      startPolling(data.transaction_id);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Tente novamente em instantes.";
       toast({ title: "Erro ao gerar PIX", description: message, variant: "destructive" });
@@ -298,11 +299,10 @@ export default function PixCheckoutModal({
 
   const checkLocalStatus = async (transactionId: string): Promise<boolean> => {
     try {
-      const { data } = await (supabase as any)
-        .from("checkout_purchases")
-        .select("status")
-        .eq("gateway_payment_id", transactionId)
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke("neonpay-pix-status", {
+        body: { transactionId },
+      });
+      if (error) throw error;
       const status = String(data?.status || "").toLowerCase();
       if (["paid", "approved", "confirmed", "completed"].includes(status)) {
         handleConfirmed();

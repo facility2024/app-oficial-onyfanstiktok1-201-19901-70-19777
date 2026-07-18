@@ -186,6 +186,23 @@ export const AdminCheckoutPagePix = () => {
               Esta imagem é usada como padrão quando o card/oferta não informar uma própria.
             </p>
           </div>
+
+          <h3 className="text-lg font-bold text-emerald-400 pt-2">💰 Valor padrão do PIX</h3>
+          <div>
+            <Label className="text-white">Valor (R$) usado no link global /checkout e na prévia</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={form.default_amount}
+              onChange={(e) => set("default_amount", e.target.value)}
+              placeholder="14.97"
+              className="bg-gray-800 border-white/10 text-white font-mono"
+            />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Para valores diferentes por produto, use a aba <b>Modelos de checkout</b> — cada modelo tem seu próprio valor e link único.
+            </p>
+          </div>
         </div>
 
         {/* Coluna 2 - botão + textos legais */}

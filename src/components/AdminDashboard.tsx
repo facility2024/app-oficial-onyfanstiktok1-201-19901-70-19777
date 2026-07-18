@@ -239,6 +239,8 @@ export const AdminDashboard = () => {
         return <AdminProducts />;
       case 'access-pages':
         return <AdminAccessPages />;
+      case 'product-content':
+        return <AdminProductContent />;
       case 'loja':
         return <AdminLoja />;
       case 'stores':

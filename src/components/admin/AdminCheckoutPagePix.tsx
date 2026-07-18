@@ -24,6 +24,7 @@ export const AdminCheckoutPagePix = () => {
   const [savingAsTemplate, setSavingAsTemplate] = useState(false);
   const [activeTab, setActiveTab] = useState<"global" | "templates">("global");
   const [templatesRefresh, setTemplatesRefresh] = useState(0);
+  const [initialDraft, setInitialDraft] = useState<any>(null);
 
   useEffect(() => {
     (async () => {

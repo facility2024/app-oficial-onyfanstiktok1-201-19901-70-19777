@@ -59,6 +59,7 @@ import IndicadorCadastro from "./pages/IndicadorCadastro";
 import IndicadorArea from "./pages/IndicadorArea";
 import InstagramProfilePage from "./pages/InstagramProfilePage";
 import InstagramModelFeed from "./pages/InstagramModelFeed";
+import BuyerAccess from "./pages/BuyerAccess";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
@@ -106,13 +107,14 @@ const App = () => (
             </ProtectedRoute>
           } />
 
-          {/* Painel de acessos do usuário */}
+          {/* Acesso do comprador via WhatsApp */}
+          <Route path="/acesso" element={<BuyerAccess />} />
+
+          {/* Painel de acessos do usuário (público — libera por sessão OU WhatsApp) */}
           <Route path="/meus-acessos" element={
-            <ProtectedRoute>
-              <div className="min-h-screen bg-gray-950">
-                <MyAccessPanel />
-              </div>
-            </ProtectedRoute>
+            <div className="min-h-screen bg-gray-950">
+              <MyAccessPanel />
+            </div>
           } />
 
           {/* Aplicação de Criador */}

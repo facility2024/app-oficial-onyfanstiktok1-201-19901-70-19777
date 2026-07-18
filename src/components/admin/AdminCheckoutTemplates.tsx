@@ -117,7 +117,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
   useEffect(() => { load(); }, []);
 
   const openNew = () => setEditing(empty());
-  const openEdit = (t: Template) => setEditing({ ...t });
+  const openEdit = (t: Template) => setEditing({ ...t, side_media: Array.isArray(t.side_media) ? t.side_media : [] });
 
   const save = async () => {
     if (!editing) return;

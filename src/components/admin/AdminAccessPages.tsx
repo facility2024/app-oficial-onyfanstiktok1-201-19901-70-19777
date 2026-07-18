@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft, Package, LayoutGrid, ListPlus, ChevronDown, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Product { id: string; name: string; slug: string; }
 interface AccessPage {

@@ -106,6 +106,15 @@ const App = () => (
             </ProtectedRoute>
           } />
 
+          {/* Painel de acessos do usuário */}
+          <Route path="/meus-acessos" element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-950">
+                <MyAccessPanel />
+              </div>
+            </ProtectedRoute>
+          } />
+
           {/* Aplicação de Criador */}
           <Route path="/creator-application" element={
             <ProtectedRoute>

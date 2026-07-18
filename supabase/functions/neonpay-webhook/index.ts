@@ -186,6 +186,28 @@ Deno.serve(async (req) => {
 
       const updatedIds = updates.flatMap((result) => result.data ?? []).map((row: any) => row.id)
       console.log('[neonpay-webhook approved]', { txid, lookupIds, updatedIds, commissionAmount, fee })
+
+      // 3) Novo sistema: checkout_purchases + entitlements
+      try {
+        const { data: cps } = await supabase
+          .from('checkout_purchases')
+          .select('id, status')
+          .in('gateway_payment_id', lookupIds)
+
+        for (const cp of (cps ?? [])) {
+          if (cp.status !== 'paid') {
+            await supabase.from('checkout_purchases')
+              .update({ status: 'paid', paid_at: paidAt ?? new Date().toISOString() })
+              .eq('id', cp.id)
+          }
+          const { data: granted, error: grantErr } = await supabase
+            .rpc('grant_entitlements_for_purchase', { _purchase_id: cp.id })
+          if (grantErr) console.log('[grant_entitlements_for_purchase error]', grantErr.message)
+          else console.log('[entitlements granted]', { purchase_id: cp.id, granted })
+        }
+      } catch (e) {
+        console.log('[checkout_purchases grant skipped]', String(e))
+      }
     }
 
     if (REJECTED_STATUSES.includes(status)) {

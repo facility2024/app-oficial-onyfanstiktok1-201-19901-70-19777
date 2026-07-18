@@ -138,7 +138,7 @@ export const AdminCheckoutPagePix = () => {
         </TabsList>
 
         <TabsContent value="templates" className="mt-4">
-          <AdminCheckoutTemplates key={templatesRefresh} />
+          <AdminCheckoutTemplates key={templatesRefresh} initialDraft={initialDraft} />
         </TabsContent>
 
         <TabsContent value="global" className="mt-4 space-y-6">

@@ -44,6 +44,7 @@ export default function PixCheckoutModal({
   redirectTo: redirectToProp,
   templateSlug,
   visualOverrides,
+  sideMediaOverride,
 }: Props) {
   const { settings: globalPixSettings } = useCheckoutPixSettings();
 

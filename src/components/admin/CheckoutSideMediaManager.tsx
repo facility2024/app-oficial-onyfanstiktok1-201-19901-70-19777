@@ -50,6 +50,7 @@ export function CheckoutSideMediaManager({
   const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [urlType, setUrlType] = useState<"image" | "video">("image");
+  const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const items = Array.isArray(value) ? value : [];

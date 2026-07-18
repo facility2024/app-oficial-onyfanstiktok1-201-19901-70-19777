@@ -152,6 +152,10 @@ export default function PixCheckoutModal({
   }, [open]);
 
   const generate = async () => {
+    if (!whatsappValid) {
+      toast({ title: "WhatsApp inválido", description: "Informe um WhatsApp válido com DDD.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       const selectedList = bumps.filter((b) => selectedBumps[b.id]).map((b) => b.titulo);
@@ -159,7 +163,12 @@ export default function PixCheckoutModal({
         ? `${productName} + ${selectedList.join(" + ")}`
         : productName;
       const { data, error } = await supabase.functions.invoke("neonpay-pix-gateway", {
-        body: { amount: finalAmount, product_name: productWithBumps },
+        body: {
+          amount: finalAmount,
+          product_name: productWithBumps,
+          customer_whatsapp: whatsapp,
+          client: { phone: whatsapp },
+        },
       });
       if (error) throw error;
       if (!data?.pix_code) throw new Error("PIX não retornado");

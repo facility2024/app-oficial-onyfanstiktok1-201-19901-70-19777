@@ -37,6 +37,18 @@ export const AdminCheckoutPagePix = () => {
           .in("setting_key", CHECKOUT_PIX_KEYS);
         const next = { ...DEFAULT_CHECKOUT_PIX_SETTINGS };
         (data || []).forEach((row: any) => {
+          if (row.setting_key === SIDE_MEDIA_KEY) {
+            const raw = row.setting_value;
+            const arr = Array.isArray(raw)
+              ? raw
+              : (raw && typeof raw === "object" && Array.isArray((raw as any).value))
+                ? (raw as any).value
+                : (typeof raw === "string" ? (() => { try { return JSON.parse(raw); } catch { return []; } })() : []);
+            next.side_media = Array.isArray(arr)
+              ? arr.filter((x: any) => x && typeof x.url === "string" && (x.type === "image" || x.type === "video")).slice(0, 5)
+              : [];
+            return;
+          }
           const entry = (Object.entries(CHECKOUT_PIX_KEY_MAP) as [keyof CheckoutPixSettings, string][])
             .find(([, k]) => k === row.setting_key);
           if (!entry) return;

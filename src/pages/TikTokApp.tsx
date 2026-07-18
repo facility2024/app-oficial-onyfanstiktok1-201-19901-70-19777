@@ -2068,20 +2068,18 @@ export const TikTokApp = () => {
 
   // 🎯 Posicionar no vídeo específico quando vindo de coleções ou links diretos
   useEffect(() => {
-    if (!targetVideoId || videos.length === 0) return;
-    const videoIndex = videos.findIndex(v => v.id === targetVideoId);
+    if (!targetVideoId || displayVideos.length === 0) return;
+    const videoIndex = displayVideos.findIndex(v => v.id === targetVideoId);
     console.log('🎯 Procurando vídeo:', targetVideoId, 'Encontrado no índice:', videoIndex);
     if (videoIndex >= 0) {
       console.log('✅ Posicionando no vídeo:', videoIndex);
       setCurrentVideoIndex(videoIndex);
-      // Scroll do carousel para o vídeo específico
       if (emblaApi) {
-        emblaApi.scrollTo(videoIndex);
+        emblaApi.scrollTo(videoIndex, true);
       }
-      // Limpar parâmetro da URL após posicionar
       setSearchParams({});
     }
-  }, [targetVideoId, videos, emblaApi, setSearchParams]);
+  }, [targetVideoId, displayVideos, emblaApi, setSearchParams]);
 
   // 🎯 Abrir perfil quando vindo de /app?profile=... OU via state (URL amigável)
   useEffect(() => {

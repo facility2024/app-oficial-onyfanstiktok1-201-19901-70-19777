@@ -64,6 +64,7 @@ const empty = (): Template => ({
   author_label: "",
   whatsapp_label: "",
   whatsapp_placeholder: "",
+  side_media: [],
 });
 
 

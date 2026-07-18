@@ -264,11 +264,20 @@ export default function InstagramImportPanel() {
             {videos.map((v) => (
               <div key={v.id} className="relative rounded-lg overflow-hidden bg-gray-900 border border-gray-700 group">
                 <div className="aspect-[9/16] bg-black">
-                  {v.thumbnail_url ? (
+                  {v.post_type === "video" ? (
+                    <video
+                      src={v.video_url}
+                      poster={v.thumbnail_url ?? undefined}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      loop
+                      autoPlay
+                      preload="metadata"
+                    />
+                  ) : v.thumbnail_url ? (
                     <img src={v.thumbnail_url} alt={v.caption ?? ""} className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <video src={v.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                  )}
+                  ) : null}
                 </div>
                 <div className="absolute top-2 left-2 flex gap-1">
                   <Badge className={v.visibility === "public" ? "bg-green-600" : "bg-yellow-600"}>

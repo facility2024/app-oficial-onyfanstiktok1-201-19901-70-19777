@@ -1190,6 +1190,7 @@ export type Database = {
           imagem_url: string | null
           link_acesso: string | null
           ordem: number
+          product_id: string | null
           template_ids: string[] | null
           titulo: string
           updated_at: string
@@ -1203,6 +1204,7 @@ export type Database = {
           imagem_url?: string | null
           link_acesso?: string | null
           ordem?: number
+          product_id?: string | null
           template_ids?: string[] | null
           titulo: string
           updated_at?: string
@@ -1216,10 +1218,115 @@ export type Database = {
           imagem_url?: string | null
           link_acesso?: string | null
           ordem?: number
+          product_id?: string | null
           template_ids?: string[] | null
           titulo?: string
           updated_at?: string
           valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_order_bumps_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkout_purchase_items: {
+        Row: {
+          created_at: string
+          id: string
+          price: number
+          product_id: string
+          purchase_id: string
+          snapshot_access_key: string | null
+          snapshot_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price?: number
+          product_id: string
+          purchase_id: string
+          snapshot_access_key?: string | null
+          snapshot_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price?: number
+          product_id?: string
+          purchase_id?: string
+          snapshot_access_key?: string | null
+          snapshot_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_purchase_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_purchase_items_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkout_purchases: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_whatsapp: string | null
+          gateway: string
+          gateway_payment_id: string | null
+          id: string
+          metadata: Json
+          paid_at: string | null
+          pix_payment_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_whatsapp?: string | null
+          gateway?: string
+          gateway_payment_id?: string | null
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          pix_payment_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_whatsapp?: string | null
+          gateway?: string
+          gateway_payment_id?: string | null
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          pix_payment_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1239,6 +1346,7 @@ export type Database = {
           nome: string
           ordem: number
           product_description: string
+          product_id: string | null
           product_image_url: string
           product_name: string
           redirect_to: string
@@ -1267,6 +1375,7 @@ export type Database = {
           nome: string
           ordem?: number
           product_description?: string
+          product_id?: string | null
           product_image_url?: string
           product_name?: string
           redirect_to?: string
@@ -1295,6 +1404,7 @@ export type Database = {
           nome?: string
           ordem?: number
           product_description?: string
+          product_id?: string | null
           product_image_url?: string
           product_name?: string
           redirect_to?: string
@@ -1321,6 +1431,13 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "popular_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -6293,6 +6410,51 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          access_key: string
+          created_at: string
+          default_price: number
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          metadata: Json
+          name: string
+          slug: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          access_key: string
+          created_at?: string
+          default_price?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          metadata?: Json
+          name: string
+          slug: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          access_key?: string
+          created_at?: string
+          default_price?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          metadata?: Json
+          name?: string
+          slug?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           asaas_customer_id: string | null
@@ -7687,6 +7849,63 @@ export type Database = {
           visualizado_em?: string
         }
         Relationships: []
+      }
+      user_entitlements: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          id: string
+          product_id: string
+          purchase_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          product_id: string
+          purchase_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          product_id?: string
+          purchase_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_entitlements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_entitlements_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_favorites: {
         Row: {
@@ -9431,6 +9650,10 @@ export type Database = {
           video_url: string
           views_count: number
         }[]
+      }
+      grant_entitlements_for_purchase: {
+        Args: { _purchase_id: string }
+        Returns: number
       }
       has_model_subscription: {
         Args: { _model_id: string; _user_id: string }

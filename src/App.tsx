@@ -45,6 +45,8 @@ import LojaProdutoPage from "./pages/LojaProdutoPage";
 import PostagemPage from "./pages/PostagemPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutTemplatePage from "./pages/CheckoutTemplatePage";
+import CheckoutGlobalPage from "./pages/CheckoutGlobalPage";
+
 import CreateStorePage from "./pages/CreateStorePage";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
 import StoreProfilePage from "./pages/StoreProfilePage";

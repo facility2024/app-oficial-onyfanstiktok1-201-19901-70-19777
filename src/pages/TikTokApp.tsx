@@ -161,6 +161,10 @@ export const TikTokApp = () => {
   const promoViewTrackedRef = useRef<Set<string>>(new Set());
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
+  // 🔒 Snapshot do usuário no momento do clique no perfil. Evita bug em que,
+  // durante o await das ações de tracking, o feed avança e o ProfileScreen
+  // acaba abrindo o perfil do vídeo seguinte em vez do que foi clicado.
+  const [profileUserSnapshot, setProfileUserSnapshot] = useState<any | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatEntity, setChatEntity] = useState<{

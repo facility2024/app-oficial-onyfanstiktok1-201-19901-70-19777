@@ -53,10 +53,10 @@ export const CarouselScheduler = ({ mode = 'admin' }: { mode?: 'admin' | 'creato
       if (!user) { setScheduledCarousels([]); return; }
       const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('username, display_name')
+        .select('username, name')
         .eq('id', user.id)
         .maybeSingle();
-      const baseName = profile?.username || profile?.display_name || user.email?.split('@')[0] || '';
+      const baseName = profile?.username || profile?.name || user.email?.split('@')[0] || '';
       const username = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       if (username) {
         query = query.ilike('modelo_username', username);

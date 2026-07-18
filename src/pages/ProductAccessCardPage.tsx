@@ -134,20 +134,23 @@ export default function ProductAccessCardPage() {
       </div>
 
       <Dialog open={!!playing} onOpenChange={(o) => !o && setPlaying(null)}>
-        <DialogContent className="max-w-3xl bg-black border-gray-800 p-0">
+        <DialogContent className="max-w-4xl w-[95vw] bg-black border-gray-800 p-0 overflow-hidden">
           {playing && (
-            <div className="space-y-2">
-              <video
-                src={playing.video_url}
-                controls
-                autoPlay
-                playsInline
-                className="w-full max-h-[80vh] bg-black"
-              />
-              <div className="p-3">
-                <p className="text-white font-bold">{playing.title}</p>
+            <div className="flex flex-col">
+              <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
+                <video
+                  src={playing.video_url}
+                  poster={playing.thumbnail_url ?? undefined}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-contain bg-black"
+                />
+              </div>
+              <div className="p-4 bg-gray-950 border-t border-gray-800">
+                <h3 className="text-white font-bold text-lg">{playing.title}</h3>
                 {playing.description && (
-                  <p className="text-gray-400 text-sm mt-1 whitespace-pre-wrap">{playing.description}</p>
+                  <p className="text-gray-400 text-sm mt-2 whitespace-pre-wrap">{playing.description}</p>
                 )}
               </div>
             </div>

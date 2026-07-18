@@ -424,7 +424,7 @@ export default function PixCheckoutModal({
               />
             </div>
             <div className="text-gray-900 font-bold text-base leading-tight">{productName}</div>
-            <div className="text-xs text-gray-500 mt-1">Feito por: {sellerName}</div>
+            <div className="text-xs text-gray-500 mt-1">Feito por: {effectiveSellerName}</div>
 
             <div className="mt-4 bg-gray-50 rounded-lg p-3">
               <div className="text-xs font-bold text-gray-800 mb-1">Descrição</div>
@@ -453,7 +453,7 @@ export default function PixCheckoutModal({
               </div>
             </div>
 
-            <div className="text-[11px] text-gray-500 mt-3">Feito por: {sellerName}</div>
+            <div className="text-[11px] text-gray-500 mt-3">Feito por: {effectiveSellerName}</div>
           </div>
         </div>
       </div>

@@ -45,7 +45,7 @@ const slugify = (s: string) =>
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
-export const AdminCheckoutTemplates = () => {
+export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partial<Template> | null } = {}) => {
   const [list, setList] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Template | null>(null);
@@ -53,6 +53,13 @@ export const AdminCheckoutTemplates = () => {
   const [preview, setPreview] = useState<Template | null>(null);
   const [modelSearch, setModelSearch] = useState("");
   const [modelResults, setModelResults] = useState<ModelOption[]>([]);
+
+  // Abre o editor pré-preenchido quando um rascunho é enviado (ex: da aba global)
+  useEffect(() => {
+    if (initialDraft) setEditing({ ...empty(), ...initialDraft });
+  }, [initialDraft]);
+
+
 
   useEffect(() => {
     const q = modelSearch.trim();

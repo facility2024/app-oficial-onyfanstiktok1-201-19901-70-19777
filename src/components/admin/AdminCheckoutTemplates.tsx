@@ -20,7 +20,10 @@ interface Template {
   storage_flag: string;
   ativo: boolean;
   ordem: number;
+  model_id: string | null;
 }
+
+interface ModelOption { id: string; username: string; avatar_url: string | null; }
 
 const empty = (): Template => ({
   id: "",
@@ -34,6 +37,7 @@ const empty = (): Template => ({
   storage_flag: "garotas_top_paid",
   ativo: true,
   ordem: 0,
+  model_id: null,
 });
 
 const slugify = (s: string) =>

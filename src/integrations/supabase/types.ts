@@ -9054,6 +9054,36 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_access_codes: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          whatsapp: string
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          whatsapp: string
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       whatsapp_logs: {
         Row: {
           agent_id: string

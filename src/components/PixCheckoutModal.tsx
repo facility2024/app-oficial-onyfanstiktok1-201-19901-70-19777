@@ -568,6 +568,13 @@ export default function PixCheckoutModal({
                         <><Copy className="w-5 h-5 mr-2" /> Copiar código PIX</>
                       )}
                     </Button>
+                    <Button
+                      onClick={manualCheck}
+                      variant="outline"
+                      className="w-full font-semibold"
+                    >
+                      Já paguei — verificar agora
+                    </Button>
                     <p className="text-[11px] text-center text-gray-500 leading-relaxed">
                       Abra o app do seu banco, escolha PIX › <b>Copia e Cola</b>, cole o código e confirme.
                       Assim que o pagamento cair, seu acesso é liberado automaticamente.

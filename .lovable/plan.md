@@ -1,61 +1,77 @@
-## Objetivo
-Criar sistema de "Páginas de Acesso" por produto: quando o comprador clicar num produto liberado em `/meus-acessos`, abre dentro do app uma página com os vídeos daquela oferta. Tudo gerenciado por painel admin.
+## Reestruturação: Páginas de Acesso em formato "Área de Membros"
 
-## Banco de dados (migration)
+### Objetivo
+Transformar a página de acesso (produto + oferta) num modelo de **cards estilo área de membros**: cada card tem um título e agrupa vários vídeos. Cadastro em lote (várias URLs de uma vez). Ao clicar num card, abre uma tela dedicada com os vídeos daquele card.
 
-**`access_pages`** — uma página por produto
-- `id uuid pk`, `product_id uuid fk products` (unique), `slug text unique`
-- `title text`, `description text`, `cover_url text`
-- `is_published boolean default false`
-- `created_at`, `updated_at`
+---
 
-**`access_page_videos`** — cards de vídeo dentro da página
-- `id uuid pk`, `page_id uuid fk access_pages on delete cascade`
-- `title text`, `description text`, `thumbnail_url text`, `video_url text`
-- `sort_order int default 0`, `is_active boolean default true`
-- `created_at`
+### 1. Banco de dados (migration)
 
-RLS:
-- SELECT público em `access_pages` e `access_page_videos` **apenas** onde `is_published=true` / `is_active=true` (a verificação de entitlement é feita na página do app, não na policy — assim admin edita livre e página exibe apenas se publicada).
-- ALL para admin (`has_role admin`).
-- GRANTs: `anon`+`authenticated` SELECT; `authenticated` ALL condicionado por policy; `service_role` ALL.
+**Nova tabela `access_page_cards`**
+- `page_id` (FK access_pages)
+- `title`, `description`, `cover_url`
+- `sort_order`, `is_active`, `is_published`
 
-## Painel Admin
+**Alterar `access_page_videos`**
+- Adicionar coluna `card_id` (FK access_page_cards, nullable)
+- Vídeos existentes ficam sem card (compatível)
 
-Novo item no menu admin: **"Páginas de Acesso"** → `src/pages/admin/AdminAccessPages.tsx`
+RLS: leitura pública quando `is_published=true`, escrita apenas admin.
 
-Lista todas as páginas com: produto vinculado, título, status (publicada/rascunho), nº de vídeos, ações (editar/excluir/publicar).
+---
 
-**Editor** (`AdminAccessPageEditor.tsx`, aberto em modal ou rota `/admin/access-pages/:id`):
-- Selecionar produto (dropdown de `products` ativos que ainda não têm página, ou o próprio na edição).
-- Campos: título, descrição, capa (upload no bucket `checkout-media` já existente), slug (auto do produto).
-- Lista de cards de vídeo com: título, descrição, thumbnail (upload), URL do vídeo (Bunny), reordenar (drag ou setas), ativar/desativar, excluir.
-- Botão **"Salvar e Publicar"** (seta `is_published=true`) e **"Salvar rascunho"**.
+### 2. Admin — `AdminAccessPages.tsx`
 
-## Fluxo do usuário
+Novo editor por página:
 
-1. `MyAccessPanel.tsx` — botão **"Acessar"** de um produto liberado passa a navegar para `/acesso-produto/:productId` (interno, sem link externo).
-2. Nova rota + página `src/pages/ProductAccessPage.tsx`:
-   - Valida que o usuário/whatsapp tem entitlement daquele `product_id` (via `useUserEntitlements`).
-   - Se não tiver → redireciona para `/meus-acessos` com toast.
-   - Se tiver → carrega `access_pages` do produto + `access_page_videos` publicados.
-   - Renderiza header (capa/título/descrição) e grid de cards de vídeo no mesmo estilo da imagem de referência.
-   - Clique num card abre player inline (modal com `<video>` HTML5, sem sair do app).
-   - Botão **"Voltar ao app"** no topo → `navigate('/app')`.
+```
+[Página: Acesso Coconudi]
+ ├─ + Novo card
+ ├─ Card #1: "Módulo 1 - Boas-vindas"    [editar título/capa] [publicar] [🗑]
+ │   ├─ Vídeos (3)
+ │   ├─ [+ Adicionar em lote]  ← cola várias URLs Bunny, cria todos
+ │   └─ lista com título/thumb/URL editáveis + reordenar
+ ├─ Card #2: "Módulo 2 - Avançado"
+ └─ ...
+```
 
-## Rotas (App.tsx)
-- `/acesso-produto/:productId` — pública dentro do app, mas com guard de entitlement por dentro.
-- `/admin/access-pages` e `/admin/access-pages/:id` — dentro de `AdminRoute`.
+- Botão **"Adicionar em lote"**: textarea multi-linha → cria N vídeos no card.
+- Salvar/publicar por card (independente).
 
-## Ligação com pagamento
-Nada muda no webhook: `products.access_key` + `user_entitlements` já existem. A nova página só lê o entitlement para liberar. Escalável: cada produto novo criado no admin ganha uma página nova sem tocar em código.
+---
 
-## Arquivos a criar/alterar
-- Migration nova (tabelas + RLS + GRANTs + realtime opcional).
-- `src/pages/admin/AdminAccessPages.tsx` (lista) e `AdminAccessPageEditor.tsx` (editor).
-- Adicionar entrada no menu do `AdminDashboard.tsx`.
-- `src/pages/ProductAccessPage.tsx` (visualização pelo comprador).
-- `src/components/MyAccessPanel.tsx` — trocar `onClick` do botão Acessar.
-- `src/App.tsx` — registrar 3 rotas novas.
+### 3. Comprador — `ProductAccessPage.tsx`
 
-Confirma com **"produzir"** que aplico tudo.
+Vira **grid de cards** (estilo Hotmart/Netflix):
+
+```
+[Capa do produto + descrição]
+
+Módulos disponíveis:
+ ┌────────┐ ┌────────┐ ┌────────┐
+ │ Card 1 │ │ Card 2 │ │ Card 3 │
+ │ 3 vids │ │ 5 vids │ │ 2 vids │
+ └────────┘ └────────┘ └────────┘
+```
+
+Clicar → nova rota `/acesso-produto/:productId/card/:cardId` que mostra a lista de vídeos daquele card (grid vertical 9:16 com player modal, igual hoje).
+
+---
+
+### 4. Mesma lógica na **página de oferta (order bump / pix)**
+
+O painel/rota que hoje entrega conteúdo pós-compra do bump PIX passa a usar o mesmo componente de cards. Como cada bump já aponta para um `product.access_key`, a página `/acesso-produto/:productId` cobre os dois casos automaticamente — nada muda no checkout, apenas o layout de entrega.
+
+---
+
+### 5. Arquivos afetados
+
+- `supabase/migrations/*` (nova tabela + coluna)
+- `src/components/admin/AdminAccessPages.tsx` (refatorar para cards + bulk)
+- `src/pages/ProductAccessPage.tsx` (grid de cards)
+- `src/pages/ProductAccessCardPage.tsx` (novo — vídeos de um card)
+- `src/App.tsx` (nova rota `/acesso-produto/:productId/card/:cardId`)
+
+---
+
+Confirme com **"produzir"** para eu aplicar migration + código.

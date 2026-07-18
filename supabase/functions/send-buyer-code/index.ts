@@ -14,15 +14,21 @@ Deno.serve(async (req) => {
 
     const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-    // Verifica se existe compra paga com esse WhatsApp
-    const { data: purchases } = await sb
+    // Verifica se existe compra paga com esse WhatsApp (tolerante a formatos)
+    const last8 = wa.slice(-8);
+    const { data: candidates } = await sb
       .from('checkout_purchases')
-      .select('id')
-      .eq('customer_whatsapp', wa)
+      .select('id, customer_whatsapp, status')
       .eq('status', 'paid')
-      .limit(1);
+      .ilike('customer_whatsapp', `%${last8.slice(-4)}%`)
+      .limit(200);
 
-    if (!purchases || purchases.length === 0) {
+    const match = (candidates || []).find((p: any) => {
+      const digits = String(p.customer_whatsapp || '').replace(/\D/g, '');
+      return digits.slice(-11) === wa.slice(-11) || digits.slice(-10) === wa.slice(-10);
+    });
+
+    if (!match) {
       return new Response(JSON.stringify({ error: 'Nenhuma compra confirmada encontrada para este número.' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 

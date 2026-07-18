@@ -149,7 +149,9 @@ export default function PixCheckoutModal({
       const filtered = (data || []).filter((b: any) => {
         const ids: string[] | null = b.template_ids;
         if (!ids || ids.length === 0) return true; // aparece em todos
-        return currentTemplateId ? ids.includes(currentTemplateId) : false;
+        if (currentTemplateId) return ids.includes(currentTemplateId);
+        // sem template = página global /checkout
+        return ids.includes("__global__");
       });
       setBumps(filtered);
     })();

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Upload, Link as LinkIcon, Trash2, GripVertical, Image as ImgIcon, Video as VideoIcon } from "lucide-react";
+import { Loader2, Upload, Link as LinkIcon, Trash2, GripVertical, Image as ImgIcon, Video as VideoIcon, Eye } from "lucide-react";
 import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 const MAX_ITEMS = 5;

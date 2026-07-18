@@ -1227,8 +1227,14 @@ export type Database = {
         Row: {
           amount: number
           ativo: boolean
+          author_label: string | null
           created_at: string
+          finalize_button_color: string | null
+          finalize_button_label: string | null
+          footer_security_text: string | null
           id: string
+          legal_text: string | null
+          logo_url: string | null
           model_id: string | null
           nome: string
           ordem: number
@@ -1236,15 +1242,26 @@ export type Database = {
           product_image_url: string
           product_name: string
           redirect_to: string
+          security_banner_url: string | null
+          security_text: string | null
           slug: string
           storage_flag: string
+          timer_label: string | null
           updated_at: string
+          whatsapp_label: string | null
+          whatsapp_placeholder: string | null
         }
         Insert: {
           amount?: number
           ativo?: boolean
+          author_label?: string | null
           created_at?: string
+          finalize_button_color?: string | null
+          finalize_button_label?: string | null
+          footer_security_text?: string | null
           id?: string
+          legal_text?: string | null
+          logo_url?: string | null
           model_id?: string | null
           nome: string
           ordem?: number
@@ -1252,15 +1269,26 @@ export type Database = {
           product_image_url?: string
           product_name?: string
           redirect_to?: string
+          security_banner_url?: string | null
+          security_text?: string | null
           slug: string
           storage_flag?: string
+          timer_label?: string | null
           updated_at?: string
+          whatsapp_label?: string | null
+          whatsapp_placeholder?: string | null
         }
         Update: {
           amount?: number
           ativo?: boolean
+          author_label?: string | null
           created_at?: string
+          finalize_button_color?: string | null
+          finalize_button_label?: string | null
+          footer_security_text?: string | null
           id?: string
+          legal_text?: string | null
+          logo_url?: string | null
           model_id?: string | null
           nome?: string
           ordem?: number
@@ -1268,9 +1296,14 @@ export type Database = {
           product_image_url?: string
           product_name?: string
           redirect_to?: string
+          security_banner_url?: string | null
+          security_text?: string | null
           slug?: string
           storage_flag?: string
+          timer_label?: string | null
           updated_at?: string
+          whatsapp_label?: string | null
+          whatsapp_placeholder?: string | null
         }
         Relationships: [
           {

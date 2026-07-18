@@ -18,8 +18,15 @@ interface Props {
   sellerName?: string;
   storageFlag?: string;
   redirectTo?: string;
-  /** Slug de um checkout_templates para carregar amount/name/description/image/redirect do banco */
   templateSlug?: string;
+  /** Overrides visuais (usado em prévia de rascunho de template) */
+  visualOverrides?: Partial<Record<
+    | "timer_label" | "security_text" | "security_banner_url" | "logo_url"
+    | "finalize_button_label" | "finalize_button_color" | "legal_text"
+    | "footer_security_text" | "author_label" | "whatsapp_label"
+    | "whatsapp_placeholder" | "product_image_url",
+    string
+  >>;
 }
 
 export default function PixCheckoutModal({
@@ -33,33 +40,48 @@ export default function PixCheckoutModal({
   storageFlag: storageFlagProp,
   redirectTo: redirectToProp,
   templateSlug,
+  visualOverrides,
 }: Props) {
-  const { settings: pixSettings } = useCheckoutPixSettings();
-  const effectiveSellerName = sellerName || pixSettings.author_label;
+  const { settings: globalPixSettings } = useCheckoutPixSettings();
 
-  // Template loading
-  const [template, setTemplate] = useState<{
-    id: string;
-    amount: number;
-    product_name: string;
-    product_description: string;
-    product_image_url: string;
-    redirect_to: string;
-    storage_flag: string;
-  } | null>(null);
+  const [template, setTemplate] = useState<any | null>(null);
 
   useEffect(() => {
     if (!open || !templateSlug) { setTemplate(null); return; }
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("id,amount,product_name,product_description,product_image_url,redirect_to,storage_flag")
+        .select("*")
         .eq("slug", templateSlug)
         .eq("ativo", true)
         .maybeSingle();
       if (data) setTemplate(data);
     })();
   }, [open, templateSlug]);
+
+  // Merge: global < template (banco) < visualOverrides (prévia)
+  const pick = (k: string): string => {
+    const v1 = (visualOverrides as any)?.[k];
+    if (typeof v1 === "string" && v1 !== "") return v1;
+    const v2 = template?.[k];
+    if (typeof v2 === "string" && v2 !== "") return v2;
+    return (globalPixSettings as any)[k] ?? "";
+  };
+  const pixSettings = {
+    timer_label: pick("timer_label"),
+    security_text: pick("security_text"),
+    security_banner_url: pick("security_banner_url"),
+    logo_url: pick("logo_url"),
+    finalize_button_label: pick("finalize_button_label"),
+    finalize_button_color: pick("finalize_button_color"),
+    legal_text: pick("legal_text"),
+    footer_security_text: pick("footer_security_text"),
+    author_label: pick("author_label"),
+    whatsapp_label: pick("whatsapp_label"),
+    whatsapp_placeholder: pick("whatsapp_placeholder"),
+    product_image_url: pick("product_image_url"),
+  };
+  const effectiveSellerName = sellerName || pixSettings.author_label;
 
   const amount = template?.amount ?? amountProp ?? 14.97;
   const productName = template?.product_name || productNameProp || "Meu acesso vip Orientais /Latinas";
@@ -72,6 +94,7 @@ export default function PixCheckoutModal({
     template?.product_image_url ||
     pixSettings.product_image_url ||
     "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
+
 
   // WhatsApp
   const [whatsapp, setWhatsapp] = useState("");

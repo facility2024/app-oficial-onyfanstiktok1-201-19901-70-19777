@@ -142,10 +142,16 @@ export default function PixCheckoutModal({
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_order_bumps")
-        .select("id,titulo,descricao,valor,imagem_url,link_acesso,ordem")
+        .select("id,titulo,descricao,valor,imagem_url,link_acesso,ordem,template_ids")
         .eq("ativo", true)
         .order("ordem", { ascending: true });
-      setBumps(data || []);
+      const currentTemplateId = template?.id || null;
+      const filtered = (data || []).filter((b: any) => {
+        const ids: string[] | null = b.template_ids;
+        if (!ids || ids.length === 0) return true; // aparece em todos
+        return currentTemplateId ? ids.includes(currentTemplateId) : false;
+      });
+      setBumps(filtered);
     })();
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);

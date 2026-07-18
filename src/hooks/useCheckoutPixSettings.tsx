@@ -11,6 +11,7 @@ export interface CheckoutPixSettings {
   legal_text: string;
   footer_security_text: string;
   author_label: string;
+  product_image_url: string;
 }
 
 export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
@@ -26,6 +27,7 @@ export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
   footer_security_text:
     "Os pagamentos são processados de forma segura e criptografada pela NeonPay.",
   author_label: "Otavio gomes dos santos",
+  product_image_url: "",
 };
 
 const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
@@ -38,6 +40,7 @@ const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
   legal_text: "checkout_pix_legal_text",
   footer_security_text: "checkout_pix_footer_security_text",
   author_label: "checkout_pix_author_label",
+  product_image_url: "checkout_pix_product_image_url",
 };
 
 export const CHECKOUT_PIX_KEYS = Object.values(KEY_MAP);

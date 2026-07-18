@@ -26,13 +26,17 @@ export default function PixCheckoutModal({
   amount = 14.97,
   productName = "Meu acesso vip Orientais /Latinas",
   productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
-  productImage = "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png",
+  productImage,
   sellerName,
   storageFlag = "garotas_top_paid",
   redirectTo = "/garotas-top-vip",
 }: Props) {
   const { settings: pixSettings } = useCheckoutPixSettings();
   const effectiveSellerName = sellerName || pixSettings.author_label;
+  const effectiveProductImage =
+    productImage ||
+    pixSettings.product_image_url ||
+    "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
   const [loading, setLoading] = useState(false);
   const [pix, setPix] = useState<{
     transaction_id?: string;
@@ -417,7 +421,7 @@ export default function PixCheckoutModal({
             <h3 className="text-gray-900 font-bold text-lg mb-4">Resumo do pedido</h3>
             <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 mb-3">
               <img
-                src={productImage}
+                src={effectiveProductImage}
                 alt={productName}
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}

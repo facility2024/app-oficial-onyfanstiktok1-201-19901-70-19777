@@ -156,7 +156,7 @@ export default function PixCheckoutModal({
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
-  }, [open]);
+  }, [open, template?.id]);
 
   const generate = async () => {
     if (!whatsappValid) {

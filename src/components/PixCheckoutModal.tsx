@@ -293,29 +293,64 @@ export default function PixCheckoutModal({
     setQrImage(generated);
   };
 
+  const realtimeChanRef = useRef<any>(null);
+
+  const checkLocalStatus = async (transactionId: string): Promise<boolean> => {
+    try {
+      const { data } = await (supabase as any)
+        .from("checkout_purchases")
+        .select("status")
+        .eq("gateway_payment_id", transactionId)
+        .maybeSingle();
+      const status = String(data?.status || "").toLowerCase();
+      if (["paid", "approved", "confirmed", "completed"].includes(status)) {
+        handleConfirmed();
+        return true;
+      }
+    } catch { /* silencioso */ }
+    return false;
+  };
+
   const startPolling = (transactionId?: string) => {
     if (!transactionId) return;
     if (pollRef.current) window.clearInterval(pollRef.current);
-    pollRef.current = window.setInterval(async () => {
-      try {
-        const res = await fetch(
-          `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/neonpay-pix-status?transactionId=${encodeURIComponent(transactionId)}`,
-          {
-            headers: {
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
+    if (realtimeChanRef.current) supabase.removeChannel(realtimeChanRef.current);
+
+    // Realtime: reage no instante em que o webhook marca como paga
+    realtimeChanRef.current = supabase
+      .channel(`checkout_purchase_${transactionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "checkout_purchases",
+          filter: `gateway_payment_id=eq.${transactionId}`,
+        },
+        (payload: any) => {
+          const status = String(payload?.new?.status || "").toLowerCase();
+          if (["paid", "approved", "confirmed", "completed"].includes(status)) {
+            handleConfirmed();
           }
-        );
-        const json = await res.json().catch(() => ({}));
-        const status = String(json?.status || "").toUpperCase();
-        if (["OK", "PAID", "APPROVED", "CONFIRMED", "COMPLETED"].includes(status)) {
-          handleConfirmed();
         }
-      } catch {
-        /* silencioso */
-      }
-    }, 4000) as unknown as number;
+      )
+      .subscribe();
+
+    // Fallback: poll a cada 3s na própria tabela (não depende da NeonPay)
+    pollRef.current = window.setInterval(() => {
+      void checkLocalStatus(transactionId);
+    }, 3000) as unknown as number;
+  };
+
+  const manualCheck = async () => {
+    if (!pix?.transaction_id) return;
+    const ok = await checkLocalStatus(String(pix.transaction_id));
+    if (!ok) {
+      toast({
+        title: "Pagamento ainda não identificado",
+        description: "Se você já pagou, aguarde alguns segundos e tente novamente.",
+      });
+    }
   };
 
   const handleConfirmed = async () => {

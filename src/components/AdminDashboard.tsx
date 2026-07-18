@@ -61,6 +61,7 @@ import { AdminCheckoutOrderBumps } from './admin/AdminCheckoutOrderBumps';
 import { AdminCheckoutPagePix } from './admin/AdminCheckoutPagePix';
 import AdminProducts from './admin/AdminProducts';
 import AdminAccessPages from './admin/AdminAccessPages';
+import AdminProductContent from './admin/AdminProductContent';
 
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';

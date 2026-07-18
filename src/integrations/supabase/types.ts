@@ -1226,6 +1226,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           id: string
+          model_id: string | null
           nome: string
           ordem: number
           product_description: string
@@ -1241,6 +1242,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           id?: string
+          model_id?: string | null
           nome: string
           ordem?: number
           product_description?: string
@@ -1256,6 +1258,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           id?: string
+          model_id?: string | null
           nome?: string
           ordem?: number
           product_description?: string
@@ -1266,7 +1269,22 @@ export type Database = {
           storage_flag?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "checkout_templates_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_templates_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "popular_models"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cocoflix_content: {
         Row: {

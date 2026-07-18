@@ -12,6 +12,7 @@ import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscrip
 import { useNavigate } from 'react-router-dom';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 import { ModelSubscriptionOverlay } from '@/components/tiktok/ModelSubscriptionOverlay';
+import { ModelCheckoutButtons } from '@/components/tiktok/ModelCheckoutButtons';
 
 
 interface ProfileScreenProps {
@@ -723,6 +724,11 @@ if (!isOpen) return null;
                   </p>
                 </div>
               </div>
+
+            {/* Botões de checkout vinculados a esta modelo */}
+            <ModelCheckoutButtons modelId={user.id} />
+
+
 
             {/* Seção de Assinatura Individual - Apenas para Criadoras de Conteúdo */}
             {isCreator && !hideSubscriptionSection && (loadingPlans || modelSubscription || modelPlans.length > 0) && (

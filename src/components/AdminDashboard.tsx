@@ -58,6 +58,7 @@ import CommissionSettings from './admin/CommissionSettings';
 import SalesReports from './admin/SalesReports';
 import { AdminAdsGarotasTop } from './admin/AdminAdsGarotasTop';
 import { AdminCheckoutOrderBumps } from './admin/AdminCheckoutOrderBumps';
+import { AdminCheckoutPagePix } from './admin/AdminCheckoutPagePix';
 
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -158,7 +159,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions','ads-garotas-top','checkout-order-bumps'];
+    const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions','ads-garotas-top','checkout-order-bumps','checkout-page-pix'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
@@ -227,6 +228,8 @@ export const AdminDashboard = () => {
         return <AdminAdsGarotasTop />;
       case 'checkout-order-bumps':
         return <AdminCheckoutOrderBumps />;
+      case 'checkout-page-pix':
+        return <AdminCheckoutPagePix />;
       case 'loja':
         return <AdminLoja />;
       case 'stores':

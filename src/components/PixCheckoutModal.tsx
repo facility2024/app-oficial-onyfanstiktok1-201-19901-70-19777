@@ -353,12 +353,14 @@ export default function PixCheckoutModal({
       if (pix?.transaction_id) {
         sessionStorage.setItem("pending_payment_id", String(pix.transaction_id));
       }
+      // Guarda o WhatsApp da compra para autopreencher a tela de acesso
+      if (digits) sessionStorage.setItem("buyer_whatsapp_prefill", digits);
     } catch { /* ignore */ }
 
-    toast({ title: "Pagamento confirmado!", description: "Liberando conteúdo..." });
+    toast({ title: "Pagamento confirmado!", description: "Redirecionando para sua área de acessos..." });
     setTimeout(() => {
       onClose();
-      window.location.href = "/payment-confirmation";
+      window.location.href = "/acesso";
     }, 1200);
   };
 

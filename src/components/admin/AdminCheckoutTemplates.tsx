@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, Plus, Save, Trash2, Eye, Link as LinkIcon, Pencil, X } from "lucide-react";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
+import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
+import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 interface Template {
   id: string;

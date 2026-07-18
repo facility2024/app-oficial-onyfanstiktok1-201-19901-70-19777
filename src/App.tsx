@@ -47,6 +47,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutTemplatePage from "./pages/CheckoutTemplatePage";
 import CheckoutGlobalPage from "./pages/CheckoutGlobalPage";
 import MyAccessPanel from "./components/MyAccessPanel";
+import ProductAccessPage from "./pages/ProductAccessPage";
 
 import CreateStorePage from "./pages/CreateStorePage";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";

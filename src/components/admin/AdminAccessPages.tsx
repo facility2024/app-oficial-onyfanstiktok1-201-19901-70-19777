@@ -153,6 +153,9 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
+  const [showNewCard, setShowNewCard] = useState(false);
+  const [creatingCard, setCreatingCard] = useState(false);
+  const [newCard, setNewCard] = useState({ title: "", description: "", cover_url: "", video_urls: "" });
 
   const loadData = async () => {
     setLoading(true);
@@ -181,17 +184,56 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
     toast({ title: publish ? "Publicada!" : "Salvo" });
   };
 
-  const addCard = async () => {
+  const createCard = async (publish: boolean) => {
+    const title = newCard.title.trim();
+    if (!title) {
+      toast({ title: "Digite o título do card", variant: "destructive" });
+      return;
+    }
+
+    setCreatingCard(true);
     const { data, error } = await (supabase as any).from("access_page_cards").insert({
       page_id: page.id,
-      title: `Módulo ${cards.length + 1}`,
+      title,
+      description: newCard.description.trim() || null,
+      cover_url: newCard.cover_url.trim() || null,
       sort_order: cards.length,
       is_active: true,
-      is_published: true,
+      is_published: publish,
     }).select().single();
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    setCards([...cards, data]);
-    setOpenCards({ ...openCards, [data.id]: true });
+
+    if (error || !data) {
+      setCreatingCard(false);
+      toast({ title: "Erro ao criar card", description: error?.message, variant: "destructive" });
+      return;
+    }
+
+    const urls = newCard.video_urls.split(/\r?\n/).map(url => url.trim()).filter(url => url.length > 5);
+    let createdVideos: AccessVideo[] = [];
+    if (urls.length) {
+      const rows = urls.map((videoUrl, index) => ({
+        page_id: page.id,
+        card_id: data.id,
+        title: `Vídeo ${index + 1}`,
+        video_url: videoUrl,
+        sort_order: index,
+        is_active: true,
+      }));
+      const { data: insertedVideos, error: videoError } = await (supabase as any)
+        .from("access_page_videos").insert(rows).select();
+      if (videoError) {
+        toast({ title: "Card criado, mas houve erro nos vídeos", description: videoError.message, variant: "destructive" });
+      } else {
+        createdVideos = insertedVideos ?? [];
+      }
+    }
+
+    setCards(current => [...current, data]);
+    setVideos(current => [...current, ...createdVideos]);
+    setNewCard({ title: "", description: "", cover_url: "", video_urls: "" });
+    setShowNewCard(false);
+    setCreatingCard(false);
+    toast({ title: publish ? "Card criado e publicado" : "Card salvo como rascunho" });
   };
 
   const updateCard = async (id: string, patch: Partial<AccessCard>) => {
@@ -315,10 +357,74 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
         <h3 className="text-lg font-bold text-white flex items-center gap-2">
           <LayoutGrid className="w-5 h-5" /> Módulos (cards)
         </h3>
-        <Button onClick={addCard} className="bg-emerald-600 hover:bg-emerald-700">
+        <Button onClick={() => setShowNewCard(value => !value)} className="bg-emerald-600 hover:bg-emerald-700">
           <Plus className="w-4 h-4 mr-1" /> Novo card
         </Button>
       </div>
+
+      {showNewCard && (
+        <div className="grid gap-4 rounded-lg border-2 border-emerald-600 bg-gray-900 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="font-bold text-white">Criar novo card</h4>
+              <p className="text-xs text-gray-400">Este card aparecerá separado na página principal do produto.</p>
+            </div>
+            <span className="rounded bg-gray-800 px-2 py-1 text-xs font-bold text-gray-300">CARD #{cards.length + 1}</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-1 md:col-span-2">
+              <Label className="text-white">Título do card</Label>
+              <Input
+                value={newCard.title}
+                onChange={(event) => setNewCard({ ...newCard, title: event.target.value })}
+                placeholder="Ex.: Curso completo — Parte 1"
+                className="bg-gray-950 border-gray-700 text-white"
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-white">URL da capa</Label>
+              <Input
+                value={newCard.cover_url}
+                onChange={(event) => setNewCard({ ...newCard, cover_url: event.target.value })}
+                placeholder="https://cdn.../capa.jpg"
+                className="bg-gray-950 border-gray-700 text-white"
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-white">Descrição do card</Label>
+              <Input
+                value={newCard.description}
+                onChange={(event) => setNewCard({ ...newCard, description: event.target.value })}
+                placeholder="Descrição que aparecerá na página"
+                className="bg-gray-950 border-gray-700 text-white"
+              />
+            </div>
+          </div>
+          <div className="grid gap-1">
+            <Label className="text-white">Vídeos deste card — uma URL Bunny por linha</Label>
+            <Textarea
+              rows={7}
+              value={newCard.video_urls}
+              onChange={(event) => setNewCard({ ...newCard, video_urls: event.target.value })}
+              placeholder={"https://cdn.../video-1.mp4\nhttps://cdn.../video-2.mp4\nhttps://cdn.../video-3.mp4"}
+              className="bg-gray-950 border-gray-700 text-white font-mono text-sm"
+            />
+          </div>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowNewCard(false)} disabled={creatingCard}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => createCard(false)} disabled={creatingCard}>
+              {creatingCard && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Salvar rascunho
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => createCard(true)} disabled={creatingCard}>
+              {creatingCard && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Salvar e publicar
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {cards.length > 0 && (
+        <p className="text-sm font-semibold text-gray-300">Cards já criados — cada linha abaixo é um card separado:</p>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-6"><Loader2 className="animate-spin text-white" /></div>
@@ -330,7 +436,7 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
         <div className="grid gap-3">
           {cards.map((card, ci) => {
             const cardVideos = videos.filter(v => v.card_id === card.id).sort((a, b) => a.sort_order - b.sort_order);
-            const isOpen = openCards[card.id] ?? true;
+            const isOpen = openCards[card.id] ?? false;
             return (
               <div key={card.id} className="rounded-lg border border-gray-800 bg-gray-900 overflow-hidden">
                 <div className="p-3 flex items-center gap-2 bg-gray-950/50 flex-wrap">

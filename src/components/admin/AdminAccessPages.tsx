@@ -52,25 +52,27 @@ export default function AdminAccessPages() {
     if (loading || autoHandled || !productParam) return;
     setAutoHandled(true);
     (async () => {
-      const existing = pages.find(pg => pg.product_id === productParam);
-      if (existing) {
-        setEditing(existing);
+      // Sempre consulta o banco (evita corrida com estado local desatualizado)
+      const { data: fresh } = await (supabase as any)
+        .from("access_pages").select("*").eq("product_id", productParam).maybeSingle();
+      if (fresh) {
+        setEditing(fresh);
       } else {
         const prod = products.find(p => p.id === productParam);
         if (!prod) { toast({ title: "Produto não encontrado", variant: "destructive" }); return; }
-        const { data, error } = await (supabase as any).from("access_pages").insert({
+        const { data, error } = await (supabase as any).from("access_pages").upsert({
           product_id: prod.id, slug: prod.slug, title: prod.name, is_published: false,
-        }).select().single();
+        }, { onConflict: "product_id" }).select().single();
         if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
         await load();
         setEditing(data);
-        toast({ title: "Página criada", description: `Cadastre os vídeos de "${prod.name}"` });
+        toast({ title: "Página pronta", description: `Cadastre os vídeos de "${prod.name}"` });
       }
-      // limpa o param para não reabrir depois
       searchParams.delete("product");
       setSearchParams(searchParams, { replace: true });
     })();
   }, [loading, autoHandled, productParam, pages, products]);
+
 
   const createPage = async () => {
     const available = products.filter(p => !pages.some(pg => pg.product_id === p.id));

@@ -21,6 +21,18 @@ interface Template {
   ativo: boolean;
   ordem: number;
   model_id: string | null;
+  // overrides visuais (herdados da página global)
+  timer_label: string;
+  security_text: string;
+  security_banner_url: string;
+  logo_url: string;
+  finalize_button_label: string;
+  finalize_button_color: string;
+  legal_text: string;
+  footer_security_text: string;
+  author_label: string;
+  whatsapp_label: string;
+  whatsapp_placeholder: string;
 }
 
 interface ModelOption { id: string; username: string; avatar_url: string | null; }
@@ -38,7 +50,19 @@ const empty = (): Template => ({
   ativo: true,
   ordem: 0,
   model_id: null,
+  timer_label: "",
+  security_text: "",
+  security_banner_url: "",
+  logo_url: "",
+  finalize_button_label: "",
+  finalize_button_color: "",
+  legal_text: "",
+  footer_security_text: "",
+  author_label: "",
+  whatsapp_label: "",
+  whatsapp_placeholder: "",
 });
+
 
 const slugify = (s: string) =>
   s.toLowerCase()

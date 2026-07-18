@@ -77,14 +77,17 @@ Deno.serve(async (req) => {
         try { data = JSON.parse(text) } catch { data = { raw: text } }
 
         if (response.ok) {
-          const transaction = data.transaction && typeof data.transaction === 'object'
-            ? data.transaction as Record<string, unknown>
+          const responseData = data.data && typeof data.data === 'object'
+            ? data.data as Record<string, unknown>
+            : data
+          const transaction = responseData.transaction && typeof responseData.transaction === 'object'
+            ? responseData.transaction as Record<string, unknown>
             : {}
-          const payment = data.payment && typeof data.payment === 'object'
-            ? data.payment as Record<string, unknown>
+          const payment = responseData.payment && typeof responseData.payment === 'object'
+            ? responseData.payment as Record<string, unknown>
             : {}
-          const status = typeof data.status === 'string'
-            ? data.status
+          const status = typeof responseData.status === 'string'
+            ? responseData.status
             : typeof transaction.status === 'string'
               ? transaction.status
               : typeof payment.status === 'string'
@@ -111,7 +114,7 @@ Deno.serve(async (req) => {
         }
 
         lastError = { status: response.status, data }
-        if (response.status === 404) break
+        if (response.status === 404) continue
       } catch (error) {
         lastError = { message: String(error) }
       }

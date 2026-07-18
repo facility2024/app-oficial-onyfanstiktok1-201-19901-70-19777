@@ -12,6 +12,7 @@ import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscrip
 import { useNavigate } from 'react-router-dom';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 import { ModelSubscriptionOverlay } from '@/components/tiktok/ModelSubscriptionOverlay';
+import { ModelCheckoutButtons } from '@/components/tiktok/ModelCheckoutButtons';
 
 
 interface ProfileScreenProps {

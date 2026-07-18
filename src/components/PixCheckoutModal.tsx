@@ -189,6 +189,7 @@ export default function PixCheckoutModal({
     })();
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
+      if (realtimeChanRef.current) { supabase.removeChannel(realtimeChanRef.current); realtimeChanRef.current = null; }
     };
   }, [open, template?.id]);
 

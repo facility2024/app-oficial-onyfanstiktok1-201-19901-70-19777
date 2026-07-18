@@ -72,9 +72,6 @@ export default function BuyerAccess() {
             <h1 className="text-xl font-bold text-white">Área do Comprador</h1>
             <p className="text-sm text-gray-300">Acesse com o WhatsApp usado na compra</p>
           </div>
-            <h1 className="text-xl font-bold text-white">Área do Comprador</h1>
-            <p className="text-sm text-gray-400">Acesse com o WhatsApp usado na compra</p>
-          </div>
         </div>
 
         {step === "wa" ? (

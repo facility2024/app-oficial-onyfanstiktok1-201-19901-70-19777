@@ -121,17 +121,20 @@ function collectMedia(root: any): Array<{ kind: 'video' | 'image'; url: string; 
     if (Array.isArray(node)) { for (const n of node) walk(n, parentKey); return; }
     if (typeof node !== 'object') return;
 
+    const isVideoNode = node.media_type === 2
+      || node.mediaType === 2
+      || node.type === 'video'
+      || node.media_type === 'video'
+      || node.product_type === 'clips';
     const vurl = node.video_url
       || node.videoUrl
       || node.video_uri
       || node.videoUri
       || node.play_url
       || node.playUrl
-      || node.download_url
-      || node.downloadUrl
       || firstUrl(node.video_versions)
       || firstUrl(node.videoVersions)
-      || ((node.media_type === 2 || node.mediaType === 2 || node.type === 'video') ? firstUrl(node.url ?? node.src ?? node.uri) : undefined);
+      || (isVideoNode ? firstUrl(node.download_url ?? node.downloadUrl ?? node.url ?? node.src ?? node.uri) : undefined);
     if (vurl && typeof vurl === 'string') {
       const thumb = node.thumbnail_url
         || node.thumbnailUrl
@@ -460,11 +463,10 @@ async function persistPost(
   visibility: 'public' | 'private',
   userId: string,
 ) {
-  const media = collectMedia(postNode);
-  if (media.length === 0) throw new Error('Post sem mídia utilizável');
+  const media = collectMedia(postNode).filter((item) => item.kind === 'video');
+  if (media.length === 0) throw new Error('Este link não contém vídeo. Envie um Reel ou post com vídeo.');
 
-  const post_type: 'video' | 'image' | 'carousel' =
-    media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
+  const post_type: 'video' = 'video';
 
   const mediaOut: any[] = [];
   let mainVideoUrl: string | null = null;
@@ -474,8 +476,8 @@ async function persistPost(
   for (let i = 0; i < media.length; i++) {
     const m = media[i];
     const suffix = media.length > 1 ? `_${i + 1}` : '';
-    const ext = m.kind === 'video' ? 'mp4' : 'jpg';
-    const subdir = m.kind === 'video' ? 'videos' : 'posters';
+    const ext = 'mp4';
+    const subdir = 'videos';
     const path = `${BUNNY_ROOT}/${model.slug}/${subdir}/${shortcode}${suffix}.${ext}`;
     await streamToBunny(m.url, path);
     const cdn = `https://${BUNNY_PULL}/${path}`;
@@ -496,7 +498,7 @@ async function persistPost(
 
     if (!mainVideoUrl) {
       mainVideoUrl = cdn;
-      mainThumbUrl = thumbCdn ?? (m.kind === 'image' ? cdn : null);
+      mainThumbUrl = thumbCdn ?? null;
       mainBunnyPath = path;
     }
   }
@@ -734,10 +736,11 @@ Deno.serve(async (req) => {
     let skipped = 0, failed = 0, imported = 0;
 
     function buildDirectRow(model: { id: string }, shortcode: string, postNode: any) {
-      const media = collectMedia(postNode);
+      // O payload também contém capa e miniaturas. Para importação de vídeo,
+      // elas nunca podem virar a mídia principal nem mudar o tipo para carousel.
+      const media = collectMedia(postNode).filter((item) => item.kind === 'video');
       if (media.length === 0) return null;
-      const post_type: 'video' | 'image' | 'carousel' =
-        media.length > 1 ? 'carousel' : (media[0].kind === 'video' ? 'video' : 'image');
+      const post_type: 'video' = 'video';
       const first = media[0];
       const mediaOut = media.map((m) => ({
         kind: m.kind, url: m.url, thumb: m.thumb ?? null,
@@ -750,7 +753,7 @@ Deno.serve(async (req) => {
         source_url: `https://www.instagram.com/p/${shortcode}/`,
         bunny_path: null,
         video_url: first.url,
-        thumbnail_url: first.thumb ?? (first.kind === 'image' ? first.url : null),
+        thumbnail_url: first.thumb ?? null,
         caption: extractCaption(postNode) ?? null,
         duration_seconds: first.duration ?? null,
         width: first.width ?? null,
@@ -786,13 +789,13 @@ Deno.serve(async (req) => {
             modelCache.set(owner.username, model);
           }
           let postNode = extractPostNode(raw);
-          if (collectMedia(postNode).length === 0) {
+           if (!collectMedia(postNode).some((item) => item.kind === 'video')) {
             const postsPayload = await fetchUserPosts(owner.username, '');
             postNode = findPostByShortcode(postsPayload, sc) ?? extractPostNode(postsPayload);
           }
           const row = buildDirectRow(model, sc, postNode);
           if (row) directInserts.push(row);
-          else { failed++; console.error('[ig-import] loose sem mídia', sc); }
+           else { failed++; console.error('[ig-import] link sem vídeo', sc); }
         } catch (e: any) {
           failed++;
           console.error('[ig-import] loose', sc, e?.message ?? e);

@@ -21,7 +21,7 @@ interface Bump {
   template_ids: string[] | null;
 }
 
-interface TemplateOpt { id: string; nome: string; slug: string; model_id: string | null }
+interface TemplateOpt { id: string; nome: string; slug: string; model_id: string | null; model_name?: string | null }
 
 const empty = {
   titulo: "",

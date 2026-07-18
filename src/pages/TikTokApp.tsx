@@ -3479,9 +3479,16 @@ export const TikTokApp = () => {
           setShowComments(true);
         }} onOpenProfile={async () => {
           console.log('Mobile profile clicked via SideMenu');
-          await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-          await trackFollow(currentVideo?.user?.id || '');
+          // 1) Congela o usuário do vídeo atual ANTES de qualquer await, senão
+          // o feed pode avançar durante o tracking e o perfil abre errado.
+          const snap = currentVideo?.user ? { ...currentVideo.user } : null;
+          const vId = currentVideo?.id;
+          const uId = currentVideo?.user?.id;
+          setProfileUserSnapshot(snap);
           setShowProfile(true);
+          // 2) Tracking em background (não bloqueia a abertura).
+          checkAndTrackAction('profile_view', vId, uId).catch(() => {});
+          trackFollow(uId || '').catch(() => {});
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
           setShowLiveList(true);

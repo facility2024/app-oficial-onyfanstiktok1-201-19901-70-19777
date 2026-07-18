@@ -391,27 +391,23 @@ export default function PixCheckoutModal({
               <Button
                 onClick={generate}
                 disabled={loading}
-                className="w-full bg-[#7CB342] hover:bg-[#6ba338] disabled:opacity-60 text-white font-bold py-6 rounded-lg text-base shadow"
+                style={{ backgroundColor: pixSettings.finalize_button_color }}
+                className="w-full disabled:opacity-60 text-white font-bold py-6 rounded-lg text-base shadow hover:brightness-95"
               >
                 {loading ? (
                   <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Gerando PIX...</>
                 ) : (
-                  "Finalizar Pagamento"
+                  pixSettings.finalize_button_label
                 )}
               </Button>
             )}
 
             {/* Footer disclaimer */}
             <div className="text-[11px] text-gray-500 leading-relaxed space-y-2 pt-2">
-              <p>
-                Ao clicar em 'Finalizar Pagamento', eu declaro que li e concordo (i) que a NeonPay está
-                processando este pedido em nome de terceiros e não possui responsabilidade pelo conteúdo
-                e/ou faz controle prévio deste; (ii) com os Termos de Uso e Política de Privacidade, e
-                (iii) que sou maior de idade ou autorizado e acompanhado por um responsável legal.
-              </p>
+              <p>{pixSettings.legal_text}</p>
               <p className="flex items-center gap-1.5 text-gray-600">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Os pagamentos são processados de forma segura e criptografada pela NeonPay.
+                {pixSettings.footer_security_text}
               </p>
             </div>
           </div>

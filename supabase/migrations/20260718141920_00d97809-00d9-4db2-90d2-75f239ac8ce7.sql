@@ -1,0 +1,2 @@
+ALTER TABLE public.checkout_order_bumps ADD COLUMN IF NOT EXISTS template_ids uuid[] DEFAULT NULL;
+COMMENT ON COLUMN public.checkout_order_bumps.template_ids IS 'Se NULL ou vazio, o bump aparece em TODOS os checkouts. Se preenchido, só aparece nos templates listados.';

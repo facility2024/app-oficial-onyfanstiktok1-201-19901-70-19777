@@ -1190,6 +1190,7 @@ export type Database = {
           imagem_url: string | null
           link_acesso: string | null
           ordem: number
+          template_ids: string[] | null
           titulo: string
           updated_at: string
           valor: number
@@ -1202,6 +1203,7 @@ export type Database = {
           imagem_url?: string | null
           link_acesso?: string | null
           ordem?: number
+          template_ids?: string[] | null
           titulo: string
           updated_at?: string
           valor?: number
@@ -1214,6 +1216,7 @@ export type Database = {
           imagem_url?: string | null
           link_acesso?: string | null
           ordem?: number
+          template_ids?: string[] | null
           titulo?: string
           updated_at?: string
           valor?: number

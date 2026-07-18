@@ -39,6 +39,7 @@ export default function PixCheckoutModal({
 
   // Template loading
   const [template, setTemplate] = useState<{
+    id: string;
     amount: number;
     product_name: string;
     product_description: string;
@@ -52,7 +53,7 @@ export default function PixCheckoutModal({
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("amount,product_name,product_description,product_image_url,redirect_to,storage_flag")
+        .select("id,amount,product_name,product_description,product_image_url,redirect_to,storage_flag")
         .eq("slug", templateSlug)
         .eq("ativo", true)
         .maybeSingle();

@@ -46,13 +46,13 @@ Deno.serve(async (req) => {
 
     // Itens de compra do novo sistema (produtos/liberações)
     const rawItems = Array.isArray(body?.items) ? body.items : []
-    const purchaseItems = rawItems
+    let purchaseItems = rawItems
       .map((it: any) => ({
         product_id: getText(it?.product_id),
         price: Number(it?.price ?? 0),
         snapshot_name: getText(it?.snapshot_name) ?? productName,
       }))
-      .filter((it) => !!it.product_id) as Array<{ product_id: string; price: number; snapshot_name: string }>
+      .filter((it) => !!it.product_id && UUID_RE.test(it.product_id)) as Array<{ product_id: string; price: number; snapshot_name: string }>
 
     const templateId = getText(body?.template_id) ?? null
     const templateSlug = getText(body?.template_slug) ?? null
@@ -107,6 +107,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
+    // Nunca dependa apenas dos itens enviados pelo navegador. Em links públicos,
+    // o usuário pode clicar antes de o template terminar de carregar. O servidor
+    // resolve o produto vinculado ao template e mantém a compra rastreável.
+    if (purchaseItems.length === 0 && templateId && UUID_RE.test(templateId)) {
+      const { data: linkedTemplate, error: templateError } = await admin
+        .from('checkout_templates')
+        .select('product_id, product_name')
+        .eq('id', templateId)
+        .eq('ativo', true)
+        .maybeSingle()
+
+      if (templateError) console.log('[gateway template lookup]', templateError.message)
+      if (linkedTemplate?.product_id) {
+        purchaseItems = [{
+          product_id: linkedTemplate.product_id,
+          price: amount,
+          snapshot_name: linkedTemplate.product_name || productName,
+        }]
+      }
+    }
+
     // Persistir WhatsApp em pix_payments para o webhook liberar acesso depois
     try {
       await admin.from('pix_payments').insert({
@@ -122,31 +143,44 @@ Deno.serve(async (req) => {
 
     // CRÍTICO: cria checkout_purchases + items ANTES de retornar, para o webhook
     // sempre encontrar o registro e liberar acesso automaticamente.
+    const { data: purchase, error: pErr } = await admin
+      .from('checkout_purchases')
+      .insert({
+        user_id: authUserId,
+        customer_whatsapp: phoneDigits,
+        customer_email: customerEmail,
+        total_amount: amount,
+        status: 'pending',
+        gateway: 'neonpay',
+        gateway_payment_id: transactionId,
+        metadata: { template_id: templateId, template_slug: templateSlug, identifier },
+      })
+      .select('id')
+      .single()
+
+    if (pErr || !purchase?.id) {
+      console.error('[gateway checkout_purchases fatal]', pErr?.message ?? 'purchase id missing', {
+        transactionId, identifier, templateId, itemCount: purchaseItems.length,
+      })
+      return new Response(JSON.stringify({
+        error: 'purchase_tracking_failed',
+        message: 'Não foi possível registrar a compra com segurança. Gere um novo PIX.',
+      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     if (purchaseItems.length > 0) {
-      try {
-        const { data: purchase, error: pErr } = await admin
-          .from('checkout_purchases')
-          .insert({
-            user_id: authUserId,
-            customer_whatsapp: phoneDigits,
-            customer_email: customerEmail,
-            total_amount: amount,
-            status: 'pending',
-            gateway: 'neonpay',
-            gateway_payment_id: transactionId,
-            metadata: { template_id: templateId, template_slug: templateSlug },
-          })
-          .select('id')
-          .maybeSingle()
-        if (pErr) console.log('[gateway checkout_purchases insert]', pErr.message)
-        if (purchase?.id) {
-          const rows = purchaseItems.map((it) => ({ ...it, purchase_id: purchase.id }))
-          const { error: iErr } = await admin.from('checkout_purchase_items').insert(rows)
-          if (iErr) console.log('[gateway checkout_purchase_items insert]', iErr.message)
-        }
-      } catch (e) {
-        console.log('[gateway checkout_purchases block]', String(e))
+      const rows = purchaseItems.map((it) => ({ ...it, purchase_id: purchase.id }))
+      const { error: iErr } = await admin.from('checkout_purchase_items').insert(rows)
+      if (iErr) {
+        console.error('[gateway checkout_purchase_items fatal]', iErr.message, { purchaseId: purchase.id })
+        await admin.from('checkout_purchases').delete().eq('id', purchase.id)
+        return new Response(JSON.stringify({
+          error: 'purchase_items_failed',
+          message: 'O produto não pôde ser vinculado à compra. Gere um novo PIX.',
+        }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
+    } else {
+      console.warn('[gateway purchase without entitlement product]', { purchaseId: purchase.id, templateId })
     }
 
     if (authUserId && privateModelId) {

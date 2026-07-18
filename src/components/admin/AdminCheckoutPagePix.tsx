@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Save, CreditCard, Eye, Link as LinkIcon } from "lucide-react";
+import { Loader2, Save, CreditCard, Eye, Link as LinkIcon, Layers, Settings2 } from "lucide-react";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AdminCheckoutTemplates } from "./AdminCheckoutTemplates";
 import {
   CHECKOUT_PIX_KEY_MAP,
   CHECKOUT_PIX_KEYS,

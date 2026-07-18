@@ -70,11 +70,13 @@ import { AdminVideoScheduler } from './admin/AdminVideoScheduler';
 import { CarouselScheduler } from './admin/CarouselScheduler';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { useLocation } from 'react-router-dom';
 
 // Lazy load AdminIntelligentFeed to avoid build issues
 const AdminIntelligentFeed = lazy(() => import('./admin/AdminIntelligentFeed').then(mod => ({ default: mod.AdminIntelligentFeed })));
 
 export const AdminDashboard = () => {
+  const location = useLocation();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -159,13 +161,13 @@ export const AdminDashboard = () => {
 
   // Deep link: inicializa a aba a partir de ?tab=
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
     const valid = ['home','app','posts','users','roles','creators','cadastros','gamification','marketplace','physical-products','local-businesses','chat-panels','videos','genres','intelligent-feed','money','vip','model-subscriptions','webhook-logs','email-events','settings','documentation','video-call','live','ads','promo-ads','feed-promotions','ads-garotas-top','checkout-order-bumps','checkout-page-pix','products','access-pages'];
     if (tab && valid.includes(tab)) {
       setActiveSection(tab);
     }
-  }, []);
+  }, [location.search]);
 
   // Mantém a URL em sincronia com a aba atual
   useEffect(() => {

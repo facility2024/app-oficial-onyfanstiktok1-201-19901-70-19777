@@ -69,8 +69,8 @@ Deno.serve(async (req) => {
     )
     const feeCents = Number(body.fee ?? body.neonpay_fee ?? 0)
     const fee = feeCents > 1000 ? feeCents / 100 : feeCents
-    const paidAt = body.paid_at ?? body.paidAt ?? body.approved_at ?? body.approvedAt ??
-      tx?.paid_at ?? tx?.paidAt ?? tx?.approved_at ?? tx?.approvedAt ?? tx?.payment_date ?? null
+    const paidAt = body.paid_at ?? body.paidAt ?? body.payed_at ?? body.payedAt ?? body.approved_at ?? body.approvedAt ??
+      tx?.paid_at ?? tx?.paidAt ?? tx?.payed_at ?? tx?.payedAt ?? tx?.approved_at ?? tx?.approvedAt ?? tx?.payment_date ?? null
 
     const webhookLog = await supabase.from('webhook_logs').insert({
       source: 'neonpay',
@@ -189,10 +189,33 @@ Deno.serve(async (req) => {
 
       // 3) Novo sistema: checkout_purchases + entitlements
       try {
-        const { data: cps } = await supabase
+        let { data: cps, error: cpsError } = await supabase
           .from('checkout_purchases')
           .select('id, status')
           .in('gateway_payment_id', lookupIds)
+
+        // A NeonPay envia tanto transaction.id quanto identifier. O identifier
+        // salvo no metadata recupera callbacks que usem a referência externa.
+        if (!cpsError && (!cps || cps.length === 0)) {
+          const recovered: any[] = []
+          for (const lookupId of lookupIds) {
+            const { data: rows, error } = await supabase
+              .from('checkout_purchases')
+              .select('id, status')
+              .contains('metadata', { identifier: lookupId })
+            if (error) {
+              cpsError = error
+              break
+            }
+            recovered.push(...(rows ?? []))
+          }
+          cps = recovered
+        }
+
+        if (cpsError) console.log('[checkout_purchases lookup error]', cpsError.message)
+        if (!cps || cps.length === 0) {
+          console.log('[checkout_purchases not found]', { txid, lookupIds })
+        }
 
         for (const cp of (cps ?? [])) {
           if (cp.status !== 'paid') {

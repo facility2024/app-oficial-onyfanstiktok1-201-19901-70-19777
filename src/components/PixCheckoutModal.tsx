@@ -128,6 +128,7 @@ export default function PixCheckoutModal({
   const [copied, setCopied] = useState(false);
   const [paid, setPaid] = useState(false);
   const pollRef = useRef<number | null>(null);
+  const confirmedRef = useRef(false);
   const [countdown, setCountdown] = useState("00:00:00");
 
   interface Bump {
@@ -248,6 +249,7 @@ export default function PixCheckoutModal({
 
       // Só começa a verificar após o registro local existir.
       startPolling(data.transaction_id);
+      void checkLocalStatus(String(data.transaction_id));
 
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Tente novamente em instantes.";
@@ -283,7 +285,7 @@ export default function PixCheckoutModal({
       });
       if (error) throw error;
       const status = String(data?.status || "").toLowerCase();
-      if (["paid", "approved", "confirmed", "completed"].includes(status)) {
+      if (["paid", "approved", "confirmed", "completed", "authorized", "received", "success"].includes(status)) {
         handleConfirmed();
         return true;
       }
@@ -309,7 +311,7 @@ export default function PixCheckoutModal({
         },
         (payload: any) => {
           const status = String(payload?.new?.status || "").toLowerCase();
-          if (["paid", "approved", "confirmed", "completed"].includes(status)) {
+          if (["paid", "approved", "confirmed", "completed", "authorized", "received", "success"].includes(status)) {
             handleConfirmed();
           }
         }
@@ -334,6 +336,8 @@ export default function PixCheckoutModal({
   };
 
   const handleConfirmed = async () => {
+    if (confirmedRef.current) return;
+    confirmedRef.current = true;
     if (pollRef.current) window.clearInterval(pollRef.current);
     if (realtimeChanRef.current) { supabase.removeChannel(realtimeChanRef.current); realtimeChanRef.current = null; }
     setPaid(true);

@@ -266,10 +266,25 @@ export const AdminCheckoutPagePix = () => {
           <div className="pt-3 border-t border-white/10">
             <CheckoutSideMediaManager
               value={form.side_media}
-              onChange={(next) => set("side_media", next)}
+              onChange={async (next) => {
+                set("side_media", next);
+                // Auto-persist side_media immediately (independente do botão Salvar)
+                try {
+                  const { error } = await (supabase as any)
+                    .from("admin_settings")
+                    .upsert(
+                      { setting_key: SIDE_MEDIA_KEY, setting_value: next as any },
+                      { onConflict: "setting_key" }
+                    );
+                  if (error) throw error;
+                  toast.success("Mídia lateral atualizada");
+                } catch (e: any) {
+                  toast.error("Erro ao salvar mídia lateral", { description: e?.message });
+                }
+              }}
             />
             <p className="text-[11px] text-gray-500 mt-1">
-              Se você adicionar mídias aqui, elas viram um <b>carrossel</b> automático no card lateral (imagens trocam a cada 4s; vídeos avançam ao terminar). Se ficar vazio, usa apenas a imagem única acima.
+              As mídias aqui são <b>salvas automaticamente</b> e viram um <b>carrossel</b> no card lateral do checkout (imagens trocam a cada 4s; vídeos avançam ao terminar). Se ficar vazio, usa apenas a imagem única acima.
             </p>
           </div>
 

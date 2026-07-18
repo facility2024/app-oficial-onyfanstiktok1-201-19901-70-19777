@@ -14,8 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_page_cards: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_published: boolean
+          page_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          page_id: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          page_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_page_cards_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "access_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       access_page_videos: {
         Row: {
+          card_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -27,6 +75,7 @@ export type Database = {
           video_url: string
         }
         Insert: {
+          card_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -38,6 +87,7 @@ export type Database = {
           video_url: string
         }
         Update: {
+          card_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -49,6 +99,13 @@ export type Database = {
           video_url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "access_page_videos_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "access_page_cards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "access_page_videos_page_id_fkey"
             columns: ["page_id"]

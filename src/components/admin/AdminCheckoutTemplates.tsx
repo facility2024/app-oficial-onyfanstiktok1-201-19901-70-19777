@@ -360,6 +360,42 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
             </div>
 
 
+            {/* Aparência (herdada da página global — pode sobrescrever) */}
+            <details className="border border-white/10 rounded-lg p-3 bg-white/5">
+              <summary className="cursor-pointer text-white font-bold">
+                🎨 Aparência (herdada da página global — clique para sobrescrever)
+              </summary>
+              <div className="mt-3 space-y-3">
+                {([
+                  ["timer_label", "Texto do timer"],
+                  ["security_text", "Texto abaixo do selo"],
+                  ["security_banner_url", "URL banner de segurança"],
+                  ["logo_url", "URL logo customizada"],
+                  ["finalize_button_label", "Texto do botão"],
+                  ["finalize_button_color", "Cor do botão (hex)"],
+                  ["footer_security_text", "Texto de segurança do rodapé"],
+                  ["author_label", "Feito por (autor)"],
+                  ["whatsapp_label", "Rótulo do WhatsApp"],
+                  ["whatsapp_placeholder", "Placeholder WhatsApp"],
+                ] as [keyof Template, string][]).map(([k, label]) => (
+                  <div key={k as string}>
+                    <Label className="text-white text-xs">{label}</Label>
+                    <Input value={(editing as any)[k] ?? ""}
+                      onChange={(e) => setEditing({ ...editing, [k]: e.target.value } as Template)}
+                      placeholder="(vazio = usa o da página global)"
+                      className="bg-gray-800 border-white/10 text-white text-xs" />
+                  </div>
+                ))}
+                <div>
+                  <Label className="text-white text-xs">Texto legal (termos)</Label>
+                  <Textarea rows={4} value={editing.legal_text}
+                    onChange={(e) => setEditing({ ...editing, legal_text: e.target.value })}
+                    placeholder="(vazio = usa o da página global)"
+                    className="bg-gray-800 border-white/10 text-white text-xs" />
+                </div>
+              </div>
+            </details>
+
             <label className="flex items-center gap-2 text-white font-semibold">
               <input type="checkbox" checked={editing.ativo}
                 onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}
@@ -390,8 +426,23 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
           productImage={preview.product_image_url || undefined}
           storageFlag={preview.storage_flag}
           redirectTo={preview.redirect_to}
+          visualOverrides={{
+            timer_label: preview.timer_label,
+            security_text: preview.security_text,
+            security_banner_url: preview.security_banner_url,
+            logo_url: preview.logo_url,
+            finalize_button_label: preview.finalize_button_label,
+            finalize_button_color: preview.finalize_button_color,
+            legal_text: preview.legal_text,
+            footer_security_text: preview.footer_security_text,
+            author_label: preview.author_label,
+            whatsapp_label: preview.whatsapp_label,
+            whatsapp_placeholder: preview.whatsapp_placeholder,
+            product_image_url: preview.product_image_url,
+          }}
         />
       )}
+
     </div>
   );
 };

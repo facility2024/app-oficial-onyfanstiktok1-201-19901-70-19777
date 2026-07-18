@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export type SideMediaItem = { type: "image" | "video"; url: string };
+
 export interface CheckoutPixSettings {
   timer_label: string;
   security_text: string;
@@ -15,6 +17,7 @@ export interface CheckoutPixSettings {
   whatsapp_label: string;
   whatsapp_placeholder: string;
   default_amount: string;
+  side_media: SideMediaItem[];
 }
 
 export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
@@ -35,9 +38,10 @@ export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
     "📱 Coloque seu WhatsApp válido — ele será sua chave de acesso aos seus produtos",
   whatsapp_placeholder: "(11) 99999-9999",
   default_amount: "14.97",
+  side_media: [],
 };
 
-const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
+const KEY_MAP: Record<Exclude<keyof CheckoutPixSettings, "side_media">, string> = {
   timer_label: "checkout_pix_timer_label",
   security_text: "checkout_pix_security_text",
   security_banner_url: "checkout_pix_security_banner_url",
@@ -53,7 +57,8 @@ const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
   default_amount: "checkout_pix_default_amount",
 };
 
-export const CHECKOUT_PIX_KEYS = Object.values(KEY_MAP);
+export const SIDE_MEDIA_KEY = "checkout_pix_side_media";
+export const CHECKOUT_PIX_KEYS = [...Object.values(KEY_MAP), SIDE_MEDIA_KEY];
 export const CHECKOUT_PIX_KEY_MAP = KEY_MAP;
 
 function coerceString(v: unknown): string | null {
@@ -63,6 +68,20 @@ function coerceString(v: unknown): string | null {
     if (typeof inner === "string") return inner;
   }
   return null;
+}
+
+function coerceSideMedia(v: unknown): SideMediaItem[] {
+  const raw = Array.isArray(v)
+    ? v
+    : v && typeof v === "object" && Array.isArray((v as any).value)
+      ? (v as any).value
+      : typeof v === "string"
+        ? (() => { try { return JSON.parse(v); } catch { return []; } })()
+        : [];
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((x: any) => x && typeof x.url === "string" && (x.type === "image" || x.type === "video"))
+    .slice(0, 5);
 }
 
 export function useCheckoutPixSettings() {
@@ -82,7 +101,11 @@ export function useCheckoutPixSettings() {
         if (cancelled) return;
         const next = { ...DEFAULT_CHECKOUT_PIX_SETTINGS };
         (data || []).forEach((row: any) => {
-          const entry = (Object.entries(KEY_MAP) as [keyof CheckoutPixSettings, string][])
+          if (row.setting_key === SIDE_MEDIA_KEY) {
+            next.side_media = coerceSideMedia(row.setting_value);
+            return;
+          }
+          const entry = (Object.entries(KEY_MAP) as [Exclude<keyof CheckoutPixSettings, "side_media">, string][])
             .find(([, k]) => k === row.setting_key);
           if (!entry) return;
           const val = coerceString(row.setting_value);

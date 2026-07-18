@@ -18,25 +18,71 @@ interface Props {
   sellerName?: string;
   storageFlag?: string;
   redirectTo?: string;
+  /** Slug de um checkout_templates para carregar amount/name/description/image/redirect do banco */
+  templateSlug?: string;
 }
 
 export default function PixCheckoutModal({
   open,
   onClose,
-  amount = 14.97,
-  productName = "Meu acesso vip Orientais /Latinas",
-  productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
+  amount: amountProp,
+  productName: productNameProp,
+  productDescription: productDescriptionProp,
   productImage,
   sellerName,
-  storageFlag = "garotas_top_paid",
-  redirectTo = "/garotas-top-vip",
+  storageFlag: storageFlagProp,
+  redirectTo: redirectToProp,
+  templateSlug,
 }: Props) {
   const { settings: pixSettings } = useCheckoutPixSettings();
   const effectiveSellerName = sellerName || pixSettings.author_label;
+
+  // Template loading
+  const [template, setTemplate] = useState<{
+    amount: number;
+    product_name: string;
+    product_description: string;
+    product_image_url: string;
+    redirect_to: string;
+    storage_flag: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open || !templateSlug) { setTemplate(null); return; }
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("checkout_templates")
+        .select("amount,product_name,product_description,product_image_url,redirect_to,storage_flag")
+        .eq("slug", templateSlug)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (data) setTemplate(data);
+    })();
+  }, [open, templateSlug]);
+
+  const amount = template?.amount ?? amountProp ?? 14.97;
+  const productName = template?.product_name || productNameProp || "Meu acesso vip Orientais /Latinas";
+  const productDescription = template?.product_description || productDescriptionProp ||
+    "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...";
+  const storageFlag = template?.storage_flag || storageFlagProp || "garotas_top_paid";
+  const redirectTo = template?.redirect_to || redirectToProp || "/garotas-top-vip";
   const effectiveProductImage =
     productImage ||
+    template?.product_image_url ||
     pixSettings.product_image_url ||
     "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
+
+  // WhatsApp
+  const [whatsapp, setWhatsapp] = useState("");
+  const digits = whatsapp.replace(/\D/g, "");
+  const whatsappValid = digits.length >= 10 && digits.length <= 11;
+  const formatWhatsapp = (raw: string) => {
+    const d = raw.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
   const [loading, setLoading] = useState(false);
   const [pix, setPix] = useState<{
     transaction_id?: string;

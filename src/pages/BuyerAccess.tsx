@@ -60,11 +60,18 @@ export default function BuyerAccess() {
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-gray-950 p-4">
-      <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+    <div
+      className="min-h-dvh flex items-center justify-center p-4 bg-gray-950 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/%26.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="relative w-full max-w-md bg-gray-900/90 border border-emerald-500/30 shadow-2xl shadow-emerald-500/10 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-8 h-8 text-emerald-400" />
           <div>
+            <h1 className="text-xl font-bold text-white">Área do Comprador</h1>
+            <p className="text-sm text-gray-300">Acesse com o WhatsApp usado na compra</p>
+          </div>
             <h1 className="text-xl font-bold text-white">Área do Comprador</h1>
             <p className="text-sm text-gray-400">Acesse com o WhatsApp usado na compra</p>
           </div>

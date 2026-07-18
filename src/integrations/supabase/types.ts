@@ -8118,7 +8118,6 @@ export type Database = {
           nivel_privacidade: string | null
           nome_completo: string | null
           nome_usuario: string | null
-          senha: string | null
           site: string | null
           status: string | null
           telefone: string | null
@@ -8137,7 +8136,6 @@ export type Database = {
           nivel_privacidade?: string | null
           nome_completo?: string | null
           nome_usuario?: string | null
-          senha?: string | null
           site?: string | null
           status?: string | null
           telefone?: string | null
@@ -8156,7 +8154,6 @@ export type Database = {
           nivel_privacidade?: string | null
           nome_completo?: string | null
           nome_usuario?: string | null
-          senha?: string | null
           site?: string | null
           status?: string | null
           telefone?: string | null

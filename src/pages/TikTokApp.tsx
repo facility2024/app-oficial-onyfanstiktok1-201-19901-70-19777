@@ -161,6 +161,10 @@ export const TikTokApp = () => {
   const promoViewTrackedRef = useRef<Set<string>>(new Set());
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
+  // 🔒 Snapshot do usuário no momento do clique no perfil. Evita bug em que,
+  // durante o await das ações de tracking, o feed avança e o ProfileScreen
+  // acaba abrindo o perfil do vídeo seguinte em vez do que foi clicado.
+  const [profileUserSnapshot, setProfileUserSnapshot] = useState<any | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatEntity, setChatEntity] = useState<{
@@ -2197,6 +2201,7 @@ export const TikTokApp = () => {
   const handleCloseProfile = useCallback(() => {
     console.log('❌ Fechando perfil');
     setShowProfile(false);
+    setProfileUserSnapshot(null);
     // Restaurar URL para /app
     if (window.location.pathname !== '/app') {
       window.history.replaceState({}, '', '/app');
@@ -3475,9 +3480,16 @@ export const TikTokApp = () => {
           setShowComments(true);
         }} onOpenProfile={async () => {
           console.log('Mobile profile clicked via SideMenu');
-          await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-          await trackFollow(currentVideo?.user?.id || '');
+          // 1) Congela o usuário do vídeo atual ANTES de qualquer await, senão
+          // o feed pode avançar durante o tracking e o perfil abre errado.
+          const snap = currentVideo?.user ? { ...currentVideo.user } : null;
+          const vId = currentVideo?.id;
+          const uId = currentVideo?.user?.id;
+          setProfileUserSnapshot(snap);
           setShowProfile(true);
+          // 2) Tracking em background (não bloqueia a abertura).
+          checkAndTrackAction('profile_view', vId, uId).catch(() => {});
+          trackFollow(uId || '').catch(() => {});
         }} onOpenLive={() => {
           console.log('Mobile live clicked via SideMenu');
           setShowLiveList(true);
@@ -3586,7 +3598,7 @@ export const TikTokApp = () => {
       }} />}
 
         {/* Profile Screen */}
-        <ProfileScreen user={currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onVideoSelect={videoId => {
+        <ProfileScreen user={profileUserSnapshot || currentVideo.user} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onVideoSelect={videoId => {
         openSelectedVideo(videoId);
       }} onOpenChat={() => {
         handleCloseProfile();
@@ -3927,9 +3939,13 @@ export const TikTokApp = () => {
                   setShowComments(true);
                 }} onOpenProfile={async () => {
                   console.log('Desktop profile clicked');
-                  await checkAndTrackAction('profile_view', currentVideo?.id, currentVideo?.user?.id);
-                  await trackFollow(currentVideo?.user?.id || '');
+                  const snap = currentVideo?.user ? { ...currentVideo.user } : null;
+                  const vId = currentVideo?.id;
+                  const uId = currentVideo?.user?.id;
+                  setProfileUserSnapshot(snap);
                   setShowProfile(true);
+                  checkAndTrackAction('profile_view', vId, uId).catch(() => {});
+                  trackFollow(uId || '').catch(() => {});
                 }} onOpenLive={() => {
                   console.log('Desktop live clicked');
                   setShowLiveList(true);
@@ -4025,7 +4041,7 @@ export const TikTokApp = () => {
        </div>
 
       {/* Desktop Profile Screen */}
-      <ProfileScreen user={currentVideo.user} onVideoSelect={videoId => {
+      <ProfileScreen user={profileUserSnapshot || currentVideo.user} onVideoSelect={videoId => {
       openSelectedVideo(videoId);
     }} isOpen={showProfile} onClose={handleCloseProfile} onGoHome={goToHome} isChatActive={isCurrentChatActive} onOpenChat={() => {
       handleCloseProfile();

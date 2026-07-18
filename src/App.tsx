@@ -178,7 +178,7 @@ const App = () => (
           } />
           <Route path="/checkout/:slug" element={
             <ProtectedRoute>
-              <CheckoutPage />
+              <CheckoutTemplatePage />
             </ProtectedRoute>
           } />
           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />

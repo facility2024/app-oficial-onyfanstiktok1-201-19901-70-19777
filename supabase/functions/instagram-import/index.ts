@@ -850,7 +850,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         ok: true, queued: 0, imported, skipped, failed, jobId: job.id,
         total: imported + skipped + failed,
-        usernames: Array.from(usernames),
+        
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );

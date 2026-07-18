@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
 import coconudiLogo from "@/assets/coconudi-logo.png";
+import { useCheckoutPixSettings } from "@/hooks/useCheckoutPixSettings";
 
 interface Props {
   open: boolean;
@@ -26,10 +27,12 @@ export default function PixCheckoutModal({
   productName = "Meu acesso vip Orientais /Latinas",
   productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
   productImage = "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png",
-  sellerName = "Otavio gomes dos santos",
+  sellerName,
   storageFlag = "garotas_top_paid",
   redirectTo = "/garotas-top-vip",
 }: Props) {
+  const { settings: pixSettings } = useCheckoutPixSettings();
+  const effectiveSellerName = sellerName || pixSettings.author_label;
   const [loading, setLoading] = useState(false);
   const [pix, setPix] = useState<{
     transaction_id?: string;
@@ -240,7 +243,7 @@ export default function PixCheckoutModal({
         <div className="relative bg-gradient-to-r from-[#1a1a1a] via-[#6b21a8] to-[#1a1a1a] text-white text-center py-4 px-4 border-b border-purple-900/60">
           <div className="text-2xl sm:text-3xl font-black tracking-wider tabular-nums drop-shadow-[0_0_10px_rgba(168,85,247,0.6)]">{countdown}</div>
           <div className="text-xs sm:text-sm font-semibold opacity-95">
-            Oferta acaba em breve — não perca!
+            {pixSettings.timer_label}
           </div>
           <button
             onClick={onClose}
@@ -254,12 +257,12 @@ export default function PixCheckoutModal({
         {/* Selo de segurança */}
         <div className="bg-neutral-900 border-b border-black py-4 px-4 flex flex-col items-center justify-center gap-2">
           <img
-            src="https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/Design%20sem%20nome%20(1).png"
+            src={pixSettings.security_banner_url}
             alt="Pagamento seguro"
             className="h-16 sm:h-20 w-auto object-contain"
           />
           <p className="text-xs sm:text-sm font-semibold text-white text-center">
-            Pagamento seguro pela plataforma coconudi.com
+            {pixSettings.security_text}
           </p>
         </div>
 
@@ -388,27 +391,23 @@ export default function PixCheckoutModal({
               <Button
                 onClick={generate}
                 disabled={loading}
-                className="w-full bg-[#7CB342] hover:bg-[#6ba338] disabled:opacity-60 text-white font-bold py-6 rounded-lg text-base shadow"
+                style={{ backgroundColor: pixSettings.finalize_button_color }}
+                className="w-full disabled:opacity-60 text-white font-bold py-6 rounded-lg text-base shadow hover:brightness-95"
               >
                 {loading ? (
                   <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Gerando PIX...</>
                 ) : (
-                  "Finalizar Pagamento"
+                  pixSettings.finalize_button_label
                 )}
               </Button>
             )}
 
             {/* Footer disclaimer */}
             <div className="text-[11px] text-gray-500 leading-relaxed space-y-2 pt-2">
-              <p>
-                Ao clicar em 'Finalizar Pagamento', eu declaro que li e concordo (i) que a NeonPay está
-                processando este pedido em nome de terceiros e não possui responsabilidade pelo conteúdo
-                e/ou faz controle prévio deste; (ii) com os Termos de Uso e Política de Privacidade, e
-                (iii) que sou maior de idade ou autorizado e acompanhado por um responsável legal.
-              </p>
+              <p>{pixSettings.legal_text}</p>
               <p className="flex items-center gap-1.5 text-gray-600">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Os pagamentos são processados de forma segura e criptografada pela NeonPay.
+                {pixSettings.footer_security_text}
               </p>
             </div>
           </div>
@@ -425,7 +424,7 @@ export default function PixCheckoutModal({
               />
             </div>
             <div className="text-gray-900 font-bold text-base leading-tight">{productName}</div>
-            <div className="text-xs text-gray-500 mt-1">Feito por: {sellerName}</div>
+            <div className="text-xs text-gray-500 mt-1">Feito por: {effectiveSellerName}</div>
 
             <div className="mt-4 bg-gray-50 rounded-lg p-3">
               <div className="text-xs font-bold text-gray-800 mb-1">Descrição</div>
@@ -454,7 +453,7 @@ export default function PixCheckoutModal({
               </div>
             </div>
 
-            <div className="text-[11px] text-gray-500 mt-3">Feito por: {sellerName}</div>
+            <div className="text-[11px] text-gray-500 mt-3">Feito por: {effectiveSellerName}</div>
           </div>
         </div>
       </div>

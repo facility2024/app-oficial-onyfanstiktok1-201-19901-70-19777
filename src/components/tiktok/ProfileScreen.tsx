@@ -722,10 +722,12 @@ if (!isOpen) return null;
                   <p className="text-white text-sm text-center leading-relaxed">
                     {user.bio || "Sem descrição disponível"}
                   </p>
+                </div>
               </div>
 
             {/* Botões de checkout vinculados a esta modelo */}
             <ModelCheckoutButtons modelId={user.id} />
+
 
 
             {/* Seção de Assinatura Individual - Apenas para Criadoras de Conteúdo */}

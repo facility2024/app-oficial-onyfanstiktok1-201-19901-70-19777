@@ -118,6 +118,9 @@ const App = () => (
             </div>
           } />
 
+          {/* Página de acesso de um produto específico */}
+          <Route path="/acesso-produto/:productId" element={<ProductAccessPage />} />
+
           {/* Aplicação de Criador */}
           <Route path="/creator-application" element={
             <ProtectedRoute>

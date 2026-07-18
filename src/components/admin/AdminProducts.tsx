@@ -115,14 +115,14 @@ export default function AdminProducts() {
           <div>
             <Label className="text-white">Tipo</Label>
             <select
-              className="w-full h-10 rounded-md bg-white/10 text-white px-3"
+              className="w-full h-10 rounded-md bg-gray-900 text-white border border-white/20 px-3"
               value={draft.type}
               onChange={(e) => setDraft({ ...draft, type: e.target.value as any })}
             >
-              <option value="main">Principal</option>
-              <option value="bump">Order Bump</option>
-              <option value="upsell">Upsell</option>
-              <option value="subscription">Assinatura</option>
+              <option value="main" className="bg-gray-900 text-white">Principal</option>
+              <option value="bump" className="bg-gray-900 text-white">Order Bump</option>
+              <option value="upsell" className="bg-gray-900 text-white">Upsell</option>
+              <option value="subscription" className="bg-gray-900 text-white">Assinatura</option>
             </select>
           </div>
           <div>

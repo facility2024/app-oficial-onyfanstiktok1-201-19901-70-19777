@@ -255,6 +255,8 @@ export const AdminCheckoutPagePix = () => {
           Salvar alterações
         </Button>
       </div>
+        </TabsContent>
+      </Tabs>
 
       {previewOpen && (
         <PixCheckoutModal

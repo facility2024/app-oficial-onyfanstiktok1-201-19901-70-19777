@@ -126,6 +126,7 @@ export const AdminCheckoutPagePix = () => {
         author_label: form.author_label,
         whatsapp_label: form.whatsapp_label,
         whatsapp_placeholder: form.whatsapp_placeholder,
+        side_media: form.side_media || [],
       });
       setTemplatesRefresh((n) => n + 1);
       setActiveTab("templates");

@@ -2201,6 +2201,7 @@ export const TikTokApp = () => {
   const handleCloseProfile = useCallback(() => {
     console.log('❌ Fechando perfil');
     setShowProfile(false);
+    setProfileUserSnapshot(null);
     // Restaurar URL para /app
     if (window.location.pathname !== '/app') {
       window.history.replaceState({}, '', '/app');

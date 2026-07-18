@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Save, CreditCard, Eye, Link as LinkIcon, Layers, Settings2 } from "lucide-react";
+import { Loader2, Save, CreditCard, Eye, Link as LinkIcon, Layers, Settings2, PlusCircle } from "lucide-react";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AdminCheckoutTemplates } from "./AdminCheckoutTemplates";
@@ -21,6 +21,9 @@ export const AdminCheckoutPagePix = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [savingAsTemplate, setSavingAsTemplate] = useState(false);
+  const [activeTab, setActiveTab] = useState<"global" | "templates">("global");
+  const [templatesRefresh, setTemplatesRefresh] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -67,6 +70,44 @@ export const AdminCheckoutPagePix = () => {
     }
   };
 
+  const slugify = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
+
+  const handleSaveAsTemplate = async () => {
+    const amount = Number(form.default_amount);
+    if (!amount || amount <= 0) {
+      toast.error("Defina um valor padrão antes de gerar um novo modelo.");
+      return;
+    }
+    setSavingAsTemplate(true);
+    try {
+      const baseName = `Checkout R$ ${amount.toFixed(2).replace(".", ",")}`;
+      const baseSlug = slugify(`${baseName}-${Date.now().toString(36)}`);
+      const { error } = await (supabase as any).from("checkout_templates").insert({
+        nome: baseName,
+        slug: baseSlug,
+        amount,
+        product_name: "Acesso Coconudi",
+        product_description: "Pagamento seguro via PIX",
+        product_image_url: form.product_image_url || "",
+        redirect_to: "/app",
+        storage_flag: `checkout_${baseSlug}_paid`,
+        ativo: true,
+        ordem: 0,
+        model_id: null,
+      });
+      if (error) throw error;
+      toast.success("Novo modelo criado!", { description: "Aparece na aba Modelos de checkout como miniatura editável." });
+      setTemplatesRefresh((n) => n + 1);
+      setActiveTab("templates");
+    } catch (e: any) {
+      toast.error("Erro ao gerar modelo", { description: e?.message });
+    } finally {
+      setSavingAsTemplate(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-16">
@@ -87,7 +128,7 @@ export const AdminCheckoutPagePix = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="global" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "global" | "templates")} className="w-full">
         <TabsList className="bg-gray-900 border border-white/10">
           <TabsTrigger value="global" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Settings2 className="w-4 h-4 mr-2" /> Configurações globais
@@ -98,7 +139,7 @@ export const AdminCheckoutPagePix = () => {
         </TabsList>
 
         <TabsContent value="templates" className="mt-4">
-          <AdminCheckoutTemplates />
+          <AdminCheckoutTemplates key={templatesRefresh} />
         </TabsContent>
 
         <TabsContent value="global" className="mt-4 space-y-6">
@@ -115,6 +156,12 @@ export const AdminCheckoutPagePix = () => {
               );
             }} variant="outline" className="border-white/20 text-white hover:bg-white/10 font-bold">
               <LinkIcon className="w-4 h-4 mr-2" /> Copiar link da página
+            </Button>
+            <Button onClick={handleSaveAsTemplate} disabled={savingAsTemplate}
+              variant="outline"
+              className="border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/10 font-bold">
+              {savingAsTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlusCircle className="w-4 h-4 mr-2" />}
+              Gerar novo checkout com este valor
             </Button>
             <Button onClick={handleSave} disabled={saving}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">

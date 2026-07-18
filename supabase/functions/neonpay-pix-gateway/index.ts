@@ -41,13 +41,16 @@ Deno.serve(async (req) => {
 
     const identifier = `gt10_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
+    const rawPhone = getText(body?.customer_whatsapp) ?? getText(body?.client?.phone) ?? '(11) 99999-9999'
+    const phoneDigits = rawPhone.replace(/\D/g, '')
+
     const payload = {
       identifier,
       amount,
       client: {
         name: body?.client?.name || 'Cliente Coconudi',
         email: body?.client?.email || 'cliente@coconudi.com',
-        phone: body?.client?.phone || '(11) 99999-9999',
+        phone: rawPhone,
         document: body?.client?.document || '12345678909',
       },
       products: [

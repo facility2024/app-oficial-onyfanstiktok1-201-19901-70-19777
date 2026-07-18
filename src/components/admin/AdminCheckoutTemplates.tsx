@@ -458,6 +458,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
             whatsapp_placeholder: preview.whatsapp_placeholder,
             product_image_url: preview.product_image_url,
           }}
+          sideMediaOverride={preview.side_media}
         />
       )}
 

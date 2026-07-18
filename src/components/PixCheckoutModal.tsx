@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
 import coconudiLogo from "@/assets/coconudi-logo.png";
-import { useCheckoutPixSettings } from "@/hooks/useCheckoutPixSettings";
+import { useCheckoutPixSettings, type SideMediaItem } from "@/hooks/useCheckoutPixSettings";
+import CheckoutSideCarousel from "@/components/CheckoutSideCarousel";
 
 interface Props {
   open: boolean;

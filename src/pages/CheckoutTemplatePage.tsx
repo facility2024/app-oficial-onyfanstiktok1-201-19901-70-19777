@@ -4,22 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 
-interface Template {
-  slug: string;
-  amount: number;
-  product_name: string;
-  product_description: string;
-  product_image_url: string;
-  redirect_to: string;
-  storage_flag: string;
-  ativo: boolean;
-}
-
 const CheckoutTemplatePage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [tpl, setTpl] = useState<Template | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -27,16 +15,15 @@ const CheckoutTemplatePage = () => {
       if (!slug) return;
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("*")
+        .select("id")
         .eq("slug", slug)
         .eq("ativo", true)
         .maybeSingle();
-      setTpl(data as Template | null);
-      setLoading(false);
+      setStatus(data ? "ok" : "missing");
     })();
   }, [slug]);
 
-  if (loading) {
+  if (status === "loading") {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
@@ -44,7 +31,7 @@ const CheckoutTemplatePage = () => {
     );
   }
 
-  if (!tpl) {
+  if (status === "missing") {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-3 p-6 text-center">
         <p className="text-white text-lg font-bold">Checkout indisponível</p>
@@ -62,12 +49,7 @@ const CheckoutTemplatePage = () => {
       <PixCheckoutModal
         open={open}
         onClose={() => { setOpen(false); navigate(-1); }}
-        amount={Number(tpl.amount)}
-        productName={tpl.product_name}
-        productDescription={tpl.product_description}
-        productImage={tpl.product_image_url || undefined}
-        storageFlag={tpl.storage_flag}
-        redirectTo={tpl.redirect_to}
+        templateSlug={slug}
       />
     </div>
   );

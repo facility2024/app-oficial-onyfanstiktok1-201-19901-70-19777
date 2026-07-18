@@ -102,7 +102,7 @@ export default function MyAccessPanel() {
               )}
             </div>
             {unlocked ? (
-              <Button size="sm" onClick={() => nav("/app")}>Acessar</Button>
+              <Button size="sm" onClick={() => nav(`/acesso-produto/${p.id}`)}>Acessar</Button>
             ) : (
               <Button size="sm" variant="secondary" onClick={() => openCheckout(p.id)}>
                 Comprar

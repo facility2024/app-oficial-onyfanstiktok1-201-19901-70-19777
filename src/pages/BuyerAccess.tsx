@@ -47,7 +47,7 @@ export default function BuyerAccess() {
       className="min-h-dvh flex items-center justify-center p-4 bg-gray-950 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: "url('https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/%26.jpg')" }}
     >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
       <div className="relative w-full max-w-md bg-gray-900/90 border border-emerald-500/30 shadow-2xl shadow-emerald-500/10 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-8 h-8 text-emerald-400" />

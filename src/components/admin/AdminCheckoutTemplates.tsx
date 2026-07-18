@@ -286,6 +286,46 @@ export const AdminCheckoutTemplates = () => {
               </div>
             </div>
 
+            {/* Vínculo com modelo (opcional) */}
+            <div className="border border-white/10 rounded-lg p-3 bg-white/5 space-y-2">
+              <Label className="text-white">🔗 Vincular a uma modelo (opcional)</Label>
+              <p className="text-xs text-gray-400">
+                Se vinculado, esse checkout aparece como botão "Comprar" no perfil da modelo.
+              </p>
+              {editing.model_id ? (
+                <div className="flex items-center justify-between gap-2 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2">
+                  <span className="text-emerald-300 text-sm font-mono truncate">
+                    {editing.model_id}
+                  </span>
+                  <Button size="sm" variant="outline"
+                    onClick={() => setEditing({ ...editing, model_id: null })}
+                    className="border-red-500/40 text-red-300 hover:bg-red-500/10">
+                    Remover
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Input value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                    placeholder="Buscar modelo pelo @username..."
+                    className="bg-gray-800 border-white/10 text-white" />
+                  {modelResults.length > 0 && (
+                    <div className="max-h-48 overflow-y-auto border border-white/10 rounded-lg divide-y divide-white/10">
+                      {modelResults.map((m) => (
+                        <button key={m.id} type="button"
+                          onClick={() => { setEditing({ ...editing, model_id: m.id }); setModelSearch(""); setModelResults([]); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-white/10 text-left">
+                          <img src={m.avatar_url || "/default-avatar.svg"} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          <span className="text-white text-sm">@{m.username}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+
             <label className="flex items-center gap-2 text-white font-semibold">
               <input type="checkbox" checked={editing.ativo}
                 onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}

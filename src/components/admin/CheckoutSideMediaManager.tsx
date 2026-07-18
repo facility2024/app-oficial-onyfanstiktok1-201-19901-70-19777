@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Upload, Link as LinkIcon, Trash2, GripVertical, Image as ImgIcon, Video as VideoIcon } from "lucide-react";
+import { Loader2, Upload, Link as LinkIcon, Trash2, GripVertical, Image as ImgIcon, Video as VideoIcon, Eye } from "lucide-react";
 import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 const MAX_ITEMS = 5;
@@ -50,6 +50,7 @@ export function CheckoutSideMediaManager({
   const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [urlType, setUrlType] = useState<"image" | "video">("image");
+  const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const items = Array.isArray(value) ? value : [];
@@ -195,9 +196,31 @@ export function CheckoutSideMediaManager({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {items.map((it, i) => (
             <div key={i} className="relative group bg-gray-900 border border-white/10 rounded-lg overflow-hidden">
-              <div className="aspect-[3/4] bg-black flex items-center justify-center">
+              <div className="aspect-[3/4] bg-black flex items-center justify-center relative">
                 {it.type === "video" ? (
-                  <video src={it.url} muted autoPlay loop playsInline className="w-full h-full object-cover" />
+                  revealed[i] ? (
+                    <video src={it.url} controls autoPlay playsInline className="w-full h-full object-cover" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setRevealed((r) => ({ ...r, [i]: true }))}
+                      className="relative w-full h-full block"
+                      aria-label="Ver vídeo"
+                    >
+                      <video
+                        src={`${it.url}#t=0.1`}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover blur-md brightness-50 pointer-events-none"
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="w-10 h-10 rounded-full bg-black/60 border border-white/30 flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white" />
+                        </span>
+                      </span>
+                    </button>
+                  )
                 ) : (
                   <img src={it.url} alt="" className="w-full h-full object-cover" />
                 )}

@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft, Package } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft, Package, LayoutGrid, ListPlus, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Product { id: string; name: string; slug: string; }
@@ -15,8 +14,12 @@ interface AccessPage {
   title: string; description: string | null; cover_url: string | null;
   is_published: boolean;
 }
-interface AccessVideo {
+interface AccessCard {
   id: string; page_id: string; title: string; description: string | null;
+  cover_url: string | null; sort_order: number; is_active: boolean; is_published: boolean;
+}
+interface AccessVideo {
+  id: string; page_id: string; card_id: string | null; title: string; description: string | null;
   thumbnail_url: string | null; video_url: string; sort_order: number; is_active: boolean;
 }
 
@@ -53,7 +56,7 @@ export default function AdminAccessPages() {
   };
 
   const removePage = async (id: string) => {
-    if (!confirm("Excluir esta página e todos os vídeos?")) return;
+    if (!confirm("Excluir esta página e todos os módulos/vídeos?")) return;
     await (supabase as any).from("access_pages").delete().eq("id", id);
     toast({ title: "Página excluída" });
     load();
@@ -77,7 +80,7 @@ export default function AdminAccessPages() {
         </div>
       </div>
       <p className="text-sm text-gray-400">
-        Cada produto pode ter uma página de acesso. Ao aprovar o pagamento, o comprador é liberado automaticamente.
+        Cada produto vira uma área de membros com <b>módulos (cards)</b>. Cada card contém vários vídeos. Ao clicar no card, o comprador abre a lista de vídeos daquele módulo.
       </p>
 
       {loading ? (
@@ -93,7 +96,7 @@ export default function AdminAccessPages() {
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-white truncate">{p.title}</p>
                   <p className="text-xs text-gray-400 truncate">
-                    Produto: {prod?.name ?? "—"} · slug: /acesso-produto/{p.product_id}
+                    Produto: {prod?.name ?? "—"} · /acesso-produto/{p.product_id}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded ${p.is_published ? "bg-emerald-600 text-white" : "bg-gray-700 text-gray-300"}`}>
@@ -114,18 +117,23 @@ export default function AdminAccessPages() {
 
 function PageEditor({ page, products, onBack }: { page: AccessPage; products: Product[]; onBack: () => void; }) {
   const [form, setForm] = useState<AccessPage>(page);
+  const [cards, setCards] = useState<AccessCard[]>([]);
   const [videos, setVideos] = useState<AccessVideo[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
 
-  const loadVideos = async () => {
+  const loadData = async () => {
     setLoading(true);
-    const { data } = await (supabase as any)
-      .from("access_page_videos").select("*").eq("page_id", page.id).order("sort_order");
-    setVideos(data ?? []);
+    const [{ data: c }, { data: v }] = await Promise.all([
+      (supabase as any).from("access_page_cards").select("*").eq("page_id", page.id).order("sort_order"),
+      (supabase as any).from("access_page_videos").select("*").eq("page_id", page.id).order("sort_order"),
+    ]);
+    setCards(c ?? []);
+    setVideos(v ?? []);
     setLoading(false);
   };
-  useEffect(() => { loadVideos(); }, [page.id]);
+  useEffect(() => { loadData(); }, [page.id]);
 
   const savePage = async (publish?: boolean) => {
     setSaving(true);
@@ -142,13 +150,67 @@ function PageEditor({ page, products, onBack }: { page: AccessPage; products: Pr
     toast({ title: publish ? "Publicada!" : "Salvo" });
   };
 
-  const addVideo = async () => {
+  const addCard = async () => {
+    const { data, error } = await (supabase as any).from("access_page_cards").insert({
+      page_id: page.id,
+      title: `Módulo ${cards.length + 1}`,
+      sort_order: cards.length,
+      is_active: true,
+      is_published: true,
+    }).select().single();
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    setCards([...cards, data]);
+    setOpenCards({ ...openCards, [data.id]: true });
+  };
+
+  const updateCard = async (id: string, patch: Partial<AccessCard>) => {
+    setCards(cards.map(c => c.id === id ? { ...c, ...patch } : c));
+    await (supabase as any).from("access_page_cards").update(patch).eq("id", id);
+  };
+
+  const removeCard = async (id: string) => {
+    if (!confirm("Excluir módulo e todos os vídeos dele?")) return;
+    await (supabase as any).from("access_page_cards").delete().eq("id", id);
+    setCards(cards.filter(c => c.id !== id));
+    setVideos(videos.filter(v => v.card_id !== id));
+  };
+
+  const moveCard = async (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= cards.length) return;
+    const arr = [...cards];
+    [arr[idx], arr[j]] = [arr[j], arr[idx]];
+    const updated = arr.map((c, i) => ({ ...c, sort_order: i }));
+    setCards(updated);
+    await Promise.all(updated.map(c =>
+      (supabase as any).from("access_page_cards").update({ sort_order: c.sort_order }).eq("id", c.id)
+    ));
+  };
+
+  const addVideo = async (cardId: string) => {
+    const inCard = videos.filter(v => v.card_id === cardId);
     const { data, error } = await (supabase as any).from("access_page_videos").insert({
-      page_id: page.id, title: "Novo vídeo", video_url: "",
-      sort_order: videos.length, is_active: true,
+      page_id: page.id, card_id: cardId,
+      title: "Novo vídeo", video_url: "",
+      sort_order: inCard.length, is_active: true,
     }).select().single();
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     setVideos([...videos, data]);
+  };
+
+  const bulkAddVideos = async (cardId: string, text: string) => {
+    const urls = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 5);
+    if (!urls.length) { toast({ title: "Cole ao menos uma URL", variant: "destructive" }); return; }
+    const base = videos.filter(v => v.card_id === cardId).length;
+    const rows = urls.map((u, i) => ({
+      page_id: page.id, card_id: cardId,
+      title: `Vídeo ${base + i + 1}`, video_url: u,
+      sort_order: base + i, is_active: true,
+    }));
+    const { data, error } = await (supabase as any).from("access_page_videos").insert(rows).select();
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    setVideos([...videos, ...(data ?? [])]);
+    toast({ title: `${urls.length} vídeos adicionados` });
   };
 
   const updateVideo = async (id: string, patch: Partial<AccessVideo>) => {
@@ -162,13 +224,16 @@ function PageEditor({ page, products, onBack }: { page: AccessPage; products: Pr
     setVideos(videos.filter(v => v.id !== id));
   };
 
-  const move = async (idx: number, dir: -1 | 1) => {
+  const moveVideo = async (cardId: string, idx: number, dir: -1 | 1) => {
+    const list = videos.filter(v => v.card_id === cardId).sort((a, b) => a.sort_order - b.sort_order);
     const j = idx + dir;
-    if (j < 0 || j >= videos.length) return;
-    const arr = [...videos];
-    [arr[idx], arr[j]] = [arr[j], arr[idx]];
-    const updated = arr.map((v, i) => ({ ...v, sort_order: i }));
-    setVideos(updated);
+    if (j < 0 || j >= list.length) return;
+    [list[idx], list[j]] = [list[j], list[idx]];
+    const updated = list.map((v, i) => ({ ...v, sort_order: i }));
+    setVideos(videos.map(v => {
+      const u = updated.find(x => x.id === v.id);
+      return u ?? v;
+    }));
     await Promise.all(updated.map(v =>
       (supabase as any).from("access_page_videos").update({ sort_order: v.sort_order }).eq("id", v.id)
     ));
@@ -176,9 +241,9 @@ function PageEditor({ page, products, onBack }: { page: AccessPage; products: Pr
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="w-4 h-4 mr-1" />Voltar</Button>
-        <h2 className="text-xl font-bold text-white flex-1">Editar página de acesso</h2>
+        <h2 className="text-xl font-bold text-white flex-1">Editar área de membros</h2>
         <Button variant="secondary" onClick={() => savePage()} disabled={saving}>
           <Save className="w-4 h-4 mr-1" /> Salvar rascunho
         </Button>
@@ -216,55 +281,141 @@ function PageEditor({ page, products, onBack }: { page: AccessPage; products: Pr
       </div>
 
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-white">Vídeos da página</h3>
-        <Button onClick={addVideo} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="w-4 h-4 mr-1" /> Adicionar vídeo
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <LayoutGrid className="w-5 h-5" /> Módulos (cards)
+        </h3>
+        <Button onClick={addCard} className="bg-emerald-600 hover:bg-emerald-700">
+          <Plus className="w-4 h-4 mr-1" /> Novo card
         </Button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-6"><Loader2 className="animate-spin text-white" /></div>
-      ) : videos.length === 0 ? (
+      ) : cards.length === 0 ? (
         <div className="text-center text-gray-400 py-6 border border-dashed border-gray-800 rounded-lg">
-          Nenhum vídeo cadastrado.
+          Nenhum módulo criado. Clique em "Novo card" para começar.
         </div>
       ) : (
         <div className="grid gap-3">
-          {videos.map((v, i) => (
-            <div key={v.id} className="p-3 rounded-lg border border-gray-800 bg-gray-900 grid gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">#{i + 1}</span>
-                <Input value={v.title}
-                  onChange={(e) => updateVideo(v.id, { title: e.target.value })}
-                  placeholder="Título do vídeo"
-                  className="flex-1 bg-gray-950 border-gray-700 text-white" />
-                <Button size="icon" variant="ghost" onClick={() => move(i, -1)}><ArrowUp className="w-4 h-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => move(i, 1)}><ArrowDown className="w-4 h-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => updateVideo(v.id, { is_active: !v.is_active })}>
-                  {v.is_active ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-500" />}
-                </Button>
-                <Button size="icon" variant="destructive" onClick={() => removeVideo(v.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+          {cards.map((card, ci) => {
+            const cardVideos = videos.filter(v => v.card_id === card.id).sort((a, b) => a.sort_order - b.sort_order);
+            const isOpen = openCards[card.id] ?? true;
+            return (
+              <div key={card.id} className="rounded-lg border border-gray-800 bg-gray-900 overflow-hidden">
+                <div className="p-3 flex items-center gap-2 bg-gray-950/50">
+                  <Button size="icon" variant="ghost" onClick={() => setOpenCards({ ...openCards, [card.id]: !isOpen })}>
+                    {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </Button>
+                  <span className="text-xs text-gray-500">#{ci + 1}</span>
+                  <Input value={card.title}
+                    onChange={(e) => updateCard(card.id, { title: e.target.value })}
+                    placeholder="Título do módulo"
+                    className="flex-1 bg-gray-950 border-gray-700 text-white font-bold" />
+                  <span className="text-xs text-gray-400 whitespace-nowrap">{cardVideos.length} vídeo(s)</span>
+                  <Button size="icon" variant="ghost" onClick={() => moveCard(ci, -1)}><ArrowUp className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => moveCard(ci, 1)}><ArrowDown className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => updateCard(card.id, { is_published: !card.is_published })}
+                    title={card.is_published ? "Publicado" : "Rascunho"}>
+                    {card.is_published ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-500" />}
+                  </Button>
+                  <Button size="icon" variant="destructive" onClick={() => removeCard(card.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {isOpen && (
+                  <div className="p-3 grid gap-3 border-t border-gray-800">
+                    <div className="grid md:grid-cols-2 gap-2">
+                      <Input value={card.cover_url ?? ""}
+                        onChange={(e) => updateCard(card.id, { cover_url: e.target.value })}
+                        placeholder="URL da capa do card (miniatura)"
+                        className="bg-gray-950 border-gray-700 text-white" />
+                      <Input value={card.description ?? ""}
+                        onChange={(e) => updateCard(card.id, { description: e.target.value })}
+                        placeholder="Descrição curta"
+                        className="bg-gray-950 border-gray-700 text-white" />
+                    </div>
+
+                    <BulkAddBox onSubmit={(t) => bulkAddVideos(card.id, t)} />
+
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-white font-semibold text-sm">Vídeos deste card</h4>
+                      <Button size="sm" onClick={() => addVideo(card.id)} className="bg-emerald-600 hover:bg-emerald-700">
+                        <Plus className="w-4 h-4 mr-1" /> Adicionar vídeo
+                      </Button>
+                    </div>
+
+                    {cardVideos.length === 0 ? (
+                      <div className="text-center text-gray-500 text-sm py-4 border border-dashed border-gray-800 rounded">
+                        Nenhum vídeo neste card ainda.
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        {cardVideos.map((v, i) => (
+                          <div key={v.id} className="p-2 rounded border border-gray-800 bg-gray-950 grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">#{i + 1}</span>
+                              <Input value={v.title}
+                                onChange={(e) => updateVideo(v.id, { title: e.target.value })}
+                                placeholder="Título"
+                                className="flex-1 bg-gray-900 border-gray-700 text-white text-sm" />
+                              <Button size="icon" variant="ghost" onClick={() => moveVideo(card.id, i, -1)}><ArrowUp className="w-4 h-4" /></Button>
+                              <Button size="icon" variant="ghost" onClick={() => moveVideo(card.id, i, 1)}><ArrowDown className="w-4 h-4" /></Button>
+                              <Button size="icon" variant="ghost" onClick={() => updateVideo(v.id, { is_active: !v.is_active })}>
+                                {v.is_active ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-500" />}
+                              </Button>
+                              <Button size="icon" variant="destructive" onClick={() => removeVideo(v.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-2">
+                              <Input value={v.thumbnail_url ?? ""}
+                                onChange={(e) => updateVideo(v.id, { thumbnail_url: e.target.value })}
+                                placeholder="URL da miniatura"
+                                className="bg-gray-900 border-gray-700 text-white text-sm" />
+                              <Input value={v.video_url}
+                                onChange={(e) => updateVideo(v.id, { video_url: e.target.value })}
+                                placeholder="URL do vídeo (Bunny)"
+                                className="bg-gray-900 border-gray-700 text-white text-sm" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <Textarea value={v.description ?? ""}
-                onChange={(e) => updateVideo(v.id, { description: e.target.value })}
-                placeholder="Descrição"
-                className="bg-gray-950 border-gray-700 text-white min-h-[60px]" />
-              <div className="grid md:grid-cols-2 gap-2">
-                <Input value={v.thumbnail_url ?? ""}
-                  onChange={(e) => updateVideo(v.id, { thumbnail_url: e.target.value })}
-                  placeholder="URL da miniatura"
-                  className="bg-gray-950 border-gray-700 text-white" />
-                <Input value={v.video_url}
-                  onChange={(e) => updateVideo(v.id, { video_url: e.target.value })}
-                  placeholder="URL do vídeo (Bunny)"
-                  className="bg-gray-950 border-gray-700 text-white" />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+    </div>
+  );
+}
+
+function BulkAddBox({ onSubmit }: { onSubmit: (text: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  if (!open) {
+    return (
+      <Button variant="secondary" size="sm" className="w-fit" onClick={() => setOpen(true)}>
+        <ListPlus className="w-4 h-4 mr-1" /> Adicionar em lote (várias URLs)
+      </Button>
+    );
+  }
+  return (
+    <div className="p-3 rounded border border-emerald-700/50 bg-emerald-950/20 grid gap-2">
+      <Label className="text-emerald-300 text-sm">Cole uma URL por linha (Bunny CDN)</Label>
+      <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)}
+        placeholder={"https://cdn.bunny.net/video1.mp4\nhttps://cdn.bunny.net/video2.mp4"}
+        className="bg-gray-950 border-gray-700 text-white text-sm font-mono" />
+      <div className="flex gap-2">
+        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"
+          onClick={() => { onSubmit(text); setText(""); setOpen(false); }}>
+          Cadastrar todos
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => { setText(""); setOpen(false); }}>Cancelar</Button>
+      </div>
     </div>
   );
 }

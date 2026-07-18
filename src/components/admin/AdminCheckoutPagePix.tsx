@@ -252,6 +252,16 @@ export const AdminCheckoutPagePix = () => {
           Salvar alterações
         </Button>
       </div>
+
+      {previewOpen && (
+        <PixCheckoutModal
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          amount={14.97}
+          productImage={form.product_image_url || undefined}
+          sellerName={form.author_label}
+        />
+      )}
     </div>
   );
 };

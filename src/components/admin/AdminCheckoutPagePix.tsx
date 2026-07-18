@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Save, CreditCard } from "lucide-react";
+import { Loader2, Save, CreditCard, Eye, Link as LinkIcon } from "lucide-react";
+import PixCheckoutModal from "@/components/PixCheckoutModal";
 import {
   CHECKOUT_PIX_KEY_MAP,
   CHECKOUT_PIX_KEYS,
@@ -17,6 +18,7 @@ export const AdminCheckoutPagePix = () => {
   const [form, setForm] = useState<CheckoutPixSettings>(DEFAULT_CHECKOUT_PIX_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     (async () => {

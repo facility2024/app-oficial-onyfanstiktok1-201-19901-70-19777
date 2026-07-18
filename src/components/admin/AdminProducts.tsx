@@ -161,7 +161,7 @@ export default function AdminProducts() {
               onClick={() => patch(p.id, { is_active: !p.is_active })}>
               {p.is_active ? "Desativar" : "Ativar"}
             </Button>
-            <Button size="sm" onClick={() => navigate(`/admin?tab=access-pages&product=${p.id}`)}>
+            <Button size="sm" onClick={() => navigate(`/admin?tab=product-content&product=${p.id}`)}>
               <Video className="w-4 h-4 mr-1" /> Conteúdo
             </Button>
             <Button size="sm" variant="destructive" onClick={() => remove(p.id)}>

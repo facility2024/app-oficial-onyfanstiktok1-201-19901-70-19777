@@ -70,6 +70,44 @@ export const AdminCheckoutPagePix = () => {
     }
   };
 
+  const slugify = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
+
+  const handleSaveAsTemplate = async () => {
+    const amount = Number(form.default_amount);
+    if (!amount || amount <= 0) {
+      toast.error("Defina um valor padrão antes de gerar um novo modelo.");
+      return;
+    }
+    setSavingAsTemplate(true);
+    try {
+      const baseName = `Checkout R$ ${amount.toFixed(2).replace(".", ",")}`;
+      const baseSlug = slugify(`${baseName}-${Date.now().toString(36)}`);
+      const { error } = await (supabase as any).from("checkout_templates").insert({
+        nome: baseName,
+        slug: baseSlug,
+        amount,
+        product_name: "Acesso Coconudi",
+        product_description: "Pagamento seguro via PIX",
+        product_image_url: form.product_image_url || "",
+        redirect_to: "/app",
+        storage_flag: `checkout_${baseSlug}_paid`,
+        ativo: true,
+        ordem: 0,
+        model_id: null,
+      });
+      if (error) throw error;
+      toast.success("Novo modelo criado!", { description: "Aparece na aba Modelos de checkout como miniatura editável." });
+      setTemplatesRefresh((n) => n + 1);
+      setActiveTab("templates");
+    } catch (e: any) {
+      toast.error("Erro ao gerar modelo", { description: e?.message });
+    } finally {
+      setSavingAsTemplate(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-16">

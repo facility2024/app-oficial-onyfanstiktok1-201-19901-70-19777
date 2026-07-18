@@ -168,7 +168,22 @@ export const useFeedPromotions = () => {
       if (seen >= cap) return false;
       return periodsForFrequency(cap).includes(period);
     });
-    return shuffleWithSeed(filtered, getSessionSeed());
+
+    // Agrupa por prioridade e embaralha SOMENTE dentro de cada grupo.
+    // Assim, prioridade maior sempre aparece antes; entre iguais varia por sessão.
+    const seed = getSessionSeed();
+    const buckets = new Map<number, FeedPromotion[]>();
+    for (const p of filtered) {
+      const prio = Number(p.priority) || 0;
+      if (!buckets.has(prio)) buckets.set(prio, []);
+      buckets.get(prio)!.push(p);
+    }
+    const sortedPriorities = Array.from(buckets.keys()).sort((a, b) => b - a);
+    const ordered: FeedPromotion[] = [];
+    for (const prio of sortedPriorities) {
+      ordered.push(...shuffleWithSeed(buckets.get(prio)!, seed + prio));
+    }
+    return ordered;
   }, [promotionsTyped, dailyViews]);
 
   const interval = eligiblePromotions.length > 0 ? (eligiblePromotions[0]?.position_interval || 5) : 0;

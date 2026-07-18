@@ -14,6 +14,7 @@ export interface CheckoutPixSettings {
   product_image_url: string;
   whatsapp_label: string;
   whatsapp_placeholder: string;
+  default_amount: string;
 }
 
 export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
@@ -33,6 +34,7 @@ export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
   whatsapp_label:
     "📱 Coloque seu WhatsApp válido — ele será sua chave de acesso aos seus produtos",
   whatsapp_placeholder: "(11) 99999-9999",
+  default_amount: "14.97",
 };
 
 const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
@@ -48,6 +50,7 @@ const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
   product_image_url: "checkout_pix_product_image_url",
   whatsapp_label: "checkout_pix_whatsapp_label",
   whatsapp_placeholder: "checkout_pix_whatsapp_placeholder",
+  default_amount: "checkout_pix_default_amount",
 };
 
 export const CHECKOUT_PIX_KEYS = Object.values(KEY_MAP);

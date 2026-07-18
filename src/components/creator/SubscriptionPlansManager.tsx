@@ -258,20 +258,22 @@ export const SubscriptionPlansManager = ({ creatorId }: SubscriptionPlansManager
                 />
               </div>
 
-              {/* Link de Pagamento */}
-              <div className="space-y-2">
-                <Label className="text-gray-300 flex items-center gap-1">
-                  <Link className="w-3 h-3" /> Link de Pagamento (Hoopay)
-                </Label>
-                <Input
-                  type="url"
-                  placeholder="https://hoopay.com.br/..."
-                  value={plan.payment_url || ''}
-                  onChange={(e) => handlePlanChange(plan.plan_type, 'payment_url', e.target.value || null)}
-                  className="bg-gray-600 border-gray-500 text-white"
-                  disabled={!plan.is_active}
-                />
-              </div>
+              {/* Link de Pagamento (Hoopay) - oculto temporariamente a pedido do criador */}
+              {false && (
+                <div className="space-y-2">
+                  <Label className="text-gray-300 flex items-center gap-1">
+                    <Link className="w-3 h-3" /> Link de Pagamento (Hoopay)
+                  </Label>
+                  <Input
+                    type="url"
+                    placeholder="https://hoopay.com.br/..."
+                    value={plan.payment_url || ''}
+                    onChange={(e) => handlePlanChange(plan.plan_type, 'payment_url', e.target.value || null)}
+                    className="bg-gray-600 border-gray-500 text-white"
+                    disabled={!plan.is_active}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Benefícios Personalizados */}

@@ -51,6 +51,22 @@ export const AdminCheckoutTemplates = () => {
   const [editing, setEditing] = useState<Template | null>(null);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<Template | null>(null);
+  const [modelSearch, setModelSearch] = useState("");
+  const [modelResults, setModelResults] = useState<ModelOption[]>([]);
+
+  useEffect(() => {
+    const q = modelSearch.trim();
+    if (!q) { setModelResults([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await (supabase as any)
+        .from("models")
+        .select("id,username,avatar_url")
+        .ilike("username", `%${q}%`)
+        .limit(10);
+      setModelResults((data as ModelOption[]) || []);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [modelSearch]);
 
   const load = async () => {
     setLoading(true);

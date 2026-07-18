@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,11 @@ export default function BuyerAccess() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
+
+  useEffect(() => {
+    const pre = sessionStorage.getItem("buyer_whatsapp_prefill");
+    if (pre) setWa(pre);
+  }, []);
 
   const send = async () => {
     setLoading(true);

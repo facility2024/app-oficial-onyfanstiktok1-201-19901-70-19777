@@ -242,12 +242,14 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
               </button>
             </div>
 
-            <div>
-              <Label className="text-white">Nome interno *</Label>
+            <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-lg p-3">
+              <Label className="text-emerald-300 font-bold">
+                📝 Renomear página PIX * <span className="text-[10px] text-emerald-200/70">(aparece na busca do Order Bump)</span>
+              </Label>
               <Input value={editing.nome}
                 onChange={(e) => setEditing({ ...editing, nome: e.target.value, slug: editing.slug || slugify(e.target.value) })}
                 placeholder="Ex: VIP Latinas R$14,97"
-                className="bg-gray-800 border-white/10 text-white" />
+                className="bg-gray-900 border-emerald-500/40 text-white font-semibold mt-1" />
             </div>
 
             <div>
@@ -260,6 +262,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
                 Link final: <span className="text-emerald-400">{window.location.origin}/checkout/{editing.slug || "..."}</span>
               </p>
             </div>
+
 
             <div className="grid grid-cols-2 gap-3">
               <div>

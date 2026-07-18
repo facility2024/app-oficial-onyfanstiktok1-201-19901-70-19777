@@ -113,13 +113,17 @@ Deno.serve(async (req) => {
     // Nunca dependa apenas dos itens enviados pelo navegador. Em links públicos,
     // o usuário pode clicar antes de o template terminar de carregar. O servidor
     // resolve o produto vinculado ao template e mantém a compra rastreável.
-    if (purchaseItems.length === 0 && templateId && UUID_RE.test(templateId)) {
-      const { data: linkedTemplate, error: templateError } = await admin
+    if (purchaseItems.length === 0 && ((templateId && UUID_RE.test(templateId)) || templateSlug)) {
+      let templateQuery = admin
         .from('checkout_templates')
         .select('product_id, product_name')
-        .eq('id', templateId)
         .eq('ativo', true)
-        .maybeSingle()
+
+      templateQuery = templateId && UUID_RE.test(templateId)
+        ? templateQuery.eq('id', templateId)
+        : templateQuery.eq('slug', templateSlug)
+
+      const { data: linkedTemplate, error: templateError } = await templateQuery.maybeSingle()
 
       if (templateError) console.log('[gateway template lookup]', templateError.message)
       if (linkedTemplate?.product_id) {

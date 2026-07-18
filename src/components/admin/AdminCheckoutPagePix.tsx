@@ -9,10 +9,12 @@ import { Loader2, Save, CreditCard, Eye, Link as LinkIcon, Layers, Settings2, Pl
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AdminCheckoutTemplates } from "./AdminCheckoutTemplates";
+import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
 import {
   CHECKOUT_PIX_KEY_MAP,
   CHECKOUT_PIX_KEYS,
   DEFAULT_CHECKOUT_PIX_SETTINGS,
+  SIDE_MEDIA_KEY,
   type CheckoutPixSettings,
 } from "@/hooks/useCheckoutPixSettings";
 

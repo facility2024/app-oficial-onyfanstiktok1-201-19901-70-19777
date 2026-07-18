@@ -39,7 +39,7 @@ export const ModelSubscriptionOverlay: React.FC<ModelSubscriptionOverlayProps> =
     params.set('plan', plan.plan_type);
     params.set('type', plan.model_type);
     params.set('name', modelName);
-    const checkoutUrl = `/checkout?${params.toString()}`;
+    const checkoutUrl = `/checkout-vip?${params.toString()}`;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {

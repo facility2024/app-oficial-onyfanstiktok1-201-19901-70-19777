@@ -156,7 +156,7 @@ const SubscribePage = () => {
     }
 
     // Redirecionar para checkout transparente
-    navigate('/checkout');
+    navigate('/checkout-vip');
   };
 
   const handlePhoneSubmit = async () => {

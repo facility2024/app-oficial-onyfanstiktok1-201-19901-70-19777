@@ -16,7 +16,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const sessionChecked = useRef(false);
 
   const redirectUnauthenticated = () => {
-    if (location.pathname === '/checkout') {
+    if (location.pathname === '/checkout-vip') {
       localStorage.setItem('returnTo', location.pathname + location.search);
       localStorage.setItem('requiresLogin', 'true');
       navigate('/auth', { replace: true });

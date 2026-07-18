@@ -770,7 +770,7 @@ if (!isOpen) return null;
                               params.set('plan', plan.plan_type);
                               params.set('type', plan.model_type);
                               params.set('name', user.username || '');
-                              navigate(`/checkout?${params.toString()}`);
+                              navigate(`/checkout-vip?${params.toString()}`);
                             }}
                             className="w-full relative overflow-hidden rounded-xl py-3.5 px-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg bg-gradient-to-r from-purple-500/40 to-purple-600/40 border-2 border-purple-400"
                           >

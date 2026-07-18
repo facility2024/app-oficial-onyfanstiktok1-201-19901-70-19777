@@ -99,6 +99,13 @@ export default function PixCheckoutModal({
     pixSettings.product_image_url ||
     "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
 
+  const effectiveSideMedia: SideMediaItem[] = (() => {
+    if (sideMediaOverride && sideMediaOverride.length > 0) return sideMediaOverride;
+    const t = Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
+    if (t.length > 0) return t;
+    return globalPixSettings.side_media || [];
+  })();
+
 
   // WhatsApp
   const [whatsapp, setWhatsapp] = useState("");

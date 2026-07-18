@@ -18,7 +18,10 @@ interface Bump {
   link_acesso: string | null;
   ativo: boolean;
   ordem: number;
+  template_ids: string[] | null;
 }
+
+interface TemplateOpt { id: string; nome: string; slug: string }
 
 const empty = {
   titulo: "",
@@ -28,6 +31,7 @@ const empty = {
   link_acesso: "",
   ativo: true,
   ordem: 0,
+  template_ids: [] as string[],
 };
 
 export const AdminCheckoutOrderBumps = () => {

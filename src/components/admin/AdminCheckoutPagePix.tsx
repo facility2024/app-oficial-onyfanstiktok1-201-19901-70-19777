@@ -128,7 +128,7 @@ export const AdminCheckoutPagePix = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="global" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "global" | "templates")} className="w-full">
         <TabsList className="bg-gray-900 border border-white/10">
           <TabsTrigger value="global" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Settings2 className="w-4 h-4 mr-2" /> Configurações globais
@@ -139,7 +139,7 @@ export const AdminCheckoutPagePix = () => {
         </TabsList>
 
         <TabsContent value="templates" className="mt-4">
-          <AdminCheckoutTemplates />
+          <AdminCheckoutTemplates key={templatesRefresh} />
         </TabsContent>
 
         <TabsContent value="global" className="mt-4 space-y-6">
@@ -156,6 +156,12 @@ export const AdminCheckoutPagePix = () => {
               );
             }} variant="outline" className="border-white/20 text-white hover:bg-white/10 font-bold">
               <LinkIcon className="w-4 h-4 mr-2" /> Copiar link da página
+            </Button>
+            <Button onClick={handleSaveAsTemplate} disabled={savingAsTemplate}
+              variant="outline"
+              className="border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/10 font-bold">
+              {savingAsTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlusCircle className="w-4 h-4 mr-2" />}
+              Gerar novo checkout com este valor
             </Button>
             <Button onClick={handleSave} disabled={saving}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">

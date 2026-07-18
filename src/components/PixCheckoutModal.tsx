@@ -28,6 +28,8 @@ interface Props {
     | "whatsapp_placeholder" | "product_image_url",
     string
   >>;
+  /** Prévia/override do carrossel lateral */
+  sideMediaOverride?: SideMediaItem[];
 }
 
 export default function PixCheckoutModal({

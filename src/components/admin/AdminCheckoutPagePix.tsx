@@ -263,6 +263,16 @@ export const AdminCheckoutPagePix = () => {
             </p>
           </div>
 
+          <div className="pt-3 border-t border-white/10">
+            <CheckoutSideMediaManager
+              value={form.side_media}
+              onChange={(next) => set("side_media", next)}
+            />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Se você adicionar mídias aqui, elas viram um <b>carrossel</b> automático no card lateral (imagens trocam a cada 4s; vídeos avançam ao terminar). Se ficar vazio, usa apenas a imagem única acima.
+            </p>
+          </div>
+
           <h3 className="text-lg font-bold text-emerald-400 pt-2">💰 Valor padrão do PIX</h3>
           <div>
             <Label className="text-white">Valor (R$) usado no link global /checkout e na prévia</Label>

@@ -43,6 +43,7 @@ export const AdminCheckoutOrderBumps = () => {
   const [saving, setSaving] = useState(false);
   const [mainLink, setMainLink] = useState("");
   const [mainLinkSaving, setMainLinkSaving] = useState(false);
+  const [templates, setTemplates] = useState<TemplateOpt[]>([]);
 
   const fetchItems = async () => {
     setLoading(true);

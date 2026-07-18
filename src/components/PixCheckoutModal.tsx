@@ -18,25 +18,71 @@ interface Props {
   sellerName?: string;
   storageFlag?: string;
   redirectTo?: string;
+  /** Slug de um checkout_templates para carregar amount/name/description/image/redirect do banco */
+  templateSlug?: string;
 }
 
 export default function PixCheckoutModal({
   open,
   onClose,
-  amount = 14.97,
-  productName = "Meu acesso vip Orientais /Latinas",
-  productDescription = "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...",
+  amount: amountProp,
+  productName: productNameProp,
+  productDescription: productDescriptionProp,
   productImage,
   sellerName,
-  storageFlag = "garotas_top_paid",
-  redirectTo = "/garotas-top-vip",
+  storageFlag: storageFlagProp,
+  redirectTo: redirectToProp,
+  templateSlug,
 }: Props) {
   const { settings: pixSettings } = useCheckoutPixSettings();
   const effectiveSellerName = sellerName || pixSettings.author_label;
+
+  // Template loading
+  const [template, setTemplate] = useState<{
+    amount: number;
+    product_name: string;
+    product_description: string;
+    product_image_url: string;
+    redirect_to: string;
+    storage_flag: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open || !templateSlug) { setTemplate(null); return; }
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("checkout_templates")
+        .select("amount,product_name,product_description,product_image_url,redirect_to,storage_flag")
+        .eq("slug", templateSlug)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (data) setTemplate(data);
+    })();
+  }, [open, templateSlug]);
+
+  const amount = template?.amount ?? amountProp ?? 14.97;
+  const productName = template?.product_name || productNameProp || "Meu acesso vip Orientais /Latinas";
+  const productDescription = template?.product_description || productDescriptionProp ||
+    "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...";
+  const storageFlag = template?.storage_flag || storageFlagProp || "garotas_top_paid";
+  const redirectTo = template?.redirect_to || redirectToProp || "/garotas-top-vip";
   const effectiveProductImage =
     productImage ||
+    template?.product_image_url ||
     pixSettings.product_image_url ||
     "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
+
+  // WhatsApp
+  const [whatsapp, setWhatsapp] = useState("");
+  const digits = whatsapp.replace(/\D/g, "");
+  const whatsappValid = digits.length >= 10 && digits.length <= 11;
+  const formatWhatsapp = (raw: string) => {
+    const d = raw.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
   const [loading, setLoading] = useState(false);
   const [pix, setPix] = useState<{
     transaction_id?: string;
@@ -106,6 +152,10 @@ export default function PixCheckoutModal({
   }, [open]);
 
   const generate = async () => {
+    if (!whatsappValid) {
+      toast({ title: "WhatsApp inválido", description: "Informe um WhatsApp válido com DDD.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       const selectedList = bumps.filter((b) => selectedBumps[b.id]).map((b) => b.titulo);
@@ -113,7 +163,12 @@ export default function PixCheckoutModal({
         ? `${productName} + ${selectedList.join(" + ")}`
         : productName;
       const { data, error } = await supabase.functions.invoke("neonpay-pix-gateway", {
-        body: { amount: finalAmount, product_name: productWithBumps },
+        body: {
+          amount: finalAmount,
+          product_name: productWithBumps,
+          customer_whatsapp: whatsapp,
+          client: { phone: whatsapp },
+        },
       });
       if (error) throw error;
       if (!data?.pix_code) throw new Error("PIX não retornado");
@@ -390,13 +445,42 @@ export default function PixCheckoutModal({
               </div>
             )}
 
+            {/* WhatsApp obrigatório */}
+            {!pix && !paid && (
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <label className="block text-sm font-bold text-gray-900 mb-2 leading-snug">
+                  {pixSettings.whatsapp_label}
+                </label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                  placeholder={pixSettings.whatsapp_placeholder}
+                  className={`w-full h-12 px-4 rounded-lg border-2 text-gray-900 text-base font-semibold focus:outline-none transition ${
+                    whatsapp === ""
+                      ? "border-gray-300 focus:border-purple-500"
+                      : whatsappValid
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-red-400 bg-red-50"
+                  }`}
+                />
+                {whatsapp !== "" && !whatsappValid && (
+                  <p className="text-xs text-red-600 mt-1 font-semibold">
+                    Digite um WhatsApp válido com DDD (10 ou 11 dígitos).
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Finalizar */}
             {!pix && !paid && (
               <Button
                 onClick={generate}
-                disabled={loading}
+                disabled={loading || !whatsappValid}
                 style={{ backgroundColor: pixSettings.finalize_button_color }}
-                className="w-full disabled:opacity-60 text-white font-bold py-6 rounded-lg text-base shadow hover:brightness-95"
+                className="w-full disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-6 rounded-lg text-base shadow hover:brightness-95"
               >
                 {loading ? (
                   <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Gerando PIX...</>

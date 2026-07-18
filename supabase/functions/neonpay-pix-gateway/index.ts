@@ -41,13 +41,16 @@ Deno.serve(async (req) => {
 
     const identifier = `gt10_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
+    const rawPhone = getText(body?.customer_whatsapp) ?? getText(body?.client?.phone) ?? '(11) 99999-9999'
+    const phoneDigits = rawPhone.replace(/\D/g, '')
+
     const payload = {
       identifier,
       amount,
       client: {
         name: body?.client?.name || 'Cliente Coconudi',
         email: body?.client?.email || 'cliente@coconudi.com',
-        phone: body?.client?.phone || '(11) 99999-9999',
+        phone: rawPhone,
         document: body?.client?.document || '12345678909',
       },
       products: [
@@ -80,6 +83,23 @@ Deno.serve(async (req) => {
     const transaction = getObject(data.transaction)
 
     const transactionId = getText(data.transactionId) ?? getText(data.id) ?? getText(transaction.id) ?? identifier
+
+    // Persistir WhatsApp em pix_payments para o webhook liberar acesso depois
+    try {
+      const admin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+      await admin.from('pix_payments').insert({
+        transaction_id: transactionId,
+        amount,
+        status: 'PENDING',
+        customer_phone: rawPhone,
+        customer_whatsapp: phoneDigits,
+      })
+    } catch (persistErr) {
+      console.log('[neonpay-pix-gateway pix_payments insert]', String(persistErr))
+    }
 
     if (authUserId && privateModelId) {
       const admin = createClient(

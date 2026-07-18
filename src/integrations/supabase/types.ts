@@ -1220,6 +1220,54 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_templates: {
+        Row: {
+          amount: number
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          product_description: string
+          product_image_url: string
+          product_name: string
+          redirect_to: string
+          slug: string
+          storage_flag: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          product_description?: string
+          product_image_url?: string
+          product_name?: string
+          redirect_to?: string
+          slug: string
+          storage_flag?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          product_description?: string
+          product_image_url?: string
+          product_name?: string
+          redirect_to?: string
+          slug?: string
+          storage_flag?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cocoflix_content: {
         Row: {
           category: string
@@ -5305,6 +5353,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          customer_whatsapp: string | null
           email: string
           expires_at: string
           hoopay_charge_uuid: string | null
@@ -5328,6 +5377,7 @@ export type Database = {
         Insert: {
           amount?: number
           created_at?: string
+          customer_whatsapp?: string | null
           email: string
           expires_at?: string
           hoopay_charge_uuid?: string | null
@@ -5351,6 +5401,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          customer_whatsapp?: string | null
           email?: string
           expires_at?: string
           hoopay_charge_uuid?: string | null

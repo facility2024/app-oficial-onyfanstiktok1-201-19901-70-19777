@@ -12,6 +12,8 @@ export interface CheckoutPixSettings {
   footer_security_text: string;
   author_label: string;
   product_image_url: string;
+  whatsapp_label: string;
+  whatsapp_placeholder: string;
 }
 
 export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
@@ -28,6 +30,9 @@ export const DEFAULT_CHECKOUT_PIX_SETTINGS: CheckoutPixSettings = {
     "Os pagamentos são processados de forma segura e criptografada pela NeonPay.",
   author_label: "Otavio gomes dos santos",
   product_image_url: "",
+  whatsapp_label:
+    "📱 Coloque seu WhatsApp válido — ele será sua chave de acesso aos seus produtos",
+  whatsapp_placeholder: "(11) 99999-9999",
 };
 
 const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
@@ -41,6 +46,8 @@ const KEY_MAP: Record<keyof CheckoutPixSettings, string> = {
   footer_security_text: "checkout_pix_footer_security_text",
   author_label: "checkout_pix_author_label",
   product_image_url: "checkout_pix_product_image_url",
+  whatsapp_label: "checkout_pix_whatsapp_label",
+  whatsapp_placeholder: "checkout_pix_whatsapp_placeholder",
 };
 
 export const CHECKOUT_PIX_KEYS = Object.values(KEY_MAP);

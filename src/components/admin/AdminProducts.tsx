@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, Video } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -31,6 +32,7 @@ const empty = (): Partial<Product> => ({
 });
 
 export default function AdminProducts() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Partial<Product>>(empty());
@@ -84,7 +86,12 @@ export default function AdminProducts() {
 
   return (
     <div className="p-4 space-y-6">
-      <h2 className="text-2xl font-bold text-white">Produtos (Catálogo)</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold text-white">Produtos (Catálogo)</h2>
+        <Button onClick={() => navigate("/admin?tab=access-pages")} className="bg-emerald-600 hover:bg-emerald-700">
+          <Video className="w-4 h-4 mr-2" /> Cadastrar vídeos dos produtos
+        </Button>
+      </div>
       <p className="text-white/60 text-sm">
         Cada checkout, order bump ou assinatura é um produto. Vendas geram liberações individuais
         na tabela <code>user_entitlements</code>.
@@ -155,6 +162,9 @@ export default function AdminProducts() {
             <Button size="sm" variant="secondary"
               onClick={() => patch(p.id, { is_active: !p.is_active })}>
               {p.is_active ? "Desativar" : "Ativar"}
+            </Button>
+            <Button size="sm" onClick={() => navigate("/admin?tab=access-pages")}>
+              <Video className="w-4 h-4 mr-1" /> Conteúdo
             </Button>
             <Button size="sm" variant="destructive" onClick={() => remove(p.id)}>
               <Trash2 className="w-4 h-4" />

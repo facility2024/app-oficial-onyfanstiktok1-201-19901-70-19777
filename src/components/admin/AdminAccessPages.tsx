@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Product { id: string; name: string; slug: string; }
 interface AccessPage {
@@ -20,6 +21,7 @@ interface AccessVideo {
 }
 
 export default function AdminAccessPages() {
+  const navigate = useNavigate();
   const [pages, setPages] = useState<AccessPage[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,11 +65,16 @@ export default function AdminAccessPages() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-2xl font-bold text-white">Páginas de Acesso</h2>
-        <Button onClick={createPage} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="w-4 h-4 mr-1" /> Nova página
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => navigate("/admin?tab=products")}>
+            <Package className="w-4 h-4 mr-1" /> Cadastrar produto
+          </Button>
+          <Button onClick={createPage} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="w-4 h-4 mr-1" /> Nova página
+          </Button>
+        </div>
       </div>
       <p className="text-sm text-gray-400">
         Cada produto pode ter uma página de acesso. Ao aprovar o pagamento, o comprador é liberado automaticamente.

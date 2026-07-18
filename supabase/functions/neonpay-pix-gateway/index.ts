@@ -84,6 +84,23 @@ Deno.serve(async (req) => {
 
     const transactionId = getText(data.transactionId) ?? getText(data.id) ?? getText(transaction.id) ?? identifier
 
+    // Persistir WhatsApp em pix_payments para o webhook liberar acesso depois
+    try {
+      const admin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+      await admin.from('pix_payments').insert({
+        transaction_id: transactionId,
+        amount,
+        status: 'PENDING',
+        customer_phone: rawPhone,
+        customer_whatsapp: phoneDigits,
+      })
+    } catch (persistErr) {
+      console.log('[neonpay-pix-gateway pix_payments insert]', String(persistErr))
+    }
+
     if (authUserId && privateModelId) {
       const admin = createClient(
         Deno.env.get('SUPABASE_URL')!,

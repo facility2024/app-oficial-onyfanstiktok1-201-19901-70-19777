@@ -1,51 +1,61 @@
 ## Objetivo
+Criar sistema de "Páginas de Acesso" por produto: quando o comprador clicar num produto liberado em `/meus-acessos`, abre dentro do app uma página com os vídeos daquela oferta. Tudo gerenciado por painel admin.
 
-Adicionar liberação automática de conteúdo após pagamento PIX aprovado, com dois tipos de acesso: **link do produto principal (vídeos)** e **link do Order Bump (oferta extra)**, ambos gerenciados pelo painel admin.
+## Banco de dados (migration)
 
-## Regras de liberação
+**`access_pages`** — uma página por produto
+- `id uuid pk`, `product_id uuid fk products` (unique), `slug text unique`
+- `title text`, `description text`, `cover_url text`
+- `is_published boolean default false`
+- `created_at`, `updated_at`
 
-Na tela de confirmação (`PaymentConfirmation.tsx`), após o pagamento ser aprovado:
+**`access_page_videos`** — cards de vídeo dentro da página
+- `id uuid pk`, `page_id uuid fk access_pages on delete cascade`
+- `title text`, `description text`, `thumbnail_url text`, `video_url text`
+- `sort_order int default 0`, `is_active boolean default true`
+- `created_at`
 
-- **Comprou só o produto principal** → aparece **1 botão**: "Clique aqui para acessar seus vídeos"
-- **Comprou principal + Order Bump(s)** → aparecem **2 botões**:
-  1. "Meu acesso aos vídeos" (link principal)
-  2. "Acesso à minha oferta" (link do bump comprado)
+RLS:
+- SELECT público em `access_pages` e `access_page_videos` **apenas** onde `is_published=true` / `is_active=true` (a verificação de entitlement é feita na página do app, não na policy — assim admin edita livre e página exibe apenas se publicada).
+- ALL para admin (`has_role admin`).
+- GRANTs: `anon`+`authenticated` SELECT; `authenticated` ALL condicionado por policy; `service_role` ALL.
 
-## Mudanças no banco
+## Painel Admin
 
-1. Nova coluna em `checkout_order_bumps`:
-   - `link_acesso` (text) — URL liberada quando o usuário compra aquele bump.
-2. Nova entrada em `admin_settings`:
-   - `key = 'checkout_main_access_link'` → URL do produto principal (vídeos).
+Novo item no menu admin: **"Páginas de Acesso"** → `src/pages/admin/AdminAccessPages.tsx`
 
-## Mudanças no Admin
+Lista todas as páginas com: produto vinculado, título, status (publicada/rascunho), nº de vídeos, ações (editar/excluir/publicar).
 
-**`AdminCheckoutOrderBumps.tsx`**
-- Adicionar campo "Link de acesso liberado" no editor de cada bump (input URL).
+**Editor** (`AdminAccessPageEditor.tsx`, aberto em modal ou rota `/admin/access-pages/:id`):
+- Selecionar produto (dropdown de `products` ativos que ainda não têm página, ou o próprio na edição).
+- Campos: título, descrição, capa (upload no bucket `checkout-media` já existente), slug (auto do produto).
+- Lista de cards de vídeo com: título, descrição, thumbnail (upload), URL do vídeo (Bunny), reordenar (drag ou setas), ativar/desativar, excluir.
+- Botão **"Salvar e Publicar"** (seta `is_published=true`) e **"Salvar rascunho"**.
 
-**Novo bloco no admin (dentro do mesmo componente ou em `AdminSettings`)**
-- Campo "Link de acesso — Produto principal (vídeos)" salvando em `admin_settings.checkout_main_access_link`.
+## Fluxo do usuário
 
-## Mudanças no Checkout
+1. `MyAccessPanel.tsx` — botão **"Acessar"** de um produto liberado passa a navegar para `/acesso-produto/:productId` (interno, sem link externo).
+2. Nova rota + página `src/pages/ProductAccessPage.tsx`:
+   - Valida que o usuário/whatsapp tem entitlement daquele `product_id` (via `useUserEntitlements`).
+   - Se não tiver → redireciona para `/meus-acessos` com toast.
+   - Se tiver → carrega `access_pages` do produto + `access_page_videos` publicados.
+   - Renderiza header (capa/título/descrição) e grid de cards de vídeo no mesmo estilo da imagem de referência.
+   - Clique num card abre player inline (modal com `<video>` HTML5, sem sair do app).
+   - Botão **"Voltar ao app"** no topo → `navigate('/app')`.
 
-**`PixCheckoutModal.tsx`**
-- Ao gerar o PIX, salvar em `sessionStorage`:
-  - `purchased_main_link` (link principal)
-  - `purchased_bump_links` (array com os links dos bumps selecionados)
+## Rotas (App.tsx)
+- `/acesso-produto/:productId` — pública dentro do app, mas com guard de entitlement por dentro.
+- `/admin/access-pages` e `/admin/access-pages/:id` — dentro de `AdminRoute`.
 
-## Mudanças na Confirmação
+## Ligação com pagamento
+Nada muda no webhook: `products.access_key` + `user_entitlements` já existem. A nova página só lê o entitlement para liberar. Escalável: cada produto novo criado no admin ganha uma página nova sem tocar em código.
 
-**`PaymentConfirmation.tsx`**
-- Quando `status === 'CONFIRMED'`, ler do `sessionStorage` os links salvos e renderizar:
-  - Sempre: botão "🎬 Meu acesso aos vídeos" → abre `purchased_main_link`
-  - Se `purchased_bump_links.length > 0`: botão(ões) "🎁 Acesso à minha oferta" → abre cada link
-- Limpar `sessionStorage` após exibir.
+## Arquivos a criar/alterar
+- Migration nova (tabelas + RLS + GRANTs + realtime opcional).
+- `src/pages/admin/AdminAccessPages.tsx` (lista) e `AdminAccessPageEditor.tsx` (editor).
+- Adicionar entrada no menu do `AdminDashboard.tsx`.
+- `src/pages/ProductAccessPage.tsx` (visualização pelo comprador).
+- `src/components/MyAccessPanel.tsx` — trocar `onClick` do botão Acessar.
+- `src/App.tsx` — registrar 3 rotas novas.
 
-## Arquivos afetados
-
-- `supabase/migrations/*` (nova migration — coluna + setting)
-- `src/components/admin/AdminCheckoutOrderBumps.tsx`
-- `src/components/PixCheckoutModal.tsx`
-- `src/pages/PaymentConfirmation.tsx`
-
-Aguardo o comando **"produzir"** para aplicar.
+Confirma com **"produzir"** que aplico tudo.

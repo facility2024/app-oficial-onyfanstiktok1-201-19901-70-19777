@@ -9,10 +9,12 @@ import { Loader2, Save, CreditCard, Eye, Link as LinkIcon, Layers, Settings2, Pl
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AdminCheckoutTemplates } from "./AdminCheckoutTemplates";
+import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
 import {
   CHECKOUT_PIX_KEY_MAP,
   CHECKOUT_PIX_KEYS,
   DEFAULT_CHECKOUT_PIX_SETTINGS,
+  SIDE_MEDIA_KEY,
   type CheckoutPixSettings,
 } from "@/hooks/useCheckoutPixSettings";
 
@@ -35,6 +37,18 @@ export const AdminCheckoutPagePix = () => {
           .in("setting_key", CHECKOUT_PIX_KEYS);
         const next = { ...DEFAULT_CHECKOUT_PIX_SETTINGS };
         (data || []).forEach((row: any) => {
+          if (row.setting_key === SIDE_MEDIA_KEY) {
+            const raw = row.setting_value;
+            const arr = Array.isArray(raw)
+              ? raw
+              : (raw && typeof raw === "object" && Array.isArray((raw as any).value))
+                ? (raw as any).value
+                : (typeof raw === "string" ? (() => { try { return JSON.parse(raw); } catch { return []; } })() : []);
+            next.side_media = Array.isArray(arr)
+              ? arr.filter((x: any) => x && typeof x.url === "string" && (x.type === "image" || x.type === "video")).slice(0, 5)
+              : [];
+            return;
+          }
           const entry = (Object.entries(CHECKOUT_PIX_KEY_MAP) as [keyof CheckoutPixSettings, string][])
             .find(([, k]) => k === row.setting_key);
           if (!entry) return;
@@ -59,6 +73,10 @@ export const AdminCheckoutPagePix = () => {
           setting_key: key,
           setting_value: form[field] as any,
         }));
+      rows.push({
+        setting_key: SIDE_MEDIA_KEY as any,
+        setting_value: (form.side_media || []) as any,
+      });
       const { error } = await (supabase as any)
         .from("admin_settings")
         .upsert(rows, { onConflict: "setting_key" });
@@ -108,6 +126,7 @@ export const AdminCheckoutPagePix = () => {
         author_label: form.author_label,
         whatsapp_label: form.whatsapp_label,
         whatsapp_placeholder: form.whatsapp_placeholder,
+        side_media: form.side_media || [],
       });
       setTemplatesRefresh((n) => n + 1);
       setActiveTab("templates");
@@ -244,6 +263,16 @@ export const AdminCheckoutPagePix = () => {
             </p>
           </div>
 
+          <div className="pt-3 border-t border-white/10">
+            <CheckoutSideMediaManager
+              value={form.side_media}
+              onChange={(next) => set("side_media", next)}
+            />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Se você adicionar mídias aqui, elas viram um <b>carrossel</b> automático no card lateral (imagens trocam a cada 4s; vídeos avançam ao terminar). Se ficar vazio, usa apenas a imagem única acima.
+            </p>
+          </div>
+
           <h3 className="text-lg font-bold text-emerald-400 pt-2">💰 Valor padrão do PIX</h3>
           <div>
             <Label className="text-white">Valor (R$) usado no link global /checkout e na prévia</Label>
@@ -339,6 +368,7 @@ export const AdminCheckoutPagePix = () => {
           amount={Number(form.default_amount) || 14.97}
           productImage={form.product_image_url || undefined}
           sellerName={form.author_label}
+          sideMediaOverride={form.side_media}
         />
       )}
     </div>

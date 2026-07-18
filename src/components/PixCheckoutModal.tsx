@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
 import coconudiLogo from "@/assets/coconudi-logo.png";
-import { useCheckoutPixSettings } from "@/hooks/useCheckoutPixSettings";
+import { useCheckoutPixSettings, type SideMediaItem } from "@/hooks/useCheckoutPixSettings";
+import CheckoutSideCarousel from "@/components/CheckoutSideCarousel";
 
 interface Props {
   open: boolean;
@@ -27,6 +28,8 @@ interface Props {
     | "whatsapp_placeholder" | "product_image_url",
     string
   >>;
+  /** Prévia/override do carrossel lateral */
+  sideMediaOverride?: SideMediaItem[];
 }
 
 export default function PixCheckoutModal({
@@ -41,6 +44,7 @@ export default function PixCheckoutModal({
   redirectTo: redirectToProp,
   templateSlug,
   visualOverrides,
+  sideMediaOverride,
 }: Props) {
   const { settings: globalPixSettings } = useCheckoutPixSettings();
 
@@ -94,6 +98,13 @@ export default function PixCheckoutModal({
     template?.product_image_url ||
     pixSettings.product_image_url ||
     "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
+
+  const effectiveSideMedia: SideMediaItem[] = (() => {
+    if (sideMediaOverride && sideMediaOverride.length > 0) return sideMediaOverride;
+    const t = Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
+    if (t.length > 0) return t;
+    return globalPixSettings.side_media || [];
+  })();
 
 
   // WhatsApp
@@ -533,14 +544,11 @@ export default function PixCheckoutModal({
           {/* Right column - order summary */}
           <div className="bg-white rounded-xl shadow-sm p-5 h-fit order-1 lg:order-2">
             <h3 className="text-gray-900 font-bold text-lg mb-4">Resumo do pedido</h3>
-            <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 mb-3">
-              <img
-                src={effectiveProductImage}
-                alt={productName}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            </div>
+            <CheckoutSideCarousel
+              items={effectiveSideMedia}
+              fallbackImage={effectiveProductImage}
+              productName={productName}
+            />
             <div className="text-gray-900 font-bold text-base leading-tight">{productName}</div>
             <div className="text-xs text-gray-500 mt-1">Feito por: {effectiveSellerName}</div>
 

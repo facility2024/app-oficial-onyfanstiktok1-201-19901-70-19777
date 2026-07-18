@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, Plus, Save, Trash2, Eye, Link as LinkIcon, Pencil, X } from "lucide-react";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
+import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
+import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 interface Template {
   id: string;
@@ -33,6 +35,7 @@ interface Template {
   author_label: string;
   whatsapp_label: string;
   whatsapp_placeholder: string;
+  side_media: SideMediaItem[];
 }
 
 interface ModelOption { id: string; username: string; avatar_url: string | null; }
@@ -61,6 +64,7 @@ const empty = (): Template => ({
   author_label: "",
   whatsapp_label: "",
   whatsapp_placeholder: "",
+  side_media: [],
 });
 
 
@@ -113,7 +117,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
   useEffect(() => { load(); }, []);
 
   const openNew = () => setEditing(empty());
-  const openEdit = (t: Template) => setEditing({ ...t });
+  const openEdit = (t: Template) => setEditing({ ...t, side_media: Array.isArray(t.side_media) ? t.side_media : [] });
 
   const save = async () => {
     if (!editing) return;
@@ -396,6 +400,20 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
               </div>
             </details>
 
+            <details className="bg-gray-900/60 border border-white/10 rounded-lg p-3">
+              <summary className="cursor-pointer text-white font-semibold">🎬 Mídia lateral (imagens e vídeos)</summary>
+              <div className="mt-3">
+                <CheckoutSideMediaManager
+                  value={editing.side_media}
+                  onChange={(next) => setEditing({ ...editing, side_media: next })}
+                />
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Se vazio, usa as mídias/imagem da página global.
+                </p>
+              </div>
+            </details>
+
+
             <label className="flex items-center gap-2 text-white font-semibold">
               <input type="checkbox" checked={editing.ativo}
                 onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}
@@ -440,6 +458,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
             whatsapp_placeholder: preview.whatsapp_placeholder,
             product_image_url: preview.product_image_url,
           }}
+          sideMediaOverride={preview.side_media}
         />
       )}
 

@@ -1244,6 +1244,7 @@ export type Database = {
           redirect_to: string
           security_banner_url: string | null
           security_text: string | null
+          side_media: Json
           slug: string
           storage_flag: string
           timer_label: string | null
@@ -1271,6 +1272,7 @@ export type Database = {
           redirect_to?: string
           security_banner_url?: string | null
           security_text?: string | null
+          side_media?: Json
           slug: string
           storage_flag?: string
           timer_label?: string | null
@@ -1298,6 +1300,7 @@ export type Database = {
           redirect_to?: string
           security_banner_url?: string | null
           security_text?: string | null
+          side_media?: Json
           slug?: string
           storage_flag?: string
           timer_label?: string | null

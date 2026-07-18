@@ -173,11 +173,13 @@ const App = () => (
           
           {/* Assinatura VIP */}
           <Route path="/subscribe" element={<SubscribePage />} />
-          <Route path="/checkout" element={
+          <Route path="/checkout" element={<CheckoutGlobalPage />} />
+          <Route path="/checkout-vip" element={
             <ProtectedRoute>
               <CheckoutPage />
             </ProtectedRoute>
           } />
+
           <Route path="/checkout/:slug" element={<CheckoutTemplatePage />} />
 
           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />

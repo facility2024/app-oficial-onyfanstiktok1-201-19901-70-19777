@@ -20,6 +20,11 @@ export default function BuyerAccess() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
+  useEffect(() => {
+    const pre = sessionStorage.getItem("buyer_whatsapp_prefill");
+    if (pre) setWa(pre);
+  }, []);
+
   const send = async () => {
     setLoading(true);
     try {

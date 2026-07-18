@@ -95,7 +95,17 @@ export const AdminCheckoutOrderBumps = () => {
         .select("id,nome,slug,model_id")
         .eq("ativo", true)
         .order("nome", { ascending: true });
-      setTemplates(data || []);
+      const list = (data || []) as TemplateOpt[];
+      const modelIds = Array.from(new Set(list.map((t) => t.model_id).filter(Boolean))) as string[];
+      let modelMap: Record<string, string> = {};
+      if (modelIds.length) {
+        const { data: mods } = await (supabase as any)
+          .from("models")
+          .select("id,name")
+          .in("id", modelIds);
+        (mods || []).forEach((m: any) => { modelMap[m.id] = m.name; });
+      }
+      setTemplates(list.map((t) => ({ ...t, model_name: t.model_id ? modelMap[t.model_id] || null : null })));
     })();
   }, []);
 

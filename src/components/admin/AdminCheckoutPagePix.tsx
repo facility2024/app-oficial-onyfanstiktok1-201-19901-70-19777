@@ -77,50 +77,51 @@ export const AdminCheckoutPagePix = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <CreditCard className="w-6 h-6 text-emerald-400" />
-            Página de Checkout (PIX)
-          </h2>
-          <p className="text-sm text-gray-400 mt-1">
-            Edite todos os textos e elementos fixos da tela de pagamento PIX do NeonPay.
-            (O banner do produto, título e descrição são editados em <b>Feed de Ofertas</b>.)
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={() => setPreviewOpen(true)}
-            variant="outline"
-            className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 font-bold"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Ver prévia
-          </Button>
-          <Button
-            onClick={() => {
+      <div>
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <CreditCard className="w-6 h-6 text-emerald-400" />
+          Página de Checkout (PIX)
+        </h2>
+        <p className="text-sm text-gray-400 mt-1">
+          Configure a aparência global do checkout e crie múltiplos modelos com valores diferentes.
+        </p>
+      </div>
+
+      <Tabs defaultValue="global" className="w-full">
+        <TabsList className="bg-gray-900 border border-white/10">
+          <TabsTrigger value="global" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <Settings2 className="w-4 h-4 mr-2" /> Configurações globais
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <Layers className="w-4 h-4 mr-2" /> Modelos de checkout
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="templates" className="mt-4">
+          <AdminCheckoutTemplates />
+        </TabsContent>
+
+        <TabsContent value="global" className="mt-4 space-y-6">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Button onClick={() => setPreviewOpen(true)} variant="outline"
+              className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 font-bold">
+              <Eye className="w-4 h-4 mr-2" /> Ver prévia
+            </Button>
+            <Button onClick={() => {
               const url = `${window.location.origin}/checkout`;
               navigator.clipboard.writeText(url).then(
                 () => toast.success("Link copiado!", { description: url }),
                 () => toast.error("Não foi possível copiar", { description: url })
               );
-            }}
-            variant="outline"
-            className="border-white/20 text-white hover:bg-white/10 font-bold"
-          >
-            <LinkIcon className="w-4 h-4 mr-2" />
-            Copiar link da página
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-          >
-            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            Salvar alterações
-          </Button>
-        </div>
-      </div>
+            }} variant="outline" className="border-white/20 text-white hover:bg-white/10 font-bold">
+              <LinkIcon className="w-4 h-4 mr-2" /> Copiar link da página
+            </Button>
+            <Button onClick={handleSave} disabled={saving}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Salvar alterações
+            </Button>
+          </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Coluna 1 - textos */}

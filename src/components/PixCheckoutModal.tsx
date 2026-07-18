@@ -355,6 +355,7 @@ export default function PixCheckoutModal({
 
   const handleConfirmed = async () => {
     if (pollRef.current) window.clearInterval(pollRef.current);
+    if (realtimeChanRef.current) { supabase.removeChannel(realtimeChanRef.current); realtimeChanRef.current = null; }
     setPaid(true);
     try {
       localStorage.setItem(storageFlag, "1");

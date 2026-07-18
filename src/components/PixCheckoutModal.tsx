@@ -243,7 +243,7 @@ export default function PixCheckoutModal({
         <div className="relative bg-gradient-to-r from-[#1a1a1a] via-[#6b21a8] to-[#1a1a1a] text-white text-center py-4 px-4 border-b border-purple-900/60">
           <div className="text-2xl sm:text-3xl font-black tracking-wider tabular-nums drop-shadow-[0_0_10px_rgba(168,85,247,0.6)]">{countdown}</div>
           <div className="text-xs sm:text-sm font-semibold opacity-95">
-            Oferta acaba em breve — não perca!
+            {pixSettings.timer_label}
           </div>
           <button
             onClick={onClose}
@@ -257,12 +257,12 @@ export default function PixCheckoutModal({
         {/* Selo de segurança */}
         <div className="bg-neutral-900 border-b border-black py-4 px-4 flex flex-col items-center justify-center gap-2">
           <img
-            src="https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/Design%20sem%20nome%20(1).png"
+            src={pixSettings.security_banner_url}
             alt="Pagamento seguro"
             className="h-16 sm:h-20 w-auto object-contain"
           />
           <p className="text-xs sm:text-sm font-semibold text-white text-center">
-            Pagamento seguro pela plataforma coconudi.com
+            {pixSettings.security_text}
           </p>
         </div>
 

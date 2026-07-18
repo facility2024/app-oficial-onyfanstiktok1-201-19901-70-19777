@@ -46,6 +46,7 @@ import PostagemPage from "./pages/PostagemPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutTemplatePage from "./pages/CheckoutTemplatePage";
 import CheckoutGlobalPage from "./pages/CheckoutGlobalPage";
+import MyAccessPanel from "./components/MyAccessPanel";
 
 import CreateStorePage from "./pages/CreateStorePage";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
@@ -102,6 +103,15 @@ const App = () => (
           <Route path="/profile" element={
             <ProtectedRoute>
               <UserProfile />
+            </ProtectedRoute>
+          } />
+
+          {/* Painel de acessos do usuário */}
+          <Route path="/meus-acessos" element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-950">
+                <MyAccessPanel />
+              </div>
             </ProtectedRoute>
           } />
 

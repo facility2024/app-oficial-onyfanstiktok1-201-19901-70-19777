@@ -216,6 +216,58 @@ export default function PixCheckoutModal({
       setPix(data);
       await buildQrImage(String(data.pix_code), data.pix_image);
       startPolling(data.transaction_id);
+
+      // Registra compra + itens no novo sistema de produtos/liberações
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const userId = authData?.user?.id ?? null;
+
+        const items: { product_id: string; price: number; snapshot_name: string; snapshot_access_key?: string }[] = [];
+        if (template?.product_id) {
+          items.push({
+            product_id: template.product_id,
+            price: Number(amount || 0),
+            snapshot_name: productName,
+          });
+        }
+        for (const b of bumps.filter((x) => selectedBumps[x.id])) {
+          const { data: bumpRow } = await (supabase as any)
+            .from("checkout_order_bumps").select("product_id").eq("id", b.id).maybeSingle();
+          if (bumpRow?.product_id) {
+            items.push({
+              product_id: bumpRow.product_id,
+              price: Number(b.valor || 0),
+              snapshot_name: b.titulo,
+            });
+          }
+        }
+
+        if (items.length > 0) {
+          const { data: purchase, error: pErr } = await (supabase as any)
+            .from("checkout_purchases")
+            .insert({
+              user_id: userId,
+              customer_whatsapp: whatsapp,
+              customer_email: authData?.user?.email ?? null,
+              total_amount: finalAmount,
+              status: "pending",
+              gateway: "neonpay",
+              gateway_payment_id: String(data.transaction_id),
+              metadata: { template_id: template?.id ?? null, template_slug: templateSlug ?? null },
+            })
+            .select("id")
+            .maybeSingle();
+          if (pErr) console.warn("[checkout_purchases insert]", pErr.message);
+          if (purchase?.id) {
+            const payload = items.map((it) => ({ ...it, purchase_id: purchase.id }));
+            const { error: iErr } = await (supabase as any)
+              .from("checkout_purchase_items").insert(payload);
+            if (iErr) console.warn("[checkout_purchase_items insert]", iErr.message);
+          }
+        }
+      } catch (regErr) {
+        console.warn("[registro compra falhou]", regErr);
+      }
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Tente novamente em instantes.";
       toast({ title: "Erro ao gerar PIX", description: message, variant: "destructive" });

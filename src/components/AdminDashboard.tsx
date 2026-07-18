@@ -59,6 +59,7 @@ import SalesReports from './admin/SalesReports';
 import { AdminAdsGarotasTop } from './admin/AdminAdsGarotasTop';
 import { AdminCheckoutOrderBumps } from './admin/AdminCheckoutOrderBumps';
 import { AdminCheckoutPagePix } from './admin/AdminCheckoutPagePix';
+import AdminProducts from './admin/AdminProducts';
 
 import { LoginScreen } from './admin/LoginScreen';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -230,6 +231,8 @@ export const AdminDashboard = () => {
         return <AdminCheckoutOrderBumps />;
       case 'checkout-page-pix':
         return <AdminCheckoutPagePix />;
+      case 'products':
+        return <AdminProducts />;
       case 'loja':
         return <AdminLoja />;
       case 'stores':

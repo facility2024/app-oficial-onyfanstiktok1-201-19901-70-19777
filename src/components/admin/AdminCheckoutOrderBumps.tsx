@@ -107,6 +107,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: b.link_acesso || "",
       ativo: b.ativo,
       ordem: b.ordem,
+      template_ids: b.template_ids || [],
     });
   };
 

@@ -445,13 +445,42 @@ export default function PixCheckoutModal({
               </div>
             )}
 
+            {/* WhatsApp obrigatório */}
+            {!pix && !paid && (
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <label className="block text-sm font-bold text-gray-900 mb-2 leading-snug">
+                  {pixSettings.whatsapp_label}
+                </label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                  placeholder={pixSettings.whatsapp_placeholder}
+                  className={`w-full h-12 px-4 rounded-lg border-2 text-gray-900 text-base font-semibold focus:outline-none transition ${
+                    whatsapp === ""
+                      ? "border-gray-300 focus:border-purple-500"
+                      : whatsappValid
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-red-400 bg-red-50"
+                  }`}
+                />
+                {whatsapp !== "" && !whatsappValid && (
+                  <p className="text-xs text-red-600 mt-1 font-semibold">
+                    Digite um WhatsApp válido com DDD (10 ou 11 dígitos).
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Finalizar */}
             {!pix && !paid && (
               <Button
                 onClick={generate}
-                disabled={loading}
+                disabled={loading || !whatsappValid}
                 style={{ backgroundColor: pixSettings.finalize_button_color }}
-                className="w-full disabled:opacity-60 text-white font-bold py-6 rounded-lg text-base shadow hover:brightness-95"
+                className="w-full disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-6 rounded-lg text-base shadow hover:brightness-95"
               >
                 {loading ? (
                   <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Gerando PIX...</>

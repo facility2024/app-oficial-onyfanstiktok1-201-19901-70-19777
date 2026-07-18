@@ -34,7 +34,7 @@ export const PremiumContentOverlay = ({
     if (modelId) params.set('model', modelId);
     params.set('type', modelType);
     if (modelName) params.set('name', modelName);
-    const checkoutUrl = `/checkout?${params.toString()}`;
+    const checkoutUrl = `/checkout-vip?${params.toString()}`;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {

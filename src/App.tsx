@@ -48,6 +48,7 @@ import CheckoutTemplatePage from "./pages/CheckoutTemplatePage";
 import CheckoutGlobalPage from "./pages/CheckoutGlobalPage";
 import MyAccessPanel from "./components/MyAccessPanel";
 import ProductAccessPage from "./pages/ProductAccessPage";
+import ProductAccessCardPage from "./pages/ProductAccessCardPage";
 
 import CreateStorePage from "./pages/CreateStorePage";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
@@ -120,6 +121,7 @@ const App = () => (
 
           {/* Página de acesso de um produto específico */}
           <Route path="/acesso-produto/:productId" element={<ProductAccessPage />} />
+          <Route path="/acesso-produto/:productId/card/:cardId" element={<ProductAccessCardPage />} />
 
           {/* Aplicação de Criador */}
           <Route path="/creator-application" element={

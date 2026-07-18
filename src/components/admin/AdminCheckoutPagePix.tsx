@@ -73,6 +73,10 @@ export const AdminCheckoutPagePix = () => {
           setting_key: key,
           setting_value: form[field] as any,
         }));
+      rows.push({
+        setting_key: SIDE_MEDIA_KEY as any,
+        setting_value: (form.side_media || []) as any,
+      });
       const { error } = await (supabase as any)
         .from("admin_settings")
         .upsert(rows, { onConflict: "setting_key" });

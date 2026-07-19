@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import AdsGarotasTopModal from './AdsGarotasTopModal';
 
 interface FeedPromotion {
   id: string;
@@ -38,7 +38,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [isPlaying, setIsPlaying] = useState(false);
   const [localMuted, setLocalMuted] = useState(isMuted);
   const [showPopup, setShowPopup] = useState(false);
-  const [showGarotasTop, setShowGarotasTop] = useState(false);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
@@ -71,21 +71,33 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     }
   };
 
+  const navigate = useNavigate();
+
+  const openLink = (url: string) => {
+    // Rota interna (SPA) → navigate; externa → nova aba
+    try {
+      if (url.startsWith('/')) {
+        navigate(url);
+        return;
+      }
+      const u = new URL(url, window.location.origin);
+      if (u.origin === window.location.origin) {
+        navigate(u.pathname + u.search + u.hash);
+        return;
+      }
+    } catch {}
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const handleCtaClick = (e?: any) => {
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
 
     trackClick('cta');
 
-    // Detecta link do Garotas Top e abre como popup responsivo
-    if (promo.cta_link && (/ads\s*\/\s*garotas-top/i.test(promo.cta_link) || /\/ads\/garotas-top/i.test(promo.cta_link))) {
-      setShowGarotasTop(true);
-      return;
-    }
-
     if (promo.cta_mode === 'popup') {
       setShowPopup(true);
     } else if (promo.cta_link) {
-      window.open(promo.cta_link, '_blank', 'noopener,noreferrer');
+      openLink(promo.cta_link);
     }
   };
 
@@ -278,8 +290,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         </div>,
         document.body
       )}
-
-      <AdsGarotasTopModal open={showGarotasTop} onClose={() => setShowGarotasTop(false)} />
     </div>
+
   );
 };

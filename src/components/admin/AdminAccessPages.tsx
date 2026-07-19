@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft, Package, LayoutGrid, ListPlus, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Save, Eye, EyeOff, ArrowLeft, Package, LayoutGrid, ListPlus, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Product { id: string; name: string; slug: string; }
@@ -454,6 +454,11 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
                   </span>
                   <Button size="icon" variant="ghost" onClick={() => moveCard(ci, -1)} title="Subir"><ArrowUp className="w-4 h-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={() => moveCard(ci, 1)} title="Descer"><ArrowDown className="w-4 h-4" /></Button>
+                  <Button size="sm" variant="secondary"
+                    onClick={() => setOpenCards({ ...openCards, [card.id]: !isOpen })}
+                    title="Editar informações do card">
+                    <Pencil className="w-4 h-4 mr-1" />{isOpen ? "Fechar" : "Editar"}
+                  </Button>
                   <Button size="sm" variant={card.is_published ? "secondary" : "default"}
                     className={card.is_published ? "" : "bg-emerald-600 hover:bg-emerald-700"}
                     onClick={() => updateCard(card.id, { is_published: !card.is_published })}>
@@ -463,6 +468,7 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+
 
                 {isOpen && (
                   <div className="p-3 grid gap-3 border-t border-gray-800">

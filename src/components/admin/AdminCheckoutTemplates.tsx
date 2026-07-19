@@ -73,6 +73,13 @@ const slugify = (s: string) =>
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
+const randSuffix = () => Math.random().toString(36).slice(2, 7);
+const parseAmount = (v: any): number => {
+  if (typeof v === "number") return v;
+  const n = Number(String(v ?? "").replace(/\s/g, "").replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : Number(String(v ?? "").replace(",", ".")) || 0;
+};
+
 export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partial<Template> | null } = {}) => {
   const [list, setList] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);

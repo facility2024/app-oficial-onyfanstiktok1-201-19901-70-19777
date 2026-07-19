@@ -141,36 +141,54 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
     try {
       let slug = baseSlug;
       let lastErr: any = null;
+      let persisted: any = null;
       for (let attempt = 0; attempt < 5; attempt++) {
-        const payload = { ...editing, slug, amount: amountNum };
+        // Remove campos que não devem ser enviados (o Postgres gere sozinho)
+        const { id: _id, created_at: _c, updated_at: _u, ...cleanEditing } = editing as any;
+        const payload = { ...cleanEditing, slug, amount: amountNum };
         let error: any = null;
+        let data: any = null;
         if (editing.id) {
           const res = await (supabase as any)
-            .from("checkout_templates").update(payload).eq("id", editing.id);
+            .from("checkout_templates")
+            .update(payload)
+            .eq("id", editing.id)
+            .select();
           error = res.error;
+          data = res.data;
         } else {
-          const { id: _omit, ...toInsert } = payload;
-          void _omit;
           const res = await (supabase as any)
-            .from("checkout_templates").insert(toInsert);
+            .from("checkout_templates")
+            .insert(payload)
+            .select();
           error = res.error;
+          data = res.data;
         }
-        if (!error) { lastErr = null; break; }
+        if (!error) {
+          if (!data || data.length === 0) {
+            throw new Error("Nenhuma linha foi alterada. Verifique se você tem permissão de admin.");
+          }
+          persisted = data[0];
+          lastErr = null;
+          break;
+        }
         lastErr = error;
         const dup = error.code === "23505" || /duplicate|unique/i.test(error.message || "");
         if (!dup) break;
         slug = `${baseSlug}-${randSuffix()}`;
       }
       if (lastErr) throw lastErr;
-      toast.success("Modelo salvo!", { description: `/checkout/${slug}` });
+      toast.success("Salvo!", { description: `/checkout/${persisted?.slug || slug} • R$ ${Number(persisted?.amount ?? amountNum).toFixed(2).replace(".", ",")}` });
       setEditing(null);
       load();
     } catch (e: any) {
+      console.error("[AdminCheckoutTemplates] save error", e);
       toast.error("Erro ao salvar", { description: e?.message || "Tente novamente" });
     } finally {
       setSaving(false);
     }
   };
+
 
   const remove = async (t: Template) => {
     if (!confirm(`Excluir modelo "${t.nome}"?`)) return;

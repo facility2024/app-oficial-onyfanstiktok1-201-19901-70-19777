@@ -101,8 +101,10 @@ export default function PixCheckoutModal({
 
   const effectiveSideMedia: SideMediaItem[] = (() => {
     if (sideMediaOverride && sideMediaOverride.length > 0) return sideMediaOverride;
-    const t = Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
-    if (t.length > 0) return t;
+    // Isolamento estrito: se há template (link individual), usa APENAS a mídia do template.
+    if (templateSlug || template) {
+      return Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
+    }
     return globalPixSettings.side_media || [];
   })();
 

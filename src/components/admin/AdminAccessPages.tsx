@@ -444,6 +444,13 @@ export function PageEditor({ page, products, onBack }: { page: AccessPage; produ
                     {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </Button>
                   <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">CARD #{ci + 1}</span>
+                  <div className="w-14 h-14 rounded-md overflow-hidden bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
+                    {card.cover_url ? (
+                      <img src={card.cover_url} alt={card.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <LayoutGrid className="w-5 h-5 text-gray-600" />
+                    )}
+                  </div>
                   <Input value={card.title}
                     onChange={(e) => updateCard(card.id, { title: e.target.value })}
                     placeholder="Título do módulo"

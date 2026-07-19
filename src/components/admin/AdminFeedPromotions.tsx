@@ -852,7 +852,8 @@ export const AdminFeedPromotions = () => {
                       toast.error('Erro ao aplicar: ' + error.message);
                     } else {
                       toast.success(`Link aplicado em ${count ?? 'todos os'} cards`);
-                      queryClient.invalidateQueries({ queryKey: ['feed-promotions-admin'] });
+                      queryClient.invalidateQueries({ queryKey: ['admin-feed-promotions'] });
+                      queryClient.invalidateQueries({ queryKey: ['feed-promotions'] });
                     }
                   }}
                 >

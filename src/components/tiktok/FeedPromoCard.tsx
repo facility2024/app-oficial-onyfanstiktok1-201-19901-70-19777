@@ -290,8 +290,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         </div>,
         document.body
       )}
-
-      <AdsGarotasTopModal open={showGarotasTop} onClose={() => setShowGarotasTop(false)} />
     </div>
+
   );
 };

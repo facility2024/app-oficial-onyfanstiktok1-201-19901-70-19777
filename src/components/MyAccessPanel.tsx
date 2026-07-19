@@ -72,29 +72,37 @@ export default function MyAccessPanel() {
       )}
       {products.map((p) => {
         const unlocked = hasProduct(p.id);
+        if (!unlocked) {
+          return (
+            <div
+              key={p.id}
+              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 opacity-70"
+            >
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-4 h-4 text-white/40" />
+              </div>
+              <p className="font-semibold text-white/70 truncate flex-1">{p.name}</p>
+              <span className="text-xs text-white/40 uppercase tracking-wide">Bloqueado</span>
+            </div>
+          );
+        }
         return (
           <div
             key={p.id}
-            className={`flex items-center gap-3 rounded-xl border p-3 ${
-              unlocked ? "border-green-500/40 bg-green-500/5" : "border-white/10 bg-white/5"
-            }`}
+            className="flex items-center gap-3 rounded-xl border border-green-500/40 bg-green-500/5 p-3"
           >
             <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
               {p.image_url ? (
                 <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/40">
-                  {unlocked ? <CheckCircle2 /> : <Lock />}
+                  <CheckCircle2 />
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                {unlocked ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Lock className="w-4 h-4 text-white/40" />
-                )}
+                <CheckCircle2 className="w-4 h-4 text-green-400" />
                 <p className="font-semibold text-white truncate">{p.name}</p>
               </div>
               {p.description && (

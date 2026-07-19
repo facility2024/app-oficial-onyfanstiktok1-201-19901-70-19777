@@ -91,12 +91,11 @@ export default function PixCheckoutModal({
   };
   const effectiveSellerName = sellerName || pixSettings.author_label;
 
-  const amount = template?.amount ?? amountProp ?? 14.97;
-  const productName = template?.product_name || productNameProp || "Meu acesso vip Orientais /Latinas";
-  const productDescription = template?.product_description || productDescriptionProp ||
-    "🚨 Olá! 🥵🔥 Tenha acesso a mais de 600 vídeos exclusivos, com novos conteúdos...";
-  const storageFlag = template?.storage_flag || storageFlagProp || "garotas_top_paid";
-  const redirectTo = template?.redirect_to || redirectToProp || "/garotas-top-vip";
+  const amount = Number(template?.amount ?? amountProp ?? 0);
+  const productName = template?.product_name || productNameProp || "Produto";
+  const productDescription = template?.product_description || productDescriptionProp || "Pagamento seguro via PIX";
+  const storageFlag = template?.storage_flag || storageFlagProp || "checkout_paid";
+  const redirectTo = template?.redirect_to || redirectToProp || "/app";
   const effectiveProductImage =
     productImage ||
     template?.product_image_url ||
@@ -428,6 +427,15 @@ export default function PixCheckoutModal({
   };
 
   if (!open) return null;
+
+  if (templateSlug && !template) {
+    return createPortal(
+      <div className="fixed inset-0 z-[10030] bg-black flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-[#7CB342]" />
+      </div>,
+      document.body,
+    );
+  }
 
   const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
   const priceFmt = fmt(amount);

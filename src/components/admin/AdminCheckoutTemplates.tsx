@@ -45,12 +45,12 @@ const empty = (): Template => ({
   id: "",
   nome: "",
   slug: "",
-  amount: 14.97,
+  amount: 0,
   product_name: "",
   product_description: "",
   product_image_url: "",
   redirect_to: "/garotas-top-vip",
-  storage_flag: "garotas_top_paid",
+  storage_flag: "checkout_paid",
   ativo: true,
   ordem: 0,
   model_id: null,
@@ -294,7 +294,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
               </Label>
               <Input value={editing.nome}
                 onChange={(e) => setEditing({ ...editing, nome: e.target.value, slug: editing.slug || slugify(e.target.value) })}
-                placeholder="Ex: VIP Latinas R$14,97"
+                placeholder="Ex: Página PIX Produto A"
                 className="bg-gray-900 border-emerald-500/40 text-white font-semibold mt-1" />
             </div>
 

@@ -171,6 +171,8 @@ export default function PixCheckoutModal({
 
   useEffect(() => {
     if (!open) return;
+    // Aguarda o template carregar quando há slug (evita filtrar bumps antes do template.id existir)
+    if (templateSlug && !template?.id) return;
     setPix(null);
     setQrImage(null);
     setPaid(false);
@@ -186,11 +188,9 @@ export default function PixCheckoutModal({
       const isTemplatedCheckout = !!(templateSlug || currentTemplateId);
       const filtered = (data || []).filter((b: any) => {
         const ids: string[] | null = b.template_ids;
-        // Isolamento estrito: em checkout com template, só aparecem bumps EXPLICITAMENTE vinculados.
         if (isTemplatedCheckout) {
           return !!currentTemplateId && Array.isArray(ids) && ids.includes(currentTemplateId);
         }
-        // Checkout global: só bumps sem vínculo (não pertencem a outro template).
         return !ids || ids.length === 0;
       });
       setBumps(filtered);
@@ -199,7 +199,7 @@ export default function PixCheckoutModal({
       if (pollRef.current) window.clearInterval(pollRef.current);
       if (realtimeChanRef.current) { supabase.removeChannel(realtimeChanRef.current); realtimeChanRef.current = null; }
     };
-  }, [open, template?.id]);
+  }, [open, templateSlug, template?.id]);
 
   const generate = async () => {
     if (!whatsappValid) {

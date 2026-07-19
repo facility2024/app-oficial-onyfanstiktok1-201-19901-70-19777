@@ -39,7 +39,8 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [isPlaying, setIsPlaying] = useState(false);
   const [localMuted, setLocalMuted] = useState(isMuted);
   const [showPopup, setShowPopup] = useState(false);
-  
+  const ctaBusyRef = useRef(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
@@ -75,7 +76,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const navigate = useNavigate();
 
   const openLink = (url: string) => {
-    // Rota interna (SPA) → navigate; externa → nova aba
+    // Sempre navegar internamente quando possível (evita 2 abas: uma no app, outra no navegador)
     try {
       if (url.startsWith('/')) {
         navigate(url);
@@ -86,12 +87,19 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         navigate(u.pathname + u.search + u.hash);
         return;
       }
-    } catch {}
-    window.open(url, '_blank', 'noopener,noreferrer');
+      // Externo: mesma aba, sem duplicação
+      window.location.href = url;
+    } catch {
+      window.location.href = url;
+    }
   };
 
   const handleCtaClick = async (e?: any) => {
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (ctaBusyRef.current) return;
+    ctaBusyRef.current = true;
+    setTimeout(() => { ctaBusyRef.current = false; }, 800);
 
     trackClick('cta');
 
@@ -100,8 +108,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
       return;
     }
 
-    // Preferir o vínculo por template_id: resolve o slug atual no momento do clique.
-    // Assim, se você renomear/regerar o slug da página PIX, o card continua funcionando.
+    // Preferir vínculo por template_id: resolve o slug atual no clique
     if (promo.checkout_template_id) {
       try {
         const { data } = await (supabase as any)
@@ -113,7 +120,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
           openLink(`/checkout/${data.slug}`);
           return;
         }
-      } catch { /* cai no fallback abaixo */ }
+      } catch { /* fallback abaixo */ }
     }
 
     if (promo.cta_link) {
@@ -122,9 +129,12 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   };
 
   const handlePopupCtaClick = () => {
+    if (ctaBusyRef.current) return;
+    ctaBusyRef.current = true;
+    setTimeout(() => { ctaBusyRef.current = false; }, 800);
     trackClick('popup_cta');
     if (promo.popup_cta_link) {
-      window.open(promo.popup_cta_link, '_blank', 'noopener,noreferrer');
+      openLink(promo.popup_cta_link);
     }
   };
 

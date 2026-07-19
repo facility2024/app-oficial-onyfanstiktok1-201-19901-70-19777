@@ -29,7 +29,12 @@ const formatBRL = (value: number) => Number(value || 0).toLocaleString("pt-BR", 
 });
 
 const parseAmount = (value: string) => {
-  const normalized = value.trim().replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  let normalized = value.trim().replace(/\s/g, "");
+  if (normalized.includes(",") && normalized.includes(".")) {
+    normalized = normalized.replace(/\./g, "").replace(",", ".");
+  } else {
+    normalized = normalized.replace(",", ".");
+  }
   return Number(normalized);
 };
 
@@ -42,7 +47,6 @@ const empty = {
   ativo: true,
   ordem: 0,
   template_ids: [] as string[],
-  target: "global" as "global" | "templates",
 };
 
 export const AdminCheckoutOrderBumps = () => {
@@ -55,7 +59,6 @@ export const AdminCheckoutOrderBumps = () => {
   const [mainLink, setMainLink] = useState("");
   const [mainLinkSaving, setMainLinkSaving] = useState(false);
   const [templates, setTemplates] = useState<TemplateOpt[]>([]);
-  const [globalAmount, setGlobalAmount] = useState(0);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -102,19 +105,11 @@ export const AdminCheckoutOrderBumps = () => {
     fetchItems();
     fetchMainLink();
     (async () => {
-      const [{ data }, { data: globalPrice }] = await Promise.all([
-        (supabase as any)
-          .from("checkout_templates")
-          .select("id,nome,slug,amount,model_id")
-          .eq("ativo", true)
-          .order("created_at", { ascending: false }),
-        (supabase as any)
-          .from("admin_settings")
-          .select("setting_value")
-          .eq("setting_key", "checkout_pix_default_amount")
-          .maybeSingle(),
-      ]);
-      setGlobalAmount(Number(globalPrice?.setting_value || 0));
+      const { data } = await (supabase as any)
+        .from("checkout_templates")
+        .select("id,nome,slug,amount,model_id")
+        .eq("ativo", true)
+        .order("created_at", { ascending: false });
       const list = (data || []) as TemplateOpt[];
       const modelIds = Array.from(new Set(list.map((t) => t.model_id).filter(Boolean))) as string[];
       let modelMap: Record<string, string> = {};
@@ -146,8 +141,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: b.link_acesso || "",
       ativo: b.ativo,
       ordem: b.ordem,
-      template_ids: b.template_ids || [],
-      target: b.template_ids?.length ? "templates" : "global",
+      template_ids: (b.template_ids || []).filter((id) => templates.some((t) => t.id === id)),
     });
   };
 
@@ -161,6 +155,11 @@ export const AdminCheckoutOrderBumps = () => {
       toast.error("Valor inválido");
       return;
     }
+    const validTemplateIds = form.template_ids.filter((id) => templates.some((t) => t.id === id));
+    if (validTemplateIds.length === 0) {
+      toast.error("Marque pelo menos uma página PIX salva");
+      return;
+    }
     setSaving(true);
     const payload = {
       titulo: form.titulo.trim(),
@@ -170,7 +169,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: form.link_acesso.trim() || null,
       ativo: form.ativo,
       ordem: Number(form.ordem) || 0,
-      template_ids: form.target === "templates" && form.template_ids.length ? form.template_ids : null,
+      template_ids: validTemplateIds,
     };
     const q = editingId
       ? (supabase as any).from("checkout_order_bumps").update(payload).eq("id", editingId)
@@ -222,17 +221,16 @@ export const AdminCheckoutOrderBumps = () => {
             automaticamente ao total.
           </p>
         </div>
-        {!isCreating && !editingId && (
-          <Button
-            onClick={() => {
-              setIsCreating(true);
-              setForm(empty);
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Novo Order Bump
-          </Button>
-        )}
+        <Button
+          onClick={() => {
+            setEditingId(null);
+            setIsCreating(true);
+            setForm(empty);
+          }}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold shrink-0"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Novo Order Bump
+        </Button>
       </div>
 
       {/* Link de acesso ao produto principal */}
@@ -336,32 +334,13 @@ export const AdminCheckoutOrderBumps = () => {
               </p>
             </div>
             <div>
-              <Label className="text-white">🎯 Em qual página PIX exibir este Order Bump?</Label>
+              <Label className="text-white">🎯 Páginas PIX salvas *</Label>
               <p className="text-xs text-gray-400 mb-2">
-                O checkout global e cada página PIX criada são separados. Os valores abaixo vêm diretamente das páginas salvas.
+                Marque em quais páginas este Order Bump será exibido. O preço verde é o valor real salvo em cada página PIX.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, target: "global", template_ids: [] })}
-                  className={`p-3 rounded border text-left ${form.target === "global" ? "border-emerald-400 bg-emerald-950 text-white" : "border-gray-700 bg-gray-800 text-gray-300"}`}
-                >
-                  <span className="block font-bold">Checkout PIX global</span>
-                  <span className="text-emerald-300 font-black">{formatBRL(globalAmount)}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, target: "templates" })}
-                  className={`p-3 rounded border text-left ${form.target === "templates" ? "border-purple-400 bg-purple-950 text-white" : "border-gray-700 bg-gray-800 text-gray-300"}`}
-                >
-                  <span className="block font-bold">Páginas PIX criadas</span>
-                  <span className="text-xs">Selecionar páginas individuais</span>
-                </button>
-              </div>
-              {form.target === "templates" && (
               <div className="max-h-64 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-800 space-y-1">
                 {templates.length === 0 && (
-                  <div className="text-xs text-gray-500 pl-2">Nenhuma página PIX cadastrada.</div>
+                  <div className="text-sm text-amber-300 p-2">Nenhuma página PIX ativa foi salva. Crie uma página PIX antes de cadastrar o Order Bump.</div>
                 )}
                 {templates.map((t) => {
                   const checked = form.template_ids.includes(t.id);
@@ -387,11 +366,15 @@ export const AdminCheckoutOrderBumps = () => {
                           👤 {t.model_name}
                         </span>
                       )}
-                      <span className="text-xs text-gray-400 ml-auto">/checkout/{t.slug}</span>
+                      <span className="text-xs text-gray-400 ml-auto truncate">/checkout/{t.slug}</span>
                     </label>
                   );
                 })}
               </div>
+              {form.template_ids.length > 0 && (
+                <p className="text-xs font-bold text-emerald-300 mt-2">
+                  {form.template_ids.length} página(s) PIX selecionada(s)
+                </p>
               )}
             </div>
             <div className="flex items-center gap-2">

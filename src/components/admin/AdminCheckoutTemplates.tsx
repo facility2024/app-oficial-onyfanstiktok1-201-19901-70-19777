@@ -76,8 +76,11 @@ const slugify = (s: string) =>
 const randSuffix = () => Math.random().toString(36).slice(2, 7);
 const parseAmount = (v: any): number => {
   if (typeof v === "number") return v;
-  const n = Number(String(v ?? "").replace(/\s/g, "").replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(n) ? n : Number(String(v ?? "").replace(",", ".")) || 0;
+  let s = String(v ?? "").trim().replace(/\s/g, "");
+  if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+  else s = s.replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
 };
 
 export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partial<Template> | null } = {}) => {

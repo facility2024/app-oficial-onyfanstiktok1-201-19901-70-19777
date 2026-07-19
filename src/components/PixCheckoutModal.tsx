@@ -354,10 +354,12 @@ export default function PixCheckoutModal({
       void error;
     }
 
-    // Prioridade: redirectTo do card (link_acesso específico) > admin_settings global > fallback
+    // Isolamento estrito por template:
+    // - Se veio de um template (link individual), usa SOMENTE o redirect_to do template.
+    // - Se for checkout global, aí sim pode usar o link global do admin_settings.
     let mainLink = redirectTo;
-    const usingCardLink = !!redirectTo && redirectTo !== "/garotas-top-vip";
-    if (!usingCardLink) {
+    const isTemplatedCheckout = !!(templateSlug || template?.id);
+    if (!isTemplatedCheckout) {
       try {
         const { data } = await (supabase as any)
           .from("admin_settings")

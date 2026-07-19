@@ -866,9 +866,10 @@ export const AdminFeedPromotions = () => {
                       return;
                     }
                     if (!confirm(`Aplicar este link em TODOS os cards de promoção?\n\n${link}`)) return;
+                    const templateId = await resolveCheckoutTemplateId(link);
                     const { error, count } = await supabase
                       .from('feed_promotions')
-                      .update({ cta_link: link }, { count: 'exact' })
+                      .update({ cta_link: link, checkout_template_id: templateId }, { count: 'exact' })
                       .not('id', 'is', null);
                     if (error) {
                       toast.error('Erro ao aplicar: ' + error.message);

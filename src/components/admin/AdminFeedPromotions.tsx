@@ -832,6 +832,33 @@ export const AdminFeedPromotions = () => {
               <div>
                 <Label>Link do CTA</Label>
                 <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://..." className={modalInputClass} />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 w-full bg-cyan-600 hover:bg-cyan-700 text-white border-cyan-500"
+                  onClick={async () => {
+                    const link = form.cta_link?.trim();
+                    if (!link) {
+                      toast.error('Preencha o Link do CTA antes de aplicar');
+                      return;
+                    }
+                    if (!confirm(`Aplicar este link em TODOS os cards de promoção?\n\n${link}`)) return;
+                    const { error, count } = await supabase
+                      .from('feed_promotions')
+                      .update({ cta_link: link }, { count: 'exact' })
+                      .not('id', 'is', null);
+                    if (error) {
+                      toast.error('Erro ao aplicar: ' + error.message);
+                    } else {
+                      toast.success(`Link aplicado em ${count ?? 'todos os'} cards`);
+                      queryClient.invalidateQueries({ queryKey: ['admin-feed-promotions'] });
+                      queryClient.invalidateQueries({ queryKey: ['feed-promotions'] });
+                    }
+                  }}
+                >
+                  <Link className="w-3 h-3 mr-1" /> Aplicar este link em todos os cards
+                </Button>
               </div>
             </div>
 

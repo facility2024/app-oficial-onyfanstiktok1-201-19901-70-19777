@@ -2715,6 +2715,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           banner_url: string | null
+          checkout_template_id: string | null
           clicks_count: number | null
           created_at: string | null
           cta_link: string | null
@@ -2744,6 +2745,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           banner_url?: string | null
+          checkout_template_id?: string | null
           clicks_count?: number | null
           created_at?: string | null
           cta_link?: string | null
@@ -2773,6 +2775,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           banner_url?: string | null
+          checkout_template_id?: string | null
           clicks_count?: number | null
           created_at?: string | null
           cta_link?: string | null
@@ -2799,7 +2802,15 @@ export type Database = {
           updated_at?: string | null
           views_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "feed_promotions_checkout_template_id_fkey"
+            columns: ["checkout_template_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gamification_actions: {
         Row: {
@@ -9719,6 +9730,7 @@ export type Database = {
         Returns: {
           avatar_url: string | null
           banner_url: string | null
+          checkout_template_id: string | null
           clicks_count: number | null
           created_at: string | null
           cta_link: string | null

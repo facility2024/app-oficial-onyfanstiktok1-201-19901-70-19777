@@ -26,6 +26,7 @@ interface FeedPromotion {
   popup_media_type?: string | null;
   popup_cta_text?: string | null;
   popup_cta_link?: string | null;
+  checkout_template_id?: string | null;
 }
 
 interface FeedPromoCardProps {
@@ -89,14 +90,33 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleCtaClick = (e?: any) => {
+  const handleCtaClick = async (e?: any) => {
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
 
     trackClick('cta');
 
     if (promo.cta_mode === 'popup') {
       setShowPopup(true);
-    } else if (promo.cta_link) {
+      return;
+    }
+
+    // Preferir o vínculo por template_id: resolve o slug atual no momento do clique.
+    // Assim, se você renomear/regerar o slug da página PIX, o card continua funcionando.
+    if (promo.checkout_template_id) {
+      try {
+        const { data } = await (supabase as any)
+          .from('checkout_templates')
+          .select('slug, ativo')
+          .eq('id', promo.checkout_template_id)
+          .maybeSingle();
+        if (data?.slug && data?.ativo !== false) {
+          openLink(`/checkout/${data.slug}`);
+          return;
+        }
+      } catch { /* cai no fallback abaixo */ }
+    }
+
+    if (promo.cta_link) {
       openLink(promo.cta_link);
     }
   };

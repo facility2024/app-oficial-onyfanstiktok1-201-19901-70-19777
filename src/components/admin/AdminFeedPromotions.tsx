@@ -25,6 +25,26 @@ const detectIsVideo = (raw: string): boolean => {
   return false;
 };
 
+// Extrai o slug de /checkout/<slug> em uma URL (interna ou absoluta).
+const extractCheckoutSlug = (link?: string | null): string | null => {
+  if (!link) return null;
+  const m = link.match(/\/checkout\/([^/?#]+)/i);
+  return m?.[1] || null;
+};
+
+// Resolve o UUID do checkout_template pelo slug encontrado no cta_link.
+// Retorna null se o link não for /checkout/<slug> ou o slug não existir.
+const resolveCheckoutTemplateId = async (link?: string | null): Promise<string | null> => {
+  const slug = extractCheckoutSlug(link);
+  if (!slug) return null;
+  const { data } = await (supabase as any)
+    .from('checkout_templates')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  return data?.id ?? null;
+};
+
 interface FeedPromotion {
   id: string;
   title: string;
@@ -172,6 +192,7 @@ export const AdminFeedPromotions = () => {
         schedule_status: formData.send_now ? 'active' : 'scheduled',
         model_id: formData.model_id || null,
         daily_frequency: formData.daily_frequency || 0,
+        checkout_template_id: await resolveCheckoutTemplateId(formData.cta_link),
       };
 
       if (formData.id) {
@@ -536,6 +557,7 @@ export const AdminFeedPromotions = () => {
         model_id: modelId || null,
         daily_frequency: form.daily_frequency || 0,
         shareable_link: `${window.location.origin}/app`,
+        checkout_template_id: await resolveCheckoutTemplateId(form.cta_link),
       };
 
       const { error } = await (supabase as any).from('feed_promotions').insert(payload);
@@ -844,9 +866,10 @@ export const AdminFeedPromotions = () => {
                       return;
                     }
                     if (!confirm(`Aplicar este link em TODOS os cards de promoção?\n\n${link}`)) return;
+                    const templateId = await resolveCheckoutTemplateId(link);
                     const { error, count } = await supabase
                       .from('feed_promotions')
-                      .update({ cta_link: link }, { count: 'exact' })
+                      .update({ cta_link: link, checkout_template_id: templateId }, { count: 'exact' })
                       .not('id', 'is', null);
                     if (error) {
                       toast.error('Erro ao aplicar: ' + error.message);

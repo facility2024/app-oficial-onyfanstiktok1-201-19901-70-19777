@@ -48,7 +48,11 @@ const CheckoutTemplatePage = () => {
     <div className="fixed inset-0 bg-black">
       <PixCheckoutModal
         open={open}
-        onClose={() => { setOpen(false); navigate(-1); }}
+        onClose={() => {
+          setOpen(false);
+          if (window.history.length > 1) navigate(-1);
+          else navigate("/app");
+        }}
         templateSlug={slug}
       />
     </div>

@@ -106,7 +106,8 @@ export default function PixCheckoutModal({
     "https://COCONUDIMUDIAL.b-cdn.net/PASTA%20TUTORIAS%20E%20ARQUIVOS%20COCONUDI/ChatGPT%20Image%205%20de%20jul.%20de%202026%2C%2008_22_21.png";
 
   const effectiveSideMedia: SideMediaItem[] = (() => {
-    if (sideMediaOverride && sideMediaOverride.length > 0) return sideMediaOverride;
+    // Um array vazio também é um override válido: não deve puxar a mídia global antiga.
+    if (sideMediaOverride !== undefined) return sideMediaOverride;
     // Isolamento estrito: se há template (link individual), usa APENAS a mídia do template.
     if (templateSlug || template) {
       return Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];

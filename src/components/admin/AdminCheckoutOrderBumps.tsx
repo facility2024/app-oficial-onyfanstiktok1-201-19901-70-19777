@@ -129,6 +129,9 @@ export const AdminCheckoutOrderBumps = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "checkout_templates" }, () => {
         fetchTemplates();
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "checkout_order_bumps" }, () => {
+        fetchItems();
+      })
       .subscribe();
     return () => { (supabase as any).removeChannel(channel); };
   }, []);
@@ -435,6 +438,24 @@ export const AdminCheckoutOrderBumps = () => {
                 </div>
                 <div className="text-green-400 font-black text-lg">
                   + R$ {Number(b.valor).toFixed(2).replace(".", ",")}
+                </div>
+                <div className="rounded border border-emerald-700 bg-emerald-950/40 p-2 space-y-1">
+                  <div className="text-[11px] font-bold text-emerald-300">Páginas PIX vinculadas</div>
+                  {(b.template_ids || []).length === 0 ? (
+                    <div className="text-xs font-semibold text-amber-300">Nenhuma página vinculada</div>
+                  ) : (
+                    (b.template_ids || []).map((templateId) => {
+                      const linkedTemplate = templates.find((template) => template.id === templateId);
+                      return linkedTemplate ? (
+                        <div key={templateId} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="truncate text-white">{linkedTemplate.nome}</span>
+                          <span className="shrink-0 font-black text-emerald-300">{formatBRL(linkedTemplate.amount)}</span>
+                        </div>
+                      ) : (
+                        <div key={templateId} className="text-xs text-red-300">Página removida ou inativa</div>
+                      );
+                    })
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

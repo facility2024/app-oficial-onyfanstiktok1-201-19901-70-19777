@@ -25,6 +25,26 @@ const detectIsVideo = (raw: string): boolean => {
   return false;
 };
 
+// Extrai o slug de /checkout/<slug> em uma URL (interna ou absoluta).
+const extractCheckoutSlug = (link?: string | null): string | null => {
+  if (!link) return null;
+  const m = link.match(/\/checkout\/([^/?#]+)/i);
+  return m?.[1] || null;
+};
+
+// Resolve o UUID do checkout_template pelo slug encontrado no cta_link.
+// Retorna null se o link não for /checkout/<slug> ou o slug não existir.
+const resolveCheckoutTemplateId = async (link?: string | null): Promise<string | null> => {
+  const slug = extractCheckoutSlug(link);
+  if (!slug) return null;
+  const { data } = await (supabase as any)
+    .from('checkout_templates')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  return data?.id ?? null;
+};
+
 interface FeedPromotion {
   id: string;
   title: string;

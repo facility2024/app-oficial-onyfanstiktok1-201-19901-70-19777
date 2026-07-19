@@ -101,28 +101,38 @@ export const AdminCheckoutOrderBumps = () => {
     toast.success("Link do produto principal salvo!");
   };
 
+  const fetchTemplates = async () => {
+    const { data } = await (supabase as any)
+      .from("checkout_templates")
+      .select("id,nome,slug,amount,model_id")
+      .eq("ativo", true)
+      .order("created_at", { ascending: false });
+    const list = (data || []) as TemplateOpt[];
+    const modelIds = Array.from(new Set(list.map((t) => t.model_id).filter(Boolean))) as string[];
+    let modelMap: Record<string, string> = {};
+    if (modelIds.length) {
+      const { data: mods } = await (supabase as any)
+        .from("models")
+        .select("id,name")
+        .in("id", modelIds);
+      (mods || []).forEach((m: any) => { modelMap[m.id] = m.name; });
+    }
+    setTemplates(list.map((t) => ({ ...t, model_name: t.model_id ? modelMap[t.model_id] || null : null })));
+  };
+
   useEffect(() => {
     fetchItems();
     fetchMainLink();
-    (async () => {
-      const { data } = await (supabase as any)
-        .from("checkout_templates")
-        .select("id,nome,slug,amount,model_id")
-        .eq("ativo", true)
-        .order("created_at", { ascending: false });
-      const list = (data || []) as TemplateOpt[];
-      const modelIds = Array.from(new Set(list.map((t) => t.model_id).filter(Boolean))) as string[];
-      let modelMap: Record<string, string> = {};
-      if (modelIds.length) {
-        const { data: mods } = await (supabase as any)
-          .from("models")
-          .select("id,name")
-          .in("id", modelIds);
-        (mods || []).forEach((m: any) => { modelMap[m.id] = m.name; });
-      }
-      setTemplates(list.map((t) => ({ ...t, model_name: t.model_id ? modelMap[t.model_id] || null : null })));
-    })();
+    fetchTemplates();
+    const channel = (supabase as any)
+      .channel("admin-order-bumps-templates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "checkout_templates" }, () => {
+        fetchTemplates();
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(channel); };
   }, []);
+
 
   const resetForm = () => {
     setForm(empty);

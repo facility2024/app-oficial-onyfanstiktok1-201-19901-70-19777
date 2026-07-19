@@ -132,27 +132,40 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
   const save = async () => {
     if (!editing) return;
     if (!editing.nome.trim()) return toast.error("Informe o nome do modelo");
-    const slug = editing.slug.trim() || slugify(editing.nome);
-    if (!slug) return toast.error("Slug inválido");
+    const baseSlug = (editing.slug.trim() || slugify(editing.nome)).trim();
+    if (!baseSlug) return toast.error("Slug inválido");
+    const amountNum = parseAmount(editing.amount);
+    if (!(amountNum > 0)) return toast.error("Valor inválido — use ex.: 10,00");
     setSaving(true);
     try {
-      const payload = { ...editing, slug };
-      if (editing.id) {
-        const { error } = await (supabase as any)
-          .from("checkout_templates").update(payload).eq("id", editing.id);
-        if (error) throw error;
-      } else {
-        const { id: _omit, ...toInsert } = payload;
-        void _omit;
-        const { error } = await (supabase as any)
-          .from("checkout_templates").insert(toInsert);
-        if (error) throw error;
+      let slug = baseSlug;
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const payload = { ...editing, slug, amount: amountNum };
+        let error: any = null;
+        if (editing.id) {
+          const res = await (supabase as any)
+            .from("checkout_templates").update(payload).eq("id", editing.id);
+          error = res.error;
+        } else {
+          const { id: _omit, ...toInsert } = payload;
+          void _omit;
+          const res = await (supabase as any)
+            .from("checkout_templates").insert(toInsert);
+          error = res.error;
+        }
+        if (!error) { lastErr = null; break; }
+        lastErr = error;
+        const dup = error.code === "23505" || /duplicate|unique/i.test(error.message || "");
+        if (!dup) break;
+        slug = `${baseSlug}-${randSuffix()}`;
       }
-      toast.success("Modelo salvo!");
+      if (lastErr) throw lastErr;
+      toast.success("Modelo salvo!", { description: `/checkout/${slug}` });
       setEditing(null);
       load();
     } catch (e: any) {
-      toast.error("Erro ao salvar", { description: e?.message });
+      toast.error("Erro ao salvar", { description: e?.message || "Tente novamente" });
     } finally {
       setSaving(false);
     }

@@ -73,6 +73,16 @@ const slugify = (s: string) =>
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
+const randSuffix = () => Math.random().toString(36).slice(2, 7);
+const parseAmount = (v: any): number => {
+  if (typeof v === "number") return v;
+  let s = String(v ?? "").trim().replace(/\s/g, "");
+  if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+  else s = s.replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+};
+
 export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partial<Template> | null } = {}) => {
   const [list, setList] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,27 +132,40 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
   const save = async () => {
     if (!editing) return;
     if (!editing.nome.trim()) return toast.error("Informe o nome do modelo");
-    const slug = editing.slug.trim() || slugify(editing.nome);
-    if (!slug) return toast.error("Slug inválido");
+    const baseSlug = (editing.slug.trim() || slugify(editing.nome)).trim();
+    if (!baseSlug) return toast.error("Slug inválido");
+    const amountNum = parseAmount(editing.amount);
+    if (!(amountNum > 0)) return toast.error("Valor inválido — use ex.: 10,00");
     setSaving(true);
     try {
-      const payload = { ...editing, slug };
-      if (editing.id) {
-        const { error } = await (supabase as any)
-          .from("checkout_templates").update(payload).eq("id", editing.id);
-        if (error) throw error;
-      } else {
-        const { id: _omit, ...toInsert } = payload;
-        void _omit;
-        const { error } = await (supabase as any)
-          .from("checkout_templates").insert(toInsert);
-        if (error) throw error;
+      let slug = baseSlug;
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const payload = { ...editing, slug, amount: amountNum };
+        let error: any = null;
+        if (editing.id) {
+          const res = await (supabase as any)
+            .from("checkout_templates").update(payload).eq("id", editing.id);
+          error = res.error;
+        } else {
+          const { id: _omit, ...toInsert } = payload;
+          void _omit;
+          const res = await (supabase as any)
+            .from("checkout_templates").insert(toInsert);
+          error = res.error;
+        }
+        if (!error) { lastErr = null; break; }
+        lastErr = error;
+        const dup = error.code === "23505" || /duplicate|unique/i.test(error.message || "");
+        if (!dup) break;
+        slug = `${baseSlug}-${randSuffix()}`;
       }
-      toast.success("Modelo salvo!");
+      if (lastErr) throw lastErr;
+      toast.success("Modelo salvo!", { description: `/checkout/${slug}` });
       setEditing(null);
       load();
     } catch (e: any) {
-      toast.error("Erro ao salvar", { description: e?.message });
+      toast.error("Erro ao salvar", { description: e?.message || "Tente novamente" });
     } finally {
       setSaving(false);
     }
@@ -271,9 +294,12 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-white">Valor (R$) *</Label>
-                <Input type="number" step="0.01" min="0" value={editing.amount}
-                  onChange={(e) => setEditing({ ...editing, amount: Number(e.target.value) })}
+                <Input type="text" inputMode="decimal" value={String(editing.amount ?? "")}
+                  onChange={(e) => setEditing({ ...editing, amount: e.target.value as any })}
+                  onBlur={(e) => setEditing({ ...editing, amount: parseAmount(e.target.value) })}
+                  placeholder="Ex: 10,00"
                   className="bg-gray-800 border-white/10 text-white" />
+                <p className="text-[10px] text-gray-500 mt-1">Aceita vírgula ou ponto. Ex: 10,00 ou 10.00</p>
               </div>
               <div>
                 <Label className="text-white">Ordem</Label>

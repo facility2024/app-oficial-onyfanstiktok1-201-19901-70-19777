@@ -26,6 +26,7 @@ interface FeedPromotion {
   popup_media_type?: string | null;
   popup_cta_text?: string | null;
   popup_cta_link?: string | null;
+  checkout_template_id?: string | null;
 }
 
 interface FeedPromoCardProps {

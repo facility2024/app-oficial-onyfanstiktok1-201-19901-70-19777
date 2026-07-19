@@ -21,7 +21,17 @@ interface Bump {
   template_ids: string[] | null;
 }
 
-interface TemplateOpt { id: string; nome: string; slug: string; model_id: string | null; model_name?: string | null }
+interface TemplateOpt { id: string; nome: string; slug: string; amount: number; model_id: string | null; model_name?: string | null }
+
+const formatBRL = (value: number) => Number(value || 0).toLocaleString("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+const parseAmount = (value: string) => {
+  const normalized = value.trim().replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  return Number(normalized);
+};
 
 const empty = {
   titulo: "",
@@ -92,7 +102,7 @@ export const AdminCheckoutOrderBumps = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("id,nome,slug,model_id")
+        .select("id,nome,slug,amount,model_id")
         .eq("ativo", true)
         .order("nome", { ascending: true });
       const list = (data || []) as TemplateOpt[];
@@ -135,7 +145,7 @@ export const AdminCheckoutOrderBumps = () => {
       toast.error("Título é obrigatório");
       return;
     }
-    const valorNum = Number(form.valor);
+    const valorNum = parseAmount(form.valor);
     if (!Number.isFinite(valorNum) || valorNum < 0) {
       toast.error("Valor inválido");
       return;
@@ -276,9 +286,8 @@ export const AdminCheckoutOrderBumps = () => {
               <div>
                 <Label className="text-white">Valor (R$) *</Label>
                 <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   value={form.valor}
                   onChange={(e) => setForm({ ...form, valor: e.target.value })}
                   className="bg-gray-800 text-white border-gray-700"
@@ -340,7 +349,10 @@ export const AdminCheckoutOrderBumps = () => {
                         }}
                         className="w-4 h-4 accent-purple-500"
                       />
-                      <span className="font-semibold">{t.nome}</span>
+                       <span className="font-semibold">{t.nome}</span>
+                       <span className="text-xs font-black text-emerald-300">
+                         {formatBRL(t.amount)}
+                       </span>
                       {t.model_name && (
                         <span className="text-xs bg-pink-600/40 text-pink-200 px-1.5 py-0.5 rounded">
                           👤 {t.model_name}

@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Save, X, Loader2, RefreshCw } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, Loader2, RefreshCw, Link } from "lucide-react";
 import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
 
 
@@ -66,6 +66,26 @@ export const AdminAdsGarotasTop = () => {
   const [bulkCta, setBulkCta] = useState("Assinar Conteúdo");
   const [bulkNomePrefix, setBulkNomePrefix] = useState("Modelo");
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [categoryLink, setCategoryLink] = useState("");
+  const [applyingCategoryLink, setApplyingCategoryLink] = useState(false);
+
+  const applyLinkToSelectedCategory = async () => {
+    const link = categoryLink.trim();
+    if (!link) return toast.error("Cole o link da página PIX");
+    if (filter === "all") return toast.error("Selecione uma categoria antes de aplicar o link");
+    if (!confirm(`Aplicar este link em todos os cards de ${CAT_LABEL[filter]}?\n\n${link}`)) return;
+
+    setApplyingCategoryLink(true);
+    const { error, count } = await (supabase as any)
+      .from(TABLE_BY_CAT[filter])
+      .update({ link_acesso: link }, { count: "exact" })
+      .not("id", "is", null);
+    setApplyingCategoryLink(false);
+
+    if (error) return toast.error("Erro ao aplicar o link: " + error.message);
+    toast.success(`Link aplicado em ${count ?? 0} card(s) de ${CAT_LABEL[filter]}`);
+    fetchCards();
+  };
 
   const handleBulkImport = async () => {
     const urls = bulkUrls
@@ -279,6 +299,35 @@ export const AdminAdsGarotasTop = () => {
         </div>
       </div>
 
+      <Card className="bg-gray-900 border-cyan-500/60">
+        <CardContent className="p-4">
+          <Label className="text-white font-bold">Link da página PIX para todos os cards da categoria</Label>
+          <p className="text-xs text-gray-400 mt-1 mb-3">
+            Selecione uma categoria acima, cole o link criado e aplique somente nos cards dessa categoria.
+          </p>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Input
+              value={categoryLink}
+              onChange={(e) => setCategoryLink(e.target.value)}
+              placeholder="https://seu-app.com/checkout/link-da-pagina-pix"
+              className="bg-gray-800 text-white border-gray-600 flex-1"
+            />
+            <Button
+              type="button"
+              onClick={applyLinkToSelectedCategory}
+              disabled={applyingCategoryLink || filter === "all" || !categoryLink.trim()}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold"
+            >
+              {applyingCategoryLink ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
+              Aplicar em todos da categoria
+            </Button>
+          </div>
+          {filter === "all" && (
+            <p className="text-xs text-amber-300 mt-2">Escolha Garotas Top, Latinas ou Novidades no seletor acima.</p>
+          )}
+        </CardContent>
+      </Card>
+
       {bulkOpen && !isCreating && !editingId && (
         <Card className="bg-gray-900 border-orange-500/40">
           <CardHeader>
@@ -482,33 +531,6 @@ export const AdminAdsGarotasTop = () => {
                 <p className="text-[11px] text-gray-400 mt-1">
                   Ao pagar apenas o acesso aos vídeos deste card, o botão "Clique aqui para acessar seus vídeos" abrirá este link.
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 border-purple-500 text-purple-300 hover:bg-purple-900/40"
-                  disabled={!form.link_acesso.trim() || saving}
-                  onClick={async () => {
-                    const link = form.link_acesso.trim();
-                    if (!link) return;
-                    if (!confirm(`Aplicar o link "${link}" a TODOS os cards de Garotas Top, Latinas e Novidades?`)) return;
-                    setSaving(true);
-                    const [a, b, c] = await Promise.all([
-                      (supabase as any).from("ads_garotas_top").update({ link_acesso: link }).not("id", "is", null),
-                      (supabase as any).from("ads_latinas").update({ link_acesso: link }).not("id", "is", null),
-                      (supabase as any).from("ads_novidades").update({ link_acesso: link }).not("id", "is", null),
-                    ]);
-                    setSaving(false);
-                    if (a.error || b.error || c.error) {
-                      toast.error("Erro ao aplicar em todos");
-                    } else {
-                      toast.success("Link aplicado a todos os cards");
-                      fetchCards();
-                    }
-                  }}
-                >
-                  Aplicar este link a todos os cards
-                </Button>
               </div>
 
               <div className="flex items-center gap-3">

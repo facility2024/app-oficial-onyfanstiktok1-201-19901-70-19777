@@ -192,6 +192,7 @@ export const AdminFeedPromotions = () => {
         schedule_status: formData.send_now ? 'active' : 'scheduled',
         model_id: formData.model_id || null,
         daily_frequency: formData.daily_frequency || 0,
+        checkout_template_id: await resolveCheckoutTemplateId(formData.cta_link),
       };
 
       if (formData.id) {

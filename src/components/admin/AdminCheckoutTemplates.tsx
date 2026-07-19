@@ -388,7 +388,12 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
                   )}
                 </>
               )}
-            </div>
+
+
+            {/* Order Bumps vinculados a esta página */}
+            <TemplateBumpsLinker templateId={editing.id || null} />
+
+
 
 
             {/* Aparência (herdada da página global — pode sobrescrever) */}

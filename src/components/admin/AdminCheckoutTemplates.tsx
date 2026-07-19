@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Plus, Save, Trash2, Eye, Link as LinkIcon, Pencil, X } from "lucide-react";
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
+import TemplateBumpsLinker from "./TemplateBumpsLinker";
 import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 interface Template {
@@ -388,6 +389,13 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
                 </>
               )}
             </div>
+
+
+            {/* Order Bumps vinculados a esta página */}
+            <TemplateBumpsLinker templateId={editing.id || null} />
+
+
+
 
 
             {/* Aparência (herdada da página global — pode sobrescrever) */}

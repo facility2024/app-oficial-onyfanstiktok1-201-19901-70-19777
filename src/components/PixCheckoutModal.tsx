@@ -183,10 +183,15 @@ export default function PixCheckoutModal({
         .eq("ativo", true)
         .order("ordem", { ascending: true });
       const currentTemplateId = template?.id || null;
+      const isTemplatedCheckout = !!(templateSlug || currentTemplateId);
       const filtered = (data || []).filter((b: any) => {
         const ids: string[] | null = b.template_ids;
-        if (!ids || ids.length === 0) return true; // aparece em todas as páginas PIX
-        return currentTemplateId ? ids.includes(currentTemplateId) : false;
+        // Isolamento estrito: em checkout com template, só aparecem bumps EXPLICITAMENTE vinculados.
+        if (isTemplatedCheckout) {
+          return !!currentTemplateId && Array.isArray(ids) && ids.includes(currentTemplateId);
+        }
+        // Checkout global: só bumps sem vínculo (não pertencem a outro template).
+        return !ids || ids.length === 0;
       });
       setBumps(filtered);
     })();

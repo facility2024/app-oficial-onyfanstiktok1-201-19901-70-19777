@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import AdsGarotasTopModal from './AdsGarotasTopModal';
 
 interface FeedPromotion {
   id: string;

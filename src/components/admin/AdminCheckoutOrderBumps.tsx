@@ -21,7 +21,17 @@ interface Bump {
   template_ids: string[] | null;
 }
 
-interface TemplateOpt { id: string; nome: string; slug: string; model_id: string | null; model_name?: string | null }
+interface TemplateOpt { id: string; nome: string; slug: string; amount: number; model_id: string | null; model_name?: string | null }
+
+const formatBRL = (value: number) => Number(value || 0).toLocaleString("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+const parseAmount = (value: string) => {
+  const normalized = value.trim().replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  return Number(normalized);
+};
 
 const empty = {
   titulo: "",
@@ -32,6 +42,7 @@ const empty = {
   ativo: true,
   ordem: 0,
   template_ids: [] as string[],
+  target: "global" as "global" | "templates",
 };
 
 export const AdminCheckoutOrderBumps = () => {
@@ -44,6 +55,7 @@ export const AdminCheckoutOrderBumps = () => {
   const [mainLink, setMainLink] = useState("");
   const [mainLinkSaving, setMainLinkSaving] = useState(false);
   const [templates, setTemplates] = useState<TemplateOpt[]>([]);
+  const [globalAmount, setGlobalAmount] = useState(0);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -90,11 +102,19 @@ export const AdminCheckoutOrderBumps = () => {
     fetchItems();
     fetchMainLink();
     (async () => {
-      const { data } = await (supabase as any)
-        .from("checkout_templates")
-        .select("id,nome,slug,model_id")
-        .eq("ativo", true)
-        .order("nome", { ascending: true });
+      const [{ data }, { data: globalPrice }] = await Promise.all([
+        (supabase as any)
+          .from("checkout_templates")
+          .select("id,nome,slug,amount,model_id")
+          .eq("ativo", true)
+          .order("created_at", { ascending: false }),
+        (supabase as any)
+          .from("admin_settings")
+          .select("setting_value")
+          .eq("setting_key", "checkout_pix_default_amount")
+          .maybeSingle(),
+      ]);
+      setGlobalAmount(Number(globalPrice?.setting_value || 0));
       const list = (data || []) as TemplateOpt[];
       const modelIds = Array.from(new Set(list.map((t) => t.model_id).filter(Boolean))) as string[];
       let modelMap: Record<string, string> = {};
@@ -127,6 +147,7 @@ export const AdminCheckoutOrderBumps = () => {
       ativo: b.ativo,
       ordem: b.ordem,
       template_ids: b.template_ids || [],
+      target: b.template_ids?.length ? "templates" : "global",
     });
   };
 
@@ -135,7 +156,7 @@ export const AdminCheckoutOrderBumps = () => {
       toast.error("Título é obrigatório");
       return;
     }
-    const valorNum = Number(form.valor);
+    const valorNum = parseAmount(form.valor);
     if (!Number.isFinite(valorNum) || valorNum < 0) {
       toast.error("Valor inválido");
       return;
@@ -149,7 +170,7 @@ export const AdminCheckoutOrderBumps = () => {
       link_acesso: form.link_acesso.trim() || null,
       ativo: form.ativo,
       ordem: Number(form.ordem) || 0,
-      template_ids: form.template_ids.length ? form.template_ids : null,
+      template_ids: form.target === "templates" && form.template_ids.length ? form.template_ids : null,
     };
     const q = editingId
       ? (supabase as any).from("checkout_order_bumps").update(payload).eq("id", editingId)
@@ -276,9 +297,8 @@ export const AdminCheckoutOrderBumps = () => {
               <div>
                 <Label className="text-white">Valor (R$) *</Label>
                 <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   value={form.valor}
                   onChange={(e) => setForm({ ...form, valor: e.target.value })}
                   className="bg-gray-800 text-white border-gray-700"
@@ -316,11 +336,29 @@ export const AdminCheckoutOrderBumps = () => {
               </p>
             </div>
             <div>
-              <Label className="text-white">🎯 Em quais páginas PIX exibir este Order Bump (opcional)</Label>
+              <Label className="text-white">🎯 Em qual página PIX exibir este Order Bump?</Label>
               <p className="text-xs text-gray-400 mb-2">
-                Deixe <b>tudo desmarcado</b> para exibir em <b>todas</b> as páginas PIX criadas.
-                Ou marque abaixo para restringir a páginas específicas.
+                O checkout global e cada página PIX criada são separados. Os valores abaixo vêm diretamente das páginas salvas.
               </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, target: "global", template_ids: [] })}
+                  className={`p-3 rounded border text-left ${form.target === "global" ? "border-emerald-400 bg-emerald-950 text-white" : "border-gray-700 bg-gray-800 text-gray-300"}`}
+                >
+                  <span className="block font-bold">Checkout PIX global</span>
+                  <span className="text-emerald-300 font-black">{formatBRL(globalAmount)}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, target: "templates" })}
+                  className={`p-3 rounded border text-left ${form.target === "templates" ? "border-purple-400 bg-purple-950 text-white" : "border-gray-700 bg-gray-800 text-gray-300"}`}
+                >
+                  <span className="block font-bold">Páginas PIX criadas</span>
+                  <span className="text-xs">Selecionar páginas individuais</span>
+                </button>
+              </div>
+              {form.target === "templates" && (
               <div className="max-h-64 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-800 space-y-1">
                 {templates.length === 0 && (
                   <div className="text-xs text-gray-500 pl-2">Nenhuma página PIX cadastrada.</div>
@@ -340,7 +378,10 @@ export const AdminCheckoutOrderBumps = () => {
                         }}
                         className="w-4 h-4 accent-purple-500"
                       />
-                      <span className="font-semibold">{t.nome}</span>
+                       <span className="font-semibold">{t.nome}</span>
+                       <span className="text-xs font-black text-emerald-300">
+                         {formatBRL(t.amount)}
+                       </span>
                       {t.model_name && (
                         <span className="text-xs bg-pink-600/40 text-pink-200 px-1.5 py-0.5 rounded">
                           👤 {t.model_name}
@@ -351,6 +392,7 @@ export const AdminCheckoutOrderBumps = () => {
                   );
                 })}
               </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Switch

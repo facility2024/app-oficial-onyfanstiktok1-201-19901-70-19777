@@ -557,6 +557,7 @@ export const AdminFeedPromotions = () => {
         model_id: modelId || null,
         daily_frequency: form.daily_frequency || 0,
         shareable_link: `${window.location.origin}/app`,
+        checkout_template_id: await resolveCheckoutTemplateId(form.cta_link),
       };
 
       const { error } = await (supabase as any).from('feed_promotions').insert(payload);

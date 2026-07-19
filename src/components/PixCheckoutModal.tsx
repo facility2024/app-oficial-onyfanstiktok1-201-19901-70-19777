@@ -51,7 +51,11 @@ export default function PixCheckoutModal({
   const [template, setTemplate] = useState<any | null>(null);
 
   useEffect(() => {
-    if (!open || !templateSlug) { setTemplate(null); return; }
+    // Sempre limpa o template anterior ao trocar de slug/abrir modal
+    // (evita cruzar dados de uma oferta antiga com a nova).
+    setTemplate(null);
+    if (!open || !templateSlug) return;
+    let cancelled = false;
     (async () => {
       const { data } = await (supabase as any)
         .from("checkout_templates")
@@ -59,8 +63,10 @@ export default function PixCheckoutModal({
         .eq("slug", templateSlug)
         .eq("ativo", true)
         .maybeSingle();
+      if (cancelled) return;
       if (data) setTemplate(data);
     })();
+    return () => { cancelled = true; };
   }, [open, templateSlug]);
 
   // Merge: global < template (banco) < visualOverrides (prévia)

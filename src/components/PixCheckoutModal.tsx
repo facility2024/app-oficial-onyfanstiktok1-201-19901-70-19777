@@ -149,6 +149,7 @@ export default function PixCheckoutModal({
     ordem: number;
   }
   const [bumps, setBumps] = useState<Bump[]>([]);
+  const [bumpsLoading, setBumpsLoading] = useState(false);
   const [selectedBumps, setSelectedBumps] = useState<Record<string, boolean>>({});
 
   const bumpsTotal = bumps.reduce(
@@ -178,30 +179,46 @@ export default function PixCheckoutModal({
   useEffect(() => {
     if (!open) return;
     // Aguarda o template carregar quando há slug (evita filtrar bumps antes do template.id existir)
-    if (templateSlug && !template?.id) return;
+    if (templateSlug && !template?.id) {
+      setBumps([]);
+      setBumpsLoading(true);
+      return;
+    }
     setPix(null);
     setQrImage(null);
     setPaid(false);
     setCopied(false);
+    setBumpsLoading(true);
     setSelectedBumps({});
+    let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any)
+      const currentTemplateId = template?.id || null;
+      let query = (supabase as any)
         .from("checkout_order_bumps")
         .select("id,titulo,descricao,valor,imagem_url,link_acesso,ordem,template_ids")
         .eq("ativo", true)
         .order("ordem", { ascending: true });
-      const currentTemplateId = template?.id || null;
-      const isTemplatedCheckout = !!(templateSlug || currentTemplateId);
-      const filtered = (data || []).filter((b: any) => {
-        const ids: string[] | null = b.template_ids;
-        if (isTemplatedCheckout) {
-          return !!currentTemplateId && Array.isArray(ids) && ids.includes(currentTemplateId);
-        }
-        return !ids || ids.length === 0;
-      });
-      setBumps(filtered);
+
+      // O banco entrega somente os bumps desta página PIX; evita mistura e
+      // elimina a janela em que o filtro local podia mostrar uma lista vazia.
+      if (currentTemplateId) {
+        query = query.contains("template_ids", [currentTemplateId]);
+      } else {
+        query = query.or("template_ids.is.null,template_ids.eq.{}");
+      }
+
+      const { data, error } = await query;
+      if (cancelled) return;
+      if (error) {
+        console.error("Erro ao carregar Order Bumps:", error);
+        setBumps([]);
+      } else {
+        setBumps(data || []);
+      }
+      setBumpsLoading(false);
     })();
     return () => {
+      cancelled = true;
       if (pollRef.current) window.clearInterval(pollRef.current);
       if (realtimeChanRef.current) { supabase.removeChannel(realtimeChanRef.current); realtimeChanRef.current = null; }
     };
@@ -469,6 +486,14 @@ export default function PixCheckoutModal({
                 <span className="text-gray-800 font-semibold">Pix</span>
               </div>
             </div>
+
+            {/* Mantém o espaço da seção enquanto os bumps do template carregam. */}
+            {bumpsLoading && !pix && !paid && (
+              <div className="bg-white rounded-xl shadow-sm p-5 flex items-center justify-center gap-3 text-gray-700">
+                <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                <span className="text-sm font-semibold">Carregando ofertas adicionais...</span>
+              </div>
+            )}
 
             {/* Order Bumps */}
             {bumps.length > 0 && !pix && !paid && (

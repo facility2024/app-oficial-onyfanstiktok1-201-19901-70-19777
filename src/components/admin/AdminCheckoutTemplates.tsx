@@ -294,9 +294,12 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-white">Valor (R$) *</Label>
-                <Input type="number" step="0.01" min="0" value={editing.amount}
-                  onChange={(e) => setEditing({ ...editing, amount: Number(e.target.value) })}
+                <Input type="text" inputMode="decimal" value={String(editing.amount ?? "")}
+                  onChange={(e) => setEditing({ ...editing, amount: e.target.value as any })}
+                  onBlur={(e) => setEditing({ ...editing, amount: parseAmount(e.target.value) })}
+                  placeholder="Ex: 10,00"
                   className="bg-gray-800 border-white/10 text-white" />
+                <p className="text-[10px] text-gray-500 mt-1">Aceita vírgula ou ponto. Ex: 10,00 ou 10.00</p>
               </div>
               <div>
                 <Label className="text-white">Ordem</Label>

@@ -56,14 +56,6 @@ export default function MyAccessPanel() {
     );
   }
 
-  const openCheckout = async (productId: string) => {
-    // Procura template vinculado a este produto
-    const { data: tpl } = await (supabase as any)
-      .from("checkout_templates").select("slug").eq("product_id", productId).maybeSingle();
-    if (tpl?.slug) nav(`/checkout/${tpl.slug}`);
-    else nav("/checkout");
-  };
-
   return (
     <div className="grid gap-3 p-4">
       <h2 className="text-white text-xl font-bold mb-2">Meus Acessos</h2>

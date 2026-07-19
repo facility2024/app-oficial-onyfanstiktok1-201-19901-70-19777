@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Copy, CheckCircle2, ShieldCheck } from "lucide-react";
 import coconudiLogo from "@/assets/coconudi-logo.png";
-import { useCheckoutPixSettings, type SideMediaItem } from "@/hooks/useCheckoutPixSettings";
+import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 import CheckoutSideCarousel from "@/components/CheckoutSideCarousel";
 
 interface Props {
@@ -46,8 +46,6 @@ export default function PixCheckoutModal({
   visualOverrides,
   sideMediaOverride,
 }: Props) {
-  const { settings: globalPixSettings } = useCheckoutPixSettings();
-
   const [template, setTemplate] = useState<any | null>(null);
 
   useEffect(() => {
@@ -69,13 +67,13 @@ export default function PixCheckoutModal({
     return () => { cancelled = true; };
   }, [open, templateSlug]);
 
-  // Merge: global < template (banco) < visualOverrides (prévia)
+  // Cada checkout usa somente seu template; não existe mais página/configuração global.
   const pick = (k: string): string => {
     const v1 = (visualOverrides as any)?.[k];
     if (typeof v1 === "string" && v1 !== "") return v1;
     const v2 = template?.[k];
     if (typeof v2 === "string" && v2 !== "") return v2;
-    return (globalPixSettings as any)[k] ?? "";
+    return "";
   };
   const pixSettings = {
     timer_label: pick("timer_label"),
@@ -112,7 +110,7 @@ export default function PixCheckoutModal({
     if (templateSlug || template) {
       return Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
     }
-    return globalPixSettings.side_media || [];
+    return [];
   })();
 
 

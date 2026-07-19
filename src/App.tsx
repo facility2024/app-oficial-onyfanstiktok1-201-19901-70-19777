@@ -45,7 +45,6 @@ import LojaProdutoPage from "./pages/LojaProdutoPage";
 import PostagemPage from "./pages/PostagemPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutTemplatePage from "./pages/CheckoutTemplatePage";
-import CheckoutGlobalPage from "./pages/CheckoutGlobalPage";
 import MyAccessPanel from "./components/MyAccessPanel";
 import ProductAccessPage from "./pages/ProductAccessPage";
 import ProductAccessCardPage from "./pages/ProductAccessCardPage";
@@ -191,7 +190,6 @@ const App = () => (
           
           {/* Assinatura VIP */}
           <Route path="/subscribe" element={<SubscribePage />} />
-          <Route path="/checkout" element={<CheckoutGlobalPage />} />
           <Route path="/checkout-vip" element={
             <ProtectedRoute>
               <CheckoutPage />

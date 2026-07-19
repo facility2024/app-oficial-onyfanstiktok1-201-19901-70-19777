@@ -105,7 +105,6 @@ export const AdminCheckoutOrderBumps = () => {
     const { data } = await (supabase as any)
       .from("checkout_templates")
       .select("id,nome,slug,amount,model_id")
-      .eq("ativo", true)
       .order("created_at", { ascending: false });
     const list = (data || []) as TemplateOpt[];
     const modelIds = Array.from(new Set(list.map((t) => t.model_id).filter(Boolean))) as string[];

@@ -109,13 +109,8 @@ export default function MyAccessPanel() {
                 <p className="text-xs text-white/60 line-clamp-1">{p.description}</p>
               )}
             </div>
-            {unlocked ? (
-              <Button size="sm" onClick={() => nav(`/acesso-produto/${p.id}`)}>Acessar</Button>
-            ) : (
-              <Button size="sm" variant="secondary" onClick={() => openCheckout(p.id)}>
-                Comprar
-              </Button>
-            )}
+            <Button size="sm" onClick={() => nav(`/acesso-produto/${p.id}`)}>Acessar</Button>
+
           </div>
         );
       })}

@@ -101,8 +101,10 @@ export default function PixCheckoutModal({
 
   const effectiveSideMedia: SideMediaItem[] = (() => {
     if (sideMediaOverride && sideMediaOverride.length > 0) return sideMediaOverride;
-    const t = Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
-    if (t.length > 0) return t;
+    // Isolamento estrito: se há template (link individual), usa APENAS a mídia do template.
+    if (templateSlug || template) {
+      return Array.isArray(template?.side_media) ? (template!.side_media as SideMediaItem[]) : [];
+    }
     return globalPixSettings.side_media || [];
   })();
 
@@ -181,10 +183,15 @@ export default function PixCheckoutModal({
         .eq("ativo", true)
         .order("ordem", { ascending: true });
       const currentTemplateId = template?.id || null;
+      const isTemplatedCheckout = !!(templateSlug || currentTemplateId);
       const filtered = (data || []).filter((b: any) => {
         const ids: string[] | null = b.template_ids;
-        if (!ids || ids.length === 0) return true; // aparece em todas as páginas PIX
-        return currentTemplateId ? ids.includes(currentTemplateId) : false;
+        // Isolamento estrito: em checkout com template, só aparecem bumps EXPLICITAMENTE vinculados.
+        if (isTemplatedCheckout) {
+          return !!currentTemplateId && Array.isArray(ids) && ids.includes(currentTemplateId);
+        }
+        // Checkout global: só bumps sem vínculo (não pertencem a outro template).
+        return !ids || ids.length === 0;
       });
       setBumps(filtered);
     })();
@@ -347,10 +354,12 @@ export default function PixCheckoutModal({
       void error;
     }
 
-    // Prioridade: redirectTo do card (link_acesso específico) > admin_settings global > fallback
+    // Isolamento estrito por template:
+    // - Se veio de um template (link individual), usa SOMENTE o redirect_to do template.
+    // - Se for checkout global, aí sim pode usar o link global do admin_settings.
     let mainLink = redirectTo;
-    const usingCardLink = !!redirectTo && redirectTo !== "/garotas-top-vip";
-    if (!usingCardLink) {
+    const isTemplatedCheckout = !!(templateSlug || template?.id);
+    if (!isTemplatedCheckout) {
       try {
         const { data } = await (supabase as any)
           .from("admin_settings")

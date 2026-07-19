@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Entitlement {
@@ -85,8 +85,17 @@ export function useUserEntitlements() {
     return () => { supabase.removeChannel(channel); };
   }, [userId, load]);
 
-  const productIds = new Set(entitlements.map((e) => e.product_id));
-  const hasProduct = (productId: string) => productIds.has(productId);
+  // Keep these references stable. ProductAccessPage uses hasProduct inside an
+  // effect; recreating it on every render caused that effect to run forever,
+  // repeatedly replacing the page with the loading spinner.
+  const productIds = useMemo(
+    () => new Set(entitlements.map((e) => e.product_id)),
+    [entitlements],
+  );
+  const hasProduct = useCallback(
+    (productId: string) => productIds.has(productId),
+    [productIds],
+  );
 
   return { entitlements, productIds, hasProduct, loading, userId, reload: () => load(userId) };
 }

@@ -41,7 +41,16 @@ async function resolveCheckoutSlug(templateId: string): Promise<string | null> {
 
 const PAGE_SIZE = 20;
 
+type CategoryKey = "garotas_top" | "latinas" | "novidades";
+const CATEGORIES: { key: CategoryKey; label: string; table: "ads_garotas_top" | "ads_latinas" | "ads_novidades"; title: string; subtitle: string }[] = [
+  { key: "garotas_top", label: "Garotas Top", table: "ads_garotas_top", title: "GAROTAS TOP 10", subtitle: "Chinesas e as mais quentes das redes" },
+  { key: "latinas", label: "Latinas", table: "ads_latinas", title: "LATINAS", subtitle: "As latinas mais desejadas" },
+  { key: "novidades", label: "Novidades 🔥", table: "ads_novidades", title: "NOVIDADES 🔥", subtitle: "Recém-chegadas toda semana" },
+];
+
 export default function AdsGarotasTopPage() {
+  const [category, setCategory] = useState<CategoryKey>("garotas_top");
+  const activeCategory = CATEGORIES.find((c) => c.key === category)!;
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -51,7 +60,7 @@ export default function AdsGarotasTopPage() {
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
   const [showPix, setShowPix] = useState(false);
-  const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
+  const { price: fallbackPrice } = useCheckoutPrice(category);
   const price = useMemo(() => {
     const syncedCard = cards.find((card) => card.valor != null && Number(card.valor) > 0);
     return syncedCard ? Number(syncedCard.valor) : fallbackPrice;
@@ -67,19 +76,22 @@ export default function AdsGarotasTopPage() {
 
   const fetchCards = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("ads_garotas_top")
+    const { data } = await (supabase as any)
+      .from(activeCategory.table)
       .select("*")
       .eq("is_active", true)
       .order("ordem", { ascending: true })
       .order("created_at", { ascending: false });
     setCards(data || []);
+    setPage(1);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchCards();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
 
   const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
   const pageCards = useMemo(
@@ -122,6 +134,23 @@ export default function AdsGarotasTopPage() {
           <span className="text-sm font-semibold">Voltar ao app</span>
         </button>
 
+        {/* Abas de categorias */}
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => setCategory(c.key)}
+              className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${
+                category === c.key
+                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 border-fuchsia-400 text-white shadow-[0_0_20px_rgba(217,70,239,0.6)]"
+                  : "bg-purple-950/40 border-purple-500/30 text-purple-200 hover:bg-purple-800/40"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
         {/* Header */}
         <header className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-900/40 border border-purple-500/40 mb-4">
@@ -131,11 +160,12 @@ export default function AdsGarotasTopPage() {
             </span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black bg-gradient-to-r from-purple-300 via-fuchsia-400 to-purple-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]">
-            GAROTAS TOP 10
+            {activeCategory.title}
           </h1>
           <p className="mt-3 text-lg md:text-xl text-purple-200/80 font-medium">
-            Chinesas e as mais quentes das redes
+            {activeCategory.subtitle}
           </p>
+
           <p className="mt-3 text-sm md:text-base text-purple-100/90 max-w-2xl mx-auto leading-relaxed">
             São vários vídeos atualizados todas as semanas com as mais lindas da internet.
           </p>

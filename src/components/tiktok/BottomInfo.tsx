@@ -29,7 +29,7 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate =
   };
   return (
     <>
-    <div className="absolute bottom-16 left-0 right-20 pb-2 px-4">
+    <div className="absolute bottom-2 left-0 right-20 pb-1 px-4">
       {isNew && (
         <div className="mb-2 inline-flex bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full shadow-lg animate-pulse font-bold text-sm items-center gap-1.5">
           <span className="text-base">✨</span>

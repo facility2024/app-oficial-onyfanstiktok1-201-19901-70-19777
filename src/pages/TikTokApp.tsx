@@ -3594,12 +3594,6 @@ export const TikTokApp = () => {
             <span className="text-xs">Explorar</span>
           </button>
 
-
-          <button onClick={() => navigate('/explore')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
-            <Compass className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
-            <span className="text-xs">Explorar</span>
-          </button>
-
           {isCreator && !creatorLoading && (
             <button
               onClick={() => setShowQuickRecord(true)}
@@ -3612,6 +3606,11 @@ export const TikTokApp = () => {
               <span className="text-[10px] leading-none">Gravar</span>
             </button>
           )}
+
+          <button onClick={() => navigate('/explore')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
+            <Compass className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
+            <span className="text-xs">Explorar</span>
+          </button>
 
           <button onClick={() => navigate('/profile')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <User className="w-7 h-7 mb-0.5" strokeWidth={1.5} />

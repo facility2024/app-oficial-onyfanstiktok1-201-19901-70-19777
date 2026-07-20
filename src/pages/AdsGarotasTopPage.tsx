@@ -55,6 +55,13 @@ export default function AdsGarotasTopPage() {
   const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
   const price = fallbackPrice;
 
+  useEffect(() => {
+    document.documentElement.classList.add('allow-scroll');
+    return () => {
+      document.documentElement.classList.remove('allow-scroll');
+    };
+  }, []);
+
   const fetchCards = async () => {
     setLoading(true);
     const { data } = await supabase

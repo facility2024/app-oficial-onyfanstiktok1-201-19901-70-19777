@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.whatsapp_access_codes CASCADE;

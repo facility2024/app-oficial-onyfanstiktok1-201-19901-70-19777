@@ -10,17 +10,9 @@ import { ModelSubscriptionOverlay } from './ModelSubscriptionOverlay';
 import { useModelSubscription } from '@/hooks/useModelSubscription';
 import { MediaCarouselPlayer } from './MediaCarouselPlayer';
 
-const getSafeVideoPoster = (thumbnailUrl?: string | null): string | undefined => {
-  const raw = String(thumbnailUrl || '').trim();
-  if (!raw) return undefined;
-
-  const normalized = raw.toLowerCase();
-  if (normalized === '/default-avatar.svg' || normalized.endsWith('/default-avatar.svg')) {
-    return undefined;
-  }
-
-  return raw;
-};
+// Nunca usar avatar/imagem como poster do vídeo — evita o "flash" ao rolar o feed.
+// O próprio vídeo (primeiro frame) é usado como preview.
+const getSafeVideoPoster = (_thumbnailUrl?: string | null): string | undefined => undefined;
 
 interface VideoPlayerProps {
   video: Video;

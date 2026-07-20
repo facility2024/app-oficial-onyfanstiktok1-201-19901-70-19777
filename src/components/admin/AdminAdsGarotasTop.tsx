@@ -369,6 +369,51 @@ export const AdminAdsGarotasTop = () => {
         </CardContent>
       </Card>
 
+      <Card className="bg-gray-900 border-fuchsia-500/60">
+        <CardContent className="p-4">
+          <Label className="text-white font-bold">Template PIX (Checkout) para todos os cards da categoria</Label>
+          <p className="text-xs text-gray-400 mt-1 mb-3">
+            Escolha um template criado em <b>Checkout Templates</b>. O botão "Assinar via PIX" abrirá esse checkout completo (com valor, order bumps e mídia do template).
+          </p>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Select value={categoryTemplateId} onValueChange={setCategoryTemplateId}>
+              <SelectTrigger className="bg-gray-800 text-white border-gray-600 flex-1">
+                <SelectValue placeholder="Selecione um template PIX" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nome} {t.valor ? `— R$ ${Number(t.valor).toFixed(2).replace(".", ",")}` : ""} (/{t.slug})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              onClick={() => applyTemplateToSelectedCategory(false)}
+              disabled={applyingCategoryTemplate || filter === "all" || !categoryTemplateId}
+              className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold"
+            >
+              {applyingCategoryTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
+              Aplicar em todos os cards
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => applyTemplateToSelectedCategory(true)}
+              disabled={applyingCategoryTemplate || filter === "all"}
+              className="border-gray-600 text-white hover:bg-gray-800"
+            >
+              Limpar de todos
+            </Button>
+          </div>
+          {filter === "all" && (
+            <p className="text-xs text-amber-300 mt-2">Escolha Garotas Top, Latinas ou Novidades no seletor acima.</p>
+          )}
+        </CardContent>
+      </Card>
+
+
       {bulkOpen && !isCreating && !editingId && (
         <Card className="bg-gray-900 border-orange-500/40">
           <CardHeader>

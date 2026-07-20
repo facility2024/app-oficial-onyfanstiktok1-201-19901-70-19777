@@ -66,3 +66,29 @@ export const toBunnyStreamCanonicalEmbedUrl = (src?: string | null): string | nu
   const parsed = parseBunnyStreamUrl(src);
   return parsed ? `https://player.mediadelivery.net/embed/${parsed.libraryId}/${parsed.videoId}` : null;
 };
+
+/**
+ * Retorna a URL de thumbnail estática (imagem leve) do vídeo Bunny Stream,
+ * evitando embutir o player inteiro em grids/listas.
+ */
+export const toBunnyStreamThumbnailUrl = (src?: string | null): string | null => {
+  try {
+    const raw = String(src || '').trim();
+    if (!raw) return null;
+    const url = new URL(raw);
+    if (BUNNY_CDN_HOST_RE.test(url.hostname)) {
+      const parts = url.pathname.split('/').filter(Boolean);
+      const videoId = parts[0];
+      if (UUID_RE.test(videoId || '')) {
+        return `https://${url.hostname}/${videoId}/thumbnail.jpg`;
+      }
+    }
+    const parsed = parseBunnyStreamUrl(raw);
+    if (parsed) {
+      return `https://vz-${parsed.libraryId}.b-cdn.net/${parsed.videoId}/thumbnail.jpg`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};

@@ -94,44 +94,66 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   } = useModelSubscription(user.id);
   
   useEffect(() => {
-    // Limpa imediatamente o estado do perfil anterior para não exibir dados/vídeos errados
+    if (!(isOpen && user.id)) return;
+
+    // Ao trocar de perfil: se houver cache do NOVO usuário, preencher já (abertura instantânea).
+    // Caso contrário, limpar para não exibir dados do perfil anterior.
     setFreshAvatar(null);
-    setContents([]);
-    setPublicContents([]);
-    setPrivateContents([]);
     setPanelUrl(null);
     setHideSubscriptionSection(false);
     setIsFollowing(false);
     setIsCreator(false);
     setIsFollowingCreator(false);
-    if (isOpen && user.id) {
-      Promise.all([
-        loadModelContent(),
-        checkFollowingStatus(),
-        checkCreatorStatus(),
-        loadServiceStatus()
-      ]);
-      // Fetch fresh avatar from DB
-      (async () => {
-        const { data: model } = await supabase
-          .from('models')
+
+    try {
+      const cacheKey = `profile_${user.id}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      if (cached && cacheTime && Date.now() - parseInt(cacheTime) < 60000) {
+        const cachedData = JSON.parse(cached);
+        const cachedContents = Array.isArray(cachedData.contents) ? cachedData.contents : [];
+        setContents(cachedContents);
+        setPublicContents(cachedData.publicContents || cachedContents.filter((v: ModelContent) => v.visibility === 'public' || !v.visibility));
+        setPrivateContents(cachedData.privateContents || cachedContents.filter((v: ModelContent) => v.visibility && v.visibility !== 'public'));
+        if (cachedData.panelUrl) setPanelUrl(cachedData.panelUrl);
+      } else {
+        setContents([]);
+        setPublicContents([]);
+        setPrivateContents([]);
+      }
+    } catch {
+      setContents([]);
+      setPublicContents([]);
+      setPrivateContents([]);
+    }
+
+    Promise.all([
+      loadModelContent(),
+      checkFollowingStatus(),
+      checkCreatorStatus(),
+      loadServiceStatus()
+    ]);
+
+    // Fetch fresh avatar em paralelo (não bloqueia abertura)
+    (async () => {
+      const { data: model } = await supabase
+        .from('models')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (model?.avatar_url) {
+        setFreshAvatar(model.avatar_url);
+      } else {
+        const { data: profile } = await supabase
+          .from('profiles')
           .select('avatar_url')
           .eq('id', user.id)
           .maybeSingle();
-        if (model?.avatar_url) {
-          setFreshAvatar(model.avatar_url);
-        } else {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('avatar_url')
-            .eq('id', user.id)
-            .maybeSingle();
-          if (profile?.avatar_url) {
-            setFreshAvatar(profile.avatar_url);
-          }
+        if (profile?.avatar_url) {
+          setFreshAvatar(profile.avatar_url);
         }
-      })();
-    }
+      }
+    })();
   }, [isOpen, user.id]);
 
   // Verificar se é um criador de conteúdo

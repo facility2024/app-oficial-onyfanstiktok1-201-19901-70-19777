@@ -96,7 +96,7 @@ const LocalBusinessPage = () => {
     <div className="fixed inset-0 bg-black overflow-y-auto">
       {/* Header com gradiente da navbar */}
       <div className="sticky top-0 z-20 border-b border-white/10" style={{
-        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(88, 28, 135, 0.95) 0%, rgba(59, 7, 100, 0.95) 35%, rgba(24, 24, 27, 0.98) 70%, rgba(10, 10, 10, 1) 100%)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           {/* Botão Voltar */}
@@ -377,7 +377,7 @@ const BusinessCard = ({ business }: { business: LocalBusiness }) => {
             size="sm"
             className="w-full text-white font-semibold text-xs"
             style={{
-              background: 'linear-gradient(135deg, rgba(124, 179, 66, 1) 0%, rgba(196, 132, 46, 1) 100%)'
+              background: 'linear-gradient(135deg, rgba(88, 28, 135, 1) 0%, rgba(10, 10, 10, 1) 100%)'
             }}
           >
             Como Chegar

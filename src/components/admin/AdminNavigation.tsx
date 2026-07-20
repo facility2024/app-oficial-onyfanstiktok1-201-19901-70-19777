@@ -44,7 +44,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
     <nav 
       className="shadow-lg border-b border-white/10 fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
       style={{
-        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(88, 28, 135, 0.95) 0%, rgba(59, 7, 100, 0.95) 35%, rgba(24, 24, 27, 0.98) 70%, rgba(10, 10, 10, 1) 100%)'
       }}
     >
       <div className="container">

@@ -67,7 +67,7 @@ export const AdminCharts = ({ webhookStatus, lastSync }: AdminChartsProps) => {
         label: 'Views',
         data: dailyViewsData,
         borderColor: '#7CB342',
-        backgroundColor: 'rgba(124, 179, 66, 0.1)',
+        backgroundColor: 'rgba(88, 28, 135, 0.15)',
         tension: 0.4,
         fill: true,
       },

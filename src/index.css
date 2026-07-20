@@ -426,6 +426,22 @@
   .animate-progress-decrease {
     animation: progress-decrease 4s linear;
   }
+
+  /* CTA attention: pulse + glow to grab user's eye */
+  @keyframes cta-attention {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7), 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow: 0 0 0 12px rgba(16, 185, 129, 0), 0 0 28px rgba(16, 185, 129, 0.9);
+    }
+  }
+  .animate-cta-attention {
+    animation: cta-attention 1.4s ease-in-out infinite;
+    will-change: transform, box-shadow;
+  }
   
   .custom-div-icon {
     border: none !important;

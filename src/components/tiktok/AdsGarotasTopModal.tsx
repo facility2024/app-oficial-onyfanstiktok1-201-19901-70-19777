@@ -304,8 +304,13 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
             <Button
               onClick={async () => {
                 if (selected?.checkout_template_id) {
-                  const ok = await openCheckoutTemplate(selected.checkout_template_id);
-                  if (ok) return;
+                  const slug = await resolveCheckoutSlug(selected.checkout_template_id);
+                  if (slug) {
+                    onClose();
+                    setSelected(null);
+                    navigate(`/checkout/${slug}`);
+                    return;
+                  }
                 }
                 setSelected(null);
                 setShowPix(true);

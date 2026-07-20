@@ -317,7 +317,7 @@ export default function AdsGarotasTopPage() {
                 setSelected(null);
                 setShowPix(true);
               }}
-              className="w-full min-h-12 h-auto whitespace-normal bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold px-3 py-3 text-sm sm:text-base leading-tight shadow-[0_0_30px_rgba(168,85,247,0.6)]"
+              className="w-full min-h-12 h-auto whitespace-normal bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold px-3 py-3 text-sm sm:text-base leading-tight shadow-[0_0_30px_rgba(168,85,247,0.6)] animate-cta-attention-purple"
             >
               Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
             </Button>

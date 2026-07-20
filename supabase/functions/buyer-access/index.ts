@@ -3,6 +3,23 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const normalize = (s: string) => (s || '').replace(/\D/g, '');
 
+// Rate limit em memória (por instância). Bloqueia força-bruta por IP e por WhatsApp.
+const RL_WINDOW_MS = 60_000;
+const RL_MAX_PER_IP = 15;
+const RL_MAX_PER_WA = 6;
+const hits = new Map<string, { count: number; reset: number }>();
+const bump = (key: string, max: number): boolean => {
+  const now = Date.now();
+  const cur = hits.get(key);
+  if (!cur || cur.reset < now) {
+    hits.set(key, { count: 1, reset: now + RL_WINDOW_MS });
+    return true;
+  }
+  if (cur.count >= max) return false;
+  cur.count += 1;
+  return true;
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -12,6 +29,18 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'WhatsApp inválido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('cf-connecting-ip') ||
+      'unknown';
+
+    if (!bump(`ip:${ip}`, RL_MAX_PER_IP) || !bump(`wa:${wa}`, RL_MAX_PER_WA)) {
+      return new Response(
+        JSON.stringify({ error: 'Muitas tentativas. Aguarde 1 minuto e tente novamente.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 

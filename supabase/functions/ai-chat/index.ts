@@ -243,7 +243,7 @@ async function callGrok(apiKey: string, userMessage: string, systemPrompt: strin
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'grok-2-latest',
+      model: 'grok-4-latest',
       messages,
       temperature: 0.9,
       max_tokens: 1024,
@@ -253,7 +253,7 @@ async function callGrok(apiKey: string, userMessage: string, systemPrompt: strin
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Erro Grok:', errorText);
-    throw new Error(`Erro na API Grok: ${response.status}`);
+    throw new Error(`Erro na API Grok: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();

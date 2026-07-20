@@ -2877,26 +2877,15 @@ export const TikTokApp = () => {
     }
 
     if (!shared) {
-      }
-
-      // Update share count
-      const newCount = currentVideo.shares_count + 1;
-      await supabase.from('videos').update({
-        shares_count: newCount
-      }).eq('id', currentVideo.id);
-      setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
-        ...video,
-        shares_count: newCount
-      } : video));
-      console.log('✅ SHARE VIDEO - Ação completa! Novo count:', newCount);
-    } catch (error) {
-      console.error('❌ SHARE VIDEO - Erro:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível compartilhar o vídeo",
-        variant: "destructive"
-      });
+      console.warn('Share não concluído');
     }
+
+    // Atualizar contador local
+    const newCount = (currentVideo.shares_count || 0) + 1;
+    setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
+      ...video,
+      shares_count: newCount
+    } : video));
   };
   const followModel = async () => {
     console.log('🔥 SEGUIR: Função followModel CHAMADA!');

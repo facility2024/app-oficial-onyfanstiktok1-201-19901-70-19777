@@ -58,6 +58,42 @@ Deno.serve(async (req) => {
     const templateSlug = getText(body?.template_slug) ?? null
     const customerEmail = getText(body?.customer_email) ?? getText(body?.client?.email) ?? null
 
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
+    // Nunca dependa apenas dos itens enviados pelo navegador. O servidor
+    // resolve o produto do template antes de criar a cobrança.
+    if (purchaseItems.length === 0 && ((templateId && UUID_RE.test(templateId)) || templateSlug)) {
+      let templateQuery = admin
+        .from('checkout_templates')
+        .select('product_id, product_name')
+        .eq('ativo', true)
+
+      templateQuery = templateId && UUID_RE.test(templateId)
+        ? templateQuery.eq('id', templateId)
+        : templateQuery.eq('slug', templateSlug)
+
+      const { data: linkedTemplate, error: templateError } = await templateQuery.maybeSingle()
+      if (templateError) console.log('[gateway template lookup]', templateError.message)
+      if (linkedTemplate?.product_id) {
+        purchaseItems = [{
+          product_id: linkedTemplate.product_id,
+          price: amount,
+          snapshot_name: linkedTemplate.product_name || productName,
+        }]
+      }
+    }
+
+    // Impede pagamento sem produto: sem item não existe acesso para liberar.
+    if (purchaseItems.length === 0) {
+      return new Response(JSON.stringify({
+        error: 'checkout_product_not_configured',
+        message: 'Este checkout ainda não possui um produto de acesso vinculado.',
+      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     const payload = {
       identifier,
       amount,
@@ -104,36 +140,6 @@ Deno.serve(async (req) => {
     // pode representar outro recurso (pedido/cobrança) e não casar no callback.
     const transactionId = getText(payment.transactionId) ?? getText(pix.transactionId) ??
       getText(transaction.id) ?? getText(payment.id) ?? identifier
-
-    const admin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    )
-
-    // Nunca dependa apenas dos itens enviados pelo navegador. Em links públicos,
-    // o usuário pode clicar antes de o template terminar de carregar. O servidor
-    // resolve o produto vinculado ao template e mantém a compra rastreável.
-    if (purchaseItems.length === 0 && ((templateId && UUID_RE.test(templateId)) || templateSlug)) {
-      let templateQuery = admin
-        .from('checkout_templates')
-        .select('product_id, product_name')
-        .eq('ativo', true)
-
-      templateQuery = templateId && UUID_RE.test(templateId)
-        ? templateQuery.eq('id', templateId)
-        : templateQuery.eq('slug', templateSlug)
-
-      const { data: linkedTemplate, error: templateError } = await templateQuery.maybeSingle()
-
-      if (templateError) console.log('[gateway template lookup]', templateError.message)
-      if (linkedTemplate?.product_id) {
-        purchaseItems = [{
-          product_id: linkedTemplate.product_id,
-          price: amount,
-          snapshot_name: linkedTemplate.product_name || productName,
-        }]
-      }
-    }
 
     // Mantém compatibilidade com o histórico PIX. Os nomes anteriores
     // (transaction_id/customer_phone) não existem nessa tabela e faziam o
@@ -189,8 +195,6 @@ Deno.serve(async (req) => {
           message: 'O produto não pôde ser vinculado à compra. Gere um novo PIX.',
         }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
-    } else {
-      console.warn('[gateway purchase without entitlement product]', { purchaseId: purchase.id, templateId })
     }
 
     if (authUserId && privateModelId) {

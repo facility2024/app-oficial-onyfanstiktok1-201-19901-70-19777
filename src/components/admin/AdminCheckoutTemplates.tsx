@@ -140,6 +140,7 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
     if (!baseSlug) return toast.error("Slug inválido");
     const amountNum = parseAmount(editing.amount);
     if (!(amountNum > 0)) return toast.error("Valor inválido — use ex.: 10,00");
+    if (!editing.product_id) return toast.error("Selecione o produto que será liberado após o pagamento");
     setSaving(true);
     try {
       let slug = baseSlug;

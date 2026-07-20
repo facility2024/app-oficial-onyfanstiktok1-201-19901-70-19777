@@ -33,7 +33,15 @@ interface CardItem {
   ordem: number;
   is_active: boolean;
   link_acesso: string | null;
+  checkout_template_id: string | null;
   _categoria: Categoria;
+}
+
+interface TemplateOption {
+  id: string;
+  nome: string;
+  slug: string;
+  valor: number | null;
 }
 
 const emptyForm = {
@@ -45,6 +53,7 @@ const emptyForm = {
   ordem: 0,
   is_active: true,
   link_acesso: "",
+  checkout_template_id: "",
   categoria: "garotas_top" as Categoria,
 };
 

@@ -77,6 +77,36 @@ export const AdminAdsGarotasTop = () => {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [categoryLink, setCategoryLink] = useState("");
   const [applyingCategoryLink, setApplyingCategoryLink] = useState(false);
+  const [templates, setTemplates] = useState<TemplateOption[]>([]);
+  const [categoryTemplateId, setCategoryTemplateId] = useState<string>("");
+  const [applyingCategoryTemplate, setApplyingCategoryTemplate] = useState(false);
+
+  const fetchTemplates = async () => {
+    const { data } = await (supabase as any)
+      .from("checkout_templates")
+      .select("id, nome, slug, valor, ativo")
+      .eq("ativo", true)
+      .order("created_at", { ascending: false });
+    setTemplates((data || []) as TemplateOption[]);
+  };
+
+  const applyTemplateToSelectedCategory = async (clear = false) => {
+    if (filter === "all") return toast.error("Selecione uma categoria antes de aplicar o template");
+    if (!clear && !categoryTemplateId) return toast.error("Escolha um template PIX");
+    const action = clear ? "Limpar" : "Aplicar";
+    if (!confirm(`${action} template PIX em todos os cards de ${CAT_LABEL[filter]}?`)) return;
+
+    setApplyingCategoryTemplate(true);
+    const { error, count } = await (supabase as any)
+      .from(TABLE_BY_CAT[filter])
+      .update({ checkout_template_id: clear ? null : categoryTemplateId }, { count: "exact" })
+      .not("id", "is", null);
+    setApplyingCategoryTemplate(false);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success(`${count ?? 0} card(s) atualizado(s)`);
+    fetchCards();
+  };
+
 
   const applyLinkToSelectedCategory = async () => {
     const link = categoryLink.trim();

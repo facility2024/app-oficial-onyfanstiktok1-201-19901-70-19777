@@ -141,7 +141,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             setIsInView(visible);
           });
         },
-        { root: null, rootMargin: '1500px 0px', threshold: [0, 0.01] }
+        { root: null, rootMargin: '600px 0px', threshold: [0, 0.01] }
       );
       observer.observe(el);
       return () => observer.disconnect();

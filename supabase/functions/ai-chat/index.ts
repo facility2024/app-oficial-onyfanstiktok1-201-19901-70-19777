@@ -72,6 +72,12 @@ serve(async (req) => {
       );
     }
 
+    // Fallback: se houver API key mas provider estiver nulo, assume 'gemini' (compat. registros antigos)
+    if (!chatPanel.ai_provider && chatPanel.api_key_encrypted) {
+      chatPanel.ai_provider = 'gemini';
+      console.log('⚠️ ai_provider nulo — assumindo gemini por padrão');
+    }
+
     if (!chatPanel.ai_provider || !chatPanel.api_key_encrypted) {
       return new Response(
         JSON.stringify({ error: 'Chat não configurado corretamente. Configure o provider e API key no painel admin.' }),
@@ -80,6 +86,7 @@ serve(async (req) => {
     }
 
     console.log('🤖 Provider:', chatPanel.ai_provider);
+
 
     let aiResponse = '';
     const rawPrompt = (chatPanel.prompt || '').trim();

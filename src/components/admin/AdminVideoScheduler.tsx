@@ -320,6 +320,14 @@ export const AdminVideoScheduler = () => {
       return;
     }
 
+    // Avatar é obrigatório para a modelo aparecer corretamente no feed
+    if (!formData.modelAvatarUrl.trim()) {
+      toast.error('Informe a URL do avatar da modelo (obrigatório para aparecer no feed)');
+      return;
+    }
+
+
+
     let modelId = formData.modelId;
 
     // Criar novo modelo se necessário

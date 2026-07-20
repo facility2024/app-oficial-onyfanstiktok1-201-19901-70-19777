@@ -269,7 +269,7 @@ const LocalBusinessDetailsPage = () => {
             onClick={handleGetDirections}
             className="w-full py-6 text-lg font-semibold text-gray-900"
             style={{
-              background: 'linear-gradient(135deg, rgba(124, 179, 66, 1) 0%, rgba(85, 139, 47, 1) 50%, rgba(196, 132, 46, 1) 100%)'
+              background: 'linear-gradient(135deg, rgba(88, 28, 135, 1) 0%, rgba(59, 7, 100, 1) 50%, rgba(10, 10, 10, 1) 100%)'
             }}
           >
             <MapPin className="h-5 w-5 mr-2" />

@@ -275,7 +275,7 @@ const SubscribePage = () => {
       <header 
         className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between"
         style={{
-          background: 'linear-gradient(90deg, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+          background: 'linear-gradient(90deg, rgba(88, 28, 135, 0.95) 0%, rgba(59, 7, 100, 0.95) 35%, rgba(24, 24, 27, 0.98) 70%, rgba(10, 10, 10, 1) 100%)'
         }}
       >
         <Button 

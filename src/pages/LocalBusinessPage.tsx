@@ -377,7 +377,7 @@ const BusinessCard = ({ business }: { business: LocalBusiness }) => {
             size="sm"
             className="w-full text-white font-semibold text-xs"
             style={{
-              background: 'linear-gradient(135deg, rgba(124, 179, 66, 1) 0%, rgba(196, 132, 46, 1) 100%)'
+              background: 'linear-gradient(135deg, rgba(88, 28, 135, 1) 0%, rgba(10, 10, 10, 1) 100%)'
             }}
           >
             Como Chegar

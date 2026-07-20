@@ -61,8 +61,8 @@ export default function MyAccessPanel() {
   }
 
   return (
-    <div className="grid gap-3 p-4">
-      <h2 className="text-white text-xl font-bold mb-2">Meus Acessos</h2>
+    <div className="w-full max-w-3xl mx-auto grid gap-3 p-3 sm:p-4">
+      <h2 className="text-white text-lg sm:text-xl font-bold mb-1">Meus Acessos</h2>
       {products.length === 0 && (
         <p className="text-white/60 text-sm">Nenhum produto cadastrado.</p>
       )}
@@ -72,45 +72,43 @@ export default function MyAccessPanel() {
           return (
             <div
               key={p.id}
-              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 opacity-70"
+              className="flex items-center gap-2 sm:gap-3 rounded-xl border border-white/10 bg-white/5 p-2.5 sm:p-3 opacity-70 min-w-0"
             >
-              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                 <Lock className="w-4 h-4 text-white/40" />
               </div>
-              <p className="font-semibold text-white/70 truncate flex-1 text-sm">{p.name}</p>
-              <span className="text-[10px] text-white/40 uppercase tracking-wide whitespace-nowrap">Bloqueado</span>
+              <p className="font-semibold text-white/70 flex-1 min-w-0 text-xs sm:text-sm break-words leading-tight">{p.name}</p>
+              <span className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wide whitespace-nowrap flex-shrink-0">Bloqueado</span>
             </div>
           );
         }
         return (
           <div
             key={p.id}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-green-500/40 bg-green-500/5 p-3"
+            className="flex items-center gap-2 sm:gap-3 rounded-xl border border-green-500/40 bg-green-500/5 p-2.5 sm:p-3 min-w-0"
           >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/40">
-                    <CheckCircle2 />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <p className="font-semibold text-white truncate">{p.name}</p>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+              {p.image_url ? (
+                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/40">
+                  <CheckCircle2 />
                 </div>
-                {p.description && (
-                  <p className="text-xs text-white/60 line-clamp-1">{p.description}</p>
-                )}
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+                <p className="font-semibold text-white text-sm sm:text-base break-words leading-tight">{p.name}</p>
               </div>
+              {p.description && (
+                <p className="text-[11px] sm:text-xs text-white/60 line-clamp-2 mt-0.5">{p.description}</p>
+              )}
             </div>
             <Button
               size="sm"
               onClick={() => nav(`/acesso-produto/${p.id}`)}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white font-bold shrink-0"
+              className="bg-green-600 hover:bg-green-500 text-white font-bold shrink-0 h-9 px-3 text-xs sm:text-sm"
             >
               Acessar
             </Button>

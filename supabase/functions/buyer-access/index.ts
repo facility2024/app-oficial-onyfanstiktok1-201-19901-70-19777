@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const last4 = wa.slice(-4);
     const { data: candidates, error: qErr } = await sb
       .from('checkout_purchases')
-      .select('id, customer_whatsapp, status')
+      .select('id, customer_whatsapp, status, paid_at, checkout_purchase_items(product_id)')
       .eq('status', 'paid')
       .ilike('customer_whatsapp', `%${last4}%`)
       .limit(500);
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const match = (candidates || []).find((p: any) => {
+    const matches = (candidates || []).filter((p: any) => {
       const digits = String(p.customer_whatsapp || '').replace(/\D/g, '');
       return (
         digits === wa ||
@@ -45,15 +45,50 @@ Deno.serve(async (req) => {
       );
     });
 
-    if (!match) {
+    if (matches.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Nenhuma compra confirmada encontrada para este número.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
+    const purchaseIds = matches.map((p: any) => p.id);
+    const productIds = new Set<string>();
+
+    for (const purchase of matches) {
+      for (const item of purchase.checkout_purchase_items || []) {
+        if (item.product_id) productIds.add(item.product_id);
+      }
+    }
+
+    // Entitlements are also checked because older confirmed purchases may have
+    // been backfilled after their original purchase item was created.
+    const { data: entitlements, error: entitlementError } = await sb
+      .from('user_entitlements')
+      .select('product_id, status, expires_at')
+      .in('purchase_id', purchaseIds)
+      .eq('status', 'active');
+
+    if (entitlementError) {
+      console.error('[buyer-access entitlements]', entitlementError.message);
+    } else {
+      const now = Date.now();
+      for (const entitlement of entitlements || []) {
+        if (
+          entitlement.product_id &&
+          (!entitlement.expires_at || new Date(entitlement.expires_at).getTime() > now)
+        ) {
+          productIds.add(entitlement.product_id);
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ ok: true, whatsapp: wa }),
+      JSON.stringify({
+        ok: true,
+        whatsapp: wa,
+        product_ids: Array.from(productIds),
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (e) {

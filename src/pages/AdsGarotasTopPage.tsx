@@ -41,7 +41,16 @@ async function resolveCheckoutSlug(templateId: string): Promise<string | null> {
 
 const PAGE_SIZE = 20;
 
+type CategoryKey = "garotas_top" | "latinas" | "novidades";
+const CATEGORIES: { key: CategoryKey; label: string; table: "ads_garotas_top" | "ads_latinas" | "ads_novidades"; title: string; subtitle: string }[] = [
+  { key: "garotas_top", label: "Garotas Top", table: "ads_garotas_top", title: "GAROTAS TOP 10", subtitle: "Chinesas e as mais quentes das redes" },
+  { key: "latinas", label: "Latinas", table: "ads_latinas", title: "LATINAS", subtitle: "As latinas mais desejadas" },
+  { key: "novidades", label: "Novidades 🔥", table: "ads_novidades", title: "NOVIDADES 🔥", subtitle: "Recém-chegadas toda semana" },
+];
+
 export default function AdsGarotasTopPage() {
+  const [category, setCategory] = useState<CategoryKey>("garotas_top");
+  const activeCategory = CATEGORIES.find((c) => c.key === category)!;
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -51,7 +60,7 @@ export default function AdsGarotasTopPage() {
   const { hasUpdate, clear } = useAdsGarotasRealtime();
   const navigate = useNavigate();
   const [showPix, setShowPix] = useState(false);
-  const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
+  const { price: fallbackPrice } = useCheckoutPrice(category);
   const price = useMemo(() => {
     const syncedCard = cards.find((card) => card.valor != null && Number(card.valor) > 0);
     return syncedCard ? Number(syncedCard.valor) : fallbackPrice;
@@ -67,19 +76,22 @@ export default function AdsGarotasTopPage() {
 
   const fetchCards = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("ads_garotas_top")
+    const { data } = await (supabase as any)
+      .from(activeCategory.table)
       .select("*")
       .eq("is_active", true)
       .order("ordem", { ascending: true })
       .order("created_at", { ascending: false });
     setCards(data || []);
+    setPage(1);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchCards();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
 
   const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
   const pageCards = useMemo(

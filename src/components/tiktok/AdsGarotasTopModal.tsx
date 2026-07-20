@@ -153,7 +153,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
               <button
                 onClick={() => setShowLatinas(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-pink-600 to-red-600 shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300/50 animate-cta-attention-purple hover:scale-105 active:scale-95 transition-transform"
               >
                 <Flame className="w-4 h-4" /> Ver LATINAS 🌶️
               </button>

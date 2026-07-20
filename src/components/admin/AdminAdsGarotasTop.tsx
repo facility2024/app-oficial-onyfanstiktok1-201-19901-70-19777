@@ -619,6 +619,30 @@ export const AdminAdsGarotasTop = () => {
                 </p>
               </div>
 
+              <div className="md:col-span-2">
+                <Label className="text-white">💳 Template PIX vinculado (opcional)</Label>
+                <Select
+                  value={form.checkout_template_id || "none"}
+                  onValueChange={(v) => setForm({ ...form, checkout_template_id: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger className="bg-gray-800 text-white border-gray-700">
+                    <SelectValue placeholder="Nenhum — usa o PIX interno com o valor acima" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum — usa o PIX interno</SelectItem>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.nome} {t.valor ? `— R$ ${Number(t.valor).toFixed(2).replace(".", ",")}` : ""} (/{t.slug})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Se selecionado, ao clicar em "Assinar via PIX" o usuário vai direto para a página do template (com order bumps e mídia lateral).
+                </p>
+              </div>
+
+
               <div className="flex items-center gap-3">
                 <Switch
                   checked={form.is_active}

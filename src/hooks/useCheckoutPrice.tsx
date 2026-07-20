@@ -16,17 +16,48 @@ export function useCheckoutPrice(key: CheckoutKey) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
+    let active = true;
+
+    const loadPrice = async () => {
+      const { data, error } = await supabase
         .from("admin_settings")
         .select("setting_value")
         .eq("setting_key", SETTING_KEY)
         .maybeSingle();
+      if (!active) return;
+      if (error) {
+        setLoading(false);
+        return;
+      }
       const v = (data?.setting_value as any) || {};
       const parsed = Number(v?.[key]);
       if (!Number.isNaN(parsed) && parsed > 0) setPrice(parsed);
       setLoading(false);
-    })();
+    };
+
+    const handlePriceUpdate = () => { void loadPrice(); };
+    void loadPrice();
+    window.addEventListener("checkout-prices-updated", handlePriceUpdate);
+
+    const channel = supabase
+      .channel(`checkout-prices-${key}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "admin_settings",
+          filter: `setting_key=eq.${SETTING_KEY}`,
+        },
+        handlePriceUpdate,
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      window.removeEventListener("checkout-prices-updated", handlePriceUpdate);
+      supabase.removeChannel(channel);
+    };
   }, [key]);
 
   return { price, loading };
@@ -47,11 +78,13 @@ export async function fetchCheckoutPrices(): Promise<Record<CheckoutKey, number>
 }
 
 export async function saveCheckoutPrices(prices: Record<CheckoutKey, number>) {
-  await supabase.from("admin_settings").upsert(
+  const { error } = await supabase.from("admin_settings").upsert(
     {
       setting_key: SETTING_KEY,
       setting_value: prices as any,
     },
     { onConflict: "setting_key" }
   );
+  if (error) throw error;
+  window.dispatchEvent(new Event("checkout-prices-updated"));
 }

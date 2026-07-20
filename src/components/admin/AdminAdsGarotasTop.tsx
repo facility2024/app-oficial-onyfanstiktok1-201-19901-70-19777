@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, X, Loader2, RefreshCw, Link } from "lucide-react";
 import { useAdsGarotasRealtime } from "@/hooks/useAdsGarotasRealtime";
+import { fetchCheckoutPrices, saveCheckoutPrices } from "@/hooks/useCheckoutPrice";
 
 
 type Categoria = "garotas_top" | "latinas" | "novidades";
@@ -99,14 +100,47 @@ export const AdminAdsGarotasTop = () => {
     if (!confirm(`${action} template PIX em todos os cards de ${CAT_LABEL[filter]}?`)) return;
 
     setApplyingCategoryTemplate(true);
-    const { error, count } = await (supabase as any)
-      .from(TABLE_BY_CAT[filter])
-      .update({ checkout_template_id: clear ? null : categoryTemplateId }, { count: "exact" })
-      .not("id", "is", null);
-    setApplyingCategoryTemplate(false);
-    if (error) return toast.error("Erro: " + error.message);
-    toast.success(`${count ?? 0} card(s) atualizado(s)`);
-    fetchCards();
+    try {
+      let templateAmount: number | null = null;
+      if (!clear) {
+        const { data: template, error: templateError } = await (supabase as any)
+          .from("checkout_templates")
+          .select("amount")
+          .eq("id", categoryTemplateId)
+          .eq("ativo", true)
+          .maybeSingle();
+        if (templateError) throw templateError;
+        templateAmount = Number(template?.amount);
+        if (!Number.isFinite(templateAmount) || templateAmount <= 0) {
+          throw new Error("O template selecionado não possui um valor PIX válido");
+        }
+      }
+
+      const payload = clear
+        ? { checkout_template_id: null }
+        : { checkout_template_id: categoryTemplateId, valor: templateAmount };
+      const { error, count } = await (supabase as any)
+        .from(TABLE_BY_CAT[filter])
+        .update(payload, { count: "exact" })
+        .not("id", "is", null);
+      if (error) throw error;
+
+      if (!clear && templateAmount !== null) {
+        const prices = await fetchCheckoutPrices();
+        await saveCheckoutPrices({ ...prices, [filter]: templateAmount });
+      }
+
+      await Promise.all([fetchCards(), fetchTemplates()]);
+      toast.success(
+        clear
+          ? `Template removido de ${count ?? 0} card(s)`
+          : `${count ?? 0} card(s) atualizados para R$ ${templateAmount!.toFixed(2).replace(".", ",")}`,
+      );
+    } catch (error: any) {
+      toast.error("Erro ao sincronizar valor: " + (error?.message || "tente novamente"));
+    } finally {
+      setApplyingCategoryTemplate(false);
+    }
   };
 
 

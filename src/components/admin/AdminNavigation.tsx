@@ -67,7 +67,7 @@ export const AdminNavigation = ({ activeSection, setActiveSection, userId }: Adm
                     "flex items-center px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm lg:text-base font-medium transition-all duration-200",
                     isActive 
                       ? "bg-gray-900 text-white shadow-lg" 
-                      : "text-gray-900 hover:bg-black/20 hover:text-gray-900"
+                      : "text-white hover:bg-black/20 hover:text-white"
                   )}
                 >
                   <Icon className="w-4 h-4 mr-1 sm:mr-2 drop-shadow-md" />

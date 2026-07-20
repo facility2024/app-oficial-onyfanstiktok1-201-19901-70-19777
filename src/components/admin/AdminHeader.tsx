@@ -67,7 +67,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
       <div className="flex h-14 sm:h-16 items-center justify-between px-2 sm:px-4 w-full">
         {/* Sidebar Toggle + Logo */}
         <div className="flex items-center space-x-2 sm:space-x-3">
-          <SidebarTrigger className="text-gray-900 hover:bg-black/10 p-2 rounded-lg" />
+          <SidebarTrigger className="text-white hover:bg-black/10 p-2 rounded-lg" />
           <img 
             src={coconudiLogo} 
             alt="CocoNudi Logo" 
@@ -76,7 +76,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
             title="Ir para Home"
           />
           <div className="flex flex-col">
-            <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900 drop-shadow-sm leading-tight">
+            <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-white drop-shadow-sm leading-tight">
               <span className="hidden md:inline">CocoNudi Admin</span>
               <span className="hidden sm:inline md:hidden">Admin</span>
               <span className="sm:hidden">Admin</span>
@@ -100,7 +100,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
           </Button>
           
           {/* Relógio */}
-          <div className="flex flex-col items-center text-gray-900 text-xs leading-tight">
+          <div className="flex flex-col items-center text-white text-xs leading-tight">
             <div className="font-bold text-xs sm:text-sm">{formatTime(currentTime)}</div>
             <div className="text-xs opacity-70 hidden sm:block">{formatDate(currentTime)}</div>
           </div>
@@ -111,7 +111,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
               <Button
                 variant="ghost"
                 size="sm"
-                className="relative p-2 hover:bg-black/10 text-gray-900"
+                className="relative p-2 hover:bg-black/10 text-white"
                 title="Notificações"
               >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -167,7 +167,7 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
           </Popover>
 
           {/* User info */}
-          <div className="flex items-center space-x-2 text-gray-900 text-xs">
+          <div className="flex items-center space-x-2 text-white text-xs">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline max-w-32 truncate">{user.email}</span>
           </div>

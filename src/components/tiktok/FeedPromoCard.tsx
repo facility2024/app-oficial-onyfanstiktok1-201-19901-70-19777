@@ -87,11 +87,20 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         return;
       }
       const u = new URL(url, window.location.origin);
+      const internalPath = u.pathname + u.search + u.hash;
+      // Mesma origem → SPA
       if (u.origin === window.location.origin) {
-        navigate(u.pathname + u.search + u.hash);
+        navigate(internalPath);
         return;
       }
-      // Externo: mesma aba, sem duplicação
+      // Origem externa mas rota conhecida do app (ex.: coconudi.com/garotas, /checkout/:slug)
+      // → tratar como interna para não abrir nova aba/duplicar
+      const knownInternal = /^\/(garotas|garotas-top-vip|checkout\/|app|home|latinas|novidades|acesso|meus-acessos|auth|profile|subscribe|marketplace)/i;
+      if (knownInternal.test(u.pathname)) {
+        navigate(internalPath);
+        return;
+      }
+      // Externo real: mesma aba
       window.location.href = url;
     } catch {
       window.location.href = url;

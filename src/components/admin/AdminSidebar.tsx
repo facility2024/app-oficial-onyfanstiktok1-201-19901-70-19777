@@ -130,6 +130,7 @@ const navigationGroups = [
     items: [
       { id: 'settings', label: 'Configurações', icon: Settings },
       { id: 'documentation', label: 'Documentação', icon: BookOpen },
+      { id: 'guia-sistema', label: 'Guia Completo (Manual)', icon: BookOpen, external: '/guia-do-sistema' },
     ]
   },
 ];
@@ -139,7 +140,11 @@ export const AdminSidebar = ({ activeSection, setActiveSection, userId }: AdminS
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
-  const handleItemClick = (itemId: string) => {
+  const handleItemClick = (itemId: string, external?: string) => {
+    if (external) {
+      window.open(external, '_blank');
+      return;
+    }
     setActiveSection(itemId);
     trackNavigation(itemId, userId);
   };
@@ -167,7 +172,7 @@ export const AdminSidebar = ({ activeSection, setActiveSection, userId }: AdminS
                     return (
                       <SidebarMenuItem key={item.id}>
                         <SidebarMenuButton
-                          onClick={() => handleItemClick(item.id)}
+                          onClick={() => handleItemClick(item.id, (item as any).external)}
                           tooltip={item.label}
                           className={cn(
                             "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium",

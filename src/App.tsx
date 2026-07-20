@@ -62,6 +62,7 @@ import InstagramProfilePage from "./pages/InstagramProfilePage";
 import InstagramModelFeed from "./pages/InstagramModelFeed";
 import BuyerAccess from "./pages/BuyerAccess";
 import AdminHowToUsePix from "./pages/AdminHowToUsePix";
+import GuiaDoSistema from "./pages/GuiaDoSistema";
 import { CartProvider } from "./contexts/CartContext";
 
 // Optimize QueryClient for mobile performance
@@ -252,6 +253,8 @@ const App = () => (
             </AdminRoute>
           } />
           <Route path="/admin/como-usar-pix" element={<AdminHowToUsePix />} />
+          <Route path="/guia-do-sistema" element={<GuiaDoSistema />} />
+          <Route path="/guia-do-sistema.docx" element={<GuiaDoSistema />} />
 
           
           {/* URL amigável para perfis - DEVE ser antes do catch-all */}

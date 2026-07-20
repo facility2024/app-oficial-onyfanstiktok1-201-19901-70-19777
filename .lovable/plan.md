@@ -1,41 +1,38 @@
+# Vincular Template PIX aos Cards da Garotas Top
 
 ## Objetivo
-Adicionar um botão central de gravação (Play/●) na barra inferior do app (`TikTokApp.tsx`), **visível apenas para criadores aprovados** (role `creator`), que abre a câmera do celular, grava vídeo de até **20s**, permite pré-visualizar, salvar/publicar e enviar para o **Bunny.net** usando exatamente o mesmo fluxo já existente no Creator Studio (Edge Function `bunny-video-upload` → TUS upload).
+Permitir escolher, no editor de cada card da página **Garotas Top 10**, um **Template de Checkout PIX** (dos que já são gerados no painel de Checkout Templates) para ser usado no botão "Assinar via PIX". Incluir botão **"Aplicar este template em todos os cards"** para preencher em massa.
 
-## O que NÃO será alterado
-- Nada do feed, VideoPlayer, likes, comentários, VIP, checkout, promoções.
-- Nada do fluxo atual de upload do Creator Studio (será reutilizado, não duplicado).
-- Barra inferior mantém os 4 itens atuais (Início, Explorar, Explorar, Perfil); o botão central será **inserido no meio**, sem remover nada — vira 5 itens como no exemplo.
-- Usuário comum **nunca** vê o botão (`useUserRoles` → `isCreator`).
+## Caminho no Admin (onde o editor mora)
+- Painel Admin → menu lateral → **"Garotas Top 10"** (`AdminAdsGarotasTop`)
+- É onde você já cadastra nome, imagem, vídeo, valor e ordem de cada card.
+- Os **Templates PIX** são criados em: Painel Admin → **"Checkout Templates"** (`AdminCheckoutTemplates`) — cada um gera um link `/checkout/<slug>` e tem valor próprio.
 
 ## Mudanças
 
-### 1. Novo componente `src/components/creator/QuickRecordModal.tsx`
-Modal full-screen com:
-- `getUserMedia({ video: { facingMode }, audio: true })` — suporta Android + iOS Safari (usa `playsInline`, `muted` no preview).
-- Botão para alternar câmera **frontal ⇄ traseira** (`facingMode: 'user' | 'environment'`).
-- `MediaRecorder` gravando em `video/mp4` (fallback `video/webm;codecs=vp9,opus` para Android).
-- Timer visual 0-20s com **parada automática aos 20s**.
-- Após parar: pré-visualização do blob + botões **Regravar** e **Publicar**.
-- Campo opcional de título (default `Gravado em <data>`).
-- No **Publicar**: chama a edge function existente `bunny-video-upload` (action `create`) → recebe `videoGuid` + assinatura TUS → faz upload TUS do blob para `https://video.bunncdn.com/tusupload` (mesmo caminho que `BunnyVideoUploader`).
-- Após TUS OK: `INSERT` em `public.videos` com `creator_id = auth.uid()`, `is_active = true`, `visibility = 'public'`, `video_url` = embed URL retornada pela edge, `thumbnail_url` = thumbnail retornada. Isso garante que o vídeo aparece no **feed público** e no **Creator Studio** (mesma tabela já usada hoje).
+### 1. Banco de Dados
+- Adicionar coluna `checkout_template_id` (uuid, opcional) em `ads_garotas_top`, `ads_latinas` e `ads_novidades` — mesma lógica nos três modais.
+- Referência solta para `checkout_templates(id)` com `ON DELETE SET NULL`.
 
-### 2. `src/pages/TikTokApp.tsx` (mínimo)
-- Importar `useUserRoles` e `QuickRecordModal`.
-- Dentro da barra inferior (linha ~3584), inserir entre o 2º Explorar e o Perfil (posição central visual) um `<button>` renderizado condicionalmente com `isCreator === true` que abre o modal. Ícone: círculo vermelho neon com `Play` (lucide) — igual ao exemplo enviado.
-- Estado local `showQuickRecord` para controlar o modal.
+### 2. Editor Admin (`AdminAdsGarotasTop`, `AdminAdsLatinas`, `AdminAdsNovidades`)
+- Novo campo por card: **"Template PIX vinculado"** (select com busca dos templates ativos).
+- Bloco de ações em massa acima da lista:
+  - Select "Escolha o template PIX"
+  - Botão **"Aplicar em todos os cards"** — atualiza `checkout_template_id` de todos os cards da tabela.
+  - Botão **"Limpar template de todos"** — zera o vínculo.
 
-### 3. Reutilização (sem duplicar código)
-- A lógica de assinatura TUS + insert já existe em `src/components/creator/BunnyVideoUploader.tsx`; vou extrair a função de upload para um helper `src/utils/bunnyTusUpload.ts` (pequena função `uploadBlobToBunny(blob, title)`) e usar tanto no `BunnyVideoUploader` quanto no novo `QuickRecordModal`. Sem quebrar o fluxo atual.
+### 3. Modal do Feed (`AdsGarotasTopModal`, `AdsLatinasModal`, `AdsNovidasModal`)
+Ao clicar em "Assinar via PIX":
+- Se o card tem `checkout_template_id` → resolver o `slug` do template e **navegar para `/checkout/<slug>`** (usa o valor, order bumps e mídia do template).
+- Se **não tem** → mantém o comportamento atual (abre `PixCheckoutModal` interno com `valor` do card ou preço fallback).
 
-## Segurança
-- Botão bloqueado no client via `isCreator`; e o `INSERT` em `videos` já é protegido por RLS (`creators_insert_own_videos` exige `creator_id = auth.uid()`), então usuário comum não conseguiria publicar mesmo se manipulasse o front.
-- Edge function `bunny-video-upload` já valida `auth.getUser()` — nenhum segredo Bunny sai para o cliente.
+## Regras de Prioridade (do botão do card)
+1. `checkout_template_id` do card → checkout template completo (recomendado).
+2. `valor` do card → PIX interno com esse valor.
+3. Preço padrão da categoria (`useCheckoutPrice`) → PIX interno com esse valor.
 
-## Compatibilidade mobile
-- iOS Safari: `MediaRecorder` suportado em iOS 14.3+, usar `video/mp4;codecs=avc1,mp4a`.
-- Android Chrome: `video/webm;codecs=vp9,opus`.
-- Fallback: se `MediaRecorder` indisponível, mostrar aviso "Atualize o navegador".
-
-## Aguardando comando **"produzir"** para implementar.
+## Detalhes Técnicos
+- Migration: `ALTER TABLE ads_garotas_top ADD COLUMN checkout_template_id uuid REFERENCES checkout_templates(id) ON DELETE SET NULL;` (idem nas outras duas).
+- No editor: reaproveitar padrão de select já usado em `AdminCheckoutOrderBumps` (fetch de `checkout_templates` where `ativo=true`).
+- Ação em massa: `UPDATE ads_garotas_top SET checkout_template_id = $1` (sem `WHERE`, pois é a tabela toda).
+- Modal: buscar `slug` do template com `.select('slug, ativo').eq('id', card.checkout_template_id).maybeSingle()` e `navigate(/checkout/${slug})`.

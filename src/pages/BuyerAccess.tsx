@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,6 @@ const maskWa = (v: string) => {
 
 export default function BuyerAccess() {
   const [wa, setWa] = useState("");
-  const [code, setCode] = useState("");
-  const [step, setStep] = useState<"wa" | "code">("wa");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
@@ -25,38 +23,20 @@ export default function BuyerAccess() {
     if (pre) setWa(pre);
   }, []);
 
-  const sendCode = async () => {
+  const unlock = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-buyer-code", {
+      const { data, error } = await supabase.functions.invoke("buyer-access", {
         body: { whatsapp: wa },
       });
       if (error || (data as any)?.error) {
-        throw new Error((data as any)?.error || error?.message || "Não foi possível enviar o código.");
-      }
-      toast.success("Código enviado para o WhatsApp da compra.");
-      setStep("code");
-    } catch (e: any) {
-      toast.error(e.message || "Não foi possível enviar o código.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyCode = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-buyer-code", {
-        body: { whatsapp: wa, code: code.trim() },
-      });
-      if (error || (data as any)?.error) {
-        throw new Error((data as any)?.error || error?.message || "Código inválido.");
+        throw new Error((data as any)?.error || error?.message || "Número não encontrado.");
       }
       sessionStorage.setItem("buyer_whatsapp", (data as any).whatsapp);
       toast.success("Acesso liberado!");
       nav("/meus-acessos");
     } catch (e: any) {
-      toast.error(e.message || "Código inválido.");
+      toast.error(e.message || "Não foi possível liberar o acesso.");
     } finally {
       setLoading(false);
     }
@@ -73,61 +53,24 @@ export default function BuyerAccess() {
           <ShieldCheck className="w-8 h-8 text-emerald-400" />
           <div>
             <h1 className="text-xl font-bold text-white">Área do Comprador</h1>
-            <p className="text-sm text-gray-300">
-              {step === "wa"
-                ? "Digite o WhatsApp usado na compra para receber o código de acesso"
-                : "Digite o código de 6 dígitos enviado ao seu WhatsApp"}
-            </p>
+            <p className="text-sm text-gray-300">Digite o WhatsApp usado na compra para liberar o acesso</p>
           </div>
         </div>
 
-        {step === "wa" ? (
-          <>
-            <Input
-              placeholder="(11) 99999-9999"
-              value={maskWa(wa)}
-              onChange={(e) => setWa(e.target.value)}
-              inputMode="tel"
-              className="text-white placeholder:text-gray-500 bg-gray-950/80 border-gray-700 caret-white"
-            />
-            <Button
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold"
-              onClick={sendCode}
-              disabled={loading || wa.replace(/\D/g, "").length < 10}
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar código"}
-            </Button>
-          </>
-        ) : (
-          <>
-            <Input
-              placeholder="000000"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              inputMode="numeric"
-              maxLength={6}
-              className="text-white placeholder:text-gray-500 bg-gray-950/80 border-gray-700 caret-white tracking-[0.5em] text-center text-lg"
-            />
-            <Button
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold"
-              onClick={verifyCode}
-              disabled={loading || code.length !== 6}
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar código"}
-            </Button>
-            <button
-              type="button"
-              className="w-full text-xs text-gray-400 hover:text-emerald-400 transition-colors"
-              onClick={() => {
-                setCode("");
-                setStep("wa");
-              }}
-              disabled={loading}
-            >
-              ← Trocar número
-            </button>
-          </>
-        )}
+        <Input
+          placeholder="(11) 99999-9999"
+          value={maskWa(wa)}
+          onChange={(e) => setWa(e.target.value)}
+          inputMode="tel"
+          className="text-white placeholder:text-gray-500 bg-gray-950/80 border-gray-700 caret-white"
+        />
+        <Button
+          className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold"
+          onClick={unlock}
+          disabled={loading || wa.replace(/\D/g, "").length < 10}
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Liberar meus acessos"}
+        </Button>
       </div>
     </div>
   );

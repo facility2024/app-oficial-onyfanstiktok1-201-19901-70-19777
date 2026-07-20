@@ -10,7 +10,7 @@ import { MediaCarouselPlayer } from './MediaCarouselPlayer';
 import { useCreatorFollow } from '@/hooks/useCreatorFollow';
 import { useModelSubscription, DEFAULT_BENEFITS } from '@/hooks/useModelSubscription';
 import { useNavigate } from 'react-router-dom';
-import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
+import { toBunnyStreamEmbedUrl, toBunnyStreamThumbnailUrl } from '@/utils/bunnyStream';
 import { ModelSubscriptionOverlay } from '@/components/tiktok/ModelSubscriptionOverlay';
 import { ModelCheckoutButtons } from '@/components/tiktok/ModelCheckoutButtons';
 

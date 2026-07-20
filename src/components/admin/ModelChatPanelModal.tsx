@@ -23,7 +23,7 @@ interface ChatPanel {
   model_id: string;
   is_active: boolean;
   is_online: boolean;
-  ai_provider: 'gemini' | 'openai' | null;
+  ai_provider: 'gemini' | 'openai' | 'grok' | null;
   api_key_encrypted: string;
   prompt: string;
   greeting_message: string;
@@ -249,12 +249,13 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
               <div className="relative">
                 <select
                   value={panel.ai_provider || ''}
-                  onChange={(e) => setPanel({ ...panel, ai_provider: e.target.value as 'gemini' | 'openai' | null })}
+                  onChange={(e) => setPanel({ ...panel, ai_provider: (e.target.value || null) as 'gemini' | 'openai' | 'grok' | null })}
                   className="w-full px-4 py-3 bg-[#0f1729] border border-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none cursor-pointer text-sm"
                 >
                   <option value="">Selecione o provedor</option>
                   <option value="gemini">◆ Google Gemini (Recomendado)</option>
                   <option value="openai">● OpenAI (GPT)</option>
+                  <option value="grok">✦ xAI Grok</option>
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -266,9 +267,17 @@ export const ModelChatPanelModal: React.FC<ModelChatPanelModalProps> = ({
             <div className="p-4 bg-[#1a2340] rounded-xl border border-gray-700/50 space-y-3">
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-purple-400" />
-                <p className="text-white font-semibold text-sm">Chave da API (Google AI Studio)</p>
+                <p className="text-white font-semibold text-sm">
+                  Chave da API ({panel.ai_provider === 'openai' ? 'OpenAI' : panel.ai_provider === 'grok' ? 'xAI Grok' : 'Google AI Studio'})
+                </p>
               </div>
-              <p className="text-gray-400 text-xs">Obtenha sua chave em: aistudio.google.com/apikey</p>
+              <p className="text-gray-400 text-xs">
+                {panel.ai_provider === 'openai'
+                  ? 'Obtenha sua chave em: platform.openai.com/api-keys'
+                  : panel.ai_provider === 'grok'
+                  ? 'Obtenha sua chave em: console.x.ai (Grok API)'
+                  : 'Obtenha sua chave em: aistudio.google.com/apikey'}
+              </p>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Input

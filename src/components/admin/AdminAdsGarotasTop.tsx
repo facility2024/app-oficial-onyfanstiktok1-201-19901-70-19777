@@ -187,6 +187,7 @@ export const AdminAdsGarotasTop = () => {
       ordem: c.ordem,
       is_active: c.is_active,
       link_acesso: c.link_acesso || "",
+      checkout_template_id: c.checkout_template_id || "",
       categoria: c._categoria,
     });
   };

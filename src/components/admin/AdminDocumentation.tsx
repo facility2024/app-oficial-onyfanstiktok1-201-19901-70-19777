@@ -1,9 +1,54 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Code, Database, Shield, Zap, Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Code, Database, Shield, Zap, Globe, Download, ExternalLink, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const AdminDocumentation = () => {
+  const guideUrl = `${window.location.origin}/guia-do-sistema.docx`;
+
+  const GuideCard = () => (
+    <Card className="mb-6 border-2 border-primary/60 bg-gradient-to-br from-primary/10 to-transparent">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-white">
+          <BookOpen className="w-5 h-5 text-primary" />
+          Guia Completo do Sistema COCONUDI
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-gray-300">
+          Manual completo (DOCX) com 9 capítulos: Feed de Ofertas, Order Bumps, Promos, Checkout PIX, Produtos & Liberações, Postagens, Anúncios, aprilblazeirl e Afiliados.
+        </p>
+        <div className="flex items-center gap-2 bg-black/40 border border-gray-700 rounded-md px-3 py-2 text-xs text-gray-300 font-mono break-all">
+          {guideUrl}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+            <a href="/guia-do-sistema.docx" download>
+              <Download className="w-4 h-4 mr-2" /> Baixar Guia
+            </a>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <a href="/guia-do-sistema.docx" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4 mr-2" /> Abrir em nova aba
+            </a>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              navigator.clipboard.writeText(guideUrl);
+              toast.success('Link copiado!');
+            }}
+          >
+            <Copy className="w-4 h-4 mr-2" /> Copiar link
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   const sections = [
     {
       title: "Início Rápido",
@@ -102,7 +147,10 @@ export const AdminDocumentation = () => {
         </div>
       </div>
 
+      <GuideCard />
+
       <div className="grid gap-6 md:grid-cols-2">
+
         {sections.map((section, index) => {
           const Icon = section.icon;
           return (

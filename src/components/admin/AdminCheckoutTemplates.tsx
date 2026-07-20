@@ -9,6 +9,7 @@ import { Loader2, Plus, Save, Trash2, Eye, Link as LinkIcon, Pencil, X } from "l
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
 import TemplateBumpsLinker from "./TemplateBumpsLinker";
+import ProductPicker from "./ProductPicker";
 import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 interface Template {

@@ -169,9 +169,9 @@ export default function AdsGarotasTopPage() {
           <p className="mt-3 text-sm md:text-base text-purple-100/90 max-w-2xl mx-auto leading-relaxed px-3">
             São vários vídeos atualizados todas as semanas com as mais lindas da internet.
           </p>
-          <button
-            onClick={() => setShowPix(true)}
-            className="mt-5 inline-flex flex-col items-center gap-1 px-4 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer max-w-[95vw] animate-cta-attention-purple"
+          <div
+            role="presentation"
+            className="mt-5 inline-flex flex-col items-center gap-1 px-4 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 border border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.5)] max-w-[95vw] animate-cta-attention-purple cursor-default select-none pointer-events-none"
           >
             <span className="text-lg sm:text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] text-center leading-tight">
               Tudo isso por <span className="text-yellow-300 whitespace-nowrap">R$ {price.toFixed(2).replace(".", ",")}</span>
@@ -179,7 +179,7 @@ export default function AdsGarotasTopPage() {
             <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse text-center">
               🔥 Pagar com PIX — acesso imediato 🔥
             </span>
-          </button>
+          </div>
         </header>
 
         {/* Grid */}

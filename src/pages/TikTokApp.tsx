@@ -3600,11 +3600,26 @@ export const TikTokApp = () => {
             <span className="text-xs">Explorar</span>
           </button>
 
+          {isCreator && !creatorLoading && (
+            <button
+              onClick={() => setShowQuickRecord(true)}
+              className="flex flex-col items-center justify-center flex-1 text-white transition-transform hover:scale-105"
+              aria-label="Gravar vídeo"
+            >
+              <span className="w-11 h-11 rounded-full bg-gradient-to-br from-red-500 to-pink-600 border-2 border-white flex items-center justify-center shadow-[0_0_18px_rgba(239,68,68,0.7)] mb-0.5">
+                <Play className="w-5 h-5 text-white fill-white" strokeWidth={1.5} />
+              </span>
+              <span className="text-[10px] leading-none">Gravar</span>
+            </button>
+          )}
+
           <button onClick={() => navigate('/profile')} className="flex flex-col items-center justify-center flex-1 text-white hover:text-gray-300 transition-colors">
             <User className="w-7 h-7 mb-0.5" strokeWidth={1.5} />
             <span className="text-xs">Perfil</span>
           </button>
         </div>
+
+        <QuickRecordModal open={showQuickRecord} onClose={() => setShowQuickRecord(false)} />
 
         {/* Vertical Carousel Container */}
         <div className="embla overflow-hidden overscroll-none touch-pan-y" style={{ height: 'calc(100dvh - 64px)', touchAction: 'pan-y' }} ref={emblaRef}>

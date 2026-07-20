@@ -82,12 +82,14 @@ export const AdminAdsGarotasTop = () => {
   const [applyingCategoryTemplate, setApplyingCategoryTemplate] = useState(false);
 
   const fetchTemplates = async () => {
-    const { data } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("checkout_templates")
-      .select("id, nome, slug, valor, ativo")
+      .select("id, nome, slug, amount, ativo")
       .eq("ativo", true)
       .order("created_at", { ascending: false });
-    setTemplates((data || []) as TemplateOption[]);
+    if (error) { console.error("fetchTemplates", error); toast.error("Erro ao carregar templates: " + error.message); }
+    const mapped = (data || []).map((t: any) => ({ ...t, valor: t.amount }));
+    setTemplates(mapped as TemplateOption[]);
   };
 
   const applyTemplateToSelectedCategory = async (clear = false) => {

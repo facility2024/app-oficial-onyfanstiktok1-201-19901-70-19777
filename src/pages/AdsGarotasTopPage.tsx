@@ -276,9 +276,9 @@ export default function AdsGarotasTopPage() {
 
       {/* Modal de vídeo */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-md bg-gradient-to-br from-purple-950 to-black border-purple-500/40 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black bg-gradient-to-r from-purple-300 to-fuchsia-400 bg-clip-text text-transparent">
+        <DialogContent className="w-[calc(100vw-16px)] max-w-md max-h-[calc(100dvh-16px)] overflow-y-auto overscroll-contain bg-gradient-to-br from-purple-950 to-black border-purple-500/40 text-white p-3 sm:p-6 gap-3 rounded-xl">
+          <DialogHeader className="shrink-0 pr-10 text-left">
+            <DialogTitle className="text-lg sm:text-2xl leading-tight font-black bg-gradient-to-r from-purple-300 to-fuchsia-400 bg-clip-text text-transparent break-words">
               {selected?.nome}
             </DialogTitle>
           </DialogHeader>
@@ -294,32 +294,34 @@ export default function AdsGarotasTopPage() {
               preload="auto"
               onCanPlay={(event) => event.currentTarget.play().catch(() => undefined)}
               onError={() => setVideoFallbacks((prev) => ({ ...prev, [selected.id]: true }))}
-              className="w-full rounded-xl aspect-[9/16] object-cover bg-black"
+              className="w-full rounded-xl aspect-[9/16] max-h-[calc(100dvh-150px)] object-contain bg-black"
             />
           ) : selected?.imagem_url ? (
             <img
               src={selected.imagem_url}
               alt={selected.nome}
-              className="w-full rounded-xl aspect-[9/16] object-cover"
+              className="w-full rounded-xl aspect-[9/16] max-h-[calc(100dvh-150px)] object-contain bg-black"
             />
           ) : null}
-          <Button
-            onClick={async () => {
-              if (selected?.checkout_template_id) {
-                const slug = await resolveCheckoutSlug(selected.checkout_template_id);
-                if (slug) {
-                  setSelected(null);
-                  navigate(`/checkout/${slug}`);
-                  return;
+          <div className="sticky bottom-0 z-10 -mx-1 pt-2 pb-[max(0px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/95 to-transparent">
+            <Button
+              onClick={async () => {
+                if (selected?.checkout_template_id) {
+                  const slug = await resolveCheckoutSlug(selected.checkout_template_id);
+                  if (slug) {
+                    setSelected(null);
+                    navigate(`/checkout/${slug}`);
+                    return;
+                  }
                 }
-              }
-              setSelected(null);
-              setShowPix(true);
-            }}
-            className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold py-6 text-base shadow-[0_0_30px_rgba(168,85,247,0.6)]"
-          >
-            Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
-          </Button>
+                setSelected(null);
+                setShowPix(true);
+              }}
+              className="w-full min-h-12 h-auto whitespace-normal bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold px-3 py-3 text-sm sm:text-base leading-tight shadow-[0_0_30px_rgba(168,85,247,0.6)]"
+            >
+              Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
+            </Button>
+          </div>
 
         </DialogContent>
       </Dialog>

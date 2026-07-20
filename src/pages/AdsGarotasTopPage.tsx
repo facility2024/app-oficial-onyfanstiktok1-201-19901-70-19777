@@ -142,8 +142,8 @@ export default function AdsGarotasTopPage() {
               onClick={() => setCategory(c.key)}
               className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all ${
                 category === c.key
-                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 border-fuchsia-400 text-white shadow-[0_0_20px_rgba(217,70,239,0.6)]"
-                  : "bg-purple-950/40 border-purple-500/30 text-purple-200 hover:bg-purple-800/40"
+                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 border-fuchsia-400 text-white shadow-[0_0_20px_rgba(217,70,239,0.6)] animate-cta-attention-purple"
+                  : "bg-purple-950/40 border-purple-500/30 text-purple-200 hover:bg-purple-800/40 animate-pulse"
               }`}
             >
               {c.label}

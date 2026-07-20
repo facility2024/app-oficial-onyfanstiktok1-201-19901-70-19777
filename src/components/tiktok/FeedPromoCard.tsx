@@ -128,7 +128,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
     // Se o link aponta para Garotas Top, abrir o modal com a grade de vídeos
     if (isGarotasTopLink(promo.cta_link)) {
-      setShowGarotasTop(true);
+      navigate('/garotas');
       return;
     }
 

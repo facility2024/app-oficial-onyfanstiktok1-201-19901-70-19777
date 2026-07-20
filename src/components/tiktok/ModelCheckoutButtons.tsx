@@ -43,7 +43,7 @@ export const ModelCheckoutButtons = ({ modelId }: Props) => {
         <button
           key={t.id}
           onClick={() => navigate(`/checkout/${t.slug}`)}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 shadow-lg active:scale-95 transition-all"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 shadow-lg active:scale-95 transition-all animate-cta-attention"
         >
           <div className="flex items-center gap-2 min-w-0">
             <ShoppingBag className="w-4 h-4 text-white shrink-0" />

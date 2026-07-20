@@ -442,6 +442,21 @@
     animation: cta-attention 1.4s ease-in-out infinite;
     will-change: transform, box-shadow;
   }
+
+  @keyframes cta-attention-purple {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7), 0 0 20px rgba(217, 70, 239, 0.5);
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow: 0 0 0 14px rgba(168, 85, 247, 0), 0 0 40px rgba(217, 70, 239, 1);
+    }
+  }
+  .animate-cta-attention-purple {
+    animation: cta-attention-purple 1.4s ease-in-out infinite;
+    will-change: transform, box-shadow;
+  }
   
   .custom-div-icon {
     border: none !important;

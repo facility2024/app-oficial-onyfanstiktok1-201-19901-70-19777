@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2, X, Flame } from "lucide-react";
@@ -21,19 +22,16 @@ interface Card {
   checkout_template_id?: string | null;
 }
 
-async function openCheckoutTemplate(templateId: string): Promise<boolean> {
+async function resolveCheckoutSlug(templateId: string): Promise<string | null> {
   try {
     const { data } = await (supabase as any)
       .from("checkout_templates")
       .select("slug, ativo")
       .eq("id", templateId)
       .maybeSingle();
-    if (data?.slug && data?.ativo !== false) {
-      window.location.href = `/checkout/${data.slug}`;
-      return true;
-    }
+    if (data?.slug && data?.ativo !== false) return data.slug as string;
   } catch {}
-  return false;
+  return null;
 }
 
 const PAGE_SIZE = 20;

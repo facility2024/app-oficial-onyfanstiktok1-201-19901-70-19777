@@ -287,41 +287,8 @@ export default function ModelChat() {
       timestamp: new Date()
     };
 
-    // 🎁 Verificar se deve enviar saudação diária (1ª mensagem do dia)
-    const today = new Date().toISOString().split('T')[0];
-    const storageKey = `chat_data_${isCreator ? 'creator' : 'model'}_${entityId}`;
-    let shouldShowGreeting = false;
-    
-    try {
-      const existing = localStorage.getItem(storageKey);
-      if (existing) {
-        const parsed: StoredChat = JSON.parse(existing);
-        if (parsed.lastGreetingDate !== today && chatPanel?.greeting_message) {
-          shouldShowGreeting = true;
-        }
-      } else if (chatPanel?.greeting_message) {
-        shouldShowGreeting = true;
-      }
-    } catch {}
+    // Sem saudação automática — a IA responde de acordo com o prompt configurado
 
-    if (shouldShowGreeting && chatPanel?.greeting_message) {
-      const greetingMsg: Message = {
-        role: 'assistant',
-        content: chatPanel.greeting_message,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, greetingMsg]);
-      
-      // Salvar que a saudação do dia foi enviada
-      try {
-        const existing = localStorage.getItem(storageKey);
-        if (existing) {
-          const parsed: StoredChat = JSON.parse(existing);
-          parsed.lastGreetingDate = today;
-          localStorage.setItem(storageKey, JSON.stringify(parsed));
-        }
-      } catch {}
-    }
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');

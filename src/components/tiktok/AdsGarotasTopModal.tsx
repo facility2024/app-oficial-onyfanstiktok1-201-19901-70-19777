@@ -159,7 +159,7 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
               </button>
               <button
                 onClick={() => setShowNovidades(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-cyan-600 to-blue-600 shadow-[0_0_30px_rgba(34,211,238,0.7)] border border-cyan-300/50 animate-pulse hover:scale-105 active:scale-95 transition-transform"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-white text-sm sm:text-base bg-gradient-to-r from-cyan-600 to-blue-600 shadow-[0_0_30px_rgba(34,211,238,0.7)] border border-cyan-300/50 animate-cta-attention-purple hover:scale-105 active:scale-95 transition-transform"
               >
                 <Sparkles className="w-4 h-4" /> Ver NOVIDADES 🔥
               </button>

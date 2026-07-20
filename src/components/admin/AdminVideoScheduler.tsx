@@ -375,19 +375,23 @@ export const AdminVideoScheduler = () => {
         return;
       }
 
-      // Atualizar link do perfil se fornecido
-      if (formData.profileLink.trim()) {
+      // Atualizar link do perfil e/ou avatar se fornecidos
+      const updatePayload: any = {};
+      if (formData.profileLink.trim()) updatePayload.posting_panel_url = formData.profileLink.trim();
+      if (formData.modelAvatarUrl.trim()) updatePayload.avatar_url = formData.modelAvatarUrl.trim();
+      if (Object.keys(updatePayload).length > 0) {
         const { error } = await supabase
           .from('models')
-          .update({ posting_panel_url: formData.profileLink.trim() })
+          .update(updatePayload)
           .eq('id', modelId);
 
         if (error) {
-          console.error('Erro ao atualizar link:', error);
-          toast.warning('Post será agendado, mas erro ao atualizar link do perfil');
+          console.error('Erro ao atualizar modelo:', error);
+          toast.warning('Post será agendado, mas erro ao atualizar dados da modelo');
         }
       }
     }
+
 
     setLoading(true);
 

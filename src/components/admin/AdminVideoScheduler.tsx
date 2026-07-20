@@ -368,6 +368,20 @@ export const AdminVideoScheduler = () => {
         await loadModels();
       } else {
         modelId = createdModelInfo.id;
+        // Propagar avatar/link atualizados para a modelo já criada nesta sessão
+        const updatePayload: any = {};
+        if (formData.modelAvatarUrl.trim()) updatePayload.avatar_url = formData.modelAvatarUrl.trim();
+        if (formData.profileLink.trim()) updatePayload.posting_panel_url = formData.profileLink.trim();
+        if (Object.keys(updatePayload).length > 0) {
+          const { error: updErr } = await supabase
+            .from('models')
+            .update(updatePayload)
+            .eq('id', modelId);
+          if (updErr) {
+            console.error('Erro ao atualizar avatar da modelo recém-criada:', updErr);
+            toast.warning('Post agendado, mas não foi possível atualizar o avatar');
+          }
+        }
       }
     } else {
       if (!modelId) {

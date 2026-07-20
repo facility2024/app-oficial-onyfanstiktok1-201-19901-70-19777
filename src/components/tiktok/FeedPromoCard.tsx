@@ -265,8 +265,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         {promo.cta_text && (promo.cta_link || promo.cta_mode === 'popup') && (
           <button
             type="button"
-            onPointerUp={(e) => { e.stopPropagation(); handleCtaClick(e as any); }}
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={(e) => { e.stopPropagation(); handleCtaClick(e as any); }}
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             className="w-full bg-gradient-to-r from-pink-500 to-red-500 active:from-pink-600 active:to-red-600 text-white font-bold py-3 rounded-lg shadow-lg mb-3 cursor-pointer select-none"
           >

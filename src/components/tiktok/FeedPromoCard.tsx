@@ -5,6 +5,8 @@ import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Heart, MessageCircle, Share2, UserPlus, Volume2, VolumeX, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import AdsGarotasTopModal from './AdsGarotasTopModal';
+
 
 interface FeedPromotion {
   id: string;
@@ -39,9 +41,11 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [isPlaying, setIsPlaying] = useState(false);
   const [localMuted, setLocalMuted] = useState(isMuted);
   const [showPopup, setShowPopup] = useState(false);
+  const [showGarotasTop, setShowGarotasTop] = useState(false);
   const ctaBusyRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
 
@@ -94,6 +98,11 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     }
   };
 
+  const isGarotasTopLink = (url?: string | null) => {
+    if (!url) return false;
+    return /\/(ads\/)?garotas(-top)?/i.test(url) || /garotas-top-vip/i.test(url);
+  };
+
   const handleCtaClick = async (e?: any) => {
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
@@ -105,6 +114,12 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
 
     if (promo.cta_mode === 'popup') {
       setShowPopup(true);
+      return;
+    }
+
+    // Se o link aponta para Garotas Top, abrir o modal com a grade de vídeos
+    if (isGarotasTopLink(promo.cta_link)) {
+      setShowGarotasTop(true);
       return;
     }
 
@@ -127,6 +142,7 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
       openLink(promo.cta_link);
     }
   };
+
 
   const handlePopupCtaClick = () => {
     if (ctaBusyRef.current) return;
@@ -320,6 +336,8 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
         </div>,
         document.body
       )}
+
+      <AdsGarotasTopModal open={showGarotasTop} onClose={() => setShowGarotasTop(false)} />
     </div>
 
   );

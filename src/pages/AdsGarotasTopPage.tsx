@@ -26,19 +26,16 @@ interface Card {
   checkout_template_id: string | null;
 }
 
-async function openCheckoutTemplate(templateId: string): Promise<boolean> {
+async function resolveCheckoutSlug(templateId: string): Promise<string | null> {
   try {
     const { data } = await (supabase as any)
       .from("checkout_templates")
       .select("slug, ativo")
       .eq("id", templateId)
       .maybeSingle();
-    if (data?.slug && data?.ativo !== false) {
-      window.location.href = `/checkout/${data.slug}`;
-      return true;
-    }
+    if (data?.slug && data?.ativo !== false) return data.slug as string;
   } catch {}
-  return false;
+  return null;
 }
 
 
@@ -268,8 +265,12 @@ export default function AdsGarotasTopPage() {
           <Button
             onClick={async () => {
               if (selected?.checkout_template_id) {
-                const ok = await openCheckoutTemplate(selected.checkout_template_id);
-                if (ok) return;
+                const slug = await resolveCheckoutSlug(selected.checkout_template_id);
+                if (slug) {
+                  setSelected(null);
+                  navigate(`/checkout/${slug}`);
+                  return;
+                }
               }
               setSelected(null);
               setShowPix(true);

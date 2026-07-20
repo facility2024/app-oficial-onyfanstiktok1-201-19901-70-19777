@@ -72,10 +72,20 @@ serve(async (req) => {
       );
     }
 
-    // Fallback: se houver API key mas provider estiver nulo, assume 'gemini' (compat. registros antigos)
+    // Fallback: se provider nulo, detectar pelo prefixo da API key
     if (!chatPanel.ai_provider && chatPanel.api_key_encrypted) {
-      chatPanel.ai_provider = 'gemini';
-      console.log('⚠️ ai_provider nulo — assumindo gemini por padrão');
+      const key = String(chatPanel.api_key_encrypted).trim();
+      if (key.startsWith('sk-') || key.startsWith('sess-')) chatPanel.ai_provider = 'openai';
+      else if (key.startsWith('xai-')) chatPanel.ai_provider = 'grok';
+      else if (key.startsWith('AIza')) chatPanel.ai_provider = 'gemini';
+      else chatPanel.ai_provider = 'gemini';
+      console.log('⚠️ ai_provider nulo — detectado por prefixo:', chatPanel.ai_provider);
+
+      // Persiste para próximas chamadas
+      const updateQuery = isCreator
+        ? supabase.from('model_chat_panels').update({ ai_provider: chatPanel.ai_provider }).eq('creator_id', entityId)
+        : supabase.from('model_chat_panels').update({ ai_provider: chatPanel.ai_provider }).eq('model_id', entityId);
+      await updateQuery;
     }
 
     if (!chatPanel.ai_provider || !chatPanel.api_key_encrypted) {

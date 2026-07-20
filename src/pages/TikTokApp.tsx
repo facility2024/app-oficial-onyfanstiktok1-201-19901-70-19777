@@ -3601,7 +3601,11 @@ export const TikTokApp = () => {
               aria-label="Gravar vídeo"
             >
               <span className="w-11 h-11 rounded-full bg-gradient-to-br from-red-500 to-pink-600 border-2 border-white flex items-center justify-center shadow-[0_0_18px_rgba(239,68,68,0.7)] mb-0.5">
-                <Play className="w-5 h-5 text-white fill-white" strokeWidth={1.5} />
+                <img
+                  src="https://COCONUDIMUDIAL.b-cdn.net/ANUNCIANTES%20COCONUDI/%E2%80%94Pngtree%E2%80%94instagram%20reels%20logo%20featuring%20a_23692878.png"
+                  alt="Gravar"
+                  className="w-7 h-7 object-contain"
+                />
               </span>
               <span className="text-[10px] leading-none">Gravar</span>
             </button>

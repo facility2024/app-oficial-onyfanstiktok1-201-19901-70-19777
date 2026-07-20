@@ -42,6 +42,7 @@ interface Props {
 }
 
 export default function AdsGarotasTopModal({ open, onClose }: Props) {
+  const navigate = useNavigate();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);

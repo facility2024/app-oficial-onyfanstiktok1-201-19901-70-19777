@@ -52,8 +52,11 @@ export default function AdsGarotasTopPage() {
   const navigate = useNavigate();
   const [showPix, setShowPix] = useState(false);
   const { price: fallbackPrice } = useCheckoutPrice("garotas_top");
-  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : fallbackPrice;
-  const price = fallbackPrice;
+  const price = useMemo(() => {
+    const syncedCard = cards.find((card) => card.valor != null && Number(card.valor) > 0);
+    return syncedCard ? Number(syncedCard.valor) : fallbackPrice;
+  }, [cards, fallbackPrice]);
+  const checkoutAmount = selected?.valor && selected.valor > 0 ? Number(selected.valor) : price;
 
   useEffect(() => {
     document.documentElement.classList.add('allow-scroll');

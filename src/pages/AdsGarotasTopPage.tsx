@@ -125,7 +125,7 @@ export default function AdsGarotasTopPage() {
         </div>
       )}
 
-      <div className="relative max-w-7xl mx-auto px-4 py-10">
+      <div className="relative max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
         <button
           onClick={() => navigate('/app')}
           className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-purple-900/40 border border-purple-500/40 text-purple-200 hover:bg-purple-800/60 hover:text-white transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)]"
@@ -140,7 +140,7 @@ export default function AdsGarotasTopPage() {
             <button
               key={c.key}
               onClick={() => setCategory(c.key)}
-              className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${
+              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all ${
                 category === c.key
                   ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 border-fuchsia-400 text-white shadow-[0_0_20px_rgba(217,70,239,0.6)]"
                   : "bg-purple-950/40 border-purple-500/30 text-purple-200 hover:bg-purple-800/40"
@@ -152,31 +152,31 @@ export default function AdsGarotasTopPage() {
         </div>
 
         {/* Header */}
-        <header className="text-center mb-10">
+        <header className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-900/40 border border-purple-500/40 mb-4">
             <Sparkles className="w-4 h-4 text-fuchsia-400" />
             <span className="text-xs uppercase tracking-widest text-fuchsia-300">
               Exclusivo
             </span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black bg-gradient-to-r from-purple-300 via-fuchsia-400 to-purple-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black bg-gradient-to-r from-purple-300 via-fuchsia-400 to-purple-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] break-words px-2">
             {activeCategory.title}
           </h1>
-          <p className="mt-3 text-lg md:text-xl text-purple-200/80 font-medium">
+          <p className="mt-3 text-base sm:text-lg md:text-xl text-purple-200/80 font-medium px-2">
             {activeCategory.subtitle}
           </p>
 
-          <p className="mt-3 text-sm md:text-base text-purple-100/90 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-3 text-sm md:text-base text-purple-100/90 max-w-2xl mx-auto leading-relaxed px-3">
             São vários vídeos atualizados todas as semanas com as mais lindas da internet.
           </p>
           <button
             onClick={() => setShowPix(true)}
-            className="mt-5 inline-flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+            className="mt-5 inline-flex flex-col items-center gap-1 px-4 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/40 to-purple-600/40 hover:from-fuchsia-500/60 hover:to-purple-500/60 border border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.5)] hover:scale-105 active:scale-95 transition-transform cursor-pointer max-w-[95vw]"
           >
-            <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">
-              Tudo isso por <span className="text-yellow-300">R$ {price.toFixed(2).replace(".", ",")}</span>
+            <span className="text-lg sm:text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] text-center leading-tight">
+              Tudo isso por <span className="text-yellow-300 whitespace-nowrap">R$ {price.toFixed(2).replace(".", ",")}</span>
             </span>
-            <span className="text-[11px] md:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse">
+            <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest text-fuchsia-200 font-bold animate-pulse text-center">
               🔥 Pagar com PIX — acesso imediato 🔥
             </span>
           </button>
@@ -192,7 +192,8 @@ export default function AdsGarotasTopPage() {
             Nenhuma garota disponível no momento.
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3 sm:gap-4">
+
             {pageCards.map((card) => (
               <button
                 key={card.id}

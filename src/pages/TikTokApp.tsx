@@ -38,6 +38,7 @@ import { LocalBusinessCarousel } from '@/components/tiktok/LocalBusinessCarousel
 import { FullscreenVideoModal } from '@/components/tiktok/FullscreenVideoModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGenres } from '@/hooks/useGenres';
+import { QuickRecordModal } from '@/components/creator/QuickRecordModal';
 import { GenreSelector } from '@/components/tiktok/GenreSelector';
 import iconHome from '@/assets/icon-home.png';
 import iconNavigation from '@/assets/icon-navigation.png';

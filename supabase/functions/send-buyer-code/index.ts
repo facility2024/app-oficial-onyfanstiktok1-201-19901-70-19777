@@ -37,10 +37,9 @@ Deno.serve(async (req) => {
 
     await sb.from('whatsapp_access_codes').insert({ whatsapp: wa, code, expires_at });
 
-    // TODO: integrar envio real via WhatsApp. Por enquanto devolve o código para o admin poder repassar.
-    const debug = Deno.env.get('BUYER_CODE_DEBUG') === '1';
-
-    return new Response(JSON.stringify({ ok: true, ...(debug ? { code } : {}) }), {
+    // Envio real via WhatsApp deve ser plugado aqui.
+    // NUNCA retornar o código na resposta HTTP.
+    return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {

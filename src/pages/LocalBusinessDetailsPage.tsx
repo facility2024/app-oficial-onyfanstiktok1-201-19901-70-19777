@@ -102,7 +102,7 @@ const LocalBusinessDetailsPage = () => {
       <div className="fixed inset-0 bg-black overflow-y-auto">
         {/* Header Skeleton */}
         <div className="sticky top-0 z-20 border-b border-white/10 p-4" style={{
-          background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+          background: 'linear-gradient(to right, rgba(88, 28, 135, 0.95) 0%, rgba(59, 7, 100, 0.95) 35%, rgba(24, 24, 27, 0.98) 70%, rgba(10, 10, 10, 1) 100%)'
         }}>
           <div className="max-w-4xl mx-auto flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-full bg-white/30" />
@@ -139,7 +139,7 @@ const LocalBusinessDetailsPage = () => {
     <div className="fixed inset-0 bg-black overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 z-20 border-b border-white/10" style={{
-        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(88, 28, 135, 0.95) 0%, rgba(59, 7, 100, 0.95) 35%, rgba(24, 24, 27, 0.98) 70%, rgba(10, 10, 10, 1) 100%)'
       }}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">

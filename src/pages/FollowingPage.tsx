@@ -187,7 +187,7 @@ export default function FollowingPage() {
     <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="sticky top-0 z-50 backdrop-blur-lg border-b border-white/10" style={{
-        background: 'linear-gradient(to right, rgba(124, 179, 66, 0.95) 0%, rgba(85, 139, 47, 0.95) 35%, rgba(196, 132, 46, 0.95) 70%, rgba(139, 69, 19, 0.95) 100%)'
+        background: 'linear-gradient(to right, rgba(88, 28, 135, 0.95) 0%, rgba(59, 7, 100, 0.95) 35%, rgba(24, 24, 27, 0.98) 70%, rgba(10, 10, 10, 1) 100%)'
       }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

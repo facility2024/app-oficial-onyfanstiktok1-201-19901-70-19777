@@ -238,6 +238,10 @@ export const AdminVideoScheduler = () => {
       toast.error('Digite um username para a nova modelo');
       return;
     }
+    if (!formData.modelAvatarUrl.trim()) {
+      toast.error('Informe a URL do AVATAR da modelo antes de criar (obrigatório)');
+      return;
+    }
     const generatedId = crypto.randomUUID();
     setPendingModelData({ username, generatedId });
     setShowConfirmDialog(true);

@@ -28,6 +28,17 @@ export default function ProductAccessCardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    document.documentElement.classList.add("allow-scroll");
+    document.body.classList.add("allow-scroll");
+    return () => {
+      document.documentElement.classList.remove("allow-scroll");
+      document.body.classList.remove("allow-scroll");
+    };
+  }, []);
+
+
+
+  useEffect(() => {
     if (!productId || !cardId || entLoading) return;
     (async () => {
       setLoading(true);

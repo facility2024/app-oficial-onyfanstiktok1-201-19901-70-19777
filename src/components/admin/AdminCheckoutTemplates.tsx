@@ -55,6 +55,7 @@ const empty = (): Template => ({
   ativo: true,
   ordem: 0,
   model_id: null,
+  product_id: null,
   timer_label: "",
   security_text: "",
   security_banner_url: "",

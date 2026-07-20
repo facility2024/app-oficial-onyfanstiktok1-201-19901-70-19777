@@ -329,6 +329,7 @@ export const TikTokApp = () => {
   const SCHEDULED_VIEWED_KEY = 'viewed_highlight_posts';
   const HIGHLIGHT_NEW_WINDOW_MS = 12 * 60 * 60 * 1000;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const promoCtaBusyRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -431,7 +432,12 @@ export const TikTokApp = () => {
 
   const isGarotasTopLink = useCallback((link?: string | null) => {
     if (!link) return false;
-    return /ads\s*\/\s*garotas-top/i.test(link) || /\/ads\/garotas-top/i.test(link);
+    try {
+      const url = new URL(link, window.location.origin);
+      return /^\/(?:ads\/)?garotas(?:-top)?\/?$/i.test(url.pathname) || /^\/garotas-top-vip\/?$/i.test(url.pathname);
+    } catch {
+      return /^\/?(?:ads\/)?garotas(?:-top)?\/?$/i.test(link) || /^\/?garotas-top-vip\/?$/i.test(link);
+    }
   }, []);
 
   const openExternalLink = useCallback((link?: string | null) => {
@@ -446,16 +452,21 @@ export const TikTokApp = () => {
     }
   }, []);
 
-  const handlePromoCtaLink = useCallback((videoOrLink?: any, event?: React.MouseEvent | React.PointerEvent) => {
+  const handlePromoCtaLink = useCallback((videoOrLink?: any, event?: React.MouseEvent) => {
     event?.preventDefault();
     event?.stopPropagation();
+
+    // Bloqueia eventos repetidos do mesmo toque/clique antes de qualquer navegação.
+    if (promoCtaBusyRef.current) return;
+    promoCtaBusyRef.current = true;
+    window.setTimeout(() => { promoCtaBusyRef.current = false; }, 800);
 
     const link = typeof videoOrLink === 'string' ? videoOrLink : videoOrLink?._promoCtaLink;
     const isPopupPromo = typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup';
 
     if (link && isGarotasTopLink(link)) {
       setActivePromoPopup(null);
-      setShowGarotasTopModal(true);
+      navigate('/garotas');
       return;
     }
 
@@ -474,7 +485,7 @@ export const TikTokApp = () => {
     if (!link) return;
 
     openExternalLink(link);
-  }, [isGarotasTopLink, openExternalLink]);
+  }, [isGarotasTopLink, navigate, openExternalLink]);
 
   // Verifica se um vídeo é novo
   const isVideoNew = (video: Video): boolean => {
@@ -3667,8 +3678,8 @@ export const TikTokApp = () => {
                        {/* CTA Button */}
                         {(video as any)._promoCtaText && ((video as any)._promoCtaLink || (video as any)._promoCtaMode === 'popup') && (
                          <button
-                             onPointerUp={(e) => handlePromoCtaLink(video as any, e)}
-                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            type="button"
+                            onClick={(e) => handlePromoCtaLink(video as any, e)}
                            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm"
                          >
                            {(video as any)._promoCtaText}
@@ -3678,7 +3689,7 @@ export const TikTokApp = () => {
                        {(video as any)._promoBannerUrl && (
                          <div 
                            className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                             onPointerUp={(e) => handlePromoCtaLink(video as any, e)}
+                            onClick={(e) => handlePromoCtaLink(video as any, e)}
                          >
                            <img
                              src={(video as any)._promoBannerUrl}
@@ -3970,8 +3981,8 @@ export const TikTokApp = () => {
                        )}
                         {(currentVideo as any)._promoCtaText && ((currentVideo as any)._promoCtaLink || (currentVideo as any)._promoCtaMode === 'popup') && (
                          <button
-                             onPointerUp={(e) => handlePromoCtaLink(currentVideo as any, e)}
-                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            type="button"
+                            onClick={(e) => handlePromoCtaLink(currentVideo as any, e)}
                            className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-2 rounded-lg shadow-lg text-sm"
                          >
                            {(currentVideo as any)._promoCtaText}
@@ -3980,7 +3991,7 @@ export const TikTokApp = () => {
                        {(currentVideo as any)._promoBannerUrl && (
                          <div 
                            className="w-full rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                             onPointerUp={(e) => handlePromoCtaLink(currentVideo as any, e)}
+                            onClick={(e) => handlePromoCtaLink(currentVideo as any, e)}
                          >
                            <img
                              src={(currentVideo as any)._promoBannerUrl}

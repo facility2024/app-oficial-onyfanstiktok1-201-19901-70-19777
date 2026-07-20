@@ -186,7 +186,7 @@ export const AdminAdsGarotasTop = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchCards(); }, []);
+  useEffect(() => { fetchCards(); fetchTemplates(); }, []);
 
   // Realtime: recarrega automaticamente quando qualquer card muda em qualquer categoria
   useAdsGarotasRealtime(() => { fetchCards(); });
@@ -237,6 +237,7 @@ export const AdminAdsGarotasTop = () => {
       ordem: editingId ? Number(form.ordem) || 0 : 0,
       is_active: form.is_active,
       link_acesso: form.link_acesso.trim() || null,
+      checkout_template_id: form.checkout_template_id || null,
     };
 
     let error: any;

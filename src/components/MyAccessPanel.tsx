@@ -77,36 +77,43 @@ export default function MyAccessPanel() {
               <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                 <Lock className="w-4 h-4 text-white/40" />
               </div>
-              <p className="font-semibold text-white/70 truncate flex-1">{p.name}</p>
-              <span className="text-xs text-white/40 uppercase tracking-wide">Bloqueado</span>
+              <p className="font-semibold text-white/70 truncate flex-1 text-sm">{p.name}</p>
+              <span className="text-[10px] text-white/40 uppercase tracking-wide whitespace-nowrap">Bloqueado</span>
             </div>
           );
         }
         return (
           <div
             key={p.id}
-            className="flex items-center gap-3 rounded-xl border border-green-500/40 bg-green-500/5 p-3"
+            className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-green-500/40 bg-green-500/5 p-3"
           >
-            <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-              {p.image_url ? (
-                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white/40">
-                  <CheckCircle2 />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-400" />
-                <p className="font-semibold text-white truncate">{p.name}</p>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white/40">
+                    <CheckCircle2 />
+                  </div>
+                )}
               </div>
-              {p.description && (
-                <p className="text-xs text-white/60 line-clamp-1">{p.description}</p>
-              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+                  <p className="font-semibold text-white truncate">{p.name}</p>
+                </div>
+                {p.description && (
+                  <p className="text-xs text-white/60 line-clamp-1">{p.description}</p>
+                )}
+              </div>
             </div>
-            <Button size="sm" onClick={() => nav(`/acesso-produto/${p.id}`)}>Acessar</Button>
-
+            <Button
+              size="sm"
+              onClick={() => nav(`/acesso-produto/${p.id}`)}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white font-bold shrink-0"
+            >
+              Acessar
+            </Button>
           </div>
         );
       })}

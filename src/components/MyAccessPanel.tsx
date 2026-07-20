@@ -25,6 +25,7 @@ export default function MyAccessPanel() {
   const { hasProduct, loading: entLoading, userId } = useUserEntitlements();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const buyerWa = typeof window !== "undefined" ? sessionStorage.getItem("buyer_whatsapp") : null;
 
   useEffect(() => {
     (async () => {
@@ -47,11 +48,14 @@ export default function MyAccessPanel() {
     );
   }
 
-  if (!userId) {
+  if (!userId && !buyerWa) {
     return (
       <div className="p-6 text-center text-white/80">
-        <p className="mb-3">Faça login para ver seus produtos liberados.</p>
-        <Button onClick={() => nav("/auth")}>Entrar</Button>
+        <p className="mb-3">Faça login ou informe seu WhatsApp para ver seus produtos liberados.</p>
+        <div className="flex gap-2 justify-center">
+          <Button onClick={() => nav("/auth")}>Entrar</Button>
+          <Button variant="outline" onClick={() => nav("/acesso-comprador")}>Acessar por WhatsApp</Button>
+        </div>
       </div>
     );
   }

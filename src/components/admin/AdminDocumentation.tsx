@@ -147,7 +147,10 @@ export const AdminDocumentation = () => {
         </div>
       </div>
 
+      <GuideCard />
+
       <div className="grid gap-6 md:grid-cols-2">
+
         {sections.map((section, index) => {
           const Icon = section.icon;
           return (

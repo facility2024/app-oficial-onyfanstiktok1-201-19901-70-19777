@@ -32,26 +32,26 @@ export function useUserEntitlements() {
       if (data) results.push(...data);
     }
 
-    // Fallback: comprador autenticado via WhatsApp (sessionStorage)
+    // Comprador validado via WhatsApp. A Edge Function usa service role para
+    // consultar somente os IDs liberados, sem expor compras protegidas por RLS.
     const buyerWa = typeof window !== "undefined" ? sessionStorage.getItem("buyer_whatsapp") : null;
     if (buyerWa) {
-      const { data: purchases } = await (supabase as any)
-        .from("checkout_purchases")
-        .select("id, paid_at, checkout_purchase_items(product_id)")
-        .eq("customer_whatsapp", buyerWa)
-        .eq("status", "paid");
-      (purchases ?? []).forEach((p: any) => {
-        (p.checkout_purchase_items ?? []).forEach((it: any) => {
-          if (it.product_id) results.push({
-            id: `wa-${p.id}-${it.product_id}`,
-            product_id: it.product_id,
+      const { data, error } = await supabase.functions.invoke("buyer-access", {
+        body: { whatsapp: buyerWa },
+      });
+
+      if (!error && !(data as any)?.error) {
+        ((data as any)?.product_ids ?? []).forEach((productId: string) => {
+          results.push({
+            id: `wa-${productId}`,
+            product_id: productId,
             status: "active",
-            granted_at: p.paid_at,
+            granted_at: new Date().toISOString(),
             expires_at: null,
-            purchase_id: p.id,
+            purchase_id: null,
           });
         });
-      });
+      }
     }
 
     setEntitlements(results);

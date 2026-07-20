@@ -411,6 +411,12 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
             </div>
 
 
+            {/* Produto liberado após pagar (OBRIGATÓRIO para desbloquear acesso) */}
+            <ProductPicker
+              value={editing.product_id}
+              onChange={(pid) => setEditing({ ...editing, product_id: pid })}
+            />
+
             {/* Order Bumps vinculados a esta página */}
             <TemplateBumpsLinker templateId={editing.id || null} />
 

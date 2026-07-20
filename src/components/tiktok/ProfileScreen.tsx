@@ -1037,9 +1037,13 @@ if (!isOpen) return null;
                       const isPrivate = activeTab === 'private';
                       const isLocked = isPrivate && !isPremium;
                       const bunnyThumbUrl = toBunnyStreamThumbnailUrl(content.video_url);
-                      const gridThumb = (content.thumbnail_url && content.thumbnail_url !== content.video_url)
+                      const rawThumb = (content.thumbnail_url && content.thumbnail_url !== content.video_url)
                         ? content.thumbnail_url
-                        : (bunnyThumbUrl || '/placeholder.svg');
+                        : bunnyThumbUrl;
+                      const isVideoFile = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(rawThumb || '');
+                      const gridThumb = rawThumb && !isVideoFile ? rawThumb : (bunnyThumbUrl || '/placeholder.svg');
+                      // Se não temos thumbnail estática, usamos o próprio vídeo como preview
+                      const usePreviewVideo = content.type === 'video' && !bunnyThumbUrl && (!rawThumb || isVideoFile) && !!content.video_url;
 
                       return (
                         <div
@@ -1070,16 +1074,26 @@ if (!isOpen) return null;
                         >
                           {content.type === 'video' ? (
                             <>
-                              <img
-                                src={gridThumb}
-                                alt={content.title}
-                                loading="lazy"
-                                decoding="async"
-                                className={`w-full h-full object-cover bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
-                                }}
-                              />
+                              {usePreviewVideo ? (
+                                <video
+                                  src={content.video_url}
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                  className={`w-full h-full object-cover bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
+                                />
+                              ) : (
+                                <img
+                                  src={gridThumb}
+                                  alt={content.title}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className={`w-full h-full object-cover bg-black ${isLocked ? 'blur-2xl opacity-30' : ''}`}
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                                  }}
+                                />
+                              )}
                               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                                 <div className="bg-black/40 rounded-full p-2">
                                   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -1088,6 +1102,7 @@ if (!isOpen) return null;
                                 </div>
                               </div>
                             </>
+
                           ) : content.type === 'carousel' ? (
                             <div className="relative w-full h-full">
                               <img

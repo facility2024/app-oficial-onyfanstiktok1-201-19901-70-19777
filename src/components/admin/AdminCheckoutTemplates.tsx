@@ -9,6 +9,7 @@ import { Loader2, Plus, Save, Trash2, Eye, Link as LinkIcon, Pencil, X } from "l
 import PixCheckoutModal from "@/components/PixCheckoutModal";
 import CheckoutSideMediaManager from "./CheckoutSideMediaManager";
 import TemplateBumpsLinker from "./TemplateBumpsLinker";
+import ProductPicker from "./ProductPicker";
 import type { SideMediaItem } from "@/hooks/useCheckoutPixSettings";
 
 interface Template {
@@ -24,6 +25,7 @@ interface Template {
   ativo: boolean;
   ordem: number;
   model_id: string | null;
+  product_id: string | null;
   // overrides visuais (herdados da página global)
   timer_label: string;
   security_text: string;
@@ -54,6 +56,7 @@ const empty = (): Template => ({
   ativo: true,
   ordem: 0,
   model_id: null,
+  product_id: null,
   timer_label: "",
   security_text: "",
   security_banner_url: "",
@@ -408,6 +411,12 @@ export const AdminCheckoutTemplates = ({ initialDraft }: { initialDraft?: Partia
               )}
             </div>
 
+
+            {/* Produto liberado após pagar (OBRIGATÓRIO para desbloquear acesso) */}
+            <ProductPicker
+              value={editing.product_id}
+              onChange={(pid) => setEditing({ ...editing, product_id: pid })}
+            />
 
             {/* Order Bumps vinculados a esta página */}
             <TemplateBumpsLinker templateId={editing.id || null} />

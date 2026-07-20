@@ -1036,14 +1036,10 @@ if (!isOpen) return null;
                     {currentContents.map((content) => {
                       const isPrivate = activeTab === 'private';
                       const isLocked = isPrivate && !isPremium;
-                      const bunnyThumbUrl = toBunnyStreamThumbnailUrl(content.video_url);
-                      const rawThumb = (content.thumbnail_url && content.thumbnail_url !== content.video_url)
-                        ? content.thumbnail_url
-                        : bunnyThumbUrl;
-                      const isVideoFile = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(rawThumb || '');
-                      const gridThumb = rawThumb && !isVideoFile ? rawThumb : (bunnyThumbUrl || '/placeholder.svg');
-                      // Se não temos thumbnail estática, usamos o próprio vídeo como preview
-                      const usePreviewVideo = content.type === 'video' && !bunnyThumbUrl && (!rawThumb || isVideoFile) && !!content.video_url;
+                      // Restaurado: perfil sempre usa o próprio vídeo como preview (sem capa estática).
+                      // Isso evita "flash" de imagem no feed e lentidão na abertura do perfil.
+                      const gridThumb = '/placeholder.svg';
+                      const usePreviewVideo = content.type === 'video' && !!content.video_url;
 
                       return (
                         <div

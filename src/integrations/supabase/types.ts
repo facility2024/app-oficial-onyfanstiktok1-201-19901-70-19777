@@ -345,6 +345,7 @@ export type Database = {
       }
       ads_garotas_top: {
         Row: {
+          checkout_template_id: string | null
           created_at: string
           cta_link: string | null
           cta_texto: string
@@ -359,6 +360,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          checkout_template_id?: string | null
           created_at?: string
           cta_link?: string | null
           cta_texto?: string
@@ -373,6 +375,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          checkout_template_id?: string | null
           created_at?: string
           cta_link?: string | null
           cta_texto?: string
@@ -386,10 +389,19 @@ export type Database = {
           valor?: number | null
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ads_garotas_top_checkout_template_id_fkey"
+            columns: ["checkout_template_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ads_latinas: {
         Row: {
+          checkout_template_id: string | null
           created_at: string
           cta_link: string | null
           cta_texto: string | null
@@ -404,6 +416,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          checkout_template_id?: string | null
           created_at?: string
           cta_link?: string | null
           cta_texto?: string | null
@@ -418,6 +431,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          checkout_template_id?: string | null
           created_at?: string
           cta_link?: string | null
           cta_texto?: string | null
@@ -431,10 +445,19 @@ export type Database = {
           valor?: number | null
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ads_latinas_checkout_template_id_fkey"
+            columns: ["checkout_template_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ads_novidades: {
         Row: {
+          checkout_template_id: string | null
           created_at: string
           cta_link: string | null
           cta_texto: string | null
@@ -449,6 +472,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          checkout_template_id?: string | null
           created_at?: string
           cta_link?: string | null
           cta_texto?: string | null
@@ -463,6 +487,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          checkout_template_id?: string | null
           created_at?: string
           cta_link?: string | null
           cta_texto?: string | null
@@ -476,7 +501,15 @@ export type Database = {
           valor?: number | null
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ads_novidades_checkout_template_id_fkey"
+            columns: ["checkout_template_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agendamento_execucoes: {
         Row: {

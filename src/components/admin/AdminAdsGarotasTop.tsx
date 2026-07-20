@@ -33,7 +33,15 @@ interface CardItem {
   ordem: number;
   is_active: boolean;
   link_acesso: string | null;
+  checkout_template_id: string | null;
   _categoria: Categoria;
+}
+
+interface TemplateOption {
+  id: string;
+  nome: string;
+  slug: string;
+  valor: number | null;
 }
 
 const emptyForm = {
@@ -45,6 +53,7 @@ const emptyForm = {
   ordem: 0,
   is_active: true,
   link_acesso: "",
+  checkout_template_id: "",
   categoria: "garotas_top" as Categoria,
 };
 
@@ -68,6 +77,36 @@ export const AdminAdsGarotasTop = () => {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [categoryLink, setCategoryLink] = useState("");
   const [applyingCategoryLink, setApplyingCategoryLink] = useState(false);
+  const [templates, setTemplates] = useState<TemplateOption[]>([]);
+  const [categoryTemplateId, setCategoryTemplateId] = useState<string>("");
+  const [applyingCategoryTemplate, setApplyingCategoryTemplate] = useState(false);
+
+  const fetchTemplates = async () => {
+    const { data } = await (supabase as any)
+      .from("checkout_templates")
+      .select("id, nome, slug, valor, ativo")
+      .eq("ativo", true)
+      .order("created_at", { ascending: false });
+    setTemplates((data || []) as TemplateOption[]);
+  };
+
+  const applyTemplateToSelectedCategory = async (clear = false) => {
+    if (filter === "all") return toast.error("Selecione uma categoria antes de aplicar o template");
+    if (!clear && !categoryTemplateId) return toast.error("Escolha um template PIX");
+    const action = clear ? "Limpar" : "Aplicar";
+    if (!confirm(`${action} template PIX em todos os cards de ${CAT_LABEL[filter]}?`)) return;
+
+    setApplyingCategoryTemplate(true);
+    const { error, count } = await (supabase as any)
+      .from(TABLE_BY_CAT[filter])
+      .update({ checkout_template_id: clear ? null : categoryTemplateId }, { count: "exact" })
+      .not("id", "is", null);
+    setApplyingCategoryTemplate(false);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success(`${count ?? 0} card(s) atualizado(s)`);
+    fetchCards();
+  };
+
 
   const applyLinkToSelectedCategory = async () => {
     const link = categoryLink.trim();
@@ -147,7 +186,7 @@ export const AdminAdsGarotasTop = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchCards(); }, []);
+  useEffect(() => { fetchCards(); fetchTemplates(); }, []);
 
   // Realtime: recarrega automaticamente quando qualquer card muda em qualquer categoria
   useAdsGarotasRealtime(() => { fetchCards(); });
@@ -178,6 +217,7 @@ export const AdminAdsGarotasTop = () => {
       ordem: c.ordem,
       is_active: c.is_active,
       link_acesso: c.link_acesso || "",
+      checkout_template_id: c.checkout_template_id || "",
       categoria: c._categoria,
     });
   };
@@ -197,6 +237,7 @@ export const AdminAdsGarotasTop = () => {
       ordem: editingId ? Number(form.ordem) || 0 : 0,
       is_active: form.is_active,
       link_acesso: form.link_acesso.trim() || null,
+      checkout_template_id: form.checkout_template_id || null,
     };
 
     let error: any;
@@ -327,6 +368,51 @@ export const AdminAdsGarotasTop = () => {
           )}
         </CardContent>
       </Card>
+
+      <Card className="bg-gray-900 border-fuchsia-500/60">
+        <CardContent className="p-4">
+          <Label className="text-white font-bold">Template PIX (Checkout) para todos os cards da categoria</Label>
+          <p className="text-xs text-gray-400 mt-1 mb-3">
+            Escolha um template criado em <b>Checkout Templates</b>. O botão "Assinar via PIX" abrirá esse checkout completo (com valor, order bumps e mídia do template).
+          </p>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Select value={categoryTemplateId} onValueChange={setCategoryTemplateId}>
+              <SelectTrigger className="bg-gray-800 text-white border-gray-600 flex-1">
+                <SelectValue placeholder="Selecione um template PIX" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nome} {t.valor ? `— R$ ${Number(t.valor).toFixed(2).replace(".", ",")}` : ""} (/{t.slug})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              onClick={() => applyTemplateToSelectedCategory(false)}
+              disabled={applyingCategoryTemplate || filter === "all" || !categoryTemplateId}
+              className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold"
+            >
+              {applyingCategoryTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
+              Aplicar em todos os cards
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => applyTemplateToSelectedCategory(true)}
+              disabled={applyingCategoryTemplate || filter === "all"}
+              className="border-gray-600 text-white hover:bg-gray-800"
+            >
+              Limpar de todos
+            </Button>
+          </div>
+          {filter === "all" && (
+            <p className="text-xs text-amber-300 mt-2">Escolha Garotas Top, Latinas ou Novidades no seletor acima.</p>
+          )}
+        </CardContent>
+      </Card>
+
 
       {bulkOpen && !isCreating && !editingId && (
         <Card className="bg-gray-900 border-orange-500/40">
@@ -532,6 +618,30 @@ export const AdminAdsGarotasTop = () => {
                   Ao pagar apenas o acesso aos vídeos deste card, o botão "Clique aqui para acessar seus vídeos" abrirá este link.
                 </p>
               </div>
+
+              <div className="md:col-span-2">
+                <Label className="text-white">💳 Template PIX vinculado (opcional)</Label>
+                <Select
+                  value={form.checkout_template_id || "none"}
+                  onValueChange={(v) => setForm({ ...form, checkout_template_id: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger className="bg-gray-800 text-white border-gray-700">
+                    <SelectValue placeholder="Nenhum — usa o PIX interno com o valor acima" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum — usa o PIX interno</SelectItem>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.nome} {t.valor ? `— R$ ${Number(t.valor).toFixed(2).replace(".", ",")}` : ""} (/{t.slug})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Se selecionado, ao clicar em "Assinar via PIX" o usuário vai direto para a página do template (com order bumps e mídia lateral).
+                </p>
+              </div>
+
 
               <div className="flex items-center gap-3">
                 <Switch

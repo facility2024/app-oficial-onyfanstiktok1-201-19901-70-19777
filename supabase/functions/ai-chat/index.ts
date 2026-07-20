@@ -102,6 +102,13 @@ serve(async (req) => {
         systemPrompt,
         conversationHistory
       );
+    } else if (chatPanel.ai_provider === 'grok') {
+      aiResponse = await callGrok(
+        chatPanel.api_key_encrypted,
+        message,
+        systemPrompt,
+        conversationHistory
+      );
     } else {
       return new Response(
         JSON.stringify({ error: 'Provider de IA não suportado' }),
@@ -202,6 +209,34 @@ async function callOpenAI(apiKey: string, userMessage: string, systemPrompt: str
     const errorText = await response.text();
     console.error('Erro OpenAI:', errorText);
     throw new Error(`Erro na API OpenAI: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
+}
+
+async function callGrok(apiKey: string, userMessage: string, systemPrompt: string, history: any[]): Promise<string> {
+  const messages: any[] = [{ role: 'system', content: systemPrompt }];
+  for (const msg of history) {
+    messages.push({ role: msg.role === 'user' ? 'user' : 'assistant', content: msg.content });
+  }
+  messages.push({ role: 'user', content: userMessage });
+
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'grok-2-latest',
+      messages,
+      temperature: 0.9,
+      max_tokens: 1024,
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Erro Grok:', errorText);
+    throw new Error(`Erro na API Grok: ${response.status}`);
   }
 
   const data = await response.json();

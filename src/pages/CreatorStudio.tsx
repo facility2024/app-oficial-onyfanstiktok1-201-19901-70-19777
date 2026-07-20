@@ -51,7 +51,7 @@ export default function CreatorStudio() {
   const [loadingChat, setLoadingChat] = useState(false);
   
   // AI Configuration state
-  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai'>('gemini');
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'grok'>('gemini');
   const [apiKey, setApiKey] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [messageDelay, setMessageDelay] = useState([2]); // seconds
@@ -903,7 +903,7 @@ export default function CreatorStudio() {
                     <p className="text-sm text-gray-400 mb-2">Escolha qual inteligência artificial será usada no atendimento</p>
                     <Select 
                       value={aiProvider} 
-                      onValueChange={(value: 'gemini' | 'openai') => setAiProvider(value)}
+                      onValueChange={(value: 'gemini' | 'openai' | 'grok') => setAiProvider(value)}
                       disabled={!chatEnabled}
                     >
                       <SelectTrigger className="bg-gray-600 border-gray-500 text-white">
@@ -916,6 +916,9 @@ export default function CreatorStudio() {
                         <SelectItem value="openai" className="text-white hover:bg-gray-600">
                           🟢 OpenAI GPT
                         </SelectItem>
+                        <SelectItem value="grok" className="text-white hover:bg-gray-600">
+                          ✦ xAI Grok
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -924,11 +927,13 @@ export default function CreatorStudio() {
                   <div className="space-y-2 p-4 bg-gray-700/50 rounded-lg">
                     <Label className="text-white font-semibold flex items-center gap-2">
                       <Key className="w-4 h-4" />
-                      Chave da API ({aiProvider === 'gemini' ? 'Google AI Studio' : 'OpenAI'})
+                      Chave da API ({aiProvider === 'gemini' ? 'Google AI Studio' : aiProvider === 'grok' ? 'xAI Grok' : 'OpenAI'})
                     </Label>
                     <p className="text-sm text-gray-400 mb-2">
-                      {aiProvider === 'gemini' 
-                        ? 'Obtenha sua chave em: aistudio.google.com/apikey' 
+                      {aiProvider === 'gemini'
+                        ? 'Obtenha sua chave em: aistudio.google.com/apikey'
+                        : aiProvider === 'grok'
+                        ? 'Obtenha sua chave em: console.x.ai (Grok API)'
                         : 'Obtenha sua chave em: platform.openai.com/api-keys'}
                     </p>
                     <div className="relative">

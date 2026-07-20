@@ -94,7 +94,16 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
   } = useModelSubscription(user.id);
   
   useEffect(() => {
+    // Limpa imediatamente o estado do perfil anterior para não exibir dados/vídeos errados
     setFreshAvatar(null);
+    setContents([]);
+    setPublicContents([]);
+    setPrivateContents([]);
+    setPanelUrl(null);
+    setHideSubscriptionSection(false);
+    setIsFollowing(false);
+    setIsCreator(false);
+    setIsFollowingCreator(false);
     if (isOpen && user.id) {
       Promise.all([
         loadModelContent(),

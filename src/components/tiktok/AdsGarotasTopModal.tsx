@@ -18,6 +18,22 @@ interface Card {
   ordem: number;
   is_active: boolean;
   link_acesso: string | null;
+  checkout_template_id?: string | null;
+}
+
+async function openCheckoutTemplate(templateId: string): Promise<boolean> {
+  try {
+    const { data } = await (supabase as any)
+      .from("checkout_templates")
+      .select("slug, ativo")
+      .eq("id", templateId)
+      .maybeSingle();
+    if (data?.slug && data?.ativo !== false) {
+      window.location.href = `/checkout/${data.slug}`;
+      return true;
+    }
+  } catch {}
+  return false;
 }
 
 const PAGE_SIZE = 20;
@@ -287,7 +303,11 @@ export default function AdsGarotasTopModal({ open, onClose }: Props) {
               />
             )}
             <Button
-              onClick={() => {
+              onClick={async () => {
+                if (selected?.checkout_template_id) {
+                  const ok = await openCheckoutTemplate(selected.checkout_template_id);
+                  if (ok) return;
+                }
                 setSelected(null);
                 setShowPix(true);
               }}

@@ -24,6 +24,7 @@ interface Template {
   ativo: boolean;
   ordem: number;
   model_id: string | null;
+  product_id: string | null;
   // overrides visuais (herdados da página global)
   timer_label: string;
   security_text: string;

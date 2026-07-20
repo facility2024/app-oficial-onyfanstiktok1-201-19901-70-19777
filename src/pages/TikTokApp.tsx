@@ -2839,65 +2839,44 @@ export const TikTokApp = () => {
   };
   const shareVideo = async () => {
     if (!currentVideo) return;
-    console.log('📤 SHARE VIDEO - Iniciando para vídeo:', currentVideo.id);
+    const shareUrl = `${window.location.origin}/app?video=${currentVideo.id}`;
+    const shareData = {
+      title: currentVideo.title || 'COCONUDI',
+      text: currentVideo.description || 'Confira este vídeo no COCONUDI',
+      url: shareUrl,
+    };
+
+    // 🔥 CRÍTICO: chamar navigator.share SÍNCRONO no gesto do usuário (Safari iOS exige)
+    let shared = false;
     try {
-      // ✅ Usar ID correto: autenticado se logado, anônimo se não
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      const currentUserId = user?.id || localStorage.getItem('anonymous_user_id') || (() => {
-        const newId = crypto.randomUUID();
-        localStorage.setItem('anonymous_user_id', newId);
-        return newId;
-      })();
-      console.log('📤 SHARE VIDEO - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
-
-      // Temporarily increment shares_count until shares table types are updated
-      const {
-        data: videoData
-      } = await supabase.from('videos').select('shares_count').eq('id', currentVideo.id).single();
-      const currentShares = videoData?.shares_count || 0;
-      const {
-        error: shareError
-      } = await supabase.from('videos').update({
-        shares_count: currentShares + 1
-      }).eq('id', currentVideo.id);
-      if (shareError) {
-        console.warn('❌ Error registering share (continuing anyway):', shareError);
-        // Continue with share functionality even if DB insert fails
-      } else {
-        console.log('✅ SHARE registrado no banco de dados');
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share(shareData);
+        shared = true;
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: "Link copiado!", description: "Link do vídeo copiado para a área de transferência" });
+        shared = true;
       }
+    } catch (err) {
+      // Usuário cancelou ou falhou — tentar clipboard como fallback
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: "Link copiado!", description: "Link do vídeo copiado para a área de transferência" });
+      } catch {}
+    }
 
-      // ✨ IMPORTANTE: Registrar no sistema de analytics
+    // Registrar no banco depois (não bloqueia a folha de compartilhamento)
+    try {
+      const { data: videoData } = await supabase.from('videos').select('shares_count').eq('id', currentVideo.id).single();
+      const currentShares = videoData?.shares_count || 0;
+      await supabase.from('videos').update({ shares_count: currentShares + 1 }).eq('id', currentVideo.id);
       await trackShare(currentVideo.id, currentVideo.user?.id || '');
       await checkAndTrackAction('share', currentVideo.id, currentVideo.user_id);
+    } catch (e) {
+      console.warn('Share tracking falhou (continuando):', e);
+    }
 
-      // Use Web Share API for real sharing with fallback
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: currentVideo.title,
-            text: currentVideo.description,
-            url: `${window.location.origin}/app?video=${currentVideo.id}`
-          });
-        } catch (shareError) {
-          console.log('Web Share cancelled or failed:', shareError);
-          // Fallback to clipboard if Web Share fails
-          await navigator.clipboard.writeText(`${window.location.origin}/app?video=${currentVideo.id}`);
-          toast({
-            title: "Link copiado!",
-            description: "Link do vídeo copiado para a área de transferência"
-          });
-        }
-      } else {
-        await navigator.clipboard.writeText(`${window.location.origin}/app?video=${currentVideo.id}`);
-        toast({
-          title: "Link copiado!",
-          description: "Link do vídeo copiado para a área de transferência"
-        });
+    if (!shared) {
       }
 
       // Update share count

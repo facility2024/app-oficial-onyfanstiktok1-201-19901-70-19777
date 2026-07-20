@@ -266,7 +266,11 @@ export default function AdsGarotasTopPage() {
             />
           ) : null}
           <Button
-            onClick={() => {
+            onClick={async () => {
+              if (selected?.checkout_template_id) {
+                const ok = await openCheckoutTemplate(selected.checkout_template_id);
+                if (ok) return;
+              }
               setSelected(null);
               setShowPix(true);
             }}
@@ -274,6 +278,7 @@ export default function AdsGarotasTopPage() {
           >
             Assinar por R$ {(selected?.valor && selected.valor > 0 ? Number(selected.valor) : price).toFixed(2).replace(".", ",")} via PIX
           </Button>
+
         </DialogContent>
       </Dialog>
 

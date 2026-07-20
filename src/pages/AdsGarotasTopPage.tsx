@@ -209,19 +209,15 @@ export default function AdsGarotasTopPage() {
                     loadedImages[card.id] ? "opacity-100" : "opacity-70"
                   }`}
                 />
-                {card.video_url && !videoFallbacks[card.id] ? (
-                  <video
-                    src={card.video_url}
-                    poster={card.imagem_url}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    onError={() => setVideoFallbacks((prev) => ({ ...prev, [card.id]: true }))}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : null}
+                {card.video_url && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border-2 border-white/80 flex items-center justify-center shadow-[0_0_20px_rgba(217,70,239,0.7)] group-hover:scale-110 transition-transform">
+                      <svg viewBox="0 0 24 24" fill="white" className="w-6 h-6 ml-1">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
                   <h3 className="text-white font-bold text-sm md:text-base drop-shadow-lg truncate">

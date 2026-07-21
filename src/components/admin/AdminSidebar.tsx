@@ -71,6 +71,7 @@ const navigationGroups = [
       { id: 'genres', label: 'Gêneros', icon: Tags },
       { id: 'intelligent-feed', label: 'Feed Inteligente', icon: Brain },
       { id: 'posts', label: 'Postagens', icon: Calendar },
+      { id: 'stories-carousel', label: 'Stories (Novas Modelos)', icon: Sparkles },
     ]
   },
   {

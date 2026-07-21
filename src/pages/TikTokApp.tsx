@@ -1019,9 +1019,10 @@ export const TikTokApp = () => {
     }, payload => {
       console.log('🎬 ADMIN → APP: Mudança em vídeos:', payload.eventType);
       if (payload.eventType === 'INSERT') {
-        showToast("📱 Novo Conteúdo!", "Vídeo adicionado pelo admin");
-        // Sinalizar atualização pendente para aplicar no fim do ciclo
-        setPendingRefresh(true);
+        // 🚫 Não injetar novos vídeos na sessão em andamento.
+        // Novos vídeos (manuais ou agendados) entrarão apenas em nova sessão,
+        // ao atualizar a página ou reabrir o app — respeitando a rotação atual do feed.
+        console.log('🆕 Novo vídeo detectado — será incluído apenas na próxima sessão/refresh.');
       } else if (payload.eventType === 'UPDATE') {
         // 🔄 Atualização em tempo real do feed quando criador edita o vídeo
         const updated: any = payload.new;

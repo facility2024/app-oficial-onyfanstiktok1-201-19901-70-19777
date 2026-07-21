@@ -51,12 +51,15 @@ export const ModelCarousel = ({
 
   useEffect(() => {
     const fetchModels = async () => {
-      // Buscar TODAS as modelos ativas
-      const { data, error } = await supabase
+      // Buscar TODAS as modelos ativas e visíveis no carrossel (respeitando ordem manual do admin)
+      const { data, error } = await (supabase as any)
         .from('models')
-        .select('id, name, username, avatar_url, followers_count')
+        .select('id, name, username, avatar_url, followers_count, carousel_visible, carousel_order')
         .eq('is_active', true)
+        .neq('carousel_visible', false)
+        .order('carousel_order', { ascending: true, nullsFirst: false })
         .order('followers_count', { ascending: false });
+
 
       if (data && !error) {
         // 🧹 Filtrar apenas modelos que possuem vídeo ativo (evita story quebrado)

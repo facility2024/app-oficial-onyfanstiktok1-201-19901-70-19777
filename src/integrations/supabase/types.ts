@@ -4675,6 +4675,8 @@ export type Database = {
           access_code: string | null
           avatar_url: string | null
           bio: string | null
+          carousel_order: number | null
+          carousel_visible: boolean
           category: string
           created_at: string | null
           custom_link: string | null
@@ -4707,6 +4709,8 @@ export type Database = {
           access_code?: string | null
           avatar_url?: string | null
           bio?: string | null
+          carousel_order?: number | null
+          carousel_visible?: boolean
           category?: string
           created_at?: string | null
           custom_link?: string | null
@@ -4739,6 +4743,8 @@ export type Database = {
           access_code?: string | null
           avatar_url?: string | null
           bio?: string | null
+          carousel_order?: number | null
+          carousel_visible?: boolean
           category?: string
           created_at?: string | null
           custom_link?: string | null

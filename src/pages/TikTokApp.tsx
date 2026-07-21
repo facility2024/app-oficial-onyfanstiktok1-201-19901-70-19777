@@ -2114,21 +2114,11 @@ export const TikTokApp = () => {
     }
   }, [targetProfileId, stateProfileId, loading]);
 
-  // 🔄 LÓGICA: Detectar fim do ciclo e aplicar refresh pendente (novos vídeos do admin)
-  useEffect(() => {
-    if (!pendingRefresh) return;
-    // Quando há refresh pendente (novo vídeo adicionado pelo admin),
-    // recarregar o feed completo ao chegar no fim dos vídeos atuais
-    const realVideos = videos.filter(v => !v.id.startsWith('promo-'));
-    const isNearEnd = currentVideoIndex >= realVideos.length - 3;
-    if (isNearEnd) {
-      console.log('🔄 Aplicando refresh pendente - novos vídeos do admin detectados...');
-      setTimeout(() => {
-        initializeFeed();
-        setPendingRefresh(false);
-      }, 1000);
-    }
-  }, [pendingRefresh, currentVideoIndex, videos, initializeFeed]);
+  // 🔒 SNAPSHOT DE SESSÃO: o feed é congelado no início da sessão.
+  // Novos vídeos publicados durante a navegação NÃO são injetados no feed atual.
+  // Eles só entrarão na próxima sessão (F5, reabrir app ou nova sessão).
+  // O efeito de refresh pendente foi removido intencionalmente.
+
 
   // Remover função de organização complexa - usar abordagem mais simples
 

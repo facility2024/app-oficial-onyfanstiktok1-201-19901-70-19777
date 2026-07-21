@@ -1061,9 +1061,9 @@ export const TikTokApp = () => {
     }, payload => {
       console.log('👤 ADMIN → APP: Mudança em modelos:', payload.eventType);
       if (payload.eventType === 'INSERT') {
-        showToast("👤 Novo Modelo!", "Perfil adicionado pelo admin");
-        // Sinalizar atualização pendente para aplicar no fim do ciclo
-        setPendingRefresh(true);
+        // 🚫 Não injetar novos modelos na sessão em andamento.
+        // Serão incluídos apenas na próxima sessão/refresh.
+        console.log('🆕 Novo modelo detectado — será incluído apenas na próxima sessão/refresh.');
       }
     }).on('postgres_changes', {
       event: 'INSERT',

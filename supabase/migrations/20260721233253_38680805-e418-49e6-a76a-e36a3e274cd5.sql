@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_analytics_events_model_id ON public.analytics_events(model_id);

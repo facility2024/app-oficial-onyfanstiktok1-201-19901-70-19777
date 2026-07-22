@@ -37,7 +37,7 @@ export const useAdminNotifications = () => {
           .limit(10),
         // Novos usuários
         (supabase as any).from('profiles')
-          .select('id, display_name, created_at')
+          .select('id, name, created_at')
           .gte('created_at', sinceISO)
           .order('created_at', { ascending: false })
           .limit(10),

@@ -161,14 +161,21 @@ export default function AdminCommentAutoReplies() {
   const setVidFlag = async (ids: string[], enabled: boolean) => {
     if (!ids.length) return toast({ title: 'Selecione ao menos um vídeo', variant: 'destructive' });
     setSaving(true);
-    const { error } = await supabase.from('videos').update({ comment_auto_reply_enabled: enabled }).in('id', ids);
+    const CHUNK = 50;
+    let done = 0, failed = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      const { error } = await supabase.from('videos').update({ comment_auto_reply_enabled: enabled }).in('id', slice);
+      if (error) { failed += slice.length; console.error('chunk err', error); }
+      else done += slice.length;
+    }
     setSaving(false);
-    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    // Auto criar config para donos ainda sem
+    if (failed) return toast({ title: 'Concluído com falhas', description: `${done} ok, ${failed} falharam`, variant: 'destructive' });
     if (enabled) await ensureConfigsForVideos(ids);
-    toast({ title: enabled ? `${ids.length} vídeos ativados` : `${ids.length} vídeos desativados` });
+    toast({ title: enabled ? `${done} vídeos ativados` : `${done} vídeos desativados` });
     setVideos(prev => prev.map(v => ids.includes(v.id) ? { ...v, comment_auto_reply_enabled: enabled } : v));
   };
+
 
   const ensureConfigsForVideos = async (videoIds: string[]) => {
     const affected = videos.filter(v => videoIds.includes(v.id));

@@ -52,6 +52,7 @@ export default function AdminChatBulkManager() {
   const [videoFilter, setVideoFilter] = useState<'all' | 'on' | 'off' | 'panel'>('all');
 
   const [bulkMessage, setBulkMessage] = useState('');
+  const [bulkVideoMessage, setBulkVideoMessage] = useState('');
 
   useEffect(() => {
     loadAll();

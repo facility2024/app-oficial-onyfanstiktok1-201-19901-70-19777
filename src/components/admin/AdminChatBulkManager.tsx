@@ -52,6 +52,7 @@ export default function AdminChatBulkManager() {
   const [videoFilter, setVideoFilter] = useState<'all' | 'on' | 'off' | 'panel'>('all');
 
   const [bulkMessage, setBulkMessage] = useState('');
+  const [bulkVideoMessage, setBulkVideoMessage] = useState('');
 
   useEffect(() => {
     loadAll();
@@ -243,6 +244,63 @@ export default function AdminChatBulkManager() {
     setVideos(prev => prev.map(v => (v.id === id ? { ...v, chat_auto_response_enabled: enabled } : v)));
   };
 
+  // Aplica mensagem apenas em vídeos de MODELOS COMUNS (model_id, sem creator_id)
+  // Cria/atualiza o painel do model_id e ativa o chat nos vídeos selecionados.
+  const bulkApplyVideoMessage = async (scope: 'selected' | 'filtered') => {
+    if (!bulkVideoMessage.trim()) return toast({ title: 'Escreva a mensagem', variant: 'destructive' });
+    const source = scope === 'selected'
+      ? videos.filter(v => videoSelected.has(v.id))
+      : filteredVideos;
+    const commonOnly = source.filter(v => v.model_id && !v.creator_id);
+    const skipped = source.length - commonOnly.length;
+    if (!commonOnly.length) return toast({ title: 'Nenhum vídeo de modelo comum na seleção', description: 'Vídeos de criadoras são ignorados (elas têm painel próprio).', variant: 'destructive' });
+    if (!confirm(`Aplicar mensagem em ${commonOnly.length} vídeo(s) de modelos comuns?${skipped ? ` (${skipped} vídeos de criadoras serão ignorados)` : ''}`)) return;
+
+    setSaving(true);
+    try {
+      const modelIds = Array.from(new Set(commonOnly.map(v => v.model_id!)));
+      // Buscar painéis existentes
+      const { data: existing } = await supabase
+        .from('model_chat_panels')
+        .select('id, model_id')
+        .in('model_id', modelIds);
+      const existingMap = new Map((existing || []).map((p: any) => [p.model_id, p.id]));
+
+      const toUpdate = modelIds.filter(id => existingMap.has(id));
+      const toInsert = modelIds.filter(id => !existingMap.has(id));
+
+      // Update em lote
+      if (toUpdate.length) {
+        const CHUNK = 100;
+        for (let i = 0; i < toUpdate.length; i += CHUNK) {
+          const slice = toUpdate.slice(i, i + CHUNK);
+          await supabase.from('model_chat_panels')
+            .update({ greeting_message: bulkVideoMessage, is_active: true })
+            .in('model_id', slice);
+        }
+      }
+      // Insert novos
+      if (toInsert.length) {
+        const rows = toInsert.map(mid => ({ model_id: mid, greeting_message: bulkVideoMessage, is_active: true }));
+        const CHUNK = 100;
+        for (let i = 0; i < rows.length; i += CHUNK) {
+          await supabase.from('model_chat_panels').insert(rows.slice(i, i + CHUNK));
+        }
+      }
+
+      // Ativa chat_auto_response_enabled nos vídeos alvo
+      const videoIds = commonOnly.map(v => v.id);
+      await chunkedUpdate('videos', videoIds, { chat_auto_response_enabled: true });
+
+      toast({ title: `Mensagem aplicada em ${commonOnly.length} vídeo(s)`, description: `${toUpdate.length} painéis atualizados, ${toInsert.length} criados.` });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>;
   }
@@ -334,6 +392,29 @@ export default function AdminChatBulkManager() {
               <div className="flex flex-wrap gap-2">
                 <Button onClick={() => selectAllVideos(true)} variant="outline" className="border-purple-500 text-purple-300">Selecionar filtrados</Button>
                 <Button onClick={() => selectAllVideos(false)} variant="outline" className="border-gray-600 text-gray-300">Limpar seleção</Button>
+              </div>
+
+              <div className="space-y-2 pt-3 border-t border-gray-800">
+                <label className="text-sm text-white font-semibold">
+                  💬 Mensagem de chat automático (só vídeos de modelos comuns)
+                </label>
+                <p className="text-xs text-gray-400">
+                  Vídeos de <b>criadoras</b> são ignorados — elas configuram no painel próprio.
+                </p>
+                <Textarea
+                  value={bulkVideoMessage}
+                  onChange={e => setBulkVideoMessage(e.target.value)}
+                  placeholder="Ex.: 🔥 Oi amor! Tenho conteúdo exclusivo pra você — R$4,50 no PIX e libera tudo 💜"
+                  className="bg-gray-800 border-gray-700 text-white min-h-[90px]"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => bulkApplyVideoMessage('selected')} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                    Aplicar em {videoSelected.size} selecionados
+                  </Button>
+                  <Button onClick={() => bulkApplyVideoMessage('filtered')} disabled={saving} className="bg-purple-900 hover:bg-purple-800 text-white font-bold">
+                    Aplicar em TODOS filtrados ({filteredVideos.length})
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

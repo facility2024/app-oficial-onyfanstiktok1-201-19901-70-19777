@@ -9,6 +9,38 @@ import { Wifi, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Converte URLs (http/https/www) e domínios comuns em links clicáveis
+const URL_REGEX = /((?:https?:\/\/|www\.)[^\s<]+[^\s<.,!?;:)"'])|((?:[a-z0-9-]+\.)+(?:com|com\.br|net|org|io|app|me|tv|xyz|link|shop|store|site|online|to|gg)(?:\/[^\s<]*)?)/gi;
+
+const renderTextWithLinks = (text?: string) => {
+  if (!text) return null;
+  const parts: (string | JSX.Element)[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  URL_REGEX.lastIndex = 0;
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    const raw = match[0];
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    const href = raw.startsWith('http') ? raw : `https://${raw}`;
+    parts.push(
+      <a
+        key={`${match.index}-${raw}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        className="text-cyan-400 underline underline-offset-2 hover:text-cyan-300 break-all"
+      >
+        {raw}
+      </a>
+    );
+    lastIndex = match.index + raw.length;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+};
+
 interface CommentsScreenProps {
   comments: Comment[];
   isOpen: boolean;

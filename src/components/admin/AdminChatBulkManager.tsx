@@ -151,15 +151,32 @@ export default function AdminChatBulkManager() {
     setVideoSelected(checked ? new Set(filteredVideos.map(v => v.id)) : new Set());
   };
 
+  const chunkedUpdate = async (
+    table: 'videos' | 'model_chat_panels',
+    ids: string[],
+    payload: Record<string, any>
+  ) => {
+    const CHUNK = 100;
+    let done = 0;
+    let failed = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      const { error } = await supabase.from(table).update(payload).in('id', slice);
+      if (error) { failed += slice.length; console.error('chunk err', error); }
+      else { done += slice.length; }
+    }
+    return { done, failed };
+  };
+
   // ============ BULK ACTIONS: PANELS ============
   const bulkSetPanelActive = async (active: boolean) => {
     const ids = Array.from(panelSelected);
     if (!ids.length) return toast({ title: 'Selecione ao menos um painel', variant: 'destructive' });
     setSaving(true);
-    const { error } = await supabase.from('model_chat_panels').update({ is_active: active }).in('id', ids);
+    const { done, failed } = await chunkedUpdate('model_chat_panels', ids, { is_active: active });
     setSaving(false);
-    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    toast({ title: active ? `${ids.length} painéis ativados` : `${ids.length} painéis desativados` });
+    if (failed) toast({ title: 'Concluído com falhas', description: `${done} ok, ${failed} falharam`, variant: 'destructive' });
+    else toast({ title: active ? `${done} painéis ativados` : `${done} painéis desativados` });
     setPanels(prev => prev.map(p => (ids.includes(p.id) ? { ...p, is_active: active } : p)));
   };
 
@@ -168,10 +185,10 @@ export default function AdminChatBulkManager() {
     if (!ids.length) return toast({ title: 'Selecione ao menos um painel', variant: 'destructive' });
     if (!bulkMessage.trim()) return toast({ title: 'Escreva a mensagem', variant: 'destructive' });
     setSaving(true);
-    const { error } = await supabase.from('model_chat_panels').update({ greeting_message: bulkMessage }).in('id', ids);
+    const { done, failed } = await chunkedUpdate('model_chat_panels', ids, { greeting_message: bulkMessage });
     setSaving(false);
-    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    toast({ title: `Mensagem aplicada em ${ids.length} painéis` });
+    if (failed) toast({ title: 'Concluído com falhas', description: `${done} ok, ${failed} falharam`, variant: 'destructive' });
+    else toast({ title: `Mensagem aplicada em ${done} painéis` });
     setPanels(prev => prev.map(p => (ids.includes(p.id) ? { ...p, greeting_message: bulkMessage } : p)));
   };
 
@@ -191,10 +208,10 @@ export default function AdminChatBulkManager() {
     const ids = Array.from(videoSelected);
     if (!ids.length) return toast({ title: 'Selecione ao menos um vídeo', variant: 'destructive' });
     setSaving(true);
-    const { error } = await supabase.from('videos').update({ chat_auto_response_enabled: enabled }).in('id', ids);
+    const { done, failed } = await chunkedUpdate('videos', ids, { chat_auto_response_enabled: enabled });
     setSaving(false);
-    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    toast({ title: enabled ? `Chat ativado em ${ids.length} vídeos` : `Chat desativado em ${ids.length} vídeos` });
+    if (failed) toast({ title: 'Concluído com falhas', description: `${done} ok, ${failed} falharam`, variant: 'destructive' });
+    else toast({ title: enabled ? `Chat ativado em ${done} vídeos` : `Chat desativado em ${done} vídeos` });
     setVideos(prev => prev.map(v => (ids.includes(v.id) ? { ...v, chat_auto_response_enabled: enabled } : v)));
   };
 
@@ -204,11 +221,20 @@ export default function AdminChatBulkManager() {
     if (!confirm(`${enabled ? 'Ativar' : 'Desativar'} chat em ${target.length} vídeos filtrados?`)) return;
     setSaving(true);
     const ids = target.map(v => v.id);
-    const { error } = await supabase.from('videos').update({ chat_auto_response_enabled: enabled }).in('id', ids);
+    const CHUNK = 100;
+    let done = 0;
+    let failed = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      const { error } = await supabase.from('videos').update({ chat_auto_response_enabled: enabled }).in('id', slice);
+      if (error) { failed += slice.length; console.error('chunk err', error); }
+      else { done += slice.length; }
+    }
     setSaving(false);
-    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    toast({ title: `${ids.length} vídeos atualizados` });
-    setVideos(prev => prev.map(v => (ids.includes(v.id) ? { ...v, chat_auto_response_enabled: enabled } : v)));
+    if (failed) toast({ title: `Concluído com falhas`, description: `${done} ok, ${failed} falharam`, variant: 'destructive' });
+    else toast({ title: `${done} vídeos atualizados` });
+    const okSet = new Set(ids);
+    setVideos(prev => prev.map(v => (okSet.has(v.id) ? { ...v, chat_auto_response_enabled: enabled } : v)));
   };
 
   const toggleSingleVideo = async (id: string, enabled: boolean) => {

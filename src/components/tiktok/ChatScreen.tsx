@@ -42,6 +42,7 @@ interface ChatScreenProps {
   modelAvatar: string;
   entityId?: string;
   isCreator?: boolean;
+  videoId?: string;
 }
 
 // Delay helper
@@ -53,7 +54,8 @@ export const ChatScreen = ({
   modelName, 
   modelAvatar,
   entityId,
-  isCreator = false 
+  isCreator = false,
+  videoId,
 }: ChatScreenProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -116,12 +118,25 @@ export const ChatScreen = ({
     if (!entityId) return;
     
     try {
+      // Opt-in por vídeo: só mostra a resposta automática (greeting/oferta editada)
+      // se o vídeo estiver marcado como chat_auto_response_enabled=true no admin.
+      let autoEnabled = true;
+      if (videoId) {
+        const cleanId = String(videoId).replace(/-block-\d+-\d+$/, '');
+        const { data: videoRow } = await supabase
+          .from('videos')
+          .select('chat_auto_response_enabled')
+          .eq('id', cleanId)
+          .maybeSingle() as any;
+        autoEnabled = !!videoRow?.chat_auto_response_enabled;
+      }
+
       const { data } = await (supabase as any).rpc('get_chat_panel_config', {
         p_entity_id: entityId,
         p_entity_type: isCreator ? 'creator' : 'model',
       });
       
-      if (data && Object.keys(data).length > 0) {
+      if (autoEnabled && data && Object.keys(data).length > 0) {
         setChatConfig(data);
         
         // Show greeting message if no messages exist
@@ -137,14 +152,17 @@ export const ChatScreen = ({
           saveMessagesToStorage([greetingMsg]);
         }
       } else {
-        // No config, show default greeting
-        const defaultGreeting: Message = {
-          id: 'greeting',
-          text: `Olá! Sou ${displayName}. Como posso te ajudar? 💕`,
-          sender: 'model',
-          timestamp: new Date()
-        };
-        setMessages([defaultGreeting]);
+        // Sem config ou chat automático desativado neste vídeo → saudação neutra
+        const savedMessages = localStorage.getItem(storageKey);
+        if (!savedMessages) {
+          const defaultGreeting: Message = {
+            id: 'greeting',
+            text: `Olá! Sou ${displayName}. Como posso te ajudar? 💕`,
+            sender: 'model',
+            timestamp: new Date()
+          };
+          setMessages([defaultGreeting]);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar config do chat:', error);

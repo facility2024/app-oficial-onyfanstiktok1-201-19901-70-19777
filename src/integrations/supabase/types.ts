@@ -8944,6 +8944,7 @@ export type Database = {
           button_color: string
           button_text: string
           category: string | null
+          chat_auto_response_enabled: boolean
           comments_count: number | null
           created_at: string | null
           creator_id: string | null
@@ -8983,6 +8984,7 @@ export type Database = {
           button_color?: string
           button_text?: string
           category?: string | null
+          chat_auto_response_enabled?: boolean
           comments_count?: number | null
           created_at?: string | null
           creator_id?: string | null
@@ -9022,6 +9024,7 @@ export type Database = {
           button_color?: string
           button_text?: string
           category?: string | null
+          chat_auto_response_enabled?: boolean
           comments_count?: number | null
           created_at?: string | null
           creator_id?: string | null
@@ -9781,6 +9784,7 @@ export type Database = {
           button_color: string
           button_text: string
           category: string | null
+          chat_auto_response_enabled: boolean
           comments_count: number | null
           created_at: string | null
           creator_id: string | null

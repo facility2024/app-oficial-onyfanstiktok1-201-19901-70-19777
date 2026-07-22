@@ -106,6 +106,7 @@ const navigationGroups = [
     label: 'Ferramentas',
     items: [
       { id: 'chat-panels', label: 'Painéis de Chat IA', icon: Bot },
+      { id: 'chat-bulk', label: 'Chat — Massa & Vídeos', icon: Bot },
       { id: 'gamification', label: 'Gamificação', icon: Gamepad2 },
     ]
   },

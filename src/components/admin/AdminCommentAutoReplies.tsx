@@ -211,6 +211,61 @@ export default function AdminCommentAutoReplies() {
     setVideos(prev => prev.map(v => v.id === id ? { ...v, comment_auto_reply_enabled: enabled } : v));
   };
 
+  // Aplica mensagem nas configs dos DONOS dos vídeos (selecionados ou filtrados)
+  const applyMsgToVideos = async (scope: 'selected' | 'filtered') => {
+    if (!bulkMessage.trim()) return toast({ title: 'Escreva a mensagem', variant: 'destructive' });
+    const source = scope === 'selected'
+      ? videos.filter(v => vidSelected.has(v.id))
+      : filteredVids;
+    if (!source.length) return toast({ title: 'Nenhum vídeo alvo', variant: 'destructive' });
+    if (!confirm(`Aplicar mensagem em ${source.length} vídeo(s) e ativar auto-reply?`)) return;
+
+    setSaving(true);
+    try {
+      const rows: any[] = [];
+      const seen = new Set<string>();
+      for (const v of source) {
+        const type = v.creator_id ? 'creator' : (v.model_id ? 'model' : null);
+        const id = v.creator_id || v.model_id;
+        if (!type || !id) continue;
+        const key = `${type}:${id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        rows.push({ owner_id: id, owner_type: type, message: bulkMessage, is_active: true });
+      }
+      if (rows.length) {
+        const C = 100;
+        for (let i = 0; i < rows.length; i += C) {
+          await supabase.from('comment_auto_reply_configs')
+            .upsert(rows.slice(i, i + C), { onConflict: 'owner_id,owner_type' });
+        }
+      }
+      const ids = source.map(v => v.id);
+      const C = 50;
+      for (let i = 0; i < ids.length; i += C) {
+        await supabase.from('videos').update({ comment_auto_reply_enabled: true }).in('id', ids.slice(i, i + C));
+      }
+      toast({ title: `Mensagem aplicada em ${source.length} vídeo(s)`, description: `${rows.length} config(s) upsert.` });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateOwnerMsgFromVideo = async (v: VideoRow, message: string) => {
+    const type = v.creator_id ? 'creator' : (v.model_id ? 'model' : null);
+    const id = v.creator_id || v.model_id;
+    if (!type || !id) return;
+    const { error } = await supabase.from('comment_auto_reply_configs')
+      .upsert({ owner_id: id, owner_type: type, message, is_active: true }, { onConflict: 'owner_id,owner_type' });
+    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    await supabase.from('videos').update({ comment_auto_reply_enabled: true }).eq('id', v.id);
+    toast({ title: 'Mensagem salva para esta modelo/criador' });
+    loadAll();
+  };
+
   const toggleSet = (set: Set<string>, setter: any, id: string, checked: boolean) => {
     const next = new Set(set); checked ? next.add(id) : next.delete(id); setter(next);
   };
@@ -306,8 +361,18 @@ export default function AdminCommentAutoReplies() {
                 <Button onClick={() => setVidSelected(new Set(filteredVids.map(v => v.id)))} variant="outline" className="border-purple-500 text-purple-300">Selecionar filtrados</Button>
                 <Button onClick={() => setVidSelected(new Set())} variant="outline" className="border-gray-600 text-gray-300">Limpar</Button>
               </div>
+
+              <div className="space-y-2 pt-3 border-t border-gray-800">
+                <label className="text-sm text-white font-semibold">Mensagem de resposta rápida (aplica nos donos dos vídeos)</label>
+                <Textarea value={bulkMessage} onChange={e => setBulkMessage(e.target.value)} className="bg-gray-800 border-gray-700 text-white min-h-[90px]" placeholder="Ex.: 🥰 oi meu amor, obrigado pelo comentário..." />
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => applyMsgToVideos('selected')} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">Aplicar em {vidSelected.size} selecionados</Button>
+                  <Button onClick={() => applyMsgToVideos('filtered')} disabled={saving} className="bg-purple-900 hover:bg-purple-800 text-white font-bold">Aplicar em TODOS filtrados ({filteredVids.length})</Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
+
 
           <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-1 min-w-[200px]">
@@ -322,33 +387,52 @@ export default function AdminCommentAutoReplies() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[700px] overflow-y-auto">
-            {filteredVids.map(v => (
-              <div key={v.id} className="flex gap-3 p-3 bg-gray-900 border border-gray-800 rounded-lg">
-                <Checkbox checked={vidSelected.has(v.id)} onCheckedChange={ck => toggleSet(vidSelected, setVidSelected, v.id, !!ck)} className="mt-1" />
-                <div className="w-16 h-20 bg-black rounded overflow-hidden flex-shrink-0">
-                  {v.video_url ? (
-                    <video src={v.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                  ) : (
-                    <img src={v.thumbnail_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
-                  )}
+            {filteredVids.map(v => {
+              const ownerType = v.creator_id ? 'creator' : (v.model_id ? 'model' : null);
+              const ownerId = v.creator_id || v.model_id;
+              const ownerCfg = ownerType && ownerId ? configs.find(c => c.owner_type === ownerType && c.owner_id === ownerId) : null;
+              const currentMsg = ownerCfg?.message || '';
+              return (
+              <div key={v.id} className="flex flex-col gap-2 p-3 bg-gray-900 border border-gray-800 rounded-lg">
+                <div className="flex gap-3">
+                  <Checkbox checked={vidSelected.has(v.id)} onCheckedChange={ck => toggleSet(vidSelected, setVidSelected, v.id, !!ck)} className="mt-1" />
+                  <div className="w-16 h-20 bg-black rounded overflow-hidden flex-shrink-0">
+                    {v.video_url ? (
+                      <video src={v.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                    ) : (
+                      <img src={v.thumbnail_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <img src={v.avatar} alt="" className="w-5 h-5 rounded-full" onError={e => (e.currentTarget.src = DEFAULT_AVATAR)} />
+                      <span className="text-white text-xs font-semibold truncate">{v.name}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 line-clamp-2">{v.title || 'Sem título'}</div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={v.comment_auto_reply_enabled} onCheckedChange={val => toggleSingleVid(v.id, val)} />
+                      <span className={`text-xs font-bold ${v.comment_auto_reply_enabled ? 'text-green-400' : 'text-gray-500'}`}>
+                        {v.comment_auto_reply_enabled ? 'Auto-reply ON' : 'OFF'}
+                      </span>
+                      {v.has_config && <Badge className="bg-purple-700 text-xs">tem config</Badge>}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-1">
-                    <img src={v.avatar} alt="" className="w-5 h-5 rounded-full" onError={e => (e.currentTarget.src = DEFAULT_AVATAR)} />
-                    <span className="text-white text-xs font-semibold truncate">{v.name}</span>
-                  </div>
-                  <div className="text-xs text-gray-400 line-clamp-2">{v.title || 'Sem título'}</div>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Switch checked={v.comment_auto_reply_enabled} onCheckedChange={val => toggleSingleVid(v.id, val)} />
-                    <span className={`text-xs font-bold ${v.comment_auto_reply_enabled ? 'text-green-400' : 'text-gray-500'}`}>
-                      {v.comment_auto_reply_enabled ? 'Auto-reply ON' : 'OFF'}
-                    </span>
-                    {v.has_config && <Badge className="bg-purple-700 text-xs">tem config</Badge>}
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-gray-400 uppercase font-bold">Mensagem de resposta rápida (deste dono)</label>
+                  <Textarea
+                    key={`${v.id}-${currentMsg}`}
+                    defaultValue={currentMsg}
+                    placeholder="Escreva a mensagem que aparecerá quando alguém comentar..."
+                    onBlur={e => { const val = e.target.value; if (val && val !== currentMsg) updateOwnerMsgFromVideo(v, val); }}
+                    className="bg-gray-800 border-gray-700 text-white text-xs min-h-[60px]"
+                  />
                 </div>
               </div>
-            ))}
+              );
+            })}
             {!filteredVids.length && <div className="col-span-full text-center text-gray-400 py-8">Nenhum vídeo encontrado.</div>}
+
           </div>
         </TabsContent>
       </Tabs>

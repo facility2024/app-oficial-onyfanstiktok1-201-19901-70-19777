@@ -157,7 +157,7 @@ export default function AdminChatBulkManager() {
     ids: string[],
     payload: Record<string, any>
   ) => {
-    const CHUNK = 100;
+    const CHUNK = 50;
     let done = 0;
     let failed = 0;
     for (let i = 0; i < ids.length; i += CHUNK) {
@@ -222,7 +222,7 @@ export default function AdminChatBulkManager() {
     if (!confirm(`${enabled ? 'Ativar' : 'Desativar'} chat em ${target.length} vídeos filtrados?`)) return;
     setSaving(true);
     const ids = target.map(v => v.id);
-    const CHUNK = 100;
+    const CHUNK = 50;
     let done = 0;
     let failed = 0;
     for (let i = 0; i < ids.length; i += CHUNK) {
@@ -271,7 +271,7 @@ export default function AdminChatBulkManager() {
 
       // Update em lote
       if (toUpdate.length) {
-        const CHUNK = 100;
+        const CHUNK = 50;
         for (let i = 0; i < toUpdate.length; i += CHUNK) {
           const slice = toUpdate.slice(i, i + CHUNK);
           await supabase.from('model_chat_panels')
@@ -282,7 +282,7 @@ export default function AdminChatBulkManager() {
       // Insert novos
       if (toInsert.length) {
         const rows = toInsert.map(mid => ({ model_id: mid, greeting_message: bulkVideoMessage, is_active: true }));
-        const CHUNK = 100;
+        const CHUNK = 50;
         for (let i = 0; i < rows.length; i += CHUNK) {
           await supabase.from('model_chat_panels').insert(rows.slice(i, i + CHUNK));
         }

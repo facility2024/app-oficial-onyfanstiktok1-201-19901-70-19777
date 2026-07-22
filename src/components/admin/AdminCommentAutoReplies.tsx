@@ -387,33 +387,52 @@ export default function AdminCommentAutoReplies() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[700px] overflow-y-auto">
-            {filteredVids.map(v => (
-              <div key={v.id} className="flex gap-3 p-3 bg-gray-900 border border-gray-800 rounded-lg">
-                <Checkbox checked={vidSelected.has(v.id)} onCheckedChange={ck => toggleSet(vidSelected, setVidSelected, v.id, !!ck)} className="mt-1" />
-                <div className="w-16 h-20 bg-black rounded overflow-hidden flex-shrink-0">
-                  {v.video_url ? (
-                    <video src={v.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                  ) : (
-                    <img src={v.thumbnail_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
-                  )}
+            {filteredVids.map(v => {
+              const ownerType = v.creator_id ? 'creator' : (v.model_id ? 'model' : null);
+              const ownerId = v.creator_id || v.model_id;
+              const ownerCfg = ownerType && ownerId ? configs.find(c => c.owner_type === ownerType && c.owner_id === ownerId) : null;
+              const currentMsg = ownerCfg?.message || '';
+              return (
+              <div key={v.id} className="flex flex-col gap-2 p-3 bg-gray-900 border border-gray-800 rounded-lg">
+                <div className="flex gap-3">
+                  <Checkbox checked={vidSelected.has(v.id)} onCheckedChange={ck => toggleSet(vidSelected, setVidSelected, v.id, !!ck)} className="mt-1" />
+                  <div className="w-16 h-20 bg-black rounded overflow-hidden flex-shrink-0">
+                    {v.video_url ? (
+                      <video src={v.video_url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                    ) : (
+                      <img src={v.thumbnail_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <img src={v.avatar} alt="" className="w-5 h-5 rounded-full" onError={e => (e.currentTarget.src = DEFAULT_AVATAR)} />
+                      <span className="text-white text-xs font-semibold truncate">{v.name}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 line-clamp-2">{v.title || 'Sem título'}</div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={v.comment_auto_reply_enabled} onCheckedChange={val => toggleSingleVid(v.id, val)} />
+                      <span className={`text-xs font-bold ${v.comment_auto_reply_enabled ? 'text-green-400' : 'text-gray-500'}`}>
+                        {v.comment_auto_reply_enabled ? 'Auto-reply ON' : 'OFF'}
+                      </span>
+                      {v.has_config && <Badge className="bg-purple-700 text-xs">tem config</Badge>}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-1">
-                    <img src={v.avatar} alt="" className="w-5 h-5 rounded-full" onError={e => (e.currentTarget.src = DEFAULT_AVATAR)} />
-                    <span className="text-white text-xs font-semibold truncate">{v.name}</span>
-                  </div>
-                  <div className="text-xs text-gray-400 line-clamp-2">{v.title || 'Sem título'}</div>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Switch checked={v.comment_auto_reply_enabled} onCheckedChange={val => toggleSingleVid(v.id, val)} />
-                    <span className={`text-xs font-bold ${v.comment_auto_reply_enabled ? 'text-green-400' : 'text-gray-500'}`}>
-                      {v.comment_auto_reply_enabled ? 'Auto-reply ON' : 'OFF'}
-                    </span>
-                    {v.has_config && <Badge className="bg-purple-700 text-xs">tem config</Badge>}
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-gray-400 uppercase font-bold">Mensagem de resposta rápida (deste dono)</label>
+                  <Textarea
+                    key={`${v.id}-${currentMsg}`}
+                    defaultValue={currentMsg}
+                    placeholder="Escreva a mensagem que aparecerá quando alguém comentar..."
+                    onBlur={e => { const val = e.target.value; if (val && val !== currentMsg) updateOwnerMsgFromVideo(v, val); }}
+                    className="bg-gray-800 border-gray-700 text-white text-xs min-h-[60px]"
+                  />
                 </div>
               </div>
-            ))}
+              );
+            })}
             {!filteredVids.length && <div className="col-span-full text-center text-gray-400 py-8">Nenhum vídeo encontrado.</div>}
+
           </div>
         </TabsContent>
       </Tabs>

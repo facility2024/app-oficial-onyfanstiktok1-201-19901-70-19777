@@ -361,8 +361,18 @@ export default function AdminCommentAutoReplies() {
                 <Button onClick={() => setVidSelected(new Set(filteredVids.map(v => v.id)))} variant="outline" className="border-purple-500 text-purple-300">Selecionar filtrados</Button>
                 <Button onClick={() => setVidSelected(new Set())} variant="outline" className="border-gray-600 text-gray-300">Limpar</Button>
               </div>
+
+              <div className="space-y-2 pt-3 border-t border-gray-800">
+                <label className="text-sm text-white font-semibold">Mensagem de resposta rápida (aplica nos donos dos vídeos)</label>
+                <Textarea value={bulkMessage} onChange={e => setBulkMessage(e.target.value)} className="bg-gray-800 border-gray-700 text-white min-h-[90px]" placeholder="Ex.: 🥰 oi meu amor, obrigado pelo comentário..." />
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => applyMsgToVideos('selected')} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">Aplicar em {vidSelected.size} selecionados</Button>
+                  <Button onClick={() => applyMsgToVideos('filtered')} disabled={saving} className="bg-purple-900 hover:bg-purple-800 text-white font-bold">Aplicar em TODOS filtrados ({filteredVids.length})</Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
+
 
           <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-1 min-w-[200px]">

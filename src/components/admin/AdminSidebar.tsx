@@ -24,6 +24,7 @@ import {
   Radio,
   Mail,
   Coins,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -107,6 +108,7 @@ const navigationGroups = [
     items: [
       { id: 'chat-panels', label: 'Painéis de Chat IA', icon: Bot },
       { id: 'chat-bulk', label: 'Chat — Massa & Vídeos', icon: Bot },
+      { id: 'comment-autoreply', label: 'Auto-resposta Comentários', icon: MessageSquare },
       { id: 'gamification', label: 'Gamificação', icon: Gamepad2 },
     ]
   },

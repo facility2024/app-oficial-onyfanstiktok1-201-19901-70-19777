@@ -1747,6 +1747,36 @@ export type Database = {
           },
         ]
       }
+      comment_auto_reply_configs: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          message: string
+          owner_id: string
+          owner_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          owner_id: string
+          owner_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          owner_id?: string
+          owner_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -8945,6 +8975,7 @@ export type Database = {
           button_text: string
           category: string | null
           chat_auto_response_enabled: boolean
+          comment_auto_reply_enabled: boolean
           comments_count: number | null
           created_at: string | null
           creator_id: string | null
@@ -8985,6 +9016,7 @@ export type Database = {
           button_text?: string
           category?: string | null
           chat_auto_response_enabled?: boolean
+          comment_auto_reply_enabled?: boolean
           comments_count?: number | null
           created_at?: string | null
           creator_id?: string | null
@@ -9025,6 +9057,7 @@ export type Database = {
           button_text?: string
           category?: string | null
           chat_auto_response_enabled?: boolean
+          comment_auto_reply_enabled?: boolean
           comments_count?: number | null
           created_at?: string | null
           creator_id?: string | null
@@ -9785,6 +9818,7 @@ export type Database = {
           button_text: string
           category: string | null
           chat_auto_response_enabled: boolean
+          comment_auto_reply_enabled: boolean
           comments_count: number | null
           created_at: string | null
           creator_id: string | null

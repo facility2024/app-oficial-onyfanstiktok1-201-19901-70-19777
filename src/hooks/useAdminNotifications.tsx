@@ -37,7 +37,7 @@ export const useAdminNotifications = () => {
           .limit(10),
         // Novos usuários
         (supabase as any).from('profiles')
-          .select('id, display_name, created_at')
+          .select('id, name, created_at')
           .gte('created_at', sinceISO)
           .order('created_at', { ascending: false })
           .limit(10),
@@ -83,7 +83,7 @@ export const useAdminNotifications = () => {
           id: `user-${u.id}`,
           type: 'new_user',
           title: '👤 Novo Usuário',
-          description: `${u.display_name || 'Usuário'} se cadastrou`,
+          description: `${u.name || 'Usuário'} se cadastrou`,
           timestamp: new Date(u.created_at),
           read: false,
         });

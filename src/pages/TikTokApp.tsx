@@ -2688,35 +2688,62 @@ export const TikTokApp = () => {
     }, 1200);
   };
   // 🤖 Auto-resposta individual da modelo — só dispara no envio do usuário nesse chat
-  const triggerModelAutoReply = () => {
+  //    Gerenciada pelo admin: exige videos.comment_auto_reply_enabled = true
+  //    e um comment_auto_reply_configs ativo para o dono (model/creator).
+  const triggerModelAutoReply = async () => {
     if (!currentVideo) return;
-    const ownerId = (currentVideo as any)?.creator_id || (currentVideo as any)?.model_id;
+    const creatorId = (currentVideo as any)?.creator_id || null;
+    const modelId = (currentVideo as any)?.model_id || null;
+    const ownerId = creatorId || modelId;
+    const ownerType: 'creator' | 'model' | null = creatorId ? 'creator' : (modelId ? 'model' : null);
     const chatVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
     const commenterId = currentUser?.id || localStorage.getItem('anonymous_user_id');
-    if (!ownerId || !commenterId || !chatVideoId) return;
+    if (!ownerId || !ownerType || !commenterId || !chatVideoId) return;
     const autoKey = `autoreply_${ownerId}_${chatVideoId}_${commenterId}`;
     if (localStorage.getItem(autoKey)) return;
-    localStorage.setItem(autoKey, '1');
-    const modelName = currentVideo?.user?.username || 'Modelo';
-    const modelAvatar = currentVideo?.user?.avatar_url || DEFAULT_AVATAR;
-    setTimeout(() => {
-      const stillSameChat =
-        String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '') === chatVideoId;
-      if (!stillSameChat) return;
-      const autoComment = {
-        id: `autoreply-${ownerId}-${Date.now()}`,
-        text: '🥰 oi meu amor, obrigado pelo comentário. 🤗 Aqui você vai ver tudo que as redes do TikTok e Instagram não mostram.',
-        user_id: ownerId,
-        video_id: chatVideoId,
-        likes_count: 0,
-        created_at: new Date().toISOString(),
-        user: { username: modelName, avatar_url: modelAvatar },
-      } as any;
-      setComments(prev => {
-        const onlyThisVideo = prev.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === chatVideoId);
-        return [autoComment, ...onlyThisVideo];
-      });
-    }, 4000);
+
+    try {
+      // Só dispara se este vídeo específico estiver marcado pelo admin
+      const { data: vRow } = await supabase
+        .from('videos')
+        .select('comment_auto_reply_enabled')
+        .eq('id', chatVideoId)
+        .maybeSingle();
+      if (!vRow?.comment_auto_reply_enabled) return;
+
+      // Buscar mensagem configurada para o dono
+      const { data: cfg } = await supabase
+        .from('comment_auto_reply_configs')
+        .select('message, is_active')
+        .eq('owner_id', ownerId)
+        .eq('owner_type', ownerType)
+        .maybeSingle();
+      if (!cfg?.is_active || !cfg?.message) return;
+
+      localStorage.setItem(autoKey, '1');
+      const modelName = currentVideo?.user?.username || 'Modelo';
+      const modelAvatar = currentVideo?.user?.avatar_url || DEFAULT_AVATAR;
+      setTimeout(() => {
+        const stillSameChat =
+          String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '') === chatVideoId;
+        if (!stillSameChat) return;
+        const autoComment = {
+          id: `autoreply-${ownerId}-${Date.now()}`,
+          text: cfg.message,
+          user_id: ownerId,
+          video_id: chatVideoId,
+          likes_count: 0,
+          created_at: new Date().toISOString(),
+          user: { username: modelName, avatar_url: modelAvatar },
+        } as any;
+        setComments(prev => {
+          const onlyThisVideo = prev.filter(comment => String(comment.video_id || '').replace(/-block-\d+-\d+$/, '') === chatVideoId);
+          return [autoComment, ...onlyThisVideo];
+        });
+      }, 4000);
+    } catch (e) {
+      console.warn('auto-reply check failed', e);
+    }
   };
 
   const addComment = async (text: string) => {

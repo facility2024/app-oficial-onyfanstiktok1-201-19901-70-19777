@@ -393,6 +393,29 @@ export default function AdminChatBulkManager() {
                 <Button onClick={() => selectAllVideos(true)} variant="outline" className="border-purple-500 text-purple-300">Selecionar filtrados</Button>
                 <Button onClick={() => selectAllVideos(false)} variant="outline" className="border-gray-600 text-gray-300">Limpar seleção</Button>
               </div>
+
+              <div className="space-y-2 pt-3 border-t border-gray-800">
+                <label className="text-sm text-white font-semibold">
+                  💬 Mensagem de chat automático (só vídeos de modelos comuns)
+                </label>
+                <p className="text-xs text-gray-400">
+                  Vídeos de <b>criadoras</b> são ignorados — elas configuram no painel próprio.
+                </p>
+                <Textarea
+                  value={bulkVideoMessage}
+                  onChange={e => setBulkVideoMessage(e.target.value)}
+                  placeholder="Ex.: 🔥 Oi amor! Tenho conteúdo exclusivo pra você — R$4,50 no PIX e libera tudo 💜"
+                  className="bg-gray-800 border-gray-700 text-white min-h-[90px]"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => bulkApplyVideoMessage('selected')} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                    Aplicar em {videoSelected.size} selecionados
+                  </Button>
+                  <Button onClick={() => bulkApplyVideoMessage('filtered')} disabled={saving} className="bg-purple-900 hover:bg-purple-800 text-white font-bold">
+                    Aplicar em TODOS filtrados ({filteredVideos.length})
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

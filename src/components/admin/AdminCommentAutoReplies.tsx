@@ -211,6 +211,61 @@ export default function AdminCommentAutoReplies() {
     setVideos(prev => prev.map(v => v.id === id ? { ...v, comment_auto_reply_enabled: enabled } : v));
   };
 
+  // Aplica mensagem nas configs dos DONOS dos vídeos (selecionados ou filtrados)
+  const applyMsgToVideos = async (scope: 'selected' | 'filtered') => {
+    if (!bulkMessage.trim()) return toast({ title: 'Escreva a mensagem', variant: 'destructive' });
+    const source = scope === 'selected'
+      ? videos.filter(v => vidSelected.has(v.id))
+      : filteredVids;
+    if (!source.length) return toast({ title: 'Nenhum vídeo alvo', variant: 'destructive' });
+    if (!confirm(`Aplicar mensagem em ${source.length} vídeo(s) e ativar auto-reply?`)) return;
+
+    setSaving(true);
+    try {
+      const rows: any[] = [];
+      const seen = new Set<string>();
+      for (const v of source) {
+        const type = v.creator_id ? 'creator' : (v.model_id ? 'model' : null);
+        const id = v.creator_id || v.model_id;
+        if (!type || !id) continue;
+        const key = `${type}:${id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        rows.push({ owner_id: id, owner_type: type, message: bulkMessage, is_active: true });
+      }
+      if (rows.length) {
+        const C = 100;
+        for (let i = 0; i < rows.length; i += C) {
+          await supabase.from('comment_auto_reply_configs')
+            .upsert(rows.slice(i, i + C), { onConflict: 'owner_id,owner_type' });
+        }
+      }
+      const ids = source.map(v => v.id);
+      const C = 50;
+      for (let i = 0; i < ids.length; i += C) {
+        await supabase.from('videos').update({ comment_auto_reply_enabled: true }).in('id', ids.slice(i, i + C));
+      }
+      toast({ title: `Mensagem aplicada em ${source.length} vídeo(s)`, description: `${rows.length} config(s) upsert.` });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateOwnerMsgFromVideo = async (v: VideoRow, message: string) => {
+    const type = v.creator_id ? 'creator' : (v.model_id ? 'model' : null);
+    const id = v.creator_id || v.model_id;
+    if (!type || !id) return;
+    const { error } = await supabase.from('comment_auto_reply_configs')
+      .upsert({ owner_id: id, owner_type: type, message, is_active: true }, { onConflict: 'owner_id,owner_type' });
+    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    await supabase.from('videos').update({ comment_auto_reply_enabled: true }).eq('id', v.id);
+    toast({ title: 'Mensagem salva para esta modelo/criador' });
+    loadAll();
+  };
+
   const toggleSet = (set: Set<string>, setter: any, id: string, checked: boolean) => {
     const next = new Set(set); checked ? next.add(id) : next.delete(id); setter(next);
   };

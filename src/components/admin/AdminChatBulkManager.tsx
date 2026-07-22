@@ -204,11 +204,20 @@ export default function AdminChatBulkManager() {
     if (!confirm(`${enabled ? 'Ativar' : 'Desativar'} chat em ${target.length} vídeos filtrados?`)) return;
     setSaving(true);
     const ids = target.map(v => v.id);
-    const { error } = await supabase.from('videos').update({ chat_auto_response_enabled: enabled }).in('id', ids);
+    const CHUNK = 100;
+    let done = 0;
+    let failed = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      const { error } = await supabase.from('videos').update({ chat_auto_response_enabled: enabled }).in('id', slice);
+      if (error) { failed += slice.length; console.error('chunk err', error); }
+      else { done += slice.length; }
+    }
     setSaving(false);
-    if (error) return toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    toast({ title: `${ids.length} vídeos atualizados` });
-    setVideos(prev => prev.map(v => (ids.includes(v.id) ? { ...v, chat_auto_response_enabled: enabled } : v)));
+    if (failed) toast({ title: `Concluído com falhas`, description: `${done} ok, ${failed} falharam`, variant: 'destructive' });
+    else toast({ title: `${done} vídeos atualizados` });
+    const okSet = new Set(ids);
+    setVideos(prev => prev.map(v => (okSet.has(v.id) ? { ...v, chat_auto_response_enabled: enabled } : v)));
   };
 
   const toggleSingleVideo = async (id: string, enabled: boolean) => {

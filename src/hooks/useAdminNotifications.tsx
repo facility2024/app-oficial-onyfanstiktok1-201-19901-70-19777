@@ -83,7 +83,7 @@ export const useAdminNotifications = () => {
           id: `user-${u.id}`,
           type: 'new_user',
           title: '👤 Novo Usuário',
-          description: `${u.display_name || 'Usuário'} se cadastrou`,
+          description: `${u.name || 'Usuário'} se cadastrou`,
           timestamp: new Date(u.created_at),
           read: false,
         });

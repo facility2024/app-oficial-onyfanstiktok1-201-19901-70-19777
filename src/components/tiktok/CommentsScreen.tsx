@@ -138,8 +138,8 @@ export const CommentsScreen = ({ comments, isOpen, onClose, onAddComment, videoI
                         {formatTimeAgo(comment.created_at)}
                       </span>
                     </div>
-                    <p className="text-white text-sm leading-relaxed mb-2">
-                      {comment.text}
+                    <p className="text-white text-sm leading-relaxed mb-2 break-words">
+                      {renderTextWithLinks(comment.text)}
                     </p>
                     <div className="flex items-center gap-4">
                       <button

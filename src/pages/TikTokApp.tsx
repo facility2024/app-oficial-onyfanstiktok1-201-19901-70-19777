@@ -2202,10 +2202,19 @@ export const TikTokApp = () => {
       // IDs originais já no feed (para evitar duplicatas reais)
       const idsInFeed = new Set(realVideosInFeed.map(v => (v as any)._originalId || v.id));
 
-      // Priorizar vídeos NÃO assistidos e NÃO no feed
+      // 🆕 Vídeos "novos" (destaque/agendado/main/isNewModel) já exibidos nesta sessão
+      // NUNCA voltam ao feed até F5/reabrir/novo login (comportamento TikTok/Instagram).
+      const shownNewIds = getShownNewIds();
+      const isBlockedNew = (v: any) => {
+        if (!isPriorityNewItem(v)) return false;
+        const originalId = String((v as any)._originalId || v.id);
+        return shownNewIds.has(originalId);
+      };
+
+      // Priorizar vídeos NÃO assistidos e NÃO no feed (e sem "novos" já consumidos)
       const unwatched = allAvailableVideos.filter(v => {
         const originalId = (v as any)._originalId || v.id;
-        return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId);
+        return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
       });
 
       let nextBlock: any[];
@@ -2221,7 +2230,8 @@ export const TikTokApp = () => {
       } else {
         const watched = allAvailableVideos.filter(v => {
           const originalId = (v as any)._originalId || v.id;
-          return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId);
+          // Fallback também exclui "novos" já consumidos — evita o loop de repetição
+          return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
         });
 
         const shuffledWatched = [...watched].sort(() => Math.random() - 0.5);
@@ -2236,6 +2246,14 @@ export const TikTokApp = () => {
         });
       }
 
+      // 🆕 Marca os "novos" que entraram agora — não voltarão mais nesta sessão
+      try {
+        const newlyShownNewIds = nextBlock
+          .filter(isPriorityNewItem)
+          .map((v: any) => String(v._originalId || v.id));
+        addShownNewIds(newlyShownNewIds);
+      } catch {}
+
       // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
       setVideos(prev => {
         const withoutPromos = prev.filter(v => !v.id.startsWith('promo-'));
@@ -2243,7 +2261,7 @@ export const TikTokApp = () => {
       });
       setCurrentPage(prev => prev + 1);
       setHasMoreVideos(true);
-      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos (${unwatched.length} não-assistidos disponíveis)`);
+      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos (${unwatched.length} não-assistidos disponíveis, ${shownNewIds.size} "novos" já consumidos na sessão)`);
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
     } finally {

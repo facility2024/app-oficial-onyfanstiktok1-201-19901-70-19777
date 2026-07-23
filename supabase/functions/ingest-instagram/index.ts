@@ -69,7 +69,11 @@ Deno.serve(async (req) => {
       })
     }
     const displayName = String(c.display_name || c.instagram_username || username).slice(0, 100)
-    const avatarUrl = c.avatar_url || null
+    // Fallback: se não veio avatar do criador, usa o thumbnail do primeiro vídeo válido
+    const firstThumb = (body.videos as any[])
+      .map((v) => v?.thumbnail_url || v?.video_url)
+      .find((u) => typeof u === 'string' && u.length > 0) || null
+    const avatarUrl = c.avatar_url || firstThumb
     const bio = c.bio || null
 
     // Upsert model by username
@@ -80,7 +84,8 @@ Deno.serve(async (req) => {
     if (existing) {
       modelId = existing.id
       const patch: Record<string, unknown> = {}
-      if (avatarUrl && !existing.avatar_url) patch.avatar_url = avatarUrl
+      const missingAvatar = !existing.avatar_url || existing.avatar_url === '' || String(existing.avatar_url).includes('default-avatar')
+      if (avatarUrl && missingAvatar) patch.avatar_url = avatarUrl
       if (bio && !existing.bio) patch.bio = bio
       if (Object.keys(patch).length) await supabase.from('models').update(patch).eq('id', modelId)
     } else {

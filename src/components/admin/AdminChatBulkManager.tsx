@@ -50,6 +50,7 @@ export default function AdminChatBulkManager() {
   const [panelSearch, setPanelSearch] = useState('');
   const [videoSearch, setVideoSearch] = useState('');
   const [videoFilter, setVideoFilter] = useState<'all' | 'on' | 'off' | 'panel'>('all');
+  const [groupByModel, setGroupByModel] = useState(true);
 
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkVideoMessage, setBulkVideoMessage] = useState('');
@@ -121,14 +122,24 @@ export default function AdminChatBulkManager() {
 
   const filteredVideos = useMemo(() => {
     const q = videoSearch.trim().toLowerCase();
-    return videos.filter(v => {
+    const base = videos.filter(v => {
       if (q && !(v.entity_name.toLowerCase().includes(q) || (v.title || '').toLowerCase().includes(q))) return false;
       if (videoFilter === 'on') return v.chat_auto_response_enabled;
       if (videoFilter === 'off') return !v.chat_auto_response_enabled;
       if (videoFilter === 'panel') return v.has_panel;
       return true;
     });
-  }, [videos, videoSearch, videoFilter]);
+    if (!groupByModel) return base;
+    const seen = new Set<string>();
+    const out: VideoRow[] = [];
+    for (const v of base) {
+      const key = v.model_id || v.creator_id || v.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(v);
+    }
+    return out;
+  }, [videos, videoSearch, videoFilter, groupByModel]);
 
   const togglePanelSet = (id: string, checked: boolean) => {
     setPanelSelected(prev => {
@@ -429,6 +440,10 @@ export default function AdminChatBulkManager() {
                 {f === 'all' ? 'Todos' : f === 'on' ? 'Com chat' : f === 'off' ? 'Sem chat' : 'Com painel'}
               </Button>
             ))}
+            <label className="flex items-center gap-2 text-sm text-white bg-gray-800 px-3 py-2 rounded cursor-pointer">
+              <Checkbox checked={groupByModel} onCheckedChange={(c) => setGroupByModel(!!c)} />
+              Agrupar por modelo (1 por modelo)
+            </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[700px] overflow-y-auto">

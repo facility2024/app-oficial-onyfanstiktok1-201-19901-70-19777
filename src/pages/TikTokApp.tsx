@@ -115,6 +115,53 @@ interface ActivePromoPopup {
   ctaLink: string | null;
 }
 
+// 🆕 CONTROLE DE SESSÃO PARA VÍDEOS "NOVOS" (estilo TikTok/Instagram)
+// Vídeos marcados como novos (scheduled_post/main_post/isHighlighted/isNewModel)
+// só podem aparecer UMA vez por sessão. Reset ocorre em F5, reabrir app ou login.
+const FEED_NEW_SHOWN_KEY = 'feed_new_shown_session_v1';
+const FEED_SESSION_MARK_KEY = 'feed_session_started_v1';
+try {
+  // Marca a sessão como "fresca" a cada carga completa do módulo (F5/reabrir).
+  // sessionStorage sobrevive a F5 dentro da mesma aba, então usamos um marcador
+  // one-shot em memória do módulo para detectar reload real.
+  if (typeof window !== 'undefined') {
+    const alreadyStartedThisLoad = (window as any).__coco_feed_session_started;
+    if (!alreadyStartedThisLoad) {
+      sessionStorage.removeItem(FEED_NEW_SHOWN_KEY);
+      sessionStorage.setItem(FEED_SESSION_MARK_KEY, String(Date.now()));
+      (window as any).__coco_feed_session_started = true;
+    }
+  }
+} catch {}
+
+const isPriorityNewItem = (v: any): boolean => {
+  if (!v) return false;
+  return Boolean(
+    v.isHighlighted ||
+    v.isNewModel ||
+    v.source === 'scheduled_post' ||
+    v.source === 'main_post'
+  );
+};
+
+const getShownNewIds = (): Set<string> => {
+  try {
+    const raw = sessionStorage.getItem(FEED_NEW_SHOWN_KEY);
+    return new Set<string>(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set<string>();
+  }
+};
+
+const addShownNewIds = (ids: string[]) => {
+  if (!ids.length) return;
+  try {
+    const set = getShownNewIds();
+    ids.forEach(id => id && set.add(id));
+    sessionStorage.setItem(FEED_NEW_SHOWN_KEY, JSON.stringify([...set]));
+  } catch {}
+};
+
 export const TikTokApp = () => {
   console.log('🎬 TikTokApp: Componente renderizado');
 

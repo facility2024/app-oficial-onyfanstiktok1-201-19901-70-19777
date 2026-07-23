@@ -36,10 +36,26 @@ export function useMainFeedQueue(opts?: {
 
   const [queueIds, setQueueIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [remoteRatios, setRemoteRatios] = useState<MainFeedRatios & { enabled?: boolean } | null>(null);
 
   const pendingRef = useRef<Set<string>>(new Set());
   const flushTimerRef = useRef<any>(null);
   const fetchingRef = useRef(false);
+
+  // Carrega percentuais do admin_settings (uma vez por sessão)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'main_feed_ratios')
+          .maybeSingle();
+        if (data?.setting_value) setRemoteRatios(data.setting_value as any);
+      } catch {}
+    })();
+  }, []);
+
 
   const flushHistory = useCallback(async () => {
     if (!user?.id) return;

@@ -47,7 +47,44 @@ Deno.serve(async (req) => {
       })
     }
 
-    const body = await req.json().catch(() => ({})) as { model_id?: string; reset_password?: boolean; all_ig?: boolean }
+    const body = await req.json().catch(() => ({})) as { model_id?: string; reset_password?: boolean; all_ig?: boolean; delete?: boolean }
+
+    // DELETE flow: remove modelo, vídeos e conta auth vinculada
+    if (body.delete && body.model_id) {
+      const modelId = body.model_id
+      const { data: model } = await supabase.from('models')
+        .select('id, creator_user_id').eq('id', modelId).maybeSingle()
+      if (!model) {
+        return new Response(JSON.stringify({ error: 'model_not_found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Apagar interações e vídeos vinculados ao model_id
+      const { data: vids } = await supabase.from('videos').select('id').eq('model_id', modelId)
+      const videoIds = (vids ?? []).map((v: any) => v.id)
+      if (videoIds.length) {
+        await supabase.from('likes').delete().in('video_id', videoIds)
+        await supabase.from('comments').delete().in('video_id', videoIds)
+        await supabase.from('video_views').delete().in('video_id', videoIds)
+        await supabase.from('shares').delete().in('video_id', videoIds)
+        await supabase.from('videos').delete().in('id', videoIds)
+      }
+      await supabase.from('model_followers').delete().eq('model_id', modelId)
+      await supabase.from('model_chat_panels').delete().eq('model_id', modelId)
+      await supabase.from('models').delete().eq('id', modelId)
+
+      if (model.creator_user_id) {
+        try { await supabase.auth.admin.deleteUser(model.creator_user_id as string) } catch (_) {}
+        await supabase.from('profiles').delete().eq('id', model.creator_user_id)
+        await supabase.from('user_roles').delete().eq('user_id', model.creator_user_id)
+      }
+
+      return new Response(JSON.stringify({ ok: true, deleted_videos: videoIds.length }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const targets: string[] = []
 
     if (body.all_ig) {

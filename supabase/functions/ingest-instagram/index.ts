@@ -69,7 +69,11 @@ Deno.serve(async (req) => {
       })
     }
     const displayName = String(c.display_name || c.instagram_username || username).slice(0, 100)
-    const avatarUrl = c.avatar_url || null
+    // Fallback: se não veio avatar do criador, usa o thumbnail do primeiro vídeo válido
+    const firstThumb = (body.videos as any[])
+      .map((v) => v?.thumbnail_url || v?.video_url)
+      .find((u) => typeof u === 'string' && u.length > 0) || null
+    const avatarUrl = c.avatar_url || firstThumb
     const bio = c.bio || null
 
     // Upsert model by username

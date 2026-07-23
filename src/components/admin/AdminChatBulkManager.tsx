@@ -440,6 +440,10 @@ export default function AdminChatBulkManager() {
                 {f === 'all' ? 'Todos' : f === 'on' ? 'Com chat' : f === 'off' ? 'Sem chat' : 'Com painel'}
               </Button>
             ))}
+            <label className="flex items-center gap-2 text-sm text-white bg-gray-800 px-3 py-2 rounded cursor-pointer">
+              <Checkbox checked={groupByModel} onCheckedChange={(c) => setGroupByModel(!!c)} />
+              Agrupar por modelo (1 por modelo)
+            </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[700px] overflow-y-auto">

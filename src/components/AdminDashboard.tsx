@@ -36,6 +36,7 @@ import { AdminMarketplace } from './admin/AdminMarketplace';
 import { AdminLocalBusinesses } from './admin/AdminLocalBusinesses';
 import AdminModelChatPanels from './admin/AdminModelChatPanels';
 import AdminChatBulkManager from './admin/AdminChatBulkManager';
+import AdminApiEvents from './admin/AdminApiEvents';
 import AdminCommentAutoReplies from './admin/AdminCommentAutoReplies';
 import { AdminGenres } from './admin/AdminGenres';
 import { AdminVIPUsers } from './admin/AdminVIPUsers';

@@ -115,6 +115,53 @@ interface ActivePromoPopup {
   ctaLink: string | null;
 }
 
+// 🆕 CONTROLE DE SESSÃO PARA VÍDEOS "NOVOS" (estilo TikTok/Instagram)
+// Vídeos marcados como novos (scheduled_post/main_post/isHighlighted/isNewModel)
+// só podem aparecer UMA vez por sessão. Reset ocorre em F5, reabrir app ou login.
+const FEED_NEW_SHOWN_KEY = 'feed_new_shown_session_v1';
+const FEED_SESSION_MARK_KEY = 'feed_session_started_v1';
+try {
+  // Marca a sessão como "fresca" a cada carga completa do módulo (F5/reabrir).
+  // sessionStorage sobrevive a F5 dentro da mesma aba, então usamos um marcador
+  // one-shot em memória do módulo para detectar reload real.
+  if (typeof window !== 'undefined') {
+    const alreadyStartedThisLoad = (window as any).__coco_feed_session_started;
+    if (!alreadyStartedThisLoad) {
+      sessionStorage.removeItem(FEED_NEW_SHOWN_KEY);
+      sessionStorage.setItem(FEED_SESSION_MARK_KEY, String(Date.now()));
+      (window as any).__coco_feed_session_started = true;
+    }
+  }
+} catch {}
+
+const isPriorityNewItem = (v: any): boolean => {
+  if (!v) return false;
+  return Boolean(
+    v.isHighlighted ||
+    v.isNewModel ||
+    v.source === 'scheduled_post' ||
+    v.source === 'main_post'
+  );
+};
+
+const getShownNewIds = (): Set<string> => {
+  try {
+    const raw = sessionStorage.getItem(FEED_NEW_SHOWN_KEY);
+    return new Set<string>(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set<string>();
+  }
+};
+
+const addShownNewIds = (ids: string[]) => {
+  if (!ids.length) return;
+  try {
+    const set = getShownNewIds();
+    ids.forEach(id => id && set.add(id));
+    sessionStorage.setItem(FEED_NEW_SHOWN_KEY, JSON.stringify([...set]));
+  } catch {}
+};
+
 export const TikTokApp = () => {
   console.log('🎬 TikTokApp: Componente renderizado');
 
@@ -1983,6 +2030,13 @@ export const TikTokApp = () => {
 
         setAllAvailableVideos(ordered as any);
         setVideos(firstBlock as any);
+        // 🆕 Marca vídeos "novos" já exibidos nesta sessão para não voltarem no scroll infinito
+        try {
+          const newIdsShown = (firstBlock as any[])
+            .filter(isPriorityNewItem)
+            .map((v: any) => String(v._originalId || v.id));
+          addShownNewIds(newIdsShown);
+        } catch {}
         setCurrentVideoIndex(0);
         setCurrentPage(1);
         setHasMoreVideos(true);
@@ -2148,10 +2202,19 @@ export const TikTokApp = () => {
       // IDs originais já no feed (para evitar duplicatas reais)
       const idsInFeed = new Set(realVideosInFeed.map(v => (v as any)._originalId || v.id));
 
-      // Priorizar vídeos NÃO assistidos e NÃO no feed
+      // 🆕 Vídeos "novos" (destaque/agendado/main/isNewModel) já exibidos nesta sessão
+      // NUNCA voltam ao feed até F5/reabrir/novo login (comportamento TikTok/Instagram).
+      const shownNewIds = getShownNewIds();
+      const isBlockedNew = (v: any) => {
+        if (!isPriorityNewItem(v)) return false;
+        const originalId = String((v as any)._originalId || v.id);
+        return shownNewIds.has(originalId);
+      };
+
+      // Priorizar vídeos NÃO assistidos e NÃO no feed (e sem "novos" já consumidos)
       const unwatched = allAvailableVideos.filter(v => {
         const originalId = (v as any)._originalId || v.id;
-        return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId);
+        return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
       });
 
       let nextBlock: any[];
@@ -2167,7 +2230,8 @@ export const TikTokApp = () => {
       } else {
         const watched = allAvailableVideos.filter(v => {
           const originalId = (v as any)._originalId || v.id;
-          return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId);
+          // Fallback também exclui "novos" já consumidos — evita o loop de repetição
+          return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
         });
 
         const shuffledWatched = [...watched].sort(() => Math.random() - 0.5);
@@ -2182,6 +2246,14 @@ export const TikTokApp = () => {
         });
       }
 
+      // 🆕 Marca os "novos" que entraram agora — não voltarão mais nesta sessão
+      try {
+        const newlyShownNewIds = nextBlock
+          .filter(isPriorityNewItem)
+          .map((v: any) => String(v._originalId || v.id));
+        addShownNewIds(newlyShownNewIds);
+      } catch {}
+
       // Adicionar ao feed (promos serão reinjetadas pelo useEffect)
       setVideos(prev => {
         const withoutPromos = prev.filter(v => !v.id.startsWith('promo-'));
@@ -2189,7 +2261,7 @@ export const TikTokApp = () => {
       });
       setCurrentPage(prev => prev + 1);
       setHasMoreVideos(true);
-      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos (${unwatched.length} não-assistidos disponíveis)`);
+      console.log(`✅ Bloco adicionado: ${nextBlock.length} vídeos (${unwatched.length} não-assistidos disponíveis, ${shownNewIds.size} "novos" já consumidos na sessão)`);
     } catch (error) {
       console.error('❌ Erro ao carregar mais vídeos:', error);
     } finally {

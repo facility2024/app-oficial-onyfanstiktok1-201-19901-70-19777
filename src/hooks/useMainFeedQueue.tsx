@@ -36,10 +36,26 @@ export function useMainFeedQueue(opts?: {
 
   const [queueIds, setQueueIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [remoteRatios, setRemoteRatios] = useState<MainFeedRatios & { enabled?: boolean } | null>(null);
 
   const pendingRef = useRef<Set<string>>(new Set());
   const flushTimerRef = useRef<any>(null);
   const fetchingRef = useRef(false);
+
+  // Carrega percentuais do admin_settings (uma vez por sessão)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'main_feed_ratios')
+          .maybeSingle();
+        if (data?.setting_value) setRemoteRatios(data.setting_value as any);
+      } catch {}
+    })();
+  }, []);
+
 
   const flushHistory = useCallback(async () => {
     if (!user?.id) return;
@@ -79,16 +95,19 @@ export function useMainFeedQueue(opts?: {
 
   const fetchQueue = useCallback(async (append = false) => {
     if (!enabled || fetchingRef.current) return;
+    // Se admin desativou explicitamente, não busca fila (o hook só grava histórico)
+    if (remoteRatios && remoteRatios.enabled === false) return;
     fetchingRef.current = true;
     setLoading(true);
     try {
+      const r = { ...(remoteRatios || {}), ...(opts?.ratios || {}) } as MainFeedRatios;
       const { data, error } = await (supabase as any).rpc('get_main_feed_queue', {
         _user_id: user!.id,
         _limit: limit,
-        _new_pct: opts?.ratios?.new_pct ?? 20,
-        _unseen_pct: opts?.ratios?.unseen_pct ?? 30,
-        _popular_pct: opts?.ratios?.popular_pct ?? 30,
-        _old_pct: opts?.ratios?.old_pct ?? 20,
+        _new_pct: r.new_pct ?? 20,
+        _unseen_pct: r.unseen_pct ?? 30,
+        _popular_pct: r.popular_pct ?? 30,
+        _old_pct: r.old_pct ?? 20,
       });
       if (error) throw error;
       const ids: string[] = (data || []).map((r: any) => r.video_id);
@@ -99,7 +118,8 @@ export function useMainFeedQueue(opts?: {
       fetchingRef.current = false;
       setLoading(false);
     }
-  }, [enabled, user?.id, limit, opts?.ratios?.new_pct, opts?.ratios?.unseen_pct, opts?.ratios?.popular_pct, opts?.ratios?.old_pct]);
+  }, [enabled, user?.id, limit, remoteRatios, opts?.ratios?.new_pct, opts?.ratios?.unseen_pct, opts?.ratios?.popular_pct, opts?.ratios?.old_pct]);
+
 
   // Carga inicial (uma vez por sessão de usuário)
   useEffect(() => {

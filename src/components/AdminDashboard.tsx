@@ -40,6 +40,7 @@ import AdminApiEvents from './admin/AdminApiEvents';
 import AdminIngestInstagramLog from './admin/AdminIngestInstagramLog';
 import AdminIgCreators from './admin/AdminIgCreators';
 import AdminCommentAutoReplies from './admin/AdminCommentAutoReplies';
+import AdminMainFeedRatios from './admin/AdminMainFeedRatios';
 import { AdminGenres } from './admin/AdminGenres';
 import { AdminVIPUsers } from './admin/AdminVIPUsers';
 import { AdminWebhookLogs } from './admin/AdminWebhookLogs';
@@ -237,6 +238,8 @@ export const AdminDashboard = () => {
         return <AdminIgCreators />;
       case 'comment-autoreply':
         return <AdminCommentAutoReplies />;
+      case 'main-feed-ratios':
+        return <AdminMainFeedRatios />;
       case 'ads':
         return <AdminAds />;
       case 'marketplace-banners':

@@ -227,6 +227,8 @@ export const AdminDashboard = () => {
         return <AdminModelChatPanels />;
       case 'chat-bulk':
         return <AdminChatBulkManager />;
+      case 'api-events':
+        return <AdminApiEvents />;
       case 'comment-autoreply':
         return <AdminCommentAutoReplies />;
       case 'ads':

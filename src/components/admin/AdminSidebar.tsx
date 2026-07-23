@@ -133,6 +133,7 @@ const navigationGroups = [
     label: 'Sistema',
     items: [
       { id: 'settings', label: 'Configurações', icon: Settings },
+      { id: 'api-events', label: 'API & Webhooks', icon: Webhook },
       { id: 'documentation', label: 'Documentação', icon: BookOpen },
       { id: 'guia-sistema', label: 'Guia Completo (Manual)', icon: BookOpen, external: '/guia-do-sistema' },
     ]

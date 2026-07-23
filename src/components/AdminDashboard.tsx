@@ -229,6 +229,8 @@ export const AdminDashboard = () => {
         return <AdminChatBulkManager />;
       case 'api-events':
         return <AdminApiEvents />;
+      case 'ingest-instagram':
+        return <AdminIngestInstagramLog />;
       case 'comment-autoreply':
         return <AdminCommentAutoReplies />;
       case 'ads':

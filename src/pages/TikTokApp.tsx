@@ -198,6 +198,12 @@ export const TikTokApp = () => {
     getUserMemory
   } = useIntelligentFeed();
 
+  // 🧠 Feed principal — histórico individual + fila com cooldown 24h
+  // Não altera composição atual (promos/ads/snapshot) — apenas registra
+  // visualizações em `feed_history` e prepara a fila para uso futuro.
+  const { queueIds: mainQueueIds, recordView: recordFeedHistory, maybePrefetch: maybePrefetchQueue } = useMainFeedQueue();
+
+
   // 🎯 TRACKING DE ENGAJAMENTO (Pilar 1 e 2 - sem alterar layout)
   const { trackView: trackVideoEngagement, trackStrongInterest, trackSkip, updateWatchDuration } = useVideoTracking();
   const videoWatchStartRef = useRef<number>(0);

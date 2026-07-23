@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.ingest-instagram]
 verify_jwt = false
+
+[functions.ig-create-creator-account]
+verify_jwt = true

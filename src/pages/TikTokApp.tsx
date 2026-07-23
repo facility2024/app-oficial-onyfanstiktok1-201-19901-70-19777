@@ -2030,6 +2030,13 @@ export const TikTokApp = () => {
 
         setAllAvailableVideos(ordered as any);
         setVideos(firstBlock as any);
+        // 🆕 Marca vídeos "novos" já exibidos nesta sessão para não voltarem no scroll infinito
+        try {
+          const newIdsShown = (firstBlock as any[])
+            .filter(isPriorityNewItem)
+            .map((v: any) => String(v._originalId || v.id));
+          addShownNewIds(newIdsShown);
+        } catch {}
         setCurrentVideoIndex(0);
         setCurrentPage(1);
         setHasMoreVideos(true);

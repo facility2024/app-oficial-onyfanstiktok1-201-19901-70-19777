@@ -4784,6 +4784,7 @@ export type Database = {
           carousel_visible: boolean
           category: string
           created_at: string | null
+          creator_user_id: string | null
           custom_link: string | null
           display_order: number
           followers_count: number
@@ -4818,6 +4819,7 @@ export type Database = {
           carousel_visible?: boolean
           category?: string
           created_at?: string | null
+          creator_user_id?: string | null
           custom_link?: string | null
           display_order?: number
           followers_count?: number
@@ -4852,6 +4854,7 @@ export type Database = {
           carousel_visible?: boolean
           category?: string
           created_at?: string | null
+          creator_user_id?: string | null
           custom_link?: string | null
           display_order?: number
           followers_count?: number

@@ -2849,6 +2849,48 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_cursor: {
+        Row: {
+          current_position: number
+          last_update: string
+          queue: Json
+          user_id: string
+        }
+        Insert: {
+          current_position?: number
+          last_update?: string
+          queue?: Json
+          user_id: string
+        }
+        Update: {
+          current_position?: number
+          last_update?: string
+          queue?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feed_history: {
+        Row: {
+          shown_at: string
+          times_shown: number
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          shown_at?: string
+          times_shown?: number
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          shown_at?: string
+          times_shown?: number
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       feed_promotions: {
         Row: {
           avatar_url: string | null
@@ -9936,6 +9978,14 @@ export type Database = {
         Args: { p_action_type: string; p_user_id: string }
         Returns: Json
       }
+      get_fresh_videos_since: {
+        Args: { p_limit?: number; p_since: string; p_user_id: string }
+        Returns: {
+          created_at: string
+          owner_id: string
+          video_id: string
+        }[]
+      }
       get_live_online_counts: {
         Args: { p_config_id: string }
         Returns: {
@@ -9945,6 +9995,15 @@ export type Database = {
         }[]
       }
       get_live_views_48h: { Args: { p_config_id: string }; Returns: number }
+      get_main_feed_queue: {
+        Args: { p_size?: number; p_user_id: string }
+        Returns: {
+          bucket: string
+          created_at: string
+          owner_id: string
+          video_id: string
+        }[]
+      }
       get_payment_credentials: { Args: { p_provider: string }; Returns: Json }
       get_referrer_by_code: { Args: { p_code: string }; Returns: string }
       get_smart_ads: {

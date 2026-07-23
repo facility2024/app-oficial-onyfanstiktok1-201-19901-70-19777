@@ -36,6 +36,7 @@ import { AdminMarketplace } from './admin/AdminMarketplace';
 import { AdminLocalBusinesses } from './admin/AdminLocalBusinesses';
 import AdminModelChatPanels from './admin/AdminModelChatPanels';
 import AdminChatBulkManager from './admin/AdminChatBulkManager';
+import AdminApiEvents from './admin/AdminApiEvents';
 import AdminCommentAutoReplies from './admin/AdminCommentAutoReplies';
 import { AdminGenres } from './admin/AdminGenres';
 import { AdminVIPUsers } from './admin/AdminVIPUsers';
@@ -226,6 +227,8 @@ export const AdminDashboard = () => {
         return <AdminModelChatPanels />;
       case 'chat-bulk':
         return <AdminChatBulkManager />;
+      case 'api-events':
+        return <AdminApiEvents />;
       case 'comment-autoreply':
         return <AdminCommentAutoReplies />;
       case 'ads':

@@ -37,6 +37,7 @@ import { AdminLocalBusinesses } from './admin/AdminLocalBusinesses';
 import AdminModelChatPanels from './admin/AdminModelChatPanels';
 import AdminChatBulkManager from './admin/AdminChatBulkManager';
 import AdminApiEvents from './admin/AdminApiEvents';
+import AdminIngestInstagramLog from './admin/AdminIngestInstagramLog';
 import AdminCommentAutoReplies from './admin/AdminCommentAutoReplies';
 import { AdminGenres } from './admin/AdminGenres';
 import { AdminVIPUsers } from './admin/AdminVIPUsers';
@@ -229,6 +230,8 @@ export const AdminDashboard = () => {
         return <AdminChatBulkManager />;
       case 'api-events':
         return <AdminApiEvents />;
+      case 'ingest-instagram':
+        return <AdminIngestInstagramLog />;
       case 'comment-autoreply':
         return <AdminCommentAutoReplies />;
       case 'ads':

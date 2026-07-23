@@ -138,7 +138,32 @@ Deno.serve(async (req) => {
     }
 
     const skipped = incoming.length - toInsert.length
-    const result = { creator_id: modelId, username, inserted, skipped, total_received: incoming.length }
+
+    // Auto-cria conta de criadora (email sintético + senha padrão) se ainda não existir
+    let creator_account: { email: string; user_id: string } | null = null
+    try {
+      const { data: mRow } = await supabase.from('models').select('creator_user_id').eq('id', modelId).maybeSingle()
+      if (!mRow?.creator_user_id) {
+        const email = `ig_${username}@coconudi.app`
+        const { data: created } = await supabase.auth.admin.createUser({
+          email, password: '123456', email_confirm: true,
+          user_metadata: { source: 'ig_ingest', username, display_name: displayName },
+        })
+        let userId = created?.user?.id ?? null
+        if (!userId) {
+          const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 })
+          userId = list?.users?.find((u) => (u.email || '').toLowerCase() === email.toLowerCase())?.id ?? null
+        }
+        if (userId) {
+          await supabase.from('profiles').upsert({ id: userId, name: displayName, username, avatar_url: avatarUrl, bio }, { onConflict: 'id' })
+          await supabase.from('user_roles').upsert({ user_id: userId, role: 'creator' }, { onConflict: 'user_id,role' })
+          await supabase.from('models').update({ creator_user_id: userId }).eq('id', modelId)
+          creator_account = { email, user_id: userId }
+        }
+      }
+    } catch (_) { /* não bloqueia ingest se falhar */ }
+
+    const result = { creator_id: modelId, username, inserted, skipped, total_received: incoming.length, creator_account }
 
     // Log to api_events for admin visibility
     await supabase.from('api_events').insert({
@@ -148,6 +173,7 @@ Deno.serve(async (req) => {
       action: 'ingest',
       payload: result,
     })
+
 
     return new Response(JSON.stringify(result), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -233,6 +233,8 @@ export const AdminDashboard = () => {
         return <AdminApiEvents />;
       case 'ingest-instagram':
         return <AdminIngestInstagramLog />;
+      case 'ig-creators':
+        return <AdminIgCreators />;
       case 'comment-autoreply':
         return <AdminCommentAutoReplies />;
       case 'ads':

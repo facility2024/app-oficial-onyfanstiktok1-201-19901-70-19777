@@ -848,6 +848,16 @@ export const TikTokApp = () => {
         }
       }
 
+      // 🧠 FEED INTELIGENTE (v2): registra em feed_history (cooldown 24h)
+      if (watchedVideo && !isPromoVideo && isPersistedVideoId(watchedVideoId)) {
+        recordFeedHistory(watchedVideoId);
+        // prefetch da próxima fila quando restarem poucos itens
+        const remaining = mainQueueIds.length
+          ? mainQueueIds.length - (mainQueueIds.indexOf(watchedVideoId) + 1)
+          : 0;
+        maybePrefetchQueue(remaining);
+      }
+
       // 🎯 TRACKING: Registrar visualização no DB após 3s (via timer)
       if (currentUser?.id && watchedVideo && !isPromoVideo && isPersistedVideoId(watchedVideoId)) {
         lastTrackedVideoRef.current = watchedVideoId;

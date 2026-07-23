@@ -84,7 +84,8 @@ Deno.serve(async (req) => {
     if (existing) {
       modelId = existing.id
       const patch: Record<string, unknown> = {}
-      if (avatarUrl && !existing.avatar_url) patch.avatar_url = avatarUrl
+      const missingAvatar = !existing.avatar_url || existing.avatar_url === '' || String(existing.avatar_url).includes('default-avatar')
+      if (avatarUrl && missingAvatar) patch.avatar_url = avatarUrl
       if (bio && !existing.bio) patch.bio = bio
       if (Object.keys(patch).length) await supabase.from('models').update(patch).eq('id', modelId)
     } else {

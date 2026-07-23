@@ -82,11 +82,14 @@ export default function AdminIgCreators() {
   };
 
   const deleteAccount = async (r: Row) => {
-    const msg = `⚠️ EXCLUIR PERMANENTEMENTE "${r.name}"?\n\nIsso remove:\n• A modelo do app\n• ${r.video_count || 0} vídeo(s) e suas interações\n• A conta de login (se existir)\n\nEsta ação NÃO pode ser desfeita. Confirma?`;
-    if (!confirm(msg)) return;
-    if (!confirm(`Confirmação final: digite OK no próximo prompt.`)) return;
-    const t = prompt(`Digite EXCLUIR para confirmar a remoção de "${r.name}":`);
-    if ((t || "").trim().toUpperCase() !== "EXCLUIR") { toast.error("Cancelado"); return; }
+    const t = prompt(
+      `⚠️ EXCLUIR PERMANENTEMENTE "${r.name}"?\n\nIsso remove:\n• A modelo do app\n• ${r.video_count || 0} vídeo(s) e suas interações\n• A conta de login (se existir)\n\nDigite EXCLUIR para confirmar:`
+    );
+    if (t === null) return; // usuário cancelou
+    if (t.trim().toUpperCase() !== "EXCLUIR") {
+      toast.error('Digite exatamente "EXCLUIR" para confirmar');
+      return;
+    }
     setBusyId(r.id);
     try {
       await call({ model_id: r.id, delete: true });

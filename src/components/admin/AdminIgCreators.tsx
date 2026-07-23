@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Instagram, KeyRound, UserPlus, Copy, RefreshCw, Loader2 } from "lucide-react";
+import { Instagram, KeyRound, UserPlus, Copy, RefreshCw, Loader2, Trash2 } from "lucide-react";
 
 type Row = {
   id: string;
@@ -77,6 +77,21 @@ export default function AdminIgCreators() {
     try {
       await call({ model_id: r.id, reset_password: true });
       toast.success("Senha resetada para 123456");
+    } catch (e: any) { toast.error(e.message); }
+    setBusyId(null);
+  };
+
+  const deleteAccount = async (r: Row) => {
+    const msg = `⚠️ EXCLUIR PERMANENTEMENTE "${r.name}"?\n\nIsso remove:\n• A modelo do app\n• ${r.video_count || 0} vídeo(s) e suas interações\n• A conta de login (se existir)\n\nEsta ação NÃO pode ser desfeita. Confirma?`;
+    if (!confirm(msg)) return;
+    if (!confirm(`Confirmação final: digite OK no próximo prompt.`)) return;
+    const t = prompt(`Digite EXCLUIR para confirmar a remoção de "${r.name}":`);
+    if ((t || "").trim().toUpperCase() !== "EXCLUIR") { toast.error("Cancelado"); return; }
+    setBusyId(r.id);
+    try {
+      await call({ model_id: r.id, delete: true });
+      toast.success("Excluído permanentemente");
+      setRows((prev) => prev.filter((x) => x.id !== r.id));
     } catch (e: any) { toast.error(e.message); }
     setBusyId(null);
   };
@@ -193,6 +208,11 @@ export default function AdminIgCreators() {
                             <KeyRound className="w-3 h-3 mr-1" /> Resetar
                           </Button>
                         )}
+                        <Button size="sm" variant="destructive" onClick={() => deleteAccount(r)} disabled={busyId === r.id}
+                          className="bg-red-600 hover:bg-red-700 text-white">
+                          {busyId === r.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Trash2 className="w-3 h-3 mr-1" />}
+                          Excluir
+                        </Button>
                       </div>
                     </td>
                   </tr>

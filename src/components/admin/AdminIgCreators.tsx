@@ -81,6 +81,21 @@ export default function AdminIgCreators() {
     setBusyId(null);
   };
 
+  const deleteAccount = async (r: Row) => {
+    const msg = `⚠️ EXCLUIR PERMANENTEMENTE "${r.name}"?\n\nIsso remove:\n• A modelo do app\n• ${r.video_count || 0} vídeo(s) e suas interações\n• A conta de login (se existir)\n\nEsta ação NÃO pode ser desfeita. Confirma?`;
+    if (!confirm(msg)) return;
+    if (!confirm(`Confirmação final: digite OK no próximo prompt.`)) return;
+    const t = prompt(`Digite EXCLUIR para confirmar a remoção de "${r.name}":`);
+    if ((t || "").trim().toUpperCase() !== "EXCLUIR") { toast.error("Cancelado"); return; }
+    setBusyId(r.id);
+    try {
+      await call({ model_id: r.id, delete: true });
+      toast.success("Excluído permanentemente");
+      setRows((prev) => prev.filter((x) => x.id !== r.id));
+    } catch (e: any) { toast.error(e.message); }
+    setBusyId(null);
+  };
+
   const backfillAll = async () => {
     if (!confirm("Criar conta de criadora para TODOS os perfis do Instagram sem conta?")) return;
     setBulk(true);

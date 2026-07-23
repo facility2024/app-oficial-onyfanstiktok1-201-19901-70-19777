@@ -134,6 +134,7 @@ const navigationGroups = [
     label: 'Sistema',
     items: [
       { id: 'settings', label: 'Configurações', icon: Settings },
+      { id: 'main-feed-ratios', label: 'Feed Inteligente (Buckets)', icon: Settings },
       { id: 'api-events', label: 'API & Webhooks', icon: Webhook },
       { id: 'ingest-instagram', label: 'Ingest Instagram (Externo)', icon: Webhook },
       { id: 'ig-creators', label: 'Modelos do Instagram', icon: Webhook },

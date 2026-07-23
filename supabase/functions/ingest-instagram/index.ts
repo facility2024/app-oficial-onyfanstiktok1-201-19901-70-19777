@@ -69,10 +69,11 @@ Deno.serve(async (req) => {
       })
     }
     const displayName = String(c.display_name || c.instagram_username || username).slice(0, 100)
-    // Fallback: se não veio avatar do criador, usa o thumbnail do primeiro vídeo válido
+    // Fallback: se não veio avatar do criador, usa APENAS thumbnail (imagem) do primeiro vídeo.
+    // Nunca usa video_url (.mp4) para não afetar renderização de capa no feed.
     const firstThumb = (body.videos as any[])
-      .map((v) => v?.thumbnail_url || v?.video_url)
-      .find((u) => typeof u === 'string' && u.length > 0) || null
+      .map((v) => v?.thumbnail_url)
+      .find((u) => typeof u === 'string' && u.length > 0 && !/\.(mp4|mov|webm|m3u8)(\?|$)/i.test(u)) || null
     const avatarUrl = c.avatar_url || firstThumb
     const bio = c.bio || null
 

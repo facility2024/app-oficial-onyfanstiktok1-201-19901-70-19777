@@ -50,6 +50,7 @@ export default function AdminChatBulkManager() {
   const [panelSearch, setPanelSearch] = useState('');
   const [videoSearch, setVideoSearch] = useState('');
   const [videoFilter, setVideoFilter] = useState<'all' | 'on' | 'off' | 'panel'>('all');
+  const [groupByModel, setGroupByModel] = useState(true);
 
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkVideoMessage, setBulkVideoMessage] = useState('');

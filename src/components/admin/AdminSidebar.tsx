@@ -25,6 +25,7 @@ import {
   Mail,
   Coins,
   MessageSquare,
+  Webhook,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAnalytics } from '@/hooks/useAnalytics';

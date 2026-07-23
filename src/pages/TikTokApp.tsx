@@ -49,6 +49,7 @@ import coconudiHeaderLogo from '@/assets/coconudi-logo-new.png';
 import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
+import { useMainFeedQueue } from '@/hooks/useMainFeedQueue';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
 import { PaymentVerificationIndicator } from '@/components/tiktok/PaymentVerificationIndicator';
 import { PromoPopup } from '@/components/tiktok/PromoPopup';
@@ -196,6 +197,12 @@ export const TikTokApp = () => {
     markModelAsFavorite,
     getUserMemory
   } = useIntelligentFeed();
+
+  // 🧠 Feed principal — histórico individual + fila com cooldown 24h
+  // Não altera composição atual (promos/ads/snapshot) — apenas registra
+  // visualizações em `feed_history` e prepara a fila para uso futuro.
+  const { queueIds: mainQueueIds, recordView: recordFeedHistory, maybePrefetch: maybePrefetchQueue } = useMainFeedQueue();
+
 
   // 🎯 TRACKING DE ENGAJAMENTO (Pilar 1 e 2 - sem alterar layout)
   const { trackView: trackVideoEngagement, trackStrongInterest, trackSkip, updateWatchDuration } = useVideoTracking();
@@ -839,6 +846,16 @@ export const TikTokApp = () => {
         if (entityId && watchedVideoId) {
           markVideoAsWatched(watchedVideoId, entityId);
         }
+      }
+
+      // 🧠 FEED INTELIGENTE (v2): registra em feed_history (cooldown 24h)
+      if (watchedVideo && !isPromoVideo && isPersistedVideoId(watchedVideoId)) {
+        recordFeedHistory(watchedVideoId);
+        // prefetch da próxima fila quando restarem poucos itens
+        const remaining = mainQueueIds.length
+          ? mainQueueIds.length - (mainQueueIds.indexOf(watchedVideoId) + 1)
+          : 0;
+        maybePrefetchQueue(remaining);
       }
 
       // 🎯 TRACKING: Registrar visualização no DB após 3s (via timer)

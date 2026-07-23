@@ -208,6 +208,11 @@ export default function AdminIgCreators() {
                             <KeyRound className="w-3 h-3 mr-1" /> Resetar
                           </Button>
                         )}
+                        <Button size="sm" variant="destructive" onClick={() => deleteAccount(r)} disabled={busyId === r.id}
+                          className="bg-red-600 hover:bg-red-700 text-white">
+                          {busyId === r.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Trash2 className="w-3 h-3 mr-1" />}
+                          Excluir
+                        </Button>
                       </div>
                     </td>
                   </tr>

@@ -687,11 +687,8 @@ if (!isOpen) return null;
                 const shareUrl = `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/share-profile/${identifier}`;
 
                 if (navigator.share) {
-                  navigator.share({
-                    title: `@${user.username} no Coconudi`,
-                    text: `Confira o perfil de @${user.username} no Coconudi! 🔥`,
-                    url: shareUrl
-                  }).catch(() => {
+                  // ⚠️ Enviar SOMENTE url para o WhatsApp/Instagram renderizarem o preview OG
+                  navigator.share({ url: shareUrl }).catch(() => {
                     navigator.clipboard.writeText(shareUrl);
                     toast.success('Link copiado!', { description: shareUrl });
                   });

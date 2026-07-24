@@ -353,22 +353,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) */}
+        {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) — instância ÚNICA */}
         {showExternalOverlays && (
           <>
-            <div className="absolute top-3 left-3 z-40 pointer-events-none">
-              <span className="px-2 py-1 rounded-md bg-black/70 text-white text-[10px] font-bold tracking-wide">
-                Vídeos Novos
-              </span>
-            </div>
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
-              <span className="px-2 py-1 rounded-md bg-black/70 text-white text-[10px] font-semibold tracking-wide">
-                Patrocinado
-              </span>
-            </div>
+            <span className="absolute top-3 left-3 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+              Vídeos Novos
+            </span>
+            <span className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+              Patrocinado
+            </span>
             {!!videoTitle && (
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-40 max-w-[85%] pointer-events-none">
-                <p className="text-white text-sm font-semibold text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
+                <p className="text-white text-sm font-semibold text-center line-clamp-2">
                   {videoTitle}
                 </p>
               </div>

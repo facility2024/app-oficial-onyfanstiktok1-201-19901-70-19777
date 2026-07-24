@@ -110,7 +110,12 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const ctaText: string = String((video as any)?.button_text || '').trim();
     const ctaHref: string = String((video as any)?.redirect_link || '').trim();
     const ctaEnabled = (video as any)?.show_redirect_button !== false;
-    const showCta = ctaEnabled && !!ctaText && !!ctaHref;
+    // Renderiza overlays (badges/título/CTA) SOMENTE para vídeos vindos do painel externo (Instagram Ingest)
+    const uploadSource = String((video as any)?.upload_source || '').toLowerCase();
+    const videoCategory = String((video as any)?.category || '').toLowerCase();
+    const isExternalIngest = uploadSource === 'instagram_ingest' || videoCategory === 'instagram';
+    const showCta = isExternalIngest && ctaEnabled && !!ctaText && !!ctaHref;
+    const showExternalOverlays = isExternalIngest && (showCta || !!videoTitle);
 
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
@@ -345,7 +350,28 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Overlays de badges, título e CTA são renderizados exclusivamente pelo painel externo. */}
+        {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) */}
+        {showExternalOverlays && (
+          <>
+            <div className="absolute top-3 left-3 z-40 pointer-events-none">
+              <span className="px-2 py-1 rounded-md bg-black/70 text-white text-[10px] font-bold tracking-wide">
+                Vídeos Novos
+              </span>
+            </div>
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+              <span className="px-2 py-1 rounded-md bg-black/70 text-white text-[10px] font-semibold tracking-wide">
+                Patrocinado
+              </span>
+            </div>
+            {!!videoTitle && (
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-40 max-w-[85%] pointer-events-none">
+                <p className="text-white text-sm font-semibold text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
+                  {videoTitle}
+                </p>
+              </div>
+            )}
+          </>
+        )}
 
 
 
@@ -365,7 +391,20 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Overlays (badges, título e botão CTA) são renderizados pelo painel externo — evitado aqui para não duplicar. */}
+        {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
+        {showExternalOverlays && showCta && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 w-[85%] max-w-md pointer-events-auto">
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3 rounded-full font-bold text-black shadow-lg active:scale-95 transition-transform"
+              style={{ backgroundColor: ctaColor }}
+            >
+              {ctaText}
+            </a>
+          </div>
+        )}
 
 
 

@@ -678,27 +678,24 @@ if (!isOpen) return null;
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                // Gerar URL amigável usando username
-                const formattedName = (user.username || '')
+                // URL amigável via edge function share-profile (gera preview OG para redes sociais)
+                const identifier = user.id || (user.username || '')
                   .toLowerCase()
                   .replace(/\s+/g, '-')
                   .normalize('NFD')
                   .replace(/[\u0300-\u036f]/g, '');
-                const shareUrl = `${window.location.origin}/${formattedName}`;
-                
-                // Tentar usar Web Share API (mobile)
+                const shareUrl = `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/share-profile/${identifier}`;
+
                 if (navigator.share) {
                   navigator.share({
                     title: `@${user.username} no Coconudi`,
                     text: `Confira o perfil de @${user.username} no Coconudi! 🔥`,
                     url: shareUrl
                   }).catch(() => {
-                    // Fallback: copiar para clipboard
                     navigator.clipboard.writeText(shareUrl);
                     toast.success('Link copiado!', { description: shareUrl });
                   });
                 } else {
-                  // Desktop: copiar para clipboard
                   navigator.clipboard.writeText(shareUrl);
                   toast.success('Link copiado!', { description: shareUrl });
                 }

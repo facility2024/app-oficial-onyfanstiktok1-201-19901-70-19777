@@ -1,71 +1,65 @@
-import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Componentes globais (leves) — carregados de imediato
 import { OfflineHandler } from "@/components/OfflineHandler";
 import { UserLocationTracker } from "@/components/UserLocationTracker";
 import { SessionManager } from "@/components/SessionManager";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CartProvider } from "./contexts/CartContext";
-
-// Rotas críticas — eager (primeira tela)
 import SplashScreen from "./pages/SplashScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-
-// Demais páginas — lazy (code-splitting)
-const AdminDashboard = lazy(() => import("@/components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const CreatorApplication = lazy(() => import("./pages/CreatorApplication"));
-const CreatorStudio = lazy(() => import("./pages/CreatorStudio"));
-const ExplorePage = lazy(() => import("./pages/ExplorePage"));
-const FollowingPage = lazy(() => import("./pages/FollowingPage"));
-const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
-const LocalBusinessPage = lazy(() => import("./pages/LocalBusinessPage"));
-const LocalBusinessDetailsPage = lazy(() => import("./pages/LocalBusinessDetailsPage"));
-const BusinessFavoritesPage = lazy(() => import("./pages/BusinessFavoritesPage"));
-const CollectionsPage = lazy(() => import("./pages/CollectionsPage"));
-const SubscribePage = lazy(() => import("./pages/SubscribePage"));
-const PaymentConfirmation = lazy(() => import("./pages/PaymentConfirmation"));
-const VIPManagementPage = lazy(() => import("./pages/VIPManagementPage"));
-const MySubscriptionsPage = lazy(() => import("./pages/MySubscriptionsPage"));
-const AdvertisersPage = lazy(() => import("./pages/AdvertisersPage"));
-const FollowingCreatorsPage = lazy(() => import("./pages/FollowingCreatorsPage"));
-const ModelChat = lazy(() => import("./pages/ModelChat"));
-const ChatListPage = lazy(() => import("./pages/ChatListPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const VideoCallPage = lazy(() => import("./pages/VideoCallPage").then(m => ({ default: m.VideoCallPage })));
-const AtualizacoesPage = lazy(() => import("./pages/AtualizacoesPage"));
-const ExclusividadeLogin = lazy(() => import("./pages/ExclusividadeLogin"));
-const ExclusividadeConteudo = lazy(() => import("./pages/ExclusividadeConteudo"));
-const LojaPage = lazy(() => import("./pages/LojaPage"));
-const LojaProdutoPage = lazy(() => import("./pages/LojaProdutoPage"));
-const PostagemPage = lazy(() => import("./pages/PostagemPage"));
-const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
-const CheckoutTemplatePage = lazy(() => import("./pages/CheckoutTemplatePage"));
-const MyAccessPanel = lazy(() => import("./components/MyAccessPanel"));
-const ProductAccessPage = lazy(() => import("./pages/ProductAccessPage"));
-const ProductAccessCardPage = lazy(() => import("./pages/ProductAccessCardPage"));
-const CreateStorePage = lazy(() => import("./pages/CreateStorePage"));
-const ShopkeeperDashboard = lazy(() => import("./pages/ShopkeeperDashboard"));
-const StoreProfilePage = lazy(() => import("./pages/StoreProfilePage"));
-const MarketplaceStoresPage = lazy(() => import("./pages/MarketplaceStoresPage"));
-const StoreCartPage = lazy(() => import("./pages/StoreCartPage"));
-const AdsGarotasTopPage = lazy(() => import("./pages/AdsGarotasTopPage"));
-const GarotasTopVipPage = lazy(() => import("./pages/GarotasTopVipPage"));
-const IndicadorCadastro = lazy(() => import("./pages/IndicadorCadastro"));
-const IndicadorArea = lazy(() => import("./pages/IndicadorArea"));
-const InstagramProfilePage = lazy(() => import("./pages/InstagramProfilePage"));
-const InstagramModelFeed = lazy(() => import("./pages/InstagramModelFeed"));
-const BuyerAccess = lazy(() => import("./pages/BuyerAccess"));
-const AdminHowToUsePix = lazy(() => import("./pages/AdminHowToUsePix"));
-const GuiaDoSistema = lazy(() => import("./pages/GuiaDoSistema"));
+import { AdminDashboard } from "@/components/AdminDashboard";
+import UserProfile from "./pages/UserProfile";
+import CreatorApplication from "./pages/CreatorApplication";
+import CreatorStudio from "./pages/CreatorStudio";
+import ExplorePage from "./pages/ExplorePage";
+import FollowingPage from "./pages/FollowingPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import LocalBusinessPage from "./pages/LocalBusinessPage";
+import LocalBusinessDetailsPage from "./pages/LocalBusinessDetailsPage";
+import BusinessFavoritesPage from "./pages/BusinessFavoritesPage";
+import CollectionsPage from "./pages/CollectionsPage";
+import SubscribePage from "./pages/SubscribePage";
+import PaymentConfirmation from "./pages/PaymentConfirmation";
+import VIPManagementPage from "./pages/VIPManagementPage";
+import MySubscriptionsPage from "./pages/MySubscriptionsPage";
+import AdvertisersPage from "./pages/AdvertisersPage";
+import FollowingCreatorsPage from "./pages/FollowingCreatorsPage";
+import ModelChat from "./pages/ModelChat";
+import ChatListPage from "./pages/ChatListPage";
+import ProfilePage from "./pages/ProfilePage";
+import { VideoCallPage } from "./pages/VideoCallPage";
+import AtualizacoesPage from "./pages/AtualizacoesPage";
+import ExclusividadeLogin from "./pages/ExclusividadeLogin";
+import ExclusividadeConteudo from "./pages/ExclusividadeConteudo";
+import LojaPage from "./pages/LojaPage";
+import LojaProdutoPage from "./pages/LojaProdutoPage";
+import PostagemPage from "./pages/PostagemPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutTemplatePage from "./pages/CheckoutTemplatePage";
+import MyAccessPanel from "./components/MyAccessPanel";
+import ProductAccessPage from "./pages/ProductAccessPage";
+import ProductAccessCardPage from "./pages/ProductAccessCardPage";
+import CreateStorePage from "./pages/CreateStorePage";
+import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
+import StoreProfilePage from "./pages/StoreProfilePage";
+import MarketplaceStoresPage from "./pages/MarketplaceStoresPage";
+import StoreCartPage from "./pages/StoreCartPage";
+import AdsGarotasTopPage from "./pages/AdsGarotasTopPage";
+import GarotasTopVipPage from "./pages/GarotasTopVipPage";
+import IndicadorCadastro from "./pages/IndicadorCadastro";
+import IndicadorArea from "./pages/IndicadorArea";
+import InstagramProfilePage from "./pages/InstagramProfilePage";
+import InstagramModelFeed from "./pages/InstagramModelFeed";
+import BuyerAccess from "./pages/BuyerAccess";
+import AdminHowToUsePix from "./pages/AdminHowToUsePix";
+import GuiaDoSistema from "./pages/GuiaDoSistema";
 
 // Optimize QueryClient for mobile performance
 const queryClient = new QueryClient({
@@ -79,12 +73,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const RouteFallback = () => (
-  <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-    <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-  </div>
-);
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <CartProvider>
@@ -95,7 +83,6 @@ const App = () => (
       <UserLocationTracker />
       <SessionManager />
       <BrowserRouter>
-        <Suspense fallback={<RouteFallback />}>
           <Routes>
             {/* Splash Screen como HOME */}
             <Route path="/" element={<SplashScreen />} />
@@ -254,7 +241,6 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
     </CartProvider>

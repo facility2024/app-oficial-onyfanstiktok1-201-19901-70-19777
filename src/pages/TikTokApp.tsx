@@ -2950,7 +2950,8 @@ export const TikTokApp = () => {
   };
   const shareVideo = async () => {
     if (!currentVideo) return;
-    const shareUrl = `https://share.coconudi.com/v/${currentVideo.id}`;
+    // Usa edge function direta até share.coconudi.com (Cloudflare Worker) estar ativo
+    const shareUrl = `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/share-video/${currentVideo.id}`;
     // ⚠️ Enviar SOMENTE url — WhatsApp/Instagram só renderizam o preview OG
     // quando não há campo `text` acompanhando o link.
     const shareData = { url: shareUrl };

@@ -119,6 +119,9 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const isExternalIngest = uploadSource === 'instagram_ingest' || videoCategory === 'instagram';
     const showCta = isExternalIngest && ctaEnabled && !!ctaText && !!ctaHref;
     const showExternalOverlays = isExternalIngest && (showCta || !!videoTitle);
+    // Vídeo gerenciado pelo painel admin externo — nesse caso o próprio painel
+    // injeta o badge "Patrocinado"; ocultamos o badge padrão para evitar duplicidade.
+    const isExternallyManaged = Boolean(ctaText || ctaHref || videoTitle);
 
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');

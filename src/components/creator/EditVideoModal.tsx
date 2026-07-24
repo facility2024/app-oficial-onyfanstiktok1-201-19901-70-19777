@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,8 +32,20 @@ export const EditVideoModal = ({ video, open, onClose }: EditVideoModalProps) =>
     title: video.title,
     description: video.description,
     thumbnail_url: video.thumbnail_url,
-    visibility: video.visibility,
+    visibility: (video.visibility ?? 'public') as 'public' | 'private',
   });
+
+  // Ressincroniza o formulário sempre que trocar o vídeo em edição
+  // (o modal fica montado no VideoManagementTable e o useState não
+  // reinicializa sozinho quando a prop `video` muda).
+  useEffect(() => {
+    setFormData({
+      title: video.title,
+      description: video.description,
+      thumbnail_url: video.thumbnail_url,
+      visibility: (video.visibility ?? 'public') as 'public' | 'private',
+    });
+  }, [video.id, video.title, video.description, video.thumbnail_url, video.visibility]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

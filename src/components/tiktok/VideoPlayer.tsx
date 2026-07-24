@@ -110,6 +110,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const ctaText: string = String((video as any)?.button_text || '').trim();
     const ctaHref: string = String((video as any)?.redirect_link || '').trim();
+    const ctaIconRaw: string = String((video as any)?.button_icon || '').trim();
+    const ctaIcon: string = /^https?:\/\//i.test(ctaIconRaw) ? ctaIconRaw : '';
     const ctaEnabled = (video as any)?.show_redirect_button !== false;
     // Renderiza overlays (badges/título/CTA) SOMENTE para vídeos vindos do painel externo (Instagram Ingest)
     const uploadSource = String((video as any)?.upload_source || '').toLowerCase();
@@ -394,15 +396,19 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
         {showExternalOverlays && showCta && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 w-[85%] max-w-md pointer-events-auto">
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 max-w-[min(85vw,340px)] pointer-events-auto">
             <a
               href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full text-center border-2 border-white/40 shadow-2xl font-extrabold rounded-full px-6 py-3 active:scale-95 transition-transform"
+              className="inline-flex items-center justify-center gap-2 border-2 border-white/40 shadow-2xl font-extrabold rounded-full px-4 py-2 sm:px-6 sm:py-3 active:scale-95 transition-transform"
               style={{ backgroundColor: ctaColor, color: '#000', opacity: 1 }}
             >
-              {ctaText}
+              {ctaIcon ? (
+                <img src={ctaIcon} alt="" className="h-7 sm:h-9 w-auto object-contain" />
+              ) : (
+                <span>{ctaText}</span>
+              )}
             </a>
           </div>
         )}
@@ -431,6 +437,7 @@ export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
     prev.volume === next.volume &&
     pv.button_color === nv.button_color &&
     pv.button_text === nv.button_text &&
+    pv.button_icon === nv.button_icon &&
     pv.redirect_link === nv.redirect_link &&
     pv.show_redirect_button === nv.show_redirect_button &&
     pv.title === nv.title

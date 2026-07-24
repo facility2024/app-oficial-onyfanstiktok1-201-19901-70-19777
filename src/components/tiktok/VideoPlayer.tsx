@@ -350,7 +350,28 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Overlays de badges, título e CTA são renderizados exclusivamente pelo painel externo. */}
+        {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) */}
+        {showExternalOverlays && (
+          <>
+            <div className="absolute top-3 left-3 z-40 pointer-events-none">
+              <span className="px-2 py-1 rounded-md bg-black/70 text-white text-[10px] font-bold tracking-wide">
+                Vídeos Novos
+              </span>
+            </div>
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+              <span className="px-2 py-1 rounded-md bg-black/70 text-white text-[10px] font-semibold tracking-wide">
+                Patrocinado
+              </span>
+            </div>
+            {!!videoTitle && (
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-40 max-w-[85%] pointer-events-none">
+                <p className="text-white text-sm font-semibold text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
+                  {videoTitle}
+                </p>
+              </div>
+            )}
+          </>
+        )}
 
 
 

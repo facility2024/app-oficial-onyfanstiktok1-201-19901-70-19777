@@ -399,13 +399,14 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-full font-bold text-black shadow-lg active:scale-95 transition-transform"
-              style={{ backgroundColor: ctaColor }}
+              className="block w-full text-center border-2 border-white/40 shadow-2xl font-extrabold rounded-full px-6 py-3 active:scale-95 transition-transform"
+              style={{ backgroundColor: ctaColor, color: '#000', opacity: 1 }}
             >
               {ctaText}
             </a>
           </div>
         )}
+
 
 
 

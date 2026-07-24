@@ -391,7 +391,20 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Overlays (badges, título e botão CTA) são renderizados pelo painel externo — evitado aqui para não duplicar. */}
+        {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
+        {showExternalOverlays && showCta && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 w-[85%] max-w-md pointer-events-auto">
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3 rounded-full font-bold text-black shadow-lg active:scale-95 transition-transform"
+              style={{ backgroundColor: ctaColor }}
+            >
+              {ctaText}
+            </a>
+          </div>
+        )}
 
 
 

@@ -397,7 +397,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
         {showExternalOverlays && showCta && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 max-w-[min(85vw,340px)] pointer-events-auto">
+          <div className="absolute bottom-44 sm:bottom-48 left-1/2 -translate-x-1/2 z-40 max-w-[min(85vw,340px)] pointer-events-auto">
             <a
               href={ctaHref}
               target="_blank"

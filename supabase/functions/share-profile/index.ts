@@ -99,6 +99,14 @@ Deno.serve(async (req) => {
 
     const title = `${name} no CocoNudi 🔥`;
     const desc = bio;
+    // Normaliza host pra minúsculas (WhatsApp/OG scrapers falham com hostname em CAIXA ALTA)
+    let image = avatar;
+    try {
+      const u = new URL(avatar);
+      u.hostname = u.hostname.toLowerCase();
+      image = u.toString();
+    } catch { /* mantém original */ }
+    const imageType = /\.png($|\?)/i.test(image) ? "image/png" : "image/jpeg";
 
     const html = `<!doctype html>
 <html lang="pt-BR"><head>
@@ -106,19 +114,21 @@ Deno.serve(async (req) => {
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(desc)}">
 <link rel="canonical" href="${target}">
-<meta property="og:type" content="profile">
+<meta property="og:type" content="website">
 <meta property="og:site_name" content="CocoNudi">
 <meta property="og:title" content="${escapeHtml(title)}">
 <meta property="og:description" content="${escapeHtml(desc)}">
-<meta property="og:image" content="${escapeHtml(avatar)}">
-<meta property="og:image:secure_url" content="${escapeHtml(avatar)}">
+<meta property="og:image" content="${escapeHtml(image)}">
+<meta property="og:image:secure_url" content="${escapeHtml(image)}">
+<meta property="og:image:type" content="${imageType}">
 <meta property="og:image:width" content="1080">
 <meta property="og:image:height" content="1080">
+<meta property="og:image:alt" content="${escapeHtml(title)}">
 <meta property="og:url" content="${target}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escapeHtml(title)}">
 <meta name="twitter:description" content="${escapeHtml(desc)}">
-<meta name="twitter:image" content="${escapeHtml(avatar)}">
+<meta name="twitter:image" content="${escapeHtml(image)}">
 <meta http-equiv="refresh" content="0; url=${target}">
 </head><body><a href="${target}">Abrir no CocoNudi</a></body></html>`;
 

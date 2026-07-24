@@ -359,14 +359,16 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) — instância ÚNICA */}
         {showExternalOverlays && (
           <>
-            <span className="absolute top-3 left-3 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
-              Vídeos Novos
-            </span>
-            {!isExternallyManaged && (
-              <span className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
-                Patrocinado
+            <div className="absolute top-3 left-3 z-40 pointer-events-none flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+                Vídeos Novos
               </span>
-            )}
+              {!isExternallyManaged && (
+                <span className="px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+                  Patrocinado
+                </span>
+              )}
+            </div>
             {!!videoTitle && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
                 <p className="text-white text-sm font-semibold text-center line-clamp-2">

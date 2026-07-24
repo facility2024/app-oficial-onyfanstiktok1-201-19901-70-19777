@@ -98,15 +98,16 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     // Sanitizador de cor para o botão CTA — nunca deixa transparente
     const sanitizeColor = (raw: unknown): string => {
       const v = String(raw ?? '').trim();
-      if (!v) return '#FFFFFF';
+      if (!v) return '#ec4899';
       if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)) return v;
       if (/^[0-9a-f]{6}$/i.test(v)) return `#${v}`;
       if (/^[0-9a-f]{3}$/i.test(v)) return `#${v}`;
       if (/^rgba?\(/i.test(v)) return v;
       if (/^[a-z]+$/i.test(v)) return v; // nome CSS
-      return '#FFFFFF';
+      return '#ec4899';
     };
     const ctaColor = sanitizeColor((video as any)?.button_color);
+
     const ctaText: string = String((video as any)?.button_text || '').trim();
     const ctaHref: string = String((video as any)?.redirect_link || '').trim();
     const ctaEnabled = (video as any)?.show_redirect_button !== false;
@@ -398,13 +399,14 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-full font-bold text-black shadow-lg active:scale-95 transition-transform"
-              style={{ backgroundColor: ctaColor }}
+              className="block w-full text-center border-2 border-white/40 shadow-2xl font-extrabold rounded-full px-6 py-3 active:scale-95 transition-transform"
+              style={{ backgroundColor: ctaColor, color: '#000', opacity: 1 }}
             >
               {ctaText}
             </a>
           </div>
         )}
+
 
 
 
@@ -420,10 +422,18 @@ VideoPlayer.displayName = 'VideoPlayer';
 
 // Memoized version to prevent re-renders when parent state changes
 export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
+  const pv: any = prev.video;
+  const nv: any = next.video;
   return (
-    prev.video.id === next.video.id &&
+    pv.id === nv.id &&
     prev.isPlaying === next.isPlaying &&
     prev.isMuted === next.isMuted &&
-    prev.volume === next.volume
+    prev.volume === next.volume &&
+    pv.button_color === nv.button_color &&
+    pv.button_text === nv.button_text &&
+    pv.redirect_link === nv.redirect_link &&
+    pv.show_redirect_button === nv.show_redirect_button &&
+    pv.title === nv.title
   );
 });
+

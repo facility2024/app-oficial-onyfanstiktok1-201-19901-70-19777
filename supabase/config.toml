@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.ig-create-creator-account]
 verify_jwt = true
+
+[functions.share-video]
+verify_jwt = false

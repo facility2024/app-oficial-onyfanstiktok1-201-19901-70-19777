@@ -110,6 +110,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const ctaText: string = String((video as any)?.button_text || '').trim();
     const ctaHref: string = String((video as any)?.redirect_link || '').trim();
+    const ctaIconRaw: string = String((video as any)?.button_icon || '').trim();
+    const ctaIcon: string = /^https?:\/\//i.test(ctaIconRaw) ? ctaIconRaw : '';
     const ctaEnabled = (video as any)?.show_redirect_button !== false;
     // Renderiza overlays (badges/título/CTA) SOMENTE para vídeos vindos do painel externo (Instagram Ingest)
     const uploadSource = String((video as any)?.upload_source || '').toLowerCase();

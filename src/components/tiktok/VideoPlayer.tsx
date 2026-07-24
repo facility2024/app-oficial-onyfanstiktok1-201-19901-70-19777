@@ -334,8 +334,43 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
+        {/* Faixa de título no topo (vídeo normal e carrossel) */}
+        {isInView && (video as any)?.title && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none max-w-[80%]">
+            <div className="px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-white/10 shadow-lg">
+              <span className="text-white text-xs font-semibold text-center line-clamp-2">
+                {(video as any).title}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* CTA baseado nos campos sincronizados de videos */}
+        {isInView &&
+          (video as any)?.show_redirect_button === true &&
+          (video as any)?.button_text &&
+          (video as any)?.redirect_link && (
+            <div
+              className="absolute left-1/2 -translate-x-1/2 z-40"
+              style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)', pointerEvents: 'auto' }}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open((video as any).redirect_link, '_blank', 'noopener');
+                }}
+                className="px-6 py-3 rounded-full font-bold text-black shadow-xl border border-white/20 hover:scale-105 transition-transform animate-pulse"
+                style={{ backgroundColor: (video as any).button_color || '#ffffff' }}
+              >
+                {(video as any).button_text}
+              </button>
+            </div>
+          )}
+
         {/* VideoProgressBar - oculto no desktop */}
         {isInView && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
+
       </div>
     );
   }

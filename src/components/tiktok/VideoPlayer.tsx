@@ -359,7 +359,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) — instância ÚNICA */}
         {showExternalOverlays && (
           <>
-            <div className="absolute top-3 left-3 z-40 pointer-events-none flex items-center gap-2">
+            <div className="absolute top-1 left-3 z-50 pointer-events-none flex items-center gap-2">
               <span className="px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
                 Vídeos Novos
               </span>

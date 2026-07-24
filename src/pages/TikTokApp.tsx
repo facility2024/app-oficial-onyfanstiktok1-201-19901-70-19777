@@ -48,6 +48,7 @@ import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import coconudiHeaderLogo from '@/assets/coconudi-logo-new.png';
 import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
+import { useVideosRealtimeSync } from '@/hooks/useVideosRealtimeSync';
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { useMainFeedQueue } from '@/hooks/useMainFeedQueue';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';
@@ -215,6 +216,9 @@ export const TikTokApp = () => {
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
   const [videos, setVideos] = useState<Video[]>([]);
+  // 🔴 Sincronização em tempo real com o painel externo (mesma API/Supabase).
+  // Aplica UPDATE/DELETE cirurgicamente sem recarregar o feed.
+  useVideosRealtimeSync(setVideos as any);
   const promoViewTrackedRef = useRef<Set<string>>(new Set());
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);

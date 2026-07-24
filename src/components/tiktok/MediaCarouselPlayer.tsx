@@ -160,7 +160,14 @@ export const MediaCarouselPlayer = ({
       )}
 
       {safeButtons.length > 0 && (
-        <div className="absolute bottom-6 left-4 right-20 z-30 flex flex-wrap gap-2">
+        <div
+          className="absolute z-30 flex flex-wrap gap-2"
+          style={{
+            left: 'max(1rem, env(safe-area-inset-left))',
+            right: 'max(5rem, env(safe-area-inset-right))',
+            bottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+          }}
+        >
           {safeButtons.map((btn, i) => (
             <button
               key={i}

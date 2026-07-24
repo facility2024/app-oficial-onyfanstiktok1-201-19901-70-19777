@@ -3733,16 +3733,8 @@ export const TikTokApp = () => {
                      </div>
                    )}
 
-                   {/* Badge "Patrocinado" alinhado à ESQUERDA (mobile) - abaixo da top bar */}
-                   {index === currentVideoIndex && isPromoVideo && (
-                     <div className="absolute top-16 left-3 z-30">
-                       <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                         Patrocinado
-                       </span>
-                     </div>
-                   )}
+                   {/* Badges "Vídeos Novos" e "Patrocinado" agora renderizados uma única vez em VideoPlayer */}
 
-                   {/* NOVO badge é renderizado dentro de BottomInfo (evita duplicação) */}
 
 
                    {/* Promo overlay: description + CTA + banner */}

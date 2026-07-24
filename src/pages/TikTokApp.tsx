@@ -48,6 +48,7 @@ import coconudiLogo from '@/assets/coconudi-logo-new.png';
 import coconudiHeaderLogo from '@/assets/coconudi-logo-new.png';
 import headerBackground from '@/assets/header-background.png';
 // Feed inteligente reativado
+import { useVideosRealtimeSync } from '@/hooks/useVideosRealtimeSync';
 import { useIntelligentFeed } from '@/hooks/useIntelligentFeed';
 import { useMainFeedQueue } from '@/hooks/useMainFeedQueue';
 import { IntelligentFeedIndicator } from '@/components/tiktok/IntelligentFeedIndicator';

@@ -28,6 +28,7 @@ export const useVideosRealtimeSync = (
       'is_premium',
       'button_text',
       'button_color',
+      'button_icon',
       'redirect_link',
       'show_redirect_button',
       'profile_link_url',

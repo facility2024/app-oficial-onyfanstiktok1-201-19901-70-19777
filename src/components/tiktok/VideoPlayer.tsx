@@ -404,18 +404,22 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
         {showExternalOverlays && showCta && (
-          <div className="absolute bottom-44 sm:bottom-48 left-1/2 -translate-x-1/2 z-40 max-w-[min(85vw,340px)] pointer-events-auto">
+          <div className="absolute bottom-24 sm:bottom-28 left-0 right-0 z-40 px-3 sm:px-4 pointer-events-auto">
             <a
               href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 border-2 border-white/40 shadow-2xl font-extrabold rounded-full px-4 py-2 sm:px-6 sm:py-3 active:scale-95 transition-transform"
-              style={{ backgroundColor: ctaColor, color: '#ffffff', opacity: 1 }}
+              className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-lg shadow-lg active:scale-[0.98] transition-transform"
+              style={
+                (video as any)?.button_color
+                  ? { backgroundColor: ctaColor, color: '#ffffff' }
+                  : { background: 'linear-gradient(to right, #ec4899, #ef4444)', color: '#ffffff' }
+              }
             >
               {ctaIcon ? (
-                <img src={ctaIcon} alt="" className="h-7 sm:h-9 w-auto object-contain" style={{ background: 'transparent' }} />
+                <img src={ctaIcon} alt="" className="h-7 sm:h-8 w-auto object-contain" style={{ background: 'transparent' }} />
               ) : (
-                <span>{ctaText}</span>
+                <span className="text-base sm:text-lg">{ctaText}</span>
               )}
             </a>
           </div>

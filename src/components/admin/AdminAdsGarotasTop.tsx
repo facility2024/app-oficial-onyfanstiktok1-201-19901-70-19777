@@ -94,10 +94,13 @@ export const AdminAdsGarotasTop = () => {
   };
 
   const applyTemplateToSelectedCategory = async (clear = false) => {
-    if (filter === "all") return toast.error("Selecione uma categoria antes de aplicar o template");
     if (!clear && !categoryTemplateId) return toast.error("Escolha um template PIX");
     const action = clear ? "Limpar" : "Aplicar";
-    if (!confirm(`${action} template PIX em todos os cards de ${CAT_LABEL[filter]}?`)) return;
+    const targetCategories: Categoria[] = filter === "all"
+      ? ["garotas_top", "latinas", "novidades"]
+      : [filter];
+    const targetLabel = filter === "all" ? "todas as categorias" : CAT_LABEL[filter];
+    if (!confirm(`${action} template PIX em todos os cards de ${targetLabel}?`)) return;
 
     setApplyingCategoryTemplate(true);
     try {
@@ -119,22 +122,32 @@ export const AdminAdsGarotasTop = () => {
       const payload = clear
         ? { checkout_template_id: null }
         : { checkout_template_id: categoryTemplateId, valor: templateAmount };
-      const { error, count } = await (supabase as any)
-        .from(TABLE_BY_CAT[filter])
-        .update(payload, { count: "exact" })
-        .not("id", "is", null);
-      if (error) throw error;
+      const results = await Promise.all(
+        targetCategories.map((category) =>
+          (supabase as any)
+            .from(TABLE_BY_CAT[category])
+            .update(payload, { count: "exact" })
+            .not("id", "is", null),
+        ),
+      );
+      const failed = results.find((result) => result.error);
+      if (failed?.error) throw failed.error;
+      const updatedCount = results.reduce((sum, result) => sum + (result.count ?? 0), 0);
 
       if (!clear && templateAmount !== null) {
         const prices = await fetchCheckoutPrices();
-        await saveCheckoutPrices({ ...prices, [filter]: templateAmount });
+        const updatedPrices = targetCategories.reduce(
+          (next, category) => ({ ...next, [category]: templateAmount as number }),
+          prices,
+        );
+        await saveCheckoutPrices(updatedPrices);
       }
 
       await Promise.all([fetchCards(), fetchTemplates()]);
       toast.success(
         clear
-          ? `Template removido de ${count ?? 0} card(s)`
-          : `${count ?? 0} card(s) atualizados para R$ ${templateAmount!.toFixed(2).replace(".", ",")}`,
+          ? `Template removido de ${updatedCount} card(s)`
+          : `${updatedCount} card(s) atualizados para R$ ${templateAmount!.toFixed(2).replace(".", ",")}`,
       );
     } catch (error: any) {
       toast.error("Erro ao sincronizar valor: " + (error?.message || "tente novamente"));
@@ -427,7 +440,7 @@ export const AdminAdsGarotasTop = () => {
             <Button
               type="button"
               onClick={() => applyTemplateToSelectedCategory(false)}
-              disabled={applyingCategoryTemplate || filter === "all" || !categoryTemplateId}
+              disabled={applyingCategoryTemplate || !categoryTemplateId}
               className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold"
             >
               {applyingCategoryTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
@@ -437,14 +450,14 @@ export const AdminAdsGarotasTop = () => {
               type="button"
               variant="outline"
               onClick={() => applyTemplateToSelectedCategory(true)}
-              disabled={applyingCategoryTemplate || filter === "all"}
+              disabled={applyingCategoryTemplate}
               className="border-gray-600 text-white hover:bg-gray-800"
             >
               Limpar de todos
             </Button>
           </div>
           {filter === "all" && (
-            <p className="text-xs text-amber-300 mt-2">Escolha Garotas Top, Latinas ou Novidades no seletor acima.</p>
+            <p className="text-xs text-emerald-300 mt-2">O template será aplicado em Garotas Top, Latinas e Novidades.</p>
           )}
         </CardContent>
       </Card>

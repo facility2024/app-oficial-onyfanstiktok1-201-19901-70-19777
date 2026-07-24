@@ -20,6 +20,7 @@ interface Props {
   storageFlag?: string;
   redirectTo?: string;
   templateSlug?: string;
+  templateData?: Record<string, any> | null;
   /** Overrides visuais (usado em prévia de rascunho de template) */
   visualOverrides?: Partial<Record<
     | "timer_label" | "security_text" | "security_banner_url" | "logo_url"
@@ -43,6 +44,7 @@ export default function PixCheckoutModal({
   storageFlag: storageFlagProp,
   redirectTo: redirectToProp,
   templateSlug,
+  templateData,
   visualOverrides,
   sideMediaOverride,
 }: Props) {
@@ -51,7 +53,8 @@ export default function PixCheckoutModal({
   useEffect(() => {
     // Sempre limpa o template anterior ao trocar de slug/abrir modal
     // (evita cruzar dados de uma oferta antiga com a nova).
-    setTemplate(null);
+    setTemplate(templateData ?? null);
+    if (templateData) return;
     if (!open || !templateSlug) return;
     let cancelled = false;
     (async () => {
@@ -65,7 +68,7 @@ export default function PixCheckoutModal({
       if (data) setTemplate(data);
     })();
     return () => { cancelled = true; };
-  }, [open, templateSlug]);
+  }, [open, templateSlug, templateData]);
 
   // Cada checkout usa somente seu template; não existe mais página/configuração global.
   const pick = (k: string): string => {

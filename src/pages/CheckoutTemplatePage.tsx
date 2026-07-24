@@ -9,16 +9,18 @@ const CheckoutTemplatePage = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
   const [open, setOpen] = useState(true);
+  const [template, setTemplate] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     (async () => {
       if (!slug) return;
       const { data } = await (supabase as any)
         .from("checkout_templates")
-        .select("id")
+        .select("*")
         .eq("slug", slug)
         .eq("ativo", true)
         .maybeSingle();
+      setTemplate(data || null);
       setStatus(data ? "ok" : "missing");
     })();
   }, [slug]);
@@ -54,6 +56,7 @@ const CheckoutTemplatePage = () => {
           else navigate("/app");
         }}
         templateSlug={slug}
+        templateData={template}
       />
     </div>
   );

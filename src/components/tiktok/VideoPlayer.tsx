@@ -85,6 +85,33 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const lockedPrivate = isPrivateVideo && !hasIndividualSubscription;
     const locked = lockedPrivate;
 
+    // Flags para overlays de topo/CTA (única fonte de verdade)
+    const isPromo = String((video as any)?.id || '').startsWith('promo-');
+    const isNewVideo = Boolean(
+      (video as any)?.isHighlighted ||
+      (video as any)?.isNewModel ||
+      (video as any)?.source === 'scheduled_post' ||
+      (video as any)?.source === 'main_post'
+    );
+    const videoTitle: string = String((video as any)?.title || '').trim();
+
+    // Sanitizador de cor para o botão CTA — nunca deixa transparente
+    const sanitizeColor = (raw: unknown): string => {
+      const v = String(raw ?? '').trim();
+      if (!v) return '#FFFFFF';
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)) return v;
+      if (/^[0-9a-f]{6}$/i.test(v)) return `#${v}`;
+      if (/^[0-9a-f]{3}$/i.test(v)) return `#${v}`;
+      if (/^rgba?\(/i.test(v)) return v;
+      if (/^[a-z]+$/i.test(v)) return v; // nome CSS
+      return '#FFFFFF';
+    };
+    const ctaColor = sanitizeColor((video as any)?.button_color);
+    const ctaText: string = String((video as any)?.button_text || '').trim();
+    const ctaHref: string = String((video as any)?.redirect_link || '').trim();
+    const ctaEnabled = (video as any)?.show_redirect_button !== false;
+    const showCta = ctaEnabled && !!ctaText && !!ctaHref;
+
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
       return dismissedOffers.includes(offerId);

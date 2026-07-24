@@ -119,6 +119,9 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const isExternalIngest = uploadSource === 'instagram_ingest' || videoCategory === 'instagram';
     const showCta = isExternalIngest && ctaEnabled && !!ctaText && !!ctaHref;
     const showExternalOverlays = isExternalIngest && (showCta || !!videoTitle);
+    // Vídeo gerenciado pelo painel admin externo — nesse caso o próprio painel
+    // injeta o badge "Patrocinado"; ocultamos o badge padrão para evitar duplicidade.
+    const isExternallyManaged = Boolean(ctaText || ctaHref || videoTitle);
 
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
@@ -359,9 +362,11 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             <span className="absolute top-3 left-3 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
               Vídeos Novos
             </span>
-            <span className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
-              Patrocinado
-            </span>
+            {!isExternallyManaged && (
+              <span className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+                Patrocinado
+              </span>
+            )}
             {!!videoTitle && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
                 <p className="text-white text-sm font-semibold text-center line-clamp-2">

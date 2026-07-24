@@ -334,9 +334,29 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Faixa de título no topo (vídeo normal e carrossel) */}
+        {/* Badges do topo: "Vídeos Novos" à esquerda + "Patrocinado" centralizado */}
+        {isInView && (
+          <>
+            <div className="absolute top-3 left-3 z-40 pointer-events-none">
+              <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-white/15 shadow-lg">
+                <span className="text-white text-[10px] font-bold tracking-wide uppercase">
+                  Vídeos Novos
+                </span>
+              </div>
+            </div>
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+              <div className="px-3 py-1 rounded-full bg-amber-500/90 backdrop-blur-sm border border-amber-300/50 shadow-lg">
+                <span className="text-black text-[10px] font-extrabold tracking-widest uppercase">
+                  Patrocinado
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Faixa de título logo abaixo dos badges */}
         {isInView && (video as any)?.title && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none max-w-[80%]">
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-40 pointer-events-none max-w-[80%]">
             <div className="px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-white/10 shadow-lg">
               <span className="text-white text-xs font-semibold text-center line-clamp-2">
                 {(video as any).title}
@@ -349,24 +369,37 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         {isInView &&
           (video as any)?.show_redirect_button === true &&
           (video as any)?.button_text &&
-          (video as any)?.redirect_link && (
-            <div
-              className="absolute left-1/2 -translate-x-1/2 z-40"
-              style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)', pointerEvents: 'auto' }}
-            >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open((video as any).redirect_link, '_blank', 'noopener');
-                }}
-                className="px-6 py-3 rounded-full font-bold text-black shadow-xl border border-white/20 hover:scale-105 transition-transform animate-pulse"
-                style={{ backgroundColor: (video as any).button_color || '#ffffff' }}
+          (video as any)?.redirect_link && (() => {
+            const rawColor = String((video as any)?.button_color || '').trim();
+            // Aceita '#RRGGBB', 'RRGGBB', 'rgb(...)', nomes CSS. Fallback branco sólido.
+            const bg = rawColor
+              ? (/^[0-9a-fA-F]{6}$/.test(rawColor) ? `#${rawColor}` : rawColor)
+              : '#ffffff';
+            return (
+              <div
+                className="absolute left-1/2 -translate-x-1/2 z-40"
+                style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)', pointerEvents: 'auto' }}
               >
-                {(video as any).button_text}
-              </button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open((video as any).redirect_link, '_blank', 'noopener');
+                  }}
+                  className="px-6 py-3 rounded-full font-extrabold text-black shadow-2xl border-2 border-white/40 hover:scale-105 transition-transform animate-pulse"
+                  style={{
+                    backgroundColor: bg,
+                    background: bg,
+                    color: '#000000',
+                    textShadow: '0 1px 0 rgba(255,255,255,0.4)',
+                  }}
+                >
+                  {(video as any).button_text}
+                </button>
+              </div>
+            );
+          })()}
+
 
         {/* VideoProgressBar - oculto no desktop */}
         {isInView && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}

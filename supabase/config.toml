@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.share-video]
 verify_jwt = false
+
+[functions.share-profile]
+verify_jwt = false

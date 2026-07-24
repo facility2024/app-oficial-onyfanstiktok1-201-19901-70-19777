@@ -21,12 +21,20 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 1600,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
-          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) return 'react-vendor';
+          // Mantém React + libs relacionadas juntas para evitar problemas de ordem de inicialização
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-router') ||
+            id.includes('node_modules/scheduler/') ||
+            id.includes('node_modules/react-is/') ||
+            id.includes('use-sync-external-store')
+          ) return 'react-vendor';
           if (id.includes('@supabase')) return 'supabase';
           if (id.includes('@tanstack')) return 'tanstack';
           if (id.includes('framer-motion')) return 'framer';
@@ -34,11 +42,9 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('three') || id.includes('@react-three')) return 'three';
           if (id.includes('@radix-ui')) return 'radix';
           if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('date-fns')) return 'date-fns';
-          if (id.includes('zod') || id.includes('react-hook-form')) return 'forms';
-          return 'vendor';
         },
       },
     },
   },
+
 }));

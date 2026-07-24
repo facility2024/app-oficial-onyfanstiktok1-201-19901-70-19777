@@ -2950,7 +2950,7 @@ export const TikTokApp = () => {
   };
   const shareVideo = async () => {
     if (!currentVideo) return;
-    const shareUrl = `${window.location.origin}/app?video=${currentVideo.id}`;
+    const shareUrl = `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/share-video/${currentVideo.id}`;
     const shareData = {
       title: currentVideo.title || 'COCONUDI',
       text: currentVideo.description || 'Confira este vídeo no COCONUDI',

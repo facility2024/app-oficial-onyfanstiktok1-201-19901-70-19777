@@ -85,6 +85,33 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const lockedPrivate = isPrivateVideo && !hasIndividualSubscription;
     const locked = lockedPrivate;
 
+    // Flags para overlays de topo/CTA (única fonte de verdade)
+    const isPromo = String((video as any)?.id || '').startsWith('promo-');
+    const isNewVideo = Boolean(
+      (video as any)?.isHighlighted ||
+      (video as any)?.isNewModel ||
+      (video as any)?.source === 'scheduled_post' ||
+      (video as any)?.source === 'main_post'
+    );
+    const videoTitle: string = String((video as any)?.title || '').trim();
+
+    // Sanitizador de cor para o botão CTA — nunca deixa transparente
+    const sanitizeColor = (raw: unknown): string => {
+      const v = String(raw ?? '').trim();
+      if (!v) return '#FFFFFF';
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)) return v;
+      if (/^[0-9a-f]{6}$/i.test(v)) return `#${v}`;
+      if (/^[0-9a-f]{3}$/i.test(v)) return `#${v}`;
+      if (/^rgba?\(/i.test(v)) return v;
+      if (/^[a-z]+$/i.test(v)) return v; // nome CSS
+      return '#FFFFFF';
+    };
+    const ctaColor = sanitizeColor((video as any)?.button_color);
+    const ctaText: string = String((video as any)?.button_text || '').trim();
+    const ctaHref: string = String((video as any)?.redirect_link || '').trim();
+    const ctaEnabled = (video as any)?.show_redirect_button !== false;
+    const showCta = ctaEnabled && !!ctaText && !!ctaHref;
+
     const checkOfferDismissed = (offerId: string) => {
       const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
       return dismissedOffers.includes(offerId);
@@ -309,12 +336,56 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Badge discreto para vídeo privado — não bloqueia o vídeo */}
         {lockedPrivate && (
-          <div className="absolute top-3 left-3 z-30 pointer-events-none flex items-center gap-1.5 bg-black/55 backdrop-blur-sm border border-amber-400/40 rounded-full pl-2 pr-3 py-1 shadow-lg">
+          <div className="absolute top-3 right-3 z-30 pointer-events-none flex items-center gap-1.5 bg-black/55 backdrop-blur-sm border border-amber-400/40 rounded-full pl-2 pr-3 py-1 shadow-lg">
             <Crown className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />
             <div className="flex flex-col leading-tight">
               <span className="text-amber-300 text-[10px] font-bold tracking-wide">PRIVADO</span>
               <span className="text-white/80 text-[9px]">Visite meu perfil</span>
             </div>
+          </div>
+        )}
+
+        {/* Badge "Vídeos Novos" — topo-esquerda (única fonte) */}
+        {isNewVideo && (
+          <div className="absolute top-3 left-3 z-40 pointer-events-none">
+            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg">
+              <span>✨</span>
+              <span>Vídeos Novos</span>
+            </span>
+          </div>
+        )}
+
+        {/* Badge "Patrocinado" — topo-centro (única fonte) */}
+        {isPromo && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+            <span className="bg-yellow-400 text-black px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg">
+              Patrocinado
+            </span>
+          </div>
+        )}
+
+        {/* Título do vídeo — abaixo dos badges, centralizado */}
+        {videoTitle && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-40 pointer-events-none max-w-[80%]">
+            <div className="bg-black/60 text-white text-xs font-semibold px-3 py-1 rounded-full text-center truncate shadow-lg">
+              {videoTitle}
+            </div>
+          </div>
+        )}
+
+        {/* Botão CTA — rodapé, sólido (sem transparência) */}
+        {showCta && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 w-[85%] max-w-sm">
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="block w-full text-center py-3 rounded-xl border-2 border-white/40 shadow-2xl font-extrabold text-sm tracking-wide"
+              style={{ backgroundColor: ctaColor, background: ctaColor, color: '#000', opacity: 1 }}
+            >
+              {ctaText}
+            </a>
           </div>
         )}
 

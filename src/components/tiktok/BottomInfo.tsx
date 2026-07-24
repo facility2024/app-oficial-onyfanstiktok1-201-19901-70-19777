@@ -30,12 +30,8 @@ export const BottomInfo = ({ video, isNew = false, isPlaying = true, isPrivate =
   return (
     <>
     <div className="absolute bottom-2 left-0 right-20 pb-1 px-4">
-      {isNew && (
-        <div className="mb-2 inline-flex bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full shadow-lg animate-pulse font-bold text-sm items-center gap-1.5">
-          <span className="text-base">✨</span>
-          <span>NOVO</span>
-        </div>
-      )}
+      {/* Badge "Vídeos Novos" agora é renderizado uma única vez em VideoPlayer */}
+
 
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden shrink-0">

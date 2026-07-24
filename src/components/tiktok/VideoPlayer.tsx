@@ -403,7 +403,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 border-2 border-white/40 shadow-2xl font-extrabold rounded-full px-4 py-2 sm:px-6 sm:py-3 active:scale-95 transition-transform"
-              style={{ backgroundColor: ctaColor, color: '#000', opacity: 1 }}
+              style={{ backgroundColor: ctaColor, color: '#ffffff', opacity: 1 }}
             >
               {ctaIcon ? (
                 <img src={ctaIcon} alt="" className="h-7 sm:h-9 w-auto object-contain" />

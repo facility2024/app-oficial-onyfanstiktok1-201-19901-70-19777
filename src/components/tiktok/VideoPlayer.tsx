@@ -437,6 +437,7 @@ export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
     prev.volume === next.volume &&
     pv.button_color === nv.button_color &&
     pv.button_text === nv.button_text &&
+    pv.button_icon === nv.button_icon &&
     pv.redirect_link === nv.redirect_link &&
     pv.show_redirect_button === nv.show_redirect_button &&
     pv.title === nv.title

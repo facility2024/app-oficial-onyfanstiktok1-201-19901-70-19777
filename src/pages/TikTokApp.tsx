@@ -4018,26 +4018,11 @@ export const TikTokApp = () => {
             <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] max-h-[80vh]">
               <VideoPlayer ref={videoRef} video={currentVideo} isPlaying={isPlaying} isMuted={isMuted} volume={volume} onNext={nextVideo} onPrevious={prevVideo} onDoubleClick={toggleLike} onTogglePlay={() => setIsPlaying(!isPlaying)} />
 
-              {/* Desktop: Logo + NOVO + Patrocinado na MESMA LINHA */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
-                {/* Badge NOVO à esquerda */}
-                {isVideoNew(currentVideo) && (
-                  <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg animate-pulse flex items-center gap-1">
-                    <span className="text-xs">✨</span>
-                    <span>NOVO</span>
-                  </span>
-                )}
-
-                {/* Logo centralizada */}
+              {/* Desktop: apenas logo centralizada; badges renderizados em VideoPlayer */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 pointer-events-none">
                 <img src={coconudiWatermark} alt="COCONUDI" className="w-7 h-7 object-contain opacity-60 drop-shadow-lg" />
-
-                {/* Badge Patrocinado à direita */}
-                {currentVideo?.id.startsWith('promo-') && (
-                  <span className="bg-pink-500/80 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                    Patrocinado
-                  </span>
-                )}
               </div>
+
 
               {/* Desktop Footer - Avatar e Nome da modelo */}
               <div className="absolute bottom-4 left-4 right-4 z-20">

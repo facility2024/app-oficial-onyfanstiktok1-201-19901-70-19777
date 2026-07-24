@@ -2951,11 +2951,9 @@ export const TikTokApp = () => {
   const shareVideo = async () => {
     if (!currentVideo) return;
     const shareUrl = `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/share-video/${currentVideo.id}`;
-    const shareData = {
-      title: currentVideo.title || 'COCONUDI',
-      text: currentVideo.description || 'Confira este vídeo no COCONUDI',
-      url: shareUrl,
-    };
+    // ⚠️ Enviar SOMENTE url — WhatsApp/Instagram só renderizam o preview OG
+    // quando não há campo `text` acompanhando o link.
+    const shareData = { url: shareUrl };
 
     // 🔥 CRÍTICO: chamar navigator.share SÍNCRONO no gesto do usuário (Safari iOS exige)
     let shared = false;

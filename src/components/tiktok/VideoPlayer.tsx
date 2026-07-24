@@ -422,10 +422,18 @@ VideoPlayer.displayName = 'VideoPlayer';
 
 // Memoized version to prevent re-renders when parent state changes
 export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
+  const pv: any = prev.video;
+  const nv: any = next.video;
   return (
-    prev.video.id === next.video.id &&
+    pv.id === nv.id &&
     prev.isPlaying === next.isPlaying &&
     prev.isMuted === next.isMuted &&
-    prev.volume === next.volume
+    prev.volume === next.volume &&
+    pv.button_color === nv.button_color &&
+    pv.button_text === nv.button_text &&
+    pv.redirect_link === nv.redirect_link &&
+    pv.show_redirect_button === nv.show_redirect_button &&
+    pv.title === nv.title
   );
 });
+

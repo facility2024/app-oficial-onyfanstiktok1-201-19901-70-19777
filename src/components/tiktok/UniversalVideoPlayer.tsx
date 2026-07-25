@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Play, RefreshCw } from 'lucide-react';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
+import { isAudioUnlocked, subscribeAudioUnlock, unlockAudio } from '@/utils/audioUnlock';
 
 interface UniversalVideoPlayerProps {
   src: string;
@@ -53,7 +54,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const autoRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
-    const userGestureUnlockedRef = useRef(false);
+    // Desbloqueio de áudio agora é GLOBAL (persiste ao trocar de vídeo no feed)
+    const [audioUnlocked, setAudioUnlocked] = useState(() => isAudioUnlocked());
+    const audioUnlockedRef = useRef(audioUnlocked);
+    audioUnlockedRef.current = audioUnlocked;
+
+    useEffect(() => subscribeAudioUnlock(() => setAudioUnlocked(true)), []);
 
     // Detectar tipo de dispositivo
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -63,7 +69,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const bunnyEmbedUrl = toBunnyStreamEmbedUrl(src, {
       autoplay: isPlaying || autoPlayOnReady,
-      muted: isMuted || isMobile,
+      muted: isMuted || (isMobile && !audioUnlocked),
       loop: true,
       preload: isPlaying || autoPlayOnReady,
       responsive: true,
@@ -89,7 +95,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       
       // Respeitar a preferência do usuário para mute.
       // No mobile, autoplay inicial precisa ficar mutado até uma ação real do usuário.
-      const shouldMute = isMuted || (isMobile && !userGestureUnlockedRef.current);
+      const shouldMute = isMuted || (isMobile && !audioUnlockedRef.current);
       video.muted = shouldMute;
       if (shouldMute) {
         video.setAttribute('muted', 'true');
@@ -151,8 +157,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       try {
         pauseOtherVideos();
         
-        // iOS/Android: autoplay inicial sempre mutado; só desmuta após gesto real.
-        if (!isMuted && (!isMobile || userGestureUnlockedRef.current)) {
+        // iOS/Android: autoplay inicial mutado; desmuta assim que houve gesto global.
+        if (!isMuted && (!isMobile || audioUnlockedRef.current)) {
           video.muted = false;
         } else {
           video.muted = true;
@@ -194,6 +200,21 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         }
 
         if (isAutoplayBlocked) {
+          // Antes de exigir clique, tenta de novo MUTADO (política mobile).
+          // Assim o vídeo nunca fica preso na tela de carregando/play.
+          if (!video.muted) {
+            video.muted = true;
+            try {
+              await video.play();
+              setNeedsUserInteraction(false);
+              setUserStarted(true);
+              setHasError(false);
+              retryCountRef.current = 0;
+              if (onPlay) onPlay();
+              playLockRef.current = false;
+              return true;
+            } catch {}
+          }
           setNeedsUserInteraction(true);
           setHasError(false); // Não é erro de mídia
           playLockRef.current = false;
@@ -256,7 +277,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted, bunnyEmbedUrl]);
+      // IMPORTANTE: só recarrega quando o SRC muda de verdade.
+      // Antes `setupVideo`/`isMuted`/`userStarted` estavam nas deps, o que forçava
+      // um novo video.load() a cada play ou toque no mute — causando o bug de
+      // "carregando infinito" em alguns vídeos.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [playbackSrc, bunnyEmbedUrl]);
 
     // Controlar reprodução
     useEffect(() => {
@@ -274,14 +300,19 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
     }, [isPlaying, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady, bunnyEmbedUrl]);
 
-    // Controlar mute e volume
+    // Controlar mute e volume (respeitando o desbloqueio global de áudio no mobile)
     useEffect(() => {
       if (bunnyEmbedUrl) return;
-      if (internalRef && 'current' in internalRef && internalRef.current) {
-        internalRef.current.muted = isMuted;
-        internalRef.current.volume = volume;
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      if (!video) return;
+      const effectiveMuted = hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked));
+      video.muted = effectiveMuted;
+      video.volume = volume;
+      // Ao liberar o áudio (primeiro gesto), garante que o vídeo atual continue tocando
+      if (!effectiveMuted && video.paused && (isPlaying || autoPlayOnReady)) {
+        video.play().catch(() => {});
       }
-    }, [isMuted, volume, internalRef, bunnyEmbedUrl]);
+    }, [isMuted, volume, internalRef, bunnyEmbedUrl, audioUnlocked, isMobile, hasAudioOverlay, isPlaying, autoPlayOnReady]);
 
     // Event handlers
     const handleLoadedData = useCallback(() => {
@@ -294,18 +325,22 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = e.currentTarget;
       const isBunnyVideo = video.src?.includes('b-cdn.net') || video.src?.includes('bunnycdn');
       
-      // Auto-retry for Bunny videos (likely still processing)
+      // Auto-retry para vídeos da CDN (falha de rede/segmento no mobile).
+      // Backoff curto (1.2s, 2.4s, ...) e re-tenta o play — antes ficava até 25s
+      // preso no spinner de carregando.
       if (isBunnyVideo && retryCountRef.current < maxRetries) {
         retryCountRef.current++;
-        const delay = retryCountRef.current * 5000;
-        setIsBuffering(true);
+        const delay = Math.min(retryCountRef.current * 1200, 4000);
         setIsBuffering(true);
         setHasError(false);
-        
+
         if (autoRetryTimerRef.current) clearTimeout(autoRetryTimerRef.current);
         autoRetryTimerRef.current = setTimeout(() => {
-          if (internalRef && 'current' in internalRef && internalRef.current) {
-            internalRef.current.load();
+          const el = internalRef && 'current' in internalRef ? internalRef.current : null;
+          if (!el) return;
+          try { el.load(); } catch {}
+          if (isPlaying || autoPlayOnReady) {
+            el.play().catch(() => {});
           }
         }, delay);
         return;
@@ -314,7 +349,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setHasError(true);
       setIsBuffering(false);
       if (onError) onError(e);
-    }, [onError, internalRef, maxRetries]);
+    }, [onError, internalRef, maxRetries, isPlaying, autoPlayOnReady]);
 
     const handleWaiting = useCallback(() => {
       setIsBuffering(true);
@@ -334,7 +369,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
-      userGestureUnlockedRef.current = true;
+      unlockAudio();
       const nativeEvt: any = (event as any).nativeEvent;
       const shouldBlock = needsUserInteraction && nativeEvt?.cancelable;
       if (shouldBlock) {
@@ -434,7 +469,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           style={{ backgroundColor: '#000', ...style }}
           autoPlay={false}
           loop={true}
-          muted={hasAudioOverlay ? true : (isMuted || (isMobile && !userGestureUnlockedRef.current))}
+          muted={hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked))}
           playsInline={true}
           preload="auto"
           controls={false}
@@ -443,6 +478,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           onError={handleError}
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
+          onPlaying={handleCanPlay}
+          onLoadedMetadata={handleCanPlay}
           onLoadStart={handleLoadStart}
           
         />

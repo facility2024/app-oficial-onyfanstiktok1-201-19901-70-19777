@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Smartphone, LogOut, User, CheckCheck } from 'lucide-react';
+import { Bell, Smartphone, LogOut, User, CheckCheck, Eye } from 'lucide-react';
+import { SecurityDetailsDialog } from './SecurityDetailsDialog';
+import type { AdminNotification } from '@/hooks/useAdminNotifications';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';

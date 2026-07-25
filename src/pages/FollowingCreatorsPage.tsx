@@ -68,7 +68,7 @@ const FollowingCreatorsPage = () => {
       const transformedCreators: Creator[] = approvedCreators.map(c => ({
         id: c.id,
         name: c.name || 'Criador',
-        email: c.email || '',
+        email: '',
         avatar_url: c.avatar_url || DEFAULT_AVATAR,
         bio: '',
         followers_count: 0

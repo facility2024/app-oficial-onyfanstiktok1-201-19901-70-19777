@@ -349,7 +349,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       setHasError(true);
       setIsBuffering(false);
       if (onError) onError(e);
-    }, [onError, internalRef, maxRetries]);
+    }, [onError, internalRef, maxRetries, isPlaying, autoPlayOnReady]);
 
     const handleWaiting = useCallback(() => {
       setIsBuffering(true);

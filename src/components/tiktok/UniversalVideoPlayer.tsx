@@ -200,6 +200,21 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         }
 
         if (isAutoplayBlocked) {
+          // Antes de exigir clique, tenta de novo MUTADO (política mobile).
+          // Assim o vídeo nunca fica preso na tela de carregando/play.
+          if (!video.muted) {
+            video.muted = true;
+            try {
+              await video.play();
+              setNeedsUserInteraction(false);
+              setUserStarted(true);
+              setHasError(false);
+              retryCountRef.current = 0;
+              if (onPlay) onPlay();
+              playLockRef.current = false;
+              return true;
+            } catch {}
+          }
           setNeedsUserInteraction(true);
           setHasError(false); // Não é erro de mídia
           playLockRef.current = false;

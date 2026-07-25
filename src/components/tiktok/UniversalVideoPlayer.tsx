@@ -54,7 +54,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const autoRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const playLockRef = useRef(false);
     const abortRetryCountRef = useRef(0);
-    const userGestureUnlockedRef = useRef(false);
+    // Desbloqueio de áudio agora é GLOBAL (persiste ao trocar de vídeo no feed)
+    const [audioUnlocked, setAudioUnlocked] = useState(() => isAudioUnlocked());
+    const audioUnlockedRef = useRef(audioUnlocked);
+    audioUnlockedRef.current = audioUnlocked;
+
+    useEffect(() => subscribeAudioUnlock(() => setAudioUnlocked(true)), []);
 
     // Detectar tipo de dispositivo
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);

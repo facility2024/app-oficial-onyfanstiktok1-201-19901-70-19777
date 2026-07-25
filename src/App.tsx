@@ -84,6 +84,7 @@ const App = () => (
       <UserLocationTracker />
       <SessionManager />
       <BrowserRouter>
+          <AdminGlobalAlerts />
           <Routes>
             {/* Splash Screen como HOME */}
             <Route path="/" element={<SplashScreen />} />

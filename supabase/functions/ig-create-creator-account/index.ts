@@ -49,11 +49,12 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({})) as { model_id?: string; reset_password?: boolean; all_ig?: boolean; delete?: boolean }
 
-    // DELETE flow: remove modelo, vídeos e conta auth vinculada
+    // DELETE flow: remove modelo, vídeos, conta auth vinculada E o registro em ig_models
+    // (senão a próxima ingestão do Instagram re-cria a modelo automaticamente).
     if (body.delete && body.model_id) {
       const modelId = body.model_id
       const { data: model } = await supabase.from('models')
-        .select('id, creator_user_id').eq('id', modelId).maybeSingle()
+        .select('id, username, creator_user_id').eq('id', modelId).maybeSingle()
       if (!model) {
         return new Response(JSON.stringify({ error: 'model_not_found' }), {
           status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -72,6 +73,27 @@ Deno.serve(async (req) => {
       }
       await supabase.from('model_followers').delete().eq('model_id', modelId)
       await supabase.from('model_chat_panels').delete().eq('model_id', modelId)
+
+      // Encontrar e apagar registros em ig_models que apontam para este modelo,
+      // seja pelo linked_model_id no metadata, seja pelo ig_username (username = "ig_<slug>").
+      try {
+        const igUsername = (model.username || '').replace(/^ig_/, '')
+        const { data: igByMeta } = await supabase
+          .from('ig_models')
+          .select('id')
+          .filter('metadata->>linked_model_id', 'eq', modelId)
+        const { data: igByUser } = igUsername
+          ? await supabase.from('ig_models').select('id').eq('ig_username', igUsername)
+          : { data: [] as any[] }
+        const igIds = Array.from(new Set([...(igByMeta ?? []), ...(igByUser ?? [])].map((r: any) => r.id)))
+        if (igIds.length) {
+          await supabase.from('ig_import_items').delete().in('ig_model_id', igIds)
+          await supabase.from('ig_models').delete().in('id', igIds)
+        }
+      } catch (e) {
+        console.warn('[delete] ig_models cleanup falhou:', String(e))
+      }
+
       await supabase.from('models').delete().eq('id', modelId)
 
       if (model.creator_user_id) {

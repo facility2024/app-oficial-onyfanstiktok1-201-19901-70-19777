@@ -110,8 +110,8 @@ export default function FollowingPage() {
         console.log('🎯 Creator IDs:', creatorIds);
         
         const { data: creatorsData } = await supabase
-          .from('profiles')
-          .select('id, name, email, avatar_url')
+          .from('public_profiles')
+          .select('id, name, username, avatar_url')
           .in('id', creatorIds);
 
         if (creatorsData) {

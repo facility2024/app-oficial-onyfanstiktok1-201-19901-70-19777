@@ -253,7 +253,7 @@ export default function CreatorApplication() {
       const code = refCode || localStorage.getItem('pending_referral_code');
       if (code) {
         const { data: ref } = await (supabase as any)
-          .from('profiles').select('id').ilike('referral_code', code).maybeSingle();
+          .from('public_profiles').select('id').ilike('referral_code', code).maybeSingle();
         if (ref) referrerId = ref.id;
       }
 

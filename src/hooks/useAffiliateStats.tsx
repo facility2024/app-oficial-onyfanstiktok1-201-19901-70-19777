@@ -120,12 +120,12 @@ export const useAffiliateStats = () => {
         for (const wallet of topWallets) {
           // Buscar perfil (campos: id, name, email)
           const { data: profileRaw } = await supabase
-            .from('profiles')
-            .select('id, name, email')
+            .from('public_profiles')
+            .select('id, name, username')
             .eq('id', wallet.user_id)
             .maybeSingle();
 
-          const profile = profileRaw as { id: string; name: string | null; email: string | null } | null;
+          const profile = profileRaw as { id: string; name: string | null; username: string | null } | null;
           
           // Buscar referral_code da referral associada
           const userReferral = referrals.find(r => r.referrer_id === wallet.user_id);
@@ -136,7 +136,7 @@ export const useAffiliateStats = () => {
           topAffiliatesData.push({
             user_id: wallet.user_id,
             name: profile?.name || null,
-            email: profile?.email || null,
+            email: null,
             referral_code: userReferral?.referral_code || null,
             total_referrals: userReferrals.length,
             completed_referrals: userReferrals.filter(r => r.status === 'completed').length,
@@ -159,12 +159,12 @@ export const useAffiliateStats = () => {
       
       for (const ref of recentReferralsData) {
         const { data: referrerProfileRaw } = await supabase
-          .from('profiles')
-          .select('id, name, email')
+          .from('public_profiles')
+          .select('id, name, username')
           .eq('id', ref.referrer_id)
           .maybeSingle();
 
-        const referrerProfile = referrerProfileRaw as { id: string; name: string | null; email: string | null } | null;
+        const referrerProfile = referrerProfileRaw as { id: string; name: string | null; username: string | null } | null;
 
         recentReferrals.push({
           id: ref.id,

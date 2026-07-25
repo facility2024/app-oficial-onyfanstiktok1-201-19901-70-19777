@@ -78,7 +78,7 @@ const ExplorePage = () => {
 
       const [profilesRes, modelsRes, likesRes, commentsRes] = await Promise.all([
         creatorIds.length
-          ? supabase.from('profiles').select('id, name, email, avatar_url').in('id', creatorIds)
+          ? (supabase as any).from('public_profiles').select('id, name, username, avatar_url').in('id', creatorIds)
           : Promise.resolve({ data: [] as any[] }),
         modelIds.length
           ? supabase.from('models').select('id, name, username, avatar_url').in('id', modelIds)

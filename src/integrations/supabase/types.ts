@@ -747,13 +747,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "analytics_events_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "analytics_events_model_id_fkey"
             columns: ["model_id"]
             isOneToOne: false
@@ -1751,13 +1744,6 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cocoflix_content_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -4239,13 +4225,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "marketplace_orders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       marketplace_products: {
@@ -4360,13 +4339,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "marketplace_reviews_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       marketplace_stores: {
@@ -4424,13 +4396,6 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "marketplace_stores_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7086,6 +7051,57 @@ export type Database = {
           region?: string | null
           session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          first_name: string | null
+          followers_count: number | null
+          id: string
+          is_referrer_only: boolean | null
+          live_active: boolean | null
+          live_url: string | null
+          name: string | null
+          referral_code: string | null
+          username: string | null
+          video_call_active: boolean | null
+          video_call_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          followers_count?: number | null
+          id: string
+          is_referrer_only?: boolean | null
+          live_active?: boolean | null
+          live_url?: string | null
+          name?: string | null
+          referral_code?: string | null
+          username?: string | null
+          video_call_active?: boolean | null
+          video_call_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          followers_count?: number | null
+          id?: string
+          is_referrer_only?: boolean | null
+          live_active?: boolean | null
+          live_url?: string | null
+          name?: string | null
+          referral_code?: string | null
+          username?: string | null
+          video_call_active?: boolean | null
+          video_call_url?: string | null
         }
         Relationships: []
       }
@@ -9862,57 +9878,6 @@ export type Database = {
           total_views: number | null
           username: string | null
           videos_count: number | null
-        }
-        Relationships: []
-      }
-      public_profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
-          first_name: string | null
-          followers_count: number | null
-          id: string | null
-          is_referrer_only: boolean | null
-          live_active: boolean | null
-          live_url: string | null
-          name: string | null
-          referral_code: string | null
-          username: string | null
-          video_call_active: boolean | null
-          video_call_url: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          first_name?: string | null
-          followers_count?: number | null
-          id?: string | null
-          is_referrer_only?: boolean | null
-          live_active?: boolean | null
-          live_url?: string | null
-          name?: string | null
-          referral_code?: string | null
-          username?: string | null
-          video_call_active?: boolean | null
-          video_call_url?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          first_name?: string | null
-          followers_count?: number | null
-          id?: string | null
-          is_referrer_only?: boolean | null
-          live_active?: boolean | null
-          live_url?: string | null
-          name?: string | null
-          referral_code?: string | null
-          username?: string | null
-          video_call_active?: boolean | null
-          video_call_url?: string | null
         }
         Relationships: []
       }

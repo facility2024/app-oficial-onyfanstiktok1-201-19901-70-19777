@@ -1383,7 +1383,7 @@ export const TikTokApp = () => {
         const {
           data: creatorsProfiles,
           error: creatorsError
-        } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
+        } = await (supabase as any).from('public_profiles').select('id, name, username, avatar_url, bio').in('id', creatorIds);
         if (creatorsError) {
           console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
         }
@@ -2386,8 +2386,8 @@ export const TikTokApp = () => {
       const userIds = [...new Set((commentsData || []).map(c => c.user_id))];
       const {
         data: profilesData
-      } = await supabase.from('profiles').select('id, name, email').in('id', userIds);
-      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+      } = await (supabase as any).from('public_profiles').select('id, name, username').in('id', userIds);
+      const profilesMap = new Map(((profilesData || []) as any[]).map((p: any) => [p.id, p]));
 
       // Transform the data to match the Comment interface
       const transformedComments = (commentsData || []).map((comment: any) => {
@@ -3130,7 +3130,7 @@ export const TikTokApp = () => {
         const {
           data: creatorProfile,
           error: profileError
-        } = await (supabase as any).from('profiles').select('*').eq('id', modelId).single();
+        } = await (supabase as any).from('public_profiles').select('*').eq('id', modelId).single();
         if (profileError || !creatorProfile) {
           console.error('❌ Perfil do criador não encontrado:', profileError);
           return;

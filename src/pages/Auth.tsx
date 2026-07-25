@@ -706,6 +706,23 @@ const Auth = () => {
             </Button>
           )}
         </form>
+
+        {(mode === 'login' || mode === 'signup') && (
+          <div
+            role="status"
+            className="mt-4 rounded-lg border border-blue-400/30 bg-blue-500/10 p-3 text-xs md:text-sm text-blue-100 leading-relaxed"
+          >
+            <p>
+              <span className="font-semibold text-blue-200">Aviso:</span>{' '}
+              Enviamos para o seu e-mail o link de acesso à plataforma e as credenciais criadas para sua conta.
+              Verifique também a pasta de <span className="font-semibold">Spam</span> ou{' '}
+              <span className="font-semibold">Lixo Eletrônico</span>. Após a criação da conta,
+              o acesso é liberado automaticamente.
+            </p>
+          </div>
+        )}
+
+
         
         <div className="mt-4 text-center">
           {(mode === 'login' || mode === 'signup') && (

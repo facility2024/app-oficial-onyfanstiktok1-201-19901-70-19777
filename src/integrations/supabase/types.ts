@@ -6834,6 +6834,7 @@ export type Database = {
           username: string | null
           video_call_active: boolean | null
           video_call_url: string | null
+          welcome_email_sent_at: string | null
         }
         Insert: {
           asaas_customer_id?: string | null
@@ -6868,6 +6869,7 @@ export type Database = {
           username?: string | null
           video_call_active?: boolean | null
           video_call_url?: string | null
+          welcome_email_sent_at?: string | null
         }
         Update: {
           asaas_customer_id?: string | null
@@ -6902,6 +6904,7 @@ export type Database = {
           username?: string | null
           video_call_active?: boolean | null
           video_call_url?: string | null
+          welcome_email_sent_at?: string | null
         }
         Relationships: []
       }

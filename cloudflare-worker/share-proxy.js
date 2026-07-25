@@ -56,13 +56,15 @@ export default {
       if (loc) return Response.redirect(loc, 302);
     }
 
-    // Bot: devolve HTML com OG tags
+    // Bot: devolve HTML com OG tags (força text/html e remove CSP/sandbox)
     const body = await proxied.text();
     return new Response(body, {
-      status: proxied.status,
+      status: 200,
       headers: {
-        "content-type": proxied.headers.get("content-type") ?? "text/html; charset=utf-8",
-        "cache-control": "public, max-age=300", // 5 min cache no CDN
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "public, max-age=300",
+        "x-content-type-options": "nosniff",
+        "content-security-policy": "default-src 'self' https: data:; img-src * data: https:; style-src 'unsafe-inline' *;",
       },
     });
   },

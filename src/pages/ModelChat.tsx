@@ -180,8 +180,8 @@ export default function ModelChat() {
       if (isCreator) {
         // Buscar dados do criador em profiles
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, name, email, avatar_url')
+          .from('public_profiles')
+          .select('id, name, username, avatar_url')
           .eq('id', entityId)
           .single();
 

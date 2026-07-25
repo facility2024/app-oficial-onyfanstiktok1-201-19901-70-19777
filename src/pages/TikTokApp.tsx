@@ -2387,7 +2387,7 @@ export const TikTokApp = () => {
       const {
         data: profilesData
       } = await (supabase as any).from('public_profiles').select('id, name, username').in('id', userIds);
-      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+      const profilesMap = new Map(((profilesData || []) as any[]).map((p: any) => [p.id, p]));
 
       // Transform the data to match the Comment interface
       const transformedComments = (commentsData || []).map((comment: any) => {
@@ -3130,7 +3130,7 @@ export const TikTokApp = () => {
         const {
           data: creatorProfile,
           error: profileError
-        } = await (supabase as any).from('profiles').select('*').eq('id', modelId).single();
+        } = await (supabase as any).from('public_profiles').select('*').eq('id', modelId).single();
         if (profileError || !creatorProfile) {
           console.error('❌ Perfil do criador não encontrado:', profileError);
           return;

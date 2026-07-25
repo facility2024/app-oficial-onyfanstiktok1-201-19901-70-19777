@@ -67,7 +67,7 @@ export default function IndicadorCadastro() {
       const code = refFromLink || localStorage.getItem('pending_referral_code');
       if (code) {
         const { data: ref } = await supabase
-          .from('profiles').select('id').ilike('referral_code', code).maybeSingle();
+          .from('public_profiles').select('id').ilike('referral_code', code).maybeSingle();
         if (ref) referrerId = (ref as any).id;
       }
 

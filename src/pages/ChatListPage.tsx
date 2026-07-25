@@ -90,8 +90,8 @@ export default function ChatListPage() {
 
         if (activeCreatorIds.length > 0) {
           const { data: creators, error: creatorsError } = await supabase
-            .from('profiles')
-            .select('id, name, email, avatar_url')
+            .from('public_profiles')
+            .select('id, name, username, avatar_url')
             .in('id', activeCreatorIds);
 
           if (!creatorsError && creators) {

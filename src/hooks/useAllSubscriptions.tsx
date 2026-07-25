@@ -32,7 +32,7 @@ export const useAllSubscriptions = () => {
     try {
       if (modelType === 'creator') {
         const { data } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('id, username, avatar_url')
           .eq('id', modelId)
           .maybeSingle();

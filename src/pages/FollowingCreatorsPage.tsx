@@ -50,8 +50,8 @@ const FollowingCreatorsPage = () => {
 
       // Buscar dados dos criadores (perfis básicos)
       const { data: creatorsData } = await supabase
-        .from('profiles')
-        .select('id, name, email, avatar_url')
+        .from('public_profiles')
+        .select('id, name, username, avatar_url')
         .in('id', creatorIds);
 
       // Filtrar apenas criadores aprovados

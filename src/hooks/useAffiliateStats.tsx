@@ -120,8 +120,8 @@ export const useAffiliateStats = () => {
         for (const wallet of topWallets) {
           // Buscar perfil (campos: id, name, email)
           const { data: profileRaw } = await supabase
-            .from('profiles')
-            .select('id, name, email')
+            .from('public_profiles')
+            .select('id, name, username')
             .eq('id', wallet.user_id)
             .maybeSingle();
 
@@ -159,8 +159,8 @@ export const useAffiliateStats = () => {
       
       for (const ref of recentReferralsData) {
         const { data: referrerProfileRaw } = await supabase
-          .from('profiles')
-          .select('id, name, email')
+          .from('public_profiles')
+          .select('id, name, username')
           .eq('id', ref.referrer_id)
           .maybeSingle();
 

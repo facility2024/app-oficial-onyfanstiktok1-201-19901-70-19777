@@ -44,7 +44,7 @@ export default function ProfilePage() {
         
         // Buscar perfis APENAS dos criadores
         const { data: creatorProfiles } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('id, name')
           .in('id', creatorIds);
 

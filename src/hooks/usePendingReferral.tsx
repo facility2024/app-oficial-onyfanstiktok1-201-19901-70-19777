@@ -42,7 +42,7 @@ export function usePendingReferral(userId: string | undefined) {
         let referrerId = pending.referrerId;
         if (!referrerId && pending.referralCode) {
           const { data: referrer } = await supabase
-            .from('profiles')
+            .from('public_profiles')
             .select('id')
             .ilike('referral_code', pending.referralCode)
             .maybeSingle();

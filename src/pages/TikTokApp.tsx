@@ -1383,7 +1383,7 @@ export const TikTokApp = () => {
         const {
           data: creatorsProfiles,
           error: creatorsError
-        } = await supabase.from('profiles').select('id, name, email, avatar_url, bio').in('id', creatorIds);
+        } = await (supabase as any).from('public_profiles').select('id, name, username, avatar_url, bio').in('id', creatorIds);
         if (creatorsError) {
           console.warn('⚠️ Erro ao carregar perfis de criadores:', creatorsError);
         }
@@ -2386,7 +2386,7 @@ export const TikTokApp = () => {
       const userIds = [...new Set((commentsData || []).map(c => c.user_id))];
       const {
         data: profilesData
-      } = await supabase.from('profiles').select('id, name, email').in('id', userIds);
+      } = await (supabase as any).from('public_profiles').select('id, name, username').in('id', userIds);
       const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
 
       // Transform the data to match the Comment interface

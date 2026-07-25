@@ -69,7 +69,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const bunnyEmbedUrl = toBunnyStreamEmbedUrl(src, {
       autoplay: isPlaying || autoPlayOnReady,
-      muted: isMuted || isMobile,
+      muted: isMuted || (isMobile && !audioUnlocked),
       loop: true,
       preload: isPlaying || autoPlayOnReady,
       responsive: true,

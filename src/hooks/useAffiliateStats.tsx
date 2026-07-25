@@ -136,7 +136,7 @@ export const useAffiliateStats = () => {
           topAffiliatesData.push({
             user_id: wallet.user_id,
             name: profile?.name || null,
-            email: profile?.email || null,
+            email: null,
             referral_code: userReferral?.referral_code || null,
             total_referrals: userReferrals.length,
             completed_referrals: userReferrals.filter(r => r.status === 'completed').length,

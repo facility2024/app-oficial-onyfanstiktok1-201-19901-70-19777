@@ -300,14 +300,19 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       }
     }, [isPlaying, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady, bunnyEmbedUrl]);
 
-    // Controlar mute e volume
+    // Controlar mute e volume (respeitando o desbloqueio global de áudio no mobile)
     useEffect(() => {
       if (bunnyEmbedUrl) return;
-      if (internalRef && 'current' in internalRef && internalRef.current) {
-        internalRef.current.muted = isMuted;
-        internalRef.current.volume = volume;
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      if (!video) return;
+      const effectiveMuted = hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked));
+      video.muted = effectiveMuted;
+      video.volume = volume;
+      // Ao liberar o áudio (primeiro gesto), garante que o vídeo atual continue tocando
+      if (!effectiveMuted && video.paused && (isPlaying || autoPlayOnReady)) {
+        video.play().catch(() => {});
       }
-    }, [isMuted, volume, internalRef, bunnyEmbedUrl]);
+    }, [isMuted, volume, internalRef, bunnyEmbedUrl, audioUnlocked, isMobile, hasAudioOverlay, isPlaying, autoPlayOnReady]);
 
     // Event handlers
     const handleLoadedData = useCallback(() => {

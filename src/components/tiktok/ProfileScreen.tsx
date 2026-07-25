@@ -684,7 +684,7 @@ if (!isOpen) return null;
                   .replace(/\s+/g, '-')
                   .normalize('NFD')
                   .replace(/[\u0300-\u036f]/g, '');
-                const shareUrl = `https://tnzvhwapfhkhqjgyiomk.supabase.co/functions/v1/share-profile/${identifier}`;
+                const shareUrl = `https://share.coconudi.com/p/${identifier}`;
 
                 if (navigator.share) {
                   // ⚠️ Enviar SOMENTE url para o WhatsApp/Instagram renderizarem o preview OG

@@ -340,7 +340,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     
     // Click handler para iniciar reprodução
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
-      userGestureUnlockedRef.current = true;
+      unlockAudio();
       const nativeEvt: any = (event as any).nativeEvent;
       const shouldBlock = needsUserInteraction && nativeEvt?.cancelable;
       if (shouldBlock) {

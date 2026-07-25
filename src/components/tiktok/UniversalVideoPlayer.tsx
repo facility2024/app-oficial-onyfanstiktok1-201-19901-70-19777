@@ -95,7 +95,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       
       // Respeitar a preferência do usuário para mute.
       // No mobile, autoplay inicial precisa ficar mutado até uma ação real do usuário.
-      const shouldMute = isMuted || (isMobile && !userGestureUnlockedRef.current);
+      const shouldMute = isMuted || (isMobile && !audioUnlockedRef.current);
       video.muted = shouldMute;
       if (shouldMute) {
         video.setAttribute('muted', 'true');

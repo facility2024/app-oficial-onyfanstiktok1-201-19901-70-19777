@@ -16,6 +16,7 @@ const SUPPORT_EMAIL = 'suporte@coconudi.com';
 
 function buildHtml(name: string) {
   const safeName = (name || 'usuário').replace(/[<>]/g, '');
+  const resetUrl = `${APP_URL}auth?reset=1`;
   return `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.5;max-width:560px;margin:0 auto;padding:24px;">
     <h2 style="margin:0 0 16px;">Olá, ${safeName}!</h2>
     <p>Aqui é a equipe de suporte da Coconudi.</p>
@@ -25,6 +26,11 @@ function buildHtml(name: string) {
       <a href="${APP_URL}" style="display:inline-block;padding:12px 18px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">
         Acessar a plataforma
       </a>
+    </p>
+    <p style="margin:16px 0;color:#444;font-size:14px;">
+      Esqueceu sua senha? Redefina com segurança pelo link:
+      <br>
+      <a href="${resetUrl}" style="color:#6d28d9;">Redefinir minha senha</a>
     </p>
     <p>Se precisar de ajuda, fale com a gente em <strong>${SUPPORT_EMAIL}</strong>.</p>
     <p>Até mais!</p>

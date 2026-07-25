@@ -157,8 +157,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       try {
         pauseOtherVideos();
         
-        // iOS/Android: autoplay inicial sempre mutado; só desmuta após gesto real.
-        if (!isMuted && (!isMobile || userGestureUnlockedRef.current)) {
+        // iOS/Android: autoplay inicial mutado; desmuta assim que houve gesto global.
+        if (!isMuted && (!isMobile || audioUnlockedRef.current)) {
           video.muted = false;
         } else {
           video.muted = true;

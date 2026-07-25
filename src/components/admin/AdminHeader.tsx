@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Smartphone, LogOut, User, CheckCheck } from 'lucide-react';
+import { Bell, Smartphone, LogOut, User, CheckCheck, Eye } from 'lucide-react';
+import { SecurityDetailsDialog } from './SecurityDetailsDialog';
+import type { AdminNotification } from '@/hooks/useAdminNotifications';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +23,8 @@ interface AdminHeaderProps {
 export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _legacySet, user, onLogout }: AdminHeaderProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
-  const { notifications, unreadCount, markAllRead, markRead } = useAdminNotifications();
+  const { notifications, unreadCount, markAllRead, markRead } = useAdminNotifications({ soundOnSecurity: true });
+  const [securityDetail, setSecurityDetail] = useState<AdminNotification | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -158,6 +161,14 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
                         </div>
                         <p className="text-xs font-medium text-white truncate">{n.title}</p>
                         <p className="text-[11px] text-gray-400 truncate">{n.description}</p>
+                        {n.type === 'security' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); markRead(n.id); setSecurityDetail(n); }}
+                            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-red-300 hover:text-red-200 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded px-2 py-0.5"
+                          >
+                            <Eye className="w-3 h-3" /> Ver detalhes
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))
@@ -165,6 +176,11 @@ export const AdminHeader = ({ notifications: _legacyCount, setNotifications: _le
               </ScrollArea>
             </PopoverContent>
           </Popover>
+          <SecurityDetailsDialog
+            notification={securityDetail}
+            open={!!securityDetail}
+            onOpenChange={(o) => !o && setSecurityDetail(null)}
+          />
 
           {/* User info */}
           <div className="flex items-center space-x-2 text-white text-xs">

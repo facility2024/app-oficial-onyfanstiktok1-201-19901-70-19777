@@ -8,6 +8,7 @@ import { OfflineHandler } from "@/components/OfflineHandler";
 import { UserLocationTracker } from "@/components/UserLocationTracker";
 import { SessionManager } from "@/components/SessionManager";
 import { AdminRoute } from "@/components/AdminRoute";
+import { AdminGlobalAlerts } from "@/components/AdminGlobalAlerts";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CartProvider } from "./contexts/CartContext";
 import SplashScreen from "./pages/SplashScreen";
@@ -83,6 +84,7 @@ const App = () => (
       <UserLocationTracker />
       <SessionManager />
       <BrowserRouter>
+          <AdminGlobalAlerts />
           <Routes>
             {/* Splash Screen como HOME */}
             <Route path="/" element={<SplashScreen />} />

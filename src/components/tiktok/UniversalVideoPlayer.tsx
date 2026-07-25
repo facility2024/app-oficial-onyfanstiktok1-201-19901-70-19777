@@ -474,6 +474,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           onError={handleError}
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
+          onPlaying={handleCanPlay}
+          onLoadedMetadata={handleCanPlay}
           onLoadStart={handleLoadStart}
           
         />

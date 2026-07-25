@@ -64,7 +64,9 @@ Deno.serve(async (req) => {
     }
 
     const title = `${name} no CocoNudi 🔥`;
-    const desc = video?.title || video?.description || "Assista agora no CocoNudi";
+    const baseDesc = video?.title || video?.description || "Assista agora no CocoNudi";
+    const CTA = "VENHA SER COCONUDI — Compartilhe seu perfil para todos, venda mais seus produtos digitais e seja um parceiro anunciante da CocoNudi.";
+    const desc = `${baseDesc} • ${CTA}`;
     // Normaliza host pra minúsculas (WhatsApp/OG scrapers falham com hostname em CAIXA ALTA)
     const rawImage = video?.thumbnail_url || avatar;
     let image = rawImage;

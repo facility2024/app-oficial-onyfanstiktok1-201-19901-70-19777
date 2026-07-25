@@ -1317,112 +1317,53 @@ export const TikTokApp = () => {
       };
       const viewedPosts = getViewedPosts();
       console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
-      const {
-        data: postsAgendados,
-        error: postsError
-      } = await supabase.from('posts_agendados').select(`
-          *,
-          modelo:models(*)
-        `).eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', {
-        ascending: false
-      }).limit(50);
-      const {
-        data: postsPrincipais,
-        error: principaisError
-      } = await supabase.from('posts_principais').select(`
-          *,
-          post_agendado:posts_agendados(*),
-          modelo:models(*)
-        `).gte('created_at', today.toISOString()).order('created_at', {
-        ascending: false
+      // 🚀 CARGA INICIAL LEVE + PARALELA — todas as consultas independentes disparam juntas
+      // com timeout individual para nunca travar a abertura do feed em caso de lentidão.
+      console.log('📋 Carregando catálogo (paralelo com timeout)...');
+      const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string): Promise<T | null> =>
+        new Promise((resolve) => {
+          const t = setTimeout(() => { console.warn(`⏱️ timeout ${ms}ms: ${label}`); resolve(null); }, ms);
+          Promise.resolve(p).then((v) => { clearTimeout(t); resolve(v as T); }, (e) => { clearTimeout(t); console.warn(`❌ ${label}`, e); resolve(null); });
+        });
+
+      const [
+        postsAgendadosRes,
+        postsPrincipaisRes,
+        videosRes,
+        modelsRes,
+        chatPanelsRes,
+        creatorRolesRes,
+      ] = await Promise.all([
+        withTimeout(supabase.from('posts_agendados').select('*, modelo:models(*)').eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', { ascending: false }).limit(50), 8000, 'posts_agendados'),
+        withTimeout(supabase.from('posts_principais').select('*, post_agendado:posts_agendados(*), modelo:models(*)').gte('created_at', today.toISOString()).order('created_at', { ascending: false }).limit(50), 8000, 'posts_principais'),
+        withTimeout(supabase.from('videos').select('*').eq('is_active', true).or('visibility.eq.public,visibility.is.null').order('created_at', { ascending: false }).range(0, 499), 10000, 'videos'),
+        withTimeout(supabase.from('models').select('*').eq('is_active', true), 8000, 'models'),
+        withTimeout(supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active'), 6000, 'chat_panels'),
+        withTimeout((supabase as any).from('user_roles').select('user_id').eq('role', 'creator'), 6000, 'user_roles'),
+      ]);
+
+      const postsAgendados = (postsAgendadosRes as any)?.data || [];
+      const postsPrincipais = (postsPrincipaisRes as any)?.data || [];
+      let videosData: any[] = (videosRes as any)?.data || [];
+      const modelsData = (modelsRes as any)?.data || [];
+      const chatPanelsData = (chatPanelsRes as any)?.data || [];
+      const creatorRoles = (creatorRolesRes as any)?.data || [];
+
+      console.log('📋 Carga inicial:', {
+        videos: videosData.length,
+        models: modelsData.length,
+        posts_agendados: postsAgendados.length,
+        posts_principais: postsPrincipais.length,
+        chat_panels: chatPanelsData.length,
+        creators: creatorRoles.length,
       });
-      if (postsError) console.warn('⚠️ Erro ao carregar posts agendados:', postsError);
-      else console.log('📋 Posts agendados carregados:', postsAgendados?.length || 0, postsAgendados?.map((p: any) => ({ id: p.id, titulo: p.titulo, status: p.status, modelo_id: p.modelo_id })));
-      if (principaisError) console.warn('⚠️ Erro ao carregar posts principais:', principaisError);
-      else console.log('📋 Posts principais carregados:', postsPrincipais?.length || 0);
 
-      // Carregar todos os vídeos disponíveis (em lotes para não perder nenhum)
-      console.log('📋 Carregando catálogo de vídeos...');
-      let videosData: any[] = [];
-      let videosError: any = null;
-      {
-        // Primeiro lote: 1000 mais recentes
-        const { data: batch1, error: err1 } = await supabase
-          .from('videos')
-          .select('*')
-          .eq('is_active', true)
-          .or('visibility.eq.public,visibility.is.null')
-          .order('created_at', { ascending: false })
-          .range(0, 999);
-        if (err1) {
-          videosError = err1;
-        } else {
-          videosData = batch1 || [];
-          // Se retornou exatamente 1000, buscar mais
-          if (videosData.length === 1000) {
-            const { data: batch2 } = await supabase
-              .from('videos')
-              .select('*')
-              .eq('is_active', true)
-              .or('visibility.eq.public,visibility.is.null')
-              .order('created_at', { ascending: false })
-              .range(1000, 1999);
-            if (batch2 && batch2.length > 0) {
-              videosData = [...videosData, ...batch2];
-              console.log(`📋 Lote adicional carregado: +${batch2.length} vídeos (total: ${videosData.length})`);
-            }
-          }
-        }
-      }
-      if (videosError) {
-        console.error('❌ Erro ao carregar vídeos:', videosError);
-        throw videosError;
-      }
-
-      // 🧹 Filtra vídeos sem URL válida (evita card "Erro ao carregar vídeo" no feed)
-      const beforeFilter = videosData.length;
+      // 🧹 Filtra vídeos sem URL válida
       videosData = (videosData as any[]).filter((v: any) => {
         const url = String(v?.video_url || '').trim();
         return url.length > 0 && /^https?:\/\//i.test(url);
       });
-      if (beforeFilter !== videosData.length) {
-        console.log(`🧹 Removidos ${beforeFilter - videosData.length} vídeos sem URL válida`);
-      }
 
-      // 🔍 DEBUG DETALHADO - Verificar dados dos vídeos
-      console.log('🔍 Query videos result:', {
-        total: videosData?.length || 0,
-        withCreatorId: (videosData as any[])?.filter((v: any) => v.creator_id)?.length || 0,
-        withModelId: (videosData as any[])?.filter((v: any) => v.model_id)?.length || 0,
-        sample: videosData?.[0] ? {
-          id: videosData[0].id,
-          title: videosData[0].title,
-          creator_id: (videosData[0] as any).creator_id,
-          model_id: (videosData[0] as any).model_id,
-          is_active: videosData[0].is_active
-        } : 'nenhum vídeo',
-        creatorVideos: (videosData as any[])?.filter((v: any) => v.creator_id)?.map((v: any) => ({
-          id: v.id,
-          title: v.title,
-          creator_id: v.creator_id
-        })) || []
-      });
-      const {
-        data: modelsData,
-        error: modelsError
-      } = await supabase.from('models').select('*').eq('is_active', true);
-      if (modelsError && (modelsError as any).code !== 'PGRST116') {
-        console.warn('⚠️ Erro ao carregar modelos:', modelsError);
-      }
-
-      // 🔥 Carregar painéis de chat para verificar status online e ativo
-      const {
-        data: chatPanelsData,
-        error: chatPanelsError
-      } = await supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active');
-      if (chatPanelsError) {
-        console.warn('⚠️ Erro ao carregar painéis de chat:', chatPanelsError);
-      }
       const chatPanelsMap: Record<string, boolean> = {};
       const chatActiveMapTemp: Record<string, boolean> = {};
       const chatOnlineMapTemp: Record<string, boolean> = {};
@@ -1436,15 +1377,6 @@ export const TikTokApp = () => {
       });
       setChatActiveMap(chatActiveMapTemp);
       setChatOnlineMap(chatOnlineMapTemp);
-
-      // Carregar criadores (via user_roles)
-      const {
-        data: creatorRoles,
-        error: rolesError
-      } = await (supabase as any).from('user_roles').select('user_id').eq('role', 'creator');
-      if (rolesError) {
-        console.warn('⚠️ Erro ao carregar roles de criadores:', rolesError);
-      }
       let creatorsData: any[] = [];
       if (creatorRoles && creatorRoles.length > 0) {
         const creatorIds = creatorRoles.map((r: any) => r.user_id);

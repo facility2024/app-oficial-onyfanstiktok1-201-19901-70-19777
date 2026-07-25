@@ -277,7 +277,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           autoRetryTimerRef.current = null;
         }
       };
-      }, [playbackSrc, setupVideo, autoPlayOnReady, internalRef, isMobile, userStarted, bunnyEmbedUrl]);
+      // IMPORTANTE: só recarrega quando o SRC muda de verdade.
+      // Antes `setupVideo`/`isMuted`/`userStarted` estavam nas deps, o que forçava
+      // um novo video.load() a cada play ou toque no mute — causando o bug de
+      // "carregando infinito" em alguns vídeos.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [playbackSrc, bunnyEmbedUrl]);
 
     // Controlar reprodução
     useEffect(() => {

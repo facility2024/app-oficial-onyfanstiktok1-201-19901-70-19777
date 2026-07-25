@@ -325,18 +325,22 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const video = e.currentTarget;
       const isBunnyVideo = video.src?.includes('b-cdn.net') || video.src?.includes('bunnycdn');
       
-      // Auto-retry for Bunny videos (likely still processing)
+      // Auto-retry para vídeos da CDN (falha de rede/segmento no mobile).
+      // Backoff curto (1.2s, 2.4s, ...) e re-tenta o play — antes ficava até 25s
+      // preso no spinner de carregando.
       if (isBunnyVideo && retryCountRef.current < maxRetries) {
         retryCountRef.current++;
-        const delay = retryCountRef.current * 5000;
-        setIsBuffering(true);
+        const delay = Math.min(retryCountRef.current * 1200, 4000);
         setIsBuffering(true);
         setHasError(false);
-        
+
         if (autoRetryTimerRef.current) clearTimeout(autoRetryTimerRef.current);
         autoRetryTimerRef.current = setTimeout(() => {
-          if (internalRef && 'current' in internalRef && internalRef.current) {
-            internalRef.current.load();
+          const el = internalRef && 'current' in internalRef ? internalRef.current : null;
+          if (!el) return;
+          try { el.load(); } catch {}
+          if (isPlaying || autoPlayOnReady) {
+            el.play().catch(() => {});
           }
         }, delay);
         return;

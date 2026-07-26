@@ -59,6 +59,7 @@ import AdsGarotasTopModal from '@/components/tiktok/AdsGarotasTopModal';
 import AdsLatinasModal from '@/components/tiktok/AdsLatinasModal';
 
 import { useFeedPromotions } from '@/hooks/useFeedPromotions';
+import { useAdServer } from '@/hooks/useAdServer';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
 interface Video {
   id: string;
@@ -212,6 +213,12 @@ export const TikTokApp = () => {
 
   // 📢 PROMOÇÕES NO FEED
   const { promotions, registerPromoView } = useFeedPromotions();
+  // 🧠 AD SERVER — fila exclusiva por usuário, sem repetição e com métricas
+  const {
+    adQueue,
+    registerImpression: registerAdImpression,
+    registerClick: registerAdClick,
+  } = useAdServer();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
@@ -519,6 +526,13 @@ export const TikTokApp = () => {
     promoCtaBusyRef.current = true;
     window.setTimeout(() => { promoCtaBusyRef.current = false; }, 800);
 
+    // 🧠 Ad Server: métrica de clique (CTR)
+    const promoIdMatch = typeof videoOrLink !== 'string'
+      ? String(videoOrLink?.id || '').match(/^promo-([0-9a-f-]{36})/i)
+      : null;
+    if (promoIdMatch?.[1]) void registerAdClick(promoIdMatch[1]);
+
+
     const link = typeof videoOrLink === 'string' ? videoOrLink : videoOrLink?._promoCtaLink;
     const isPopupPromo = typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup';
 
@@ -543,7 +557,7 @@ export const TikTokApp = () => {
     if (!link) return;
 
     openExternalLink(link);
-  }, [isGarotasTopLink, navigate, openExternalLink]);
+  }, [isGarotasTopLink, navigate, openExternalLink, registerAdClick]);
 
   // Verifica se um vídeo é novo
   const isVideoNew = (video: Video): boolean => {
@@ -606,11 +620,13 @@ export const TikTokApp = () => {
   // 📢 Montagem estável do feed com promos, sem reescrever o estado base de vídeos
   const displayVideos = useMemo(() => {
     if (videos.length === 0) return [] as Video[];
-    if (promotions.length === 0) return videos;
+    // 🧠 Ad Server: fila exclusiva do usuário; fallback para a lista padrão
+    const adPool = (adQueue.length > 0 ? adQueue : promotions) as typeof promotions;
+    if (adPool.length === 0) return videos;
 
     const adminInterval = Math.max(
       1,
-      Math.min(...promotions.map(p => p.position_interval || 5))
+      Math.min(...adPool.map(p => p.position_interval || 5))
     );
 
     const result: Video[] = [];
@@ -622,13 +638,14 @@ export const TikTokApp = () => {
       if ((index + 1) % adminInterval !== 0) return;
 
       const slotIndex = Math.floor((index + 1) / adminInterval) - 1;
-      let selectedPromo = promotions[slotIndex % promotions.length];
+      let selectedPromo = adPool[slotIndex % adPool.length];
 
-      if (promotions.length > 1 && selectedPromo.id === lastPromoId) {
-        selectedPromo = promotions[(slotIndex + 1) % promotions.length];
+      if (adPool.length > 1 && selectedPromo.id === lastPromoId) {
+        selectedPromo = adPool[(slotIndex + 1) % adPool.length];
       }
 
       lastPromoId = selectedPromo.id;
+
 
       result.push({
         id: `promo-${selectedPromo.id}-slot-${slotIndex}`,
@@ -677,7 +694,7 @@ export const TikTokApp = () => {
       return [sharedPromoVideo, ...result];
     }
     return result;
-  }, [videos, promotions, sharedPromoVideo]);
+  }, [videos, promotions, adQueue, sharedPromoVideo]);
 
   useEffect(() => {
     if (displayVideos.length === 0) return;
@@ -706,7 +723,9 @@ export const TikTokApp = () => {
     if (promoViewTrackedRef.current.has(vid.id)) return;
     promoViewTrackedRef.current.add(vid.id);
     registerPromoView(promoId);
-  }, [currentVideo, registerPromoView]);
+    // 🧠 Ad Server: impressão + histórico individual (reinicia a fila ao esgotar)
+    void registerAdImpression(promoId, vid.id);
+  }, [currentVideo, registerPromoView, registerAdImpression]);
   const getVideoDataId = (video?: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
   const isValidUUID = (value?: string | null): boolean =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));

@@ -72,6 +72,13 @@ interface FeedPromotion {
   popup_media_type: string | null;
   popup_cta_text: string | null;
   popup_cta_link: string | null;
+  category?: string | null;
+  advertiser?: string | null;
+  weight?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  max_views_per_user?: number | null;
+  max_daily_views?: number | null;
 }
 
 const emptyForm = {
@@ -97,6 +104,13 @@ const emptyForm = {
   popup_media_type: 'image',
   popup_cta_text: 'Comprar Agora',
   popup_cta_link: '',
+  category: '',
+  advertiser: '',
+  weight: 1,
+  start_date: '',
+  end_date: '',
+  max_views_per_user: 0,
+  max_daily_views: 0,
 };
 
 export const AdminFeedPromotions = () => {
@@ -193,6 +207,13 @@ export const AdminFeedPromotions = () => {
         model_id: formData.model_id || null,
         daily_frequency: formData.daily_frequency || 0,
         checkout_template_id: await resolveCheckoutTemplateId(formData.cta_link),
+        category: formData.category || null,
+        advertiser: formData.advertiser || null,
+        weight: Math.max(1, Number(formData.weight) || 1),
+        start_date: formData.start_date ? `${formData.start_date}T00:00:00` : null,
+        end_date: formData.end_date ? `${formData.end_date}T23:59:59` : null,
+        max_views_per_user: Math.max(0, Number(formData.max_views_per_user) || 0),
+        max_daily_views: Math.max(0, Number(formData.max_daily_views) || 0),
       };
 
       if (formData.id) {
@@ -307,6 +328,13 @@ export const AdminFeedPromotions = () => {
       popup_media_type: promo.popup_media_type || 'image',
       popup_cta_text: promo.popup_cta_text || 'Comprar Agora',
       popup_cta_link: promo.popup_cta_link || '',
+      category: promo.category || '',
+      advertiser: promo.advertiser || '',
+      weight: promo.weight ?? 1,
+      start_date: promo.start_date ? String(promo.start_date).slice(0, 10) : '',
+      end_date: promo.end_date ? String(promo.end_date).slice(0, 10) : '',
+      max_views_per_user: promo.max_views_per_user ?? 0,
+      max_daily_views: promo.max_daily_views ?? 0,
     });
     setShowModal(true);
   };
@@ -558,6 +586,13 @@ export const AdminFeedPromotions = () => {
         daily_frequency: form.daily_frequency || 0,
         shareable_link: `${window.location.origin}/app`,
         checkout_template_id: await resolveCheckoutTemplateId(form.cta_link),
+        category: form.category || null,
+        advertiser: form.advertiser || null,
+        weight: Math.max(1, Number(form.weight) || 1),
+        start_date: form.start_date ? `${form.start_date}T00:00:00` : null,
+        end_date: form.end_date ? `${form.end_date}T23:59:59` : null,
+        max_views_per_user: Math.max(0, Number(form.max_views_per_user) || 0),
+        max_daily_views: Math.max(0, Number(form.max_daily_views) || 0),
       };
 
       const { error } = await (supabase as any).from('feed_promotions').insert(payload);
@@ -941,6 +976,43 @@ export const AdminFeedPromotions = () => {
                 <Input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} className={modalInputClass} />
               </div>
             </div>
+
+            {/* 🧠 Ad Server — distribuição inteligente */}
+            <div className="p-4 rounded-lg border border-emerald-500/30 bg-emerald-950/20 space-y-3">
+              <Label className="text-sm font-bold">Ad Server (distribuição inteligente)</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Categoria</Label>
+                  <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Ex.: Live, Loja, VIP" className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Anunciante</Label>
+                  <Input value={form.advertiser} onChange={(e) => setForm({ ...form, advertiser: e.target.value })} placeholder="Nome do anunciante" className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Peso de entrega</Label>
+                  <Input type="number" min={1} value={form.weight} onChange={(e) => setForm({ ...form, weight: Math.max(1, parseInt(e.target.value) || 1) })} className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Limite por usuário (0 = ilimitado)</Label>
+                  <Input type="number" min={0} value={form.max_views_per_user} onChange={(e) => setForm({ ...form, max_views_per_user: Math.max(0, parseInt(e.target.value) || 0) })} className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Máximo diário (0 = ilimitado)</Label>
+                  <Input type="number" min={0} value={form.max_daily_views} onChange={(e) => setForm({ ...form, max_daily_views: Math.max(0, parseInt(e.target.value) || 0) })} className={modalInputClass} />
+                </div>
+                <div />
+                <div>
+                  <Label>Data inicial</Label>
+                  <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Data final</Label>
+                  <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className={modalInputClass} />
+                </div>
+              </div>
+            </div>
+
 
             {/* Agendamento */}
             <div className="p-4 rounded-lg border border-yellow-500/30 bg-yellow-950/20 space-y-3">

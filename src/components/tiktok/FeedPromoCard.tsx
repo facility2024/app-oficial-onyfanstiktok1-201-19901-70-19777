@@ -193,18 +193,33 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
       </div>
 
       {/* Center: Media */}
-      <div className="flex-1 flex items-center justify-center relative" onClick={handleMediaClick}>
+      <div className="flex-1 flex items-center justify-center relative overflow-hidden" onClick={handleMediaClick}>
+        {/* Fundo desfocado para mídia horizontal (1280x720) */}
+        {isLandscape && (
+          <div
+            className="absolute inset-0 scale-125 blur-2xl opacity-60"
+            style={{
+              backgroundImage: `url(${promo.banner_url || promo.avatar_url || promo.media_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        )}
         {isVideoMedia ? (
           <>
             <video
               ref={videoRef}
               src={promo.media_url}
-              className="w-full h-full object-cover"
+              className={`relative w-full h-full ${mediaFitClass}`}
               loop
               playsInline
               muted={localMuted}
               poster={promo.banner_url || undefined}
               autoPlay={isCurrentSlide}
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget;
+                if (v.videoWidth && v.videoHeight) setIsLandscape(v.videoWidth > v.videoHeight);
+              }}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />
@@ -220,11 +235,16 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
           <img
             src={promo.media_url}
             alt={promo.title || promo.display_name}
-            className="w-full h-full object-cover"
+            className={`relative w-full h-full ${mediaFitClass}`}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && img.naturalHeight) setIsLandscape(img.naturalWidth > img.naturalHeight);
+            }}
             onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
           />
         )}
       </div>
+
 
       {/* Right: Action buttons */}
       <div className="absolute right-3 bottom-40 z-20 flex flex-col items-center gap-5">

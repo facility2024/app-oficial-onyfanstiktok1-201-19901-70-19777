@@ -72,6 +72,13 @@ interface FeedPromotion {
   popup_media_type: string | null;
   popup_cta_text: string | null;
   popup_cta_link: string | null;
+  category?: string | null;
+  advertiser?: string | null;
+  weight?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  max_views_per_user?: number | null;
+  max_daily_views?: number | null;
 }
 
 const emptyForm = {
@@ -97,6 +104,13 @@ const emptyForm = {
   popup_media_type: 'image',
   popup_cta_text: 'Comprar Agora',
   popup_cta_link: '',
+  category: '',
+  advertiser: '',
+  weight: 1,
+  start_date: '',
+  end_date: '',
+  max_views_per_user: 0,
+  max_daily_views: 0,
 };
 
 export const AdminFeedPromotions = () => {

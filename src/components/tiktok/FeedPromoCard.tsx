@@ -42,12 +42,17 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [localMuted, setLocalMuted] = useState(isMuted);
   const [showPopup, setShowPopup] = useState(false);
   const [showGarotasTop, setShowGarotasTop] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
   const ctaBusyRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Mídia horizontal (ex.: 1280x720) precisa de "contain" + fundo desfocado
+  // para não ficar cortada/esticada no feed vertical.
+  const mediaFitClass = isLandscape ? 'object-contain' : 'object-cover';
 
   const isVideoMedia = (promo.media_type || '').toLowerCase() === 'video' || /\.(mp4|webm|ogg|mov|m4v|m3u8)(\?|$)/i.test(promo.media_url || '');
+
 
   const trackClick = useCallback((buttonType: string) => {
     const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();

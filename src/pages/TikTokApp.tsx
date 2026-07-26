@@ -687,7 +687,7 @@ export const TikTokApp = () => {
       return [sharedPromoVideo, ...result];
     }
     return result;
-  }, [videos, promotions, sharedPromoVideo]);
+  }, [videos, promotions, adQueue, sharedPromoVideo]);
 
   useEffect(() => {
     if (displayVideos.length === 0) return;

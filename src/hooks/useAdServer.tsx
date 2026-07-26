@@ -178,11 +178,29 @@ export const useAdServer = () => {
         list = await fetchQueue(userId, []);
       }
 
-      setQueue(spreadQueue(list));
+      // 🕒 Respeita a frequência diária (período do dia) de cada anúncio
+      const part = getCurrentDayPart();
+      const allowed = list.filter((p) => isAdAllowedNow(p, part));
+
+      setQueue(spreadQueue(allowed));
     } finally {
       loadingRef.current = false;
     }
   }, [userId, loadSeen, fetchQueue, resetHistory]);
+
+  // Reavalia a fila quando o período do dia muda (manhã → tarde → noite)
+  useEffect(() => {
+    let last = getCurrentDayPart();
+    const id = setInterval(() => {
+      const now = getCurrentDayPart();
+      if (now !== last) {
+        last = now;
+        void buildQueue();
+      }
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [buildQueue]);
+
 
   useEffect(() => {
     if (!authReady) return;

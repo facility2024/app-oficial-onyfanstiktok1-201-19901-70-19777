@@ -17,6 +17,31 @@ const SEEN_KEY = 'ad_server_seen_v1';
 const SESSION_KEY = 'ad_server_session_v1';
 const QUEUE_SIZE = 100;
 
+/** Períodos do dia: manhã (5–11h) • tarde (12–17h) • noite (18–4h) */
+export type DayPart = 'manha' | 'tarde' | 'noite';
+
+export const getCurrentDayPart = (date = new Date()): DayPart => {
+  const h = date.getHours();
+  if (h >= 5 && h <= 11) return 'manha';
+  if (h >= 12 && h <= 17) return 'tarde';
+  return 'noite';
+};
+
+/**
+ * Frequência diária → períodos em que o anúncio pode aparecer:
+ * 1 = tarde • 2 = manhã e noite • 3 = manhã, tarde e noite
+ */
+export const dayPartsForFrequency = (freq?: number | null): DayPart[] => {
+  const f = Number(freq);
+  if (f === 1) return ['tarde'];
+  if (f === 2) return ['manha', 'noite'];
+  return ['manha', 'tarde', 'noite'];
+};
+
+const isAdAllowedNow = (promo: any, part: DayPart): boolean =>
+  dayPartsForFrequency(promo?.daily_frequency).includes(part);
+
+
 const readLocalSeen = (): string[] => {
   try {
     const raw = localStorage.getItem(SEEN_KEY);
@@ -153,11 +178,29 @@ export const useAdServer = () => {
         list = await fetchQueue(userId, []);
       }
 
-      setQueue(spreadQueue(list));
+      // 🕒 Respeita a frequência diária (período do dia) de cada anúncio
+      const part = getCurrentDayPart();
+      const allowed = list.filter((p) => isAdAllowedNow(p, part));
+
+      setQueue(spreadQueue(allowed));
     } finally {
       loadingRef.current = false;
     }
   }, [userId, loadSeen, fetchQueue, resetHistory]);
+
+  // Reavalia a fila quando o período do dia muda (manhã → tarde → noite)
+  useEffect(() => {
+    let last = getCurrentDayPart();
+    const id = setInterval(() => {
+      const now = getCurrentDayPart();
+      if (now !== last) {
+        last = now;
+        void buildQueue();
+      }
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [buildQueue]);
+
 
   useEffect(() => {
     if (!authReady) return;

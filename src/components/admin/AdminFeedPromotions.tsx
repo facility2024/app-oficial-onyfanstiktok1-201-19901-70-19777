@@ -321,6 +321,13 @@ export const AdminFeedPromotions = () => {
       popup_media_type: promo.popup_media_type || 'image',
       popup_cta_text: promo.popup_cta_text || 'Comprar Agora',
       popup_cta_link: promo.popup_cta_link || '',
+      category: promo.category || '',
+      advertiser: promo.advertiser || '',
+      weight: promo.weight ?? 1,
+      start_date: promo.start_date ? String(promo.start_date).slice(0, 10) : '',
+      end_date: promo.end_date ? String(promo.end_date).slice(0, 10) : '',
+      max_views_per_user: promo.max_views_per_user ?? 0,
+      max_daily_views: promo.max_daily_views ?? 0,
     });
     setShowModal(true);
   };

@@ -557,7 +557,7 @@ export const TikTokApp = () => {
     if (!link) return;
 
     openExternalLink(link);
-  }, [isGarotasTopLink, navigate, openExternalLink]);
+  }, [isGarotasTopLink, navigate, openExternalLink, registerAdClick]);
 
   // Verifica se um vídeo é novo
   const isVideoNew = (video: Video): boolean => {

@@ -716,7 +716,9 @@ export const TikTokApp = () => {
     if (promoViewTrackedRef.current.has(vid.id)) return;
     promoViewTrackedRef.current.add(vid.id);
     registerPromoView(promoId);
-  }, [currentVideo, registerPromoView]);
+    // 🧠 Ad Server: impressão + histórico individual (reinicia a fila ao esgotar)
+    void registerAdImpression(promoId, vid.id);
+  }, [currentVideo, registerPromoView, registerAdImpression]);
   const getVideoDataId = (video?: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
   const isValidUUID = (value?: string | null): boolean =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));

@@ -212,6 +212,12 @@ export const TikTokApp = () => {
 
   // 📢 PROMOÇÕES NO FEED
   const { promotions, registerPromoView } = useFeedPromotions();
+  // 🧠 AD SERVER — fila exclusiva por usuário, sem repetição e com métricas
+  const {
+    adQueue,
+    registerImpression: registerAdImpression,
+    registerClick: registerAdClick,
+  } = useAdServer();
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);

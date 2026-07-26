@@ -198,6 +198,79 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_impressions: {
+        Row: {
+          clicked: boolean
+          completed: boolean
+          created_at: string
+          id: string
+          promo_id: string
+          session_id: string | null
+          user_id: string | null
+          watch_time_ms: number
+        }
+        Insert: {
+          clicked?: boolean
+          completed?: boolean
+          created_at?: string
+          id?: string
+          promo_id: string
+          session_id?: string | null
+          user_id?: string | null
+          watch_time_ms?: number
+        }
+        Update: {
+          clicked?: boolean
+          completed?: boolean
+          created_at?: string
+          id?: string
+          promo_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          watch_time_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_impressions_promo_id_fkey"
+            columns: ["promo_id"]
+            isOneToOne: false
+            referencedRelation: "feed_promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_user_history: {
+        Row: {
+          created_at: string
+          last_shown_at: string
+          promo_id: string
+          times_shown: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_shown_at?: string
+          promo_id: string
+          times_shown?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_shown_at?: string
+          promo_id?: string
+          times_shown?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_user_history_promo_id_fkey"
+            columns: ["promo_id"]
+            isOneToOne: false
+            referencedRelation: "feed_promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_media: {
         Row: {
           created_at: string
@@ -2893,8 +2966,10 @@ export type Database = {
       }
       feed_promotions: {
         Row: {
+          advertiser: string | null
           avatar_url: string | null
           banner_url: string | null
+          category: string | null
           checkout_template_id: string | null
           clicks_count: number | null
           created_at: string | null
@@ -2904,8 +2979,11 @@ export type Database = {
           daily_frequency: number | null
           description: string | null
           display_name: string
+          end_date: string | null
           id: string
           is_active: boolean | null
+          max_daily_views: number
+          max_views_per_user: number
           media_type: string
           media_url: string
           model_id: string | null
@@ -2918,13 +2996,17 @@ export type Database = {
           schedule_date: string | null
           schedule_status: string | null
           shareable_link: string | null
+          start_date: string | null
           title: string
           updated_at: string | null
           views_count: number | null
+          weight: number
         }
         Insert: {
+          advertiser?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          category?: string | null
           checkout_template_id?: string | null
           clicks_count?: number | null
           created_at?: string | null
@@ -2934,8 +3016,11 @@ export type Database = {
           daily_frequency?: number | null
           description?: string | null
           display_name: string
+          end_date?: string | null
           id?: string
           is_active?: boolean | null
+          max_daily_views?: number
+          max_views_per_user?: number
           media_type?: string
           media_url: string
           model_id?: string | null
@@ -2948,13 +3033,17 @@ export type Database = {
           schedule_date?: string | null
           schedule_status?: string | null
           shareable_link?: string | null
+          start_date?: string | null
           title: string
           updated_at?: string | null
           views_count?: number | null
+          weight?: number
         }
         Update: {
+          advertiser?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          category?: string | null
           checkout_template_id?: string | null
           clicks_count?: number | null
           created_at?: string | null
@@ -2964,8 +3053,11 @@ export type Database = {
           daily_frequency?: number | null
           description?: string | null
           display_name?: string
+          end_date?: string | null
           id?: string
           is_active?: boolean | null
+          max_daily_views?: number
+          max_views_per_user?: number
           media_type?: string
           media_url?: string
           model_id?: string | null
@@ -2978,9 +3070,11 @@ export type Database = {
           schedule_date?: string | null
           schedule_status?: string | null
           shareable_link?: string | null
+          start_date?: string | null
           title?: string
           updated_at?: string | null
           views_count?: number | null
+          weight?: number
         }
         Relationships: [
           {
@@ -10022,6 +10116,52 @@ export type Database = {
         Returns: Json
       }
       generate_unique_referral_code: { Args: never; Returns: string }
+      get_ad_queue: {
+        Args: { p_limit?: number; p_seen?: string[]; p_user_id?: string }
+        Returns: {
+          advertiser: string | null
+          avatar_url: string | null
+          banner_url: string | null
+          category: string | null
+          checkout_template_id: string | null
+          clicks_count: number | null
+          created_at: string | null
+          cta_link: string | null
+          cta_mode: string
+          cta_text: string | null
+          daily_frequency: number | null
+          description: string | null
+          display_name: string
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          max_daily_views: number
+          max_views_per_user: number
+          media_type: string
+          media_url: string
+          model_id: string | null
+          popup_cta_link: string | null
+          popup_cta_text: string | null
+          popup_media_type: string | null
+          popup_media_url: string | null
+          position_interval: number | null
+          priority: number | null
+          schedule_date: string | null
+          schedule_status: string | null
+          shareable_link: string | null
+          start_date: string | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+          weight: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "feed_promotions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_chat_panel_config: {
         Args: { p_entity_id: string; p_entity_type?: string }
         Returns: Json
@@ -10063,8 +10203,10 @@ export type Database = {
       get_smart_ads: {
         Args: { p_exclude_ids?: string[]; p_limit?: number; p_user_id: string }
         Returns: {
+          advertiser: string | null
           avatar_url: string | null
           banner_url: string | null
+          category: string | null
           checkout_template_id: string | null
           clicks_count: number | null
           created_at: string | null
@@ -10074,8 +10216,11 @@ export type Database = {
           daily_frequency: number | null
           description: string | null
           display_name: string
+          end_date: string | null
           id: string
           is_active: boolean | null
+          max_daily_views: number
+          max_views_per_user: number
           media_type: string
           media_url: string
           model_id: string | null
@@ -10088,9 +10233,11 @@ export type Database = {
           schedule_date: string | null
           schedule_status: string | null
           shareable_link: string | null
+          start_date: string | null
           title: string
           updated_at: string | null
           views_count: number | null
+          weight: number
         }[]
         SetofOptions: {
           from: "*"

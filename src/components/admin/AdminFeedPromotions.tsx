@@ -636,7 +636,16 @@ export const AdminFeedPromotions = () => {
         </Button>
       </div>
 
-      <AdminAdMetrics />
+      {/* Métricas do Ad Server (recolhível — os cards ficam sempre visíveis acima) */}
+      <details className="bg-gray-900 border border-gray-700 rounded-lg">
+        <summary className="cursor-pointer px-4 py-3 text-white font-bold select-none">
+          📊 Métricas do Ad Server (clique para abrir)
+        </summary>
+        <div className="p-4 pt-0">
+          <AdminAdMetrics />
+        </div>
+      </details>
+
 
 
 

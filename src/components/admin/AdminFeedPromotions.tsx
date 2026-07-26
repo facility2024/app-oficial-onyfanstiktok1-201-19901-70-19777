@@ -977,6 +977,43 @@ export const AdminFeedPromotions = () => {
               </div>
             </div>
 
+            {/* 🧠 Ad Server — distribuição inteligente */}
+            <div className="p-4 rounded-lg border border-emerald-500/30 bg-emerald-950/20 space-y-3">
+              <Label className="text-sm font-bold">Ad Server (distribuição inteligente)</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Categoria</Label>
+                  <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Ex.: Live, Loja, VIP" className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Anunciante</Label>
+                  <Input value={form.advertiser} onChange={(e) => setForm({ ...form, advertiser: e.target.value })} placeholder="Nome do anunciante" className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Peso de entrega</Label>
+                  <Input type="number" min={1} value={form.weight} onChange={(e) => setForm({ ...form, weight: Math.max(1, parseInt(e.target.value) || 1) })} className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Limite por usuário (0 = ilimitado)</Label>
+                  <Input type="number" min={0} value={form.max_views_per_user} onChange={(e) => setForm({ ...form, max_views_per_user: Math.max(0, parseInt(e.target.value) || 0) })} className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Máximo diário (0 = ilimitado)</Label>
+                  <Input type="number" min={0} value={form.max_daily_views} onChange={(e) => setForm({ ...form, max_daily_views: Math.max(0, parseInt(e.target.value) || 0) })} className={modalInputClass} />
+                </div>
+                <div />
+                <div>
+                  <Label>Data inicial</Label>
+                  <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className={modalInputClass} />
+                </div>
+                <div>
+                  <Label>Data final</Label>
+                  <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className={modalInputClass} />
+                </div>
+              </div>
+            </div>
+
+
             {/* Agendamento */}
             <div className="p-4 rounded-lg border border-yellow-500/30 bg-yellow-950/20 space-y-3">
               <Label className="text-sm font-bold flex items-center gap-2">

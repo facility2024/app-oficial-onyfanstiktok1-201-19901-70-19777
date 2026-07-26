@@ -966,57 +966,77 @@ export const AdminFeedPromotions = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            {/* 1️⃣ Posicionamento no feed (onde o anúncio aparece) */}
+            <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-950/20 space-y-3">
               <div>
-                <Label>Intervalo (a cada X vídeos)</Label>
-                <Input type="number" value={form.position_interval} onChange={(e) => setForm({ ...form, position_interval: parseInt(e.target.value) || 5 })} className={modalInputClass} />
+                <Label className="text-sm font-bold text-blue-300">1) Posicionamento no feed</Label>
+                <p className="text-xs text-gray-400 mt-1">Define <b>ONDE</b> e <b>QUANTAS VEZES</b> este anúncio pode ocupar um espaço no feed.</p>
               </div>
-              <div>
-                <Label>Vezes por dia no feed (máx 3)</Label>
-                <Input type="number" min={1} max={3} value={form.daily_frequency || 3} onChange={(e) => setForm({ ...form, daily_frequency: Math.min(3, Math.max(1, parseInt(e.target.value) || 3)) })} className={modalInputClass} />
-                <p className="text-xs text-gray-500 mt-1">1 = tarde • 2 = manhã e noite • 3 = manhã, tarde e noite</p>
-              </div>
-              <div>
-                <Label>Prioridade</Label>
-                <Input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} className={modalInputClass} />
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Intervalo (a cada X vídeos)</Label>
+                  <Input type="number" value={form.position_interval} onChange={(e) => setForm({ ...form, position_interval: parseInt(e.target.value) || 5 })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Espaço entre um anúncio e outro no feed.</p>
+                </div>
+                <div>
+                  <Label>Vezes por dia no feed (máx 3)</Label>
+                  <Input type="number" min={1} max={3} value={form.daily_frequency || 3} onChange={(e) => setForm({ ...form, daily_frequency: Math.min(3, Math.max(1, parseInt(e.target.value) || 3)) })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">1 = tarde • 2 = manhã e noite • 3 = manhã, tarde e noite</p>
+                </div>
+                <div>
+                  <Label>Prioridade</Label>
+                  <Input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Maior número entra antes na fila.</p>
+                </div>
               </div>
             </div>
 
-            {/* 🧠 Ad Server — distribuição inteligente */}
+            {/* 2️⃣ Ad Server — distribuição inteligente (quem vê e quantas vezes) */}
             <div className="p-4 rounded-lg border border-emerald-500/30 bg-emerald-950/20 space-y-3">
-              <Label className="text-sm font-bold">Ad Server (distribuição inteligente)</Label>
+              <div>
+                <Label className="text-sm font-bold text-emerald-300">2) Ad Server (distribuição inteligente)</Label>
+                <p className="text-xs text-gray-400 mt-1">Define <b>PARA QUEM</b>, <b>QUANDO</b> e <b>ATÉ QUANTAS VEZES</b> o anúncio é entregue. Não substitui o bloco 1 — os dois trabalham juntos: o bloco 1 cria o espaço, este escolhe qual anúncio ocupa o espaço.</p>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Categoria</Label>
                   <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Ex.: Live, Loja, VIP" className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Evita dois anúncios da mesma categoria em sequência.</p>
                 </div>
                 <div>
                   <Label>Anunciante</Label>
                   <Input value={form.advertiser} onChange={(e) => setForm({ ...form, advertiser: e.target.value })} placeholder="Nome do anunciante" className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Evita repetir o mesmo anunciante seguido.</p>
                 </div>
                 <div>
                   <Label>Peso de entrega</Label>
                   <Input type="number" min={1} value={form.weight} onChange={(e) => setForm({ ...form, weight: Math.max(1, parseInt(e.target.value) || 1) })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Peso 3 aparece ~3x mais que peso 1.</p>
                 </div>
                 <div>
                   <Label>Limite por usuário (0 = ilimitado)</Label>
                   <Input type="number" min={0} value={form.max_views_per_user} onChange={(e) => setForm({ ...form, max_views_per_user: Math.max(0, parseInt(e.target.value) || 0) })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Após esse total, o usuário não vê mais este anúncio.</p>
                 </div>
                 <div>
                   <Label>Máximo diário (0 = ilimitado)</Label>
                   <Input type="number" min={0} value={form.max_daily_views} onChange={(e) => setForm({ ...form, max_daily_views: Math.max(0, parseInt(e.target.value) || 0) })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Teto de exibições por dia (todos os usuários).</p>
                 </div>
                 <div />
                 <div>
                   <Label>Data inicial</Label>
                   <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Vazio = começa imediatamente.</p>
                 </div>
                 <div>
                   <Label>Data final</Label>
                   <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className={modalInputClass} />
+                  <p className="text-xs text-gray-500 mt-1">Vazio = sem data de término.</p>
                 </div>
               </div>
             </div>
+
 
 
             {/* Agendamento */}

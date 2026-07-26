@@ -613,11 +613,13 @@ export const TikTokApp = () => {
   // 📢 Montagem estável do feed com promos, sem reescrever o estado base de vídeos
   const displayVideos = useMemo(() => {
     if (videos.length === 0) return [] as Video[];
-    if (promotions.length === 0) return videos;
+    // 🧠 Ad Server: fila exclusiva do usuário; fallback para a lista padrão
+    const adPool = (adQueue.length > 0 ? adQueue : promotions) as typeof promotions;
+    if (adPool.length === 0) return videos;
 
     const adminInterval = Math.max(
       1,
-      Math.min(...promotions.map(p => p.position_interval || 5))
+      Math.min(...adPool.map(p => p.position_interval || 5))
     );
 
     const result: Video[] = [];
@@ -629,13 +631,14 @@ export const TikTokApp = () => {
       if ((index + 1) % adminInterval !== 0) return;
 
       const slotIndex = Math.floor((index + 1) / adminInterval) - 1;
-      let selectedPromo = promotions[slotIndex % promotions.length];
+      let selectedPromo = adPool[slotIndex % adPool.length];
 
-      if (promotions.length > 1 && selectedPromo.id === lastPromoId) {
-        selectedPromo = promotions[(slotIndex + 1) % promotions.length];
+      if (adPool.length > 1 && selectedPromo.id === lastPromoId) {
+        selectedPromo = adPool[(slotIndex + 1) % adPool.length];
       }
 
       lastPromoId = selectedPromo.id;
+
 
       result.push({
         id: `promo-${selectedPromo.id}-slot-${slotIndex}`,

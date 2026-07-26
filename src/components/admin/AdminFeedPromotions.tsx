@@ -207,6 +207,13 @@ export const AdminFeedPromotions = () => {
         model_id: formData.model_id || null,
         daily_frequency: formData.daily_frequency || 0,
         checkout_template_id: await resolveCheckoutTemplateId(formData.cta_link),
+        category: formData.category || null,
+        advertiser: formData.advertiser || null,
+        weight: Math.max(1, Number(formData.weight) || 1),
+        start_date: formData.start_date ? `${formData.start_date}T00:00:00` : null,
+        end_date: formData.end_date ? `${formData.end_date}T23:59:59` : null,
+        max_views_per_user: Math.max(0, Number(formData.max_views_per_user) || 0),
+        max_daily_views: Math.max(0, Number(formData.max_daily_views) || 0),
       };
 
       if (formData.id) {

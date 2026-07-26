@@ -526,6 +526,13 @@ export const TikTokApp = () => {
     promoCtaBusyRef.current = true;
     window.setTimeout(() => { promoCtaBusyRef.current = false; }, 800);
 
+    // 🧠 Ad Server: métrica de clique (CTR)
+    const promoIdMatch = typeof videoOrLink !== 'string'
+      ? String(videoOrLink?.id || '').match(/^promo-([0-9a-f-]{36})/i)
+      : null;
+    if (promoIdMatch?.[1]) void registerAdClick(promoIdMatch[1]);
+
+
     const link = typeof videoOrLink === 'string' ? videoOrLink : videoOrLink?._promoCtaLink;
     const isPopupPromo = typeof videoOrLink !== 'string' && videoOrLink?._promoCtaMode === 'popup';
 

@@ -10116,6 +10116,21 @@ export type Database = {
         Returns: Json
       }
       generate_unique_referral_code: { Args: never; Returns: string }
+      get_ad_metrics: {
+        Args: never
+        Returns: {
+          abandon_rate: number
+          advertiser: string
+          avg_watch_ms: number
+          category: string
+          clicks: number
+          completed_views: number
+          ctr: number
+          impressions: number
+          promo_id: string
+          title: string
+        }[]
+      }
       get_ad_queue: {
         Args: { p_limit?: number; p_seen?: string[]; p_user_id?: string }
         Returns: {

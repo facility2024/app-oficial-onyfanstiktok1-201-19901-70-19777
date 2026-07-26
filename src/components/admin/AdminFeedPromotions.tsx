@@ -586,6 +586,13 @@ export const AdminFeedPromotions = () => {
         daily_frequency: form.daily_frequency || 0,
         shareable_link: `${window.location.origin}/app`,
         checkout_template_id: await resolveCheckoutTemplateId(form.cta_link),
+        category: form.category || null,
+        advertiser: form.advertiser || null,
+        weight: Math.max(1, Number(form.weight) || 1),
+        start_date: form.start_date ? `${form.start_date}T00:00:00` : null,
+        end_date: form.end_date ? `${form.end_date}T23:59:59` : null,
+        max_views_per_user: Math.max(0, Number(form.max_views_per_user) || 0),
+        max_daily_views: Math.max(0, Number(form.max_daily_views) || 0),
       };
 
       const { error } = await (supabase as any).from('feed_promotions').insert(payload);

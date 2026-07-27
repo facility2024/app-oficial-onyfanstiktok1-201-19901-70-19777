@@ -2723,16 +2723,34 @@ export const TikTokApp = () => {
     }
   };
   const createLikeExplosion = () => {
-    const heart = document.createElement('div');
-    heart.innerHTML = '❤️';
-    heart.className = 'like-explosion-heart';
-    heart.style.left = Math.random() * window.innerWidth + 'px';
-    heart.style.top = Math.random() * window.innerHeight + 'px';
-    document.body.appendChild(heart);
-    setTimeout(() => {
-      document.body.removeChild(heart);
-    }, 1200);
+    const layer = document.createElement('div');
+    layer.className = 'like-burst-layer';
+    const emojis = ['❤️', '💖', '💗', '💕', '❤️‍🔥', '💘'];
+    const total = 16;
+
+    for (let i = 0; i < total; i++) {
+      const heart = document.createElement('span');
+      heart.className = 'like-burst-heart';
+      heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      const angle = (Math.PI * 2 * i) / total + (Math.random() - 0.5) * 0.4;
+      const distance = 90 + Math.random() * 160;
+      heart.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+      heart.style.setProperty('--ty', `${Math.sin(angle) * distance - 60}px`);
+      heart.style.setProperty('--rot', `${(Math.random() - 0.5) * 120}deg`);
+      heart.style.setProperty('--scale', `${0.8 + Math.random() * 0.9}`);
+      heart.style.animationDelay = `${Math.random() * 0.12}s`;
+      layer.appendChild(heart);
+    }
+
+    const bigHeart = document.createElement('span');
+    bigHeart.className = 'like-burst-core';
+    bigHeart.textContent = '❤️';
+    layer.appendChild(bigHeart);
+
+    document.body.appendChild(layer);
+    setTimeout(() => layer.remove(), 1400);
   };
+
   // 🤖 Auto-resposta individual da modelo — só dispara no envio do usuário nesse chat
   //    Gerenciada pelo admin: exige videos.comment_auto_reply_enabled = true
   //    e um comment_auto_reply_configs ativo para o dono (model/creator).

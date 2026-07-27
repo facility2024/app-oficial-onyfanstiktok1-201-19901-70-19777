@@ -63,25 +63,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     useEffect(() => subscribeAudioUnlock(() => setAudioUnlocked(true)), []);
 
-    // Registra o elemento no AudioSessionManager (retomada automática ao voltar
-    // do background / troca de aba / rotação / reconexão). Não altera a UI.
-    useEffect(() => {
-      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
-      const unregisterVideo = audioSessionManager.registerMedia(video);
-      const unregisterAudio = audioSessionManager.registerMedia(audioRef.current);
-      return () => {
-        unregisterVideo();
-        unregisterAudio();
-      };
-    }, [internalRef, playbackSrc, hasAudioOverlay]);
-
-    // Sinaliza ao manager qual player deve ser retomado.
-    useEffect(() => {
-      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
-      if (!video) return;
-      video.dataset.audioShouldPlay = String(Boolean(isPlaying || autoPlayOnReady));
-    }, [internalRef, isPlaying, autoPlayOnReady]);
-
     // Detectar tipo de dispositivo
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
@@ -100,6 +81,25 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
+
+    // Registra o elemento no AudioSessionManager (retomada automática ao voltar
+    // do background / troca de aba / rotação / reconexão). Não altera a UI.
+    useEffect(() => {
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      const unregisterVideo = audioSessionManager.registerMedia(video);
+      const unregisterAudio = audioSessionManager.registerMedia(audioRef.current);
+      return () => {
+        unregisterVideo();
+        unregisterAudio();
+      };
+    }, [internalRef, playbackSrc, hasAudioOverlay]);
+
+    // Sinaliza ao manager qual player deve ser retomado.
+    useEffect(() => {
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      if (!video) return;
+      video.dataset.audioShouldPlay = String(Boolean(isPlaying || autoPlayOnReady));
+    }, [internalRef, isPlaying, autoPlayOnReady]);
 
     // Configuração inicial do vídeo
     const setupVideo = useCallback(() => {

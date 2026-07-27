@@ -243,6 +243,8 @@ export const TikTokApp = () => {
   } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
+  // Contagem de curtidas local (evita recriar a lista do feed e "piscar" o vídeo)
+  const [likeOverrides, setLikeOverrides] = useState<Record<string, number>>({});
   const isTogglingLikeRef = useRef(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});
@@ -703,7 +705,12 @@ export const TikTokApp = () => {
 
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
-  const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
+  const rawCurrentVideoKey = String((rawCurrentVideo as any)?._originalId || rawCurrentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
+  const currentVideo = rawCurrentVideo ? {
+    ...rawCurrentVideo,
+    user: rawCurrentVideo.user || defaultUser,
+    likes_count: likeOverrides[rawCurrentVideoKey] ?? rawCurrentVideo.likes_count,
+  } : null;
   const visibleComments = useMemo(() => {
     const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
     if (!activeVideoId) return [];
@@ -2571,10 +2578,10 @@ export const TikTokApp = () => {
         setIsLiked(true);
         localStorage.setItem(`liked_${dataVideoId}`, 'true');
         if (!wasLiked) {
-          setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
-            ...video,
-            likes_count: Math.max(0, (video.likes_count || 0) + 1)
-          } : video));
+          setLikeOverrides(prev => ({
+            ...prev,
+            [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? currentVideo.likes_count ?? 0) + 1)
+          }));
           createLikeExplosion();
         }
         return;
@@ -2700,10 +2707,7 @@ export const TikTokApp = () => {
       if (error) throw error;
 
       // Update local state
-      setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
-        ...video,
-        likes_count: newCount
-      } : video));
+      setLikeOverrides(prev => ({ ...prev, [dataVideoId]: newCount }));
 
       if (didPersistNewLike) {
         // Add like explosion animation apenas quando a curtida foi gravada agora
@@ -2719,16 +2723,34 @@ export const TikTokApp = () => {
     }
   };
   const createLikeExplosion = () => {
-    const heart = document.createElement('div');
-    heart.innerHTML = '❤️';
-    heart.className = 'like-explosion-heart';
-    heart.style.left = Math.random() * window.innerWidth + 'px';
-    heart.style.top = Math.random() * window.innerHeight + 'px';
-    document.body.appendChild(heart);
-    setTimeout(() => {
-      document.body.removeChild(heart);
-    }, 1200);
+    const layer = document.createElement('div');
+    layer.className = 'like-burst-layer';
+    const emojis = ['❤️', '💖', '💗', '💕', '❤️‍🔥', '💘'];
+    const total = 16;
+
+    for (let i = 0; i < total; i++) {
+      const heart = document.createElement('span');
+      heart.className = 'like-burst-heart';
+      heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      const angle = (Math.PI * 2 * i) / total + (Math.random() - 0.5) * 0.4;
+      const distance = 90 + Math.random() * 160;
+      heart.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+      heart.style.setProperty('--ty', `${Math.sin(angle) * distance - 60}px`);
+      heart.style.setProperty('--rot', `${(Math.random() - 0.5) * 120}deg`);
+      heart.style.setProperty('--scale', `${0.8 + Math.random() * 0.9}`);
+      heart.style.animationDelay = `${Math.random() * 0.12}s`;
+      layer.appendChild(heart);
+    }
+
+    const bigHeart = document.createElement('span');
+    bigHeart.className = 'like-burst-core';
+    bigHeart.textContent = '❤️';
+    layer.appendChild(bigHeart);
+
+    document.body.appendChild(layer);
+    setTimeout(() => layer.remove(), 1400);
   };
+
   // 🤖 Auto-resposta individual da modelo — só dispara no envio do usuário nesse chat
   //    Gerenciada pelo admin: exige videos.comment_auto_reply_enabled = true
   //    e um comment_auto_reply_configs ativo para o dono (model/creator).

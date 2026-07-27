@@ -14,6 +14,7 @@ import type { FeedPromotion } from './useFeedPromotions';
  */
 
 const SEEN_KEY = 'ad_server_seen_v1';
+const PERIOD_LOG_KEY = 'ad_server_period_log_v1';
 const SESSION_KEY = 'ad_server_session_v1';
 const QUEUE_SIZE = 100;
 
@@ -40,6 +41,35 @@ export const dayPartsForFrequency = (freq?: number | null): DayPart[] => {
 
 const isAdAllowedNow = (promo: any, part: DayPart): boolean =>
   dayPartsForFrequency(promo?.daily_frequency).includes(part);
+
+/** Chave local de data (evita fuso UTC) */
+const localDateKey = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Chave única: anúncio + dia + período (1 exibição por período) */
+const periodKey = (promoId: string, d = new Date()) =>
+  `${promoId}|${localDateKey(d)}|${getCurrentDayPart(d)}`;
+
+const readPeriodLog = (): string[] => {
+  try {
+    const raw = localStorage.getItem(PERIOD_LOG_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    const today = localDateKey();
+    // mantém apenas registros do dia atual
+    return parsed.filter((k) => typeof k === 'string' && k.includes(`|${today}|`));
+  } catch {
+    return [];
+  }
+};
+
+const writePeriodLog = (keys: string[]) => {
+  try {
+    localStorage.setItem(PERIOD_LOG_KEY, JSON.stringify(keys));
+  } catch {
+    /* noop */
+  }
+};
 
 
 const readLocalSeen = (): string[] => {
@@ -101,6 +131,7 @@ export const useAdServer = () => {
   const [authReady, setAuthReady] = useState(false);
   const [queue, setQueue] = useState<FeedPromotion[]>([]);
   const seenRef = useRef<string[]>([]);
+  const periodLogRef = useRef<Set<string>>(new Set(readPeriodLog()));
   const impressionTrackedRef = useRef<Set<string>>(new Set());
   const loadingRef = useRef(false);
 
@@ -132,6 +163,28 @@ export const useAdServer = () => {
     return (data || []).map((r: any) => r.promo_id as string);
   }, []);
 
+  /** Reconstrói o log "1x por período" (local + banco, para o dia atual) */
+  const loadPeriodLog = useCallback(async (uid: string | null): Promise<Set<string>> => {
+    const log = new Set<string>(readPeriodLog());
+    if (uid) {
+      const { data } = await (supabase as any)
+        .from('ad_user_history')
+        .select('promo_id, last_shown_at')
+        .eq('user_id', uid);
+      const today = localDateKey();
+      const part = getCurrentDayPart();
+      (data || []).forEach((r: any) => {
+        if (!r?.last_shown_at) return;
+        const d = new Date(r.last_shown_at);
+        if (localDateKey(d) === today && getCurrentDayPart(d) === part) {
+          log.add(periodKey(r.promo_id, d));
+        }
+      });
+    }
+    writePeriodLog(Array.from(log));
+    return log;
+  }, []);
+
   const resetHistory = useCallback(async (uid: string | null) => {
     seenRef.current = [];
     writeLocalSeen([]);
@@ -139,6 +192,7 @@ export const useAdServer = () => {
     if (!uid) return;
     await (supabase as any).from('ad_user_history').delete().eq('user_id', uid);
   }, []);
+
 
   const fetchQueue = useCallback(
     async (uid: string | null, seen: string[]): Promise<FeedPromotion[]> => {
@@ -170,23 +224,29 @@ export const useAdServer = () => {
     try {
       const seen = await loadSeen(userId);
       seenRef.current = seen;
+      const periodLog = await loadPeriodLog(userId);
+      periodLogRef.current = periodLog;
+
       let list = await fetchQueue(userId, seen);
 
-      // Todos já foram vistos → reinicia histórico e gera nova ordem aleatória
+      // Todos já foram vistos → reinicia o ciclo (mantém o log por período do dia)
       if (list.length === 0 && seen.length > 0) {
         await resetHistory(userId);
         list = await fetchQueue(userId, []);
       }
 
-      // 🕒 Respeita a frequência diária (período do dia) de cada anúncio
+      // 🕒 Frequência diária: período permitido + no máximo 1 exibição por período
       const part = getCurrentDayPart();
-      const allowed = list.filter((p) => isAdAllowedNow(p, part));
+      const allowed = list.filter(
+        (p) => isAdAllowedNow(p, part) && !periodLog.has(periodKey(p.id))
+      );
 
       setQueue(spreadQueue(allowed));
     } finally {
       loadingRef.current = false;
     }
-  }, [userId, loadSeen, fetchQueue, resetHistory]);
+  }, [userId, loadSeen, loadPeriodLog, fetchQueue, resetHistory]);
+
 
   // Reavalia a fila quando o período do dia muda (manhã → tarde → noite)
   useEffect(() => {
@@ -236,6 +296,14 @@ export const useAdServer = () => {
         seenRef.current = [...seenRef.current, promoId];
         if (!userId) writeLocalSeen(seenRef.current);
       }
+
+      // 🕒 Marca que este anúncio já apareceu neste período do dia (1x por período)
+      const pKey = periodKey(promoId);
+      if (!periodLogRef.current.has(pKey)) {
+        periodLogRef.current.add(pKey);
+        writePeriodLog(Array.from(periodLogRef.current));
+      }
+
 
       try {
         await (supabase as any).from('ad_impressions').insert({
@@ -314,14 +382,15 @@ export const useAdServer = () => {
     [userId]
   );
 
-  /** Anúncio para um slot do feed (nunca repete o anterior) */
+  /** Anúncio para um slot do feed (1 exibição por anúncio por período) */
   const getAdForSlot = useCallback(
     (slotIndex: number): FeedPromotion | null => {
-      if (queue.length === 0) return null;
-      return queue[slotIndex % queue.length] || null;
+      if (queue.length === 0 || slotIndex >= queue.length) return null;
+      return queue[slotIndex] || null;
     },
     [queue]
   );
+
 
   const interval = useMemo(() => {
     if (queue.length === 0) return 0;

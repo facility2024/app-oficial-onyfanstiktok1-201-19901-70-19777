@@ -639,13 +639,13 @@ export const TikTokApp = () => {
       if ((index + 1) % adminInterval !== 0) return;
 
       const slotIndex = Math.floor((index + 1) / adminInterval) - 1;
-      let selectedPromo = adPool[slotIndex % adPool.length];
-
-      if (adPool.length > 1 && selectedPromo.id === lastPromoId) {
-        selectedPromo = adPool[(slotIndex + 1) % adPool.length];
-      }
+      // 🕒 1 exibição por anúncio por período do dia: não recicla a fila
+      if (slotIndex >= adPool.length) return;
+      const selectedPromo = adPool[slotIndex];
+      if (!selectedPromo || selectedPromo.id === lastPromoId) return;
 
       lastPromoId = selectedPromo.id;
+
 
 
       result.push({

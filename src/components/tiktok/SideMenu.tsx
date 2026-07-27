@@ -1,9 +1,8 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { AvatarWithFallback } from '@/components/ui/AvatarWithFallback';
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
-import { Slider } from '@/components/ui/slider';
 import React from 'react';
 
 interface SideMenuProps {
@@ -51,7 +50,6 @@ export const SideMenu = ({
   isChatOnline = false,
   onShare
 }: SideMenuProps) => {
-  const [showVolumeSlider, setShowVolumeSlider] = React.useState(false);
 
   const formatCount = (count?: number) => {
     // Handle undefined or null values
@@ -195,52 +193,20 @@ export const SideMenu = ({
       )}
 
 
-      {/* Sound with Volume Slider */}
+      {/* Som: apenas liga/desliga. O volume é controlado pelo aparelho do usuário. */}
       <div className="flex flex-col items-center relative">
-        <div 
-          className="flex flex-col items-center cursor-pointer group" 
-          onClick={() => setShowVolumeSlider(!showVolumeSlider)}
-          onMouseEnter={() => setShowVolumeSlider(true)}
+        <div
+          className="flex flex-col items-center cursor-pointer group"
+          onClick={onToggleSound}
         >
           <div className="w-12 h-12 flex items-center justify-center transition-all">
-            {isMuted || volume === 0 ? (
+            {isMuted ? (
               <VolumeX className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
-            ) : volume < 0.5 ? (
-              <Volume1 className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
             ) : (
               <Volume2 className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
             )}
           </div>
         </div>
-        
-        {/* Volume Slider Popup */}
-        {showVolumeSlider && (
-          <div 
-            className="absolute right-14 top-0 bg-black/80 backdrop-blur-md rounded-lg p-3 flex items-center gap-3 z-50"
-            onMouseLeave={() => setShowVolumeSlider(false)}
-          >
-            <Slider
-              value={[volume * 100]}
-              max={100}
-              step={1}
-              className="w-24"
-              onValueChange={(value) => {
-                const newVolume = value[0] / 100;
-                onVolumeChange?.(newVolume);
-                if (newVolume > 0 && isMuted) onToggleSound();
-              }}
-            />
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSound();
-              }}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
-            >
-              {isMuted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Compartilhar */}

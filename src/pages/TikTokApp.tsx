@@ -261,10 +261,8 @@ export const TikTokApp = () => {
     const saved = localStorage.getItem('app_isMuted');
     return saved === 'true';
   });
-  const [volume, setVolume] = useState(() => {
-    const saved = localStorage.getItem('app_volume');
-    return saved ? parseFloat(saved) : 0.8; // Default 80%
-  });
+  // Volume sempre 100% no app: quem controla o nível é o aparelho do usuário.
+  const [volume, setVolume] = useState(1);
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
@@ -329,10 +327,10 @@ export const TikTokApp = () => {
     localStorage.setItem('app_isMuted', isMuted.toString());
   }, [isMuted]);
 
-  // 🔊 PERSISTIR ESTADO DE VOLUME
+  // Volume não é mais persistido: controlado pelo hardware do aparelho.
   useEffect(() => {
-    localStorage.setItem('app_volume', volume.toString());
-  }, [volume]);
+    localStorage.removeItem('app_volume');
+  }, []);
 
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);

@@ -703,7 +703,12 @@ export const TikTokApp = () => {
 
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
-  const currentVideo = rawCurrentVideo ? { ...rawCurrentVideo, user: rawCurrentVideo.user || defaultUser } : null;
+  const rawCurrentVideoKey = String((rawCurrentVideo as any)?._originalId || rawCurrentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
+  const currentVideo = rawCurrentVideo ? {
+    ...rawCurrentVideo,
+    user: rawCurrentVideo.user || defaultUser,
+    likes_count: likeOverrides[rawCurrentVideoKey] ?? rawCurrentVideo.likes_count,
+  } : null;
   const visibleComments = useMemo(() => {
     const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
     if (!activeVideoId) return [];

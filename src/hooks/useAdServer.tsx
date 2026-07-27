@@ -224,23 +224,29 @@ export const useAdServer = () => {
     try {
       const seen = await loadSeen(userId);
       seenRef.current = seen;
+      const periodLog = await loadPeriodLog(userId);
+      periodLogRef.current = periodLog;
+
       let list = await fetchQueue(userId, seen);
 
-      // Todos já foram vistos → reinicia histórico e gera nova ordem aleatória
+      // Todos já foram vistos → reinicia o ciclo (mantém o log por período do dia)
       if (list.length === 0 && seen.length > 0) {
         await resetHistory(userId);
         list = await fetchQueue(userId, []);
       }
 
-      // 🕒 Respeita a frequência diária (período do dia) de cada anúncio
+      // 🕒 Frequência diária: período permitido + no máximo 1 exibição por período
       const part = getCurrentDayPart();
-      const allowed = list.filter((p) => isAdAllowedNow(p, part));
+      const allowed = list.filter(
+        (p) => isAdAllowedNow(p, part) && !periodLog.has(periodKey(p.id))
+      );
 
       setQueue(spreadQueue(allowed));
     } finally {
       loadingRef.current = false;
     }
-  }, [userId, loadSeen, fetchQueue, resetHistory]);
+  }, [userId, loadSeen, loadPeriodLog, fetchQueue, resetHistory]);
+
 
   // Reavalia a fila quando o período do dia muda (manhã → tarde → noite)
   useEffect(() => {

@@ -382,14 +382,15 @@ export const useAdServer = () => {
     [userId]
   );
 
-  /** Anúncio para um slot do feed (nunca repete o anterior) */
+  /** Anúncio para um slot do feed (1 exibição por anúncio por período) */
   const getAdForSlot = useCallback(
     (slotIndex: number): FeedPromotion | null => {
-      if (queue.length === 0) return null;
-      return queue[slotIndex % queue.length] || null;
+      if (queue.length === 0 || slotIndex >= queue.length) return null;
+      return queue[slotIndex] || null;
     },
     [queue]
   );
+
 
   const interval = useMemo(() => {
     if (queue.length === 0) return 0;

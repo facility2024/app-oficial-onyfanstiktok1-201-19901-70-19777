@@ -131,6 +131,7 @@ export const useAdServer = () => {
   const [authReady, setAuthReady] = useState(false);
   const [queue, setQueue] = useState<FeedPromotion[]>([]);
   const seenRef = useRef<string[]>([]);
+  const periodLogRef = useRef<Set<string>>(new Set(readPeriodLog()));
   const impressionTrackedRef = useRef<Set<string>>(new Set());
   const loadingRef = useRef(false);
 

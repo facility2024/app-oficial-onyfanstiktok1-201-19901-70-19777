@@ -297,6 +297,14 @@ export const useAdServer = () => {
         if (!userId) writeLocalSeen(seenRef.current);
       }
 
+      // 🕒 Marca que este anúncio já apareceu neste período do dia (1x por período)
+      const pKey = periodKey(promoId);
+      if (!periodLogRef.current.has(pKey)) {
+        periodLogRef.current.add(pKey);
+        writePeriodLog(Array.from(periodLogRef.current));
+      }
+
+
       try {
         await (supabase as any).from('ad_impressions').insert({
           promo_id: promoId,

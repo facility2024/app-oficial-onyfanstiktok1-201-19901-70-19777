@@ -327,10 +327,10 @@ export const TikTokApp = () => {
     localStorage.setItem('app_isMuted', isMuted.toString());
   }, [isMuted]);
 
-  // 🔊 PERSISTIR ESTADO DE VOLUME
+  // Volume não é mais persistido: controlado pelo hardware do aparelho.
   useEffect(() => {
-    localStorage.setItem('app_volume', volume.toString());
-  }, [volume]);
+    localStorage.removeItem('app_volume');
+  }, []);
 
   // 📱 NOVA LÓGICA: Estados para feed infinito em blocos
   const [currentPage, setCurrentPage] = useState(0);

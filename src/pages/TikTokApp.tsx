@@ -2578,10 +2578,10 @@ export const TikTokApp = () => {
         setIsLiked(true);
         localStorage.setItem(`liked_${dataVideoId}`, 'true');
         if (!wasLiked) {
-          setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
-            ...video,
-            likes_count: Math.max(0, (video.likes_count || 0) + 1)
-          } : video));
+          setLikeOverrides(prev => ({
+            ...prev,
+            [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? currentVideo.likes_count ?? 0) + 1)
+          }));
           createLikeExplosion();
         }
         return;

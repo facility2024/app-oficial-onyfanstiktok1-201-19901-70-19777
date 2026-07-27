@@ -58,7 +58,6 @@ import { useVideoTracking } from '@/hooks/useVideoTracking';
 import AdsGarotasTopModal from '@/components/tiktok/AdsGarotasTopModal';
 import AdsLatinasModal from '@/components/tiktok/AdsLatinasModal';
 
-import { useFeedPromotions } from '@/hooks/useFeedPromotions';
 import { useAdServer } from '@/hooks/useAdServer';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
 interface Video {
@@ -211,14 +210,14 @@ export const TikTokApp = () => {
   const videoWatchStartRef = useRef<number>(0);
   const lastTrackedVideoRef = useRef<string>('');
 
-  // 📢 PROMOÇÕES NO FEED
-  const { promotions, registerPromoView } = useFeedPromotions();
-  // 🧠 AD SERVER — fila exclusiva por usuário, sem repetição e com métricas
+  // 🧠 AD SERVER (única fonte de anúncios do feed) — fila exclusiva por usuário,
+  // sem repetição, com prioridade, período do dia, limites e métricas.
   const {
     adQueue,
     registerImpression: registerAdImpression,
     registerClick: registerAdClick,
   } = useAdServer();
+
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);
@@ -621,7 +620,7 @@ export const TikTokApp = () => {
   const displayVideos = useMemo(() => {
     if (videos.length === 0) return [] as Video[];
     // 🧠 Ad Server: fila exclusiva do usuário; fallback para a lista padrão
-    const adPool = (adQueue.length > 0 ? adQueue : promotions) as typeof promotions;
+    const adPool = adQueue;
     if (adPool.length === 0) return videos;
 
     const adminInterval = Math.max(
@@ -694,7 +693,7 @@ export const TikTokApp = () => {
       return [sharedPromoVideo, ...result];
     }
     return result;
-  }, [videos, promotions, adQueue, sharedPromoVideo]);
+  }, [videos, adQueue, sharedPromoVideo]);
 
   useEffect(() => {
     if (displayVideos.length === 0) return;
@@ -722,10 +721,9 @@ export const TikTokApp = () => {
     // dedup por slot na sessão (evita contar re-render do mesmo slide)
     if (promoViewTrackedRef.current.has(vid.id)) return;
     promoViewTrackedRef.current.add(vid.id);
-    registerPromoView(promoId);
     // 🧠 Ad Server: impressão + histórico individual (reinicia a fila ao esgotar)
     void registerAdImpression(promoId, vid.id);
-  }, [currentVideo, registerPromoView, registerAdImpression]);
+  }, [currentVideo, registerAdImpression]);
   const getVideoDataId = (video?: any): string => String(video?._originalId || video?.id || '').replace(/-block-\d+-\d+$/, '');
   const isValidUUID = (value?: string | null): boolean =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));

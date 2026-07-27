@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Play, RefreshCw } from 'lucide-react';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 import { isAudioUnlocked, subscribeAudioUnlock, unlockAudio } from '@/utils/audioUnlock';
+import { audioSessionManager } from '@/services/AudioSessionManager';
 
 interface UniversalVideoPlayerProps {
   src: string;
@@ -81,6 +82,25 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     // Usar ref externo se fornecido
     const internalRef = ref || videoRef;
+
+    // Registra o elemento no AudioSessionManager (retomada automática ao voltar
+    // do background / troca de aba / rotação / reconexão). Não altera a UI.
+    useEffect(() => {
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      const unregisterVideo = audioSessionManager.registerMedia(video);
+      const unregisterAudio = audioSessionManager.registerMedia(audioRef.current);
+      return () => {
+        unregisterVideo();
+        unregisterAudio();
+      };
+    }, [internalRef, playbackSrc, hasAudioOverlay]);
+
+    // Sinaliza ao manager qual player deve ser retomado.
+    useEffect(() => {
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      if (!video) return;
+      video.dataset.audioShouldPlay = String(Boolean(isPlaying || autoPlayOnReady));
+    }, [internalRef, isPlaying, autoPlayOnReady]);
 
     // Configuração inicial do vídeo
     const setupVideo = useCallback(() => {

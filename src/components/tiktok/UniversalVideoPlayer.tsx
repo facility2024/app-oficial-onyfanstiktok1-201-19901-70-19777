@@ -45,6 +45,8 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const [hasError, setHasError] = useState(false);
     const [needsUserInteraction, setNeedsUserInteraction] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const [isLandscape, setIsLandscape] = useState(false);
+
     const [userStarted, setUserStarted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);

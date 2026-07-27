@@ -14,6 +14,7 @@ import type { FeedPromotion } from './useFeedPromotions';
  */
 
 const SEEN_KEY = 'ad_server_seen_v1';
+const PERIOD_LOG_KEY = 'ad_server_period_log_v1';
 const SESSION_KEY = 'ad_server_session_v1';
 const QUEUE_SIZE = 100;
 

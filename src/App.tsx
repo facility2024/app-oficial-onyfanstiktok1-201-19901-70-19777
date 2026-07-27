@@ -247,6 +247,7 @@ const App = () => (
           </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </AudioSessionProvider>
     </CartProvider>
   </QueryClientProvider>
 );

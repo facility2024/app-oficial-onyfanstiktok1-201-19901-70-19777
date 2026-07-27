@@ -211,14 +211,14 @@ export const TikTokApp = () => {
   const videoWatchStartRef = useRef<number>(0);
   const lastTrackedVideoRef = useRef<string>('');
 
-  // 📢 PROMOÇÕES NO FEED
-  const { promotions, registerPromoView } = useFeedPromotions();
-  // 🧠 AD SERVER — fila exclusiva por usuário, sem repetição e com métricas
+  // 🧠 AD SERVER (única fonte de anúncios do feed) — fila exclusiva por usuário,
+  // sem repetição, com prioridade, período do dia, limites e métricas.
   const {
     adQueue,
     registerImpression: registerAdImpression,
     registerClick: registerAdClick,
   } = useAdServer();
+
 
   // Flag para evitar loops de refresh
   const isRefreshingFeed = useRef(false);

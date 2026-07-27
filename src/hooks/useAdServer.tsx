@@ -42,6 +42,35 @@ export const dayPartsForFrequency = (freq?: number | null): DayPart[] => {
 const isAdAllowedNow = (promo: any, part: DayPart): boolean =>
   dayPartsForFrequency(promo?.daily_frequency).includes(part);
 
+/** Chave local de data (evita fuso UTC) */
+const localDateKey = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Chave única: anúncio + dia + período (1 exibição por período) */
+const periodKey = (promoId: string, d = new Date()) =>
+  `${promoId}|${localDateKey(d)}|${getCurrentDayPart(d)}`;
+
+const readPeriodLog = (): string[] => {
+  try {
+    const raw = localStorage.getItem(PERIOD_LOG_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    const today = localDateKey();
+    // mantém apenas registros do dia atual
+    return parsed.filter((k) => typeof k === 'string' && k.includes(`|${today}|`));
+  } catch {
+    return [];
+  }
+};
+
+const writePeriodLog = (keys: string[]) => {
+  try {
+    localStorage.setItem(PERIOD_LOG_KEY, JSON.stringify(keys));
+  } catch {
+    /* noop */
+  }
+};
+
 
 const readLocalSeen = (): string[] => {
   try {

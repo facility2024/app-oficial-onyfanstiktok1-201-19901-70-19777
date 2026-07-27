@@ -11,6 +11,7 @@ import { AdminRoute } from "@/components/AdminRoute";
 import { AdminGlobalAlerts } from "@/components/AdminGlobalAlerts";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CartProvider } from "./contexts/CartContext";
+import { AudioSessionProvider } from "./contexts/AudioSessionContext";
 import SplashScreen from "./pages/SplashScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";

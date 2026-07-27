@@ -261,10 +261,8 @@ export const TikTokApp = () => {
     const saved = localStorage.getItem('app_isMuted');
     return saved === 'true';
   });
-  const [volume, setVolume] = useState(() => {
-    const saved = localStorage.getItem('app_volume');
-    return saved ? parseFloat(saved) : 0.8; // Default 80%
-  });
+  // Volume sempre 100% no app: quem controla o nível é o aparelho do usuário.
+  const [volume, setVolume] = useState(1);
   const [isPlaying, setIsPlaying] = useState(true); // Inicia reproduzindo
   const [loading, setLoading] = useState(true);
   const [showAgeVerification, setShowAgeVerification] = useState(false);

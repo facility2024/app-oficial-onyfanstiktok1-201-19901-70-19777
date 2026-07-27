@@ -2707,10 +2707,7 @@ export const TikTokApp = () => {
       if (error) throw error;
 
       // Update local state
-      setVideos(prev => prev.map(video => getVideoDataId(video) === dataVideoId ? {
-        ...video,
-        likes_count: newCount
-      } : video));
+      setLikeOverrides(prev => ({ ...prev, [dataVideoId]: newCount }));
 
       if (didPersistNewLike) {
         // Add like explosion animation apenas quando a curtida foi gravada agora

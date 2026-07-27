@@ -163,6 +163,28 @@ export const useAdServer = () => {
     return (data || []).map((r: any) => r.promo_id as string);
   }, []);
 
+  /** Reconstrói o log "1x por período" (local + banco, para o dia atual) */
+  const loadPeriodLog = useCallback(async (uid: string | null): Promise<Set<string>> => {
+    const log = new Set<string>(readPeriodLog());
+    if (uid) {
+      const { data } = await (supabase as any)
+        .from('ad_user_history')
+        .select('promo_id, last_shown_at')
+        .eq('user_id', uid);
+      const today = localDateKey();
+      const part = getCurrentDayPart();
+      (data || []).forEach((r: any) => {
+        if (!r?.last_shown_at) return;
+        const d = new Date(r.last_shown_at);
+        if (localDateKey(d) === today && getCurrentDayPart(d) === part) {
+          log.add(periodKey(r.promo_id, d));
+        }
+      });
+    }
+    writePeriodLog(Array.from(log));
+    return log;
+  }, []);
+
   const resetHistory = useCallback(async (uid: string | null) => {
     seenRef.current = [];
     writeLocalSeen([]);
@@ -170,6 +192,7 @@ export const useAdServer = () => {
     if (!uid) return;
     await (supabase as any).from('ad_user_history').delete().eq('user_id', uid);
   }, []);
+
 
   const fetchQueue = useCallback(
     async (uid: string | null, seen: string[]): Promise<FeedPromotion[]> => {

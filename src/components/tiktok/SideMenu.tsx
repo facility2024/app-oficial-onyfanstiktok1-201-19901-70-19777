@@ -1,9 +1,8 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { AvatarWithFallback } from '@/components/ui/AvatarWithFallback';
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck, Volume1 } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck } from 'lucide-react';
 import { VideoOptionsMenu } from './VideoOptionsMenu';
-import { Slider } from '@/components/ui/slider';
 import React from 'react';
 
 interface SideMenuProps {
@@ -51,7 +50,6 @@ export const SideMenu = ({
   isChatOnline = false,
   onShare
 }: SideMenuProps) => {
-  const [showVolumeSlider, setShowVolumeSlider] = React.useState(false);
 
   const formatCount = (count?: number) => {
     // Handle undefined or null values

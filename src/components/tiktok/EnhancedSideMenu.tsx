@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { Video } from '@/types/database';
-import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye, Volume1 } from 'lucide-react';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Play, Pause, Eye } from 'lucide-react';
 import { useVideoActions } from '@/hooks/useVideoActions';
 import { useVideoInteractionsRealtime } from '@/hooks/useVideoInteractionsRealtime';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { FloatingHearts } from './FloatingHearts';
 import { CounterPulse } from './CounterPulse';
 import { RealtimeIndicator } from './RealtimeIndicator';
-import { Slider } from '@/components/ui/slider';
 
 const isValidUUID = (value?: string | null): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
@@ -52,7 +51,6 @@ export const EnhancedSideMenu = ({
   const [heartTrigger, setHeartTrigger] = useState(0);
   const [isPulsing, setIsPulsing] = useState(false);
   const [commentPulsing, setCommentPulsing] = useState(false);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const { toggleLike, shareVideo, viewVideo, loading } = useVideoActions();
 
   // Real-time sync for likes and comments

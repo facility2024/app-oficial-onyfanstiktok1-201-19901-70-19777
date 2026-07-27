@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Play, RefreshCw } from 'lucide-react';
 import { toBunnyStreamEmbedUrl } from '@/utils/bunnyStream';
 import { isAudioUnlocked, subscribeAudioUnlock, unlockAudio } from '@/utils/audioUnlock';
+import { audioSessionManager } from '@/services/AudioSessionManager';
 
 interface UniversalVideoPlayerProps {
   src: string;

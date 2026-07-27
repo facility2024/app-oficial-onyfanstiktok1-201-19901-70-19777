@@ -460,13 +460,19 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     }
 
     return (
-      <div className="relative w-full h-full bg-black">
+      <div className="relative w-full h-full bg-black overflow-hidden">
+        {isLandscape && (
+          <div
+            className="absolute inset-0 scale-125 blur-2xl opacity-50 pointer-events-none"
+            style={poster ? { backgroundImage: `url(${poster})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          />
+        )}
         <video
           ref={internalRef}
           src={playbackSrc}
           poster={poster}
-          className={`w-full h-full object-contain sm:object-cover ${className}`}
-          style={{ backgroundColor: '#000', ...style }}
+          className={`relative w-full h-full ${isLandscape ? 'object-contain' : 'object-contain sm:object-cover'} ${className}`}
+          style={style}
           autoPlay={false}
           loop={true}
           muted={hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked))}
@@ -479,7 +485,12 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           onWaiting={handleWaiting}
           onCanPlay={handleCanPlay}
           onPlaying={handleCanPlay}
-          onLoadedMetadata={handleCanPlay}
+          onLoadedMetadata={(e) => {
+            const v = e.currentTarget;
+            if (v.videoWidth && v.videoHeight) setIsLandscape(v.videoWidth > v.videoHeight);
+            handleCanPlay();
+          }}
+
           onLoadStart={handleLoadStart}
           
         />

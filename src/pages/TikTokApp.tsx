@@ -243,6 +243,8 @@ export const TikTokApp = () => {
   } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
+  // Contagem de curtidas local (evita recriar a lista do feed e "piscar" o vídeo)
+  const [likeOverrides, setLikeOverrides] = useState<Record<string, number>>({});
   const isTogglingLikeRef = useRef(false);
   const [preloadedVideos, setPreloadedVideos] = useState<Set<number>>(new Set());
   const [followingModels, setFollowingModels] = useState<Record<string, boolean>>({});

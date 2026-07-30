@@ -2871,23 +2871,22 @@ export const TikTokApp = () => {
       // Recarregar comentários para mostrar o novo com dados atualizados
       await loadComments(activeVideoId);
 
-      // ✨ IMPORTANTE: Registrar no sistema de analytics
-      await trackComment(activeVideoId, currentVideo.user?.id || '');
-      await checkAndTrackAction('comment', activeVideoId, currentVideo.user_id);
+      // ✨ IMPORTANTE: Registrar no sistema de analytics (não deve quebrar o comentário)
+      try {
+        await trackComment(activeVideoId, currentVideo.user?.id || '');
+        await checkAndTrackAction('comment', activeVideoId, currentVideo.user_id);
+      } catch (trackErr) {
+        console.warn('⚠️ Falha ao registrar analytics do comentário:', trackErr);
+      }
 
-      // Update video comments count
-      const newCount = currentVideo.comments_count + 1;
-      await supabase.from('videos').update({
-        comments_count: newCount
-      }).eq('id', activeVideoId);
+      // Contador local (o contador oficial é sincronizado por trigger no banco)
+      const newCount = (currentVideo.comments_count || 0) + 1;
       setVideos(prev => prev.map(video => video.id === currentVideo.id ? {
         ...video,
         comments_count: newCount
       } : video));
       console.log('✅ ADD COMMENT - Ação completa! Novo count:', newCount);
 
-      // ✨ Forçar reload dos comentários para garantir sincronização
-      await loadComments(activeVideoId);
       toast({
         title: "Comentário adicionado!",
         description: "Seu comentário foi publicado"

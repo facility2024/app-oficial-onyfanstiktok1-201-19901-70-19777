@@ -2438,11 +2438,16 @@ export const TikTokApp = () => {
       setComments([]);
     }
   }, []);
+  const setLikedFor = (videoId: string, liked: boolean) => {
+    if (!videoId) return;
+    setLikedByVideoId(prev => (prev[videoId] === liked ? prev : { ...prev, [videoId]: liked }));
+  };
   const checkIfLiked = async (videoId: string) => {
+    const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+    if (!dataVideoId) return;
     try {
-      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
       if (!isPersistedVideoId(dataVideoId)) {
-        setIsLiked(localStorage.getItem(`liked_${dataVideoId}`) === 'true');
+        setLikedFor(dataVideoId, localStorage.getItem(`liked_${dataVideoId}`) === 'true');
         return;
       }
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
@@ -2456,9 +2461,6 @@ export const TikTokApp = () => {
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      console.log('🔍 CHECKING IF LIKED:');
-      console.log('🔍 Video ID:', dataVideoId);
-      console.log('🔍 User ID:', currentUserId);
 
       // Check if user has an active like for this video in database
       const {
@@ -2467,27 +2469,15 @@ export const TikTokApp = () => {
       } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', dataVideoId).eq('is_active', true).maybeSingle();
       if (error) {
         console.error('❌ Error checking like status:', error);
-        if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
-          console.log('📝 Likes table não existe, usando localStorage...');
-          const liked = localStorage.getItem(`liked_${dataVideoId}`);
-          setIsLiked(liked === 'true');
-          return;
-        }
-        setIsLiked(false);
+        setLikedFor(dataVideoId, localStorage.getItem(`liked_${dataVideoId}`) === 'true');
         return;
       }
-      const liked = data ? true : false;
-      console.log('🔍 IS LIKED:', liked);
-      setIsLiked(liked);
-      // Also update localStorage for consistency
-      if (dataVideoId) {
-        localStorage.setItem(`liked_${dataVideoId}`, String(liked));
-      }
+      const liked = !!data;
+      setLikedFor(dataVideoId, liked);
+      localStorage.setItem(`liked_${dataVideoId}`, String(liked));
     } catch (error) {
       console.error('Error in checkIfLiked:', error);
-      // Fallback to localStorage
-      const liked = localStorage.getItem(`liked_${String(videoId || '').replace(/-block-\d+-\d+$/, '')}`);
-      setIsLiked(liked === 'true');
+      setLikedFor(dataVideoId, localStorage.getItem(`liked_${dataVideoId}`) === 'true');
     }
   };
   const checkIfFollowing = async (modelId: string) => {

@@ -2544,9 +2544,26 @@ export const TikTokApp = () => {
   const toggleLike = async () => {
     if (!currentVideo) return;
     if (isTogglingLikeRef.current) return;
-    isTogglingLikeRef.current = true;
     const dataVideoId = getVideoDataId(currentVideo);
-    console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', dataVideoId);
+    if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
+    isTogglingLikeRef.current = true;
+
+    // ⚡ Otimista: reage na hora, sem esperar rede (evita "refresh"/piscada no feed)
+    const wasLikedLocally = likedByVideoId[dataVideoId] === true || localStorage.getItem(`liked_${dataVideoId}`) === 'true';
+    setLikedFor(dataVideoId, true);
+    localStorage.setItem(`liked_${dataVideoId}`, 'true');
+    if (!wasLikedLocally) {
+      createLikeExplosion();
+      setLikeOverrides(prev => ({
+        ...prev,
+        [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? currentVideo.likes_count ?? 0) + 1)
+      }));
+    }
+
+    if (!isPersistedVideoId(dataVideoId)) {
+      isTogglingLikeRef.current = false;
+      return;
+    }
 
     // ✅ Usar ID correto: autenticado se logado, anônimo se não
     const {
@@ -2559,22 +2576,7 @@ export const TikTokApp = () => {
       localStorage.setItem('anonymous_user_id', newId);
       return newId;
     })();
-    console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
     try {
-      if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
-      if (!isPersistedVideoId(dataVideoId)) {
-        const wasLiked = localStorage.getItem(`liked_${dataVideoId}`) === 'true';
-        setIsLiked(true);
-        localStorage.setItem(`liked_${dataVideoId}`, 'true');
-        if (!wasLiked) {
-          setLikeOverrides(prev => ({
-            ...prev,
-            [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? currentVideo.likes_count ?? 0) + 1)
-          }));
-          createLikeExplosion();
-        }
-        return;
-      }
       // Primeiro, verificar se já existe like para este usuário/vídeo
       const {
         data: existingLike,

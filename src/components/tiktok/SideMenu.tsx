@@ -124,17 +124,10 @@ export const SideMenu = ({
           e.stopPropagation();
           onToggleLike();
         }}
-        onTouchStart={(e) => {
-          e.stopPropagation();
-        }}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onToggleLike();
-        }}
         style={{
           WebkitTouchCallout: 'none',
           WebkitUserSelect: 'none',
+          WebkitTapHighlightColor: 'transparent',
           touchAction: 'manipulation'
         }}
       >
@@ -150,9 +143,14 @@ export const SideMenu = ({
       </div>
 
       {/* Comment */}
-      <div className="flex flex-col items-center cursor-pointer group" onClick={() => {
-        onOpenComments();
-      }}>
+      <div
+        className="flex flex-col items-center cursor-pointer group touch-manipulation select-none"
+        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenComments();
+        }}
+      >
         <div className="w-12 h-12 flex items-center justify-center transition-all">
           <MessageCircle className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
         </div>

@@ -56,7 +56,7 @@ export const FullscreenVideoModal = ({
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         zIndex: 999999 
       }}
     >

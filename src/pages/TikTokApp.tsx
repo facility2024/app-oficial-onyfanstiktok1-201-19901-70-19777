@@ -1279,7 +1279,10 @@ export const TikTokApp = () => {
       checkIfFollowing(currentVideo.user.id);
       registerView();
     }
-  }, [currentVideo, markVideoAsWatched, trackView]);
+    // ⚠️ Dependências estáveis: currentVideo é recriado a cada render (objeto novo),
+    // usar o ID evita re-execuções em loop que causavam "refresh" no feed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawCurrentVideoKey, currentVideo?.user?.id, markVideoAsWatched, trackView]);
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 

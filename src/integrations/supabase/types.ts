@@ -10442,6 +10442,10 @@ export type Database = {
       }
       sync_real_time_data: { Args: never; Returns: undefined }
       testar_sistema: { Args: never; Returns: string }
+      touch_active_session: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
       track_user_activity: { Args: never; Returns: undefined }
       update_mission_progress: {
         Args: { p_action_type: string; p_increment?: number; p_user_id: string }

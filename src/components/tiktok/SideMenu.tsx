@@ -124,17 +124,10 @@ export const SideMenu = ({
           e.stopPropagation();
           onToggleLike();
         }}
-        onTouchStart={(e) => {
-          e.stopPropagation();
-        }}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onToggleLike();
-        }}
         style={{
           WebkitTouchCallout: 'none',
           WebkitUserSelect: 'none',
+          WebkitTapHighlightColor: 'transparent',
           touchAction: 'manipulation'
         }}
       >

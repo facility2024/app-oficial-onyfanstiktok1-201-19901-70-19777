@@ -242,7 +242,8 @@ export const TikTokApp = () => {
     isCreator: boolean;
   } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isLiked, setIsLiked] = useState(false);
+  // ❤️ Estado de curtida por ID REAL do vídeo (evita vazamento entre vídeos ao rolar o feed)
+  const [likedByVideoId, setLikedByVideoId] = useState<Record<string, boolean>>({});
   // Contagem de curtidas local (evita recriar a lista do feed e "piscar" o vídeo)
   const [likeOverrides, setLikeOverrides] = useState<Record<string, number>>({});
   const isTogglingLikeRef = useRef(false);
@@ -709,6 +710,8 @@ export const TikTokApp = () => {
     user: rawCurrentVideo.user || defaultUser,
     likes_count: likeOverrides[rawCurrentVideoKey] ?? rawCurrentVideo.likes_count,
   } : null;
+  // ❤️ Curtida do vídeo ATUAL (nunca herda estado do vídeo anterior)
+  const isLiked = rawCurrentVideoKey ? likedByVideoId[rawCurrentVideoKey] === true : false;
   const visibleComments = useMemo(() => {
     const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
     if (!activeVideoId) return [];
@@ -1276,7 +1279,10 @@ export const TikTokApp = () => {
       checkIfFollowing(currentVideo.user.id);
       registerView();
     }
-  }, [currentVideo, markVideoAsWatched, trackView]);
+    // ⚠️ Dependências estáveis: currentVideo é recriado a cada render (objeto novo),
+    // usar o ID evita re-execuções em loop que causavam "refresh" no feed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawCurrentVideoKey, currentVideo?.user?.id, markVideoAsWatched, trackView]);
 
   // FEED INTELIGENTE DESATIVADO - useEffect removido para evitar loop
 
@@ -2437,11 +2443,16 @@ export const TikTokApp = () => {
       setComments([]);
     }
   }, []);
+  const setLikedFor = (videoId: string, liked: boolean) => {
+    if (!videoId) return;
+    setLikedByVideoId(prev => (prev[videoId] === liked ? prev : { ...prev, [videoId]: liked }));
+  };
   const checkIfLiked = async (videoId: string) => {
+    const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
+    if (!dataVideoId) return;
     try {
-      const dataVideoId = String(videoId || '').replace(/-block-\d+-\d+$/, '');
       if (!isPersistedVideoId(dataVideoId)) {
-        setIsLiked(localStorage.getItem(`liked_${dataVideoId}`) === 'true');
+        setLikedFor(dataVideoId, localStorage.getItem(`liked_${dataVideoId}`) === 'true');
         return;
       }
       // ✅ Usar ID correto: autenticado se logado, anônimo se não
@@ -2455,9 +2466,6 @@ export const TikTokApp = () => {
         localStorage.setItem('anonymous_user_id', newId);
         return newId;
       })();
-      console.log('🔍 CHECKING IF LIKED:');
-      console.log('🔍 Video ID:', dataVideoId);
-      console.log('🔍 User ID:', currentUserId);
 
       // Check if user has an active like for this video in database
       const {
@@ -2466,27 +2474,15 @@ export const TikTokApp = () => {
       } = await supabase.from('likes').select('id, is_active').eq('user_id', currentUserId).eq('video_id', dataVideoId).eq('is_active', true).maybeSingle();
       if (error) {
         console.error('❌ Error checking like status:', error);
-        if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
-          console.log('📝 Likes table não existe, usando localStorage...');
-          const liked = localStorage.getItem(`liked_${dataVideoId}`);
-          setIsLiked(liked === 'true');
-          return;
-        }
-        setIsLiked(false);
+        setLikedFor(dataVideoId, localStorage.getItem(`liked_${dataVideoId}`) === 'true');
         return;
       }
-      const liked = data ? true : false;
-      console.log('🔍 IS LIKED:', liked);
-      setIsLiked(liked);
-      // Also update localStorage for consistency
-      if (dataVideoId) {
-        localStorage.setItem(`liked_${dataVideoId}`, String(liked));
-      }
+      const liked = !!data;
+      setLikedFor(dataVideoId, liked);
+      localStorage.setItem(`liked_${dataVideoId}`, String(liked));
     } catch (error) {
       console.error('Error in checkIfLiked:', error);
-      // Fallback to localStorage
-      const liked = localStorage.getItem(`liked_${String(videoId || '').replace(/-block-\d+-\d+$/, '')}`);
-      setIsLiked(liked === 'true');
+      setLikedFor(dataVideoId, localStorage.getItem(`liked_${dataVideoId}`) === 'true');
     }
   };
   const checkIfFollowing = async (modelId: string) => {
@@ -2553,9 +2549,26 @@ export const TikTokApp = () => {
   const toggleLike = async () => {
     if (!currentVideo) return;
     if (isTogglingLikeRef.current) return;
-    isTogglingLikeRef.current = true;
     const dataVideoId = getVideoDataId(currentVideo);
-    console.log('🔥 TOGGLE LIKE - Iniciando para vídeo:', dataVideoId);
+    if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
+    isTogglingLikeRef.current = true;
+
+    // ⚡ Otimista: reage na hora, sem esperar rede (evita "refresh"/piscada no feed)
+    const wasLikedLocally = likedByVideoId[dataVideoId] === true || localStorage.getItem(`liked_${dataVideoId}`) === 'true';
+    setLikedFor(dataVideoId, true);
+    localStorage.setItem(`liked_${dataVideoId}`, 'true');
+    if (!wasLikedLocally) {
+      createLikeExplosion();
+      setLikeOverrides(prev => ({
+        ...prev,
+        [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? currentVideo.likes_count ?? 0) + 1)
+      }));
+    }
+
+    if (!isPersistedVideoId(dataVideoId)) {
+      isTogglingLikeRef.current = false;
+      return;
+    }
 
     // ✅ Usar ID correto: autenticado se logado, anônimo se não
     const {
@@ -2568,22 +2581,7 @@ export const TikTokApp = () => {
       localStorage.setItem('anonymous_user_id', newId);
       return newId;
     })();
-    console.log('🔥 TOGGLE LIKE - User ID:', currentUserId, user ? '(autenticado)' : '(anônimo)');
     try {
-      if (!dataVideoId || dataVideoId.startsWith('promo-')) return;
-      if (!isPersistedVideoId(dataVideoId)) {
-        const wasLiked = localStorage.getItem(`liked_${dataVideoId}`) === 'true';
-        setIsLiked(true);
-        localStorage.setItem(`liked_${dataVideoId}`, 'true');
-        if (!wasLiked) {
-          setLikeOverrides(prev => ({
-            ...prev,
-            [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? currentVideo.likes_count ?? 0) + 1)
-          }));
-          createLikeExplosion();
-        }
-        return;
-      }
       // Primeiro, verificar se já existe like para este usuário/vídeo
       const {
         data: existingLike,
@@ -2660,15 +2658,11 @@ export const TikTokApp = () => {
         console.log('✅ LIKE CRIADO com sucesso');
       }
 
-      // Atualizar estado local (sempre curtido)
-      setIsLiked(newLikedState);
-      if (dataVideoId) {
-        localStorage.setItem(`liked_${dataVideoId}`, 'true');
-      }
+      // Estado já foi atualizado de forma otimista
+      setLikedFor(dataVideoId, newLikedState);
 
       // Registrar analytics apenas quando houve nova persistência de curtida
       const userId = currentVideo.user?.id || currentVideo.model_id || '';
-      const modelId = currentVideo.model_id || userId;
       if (didPersistNewLike && userId) {
         await trackLike(dataVideoId, userId, true);
         ensureInteractedModel(userId);
@@ -2687,35 +2681,27 @@ export const TikTokApp = () => {
       }
 
       // Fonte da verdade: total de likes ativos no banco
+      // (videos.likes_count é sincronizado por trigger no banco)
       const { count: liveLikesCount, error: countError } = await supabase
         .from('likes')
         .select('id', { count: 'exact', head: true })
         .eq('video_id', dataVideoId)
         .eq('is_active', true);
 
-      if (countError) throw countError;
-
-      const newCount = Math.max(0, liveLikesCount || 0);
-
-      const { error } = await supabase
-        .from('videos')
-        .update({ likes_count: newCount })
-        .eq('id', dataVideoId);
-
-      if (error) throw error;
-
-      // Update local state
-      setLikeOverrides(prev => ({ ...prev, [dataVideoId]: newCount }));
-
-      if (didPersistNewLike) {
-        // Add like explosion animation apenas quando a curtida foi gravada agora
-        createLikeExplosion();
+      if (!countError && typeof liveLikesCount === 'number') {
+        setLikeOverrides(prev => ({ ...prev, [dataVideoId]: Math.max(0, liveLikesCount) }));
       }
-
-      console.log('✅ LIKE processado! Count atual:', newCount);
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);
-      // Silenciar erro de like para o usuário
+      // Reverte o estado otimista se a curtida não foi persistida
+      if (!wasLikedLocally) {
+        setLikedFor(dataVideoId, false);
+        localStorage.removeItem(`liked_${dataVideoId}`);
+        setLikeOverrides(prev => ({
+          ...prev,
+          [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? 1) - 1)
+        }));
+      }
     } finally {
       isTogglingLikeRef.current = false;
     }

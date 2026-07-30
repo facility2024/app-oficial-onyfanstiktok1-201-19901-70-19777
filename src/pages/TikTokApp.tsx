@@ -2653,15 +2653,11 @@ export const TikTokApp = () => {
         console.log('✅ LIKE CRIADO com sucesso');
       }
 
-      // Atualizar estado local (sempre curtido)
-      setIsLiked(newLikedState);
-      if (dataVideoId) {
-        localStorage.setItem(`liked_${dataVideoId}`, 'true');
-      }
+      // Estado já foi atualizado de forma otimista
+      setLikedFor(dataVideoId, newLikedState);
 
       // Registrar analytics apenas quando houve nova persistência de curtida
       const userId = currentVideo.user?.id || currentVideo.model_id || '';
-      const modelId = currentVideo.model_id || userId;
       if (didPersistNewLike && userId) {
         await trackLike(dataVideoId, userId, true);
         ensureInteractedModel(userId);
@@ -2680,35 +2676,27 @@ export const TikTokApp = () => {
       }
 
       // Fonte da verdade: total de likes ativos no banco
+      // (videos.likes_count é sincronizado por trigger no banco)
       const { count: liveLikesCount, error: countError } = await supabase
         .from('likes')
         .select('id', { count: 'exact', head: true })
         .eq('video_id', dataVideoId)
         .eq('is_active', true);
 
-      if (countError) throw countError;
-
-      const newCount = Math.max(0, liveLikesCount || 0);
-
-      const { error } = await supabase
-        .from('videos')
-        .update({ likes_count: newCount })
-        .eq('id', dataVideoId);
-
-      if (error) throw error;
-
-      // Update local state
-      setLikeOverrides(prev => ({ ...prev, [dataVideoId]: newCount }));
-
-      if (didPersistNewLike) {
-        // Add like explosion animation apenas quando a curtida foi gravada agora
-        createLikeExplosion();
+      if (!countError && typeof liveLikesCount === 'number') {
+        setLikeOverrides(prev => ({ ...prev, [dataVideoId]: Math.max(0, liveLikesCount) }));
       }
-
-      console.log('✅ LIKE processado! Count atual:', newCount);
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);
-      // Silenciar erro de like para o usuário
+      // Reverte o estado otimista se a curtida não foi persistida
+      if (!wasLikedLocally) {
+        setLikedFor(dataVideoId, false);
+        localStorage.removeItem(`liked_${dataVideoId}`);
+        setLikeOverrides(prev => ({
+          ...prev,
+          [dataVideoId]: Math.max(0, (prev[dataVideoId] ?? 1) - 1)
+        }));
+      }
     } finally {
       isTogglingLikeRef.current = false;
     }

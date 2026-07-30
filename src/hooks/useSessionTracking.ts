@@ -49,13 +49,13 @@ export function useSessionTracking(configId: string | undefined) {
         address: geo.address,
       });
 
-      // Heartbeat a cada 30s
+      // Heartbeat a cada 30s (via função segura)
       interval = setInterval(async () => {
-        await (supabase as any)
-          .from('active_sessions')
-          .update({ last_seen_at: new Date().toISOString() })
-          .eq('session_id', sessionId);
+        await (supabase as any).rpc('touch_active_session', {
+          p_session_id: sessionId,
+        });
       }, 30000);
+
     };
 
     initSession();

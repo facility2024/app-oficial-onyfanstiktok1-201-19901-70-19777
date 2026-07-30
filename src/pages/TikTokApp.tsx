@@ -710,6 +710,8 @@ export const TikTokApp = () => {
     user: rawCurrentVideo.user || defaultUser,
     likes_count: likeOverrides[rawCurrentVideoKey] ?? rawCurrentVideo.likes_count,
   } : null;
+  // ❤️ Curtida do vídeo ATUAL (nunca herda estado do vídeo anterior)
+  const isLiked = rawCurrentVideoKey ? likedByVideoId[rawCurrentVideoKey] === true : false;
   const visibleComments = useMemo(() => {
     const activeVideoId = String((currentVideo as any)?._originalId || currentVideo?.id || '').replace(/-block-\d+-\d+$/, '');
     if (!activeVideoId) return [];

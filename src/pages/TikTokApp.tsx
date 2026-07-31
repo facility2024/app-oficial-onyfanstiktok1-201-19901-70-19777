@@ -2396,9 +2396,9 @@ export const TikTokApp = () => {
       const {
         data: commentsData,
         error
-      } = await supabase.from('comments').select('*').eq('video_id', dataVideoId).order('created_at', {
+      } = await supabase.from('comments').select('id, video_id, user_id, content, created_at, is_active, likes_count').eq('video_id', dataVideoId).order('created_at', {
         ascending: false
-      });
+      }).limit(100);
       if (error) {
         console.error('❌ Error loading comments:', error);
         if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {

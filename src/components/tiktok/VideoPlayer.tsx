@@ -416,8 +416,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 text-white font-bold rounded-lg shadow-lg active:scale-[0.98] transition-transform overflow-hidden shrink-0"
               style={{
-                width: ctaIcon ? 'min(77px, 22vw)' : 'min(187px, 52vw)',
-                height: ctaIcon ? 'min(77px, 22vw)' : 'min(77px, 21.5vw)',
+                width: ctaIcon ? 'min(55px, 16vw)' : 'min(187px, 52vw)',
+                height: ctaIcon ? 'min(55px, 16vw)' : 'min(55px, 15.5vw)',
                 ...((video as any)?.button_color
                   ? { backgroundColor: ctaColor, color: '#ffffff' }
                   : { background: 'linear-gradient(to right, #ec4899, #ef4444)', color: '#ffffff' }),

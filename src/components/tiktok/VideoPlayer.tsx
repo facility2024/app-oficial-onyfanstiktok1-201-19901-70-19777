@@ -117,7 +117,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const uploadSource = String((video as any)?.upload_source || '').toLowerCase();
     const videoCategory = String((video as any)?.category || '').toLowerCase();
     const isExternalIngest = uploadSource === 'instagram_ingest' || videoCategory === 'instagram';
-    const showCta = isExternalIngest && ctaEnabled && !!ctaText && !!ctaHref;
+    const showCta = isExternalIngest && ctaEnabled && (!!ctaText || !!ctaIcon) && !!ctaHref;
     const showExternalOverlays = isExternalIngest && (showCta || !!videoTitle);
     // Vídeo gerenciado pelo painel admin externo — nesse caso o próprio painel
     // injeta o badge "Patrocinado"; ocultamos o badge padrão para evitar duplicidade.

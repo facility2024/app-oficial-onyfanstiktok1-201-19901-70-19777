@@ -409,26 +409,36 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
         {showExternalOverlays && showCta && (
-          <div className="absolute bottom-24 sm:bottom-28 left-0 right-0 z-40 px-3 sm:px-4 pointer-events-auto">
+          <div className="absolute bottom-24 sm:bottom-28 left-0 right-0 z-[60] px-3 sm:px-4 flex justify-center pointer-events-auto">
             <a
               href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-lg shadow-lg active:scale-[0.98] transition-transform"
-              style={
-                (video as any)?.button_color
+              className="flex items-center justify-center gap-2 text-white font-bold rounded-lg shadow-lg active:scale-[0.98] transition-transform overflow-hidden shrink-0"
+              style={{
+                width: ctaIcon ? 'min(77px, 22vw)' : 'min(187px, 52vw)',
+                height: ctaIcon ? 'min(77px, 22vw)' : 'min(77px, 21.5vw)',
+                ...((video as any)?.button_color
                   ? { backgroundColor: ctaColor, color: '#ffffff' }
-                  : { background: 'linear-gradient(to right, #ec4899, #ef4444)', color: '#ffffff' }
-              }
+                  : { background: 'linear-gradient(to right, #ec4899, #ef4444)', color: '#ffffff' }),
+              }}
             >
               {ctaIcon ? (
-                <img src={ctaIcon} alt="" className="h-7 sm:h-8 w-auto object-contain" style={{ background: 'transparent' }} />
+                <img
+                  src={ctaIcon}
+                  alt=""
+                  loading="eager"
+                  decoding="sync"
+                  className="w-full h-full object-contain"
+                  style={{ background: 'transparent' }}
+                />
               ) : (
-                <span className="text-base sm:text-lg">{ctaText}</span>
+                <span className="text-base sm:text-lg text-center leading-tight px-2 line-clamp-2">{ctaText}</span>
               )}
             </a>
           </div>
         )}
+
 
 
 

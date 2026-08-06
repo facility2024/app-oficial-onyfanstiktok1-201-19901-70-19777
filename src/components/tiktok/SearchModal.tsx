@@ -259,8 +259,40 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
           </div>
         </div>
 
+        {/* Resultados de vídeos */}
+        {videoResults.length > 0 && (
+          <div className="px-4 pb-3">
+            <p className="text-white/60 text-xs font-semibold mb-2 uppercase tracking-wide">Vídeos encontrados</p>
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
+              {videoResults.map((v) => (
+                <div
+                  key={v.id}
+                  onClick={() => {
+                    if (onSelectVideo) onSelectVideo(v.id, v.ownerId);
+                    else if (v.ownerId) onSelectModel(v.ownerId);
+                    onClose();
+                  }}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <div className="w-12 h-16 rounded-md bg-white/10 overflow-hidden shrink-0">
+                    {v.thumbnail_url && (
+                      <img src={v.thumbnail_url} alt={v.title} className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white text-sm font-semibold truncate">{v.title}</p>
+                    <p className="text-white/60 text-xs truncate">{v.owner}</p>
+                    <p className="text-white/40 text-[10px] font-mono truncate">{v.id}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Models List */}
         <div className="flex-1 overflow-y-auto md:overflow-y-scroll px-4" onWheel={(e) => e.stopPropagation()}>
+
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>

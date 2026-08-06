@@ -2177,6 +2177,92 @@ export const TikTokApp = () => {
 
   // Remover função de organização complexa - usar abordagem mais simples
 
+  // 🔄 PAGINAÇÃO REAL POR CURSOR: busca o próximo lote de vídeos ANTIGOS no banco
+  // Não altera a lógica de anúncios (feita em `displayVideos`) nem o merge do painel admin.
+  const fetchOlderVideosBatch = useCallback(async (): Promise<Video[]> => {
+    if (!hasMoreFromDbRef.current || isFetchingOlderRef.current) return [];
+    isFetchingOlderRef.current = true;
+    try {
+      const cursor = feedCursorRef.current;
+      console.log(`📥 Buscando lote antigo no banco (cursor: ${cursor})...`);
+      let query = supabase
+        .from('videos')
+        .select('*')
+        .eq('is_active', true)
+        .or('visibility.eq.public,visibility.is.null')
+        .order('created_at', { ascending: false })
+        .range(0, DB_PAGE_SIZE - 1);
+      if (cursor) query = query.lt('created_at', cursor);
+
+      const { data, error } = await query;
+      if (error) {
+        console.warn('⚠️ Erro ao buscar lote antigo:', error);
+        return [];
+      }
+      const batch: any[] = data || [];
+      hasMoreFromDbRef.current = batch.length >= DB_PAGE_SIZE;
+      if (batch.length > 0) {
+        feedCursorRef.current = batch[batch.length - 1]?.created_at || feedCursorRef.current;
+      }
+
+      const { models, creators, chatPanels } = feedEnrichCtxRef.current;
+      const normalize = (u: string) => {
+        const raw = (u || '').trim();
+        if (!raw) return '';
+        if (!/^https?:\/\//i.test(raw) && /^[\w.-]+\.[\w.-]+/.test(raw)) return `https://${raw}`;
+        return raw;
+      };
+      const INVALID_DOMAINS = ['example.com', 'localhost', '127.0.0.1', 'test.com'];
+      const isValidVideo = (u: string) => {
+        if (!/^https?:\/\//i.test(u)) return false;
+        if (/\.(jpg|jpeg|png|gif|webp|avif|mp3|wav|m4a|aac|ogg)(\?.*)?$/i.test(u)) return false;
+        try { return !INVALID_DOMAINS.includes(new URL(u).hostname); } catch { return false; }
+      };
+
+      const seen = new Set<string>();
+      const enriched = batch
+        .map((v: any) => ({ ...v, video_url: normalize(v.video_url || '') }))
+        .filter((v: any) => {
+          if (!isValidVideo(v.video_url)) return false;
+          const key = v.video_url.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .map((video: any) => {
+          const owner: any = video.creator_id
+            ? creators.find((c: any) => c.id === video.creator_id)
+            : models.find((m: any) => m.id === video.model_id);
+          return {
+            ...video,
+            user_id: video.creator_id || video.model_id || '',
+            music_name: video.title || `Som original - ${owner?.username || owner?.name || 'Autor'}`,
+            visibility: (video.visibility as 'public' | 'private') || 'public',
+            source: 'catalog_video',
+            user: {
+              id: owner?.id || video.creator_id || video.model_id || 'unknown',
+              username: owner?.username || owner?.name || 'Usuário',
+              avatar_url: owner?.avatar_url || DEFAULT_AVATAR,
+              followers_count: owner?.followers_count || 0,
+              following_count: 0,
+              is_online: chatPanels[owner?.id] || false,
+              bio: owner?.bio || '',
+              posting_panel_url: owner?.posting_panel_url || '',
+              created_at: owner?.created_at || '',
+            },
+          } as any;
+        });
+
+      console.log(`✅ Lote antigo carregado: ${enriched.length} vídeos válidos (hasMore=${hasMoreFromDbRef.current})`);
+      return enriched as Video[];
+    } catch (e) {
+      console.warn('⚠️ Falha no fetch por cursor:', e);
+      return [];
+    } finally {
+      isFetchingOlderRef.current = false;
+    }
+  }, []);
+
   // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
   const loadMoreVideos = useCallback(async () => {
     if (isLoadingMore || allAvailableVideos.length === 0) {
@@ -2212,11 +2298,29 @@ export const TikTokApp = () => {
         return shownNewIds.has(originalId);
       };
 
-      // Priorizar vídeos NÃO assistidos e NÃO no feed (e sem "novos" já consumidos)
-      const unwatched = allAvailableVideos.filter(v => {
+      const filterUnwatched = (pool: Video[]) => pool.filter(v => {
         const originalId = (v as any)._originalId || v.id;
         return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
       });
+
+      // Priorizar vídeos NÃO assistidos e NÃO no feed (e sem "novos" já consumidos)
+      let pool = allAvailableVideos;
+      let unwatched = filterUnwatched(pool);
+
+      // 🔄 Pool local acabando? Buscar o próximo lote ANTIGO no banco (paginação por cursor)
+      if (unwatched.length < VIDEOS_PER_BLOCK && hasMoreFromDbRef.current) {
+        const olderBatch = await fetchOlderVideosBatch();
+        if (olderBatch.length > 0) {
+          const existingIds = new Set(pool.map(v => String((v as any)._originalId || v.id)));
+          const fresh = olderBatch.filter(v => !existingIds.has(String(v.id)));
+          if (fresh.length > 0) {
+            pool = [...pool, ...fresh];
+            setAllAvailableVideos(pool);
+            unwatched = filterUnwatched(pool);
+          }
+        }
+      }
+
 
       let nextBlock: any[];
       if (unwatched.length >= VIDEOS_PER_BLOCK) {

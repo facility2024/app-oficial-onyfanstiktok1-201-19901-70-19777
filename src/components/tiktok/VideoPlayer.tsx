@@ -464,7 +464,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
 
         {/* VideoProgressBar - oculto no desktop */}
-        {isInView && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
+        {hasMounted && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
 
       </div>
     );

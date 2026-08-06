@@ -3250,7 +3250,7 @@ export const TikTokApp = () => {
     if (idx !== -1) {
       setShowProfile(false);
       setCurrentVideoIndex(idx);
-      emblaApi?.scrollTo(idx);
+      emblaApi?.scrollTo(idx, true);
       return;
     }
     // Não está no feed carregado: abre pelo perfil dono do vídeo

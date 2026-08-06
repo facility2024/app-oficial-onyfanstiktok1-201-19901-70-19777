@@ -270,6 +270,8 @@ export const AdminEngagement: React.FC = () => {
     try {
       const videoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'video');
       const promoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'promo');
+      const modelIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'model');
+      const profileIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'profile');
 
       if (videoIds.length) {
         const { error } = await (supabase as any)
@@ -283,6 +285,20 @@ export const AdminEngagement: React.FC = () => {
           .from('feed_promotions')
           .update({ base_likes: baseLikes, base_views: baseViews })
           .in('id', promoIds);
+        if (error) throw error;
+      }
+      if (modelIds.length) {
+        const { error } = await (supabase as any)
+          .from('models')
+          .update({ base_followers: baseFollowers })
+          .in('id', modelIds);
+        if (error) throw error;
+      }
+      if (profileIds.length) {
+        const { error } = await (supabase as any)
+          .from('profiles')
+          .update({ base_followers: baseFollowers })
+          .in('id', profileIds);
         if (error) throw error;
       }
       toast.success(`Aplicado em ${selectedIds.length} item(ns)`);

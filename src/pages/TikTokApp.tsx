@@ -3907,7 +3907,7 @@ export const TikTokApp = () => {
         <CommentsScreen comments={visibleComments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
         
         {/* Search Modal */}
-        <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={async modelId => {
+        <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectVideo={async (videoId, ownerId) => { setShowSearch(false); await goToVideoById(videoId, ownerId); }} onSelectModel={async modelId => {
         setShowSearch(false);
         await goToModelVideo(modelId);
         setShowProfile(false);
@@ -4329,7 +4329,7 @@ export const TikTokApp = () => {
       <CommentsScreen comments={visibleComments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
 
       {/* Desktop Search Modal */}
-      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={async modelId => {
+      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectVideo={async (videoId, ownerId) => { setShowSearch(false); await goToVideoById(videoId, ownerId); }} onSelectModel={async modelId => {
       setShowSearch(false);
       await goToModelVideo(modelId);
       setShowProfile(false);

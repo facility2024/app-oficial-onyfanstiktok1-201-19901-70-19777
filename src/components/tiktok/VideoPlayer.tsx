@@ -56,6 +56,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isInView, setIsInView] = useState(false);
+    // Sticky: uma vez montado, o <video> permanece no DOM (evita flicker no scroll mobile)
+    const [hasMounted, setHasMounted] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
 
     const [offer, setOffer] = useState<Offer | null>(null);

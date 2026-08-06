@@ -1564,6 +1564,29 @@ export const TikTokApp = () => {
         }
       })());
 
+      // 🔗 Índice dos vídeos reais por URL (e por modelo+URL) para que posts agendados/principais
+      // herdem os contadores base aplicados no painel de Engajamento
+      const videosByUrl = new Map<string, any>();
+      (videosData || []).forEach((v: any) => {
+        const url = normalizeUrl(v.video_url || '');
+        if (!url) return;
+        if (!videosByUrl.has(url)) videosByUrl.set(url, v);
+        if (v.model_id) videosByUrl.set(`${v.model_id}::${url}`, v);
+        if (v.creator_id) videosByUrl.set(`${v.creator_id}::${url}`, v);
+      });
+      const getCountersForUrl = (ownerId: string | null | undefined, url: string) => {
+        const match = (ownerId ? videosByUrl.get(`${ownerId}::${url}`) : null) || videosByUrl.get(url);
+        return {
+          likes_count: match?.likes_count || 0,
+          views_count: match?.views_count || 0,
+          comments_count: match?.comments_count || 0,
+          base_likes: match?.base_likes || 0,
+          base_views: match?.base_views || 0,
+          source_video_id: match?.id || null,
+        };
+      };
+
+
       // 🎯 Processar posts agendados: 1 vídeo por modelo por acesso ao feed
       // O próximo da fila só entra após novo acesso/reload, sem empilhar vários vídeos do mesmo perfil
       const scheduledPostsByModel: Record<string, any[]> = {};

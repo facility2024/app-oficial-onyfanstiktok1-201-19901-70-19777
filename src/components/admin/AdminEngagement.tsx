@@ -103,7 +103,7 @@ export const AdminEngagement: React.FC = () => {
           const origin = v.creator_id
             ? 'Criadora'
             : v.upload_source
-            ? `Externo (${v.source})`
+            ? `Externo (${v.upload_source})`
             : 'Modelo';
           collected.push({
             id: v.id,

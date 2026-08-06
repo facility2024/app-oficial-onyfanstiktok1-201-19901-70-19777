@@ -1445,6 +1445,8 @@ export const TikTokApp = () => {
           avatar_url: p.avatar_url || modelAvatarById[p.id] || null,
         }));
       }
+      // 🔄 Guarda contexto de enriquecimento para os próximos lotes paginados
+      feedEnrichCtxRef.current = { models: modelsData || [], creators: creatorsData || [], chatPanels: chatPanelsMap };
       console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
 
       // Debug: Verificar vídeos de criadores no banco

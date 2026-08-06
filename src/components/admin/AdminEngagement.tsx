@@ -411,6 +411,9 @@ export const AdminEngagement: React.FC = () => {
               <TabsTrigger value="promo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
                 Promos do Feed
               </TabsTrigger>
+              <TabsTrigger value="followers" className="data-[state=active]:bg-green-600 data-[state=active]:text-white font-bold">
+                Seguidores
+              </TabsTrigger>
             </TabsList>
             <TabsContent value={tab} className="mt-4 space-y-4">
               <div className="flex gap-2">

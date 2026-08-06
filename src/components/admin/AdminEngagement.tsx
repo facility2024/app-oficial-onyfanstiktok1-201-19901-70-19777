@@ -183,7 +183,7 @@ export const AdminEngagement: React.FC = () => {
     setSelected({});
     loadTargets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetType]);
+  }, [tab]);
 
   useEffect(() => {
     loadSchedules();

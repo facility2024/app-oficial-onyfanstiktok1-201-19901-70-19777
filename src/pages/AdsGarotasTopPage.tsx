@@ -134,25 +134,8 @@ export default function AdsGarotasTopPage() {
           <span className="text-sm font-semibold">Voltar ao app</span>
         </button>
 
-        {/* Abas de categorias */}
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setCategory(c.key)}
-              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all ${
-                category === c.key
-                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 border-fuchsia-400 text-white shadow-[0_0_20px_rgba(217,70,239,0.6)] animate-cta-attention-purple"
-                  : "bg-purple-950/40 border-purple-500/30 text-purple-200 hover:bg-purple-800/40 animate-pulse"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Header */}
-        <header className="text-center mb-8 sm:mb-10">
+        {/* Header / Oferta */}
+        <header className="text-center mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-900/40 border border-purple-500/40 mb-4">
             <Sparkles className="w-4 h-4 text-fuchsia-400" />
             <span className="text-xs uppercase tracking-widest text-fuchsia-300">
@@ -181,6 +164,23 @@ export default function AdsGarotasTopPage() {
             </span>
           </div>
         </header>
+
+        {/* Abas de categorias */}
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => setCategory(c.key)}
+              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all ${
+                category === c.key
+                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 border-fuchsia-400 text-white shadow-[0_0_20px_rgba(217,70,239,0.6)] animate-cta-attention-purple"
+                  : "bg-purple-950/40 border-purple-500/30 text-purple-200 hover:bg-purple-800/40 animate-pulse"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
 
         {/* Grid */}
         {loading ? (

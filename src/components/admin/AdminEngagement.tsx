@@ -308,40 +308,49 @@ export const AdminEngagement: React.FC = () => {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs value={targetType} onValueChange={(v) => setTargetType(v as TargetType)}>
-            <TabsList className="bg-gray-800 border border-gray-700">
-              <TabsTrigger value="video" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
-                Vídeos
+          <Tabs value={tab} onValueChange={(v) => setTab(v as TabKind)}>
+            <TabsList className="bg-gray-800 border border-gray-700 flex-wrap h-auto">
+              <TabsTrigger value="all" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
+                Todos
+              </TabsTrigger>
+              <TabsTrigger value="model" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
+                Modelos / API externa
+              </TabsTrigger>
+              <TabsTrigger value="creator" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
+                Criadoras
               </TabsTrigger>
               <TabsTrigger value="promo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
                 Promos do Feed
               </TabsTrigger>
             </TabsList>
-            <TabsContent value={targetType} className="mt-4 space-y-4">
+            <TabsContent value={tab} className="mt-4 space-y-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && loadTargets()}
-                    placeholder={targetType === 'video' ? 'Buscar por título ou descrição...' : 'Buscar promo...'}
+                    placeholder="Buscar por nome do vídeo, modelo/criadora ou ID..."
                     className="pl-9 bg-gray-800 border-gray-600 text-white"
                   />
                 </div>
                 <Button onClick={loadTargets} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
                   <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Buscar
+                  Atualizar
                 </Button>
               </div>
 
+              <p className="text-xs text-gray-400">
+                {filteredRows.length} item(ns) exibido(s) de {rows.length} carregado(s).
+              </p>
+
               <div className="border border-gray-700 rounded-lg divide-y divide-gray-800 max-h-[380px] overflow-auto">
-                {rows.length === 0 && (
+                {filteredRows.length === 0 && (
                   <div className="p-4 text-gray-400 text-sm">Nenhum item encontrado.</div>
                 )}
-                {rows.map((r) => (
+                {filteredRows.map((r) => (
                   <label
-                    key={r.id}
+                    key={`${r.type}-${r.id}`}
                     className="flex items-center gap-3 p-3 hover:bg-gray-800/70 cursor-pointer"
                   >
                     <Checkbox
@@ -349,8 +358,13 @@ export const AdminEngagement: React.FC = () => {
                       onCheckedChange={(c) => setSelected((prev) => ({ ...prev, [r.id]: !!c }))}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold text-sm truncate">{r.label}</p>
-                      <p className="text-xs text-gray-400 font-mono">{r.id.slice(0, 8)}</p>
+                      <p className="text-white font-semibold text-sm truncate">
+                        {r.owner} <span className="text-gray-400 font-normal">— {r.label}</span>
+                      </p>
+                      <p className="text-xs text-gray-400 font-mono">
+                        {r.id}
+                        <span className="ml-2 font-sans text-purple-300 font-bold">{r.origin}</span>
+                      </p>
                     </div>
                     <div className="flex items-center gap-4 text-xs shrink-0">
                       <span className="text-pink-400 font-bold flex items-center gap-1">
@@ -367,6 +381,7 @@ export const AdminEngagement: React.FC = () => {
                   </label>
                 ))}
               </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>

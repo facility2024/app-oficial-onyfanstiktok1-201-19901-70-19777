@@ -108,6 +108,15 @@ interface Comment {
   };
 }
 
+// 🔢 Soma os contadores "base" definidos no painel admin aos contadores reais
+const applyBaseCounters = (rows: any[]): any[] =>
+  (rows || []).map((v: any) => ({
+    ...v,
+    likes_count: (v?.likes_count || 0) + (v?.base_likes || 0),
+    views_count: (v?.views_count || 0) + (v?.base_views || 0),
+  }));
+
+
 interface ActivePromoPopup {
   displayName: string;
   description: string | null;

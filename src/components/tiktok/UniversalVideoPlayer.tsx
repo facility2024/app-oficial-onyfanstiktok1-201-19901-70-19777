@@ -499,6 +499,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           loop={true}
           muted={hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked))}
           playsInline={true}
+          {...{ 'webkit-playsinline': 'true', 'x5-playsinline': 'true' }}
           preload="auto"
           controls={false}
            onClick={handleUserClick}

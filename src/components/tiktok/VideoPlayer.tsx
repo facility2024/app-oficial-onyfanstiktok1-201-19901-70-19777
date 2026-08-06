@@ -56,6 +56,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isInView, setIsInView] = useState(false);
+    // Sticky: uma vez montado, o <video> permanece no DOM (evita flicker no scroll mobile)
+    const [hasMounted, setHasMounted] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
 
     const [offer, setOffer] = useState<Offer | null>(null);
@@ -161,21 +163,33 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       const vh = window.innerHeight || document.documentElement.clientHeight;
       if (rect.bottom > -1500 && rect.top < vh + 1500) {
         setIsInView(true);
+        setHasMounted(true);
       }
+
+      let debounceId: number | null = null;
 
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             const ratio = entry.intersectionRatio || 0;
-            const visible = entry.isIntersecting && ratio > 0;
-            setIsInView(visible);
+            // Considera "ativo" apenas quando a maior parte do item está visível,
+            // evitando disparos a cada pixel de scroll (iOS/Android).
+            const visible = entry.isIntersecting && ratio >= 0.6;
+            // Uma vez montado, o <video> nunca é desmontado no scroll.
+            if (entry.isIntersecting) setHasMounted(true);
+            if (debounceId) window.clearTimeout(debounceId);
+            debounceId = window.setTimeout(() => setIsInView(visible), 120);
           });
         },
-        { root: null, rootMargin: '600px 0px', threshold: [0, 0.01] }
+        { root: null, rootMargin: '300px 0px', threshold: [0, 0.6, 0.75] }
       );
       observer.observe(el);
-      return () => observer.disconnect();
+      return () => {
+        if (debounceId) window.clearTimeout(debounceId);
+        observer.disconnect();
+      };
     }, []);
+
 
     // Registrar visualização quando o vídeo entra em viewport (evita duplicar por 5 min)
     useEffect(() => {
@@ -311,7 +325,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     return (
       <div ref={containerRef} className="relative w-full h-full">
-        {isInView ? (
+        {hasMounted ? (
           isCarousel ? (
             <div className="w-full h-full" onClick={handleVideoTap}>
               <MediaCarouselPlayer
@@ -344,6 +358,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         ) : (
           <div className="w-full h-full bg-black" />
         )}
+
 
         {/* Badge discreto para vídeo privado — não bloqueia o vídeo */}
         {lockedPrivate && (
@@ -409,7 +424,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
         {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
         {showExternalOverlays && showCta && (
-          <div className="absolute bottom-24 sm:bottom-28 left-0 right-0 z-[60] px-3 sm:px-4 flex justify-center pointer-events-auto">
+          <div
+            className="absolute bottom-24 sm:bottom-28 left-0 right-0 z-[60] px-3 sm:px-4 flex justify-center pointer-events-auto"
+            style={{ willChange: 'opacity, transform', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+          >
             <a
               href={ctaHref}
               target="_blank"
@@ -446,7 +464,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
 
         {/* VideoProgressBar - oculto no desktop */}
-        {isInView && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
+        {hasMounted && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
 
       </div>
     );

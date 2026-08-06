@@ -412,6 +412,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
               )}
             </div>
 
+            {/* Visualizações em destaque, logo abaixo de "Vídeos Novos" */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+              style={{ top: 'calc(env(safe-area-inset-top, 0px) + 46px)' }}
+            >
+              <span className="flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-bold shadow-lg">
+                <Eye className="w-3.5 h-3.5 text-cyan-300" />
+                {formatViews(totalViews)} visualizações
+              </span>
+            </div>
+
+
             {!!videoTitle && !isExternallyManaged && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
                 <p className="text-white text-sm font-semibold text-center line-clamp-2">

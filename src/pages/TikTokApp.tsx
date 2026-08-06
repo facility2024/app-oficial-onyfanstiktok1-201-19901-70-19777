@@ -2446,7 +2446,7 @@ export const TikTokApp = () => {
         const arr = [...videos];
         arr[idx] = enrichedVideo;
         setVideos(arr);
-        emblaApi?.scrollTo(idx);
+        emblaApi?.scrollTo(idx, true);
         setCurrentVideoIndex(idx);
       } else {
         const arr = [enrichedVideo, ...videos];
@@ -3250,7 +3250,7 @@ export const TikTokApp = () => {
     if (idx !== -1) {
       setShowProfile(false);
       setCurrentVideoIndex(idx);
-      emblaApi?.scrollTo(idx);
+      emblaApi?.scrollTo(idx, true);
       return;
     }
     // Não está no feed carregado: abre pelo perfil dono do vídeo
@@ -3265,12 +3265,12 @@ export const TikTokApp = () => {
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
 
-    // Primeiro tentar encontrar nos vídeos já carregados
-    const modelVideoIndex = videos.findIndex(video => video.user?.id === modelId || video.model_id === modelId || video.creator_id === modelId);
+    // Primeiro tentar encontrar na lista REALMENTE exibida (displayVideos inclui promos/anúncios)
+    const modelVideoIndex = displayVideos.findIndex((video: any) => video.user?.id === modelId || video.model_id === modelId || video.creator_id === modelId);
     if (modelVideoIndex !== -1) {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
-      emblaApi?.scrollTo(modelVideoIndex);
+      emblaApi?.scrollTo(modelVideoIndex, true);
       // Não abre perfil — busca leva direto ao vídeo no feed
       return;
     }

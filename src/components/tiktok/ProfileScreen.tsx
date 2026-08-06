@@ -658,6 +658,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       }
 
       setIsFollowing(true);
+      setRealFollowers((n) => n + 1);
 
       const followKey = `follow_${userId}_${user.id}`;
       localStorage.setItem(followKey, 'true');

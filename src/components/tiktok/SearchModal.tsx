@@ -251,7 +251,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
             <input
               type="text"
-              placeholder="Pesquisar modelos..."
+              placeholder="Pesquisar modelo, vídeo ou ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white/10 text-white placeholder-white/50 rounded-full pl-10 pr-4 py-3 border border-white/20 focus:border-white/40 focus:outline-none"

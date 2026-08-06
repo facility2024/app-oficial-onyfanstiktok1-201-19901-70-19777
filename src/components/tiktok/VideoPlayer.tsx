@@ -277,22 +277,46 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     // Auto-popup de ofertas desativado para não bloquear o carregamento dos vídeos.
     // Dados da tabela `offers` permanecem intactos; apenas o modal sobreposto foi removido.
 
+    const tapTimerRef = useRef<number | null>(null);
+
     const handleVideoTap = useCallback((event: React.MouseEvent) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
-      
-      // Duplo clique = like
+
+      // Duplo clique = like (cancela o toggle simples pendente)
       if (tapLength < 500 && tapLength > 0) {
+        if (tapTimerRef.current) {
+          window.clearTimeout(tapTimerRef.current);
+          tapTimerRef.current = null;
+        }
         setDoubleTapHeart(true);
         onDoubleClick();
         window.setTimeout(() => setDoubleTapHeart(false), 600);
       } else {
-        // Clique simples = play/pause
-        onTogglePlay();
+        // Clique simples = play/pause, com debounce para evitar duplo disparo
+        if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = window.setTimeout(() => {
+          tapTimerRef.current = null;
+          // Lê o estado REAL do elemento antes de decidir a ação
+          const el = containerRef.current?.querySelector('video') as HTMLVideoElement | null;
+          if (el) {
+            if (el.paused) {
+              el.play().catch(() => {});
+            } else {
+              el.pause();
+            }
+          }
+          onTogglePlay();
+        }, 280);
       }
-      
+
       setLastTap(currentTime);
     }, [lastTap, onDoubleClick, onTogglePlay]);
+
+    useEffect(() => () => {
+      if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
+    }, []);
+
 
     const effectClass = useMemo(() => 
       offer?.button_effect === 'pulse'

@@ -224,19 +224,160 @@ export const AdminEngagement: React.FC = () => {
     }
   };
 
-  // Busca por nome do vídeo, nome da modelo/criadora ou ID (completo ou parcial)
-  const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows.slice(0, 100);
-    return rows
-      .filter(
-        (r) =>
-          r.label.toLowerCase().includes(q) ||
-          r.owner.toLowerCase().includes(q) ||
-          r.id.toLowerCase().includes(q)
-      )
-      .slice(0, 100);
-  }, [rows, search]);
+  // 🔎 Busca GLOBAL de perfis (serviço único) + vídeos do perfil encontrado.
+  // Não altera nenhuma regra de curtidas/visualizações — apenas localiza o alvo.
+  useEffect(() => {
+    const q = search.trim();
+    if (!q) {
+      setSearchRows(null);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const profiles = await searchProfiles(q, { limit: 30 });
+        const collected: TargetRow[] = [];
+
+        if (tab === 'followers') {
+          const ids = profiles.map((p) => p.id);
+          const realById: Record<string, number> = {};
+          if (ids.length) {
+            const { data: follows } = await (supabase as any)
+              .from('model_followers')
+              .select('model_id')
+              .eq('is_active', true)
+              .in('model_id', ids);
+            (follows || []).forEach((f: any) => {
+              realById[f.model_id] = (realById[f.model_id] || 0) + 1;
+            });
+          }
+          const [modelsRes, profilesRes] = await Promise.all([
+            ids.length
+              ? (supabase as any).from('models').select('id, followers_count, base_followers').in('id', ids)
+              : Promise.resolve({ data: [] }),
+            ids.length
+              ? (supabase as any).from('profiles').select('id, followers_count, base_followers').in('id', ids)
+              : Promise.resolve({ data: [] }),
+          ]);
+          const statsById: Record<string, any> = {};
+          [...(modelsRes.data || []), ...(profilesRes.data || [])].forEach((r: any) => {
+            statsById[r.id] = r;
+          });
+
+          profiles.forEach((p) => {
+            const st = statsById[p.id] || {};
+            collected.push({
+              id: p.id,
+              label: `@${p.username || p.name}`,
+              owner: p.name,
+              origin: p.source === 'creator' ? 'Criadora' : 'Modelo',
+              likes_count: 0,
+              views_count: 0,
+              base_likes: 0,
+              base_views: 0,
+              followers_count: realById[p.id] || st.followers_count || 0,
+              base_followers: st.base_followers || 0,
+              type: p.source === 'creator' ? 'profile' : 'model',
+            });
+          });
+        } else {
+          const ids = profiles.map((p) => p.id);
+          const nameById: Record<string, { name: string; source: string }> = {};
+          profiles.forEach((p) => {
+            nameById[p.id] = { name: p.name, source: p.source };
+          });
+
+          if (ids.length) {
+            const idList = ids.join(',');
+            const { data: vids } = await (supabase as any)
+              .from('videos')
+              .select('id, title, description, likes_count, views_count, base_likes, base_views, model_id, creator_id, upload_source, created_at')
+              .eq('is_active', true)
+              .or(`model_id.in.(${idList}),creator_id.in.(${idList})`)
+              .order('created_at', { ascending: false })
+              .limit(300);
+
+            (vids || []).forEach((v: any) => {
+              const ownerId = v.creator_id || v.model_id;
+              const info = ownerId ? nameById[ownerId] : undefined;
+              collected.push({
+                id: v.id,
+                label: v.title || v.description?.slice(0, 60) || `Vídeo ${String(v.id).slice(0, 8)}`,
+                owner: info?.name || 'Sem perfil vinculado',
+                origin: v.creator_id
+                  ? 'Criadora'
+                  : v.upload_source
+                  ? `Externo (${v.upload_source})`
+                  : 'Modelo',
+                likes_count: v.likes_count || 0,
+                views_count: v.views_count || 0,
+                base_likes: v.base_likes || 0,
+                base_views: v.base_views || 0,
+                type: 'video',
+              });
+            });
+          }
+
+          // Busca direta por título/ID de vídeo (complementa a busca por perfil)
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+          const safe = q.replace(/[,()%]/g, ' ').trim();
+          if (safe.length >= 2) {
+            let vq = (supabase as any)
+              .from('videos')
+              .select('id, title, description, likes_count, views_count, base_likes, base_views, model_id, creator_id, upload_source')
+              .eq('is_active', true)
+              .limit(50);
+            vq = isUuid ? vq.eq('id', q) : vq.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`);
+            const { data: byTitle } = await vq;
+            const existing = new Set(collected.map((c) => c.id));
+            (byTitle || []).forEach((v: any) => {
+              if (existing.has(v.id)) return;
+              collected.push({
+                id: v.id,
+                label: v.title || v.description?.slice(0, 60) || `Vídeo ${String(v.id).slice(0, 8)}`,
+                owner: 'Vídeo',
+                origin: v.creator_id ? 'Criadora' : v.upload_source ? `Externo (${v.upload_source})` : 'Modelo',
+                likes_count: v.likes_count || 0,
+                views_count: v.views_count || 0,
+                base_likes: v.base_likes || 0,
+                base_views: v.base_views || 0,
+                type: 'video',
+              });
+            });
+          }
+
+          // Promos do feed já carregadas localmente
+          const ql = q.toLowerCase().replace(/^@+/, '');
+          rows
+            .filter((r) => r.type === 'promo' && (r.label.toLowerCase().includes(ql) || r.owner.toLowerCase().includes(ql) || r.id.toLowerCase().includes(ql)))
+            .forEach((r) => collected.push(r));
+        }
+
+        setSearchRows(collected.slice(0, 100));
+      } catch (e: any) {
+        console.warn('Erro na busca de perfis:', e?.message || e);
+        setSearchRows([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 320);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, tab, rows]);
+
+  const filteredRows = useMemo(
+    () => (searchRows !== null ? searchRows : rows.slice(0, 100)),
+    [rows, searchRows]
+  );
+
+  // Lookup de tipo considerando também os resultados da busca
+  const rowsById = useMemo(() => {
+    const map: Record<string, TargetRow> = {};
+    [...rows, ...(searchRows || [])].forEach((r) => { map[r.id] = r; });
+    return map;
+  }, [rows, searchRows]);
+
 
 
   const loadSchedules = async () => {

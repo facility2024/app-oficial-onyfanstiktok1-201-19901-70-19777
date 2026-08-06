@@ -161,21 +161,33 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       const vh = window.innerHeight || document.documentElement.clientHeight;
       if (rect.bottom > -1500 && rect.top < vh + 1500) {
         setIsInView(true);
+        setHasMounted(true);
       }
+
+      let debounceId: number | null = null;
 
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             const ratio = entry.intersectionRatio || 0;
-            const visible = entry.isIntersecting && ratio > 0;
-            setIsInView(visible);
+            // Considera "ativo" apenas quando a maior parte do item está visível,
+            // evitando disparos a cada pixel de scroll (iOS/Android).
+            const visible = entry.isIntersecting && ratio >= 0.6;
+            // Uma vez montado, o <video> nunca é desmontado no scroll.
+            if (entry.isIntersecting) setHasMounted(true);
+            if (debounceId) window.clearTimeout(debounceId);
+            debounceId = window.setTimeout(() => setIsInView(visible), 120);
           });
         },
-        { root: null, rootMargin: '600px 0px', threshold: [0, 0.01] }
+        { root: null, rootMargin: '300px 0px', threshold: [0, 0.6, 0.75] }
       );
       observer.observe(el);
-      return () => observer.disconnect();
+      return () => {
+        if (debounceId) window.clearTimeout(debounceId);
+        observer.disconnect();
+      };
     }, []);
+
 
     // Registrar visualização quando o vídeo entra em viewport (evita duplicar por 5 min)
     useEffect(() => {

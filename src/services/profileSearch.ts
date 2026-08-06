@@ -87,24 +87,7 @@ export async function searchProfiles(
       .limit(limit * 2);
     q = isUuid ? q.eq('id', term) : q.or(orFilter);
     const { data, error } = await q;
-    if (error) {
-      // Fallback para a view pública quando o RLS bloquear `profiles`
-      let pq = (supabase as any)
-        .from('public_profiles')
-        .select('id, name, username, avatar_url')
-        .limit(limit * 2);
-      pq = isUuid ? pq.eq('id', term) : pq.or(orFilter);
-      const { data: pub } = await pq;
-      return (pub || []).map((p: any) => ({
-        id: p.id,
-        name: p.name || p.username || 'Criadora',
-        username: p.username || p.name || '',
-        avatar_url: p.avatar_url || null,
-        source: 'creator' as const,
-        created_at: null,
-      }));
-    }
-    return (data || []).map((p: any) => ({
+    const out: ProfileSearchResult[] = (data || []).map((p: any) => ({
       id: p.id,
       name: p.name || p.username || 'Criadora',
       username: p.username || p.name || '',
@@ -112,7 +95,29 @@ export async function searchProfiles(
       source: 'creator' as const,
       created_at: p.created_at || null,
     }));
+
+    // RLS pode ocultar `profiles` para usuários anônimos — complementa com a view pública
+    if (error || out.length === 0) {
+      let pq = (supabase as any)
+        .from('public_profiles')
+        .select('id, name, username, avatar_url')
+        .limit(limit * 2);
+      pq = isUuid ? pq.eq('id', term) : pq.or(orFilter);
+      const { data: pub } = await pq;
+      (pub || []).forEach((p: any) => {
+        out.push({
+          id: p.id,
+          name: p.name || p.username || 'Criadora',
+          username: p.username || p.name || '',
+          avatar_url: p.avatar_url || null,
+          source: 'creator' as const,
+          created_at: null,
+        });
+      });
+    }
+    return out;
   };
+
 
   const [models, creators] = await Promise.all([
     sources.includes('model') ? fetchModels() : Promise.resolve([]),

@@ -196,12 +196,23 @@ export const AdminEngagement: React.FC = () => {
     }
     setSaving(true);
     try {
-      const table = targetType === 'video' ? 'videos' : 'feed_promotions';
-      const { error } = await (supabase as any)
-        .from(table)
-        .update({ base_likes: baseLikes, base_views: baseViews })
-        .in('id', selectedIds);
-      if (error) throw error;
+      const videoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'video');
+      const promoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'promo');
+
+      if (videoIds.length) {
+        const { error } = await (supabase as any)
+          .from('videos')
+          .update({ base_likes: baseLikes, base_views: baseViews })
+          .in('id', videoIds);
+        if (error) throw error;
+      }
+      if (promoIds.length) {
+        const { error } = await (supabase as any)
+          .from('feed_promotions')
+          .update({ base_likes: baseLikes, base_views: baseViews })
+          .in('id', promoIds);
+        if (error) throw error;
+      }
       toast.success(`Aplicado em ${selectedIds.length} item(ns)`);
       setSelected({});
       loadTargets();

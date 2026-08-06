@@ -63,6 +63,76 @@ export const AdminEngagement: React.FC = () => {
     try {
       const collected: TargetRow[] = [];
 
+      // ---------- SEGUIDORES (modelos + criadoras) ----------
+      if (tab === 'followers') {
+        const [modelsRes, profilesRes] = await Promise.all([
+          (supabase as any)
+            .from('models')
+            .select('id, name, username, followers_count, base_followers')
+            .eq('is_active', true)
+            .order('name', { ascending: true })
+            .limit(1000),
+          (supabase as any)
+            .from('profiles')
+            .select('id, name, username, followers_count, base_followers')
+            .order('created_at', { ascending: false })
+            .limit(500),
+        ]);
+
+        const ids = [
+          ...(modelsRes.data || []).map((m: any) => m.id),
+          ...(profilesRes.data || []).map((p: any) => p.id),
+        ];
+
+        // Contagem real de seguidores ativos
+        const realById: Record<string, number> = {};
+        if (ids.length) {
+          const { data: follows } = await (supabase as any)
+            .from('model_followers')
+            .select('model_id')
+            .eq('is_active', true)
+            .in('model_id', ids);
+          (follows || []).forEach((f: any) => {
+            realById[f.model_id] = (realById[f.model_id] || 0) + 1;
+          });
+        }
+
+        (modelsRes.data || []).forEach((m: any) => {
+          collected.push({
+            id: m.id,
+            label: `@${m.username || m.name || 'modelo'}`,
+            owner: m.name || m.username || 'Modelo',
+            origin: 'Modelo',
+            likes_count: 0,
+            views_count: 0,
+            base_likes: 0,
+            base_views: 0,
+            followers_count: realById[m.id] || m.followers_count || 0,
+            base_followers: m.base_followers || 0,
+            type: 'model',
+          });
+        });
+        (profilesRes.data || []).forEach((p: any) => {
+          collected.push({
+            id: p.id,
+            label: `@${p.username || p.name || 'criadora'}`,
+            owner: p.name || p.username || 'Criadora',
+            origin: 'Criadora',
+            likes_count: 0,
+            views_count: 0,
+            base_likes: 0,
+            base_views: 0,
+            followers_count: realById[p.id] || p.followers_count || 0,
+            base_followers: p.base_followers || 0,
+            type: 'profile',
+          });
+        });
+
+        setRows(collected);
+        setLoading(false);
+        return;
+      }
+
       // ---------- VÍDEOS (modelos + criadoras + externos via API) ----------
       if (tab !== 'promo') {
         let query = (supabase as any)

@@ -46,6 +46,8 @@ export const AdminEngagement: React.FC = () => {
   const [tab, setTab] = useState<TabKind>('all');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<TargetRow[]>([]);
+  const [searchRows, setSearchRows] = useState<TargetRow[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [baseLikes, setBaseLikes] = useState<number>(0);

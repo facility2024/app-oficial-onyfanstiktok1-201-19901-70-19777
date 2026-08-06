@@ -2446,7 +2446,7 @@ export const TikTokApp = () => {
         const arr = [...videos];
         arr[idx] = enrichedVideo;
         setVideos(arr);
-        emblaApi?.scrollTo(idx);
+        emblaApi?.scrollTo(idx, true);
         setCurrentVideoIndex(idx);
       } else {
         const arr = [enrichedVideo, ...videos];
@@ -3270,7 +3270,7 @@ export const TikTokApp = () => {
     if (modelVideoIndex !== -1) {
       console.log('✅ Perfil encontrado nos vídeos carregados, indo para índice:', modelVideoIndex);
       setCurrentVideoIndex(modelVideoIndex);
-      emblaApi?.scrollTo(modelVideoIndex);
+      emblaApi?.scrollTo(modelVideoIndex, true);
       // Não abre perfil — busca leva direto ao vídeo no feed
       return;
     }

@@ -120,15 +120,26 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
 
       if (modelsError) throw modelsError;
 
-      // 🧹 Buscar IDs de modelos que TÊM vídeo ativo (para não mostrar modelos vazias)
-      const { data: modelVideoRows } = await supabase
-        .from('videos')
-        .select('model_id')
-        .eq('is_active', true)
-        .not('model_id', 'is', null);
-      const modelsWithVideoSet = new Set<string>(
-        (modelVideoRows || []).map((r: any) => r.model_id).filter(Boolean)
-      );
+      // 🧹 Buscar IDs de modelos que TÊM vídeo ativo (paginado — evita limite de 1000)
+      const fetchAllIds = async (column: 'model_id' | 'creator_id'): Promise<Set<string>> => {
+        const set = new Set<string>();
+        const PAGE = 1000;
+        for (let offset = 0; offset < 50000; offset += PAGE) {
+          const { data, error } = await supabase
+            .from('videos')
+            .select(column)
+            .eq('is_active', true)
+            .not(column, 'is', null)
+            .range(offset, offset + PAGE - 1);
+          if (error) break;
+          (data || []).forEach((r: any) => { if (r[column]) set.add(r[column]); });
+          if (!data || data.length < PAGE) break;
+        }
+        return set;
+      };
+
+      const modelsWithVideoSet = await fetchAllIds('model_id');
+
 
       // 🔥 Buscar painéis de chat para verificar status online
       const { data: chatPanelsData, error: chatPanelsError } = await supabase
@@ -155,30 +166,15 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
         }));
 
 
-      // 🔥 Buscar criadores diretamente pelos vídeos ativos (fonte da verdade)
-      console.log('🔍 Buscando criadores via videos.creator_id...');
-      const { data: creatorVideoRows, error: creatorVideosError } = await supabase
-        .from('videos')
-        .select('creator_id')
-        .eq('is_active', true)
-        .not('creator_id', 'is', null);
-
-      if (creatorVideosError) {
-        console.error('❌ Erro ao buscar criadores via videos:', creatorVideosError);
-      }
-
-      const creatorIdsSet = new Set<string>(
-        (creatorVideoRows || [])
-          .map((r: any) => r.creator_id)
-          .filter((id: string | null) => !!id)
-      );
+      // 🔥 Buscar criadores diretamente pelos vídeos ativos (fonte da verdade, paginado)
+      const creatorIdsSet = await fetchAllIds('creator_id');
 
       let creatorsData: any[] = [];
       if (creatorIdsSet.size > 0) {
         const creatorIds = Array.from(creatorIdsSet);
         const { data: creatorsProfiles, error: creatorsError } = await supabase
           .from('profiles')
-          .select('id, name, email, avatar_url, bio')
+          .select('id, name, username, email, avatar_url, bio')
           .in('id', creatorIds);
 
         if (creatorsError) {
@@ -198,7 +194,8 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
         return {
           id: c.id,
           name: displayName,
-          username: displayName,
+          username: c.username || displayName,
+
           avatar_url: c.avatar_url || DEFAULT_AVATAR,
           followers_count: 0,
           is_live: false,

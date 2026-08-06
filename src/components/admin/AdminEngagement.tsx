@@ -413,10 +413,10 @@ export const AdminEngagement: React.FC = () => {
     }
     setSaving(true);
     try {
-      const videoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'video');
-      const promoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'promo');
-      const modelIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'model');
-      const profileIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'profile');
+      const videoIds = selectedIds.filter((id) => rowsById[id]?.type === 'video');
+      const promoIds = selectedIds.filter((id) => rowsById[id]?.type === 'promo');
+      const modelIds = selectedIds.filter((id) => rowsById[id]?.type === 'model');
+      const profileIds = selectedIds.filter((id) => rowsById[id]?.type === 'profile');
 
       if (videoIds.length) {
         const { error } = await (supabase as any)

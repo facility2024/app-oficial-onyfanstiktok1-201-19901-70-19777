@@ -2814,6 +2814,7 @@ export type Database = {
       engagement_schedules: {
         Row: {
           applied_at: string | null
+          base_followers: number
           base_likes: number
           base_views: number
           created_at: string
@@ -2829,6 +2830,7 @@ export type Database = {
         }
         Insert: {
           applied_at?: string | null
+          base_followers?: number
           base_likes?: number
           base_views?: number
           created_at?: string
@@ -2844,6 +2846,7 @@ export type Database = {
         }
         Update: {
           applied_at?: string | null
+          base_followers?: number
           base_likes?: number
           base_views?: number
           created_at?: string
@@ -4969,6 +4972,7 @@ export type Database = {
         Row: {
           access_code: string | null
           avatar_url: string | null
+          base_followers: number
           bio: string | null
           carousel_order: number | null
           carousel_visible: boolean
@@ -5004,6 +5008,7 @@ export type Database = {
         Insert: {
           access_code?: string | null
           avatar_url?: string | null
+          base_followers?: number
           bio?: string | null
           carousel_order?: number | null
           carousel_visible?: boolean
@@ -5039,6 +5044,7 @@ export type Database = {
         Update: {
           access_code?: string | null
           avatar_url?: string | null
+          base_followers?: number
           bio?: string | null
           carousel_order?: number | null
           carousel_visible?: boolean
@@ -6953,6 +6959,7 @@ export type Database = {
           asaas_customer_id: string | null
           avatar_url: string | null
           bairro: string | null
+          base_followers: number
           billing_name: string | null
           bio: string | null
           bunny_collection_id: string | null
@@ -6988,6 +6995,7 @@ export type Database = {
           asaas_customer_id?: string | null
           avatar_url?: string | null
           bairro?: string | null
+          base_followers?: number
           billing_name?: string | null
           bio?: string | null
           bunny_collection_id?: string | null
@@ -7023,6 +7031,7 @@ export type Database = {
           asaas_customer_id?: string | null
           avatar_url?: string | null
           bairro?: string | null
+          base_followers?: number
           billing_name?: string | null
           bio?: string | null
           bunny_collection_id?: string | null

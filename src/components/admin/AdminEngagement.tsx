@@ -546,14 +546,16 @@ export const AdminEngagement: React.FC = () => {
                   <Zap className="w-4 h-4 mr-2" />
                   Aplicar agora ({selectedIds.length})
                 </Button>
-                <Button
-                  onClick={schedule}
-                  disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                >
-                  <CalendarClock className="w-4 h-4 mr-2" />
-                  Agendar ({selectedIds.length})
-                </Button>
+                {tab !== 'followers' && (
+                  <Button
+                    onClick={schedule}
+                    disabled={saving}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  >
+                    <CalendarClock className="w-4 h-4 mr-2" />
+                    Agendar ({selectedIds.length})
+                  </Button>
+                )}
               </div>
             </TabsContent>
           </Tabs>

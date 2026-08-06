@@ -2333,7 +2333,7 @@ export const TikTokApp = () => {
           };
         });
       } else {
-        const watched = allAvailableVideos.filter(v => {
+        const watched = pool.filter(v => {
           const originalId = (v as any)._originalId || v.id;
           // Fallback também exclui "novos" já consumidos — evita o loop de repetição
           return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);

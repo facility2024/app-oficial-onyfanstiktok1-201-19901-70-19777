@@ -484,37 +484,55 @@ export const AdminEngagement: React.FC = () => {
               </div>
 
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-white font-bold">Curtidas base</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={baseLikes}
-                    onChange={(e) => setBaseLikes(Math.max(0, Number(e.target.value) || 0))}
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
+              {tab === 'followers' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-white font-bold">Seguidores base</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={baseFollowers}
+                      onChange={(e) => setBaseFollowers(Math.max(0, Number(e.target.value) || 0))}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Exibido no perfil como <strong className="text-white">base + seguidores reais</strong>.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-white font-bold">Visualizações base</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={baseViews}
-                    onChange={(e) => setBaseViews(Math.max(0, Number(e.target.value) || 0))}
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-white font-bold">Curtidas base</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={baseLikes}
+                      onChange={(e) => setBaseLikes(Math.max(0, Number(e.target.value) || 0))}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white font-bold">Visualizações base</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={baseViews}
+                      onChange={(e) => setBaseViews(Math.max(0, Number(e.target.value) || 0))}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white font-bold">Agendar para (data e hora)</Label>
+                    <Input
+                      type="datetime-local"
+                      value={scheduledAt}
+                      onChange={(e) => setScheduledAt(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-white font-bold">Agendar para (data e hora)</Label>
-                  <Input
-                    type="datetime-local"
-                    value={scheduledAt}
-                    onChange={(e) => setScheduledAt(e.target.value)}
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="flex flex-wrap gap-3">
                 <Button

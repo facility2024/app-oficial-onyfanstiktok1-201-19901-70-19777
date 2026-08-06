@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw, Users } from 'lucide-react';
+import { searchProfiles } from '@/services/profileSearch';
 
 type TargetType = 'video' | 'promo' | 'model' | 'profile';
 type TabKind = 'all' | 'model' | 'creator' | 'promo' | 'followers';

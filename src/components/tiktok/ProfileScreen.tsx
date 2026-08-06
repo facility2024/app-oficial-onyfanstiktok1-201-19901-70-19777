@@ -503,8 +503,8 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
         thumbnail_url: item.thumbnail_url || item.video_url || '/placeholder.svg',
         video_url: item.video_url,
         type: 'video' as const,
-        likes_count: likesMap[item.id] ?? item.likes_count ?? 0,
-        views_count: item.views_count || 0,
+        likes_count: (likesMap[item.id] ?? item.likes_count ?? 0) + (Number(item.base_likes) || 0),
+        views_count: (Number(item.views_count) || 0) + (Number(item.base_views) || 0),
         created_at: item.created_at,
         visibility: (item.visibility || 'public') as 'public' | 'premium' | 'private'
       }));

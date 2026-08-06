@@ -35,6 +35,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
+  const [globalResults, setGlobalResults] = useState<Model[]>([]);
 
   // 🔎 Busca de vídeos por título, descrição ou ID (completo/parcial)
   useEffect(() => {

@@ -1580,8 +1580,6 @@ export const TikTokApp = () => {
           likes_count: match?.likes_count || 0,
           views_count: match?.views_count || 0,
           comments_count: match?.comments_count || 0,
-          base_likes: match?.base_likes || 0,
-          base_views: match?.base_views || 0,
           source_video_id: match?.id || null,
         };
       };

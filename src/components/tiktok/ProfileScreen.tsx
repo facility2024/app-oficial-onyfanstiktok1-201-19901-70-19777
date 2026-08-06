@@ -763,7 +763,7 @@ if (!isOpen) return null;
             <div className="text-center pb-4 px-4">
               <h3 className="text-white text-xl font-bold mb-1">@{user.username}</h3>
               <p className="text-white/60 text-sm">
-                {(user.followers_count || 0).toLocaleString()} seguidores
+                {(baseFollowers + realFollowers || user.followers_count || 0).toLocaleString()} seguidores
               </p>
               {user.is_online && (
                 <div className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 px-3 py-1 rounded-full text-xs font-medium mt-2">

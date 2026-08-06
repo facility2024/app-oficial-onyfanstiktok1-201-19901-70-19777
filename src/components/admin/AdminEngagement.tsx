@@ -577,7 +577,11 @@ export const AdminEngagement: React.FC = () => {
               </div>
 
               <p className="text-xs text-gray-400">
-                {filteredRows.length} item(ns) exibido(s) de {rows.length} carregado(s).
+                {searching
+                  ? 'Buscando perfis...'
+                  : searchRows !== null
+                  ? `${filteredRows.length} resultado(s) da busca global.`
+                  : `${filteredRows.length} item(ns) exibido(s) de ${rows.length} carregado(s).`}
               </p>
 
               <div className="border border-gray-700 rounded-lg divide-y divide-gray-800 max-h-[380px] overflow-auto">

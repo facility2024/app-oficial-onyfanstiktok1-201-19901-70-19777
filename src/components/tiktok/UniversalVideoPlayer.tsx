@@ -306,6 +306,19 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [playbackSrc, bunnyEmbedUrl]);
 
+    // Fonte ÚNICA de ativação: aplica mute e dá play no MESMO momento,
+    // garantindo que áudio e vídeo nunca fiquem dessincronizados.
+    const activateVideo = useCallback(async () => {
+      const video = internalRef && 'current' in internalRef ? internalRef.current : null;
+      if (!video) return;
+      const effectiveMuted = hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlockedRef.current));
+      video.muted = effectiveMuted;
+      video.volume = volume;
+      if (video.paused) {
+        await attemptPlay();
+      }
+    }, [internalRef, hasAudioOverlay, isMuted, isMobile, volume, attemptPlay]);
+
     // Controlar reprodução
     useEffect(() => {
       if (bunnyEmbedUrl) return;
@@ -315,14 +328,14 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const shouldPlay = isPlaying || (autoPlayOnReady && isReady);
 
       if (shouldPlay && isReady && video.paused) {
-        attemptPlay();
+        activateVideo();
       } else if (!shouldPlay && !video.paused) {
         video.pause();
         if (onPause) onPause();
       }
-    }, [isPlaying, isReady, attemptPlay, onPause, internalRef, autoPlayOnReady, bunnyEmbedUrl]);
+    }, [isPlaying, isReady, activateVideo, onPause, internalRef, autoPlayOnReady, bunnyEmbedUrl]);
 
-    // Controlar mute e volume (respeitando o desbloqueio global de áudio no mobile)
+    // Mute/volume: sempre via a mesma função de ativação (play + mute juntos).
     useEffect(() => {
       if (bunnyEmbedUrl) return;
       const video = internalRef && 'current' in internalRef ? internalRef.current : null;
@@ -330,11 +343,13 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       const effectiveMuted = hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked));
       video.muted = effectiveMuted;
       video.volume = volume;
-      // Ao liberar o áudio (primeiro gesto), garante que o vídeo atual continue tocando
-      if (!effectiveMuted && video.paused && (isPlaying || autoPlayOnReady)) {
-        video.play().catch(() => {});
+      // Ao liberar o áudio (primeiro gesto global), re-sincroniza o vídeo ativo
+      // imediatamente — sem exigir clique manual no vídeo.
+      if (!effectiveMuted && (isPlaying || autoPlayOnReady)) {
+        activateVideo();
       }
-    }, [isMuted, volume, internalRef, bunnyEmbedUrl, audioUnlocked, isMobile, hasAudioOverlay, isPlaying, autoPlayOnReady]);
+    }, [isMuted, volume, internalRef, bunnyEmbedUrl, audioUnlocked, isMobile, hasAudioOverlay, isPlaying, autoPlayOnReady, activateVideo]);
+
 
     // Event handlers
     const handleLoadedData = useCallback(() => {

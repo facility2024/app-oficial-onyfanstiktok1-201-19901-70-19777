@@ -11,15 +11,20 @@ import { toast } from 'sonner';
 import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw } from 'lucide-react';
 
 type TargetType = 'video' | 'promo';
+type TabKind = 'all' | 'model' | 'creator' | 'promo';
 
 interface TargetRow {
   id: string;
   label: string;
+  owner: string;
+  origin: string;
   likes_count: number;
   views_count: number;
   base_likes: number;
   base_views: number;
+  type: TargetType;
 }
+
 
 interface ScheduleRow {
   id: string;

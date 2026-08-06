@@ -686,7 +686,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
 if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 transform transition-transform duration-300 ${
+    <div className={`fixed inset-0 z-[80] transform transition-transform duration-300 ${
       isOpen ? 'translate-x-0' : 'translate-x-full'
     }`}>
       {/* Background overlay */}

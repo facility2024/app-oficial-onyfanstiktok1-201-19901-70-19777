@@ -469,9 +469,9 @@ export const AdminEngagement: React.FC = () => {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const payload = selectedIds.map((id) => ({
-        target_type: rows.find((r) => r.id === id)?.type || 'video',
+        target_type: rowsById[id]?.type || 'video',
         target_id: id,
-        target_label: rows.find((r) => r.id === id)?.label || null,
+        target_label: rowsById[id]?.label || null,
         base_likes: baseLikes,
         base_views: baseViews,
         scheduled_at: new Date(scheduledAt).toISOString(),

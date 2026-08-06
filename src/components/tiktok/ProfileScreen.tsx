@@ -325,6 +325,38 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     };
   }, [user?.id]);
 
+  // Seguidores = base (painel admin) + reais
+  const [baseFollowers, setBaseFollowers] = useState(0);
+  const [realFollowers, setRealFollowers] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen || !user?.id) return;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(user.id));
+    if (!isUuid) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [modelRes, profileRes, followRes] = await Promise.all([
+          (supabase as any).from('models').select('base_followers').eq('id', user.id).maybeSingle(),
+          (supabase as any).from('profiles').select('base_followers').eq('id', user.id).maybeSingle(),
+          (supabase as any)
+            .from('model_followers')
+            .select('id', { count: 'exact', head: true })
+            .eq('model_id', user.id)
+            .eq('is_active', true),
+        ]);
+        if (cancelled) return;
+        setBaseFollowers(modelRes?.data?.base_followers ?? profileRes?.data?.base_followers ?? 0);
+        setRealFollowers(followRes?.count || 0);
+      } catch {
+        /* silencioso */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, user?.id]);
+
   // Load viewer name from localStorage (fallback to "Você")
   useEffect(() => {
     const name = localStorage.getItem('viewer_name');

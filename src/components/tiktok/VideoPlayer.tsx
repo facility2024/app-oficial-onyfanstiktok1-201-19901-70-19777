@@ -197,9 +197,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       const persistedVideoId = String((video as any)?._originalId || (video as any)?.id || '').replace(/-block-\d+-\d+$/, '');
       if (!isValidUUID(persistedVideoId)) return;
 
+      // ✅ Dedup: 1 visualização por vídeo a cada 24h (padrão do mercado)
       const key = `view_tracked_${persistedVideoId}`;
-      const last = Number(sessionStorage.getItem(key) || '0');
-      const THROTTLE_MS = 5 * 60 * 1000; // 5 minutos
+      const last = Number(localStorage.getItem(key) || '0');
+      const THROTTLE_MS = 24 * 60 * 60 * 1000; // 24 horas
       const now = Date.now();
       if (now - last < THROTTLE_MS) return;
 
@@ -214,26 +215,19 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           const { data: authData } = await supabase.auth.getUser();
           const userId = (authData?.user?.id as any) || null;
 
-          const ua = navigator.userAgent;
-          let deviceType: string = 'desktop';
-          if (/Mobile|Android|iPhone|iPad|iPod/i.test(ua)) deviceType = /iPad/i.test(ua) ? 'tablet' : 'mobile';
+          // RPC valida a janela de 24h no banco e incrementa views_count
+          await (supabase as any).rpc('register_video_view_24h', {
+            _video_id: persistedVideoId,
+            _viewer_key: sessionId,
+            _user_id: userId,
+          });
 
-          // Only pass model_id if video actually belongs to a model (not creator)
-          const actualModelId = (video as any)?.model_id || null;
-          await supabase.from('video_views').insert({
-            video_id: persistedVideoId,
-            model_id: actualModelId,
-            user_id: userId,
-            session_id: sessionId,
-            device_type: deviceType,
-            user_agent: ua,
-          } as any);
-
-          sessionStorage.setItem(key, String(Date.now()));
+          localStorage.setItem(key, String(Date.now()));
         } catch {
           // Silently fail view tracking
         }
       }, 2000); // considera view após 2s
+
 
       return () => window.clearTimeout(timeoutId);
     }, [isInView, video, modelId]);

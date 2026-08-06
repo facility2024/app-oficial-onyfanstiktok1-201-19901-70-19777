@@ -108,6 +108,15 @@ interface Comment {
   };
 }
 
+// 🔢 Soma os contadores "base" definidos no painel admin aos contadores reais
+const applyBaseCounters = (rows: any[]): any[] =>
+  (rows || []).map((v: any) => ({
+    ...v,
+    likes_count: (v?.likes_count || 0) + (v?.base_likes || 0),
+    views_count: (v?.views_count || 0) + (v?.base_views || 0),
+  }));
+
+
 interface ActivePromoPopup {
   displayName: string;
   description: string | null;
@@ -447,10 +456,10 @@ export const TikTokApp = () => {
         video_url: promo.media_url,
         thumbnail_url: promo.banner_url || '',
         user_id: `promo-${promo.id}`,
-        likes_count: 0,
+        likes_count: (promo as any).base_likes || 0,
         comments_count: 0,
         shares_count: 0,
-        views_count: promo.views_count || 0,
+        views_count: (promo.views_count || 0) + ((promo as any).base_views || 0),
         music_name: `${promo.display_name} • Patrocinado`,
         is_active: true,
         visibility: 'public',
@@ -665,10 +674,10 @@ export const TikTokApp = () => {
         video_url: selectedPromo.media_url,
         thumbnail_url: selectedPromo.banner_url || '',
         user_id: `promo-${selectedPromo.id}`,
-        likes_count: 0,
+        likes_count: (selectedPromo as any).base_likes || 0,
         comments_count: 0,
         shares_count: 0,
-        views_count: selectedPromo.views_count || 0,
+        views_count: (selectedPromo.views_count || 0) + ((selectedPromo as any).base_views || 0),
         music_name: `${selectedPromo.display_name} • Patrocinado`,
         is_active: true,
         visibility: 'public',
@@ -1383,7 +1392,7 @@ export const TikTokApp = () => {
 
       const postsAgendados = (postsAgendadosRes as any)?.data || [];
       const postsPrincipais = (postsPrincipaisRes as any)?.data || [];
-      let videosData: any[] = (videosRes as any)?.data || [];
+      let videosData: any[] = applyBaseCounters((videosRes as any)?.data || []);
       const modelsData = (modelsRes as any)?.data || [];
       const chatPanelsData = (chatPanelsRes as any)?.data || [];
       const creatorRoles = (creatorRolesRes as any)?.data || [];
@@ -2199,7 +2208,7 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao buscar lote antigo:', error);
         return [];
       }
-      const batch: any[] = data || [];
+      const batch: any[] = applyBaseCounters(data || []);
       hasMoreFromDbRef.current = batch.length >= DB_PAGE_SIZE;
       if (batch.length > 0) {
         feedCursorRef.current = batch[batch.length - 1]?.created_at || feedCursorRef.current;
@@ -3306,10 +3315,10 @@ export const TikTokApp = () => {
           creator_id: modelId,
           music_name: video.title || `Som original - ${profile.name || profile.username || 'Criador'}`,
           visibility: (video.visibility === 'private' ? 'private' : 'public') as 'public' | 'private',
-          likes_count: video.likes_count || 0,
+          likes_count: (video.likes_count || 0) + (video.base_likes || 0),
           comments_count: video.comments_count || 0,
           shares_count: video.shares_count || 0,
-          views_count: video.views_count || 0,
+          views_count: (video.views_count || 0) + (video.base_views || 0),
           is_active: true,
           created_at: video.created_at,
           user: {
@@ -3499,10 +3508,10 @@ export const TikTokApp = () => {
         model_id: modelId,
         music_name: video.title || `Som original - ${modelData?.username}`,
         visibility: (video.visibility === 'private' ? 'private' : 'public') as 'public' | 'private',
-        likes_count: video.likes_count || 0,
+        likes_count: (video.likes_count || 0) + (video.base_likes || 0),
         comments_count: video.comments_count || 0,
         shares_count: video.shares_count || 0,
-        views_count: video.views_count || 0,
+        views_count: (video.views_count || 0) + (video.base_views || 0),
         is_active: true,
         created_at: video.created_at,
         user: {

@@ -1564,6 +1564,27 @@ export const TikTokApp = () => {
         }
       })());
 
+      // 🔗 Índice dos vídeos reais por URL (e por modelo+URL) para que posts agendados/principais
+      // herdem os contadores base aplicados no painel de Engajamento
+      const videosByUrl = new Map<string, any>();
+      (videosData || []).forEach((v: any) => {
+        const url = normalizeUrl(v.video_url || '');
+        if (!url) return;
+        if (!videosByUrl.has(url)) videosByUrl.set(url, v);
+        if (v.model_id) videosByUrl.set(`${v.model_id}::${url}`, v);
+        if (v.creator_id) videosByUrl.set(`${v.creator_id}::${url}`, v);
+      });
+      const getCountersForUrl = (ownerId: string | null | undefined, url: string) => {
+        const match = (ownerId ? videosByUrl.get(`${ownerId}::${url}`) : null) || videosByUrl.get(url);
+        return {
+          likes_count: match?.likes_count || 0,
+          views_count: match?.views_count || 0,
+          comments_count: match?.comments_count || 0,
+          source_video_id: match?.id || null,
+        };
+      };
+
+
       // 🎯 Processar posts agendados: 1 vídeo por modelo por acesso ao feed
       // O próximo da fila só entra após novo acesso/reload, sem empilhar vários vídeos do mesmo perfil
       const scheduledPostsByModel: Record<string, any[]> = {};
@@ -1594,6 +1615,7 @@ export const TikTokApp = () => {
         visibility: 'public' as const,
         source: 'scheduled_post',
         isHighlighted: true,
+        ...getCountersForUrl(post.modelo_id, contentUrl),
         scheduled_post_id: post.id,
         scheduled_next_queue_index: nextQueueIndex,
         created_at: post.data_publicacao || post.created_at,
@@ -1714,6 +1736,7 @@ export const TikTokApp = () => {
           visibility: 'public' as const,
           source: 'main_post',
           isHighlighted: true,
+          ...getCountersForUrl(post.modelo_id, contentUrl),
           created_at: post.created_at,
           user: model ? {
             id: model.id || post.modelo_id || 'unknown',

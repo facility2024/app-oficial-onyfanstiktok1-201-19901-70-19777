@@ -1,6 +1,7 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { searchProfiles } from '@/services/profileSearch';
 import { X, Search } from 'lucide-react';
 
 interface Model {
@@ -34,6 +35,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
+  const [globalResults, setGlobalResults] = useState<Model[]>([]);
 
   // 🔎 Busca de vídeos por título, descrição ou ID (completo/parcial)
   useEffect(() => {
@@ -213,18 +215,53 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
     }
   };
 
-  const filteredModels = models.filter(model => {
-    if (!searchQuery.trim()) return true;
-    
-    const query = searchQuery.toLowerCase().trim();
-    const name = (model.name || '').toLowerCase();
-    const username = (model.username || '').toLowerCase();
-    
-    // Busca flexível: verifica se qualquer parte do query está no nome/username
-    // ou se qualquer parte do nome/username contém o query
-    return name.includes(query) || username.includes(query) ||
-      query.split(/\s+/).some(word => name.includes(word) || username.includes(word));
-  });
+  // 🔎 Busca GLOBAL de perfis (mesmo serviço do painel Engajamento)
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!isOpen || q.length < 1) {
+      setGlobalResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const profiles = await searchProfiles(q, { limit: 30 });
+        setGlobalResults(
+          profiles.map((p) => ({
+            id: p.id,
+            name: p.name,
+            username: p.username || p.name,
+            avatar_url: p.avatar_url || DEFAULT_AVATAR,
+            followers_count: 0,
+            is_live: false,
+            is_verified: p.source === 'creator',
+            is_creator: p.source === 'creator',
+          }))
+        );
+      } catch (e) {
+        console.warn('Erro na busca global de perfis:', e);
+        setGlobalResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, isOpen]);
+
+  const filteredModels = useMemo(() => {
+    const raw = searchQuery.trim();
+    if (!raw) return models;
+
+    const query = raw.toLowerCase().replace(/^@+/, '');
+    const local = models.filter((model) => {
+      const name = (model.name || '').toLowerCase();
+      const username = (model.username || '').toLowerCase();
+      return name.includes(query) || username.includes(query) || model.id.toLowerCase().includes(query) ||
+        query.split(/\s+/).some(word => name.includes(word) || username.includes(word));
+    });
+
+    // Mescla com os resultados globais (perfis que não estavam na lista local)
+    const seen = new Set(local.map((m) => m.id));
+    const extras = globalResults.filter((g) => !seen.has(g.id));
+    return [...local, ...extras];
+  }, [models, searchQuery, globalResults]);
 
   if (!isOpen) return null;
 

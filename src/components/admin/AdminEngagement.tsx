@@ -11,15 +11,20 @@ import { toast } from 'sonner';
 import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw } from 'lucide-react';
 
 type TargetType = 'video' | 'promo';
+type TabKind = 'all' | 'model' | 'creator' | 'promo';
 
 interface TargetRow {
   id: string;
   label: string;
+  owner: string;
+  origin: string;
   likes_count: number;
   views_count: number;
   base_likes: number;
   base_views: number;
+  type: TargetType;
 }
+
 
 interface ScheduleRow {
   id: string;
@@ -35,7 +40,7 @@ interface ScheduleRow {
 }
 
 export const AdminEngagement: React.FC = () => {
-  const [targetType, setTargetType] = useState<TargetType>('video');
+  const [tab, setTab] = useState<TabKind>('all');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<TargetRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,54 +59,90 @@ export const AdminEngagement: React.FC = () => {
   const loadTargets = async () => {
     setLoading(true);
     try {
-      if (targetType === 'video') {
+      const collected: TargetRow[] = [];
+
+      // ---------- VÍDEOS (modelos + criadoras + externos via API) ----------
+      if (tab !== 'promo') {
         let query = (supabase as any)
           .from('videos')
-          .select('id, title, description, likes_count, views_count, base_likes, base_views')
+          .select('id, title, description, likes_count, views_count, base_likes, base_views, model_id, creator_id, upload_source, created_at')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
-          .limit(search.trim() ? 10 : 30);
+          .limit(500);
 
-        if (search.trim()) {
-          query = query.or(`title.ilike.%${search.trim()}%,description.ilike.%${search.trim()}%`);
-        }
+        if (tab === 'model') query = query.not('model_id', 'is', null);
+        if (tab === 'creator') query = query.not('creator_id', 'is', null);
 
         const { data, error } = await query;
         if (error) throw error;
-        setRows(
-          (data || []).map((v: any) => ({
+        const videos = (data || []) as any[];
+
+        const modelIds = Array.from(new Set(videos.map((v) => v.model_id).filter(Boolean)));
+        const creatorIds = Array.from(new Set(videos.map((v) => v.creator_id).filter(Boolean)));
+
+        const [modelsRes, profilesRes] = await Promise.all([
+          modelIds.length
+            ? (supabase as any).from('models').select('id, name, username').in('id', modelIds)
+            : Promise.resolve({ data: [] }),
+          creatorIds.length
+            ? (supabase as any).from('public_profiles').select('id, name, username').in('id', creatorIds)
+            : Promise.resolve({ data: [] }),
+        ]);
+
+        const nameById: Record<string, string> = {};
+        (modelsRes.data || []).forEach((m: any) => {
+          nameById[m.id] = m.name || m.username || 'Modelo';
+        });
+        (profilesRes.data || []).forEach((p: any) => {
+          nameById[p.id] = p.name || p.username || 'Criadora';
+        });
+
+        videos.forEach((v) => {
+          const ownerId = v.creator_id || v.model_id;
+          const owner = (ownerId && nameById[ownerId]) || 'Sem perfil vinculado';
+          const origin = v.creator_id
+            ? 'Criadora'
+            : v.upload_source
+            ? `Externo (${v.upload_source})`
+            : 'Modelo';
+          collected.push({
             id: v.id,
             label: v.title || v.description?.slice(0, 60) || `Vídeo ${String(v.id).slice(0, 8)}`,
+            owner,
+            origin,
             likes_count: v.likes_count || 0,
             views_count: v.views_count || 0,
             base_likes: v.base_likes || 0,
             base_views: v.base_views || 0,
-          }))
-        );
-      } else {
-        let query = (supabase as any)
+            type: 'video',
+          });
+        });
+      }
+
+      // ---------- PROMOS DO FEED ----------
+      if (tab === 'all' || tab === 'promo') {
+        const { data, error } = await (supabase as any)
           .from('feed_promotions')
-          .select('id, display_name, description, views_count, base_likes, base_views')
+          .select('id, display_name, title, description, views_count, base_likes, base_views')
           .order('created_at', { ascending: false })
-          .limit(search.trim() ? 10 : 30);
-
-        if (search.trim()) {
-          query = query.ilike('display_name', `%${search.trim()}%`);
-        }
-
-        const { data, error } = await query;
+          .limit(300);
         if (error) throw error;
-        setRows(
-          (data || []).map((p: any) => ({
+        (data || []).forEach((p: any) => {
+          collected.push({
             id: p.id,
-            label: p.display_name || p.description?.slice(0, 60) || `Promo ${String(p.id).slice(0, 8)}`,
+            label: p.title || p.display_name || p.description?.slice(0, 60) || `Promo ${String(p.id).slice(0, 8)}`,
+            owner: p.display_name || 'Promo',
+            origin: 'Promo do Feed',
             likes_count: 0,
             views_count: p.views_count || 0,
             base_likes: p.base_likes || 0,
             base_views: p.base_views || 0,
-          }))
-        );
+            type: 'promo',
+          });
+        });
       }
+
+      setRows(collected);
     } catch (e: any) {
       console.error(e);
       toast.error('Erro ao carregar itens: ' + (e?.message || 'desconhecido'));
@@ -109,6 +150,21 @@ export const AdminEngagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Busca por nome do vídeo, nome da modelo/criadora ou ID (completo ou parcial)
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows.slice(0, 100);
+    return rows
+      .filter(
+        (r) =>
+          r.label.toLowerCase().includes(q) ||
+          r.owner.toLowerCase().includes(q) ||
+          r.id.toLowerCase().includes(q)
+      )
+      .slice(0, 100);
+  }, [rows, search]);
+
 
   const loadSchedules = async () => {
     const { data, error } = await (supabase as any)
@@ -127,7 +183,7 @@ export const AdminEngagement: React.FC = () => {
     setSelected({});
     loadTargets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetType]);
+  }, [tab]);
 
   useEffect(() => {
     loadSchedules();
@@ -140,12 +196,23 @@ export const AdminEngagement: React.FC = () => {
     }
     setSaving(true);
     try {
-      const table = targetType === 'video' ? 'videos' : 'feed_promotions';
-      const { error } = await (supabase as any)
-        .from(table)
-        .update({ base_likes: baseLikes, base_views: baseViews })
-        .in('id', selectedIds);
-      if (error) throw error;
+      const videoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'video');
+      const promoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'promo');
+
+      if (videoIds.length) {
+        const { error } = await (supabase as any)
+          .from('videos')
+          .update({ base_likes: baseLikes, base_views: baseViews })
+          .in('id', videoIds);
+        if (error) throw error;
+      }
+      if (promoIds.length) {
+        const { error } = await (supabase as any)
+          .from('feed_promotions')
+          .update({ base_likes: baseLikes, base_views: baseViews })
+          .in('id', promoIds);
+        if (error) throw error;
+      }
       toast.success(`Aplicado em ${selectedIds.length} item(ns)`);
       setSelected({});
       loadTargets();
@@ -169,7 +236,7 @@ export const AdminEngagement: React.FC = () => {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const payload = selectedIds.map((id) => ({
-        target_type: targetType,
+        target_type: rows.find((r) => r.id === id)?.type || 'video',
         target_id: id,
         target_label: rows.find((r) => r.id === id)?.label || null,
         base_likes: baseLikes,
@@ -241,40 +308,49 @@ export const AdminEngagement: React.FC = () => {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs value={targetType} onValueChange={(v) => setTargetType(v as TargetType)}>
-            <TabsList className="bg-gray-800 border border-gray-700">
-              <TabsTrigger value="video" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
-                Vídeos
+          <Tabs value={tab} onValueChange={(v) => setTab(v as TabKind)}>
+            <TabsList className="bg-gray-800 border border-gray-700 flex-wrap h-auto">
+              <TabsTrigger value="all" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
+                Todos
+              </TabsTrigger>
+              <TabsTrigger value="model" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
+                Modelos / API externa
+              </TabsTrigger>
+              <TabsTrigger value="creator" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
+                Criadoras
               </TabsTrigger>
               <TabsTrigger value="promo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
                 Promos do Feed
               </TabsTrigger>
             </TabsList>
-            <TabsContent value={targetType} className="mt-4 space-y-4">
+            <TabsContent value={tab} className="mt-4 space-y-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && loadTargets()}
-                    placeholder={targetType === 'video' ? 'Buscar por título ou descrição...' : 'Buscar promo...'}
+                    placeholder="Buscar por nome do vídeo, modelo/criadora ou ID..."
                     className="pl-9 bg-gray-800 border-gray-600 text-white"
                   />
                 </div>
                 <Button onClick={loadTargets} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
                   <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Buscar
+                  Atualizar
                 </Button>
               </div>
 
+              <p className="text-xs text-gray-400">
+                {filteredRows.length} item(ns) exibido(s) de {rows.length} carregado(s).
+              </p>
+
               <div className="border border-gray-700 rounded-lg divide-y divide-gray-800 max-h-[380px] overflow-auto">
-                {rows.length === 0 && (
+                {filteredRows.length === 0 && (
                   <div className="p-4 text-gray-400 text-sm">Nenhum item encontrado.</div>
                 )}
-                {rows.map((r) => (
+                {filteredRows.map((r) => (
                   <label
-                    key={r.id}
+                    key={`${r.type}-${r.id}`}
                     className="flex items-center gap-3 p-3 hover:bg-gray-800/70 cursor-pointer"
                   >
                     <Checkbox
@@ -282,8 +358,13 @@ export const AdminEngagement: React.FC = () => {
                       onCheckedChange={(c) => setSelected((prev) => ({ ...prev, [r.id]: !!c }))}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold text-sm truncate">{r.label}</p>
-                      <p className="text-xs text-gray-400 font-mono">{r.id.slice(0, 8)}</p>
+                      <p className="text-white font-semibold text-sm truncate">
+                        {r.owner} <span className="text-gray-400 font-normal">— {r.label}</span>
+                      </p>
+                      <p className="text-xs text-gray-400 font-mono">
+                        {r.id}
+                        <span className="ml-2 font-sans text-purple-300 font-bold">{r.origin}</span>
+                      </p>
                     </div>
                     <div className="flex items-center gap-4 text-xs shrink-0">
                       <span className="text-pink-400 font-bold flex items-center gap-1">
@@ -300,6 +381,7 @@ export const AdminEngagement: React.FC = () => {
                   </label>
                 ))}
               </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>

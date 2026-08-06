@@ -14,16 +14,93 @@ interface Model {
   is_creator?: boolean; // Flag para identificar criadores
 }
 
+interface VideoResult {
+  id: string;
+  title: string;
+  owner: string;
+  ownerId: string | null;
+  thumbnail_url: string | null;
+}
+
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectModel: (modelId: string) => void;
+  onSelectVideo?: (videoId: string, ownerId?: string | null) => void;
 }
 
-export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps) => {
+export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: SearchModalProps) => {
   const [models, setModels] = useState<Model[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
+
+  // 🔎 Busca de vídeos por título, descrição ou ID (completo/parcial)
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!isOpen || q.length < 2) {
+      setVideoResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+        let query = (supabase as any)
+          .from('videos')
+          .select('id, title, description, thumbnail_url, model_id, creator_id')
+          .eq('is_active', true)
+          .limit(20);
+
+        query = isUuid
+          ? query.eq('id', q)
+          : query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+
+        const { data } = await query;
+        let rows = (data || []) as any[];
+
+        // Busca por trecho de ID (ex.: db6255ba)
+        if (rows.length === 0 && /^[0-9a-f]{4,}$/i.test(q)) {
+          const { data: allIds } = await (supabase as any)
+            .from('videos')
+            .select('id, title, description, thumbnail_url, model_id, creator_id')
+            .eq('is_active', true)
+            .limit(1000);
+          rows = (allIds || []).filter((v: any) => String(v.id).toLowerCase().includes(q.toLowerCase()));
+        }
+
+        const modelIds = Array.from(new Set(rows.map((v) => v.model_id).filter(Boolean)));
+        const creatorIds = Array.from(new Set(rows.map((v) => v.creator_id).filter(Boolean)));
+        const nameById: Record<string, string> = {};
+
+        if (modelIds.length) {
+          const { data: ms } = await (supabase as any).from('models').select('id, name, username').in('id', modelIds);
+          (ms || []).forEach((m: any) => { nameById[m.id] = m.name || m.username || 'Modelo'; });
+        }
+        if (creatorIds.length) {
+          const { data: ps } = await (supabase as any).from('public_profiles').select('id, name, username').in('id', creatorIds);
+          (ps || []).forEach((p: any) => { nameById[p.id] = p.name || p.username || 'Criadora'; });
+        }
+
+        setVideoResults(
+          rows.slice(0, 20).map((v: any) => {
+            const ownerId = v.creator_id || v.model_id || null;
+            return {
+              id: v.id,
+              title: v.title || v.description?.slice(0, 50) || `Vídeo ${String(v.id).slice(0, 8)}`,
+              owner: (ownerId && nameById[ownerId]) || 'Perfil',
+              ownerId,
+              thumbnail_url: v.thumbnail_url || null,
+            };
+          })
+        );
+      } catch (e) {
+        console.warn('Erro na busca de vídeos:', e);
+        setVideoResults([]);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery, isOpen]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -174,7 +251,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
             <input
               type="text"
-              placeholder="Pesquisar modelos..."
+              placeholder="Pesquisar modelo, vídeo ou ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white/10 text-white placeholder-white/50 rounded-full pl-10 pr-4 py-3 border border-white/20 focus:border-white/40 focus:outline-none"
@@ -182,8 +259,40 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel }: SearchModalProps
           </div>
         </div>
 
+        {/* Resultados de vídeos */}
+        {videoResults.length > 0 && (
+          <div className="px-4 pb-3">
+            <p className="text-white/60 text-xs font-semibold mb-2 uppercase tracking-wide">Vídeos encontrados</p>
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
+              {videoResults.map((v) => (
+                <div
+                  key={v.id}
+                  onClick={() => {
+                    if (onSelectVideo) onSelectVideo(v.id, v.ownerId);
+                    else if (v.ownerId) onSelectModel(v.ownerId);
+                    onClose();
+                  }}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <div className="w-12 h-16 rounded-md bg-white/10 overflow-hidden shrink-0">
+                    {v.thumbnail_url && (
+                      <img src={v.thumbnail_url} alt={v.title} className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white text-sm font-semibold truncate">{v.title}</p>
+                    <p className="text-white/60 text-xs truncate">{v.owner}</p>
+                    <p className="text-white/40 text-[10px] font-mono truncate">{v.id}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Models List */}
         <div className="flex-1 overflow-y-auto md:overflow-y-scroll px-4" onWheel={(e) => e.stopPropagation()}>
+
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>

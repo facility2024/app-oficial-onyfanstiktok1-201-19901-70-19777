@@ -3242,6 +3242,26 @@ export const TikTokApp = () => {
       }
     }
   }, [emblaApi, currentVideoIndex]);
+  // 🔎 Ir direto para um vídeo específico (busca por nome/ID)
+  const goToVideoById = async (videoId: string, ownerId?: string | null) => {
+    const idx = displayVideos.findIndex(
+      (v: any) => v.id === videoId || v._originalId === videoId || String(v.id).startsWith(videoId)
+    );
+    if (idx !== -1) {
+      setShowProfile(false);
+      setCurrentVideoIndex(idx);
+      emblaApi?.scrollTo(idx);
+      return;
+    }
+    // Não está no feed carregado: abre pelo perfil dono do vídeo
+    if (ownerId) {
+      await goToModelVideo(ownerId);
+      setShowProfile(false);
+      return;
+    }
+    toast({ title: 'Vídeo não encontrado no feed atual', variant: 'destructive' });
+  };
+
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);
 
@@ -3887,7 +3907,7 @@ export const TikTokApp = () => {
         <CommentsScreen comments={visibleComments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
         
         {/* Search Modal */}
-        <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={async modelId => {
+        <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectVideo={async (videoId, ownerId) => { setShowSearch(false); await goToVideoById(videoId, ownerId); }} onSelectModel={async modelId => {
         setShowSearch(false);
         await goToModelVideo(modelId);
         setShowProfile(false);
@@ -4309,7 +4329,7 @@ export const TikTokApp = () => {
       <CommentsScreen comments={visibleComments} isOpen={showComments} onClose={() => setShowComments(false)} onAddComment={addComment} videoId={((currentVideo as any)?._originalId || currentVideo?.id)} onReloadComments={() => currentVideo && loadComments(((currentVideo as any)._originalId || currentVideo.id))} />
 
       {/* Desktop Search Modal */}
-      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectModel={async modelId => {
+      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} onSelectVideo={async (videoId, ownerId) => { setShowSearch(false); await goToVideoById(videoId, ownerId); }} onSelectModel={async modelId => {
       setShowSearch(false);
       await goToModelVideo(modelId);
       setShowProfile(false);

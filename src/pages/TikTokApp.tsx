@@ -2372,7 +2372,7 @@ export const TikTokApp = () => {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [allAvailableVideos, currentPage, isLoadingMore, videos, VIDEOS_PER_BLOCK]);
+  }, [allAvailableVideos, currentPage, isLoadingMore, videos, VIDEOS_PER_BLOCK, fetchOlderVideosBatch]);
 
   // 📱 Carregamento automático infinito quando próximo do fim
   useEffect(() => {

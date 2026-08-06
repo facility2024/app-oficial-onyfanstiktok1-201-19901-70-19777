@@ -325,7 +325,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
 
     return (
       <div ref={containerRef} className="relative w-full h-full">
-        {isInView ? (
+        {hasMounted ? (
           isCarousel ? (
             <div className="w-full h-full" onClick={handleVideoTap}>
               <MediaCarouselPlayer
@@ -358,6 +358,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         ) : (
           <div className="w-full h-full bg-black" />
         )}
+
 
         {/* Badge discreto para vídeo privado — não bloqueia o vídeo */}
         {lockedPrivate && (

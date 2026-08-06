@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw } from 'lucide-react';
+import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw, Users } from 'lucide-react';
 
-type TargetType = 'video' | 'promo';
-type TabKind = 'all' | 'model' | 'creator' | 'promo';
+type TargetType = 'video' | 'promo' | 'model' | 'profile';
+type TabKind = 'all' | 'model' | 'creator' | 'promo' | 'followers';
 
 interface TargetRow {
   id: string;
@@ -22,6 +22,8 @@ interface TargetRow {
   views_count: number;
   base_likes: number;
   base_views: number;
+  followers_count?: number;
+  base_followers?: number;
   type: TargetType;
 }
 

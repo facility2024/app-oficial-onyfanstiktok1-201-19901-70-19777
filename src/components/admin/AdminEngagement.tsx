@@ -65,7 +65,7 @@ export const AdminEngagement: React.FC = () => {
       if (tab !== 'promo') {
         let query = (supabase as any)
           .from('videos')
-          .select('id, title, description, likes_count, views_count, base_likes, base_views, model_id, creator_id, source, created_at')
+          .select('id, title, description, likes_count, views_count, base_likes, base_views, model_id, creator_id, upload_source, created_at')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(500);
@@ -102,7 +102,7 @@ export const AdminEngagement: React.FC = () => {
           const owner = (ownerId && nameById[ownerId]) || 'Sem perfil vinculado';
           const origin = v.creator_id
             ? 'Criadora'
-            : v.source
+            : v.upload_source
             ? `Externo (${v.source})`
             : 'Modelo';
           collected.push({

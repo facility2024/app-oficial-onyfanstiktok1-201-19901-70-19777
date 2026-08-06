@@ -73,6 +73,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const timersRef = useRef<number[]>([]);
 
     const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
+    // views_count já vem somado (base + real) do feed
+    const totalViews = Number((video as any)?.views_count || 0);
     const isCarousel = (video as any)?.media_type === 'carousel' || (video as any)?.tipo_conteudo === 'carrossel';
     const carouselImages = Array.isArray((video as any)?.images)
       ? (video as any).images.filter(Boolean)

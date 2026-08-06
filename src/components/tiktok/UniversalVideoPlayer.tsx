@@ -404,7 +404,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     
     // Removido: o desbloqueio global estava escondendo o botão de play antes da interação
     
-    // Click handler para iniciar reprodução
+    // Click handler: apenas desbloqueia o áudio e repassa o evento.
+    // A decisão de play/pause fica SÓ no handler do feed (evita duplo disparo
+    // que fazia o vídeo travar e exigir um segundo clique).
     const handleUserClick = useCallback(async (event: React.SyntheticEvent) => {
       unlockAudio();
       const nativeEvt: any = (event as any).nativeEvent;
@@ -413,22 +415,19 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
         event.preventDefault();
         event.stopPropagation();
       }
-      
+
       if (needsUserInteraction) {
-        const success = await attemptPlay();
+        const success = await activateVideo().then(() => true).catch(() => false);
         if (success) {
           setNeedsUserInteraction(false);
           setUserStarted(true);
         }
-      } else {
-        const video = internalRef && 'current' in internalRef ? internalRef.current : null;
-        if (video && isReady && video.paused) {
-          await attemptPlay();
-        }
+        return; // não repassa: este clique serviu para destravar a reprodução
       }
-      
+
       onClick?.(event as unknown as React.MouseEvent);
-    }, [needsUserInteraction, attemptPlay, onClick, isPlaying, isReady, internalRef]);
+    }, [needsUserInteraction, activateVideo, onClick]);
+
 
     // Retry handler
     const handleRetry = useCallback(async () => {

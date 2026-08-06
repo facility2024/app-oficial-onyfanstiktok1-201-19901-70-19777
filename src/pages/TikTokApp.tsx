@@ -1375,7 +1375,7 @@ export const TikTokApp = () => {
       ] = await Promise.all([
         withTimeout(supabase.from('posts_agendados').select('*, modelo:models(*)').eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', { ascending: false }).limit(50), 8000, 'posts_agendados'),
         withTimeout(supabase.from('posts_principais').select('*, post_agendado:posts_agendados(*), modelo:models(*)').gte('created_at', today.toISOString()).order('created_at', { ascending: false }).limit(50), 8000, 'posts_principais'),
-        withTimeout(supabase.from('videos').select('*').eq('is_active', true).or('visibility.eq.public,visibility.is.null').order('created_at', { ascending: false }).range(0, 499), 10000, 'videos'),
+        withTimeout(supabase.from('videos').select('*').eq('is_active', true).or('visibility.eq.public,visibility.is.null').order('created_at', { ascending: false }).range(0, DB_PAGE_SIZE - 1), 10000, 'videos'),
         withTimeout(supabase.from('models').select('*').eq('is_active', true), 8000, 'models'),
         withTimeout(supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active'), 6000, 'chat_panels'),
         withTimeout((supabase as any).from('user_roles').select('user_id').eq('role', 'creator'), 6000, 'user_roles'),
@@ -1387,6 +1387,13 @@ export const TikTokApp = () => {
       const modelsData = (modelsRes as any)?.data || [];
       const chatPanelsData = (chatPanelsRes as any)?.data || [];
       const creatorRoles = (creatorRolesRes as any)?.data || [];
+
+      // 🔄 Cursor de paginação: guarda o created_at mais antigo deste lote
+      const rawBatch: any[] = (videosRes as any)?.data || [];
+      hasMoreFromDbRef.current = rawBatch.length >= DB_PAGE_SIZE;
+      feedCursorRef.current = rawBatch.length > 0 ? rawBatch[rawBatch.length - 1]?.created_at || null : null;
+      console.log(`🔄 Cursor inicial do feed: ${feedCursorRef.current} (hasMore=${hasMoreFromDbRef.current})`);
+
 
       console.log('📋 Carga inicial:', {
         videos: videosData.length,

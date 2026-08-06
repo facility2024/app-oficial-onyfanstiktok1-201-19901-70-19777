@@ -40,7 +40,7 @@ interface ScheduleRow {
 }
 
 export const AdminEngagement: React.FC = () => {
-  const [targetType, setTargetType] = useState<TargetType>('video');
+  const [tab, setTab] = useState<TabKind>('all');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<TargetRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,54 +59,90 @@ export const AdminEngagement: React.FC = () => {
   const loadTargets = async () => {
     setLoading(true);
     try {
-      if (targetType === 'video') {
+      const collected: TargetRow[] = [];
+
+      // ---------- VÍDEOS (modelos + criadoras + externos via API) ----------
+      if (tab !== 'promo') {
         let query = (supabase as any)
           .from('videos')
-          .select('id, title, description, likes_count, views_count, base_likes, base_views')
+          .select('id, title, description, likes_count, views_count, base_likes, base_views, model_id, creator_id, source, created_at')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
-          .limit(search.trim() ? 10 : 30);
+          .limit(500);
 
-        if (search.trim()) {
-          query = query.or(`title.ilike.%${search.trim()}%,description.ilike.%${search.trim()}%`);
-        }
+        if (tab === 'model') query = query.not('model_id', 'is', null);
+        if (tab === 'creator') query = query.not('creator_id', 'is', null);
 
         const { data, error } = await query;
         if (error) throw error;
-        setRows(
-          (data || []).map((v: any) => ({
+        const videos = (data || []) as any[];
+
+        const modelIds = Array.from(new Set(videos.map((v) => v.model_id).filter(Boolean)));
+        const creatorIds = Array.from(new Set(videos.map((v) => v.creator_id).filter(Boolean)));
+
+        const [modelsRes, profilesRes] = await Promise.all([
+          modelIds.length
+            ? (supabase as any).from('models').select('id, name, username').in('id', modelIds)
+            : Promise.resolve({ data: [] }),
+          creatorIds.length
+            ? (supabase as any).from('public_profiles').select('id, name, username').in('id', creatorIds)
+            : Promise.resolve({ data: [] }),
+        ]);
+
+        const nameById: Record<string, string> = {};
+        (modelsRes.data || []).forEach((m: any) => {
+          nameById[m.id] = m.name || m.username || 'Modelo';
+        });
+        (profilesRes.data || []).forEach((p: any) => {
+          nameById[p.id] = p.name || p.username || 'Criadora';
+        });
+
+        videos.forEach((v) => {
+          const ownerId = v.creator_id || v.model_id;
+          const owner = (ownerId && nameById[ownerId]) || 'Sem perfil vinculado';
+          const origin = v.creator_id
+            ? 'Criadora'
+            : v.source
+            ? `Externo (${v.source})`
+            : 'Modelo';
+          collected.push({
             id: v.id,
             label: v.title || v.description?.slice(0, 60) || `Vídeo ${String(v.id).slice(0, 8)}`,
+            owner,
+            origin,
             likes_count: v.likes_count || 0,
             views_count: v.views_count || 0,
             base_likes: v.base_likes || 0,
             base_views: v.base_views || 0,
-          }))
-        );
-      } else {
-        let query = (supabase as any)
+            type: 'video',
+          });
+        });
+      }
+
+      // ---------- PROMOS DO FEED ----------
+      if (tab === 'all' || tab === 'promo') {
+        const { data, error } = await (supabase as any)
           .from('feed_promotions')
-          .select('id, display_name, description, views_count, base_likes, base_views')
+          .select('id, display_name, title, description, views_count, base_likes, base_views')
           .order('created_at', { ascending: false })
-          .limit(search.trim() ? 10 : 30);
-
-        if (search.trim()) {
-          query = query.ilike('display_name', `%${search.trim()}%`);
-        }
-
-        const { data, error } = await query;
+          .limit(300);
         if (error) throw error;
-        setRows(
-          (data || []).map((p: any) => ({
+        (data || []).forEach((p: any) => {
+          collected.push({
             id: p.id,
-            label: p.display_name || p.description?.slice(0, 60) || `Promo ${String(p.id).slice(0, 8)}`,
+            label: p.title || p.display_name || p.description?.slice(0, 60) || `Promo ${String(p.id).slice(0, 8)}`,
+            owner: p.display_name || 'Promo',
+            origin: 'Promo do Feed',
             likes_count: 0,
             views_count: p.views_count || 0,
             base_likes: p.base_likes || 0,
             base_views: p.base_views || 0,
-          }))
-        );
+            type: 'promo',
+          });
+        });
       }
+
+      setRows(collected);
     } catch (e: any) {
       console.error(e);
       toast.error('Erro ao carregar itens: ' + (e?.message || 'desconhecido'));
@@ -114,6 +150,21 @@ export const AdminEngagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Busca por nome do vídeo, nome da modelo/criadora ou ID (completo ou parcial)
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows.slice(0, 100);
+    return rows
+      .filter(
+        (r) =>
+          r.label.toLowerCase().includes(q) ||
+          r.owner.toLowerCase().includes(q) ||
+          r.id.toLowerCase().includes(q)
+      )
+      .slice(0, 100);
+  }, [rows, search]);
+
 
   const loadSchedules = async () => {
     const { data, error } = await (supabase as any)

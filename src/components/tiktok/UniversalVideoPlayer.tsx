@@ -499,6 +499,9 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
           loop={true}
           muted={hasAudioOverlay ? true : (isMuted || (isMobile && !audioUnlocked))}
           playsInline={true}
+          // @ts-expect-error atributos legados necessários para iOS/Android WebView
+          webkit-playsinline="true"
+          x5-playsinline="true"
           preload="auto"
           controls={false}
            onClick={handleUserClick}

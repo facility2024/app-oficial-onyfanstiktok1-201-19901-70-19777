@@ -49,6 +49,7 @@ export const AdminEngagement: React.FC = () => {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [baseLikes, setBaseLikes] = useState<number>(0);
   const [baseViews, setBaseViews] = useState<number>(0);
+  const [baseFollowers, setBaseFollowers] = useState<number>(0);
   const [scheduledAt, setScheduledAt] = useState<string>('');
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [saving, setSaving] = useState(false);

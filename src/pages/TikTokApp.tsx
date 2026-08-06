@@ -1615,6 +1615,7 @@ export const TikTokApp = () => {
         visibility: 'public' as const,
         source: 'scheduled_post',
         isHighlighted: true,
+        ...getCountersForUrl(post.modelo_id, contentUrl),
         scheduled_post_id: post.id,
         scheduled_next_queue_index: nextQueueIndex,
         created_at: post.data_publicacao || post.created_at,
@@ -1735,6 +1736,7 @@ export const TikTokApp = () => {
           visibility: 'public' as const,
           source: 'main_post',
           isHighlighted: true,
+          ...getCountersForUrl(post.modelo_id, contentUrl),
           created_at: post.created_at,
           user: model ? {
             id: model.id || post.modelo_id || 'unknown',

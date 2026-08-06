@@ -3499,10 +3499,10 @@ export const TikTokApp = () => {
         model_id: modelId,
         music_name: video.title || `Som original - ${modelData?.username}`,
         visibility: (video.visibility === 'private' ? 'private' : 'public') as 'public' | 'private',
-        likes_count: video.likes_count || 0,
+        likes_count: (video.likes_count || 0) + (video.base_likes || 0),
         comments_count: video.comments_count || 0,
         shares_count: video.shares_count || 0,
-        views_count: video.views_count || 0,
+        views_count: (video.views_count || 0) + (video.base_views || 0),
         is_active: true,
         created_at: video.created_at,
         user: {

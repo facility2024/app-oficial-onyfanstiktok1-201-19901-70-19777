@@ -566,7 +566,7 @@ export const AdminEngagement: React.FC = () => {
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nome do vídeo, modelo/criadora ou ID..."
+                    placeholder="Buscar por @username, nome, vídeo ou ID..."
                     className="pl-9 bg-gray-800 border-gray-600 text-white"
                   />
                 </div>

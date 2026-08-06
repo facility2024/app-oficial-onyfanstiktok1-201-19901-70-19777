@@ -1,6 +1,7 @@
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { searchProfiles } from '@/services/profileSearch';
 import { X, Search } from 'lucide-react';
 
 interface Model {

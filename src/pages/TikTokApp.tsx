@@ -340,6 +340,17 @@ export const TikTokApp = () => {
   const [allAvailableVideos, setAllAvailableVideos] = useState<Video[]>([]);
   const [usedModelIds, setUsedModelIds] = useState<Set<string>>(new Set());
   const VIDEOS_PER_BLOCK = 50; // Aumentado de 10 para 50 para carregar mais vídeos por vez
+
+  // 🔄 PAGINAÇÃO REAL POR CURSOR (created_at) — permite que vídeos antigos voltem ao feed
+  const DB_PAGE_SIZE = 200;
+  const feedCursorRef = useRef<string | null>(null);      // created_at mais antigo já carregado
+  const hasMoreFromDbRef = useRef<boolean>(true);          // ainda existem vídeos mais antigos no banco
+  const feedEnrichCtxRef = useRef<{ models: any[]; creators: any[]; chatPanels: Record<string, boolean> }>({
+    models: [],
+    creators: [],
+    chatPanels: {},
+  });
+  const isFetchingOlderRef = useRef(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
   const [showVideoCallList, setShowVideoCallList] = useState(false);

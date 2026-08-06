@@ -340,6 +340,17 @@ export const TikTokApp = () => {
   const [allAvailableVideos, setAllAvailableVideos] = useState<Video[]>([]);
   const [usedModelIds, setUsedModelIds] = useState<Set<string>>(new Set());
   const VIDEOS_PER_BLOCK = 50; // Aumentado de 10 para 50 para carregar mais vídeos por vez
+
+  // 🔄 PAGINAÇÃO REAL POR CURSOR (created_at) — permite que vídeos antigos voltem ao feed
+  const DB_PAGE_SIZE = 200;
+  const feedCursorRef = useRef<string | null>(null);      // created_at mais antigo já carregado
+  const hasMoreFromDbRef = useRef<boolean>(true);          // ainda existem vídeos mais antigos no banco
+  const feedEnrichCtxRef = useRef<{ models: any[]; creators: any[]; chatPanels: Record<string, boolean> }>({
+    models: [],
+    creators: [],
+    chatPanels: {},
+  });
+  const isFetchingOlderRef = useRef(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showLive, setShowLive] = useState(false);
   const [showVideoCallList, setShowVideoCallList] = useState(false);
@@ -1364,7 +1375,7 @@ export const TikTokApp = () => {
       ] = await Promise.all([
         withTimeout(supabase.from('posts_agendados').select('*, modelo:models(*)').eq('status', 'publicado').gte('data_publicacao', today.toISOString()).order('data_publicacao', { ascending: false }).limit(50), 8000, 'posts_agendados'),
         withTimeout(supabase.from('posts_principais').select('*, post_agendado:posts_agendados(*), modelo:models(*)').gte('created_at', today.toISOString()).order('created_at', { ascending: false }).limit(50), 8000, 'posts_principais'),
-        withTimeout(supabase.from('videos').select('*').eq('is_active', true).or('visibility.eq.public,visibility.is.null').order('created_at', { ascending: false }).range(0, 499), 10000, 'videos'),
+        withTimeout(supabase.from('videos').select('*').eq('is_active', true).or('visibility.eq.public,visibility.is.null').order('created_at', { ascending: false }).range(0, DB_PAGE_SIZE - 1), 10000, 'videos'),
         withTimeout(supabase.from('models').select('*').eq('is_active', true), 8000, 'models'),
         withTimeout(supabase.from('model_chat_panels' as any).select('model_id, creator_id, is_online, is_active'), 6000, 'chat_panels'),
         withTimeout((supabase as any).from('user_roles').select('user_id').eq('role', 'creator'), 6000, 'user_roles'),
@@ -1376,6 +1387,13 @@ export const TikTokApp = () => {
       const modelsData = (modelsRes as any)?.data || [];
       const chatPanelsData = (chatPanelsRes as any)?.data || [];
       const creatorRoles = (creatorRolesRes as any)?.data || [];
+
+      // 🔄 Cursor de paginação: guarda o created_at mais antigo deste lote
+      const rawBatch: any[] = (videosRes as any)?.data || [];
+      hasMoreFromDbRef.current = rawBatch.length >= DB_PAGE_SIZE;
+      feedCursorRef.current = rawBatch.length > 0 ? rawBatch[rawBatch.length - 1]?.created_at || null : null;
+      console.log(`🔄 Cursor inicial do feed: ${feedCursorRef.current} (hasMore=${hasMoreFromDbRef.current})`);
+
 
       console.log('📋 Carga inicial:', {
         videos: videosData.length,
@@ -1427,6 +1445,8 @@ export const TikTokApp = () => {
           avatar_url: p.avatar_url || modelAvatarById[p.id] || null,
         }));
       }
+      // 🔄 Guarda contexto de enriquecimento para os próximos lotes paginados
+      feedEnrichCtxRef.current = { models: modelsData || [], creators: creatorsData || [], chatPanels: chatPanelsMap };
       console.log(`📊 Dados carregados: ${videosData?.length || 0} vídeos, ${modelsData?.length || 0} modelos, ${creatorsData?.length || 0} criadores, ${(postsAgendados?.length || 0) + (postsPrincipais?.length || 0)} posts recentes`);
 
       // Debug: Verificar vídeos de criadores no banco
@@ -2157,6 +2177,92 @@ export const TikTokApp = () => {
 
   // Remover função de organização complexa - usar abordagem mais simples
 
+  // 🔄 PAGINAÇÃO REAL POR CURSOR: busca o próximo lote de vídeos ANTIGOS no banco
+  // Não altera a lógica de anúncios (feita em `displayVideos`) nem o merge do painel admin.
+  const fetchOlderVideosBatch = useCallback(async (): Promise<Video[]> => {
+    if (!hasMoreFromDbRef.current || isFetchingOlderRef.current) return [];
+    isFetchingOlderRef.current = true;
+    try {
+      const cursor = feedCursorRef.current;
+      console.log(`📥 Buscando lote antigo no banco (cursor: ${cursor})...`);
+      let query = supabase
+        .from('videos')
+        .select('*')
+        .eq('is_active', true)
+        .or('visibility.eq.public,visibility.is.null')
+        .order('created_at', { ascending: false })
+        .range(0, DB_PAGE_SIZE - 1);
+      if (cursor) query = query.lt('created_at', cursor);
+
+      const { data, error } = await query;
+      if (error) {
+        console.warn('⚠️ Erro ao buscar lote antigo:', error);
+        return [];
+      }
+      const batch: any[] = data || [];
+      hasMoreFromDbRef.current = batch.length >= DB_PAGE_SIZE;
+      if (batch.length > 0) {
+        feedCursorRef.current = batch[batch.length - 1]?.created_at || feedCursorRef.current;
+      }
+
+      const { models, creators, chatPanels } = feedEnrichCtxRef.current;
+      const normalize = (u: string) => {
+        const raw = (u || '').trim();
+        if (!raw) return '';
+        if (!/^https?:\/\//i.test(raw) && /^[\w.-]+\.[\w.-]+/.test(raw)) return `https://${raw}`;
+        return raw;
+      };
+      const INVALID_DOMAINS = ['example.com', 'localhost', '127.0.0.1', 'test.com'];
+      const isValidVideo = (u: string) => {
+        if (!/^https?:\/\//i.test(u)) return false;
+        if (/\.(jpg|jpeg|png|gif|webp|avif|mp3|wav|m4a|aac|ogg)(\?.*)?$/i.test(u)) return false;
+        try { return !INVALID_DOMAINS.includes(new URL(u).hostname); } catch { return false; }
+      };
+
+      const seen = new Set<string>();
+      const enriched = batch
+        .map((v: any) => ({ ...v, video_url: normalize(v.video_url || '') }))
+        .filter((v: any) => {
+          if (!isValidVideo(v.video_url)) return false;
+          const key = v.video_url.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .map((video: any) => {
+          const owner: any = video.creator_id
+            ? creators.find((c: any) => c.id === video.creator_id)
+            : models.find((m: any) => m.id === video.model_id);
+          return {
+            ...video,
+            user_id: video.creator_id || video.model_id || '',
+            music_name: video.title || `Som original - ${owner?.username || owner?.name || 'Autor'}`,
+            visibility: (video.visibility as 'public' | 'private') || 'public',
+            source: 'catalog_video',
+            user: {
+              id: owner?.id || video.creator_id || video.model_id || 'unknown',
+              username: owner?.username || owner?.name || 'Usuário',
+              avatar_url: owner?.avatar_url || DEFAULT_AVATAR,
+              followers_count: owner?.followers_count || 0,
+              following_count: 0,
+              is_online: chatPanels[owner?.id] || false,
+              bio: owner?.bio || '',
+              posting_panel_url: owner?.posting_panel_url || '',
+              created_at: owner?.created_at || '',
+            },
+          } as any;
+        });
+
+      console.log(`✅ Lote antigo carregado: ${enriched.length} vídeos válidos (hasMore=${hasMoreFromDbRef.current})`);
+      return enriched as Video[];
+    } catch (e) {
+      console.warn('⚠️ Falha no fetch por cursor:', e);
+      return [];
+    } finally {
+      isFetchingOlderRef.current = false;
+    }
+  }, []);
+
   // 📱 NOVA LÓGICA: Carregar próximo bloco de vídeos (simplificado)
   const loadMoreVideos = useCallback(async () => {
     if (isLoadingMore || allAvailableVideos.length === 0) {
@@ -2192,11 +2298,29 @@ export const TikTokApp = () => {
         return shownNewIds.has(originalId);
       };
 
-      // Priorizar vídeos NÃO assistidos e NÃO no feed (e sem "novos" já consumidos)
-      const unwatched = allAvailableVideos.filter(v => {
+      const filterUnwatched = (pool: Video[]) => pool.filter(v => {
         const originalId = (v as any)._originalId || v.id;
         return !watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
       });
+
+      // Priorizar vídeos NÃO assistidos e NÃO no feed (e sem "novos" já consumidos)
+      let pool = allAvailableVideos;
+      let unwatched = filterUnwatched(pool);
+
+      // 🔄 Pool local acabando? Buscar o próximo lote ANTIGO no banco (paginação por cursor)
+      if (unwatched.length < VIDEOS_PER_BLOCK && hasMoreFromDbRef.current) {
+        const olderBatch = await fetchOlderVideosBatch();
+        if (olderBatch.length > 0) {
+          const existingIds = new Set(pool.map(v => String((v as any)._originalId || v.id)));
+          const fresh = olderBatch.filter(v => !existingIds.has(String(v.id)));
+          if (fresh.length > 0) {
+            pool = [...pool, ...fresh];
+            setAllAvailableVideos(pool);
+            unwatched = filterUnwatched(pool);
+          }
+        }
+      }
+
 
       let nextBlock: any[];
       if (unwatched.length >= VIDEOS_PER_BLOCK) {
@@ -2209,7 +2333,7 @@ export const TikTokApp = () => {
           };
         });
       } else {
-        const watched = allAvailableVideos.filter(v => {
+        const watched = pool.filter(v => {
           const originalId = (v as any)._originalId || v.id;
           // Fallback também exclui "novos" já consumidos — evita o loop de repetição
           return watchedVideoIds.has(originalId) && !idsInFeed.has(originalId) && !isBlockedNew(v);
@@ -2248,7 +2372,7 @@ export const TikTokApp = () => {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [allAvailableVideos, currentPage, isLoadingMore, videos, VIDEOS_PER_BLOCK]);
+  }, [allAvailableVideos, currentPage, isLoadingMore, videos, VIDEOS_PER_BLOCK, fetchOlderVideosBatch]);
 
   // 📱 Carregamento automático infinito quando próximo do fim
   useEffect(() => {

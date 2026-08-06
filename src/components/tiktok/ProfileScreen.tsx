@@ -325,6 +325,38 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
     };
   }, [user?.id]);
 
+  // Seguidores = base (painel admin) + reais
+  const [baseFollowers, setBaseFollowers] = useState(0);
+  const [realFollowers, setRealFollowers] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen || !user?.id) return;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(user.id));
+    if (!isUuid) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [modelRes, profileRes, followRes] = await Promise.all([
+          (supabase as any).from('models').select('base_followers').eq('id', user.id).maybeSingle(),
+          (supabase as any).from('profiles').select('base_followers').eq('id', user.id).maybeSingle(),
+          (supabase as any)
+            .from('model_followers')
+            .select('id', { count: 'exact', head: true })
+            .eq('model_id', user.id)
+            .eq('is_active', true),
+        ]);
+        if (cancelled) return;
+        setBaseFollowers(modelRes?.data?.base_followers ?? profileRes?.data?.base_followers ?? 0);
+        setRealFollowers(followRes?.count || 0);
+      } catch {
+        /* silencioso */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, user?.id]);
+
   // Load viewer name from localStorage (fallback to "Você")
   useEffect(() => {
     const name = localStorage.getItem('viewer_name');
@@ -626,6 +658,7 @@ export const ProfileScreen = ({ user, isOpen, onClose, onVideoSelect, onGoHome, 
       }
 
       setIsFollowing(true);
+      setRealFollowers((n) => n + 1);
 
       const followKey = `follow_${userId}_${user.id}`;
       localStorage.setItem(followKey, 'true');
@@ -731,7 +764,7 @@ if (!isOpen) return null;
             <div className="text-center pb-4 px-4">
               <h3 className="text-white text-xl font-bold mb-1">@{user.username}</h3>
               <p className="text-white/60 text-sm">
-                {(user.followers_count || 0).toLocaleString()} seguidores
+                {(baseFollowers + realFollowers || user.followers_count || 0).toLocaleString()} seguidores
               </p>
               {user.is_online && (
                 <div className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 px-3 py-1 rounded-full text-xs font-medium mt-2">

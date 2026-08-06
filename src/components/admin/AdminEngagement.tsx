@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw } from 'lucide-react';
+import { Heart, Eye, Search, Zap, CalendarClock, Trash2, RefreshCw, Users } from 'lucide-react';
 
-type TargetType = 'video' | 'promo';
-type TabKind = 'all' | 'model' | 'creator' | 'promo';
+type TargetType = 'video' | 'promo' | 'model' | 'profile';
+type TabKind = 'all' | 'model' | 'creator' | 'promo' | 'followers';
 
 interface TargetRow {
   id: string;
@@ -22,6 +22,8 @@ interface TargetRow {
   views_count: number;
   base_likes: number;
   base_views: number;
+  followers_count?: number;
+  base_followers?: number;
   type: TargetType;
 }
 
@@ -47,6 +49,7 @@ export const AdminEngagement: React.FC = () => {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [baseLikes, setBaseLikes] = useState<number>(0);
   const [baseViews, setBaseViews] = useState<number>(0);
+  const [baseFollowers, setBaseFollowers] = useState<number>(0);
   const [scheduledAt, setScheduledAt] = useState<string>('');
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [saving, setSaving] = useState(false);
@@ -60,6 +63,76 @@ export const AdminEngagement: React.FC = () => {
     setLoading(true);
     try {
       const collected: TargetRow[] = [];
+
+      // ---------- SEGUIDORES (modelos + criadoras) ----------
+      if (tab === 'followers') {
+        const [modelsRes, profilesRes] = await Promise.all([
+          (supabase as any)
+            .from('models')
+            .select('id, name, username, followers_count, base_followers')
+            .eq('is_active', true)
+            .order('name', { ascending: true })
+            .limit(1000),
+          (supabase as any)
+            .from('profiles')
+            .select('id, name, username, followers_count, base_followers')
+            .order('created_at', { ascending: false })
+            .limit(500),
+        ]);
+
+        const ids = [
+          ...(modelsRes.data || []).map((m: any) => m.id),
+          ...(profilesRes.data || []).map((p: any) => p.id),
+        ];
+
+        // Contagem real de seguidores ativos
+        const realById: Record<string, number> = {};
+        if (ids.length) {
+          const { data: follows } = await (supabase as any)
+            .from('model_followers')
+            .select('model_id')
+            .eq('is_active', true)
+            .in('model_id', ids);
+          (follows || []).forEach((f: any) => {
+            realById[f.model_id] = (realById[f.model_id] || 0) + 1;
+          });
+        }
+
+        (modelsRes.data || []).forEach((m: any) => {
+          collected.push({
+            id: m.id,
+            label: `@${m.username || m.name || 'modelo'}`,
+            owner: m.name || m.username || 'Modelo',
+            origin: 'Modelo',
+            likes_count: 0,
+            views_count: 0,
+            base_likes: 0,
+            base_views: 0,
+            followers_count: realById[m.id] || m.followers_count || 0,
+            base_followers: m.base_followers || 0,
+            type: 'model',
+          });
+        });
+        (profilesRes.data || []).forEach((p: any) => {
+          collected.push({
+            id: p.id,
+            label: `@${p.username || p.name || 'criadora'}`,
+            owner: p.name || p.username || 'Criadora',
+            origin: 'Criadora',
+            likes_count: 0,
+            views_count: 0,
+            base_likes: 0,
+            base_views: 0,
+            followers_count: realById[p.id] || p.followers_count || 0,
+            base_followers: p.base_followers || 0,
+            type: 'profile',
+          });
+        });
+
+        setRows(collected);
+        setLoading(false);
+        return;
+      }
 
       // ---------- VÍDEOS (modelos + criadoras + externos via API) ----------
       if (tab !== 'promo') {
@@ -198,6 +271,8 @@ export const AdminEngagement: React.FC = () => {
     try {
       const videoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'video');
       const promoIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'promo');
+      const modelIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'model');
+      const profileIds = selectedIds.filter((id) => rows.find((r) => r.id === id)?.type === 'profile');
 
       if (videoIds.length) {
         const { error } = await (supabase as any)
@@ -211,6 +286,20 @@ export const AdminEngagement: React.FC = () => {
           .from('feed_promotions')
           .update({ base_likes: baseLikes, base_views: baseViews })
           .in('id', promoIds);
+        if (error) throw error;
+      }
+      if (modelIds.length) {
+        const { error } = await (supabase as any)
+          .from('models')
+          .update({ base_followers: baseFollowers })
+          .in('id', modelIds);
+        if (error) throw error;
+      }
+      if (profileIds.length) {
+        const { error } = await (supabase as any)
+          .from('profiles')
+          .update({ base_followers: baseFollowers })
+          .in('id', profileIds);
         if (error) throw error;
       }
       toast.success(`Aplicado em ${selectedIds.length} item(ns)`);
@@ -322,6 +411,9 @@ export const AdminEngagement: React.FC = () => {
               <TabsTrigger value="promo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold">
                 Promos do Feed
               </TabsTrigger>
+              <TabsTrigger value="followers" className="data-[state=active]:bg-green-600 data-[state=active]:text-white font-bold">
+                Seguidores
+              </TabsTrigger>
             </TabsList>
             <TabsContent value={tab} className="mt-4 space-y-4">
               <div className="flex gap-2">
@@ -367,53 +459,83 @@ export const AdminEngagement: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex items-center gap-4 text-xs shrink-0">
-                      <span className="text-pink-400 font-bold flex items-center gap-1">
-                        <Heart className="w-3.5 h-3.5" />
-                        {r.base_likes + r.likes_count}
-                        <span className="text-gray-500 font-normal">({r.base_likes}+{r.likes_count})</span>
-                      </span>
-                      <span className="text-cyan-400 font-bold flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5" />
-                        {r.base_views + r.views_count}
-                        <span className="text-gray-500 font-normal">({r.base_views}+{r.views_count})</span>
-                      </span>
+                      {tab === 'followers' ? (
+                        <span className="text-green-400 font-bold flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5" />
+                          {(r.base_followers || 0) + (r.followers_count || 0)}
+                          <span className="text-gray-500 font-normal">
+                            ({r.base_followers || 0}+{r.followers_count || 0})
+                          </span>
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-pink-400 font-bold flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5" />
+                            {r.base_likes + r.likes_count}
+                            <span className="text-gray-500 font-normal">({r.base_likes}+{r.likes_count})</span>
+                          </span>
+                          <span className="text-cyan-400 font-bold flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" />
+                            {r.base_views + r.views_count}
+                            <span className="text-gray-500 font-normal">({r.base_views}+{r.views_count})</span>
+                          </span>
+                        </>
+                      )}
                     </div>
                   </label>
                 ))}
               </div>
 
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-white font-bold">Curtidas base</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={baseLikes}
-                    onChange={(e) => setBaseLikes(Math.max(0, Number(e.target.value) || 0))}
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
+              {tab === 'followers' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-white font-bold">Seguidores base</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={baseFollowers}
+                      onChange={(e) => setBaseFollowers(Math.max(0, Number(e.target.value) || 0))}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Exibido no perfil como <strong className="text-white">base + seguidores reais</strong>.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-white font-bold">Visualizações base</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={baseViews}
-                    onChange={(e) => setBaseViews(Math.max(0, Number(e.target.value) || 0))}
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-white font-bold">Curtidas base</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={baseLikes}
+                      onChange={(e) => setBaseLikes(Math.max(0, Number(e.target.value) || 0))}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white font-bold">Visualizações base</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={baseViews}
+                      onChange={(e) => setBaseViews(Math.max(0, Number(e.target.value) || 0))}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white font-bold">Agendar para (data e hora)</Label>
+                    <Input
+                      type="datetime-local"
+                      value={scheduledAt}
+                      onChange={(e) => setScheduledAt(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-white font-bold">Agendar para (data e hora)</Label>
-                  <Input
-                    type="datetime-local"
-                    value={scheduledAt}
-                    onChange={(e) => setScheduledAt(e.target.value)}
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -424,14 +546,16 @@ export const AdminEngagement: React.FC = () => {
                   <Zap className="w-4 h-4 mr-2" />
                   Aplicar agora ({selectedIds.length})
                 </Button>
-                <Button
-                  onClick={schedule}
-                  disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                >
-                  <CalendarClock className="w-4 h-4 mr-2" />
-                  Agendar ({selectedIds.length})
-                </Button>
+                {tab !== 'followers' && (
+                  <Button
+                    onClick={schedule}
+                    disabled={saving}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  >
+                    <CalendarClock className="w-4 h-4 mr-2" />
+                    Agendar ({selectedIds.length})
+                  </Button>
+                )}
               </div>
             </TabsContent>
           </Tabs>

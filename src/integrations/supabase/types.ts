@@ -2811,6 +2811,54 @@ export type Database = {
           },
         ]
       }
+      engagement_schedules: {
+        Row: {
+          applied_at: string | null
+          base_likes: number
+          base_views: number
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          scheduled_at: string
+          status: string
+          target_id: string
+          target_label: string | null
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          base_likes?: number
+          base_views?: number
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          scheduled_at: string
+          status?: string
+          target_id: string
+          target_label?: string | null
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          base_likes?: number
+          base_views?: number
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          scheduled_at?: string
+          status?: string
+          target_id?: string
+          target_label?: string | null
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       eventos_analytics: {
         Row: {
           id: string
@@ -2969,6 +3017,8 @@ export type Database = {
           advertiser: string | null
           avatar_url: string | null
           banner_url: string | null
+          base_likes: number
+          base_views: number
           category: string | null
           checkout_template_id: string | null
           clicks_count: number | null
@@ -3006,6 +3056,8 @@ export type Database = {
           advertiser?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          base_likes?: number
+          base_views?: number
           category?: string | null
           checkout_template_id?: string | null
           clicks_count?: number | null
@@ -3043,6 +3095,8 @@ export type Database = {
           advertiser?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          base_likes?: number
+          base_views?: number
           category?: string | null
           checkout_template_id?: string | null
           clicks_count?: number | null
@@ -9239,6 +9293,8 @@ export type Database = {
         Row: {
           aspect_ratio: string | null
           audio_url: string | null
+          base_likes: number
+          base_views: number
           button_color: string
           button_text: string
           category: string | null
@@ -9280,6 +9336,8 @@ export type Database = {
         Insert: {
           aspect_ratio?: string | null
           audio_url?: string | null
+          base_likes?: number
+          base_views?: number
           button_color?: string
           button_text?: string
           category?: string | null
@@ -9321,6 +9379,8 @@ export type Database = {
         Update: {
           aspect_ratio?: string | null
           audio_url?: string | null
+          base_likes?: number
+          base_views?: number
           button_color?: string
           button_text?: string
           category?: string | null
@@ -10137,6 +10197,8 @@ export type Database = {
           advertiser: string | null
           avatar_url: string | null
           banner_url: string | null
+          base_likes: number
+          base_views: number
           category: string | null
           checkout_template_id: string | null
           clicks_count: number | null
@@ -10221,6 +10283,8 @@ export type Database = {
           advertiser: string | null
           avatar_url: string | null
           banner_url: string | null
+          base_likes: number
+          base_views: number
           category: string | null
           checkout_template_id: string | null
           clicks_count: number | null
@@ -10266,6 +10330,8 @@ export type Database = {
         Returns: {
           aspect_ratio: string | null
           audio_url: string | null
+          base_likes: number
+          base_views: number
           button_color: string
           button_text: string
           category: string | null
@@ -10369,6 +10435,7 @@ export type Database = {
       }
       monitor_suspicious_activity: { Args: never; Returns: undefined }
       normalize_phone: { Args: { phone_input: string }; Returns: string }
+      process_engagement_schedules: { Args: never; Returns: number }
       process_referral_completion: {
         Args: {
           p_referred_email?: string
@@ -10427,6 +10494,10 @@ export type Database = {
           p_whatsapp: string
         }
         Returns: string
+      }
+      register_video_view_24h: {
+        Args: { _user_id?: string; _video_id: string; _viewer_key?: string }
+        Returns: boolean
       }
       register_whatsapp: {
         Args: {

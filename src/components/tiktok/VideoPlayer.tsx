@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
-import { Crown } from 'lucide-react';
+import { Crown, Eye } from 'lucide-react';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/types/database';
@@ -27,6 +27,12 @@ interface VideoPlayerProps {
 
 const isValidUUID = (value?: string | null): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
+const formatViews = (n: number): string => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.0', '')}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace('.0', '')}k`;
+  return String(n || 0);
+};
 
 // Oferta vinculada ao vídeo/modelo
 interface Offer {
@@ -67,6 +73,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const timersRef = useRef<number[]>([]);
 
     const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
+    // views_count já vem somado (base + real) do feed
+    const totalViews = Number((video as any)?.views_count || 0);
     const isCarousel = (video as any)?.media_type === 'carousel' || (video as any)?.tipo_conteudo === 'carrossel';
     const carouselImages = Array.isArray((video as any)?.images)
       ? (video as any).images.filter(Boolean)
@@ -411,6 +419,18 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
                 </span>
               )}
             </div>
+
+            {/* Visualizações em destaque, logo abaixo de "Vídeos Novos" */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+              style={{ top: 'calc(env(safe-area-inset-top, 0px) + 46px)' }}
+            >
+              <span className="flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-bold shadow-lg">
+                <Eye className="w-3.5 h-3.5 text-cyan-300" />
+                {formatViews(totalViews)} visualizações
+              </span>
+            </div>
+
 
             {!!videoTitle && !isExternallyManaged && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">

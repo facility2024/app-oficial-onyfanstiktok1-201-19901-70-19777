@@ -2813,8 +2813,7 @@ export const TikTokApp = () => {
         }
       }
 
-      // Fonte da verdade: total de likes ativos no banco
-      // (videos.likes_count é sincronizado por trigger no banco)
+      // Fonte da verdade: total de likes ativos no banco + curtidas base do painel admin
       const { count: liveLikesCount, error: countError } = await supabase
         .from('likes')
         .select('id', { count: 'exact', head: true })
@@ -2822,7 +2821,8 @@ export const TikTokApp = () => {
         .eq('is_active', true);
 
       if (!countError && typeof liveLikesCount === 'number') {
-        setLikeOverrides(prev => ({ ...prev, [dataVideoId]: Math.max(0, liveLikesCount) }));
+        const baseLikes = Number((currentVideo as any).base_likes || 0);
+        setLikeOverrides(prev => ({ ...prev, [dataVideoId]: Math.max(0, liveLikesCount + baseLikes) }));
       }
     } catch (error) {
       console.error('❌ TOGGLE LIKE - Erro:', error);

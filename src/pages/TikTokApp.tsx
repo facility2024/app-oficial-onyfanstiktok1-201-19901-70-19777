@@ -1383,7 +1383,7 @@ export const TikTokApp = () => {
 
       const postsAgendados = (postsAgendadosRes as any)?.data || [];
       const postsPrincipais = (postsPrincipaisRes as any)?.data || [];
-      let videosData: any[] = (videosRes as any)?.data || [];
+      let videosData: any[] = applyBaseCounters((videosRes as any)?.data || []);
       const modelsData = (modelsRes as any)?.data || [];
       const chatPanelsData = (chatPanelsRes as any)?.data || [];
       const creatorRoles = (creatorRolesRes as any)?.data || [];
@@ -2199,7 +2199,7 @@ export const TikTokApp = () => {
         console.warn('⚠️ Erro ao buscar lote antigo:', error);
         return [];
       }
-      const batch: any[] = data || [];
+      const batch: any[] = applyBaseCounters(data || []);
       hasMoreFromDbRef.current = batch.length >= DB_PAGE_SIZE;
       if (batch.length > 0) {
         feedCursorRef.current = batch[batch.length - 1]?.created_at || feedCursorRef.current;
@@ -3306,10 +3306,10 @@ export const TikTokApp = () => {
           creator_id: modelId,
           music_name: video.title || `Som original - ${profile.name || profile.username || 'Criador'}`,
           visibility: (video.visibility === 'private' ? 'private' : 'public') as 'public' | 'private',
-          likes_count: video.likes_count || 0,
+          likes_count: (video.likes_count || 0) + (video.base_likes || 0),
           comments_count: video.comments_count || 0,
           shares_count: video.shares_count || 0,
-          views_count: video.views_count || 0,
+          views_count: (video.views_count || 0) + (video.base_views || 0),
           is_active: true,
           created_at: video.created_at,
           user: {

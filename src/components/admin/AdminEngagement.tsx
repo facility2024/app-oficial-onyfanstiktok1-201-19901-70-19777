@@ -456,16 +456,28 @@ export const AdminEngagement: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex items-center gap-4 text-xs shrink-0">
-                      <span className="text-pink-400 font-bold flex items-center gap-1">
-                        <Heart className="w-3.5 h-3.5" />
-                        {r.base_likes + r.likes_count}
-                        <span className="text-gray-500 font-normal">({r.base_likes}+{r.likes_count})</span>
-                      </span>
-                      <span className="text-cyan-400 font-bold flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5" />
-                        {r.base_views + r.views_count}
-                        <span className="text-gray-500 font-normal">({r.base_views}+{r.views_count})</span>
-                      </span>
+                      {tab === 'followers' ? (
+                        <span className="text-green-400 font-bold flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5" />
+                          {(r.base_followers || 0) + (r.followers_count || 0)}
+                          <span className="text-gray-500 font-normal">
+                            ({r.base_followers || 0}+{r.followers_count || 0})
+                          </span>
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-pink-400 font-bold flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5" />
+                            {r.base_likes + r.likes_count}
+                            <span className="text-gray-500 font-normal">({r.base_likes}+{r.likes_count})</span>
+                          </span>
+                          <span className="text-cyan-400 font-bold flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" />
+                            {r.base_views + r.views_count}
+                            <span className="text-gray-500 font-normal">({r.base_views}+{r.views_count})</span>
+                          </span>
+                        </>
+                      )}
                     </div>
                   </label>
                 ))}

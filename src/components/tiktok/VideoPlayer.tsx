@@ -28,6 +28,12 @@ interface VideoPlayerProps {
 const isValidUUID = (value?: string | null): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
 
+const formatViews = (n: number): string => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.0', '')}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace('.0', '')}k`;
+  return String(n || 0);
+};
+
 // Oferta vinculada ao vídeo/modelo
 interface Offer {
   id: string;

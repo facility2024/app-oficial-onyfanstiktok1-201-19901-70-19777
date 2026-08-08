@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS public.linktree_profiles CASCADE;
+DROP TABLE IF EXISTS public.live_streams CASCADE;
+DROP TABLE IF EXISTS public.localizacao_usuarios CASCADE;
+DROP TABLE IF EXISTS public.loja_product_covers CASCADE;
+DROP TABLE IF EXISTS public.magazine_buttons CASCADE;
+DROP TABLE IF EXISTS public.magazine_form_leads CASCADE;
+DROP TABLE IF EXISTS public.magazine_form_submissions CASCADE;
+DROP TABLE IF EXISTS public.cocoflix_purchases CASCADE;
+DROP TABLE IF EXISTS public.cocoflix_videos CASCADE;

@@ -1,0 +1,386 @@
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { detectLocation, normalizeStateName } from '@/utils/geolocation';
+interface DeviceStats {
+  desktop: number;
+  mobile: number;
+}
+
+interface RealTimeStats {
+  totalContent: number;
+  totalLikes: number;
+  totalComments: number;
+  viewsToday: number;
+  totalShares: number;
+  totalFollowers: number;
+  activeUsers: number;
+  onlineUsersByState: { [state: string]: number };
+  deviceStatsByState: { [state: string]: DeviceStats };
+  totalDeviceStats: DeviceStats;
+  totalOnlineUsers: number;
+  totalViews: number;
+  activeViews: number;
+}
+
+export const useRealTimeStats = () => {
+  const [stats, setStats] = useState<RealTimeStats>({
+    totalContent: 0,
+    totalLikes: 0,
+    totalComments: 0,
+    viewsToday: 0,
+    totalShares: 0,
+    totalFollowers: 0,
+    activeUsers: 0,
+    onlineUsersByState: {},
+    deviceStatsByState: {},
+    totalDeviceStats: { desktop: 0, mobile: 0 },
+    totalOnlineUsers: 0,
+    totalViews: 0,
+    activeViews: 0
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Refs para controlar intervalos e evitar duplicações
+  const statsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cleanupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isInitialized = useRef(false);
+  const isFetching = useRef(false);
+  const lastFetchTime = useRef(0);
+
+  const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+
+  const fetchRealTimeStats = async () => {
+    // Evitar múltiplas chamadas simultâneas
+    const now = Date.now();
+    if (isFetching.current || (now - lastFetchTime.current) < 5000) {
+      return;
+    }
+    
+    isFetching.current = true;
+    lastFetchTime.current = now;
+    
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      const onlineCutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
+
+      // Usar Promise.all para executar queries em paralelo
+      const [
+        contentResult,
+        likesResult,
+        commentsResult,
+        viewsTodayResult,
+        totalViewsResult,
+        sharesResult,
+        followersResult,
+        activeUsersResult,
+        onlineUsersResult,
+        // Queries adicionais para dados reais de vídeos
+        videosLikesResult,
+        videosViewsResult,
+        videosCommentsResult
+      ] = await Promise.all([
+        // Total de conteúdos (modelos ativos)
+        supabase.from('models').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        // Total de curtidas na tabela likes
+        supabase.from('likes').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        // Total de comentários
+        supabase.from('comments').select('*', { count: 'exact', head: true }),
+        // Views de hoje
+        supabase.from('video_views').select('*', { count: 'exact', head: true })
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString()),
+        // Total de views
+        supabase.from('video_views').select('*', { count: 'exact', head: true }),
+        // Shares dos vídeos
+        supabase.from('videos').select('shares_count'),
+        // Seguidores
+        supabase.from('model_followers').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        // Sessões ativas por heartbeat (não depender só de updated_at)
+        supabase.from('user_sessions').select('*', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .or(`last_activity_at.gte.${onlineCutoff},last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
+        // Usuários online por estado + device (heartbeat)
+        supabase.from('online_users').select('location_state, device_type')
+          .eq('is_online', true)
+          .or(`last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
+        // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
+        supabase.from('videos').select('likes_count'),
+        // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
+        supabase.from('videos').select('views_count'),
+        // Somar comments_count diretamente dos vídeos
+        supabase.from('videos').select('comments_count')
+      ]);
+
+      // Processar dados de usuários online por estado + tipo de dispositivo
+      let onlineUsersByState: { [state: string]: number } = {};
+      let deviceStatsByState: { [state: string]: DeviceStats } = {};
+      let totalDeviceStats: DeviceStats = { desktop: 0, mobile: 0 };
+      let totalOnlineUsers = 0;
+
+      if (onlineUsersResult.data && onlineUsersResult.data.length > 0) {
+        onlineUsersResult.data.forEach((row: any) => {
+          const normalizedState = normalizeStateName(String(row.location_state || '').trim());
+          const stateKey = normalizedState || 'Indefinido';
+
+          totalOnlineUsers += 1;
+          onlineUsersByState[stateKey] = (onlineUsersByState[stateKey] || 0) + 1;
+
+          // Agregar por tipo de dispositivo
+          if (!deviceStatsByState[stateKey]) {
+            deviceStatsByState[stateKey] = { desktop: 0, mobile: 0 };
+          }
+
+          const deviceType = (row.device_type || '').toLowerCase();
+          if (deviceType === 'desktop') {
+            deviceStatsByState[stateKey].desktop += 1;
+            totalDeviceStats.desktop += 1;
+          } else {
+            // mobile + tablet + desconhecido = mobile bucket
+            deviceStatsByState[stateKey].mobile += 1;
+            totalDeviceStats.mobile += 1;
+          }
+        });
+      }
+
+      // Calculate total shares from videos table
+      const totalShares = sharesResult.data?.reduce((sum: number, video: any) => sum + (video.shares_count || 0), 0) || 0;
+
+      // Usar dados da tabela likes OU fallback dos contadores de vídeos
+      const likesFromTable = likesResult.count || 0;
+      const likesFromVideos = videosLikesResult.data?.reduce((sum: number, v: any) => sum + (v.likes_count || 0), 0) || 0;
+      const finalLikes = Math.max(likesFromTable, likesFromVideos);
+
+      // Views: usar tabela video_views OU fallback dos contadores
+      const viewsFromTable = totalViewsResult.count || 0;
+      const viewsFromVideos = videosViewsResult.data?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0;
+      const finalTotalViews = Math.max(viewsFromTable, viewsFromVideos);
+
+      // Comments: tabela comments OU fallback
+      const commentsFromTable = commentsResult.count || 0;
+      const commentsFromVideos = videosCommentsResult.data?.reduce((sum: number, v: any) => sum + (v.comments_count || 0), 0) || 0;
+      const finalComments = Math.max(commentsFromTable, commentsFromVideos);
+
+      // Views hoje: usar tabela ou fallback 
+      const viewsTodayCount = viewsTodayResult.count || 0;
+
+      const newStats: RealTimeStats = {
+        totalContent: contentResult.count || 0,
+        totalLikes: finalLikes,
+        totalComments: finalComments,
+        viewsToday: viewsTodayCount,
+        totalShares: totalShares,
+        totalFollowers: followersResult.count || 0,
+        activeUsers: totalOnlineUsers || 0,
+        onlineUsersByState,
+        deviceStatsByState,
+        totalDeviceStats,
+        totalOnlineUsers,
+        totalViews: finalTotalViews,
+        activeViews: activeUsersResult.count || 0
+      };
+
+      setStats(newStats);
+
+      console.log('📊 Real-time stats atualizadas:', newStats);
+
+    } catch (error) {
+      console.error('❌ Erro ao buscar estatísticas em tempo real:', error);
+    } finally {
+      setIsLoading(false);
+      isFetching.current = false;
+    }
+  };
+
+  const trackUserActivity = async (userId: string, location?: { state?: string; city?: string; country?: string }) => {
+    try {
+      // Detectar tipo de dispositivo
+      const userAgent = navigator.userAgent;
+      let deviceType = 'desktop';
+      
+      if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+        if (/iPad/i.test(userAgent)) {
+          deviceType = 'tablet';
+        } else {
+          deviceType = 'mobile';
+        }
+      } else if (/Tablet/i.test(userAgent)) {
+        deviceType = 'tablet';
+      }
+
+      const now = new Date().toISOString();
+      const clientIP = await getClientIP();
+
+      // IDs persistentes para permitir múltiplas sessões simultâneas
+      let onlineSessionId = localStorage.getItem('online_session_id');
+      if (!onlineSessionId) {
+        onlineSessionId = crypto.randomUUID();
+        localStorage.setItem('online_session_id', onlineSessionId);
+      }
+
+      let persistentSessionToken = localStorage.getItem('user_session_token');
+      if (!persistentSessionToken) {
+        persistentSessionToken = crypto.randomUUID();
+        localStorage.setItem('user_session_token', persistentSessionToken);
+      }
+
+      // Priorizar localização recebida; fallback para detecção robusta client-side
+      const resolvedLocation = location ?? await detectLocation();
+      const normalizedState = normalizeStateName(resolvedLocation.state || '');
+      const safeState = normalizedState || null;
+      const safeCity = resolvedLocation.city?.trim() || null;
+      const safeCountry = resolvedLocation.country?.trim() || 'BR';
+
+      // 1. Registrar/atualizar sessão do usuário
+      const { error: sessionError } = await supabase
+        .from('user_sessions')
+        .upsert({
+          user_id: userId,
+          session_token: persistentSessionToken,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          is_active: true,
+          last_activity_at: now,
+          last_seen_at: now,
+          updated_at: now,
+          location_state: safeState,
+          location_city: safeCity,
+          location_country: safeCountry,
+          user_agent: userAgent,
+          ip_address: clientIP,
+          device_type: deviceType,
+          started_at: now,
+          device_info: { type: deviceType, userAgent }
+        }, {
+          onConflict: 'session_token'
+        });
+
+      if (sessionError) {
+        console.error('❌ Erro ao registrar sessão:', sessionError);
+      }
+
+      // 2. Registrar/atualizar usuário online via RPC segura (bypass de RLS)
+      const { error: onlineError } = await supabase.rpc('register_online_user', {
+        p_user_id: userId,
+        p_session_id: onlineSessionId,
+        p_location_state: safeState,
+        p_location_city: safeCity,
+        p_location_country: safeCountry,
+        p_ip_address: clientIP,
+        p_device_type: deviceType,
+        p_user_agent: userAgent
+      });
+
+      if (onlineError && onlineError.code !== '42P10') {
+        console.error('❌ Erro ao registrar usuário online:', onlineError);
+      }
+
+      // 3. Registrar evento de analytics
+      await supabase
+        .from('analytics_events')
+        .insert({
+          user_id: userId,
+          event_name: 'user_activity',
+          event_category: 'engagement',
+          page_url: window.location.href,
+          user_agent: userAgent,
+          device_type: deviceType,
+          ip_address: clientIP,
+          region: safeState,
+          city: safeCity,
+          country: safeCountry
+        });
+
+      console.log('✅ Atividade registrada:', {
+        userId,
+        deviceType,
+        location: safeState || 'indefinida',
+        ip: clientIP
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao rastrear atividade:', error);
+    }
+  };
+
+  const getClientIP = async (): Promise<string> => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      return data.ip || 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  };
+
+  // Limpeza de usuários inativos
+  const cleanupInactiveUsers = async () => {
+    try {
+      const onlineCutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
+      
+      // Marcar usuários como offline usando heartbeat (last_seen_at)
+      await supabase
+        .from('online_users')
+        .update({ is_online: false })
+        .eq('is_online', true)
+        .lt('last_seen_at', onlineCutoff);
+
+      // Marcar sessões como inativas usando atividade mais recente
+      await supabase
+        .from('user_sessions')
+        .update({ is_active: false })
+        .eq('is_active', true)
+        .or(`last_activity_at.lt.${onlineCutoff},last_seen_at.lt.${onlineCutoff},updated_at.lt.${onlineCutoff}`);
+
+      console.log('🧹 Limpeza de usuários inativos executada');
+    } catch (error) {
+      console.error('❌ Erro na limpeza de usuários inativos:', error);
+    }
+  };
+
+  // Configurar atualizações automáticas APENAS UMA VEZ
+  useEffect(() => {
+    if (!isInitialized.current) {
+      console.log('🚀 Inicializando sistema de stats em tempo real...');
+      isInitialized.current = true;
+
+      // Buscar dados iniciais
+      fetchRealTimeStats();
+
+      // Executar limpeza inicial
+      cleanupInactiveUsers();
+
+      // Atualizar stats a cada 45 segundos (reduzido frequência para evitar sobrecarga)
+      statsIntervalRef.current = setInterval(fetchRealTimeStats, 45000);
+
+      // Limpar usuários inativos a cada 2 minutos
+      cleanupIntervalRef.current = setInterval(cleanupInactiveUsers, ONLINE_WINDOW_MS);
+
+      // REMOVER real-time subscriptions para evitar updates em cascata
+      // As atualizações automáticas por intervalo são suficientes
+
+      return () => {
+        console.log('🧹 Limpando recursos do useRealTimeStats...');
+        if (statsIntervalRef.current) {
+          clearInterval(statsIntervalRef.current);
+          statsIntervalRef.current = null;
+        }
+        if (cleanupIntervalRef.current) {
+          clearInterval(cleanupIntervalRef.current);
+          cleanupIntervalRef.current = null;
+        }
+        isInitialized.current = false;
+      };
+    }
+  }, []);
+
+  return {
+    stats,
+    isLoading,
+    fetchRealTimeStats,
+    trackUserActivity
+  };
+};

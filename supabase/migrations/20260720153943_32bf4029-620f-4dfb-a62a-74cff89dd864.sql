@@ -1,0 +1,2 @@
+ALTER TABLE public.model_chat_panels DROP CONSTRAINT IF EXISTS model_chat_panels_ai_provider_check;
+ALTER TABLE public.model_chat_panels ADD CONSTRAINT model_chat_panels_ai_provider_check CHECK (ai_provider IS NULL OR ai_provider IN ('gemini','openai','grok'));

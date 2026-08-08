@@ -1,0 +1,1 @@
+UPDATE feed_promotions SET media_type = 'video' WHERE media_url ILIKE '%.mp4%' OR media_url ILIKE '%.webm%' OR media_url ILIKE '%.mov%';

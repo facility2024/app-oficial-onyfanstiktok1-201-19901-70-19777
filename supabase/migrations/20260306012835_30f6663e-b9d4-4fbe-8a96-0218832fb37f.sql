@@ -1,0 +1,1 @@
+ALTER TABLE public.feed_promotions ADD COLUMN IF NOT EXISTS daily_frequency INTEGER DEFAULT 0;

@@ -1,0 +1,230 @@
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
+import { AvatarWithFallback } from '@/components/ui/AvatarWithFallback';
+import { Video } from '@/types/database';
+import { Heart, MessageCircle, Share, User, Volume2, VolumeX, Eye, MessagesSquare, UserPlus, UserCheck } from 'lucide-react';
+import { VideoOptionsMenu } from './VideoOptionsMenu';
+import React from 'react';
+
+interface SideMenuProps {
+  video: Video | null;
+  isLiked: boolean;
+  isMuted: boolean;
+  isPlaying: boolean;
+  volume?: number;
+  isFollowing?: boolean;
+  onToggleLike: () => void;
+  onToggleSound: () => void;
+  onVolumeChange?: (value: number) => void;
+  onTogglePlay: () => void;
+  onOpenComments: () => void;
+  onOpenProfile: () => void;
+  onToggleFollow?: () => void;
+  onOpenLive?: () => void;
+  onBlockVideo?: () => void;
+  onExit?: () => void;
+  onFullscreen?: () => void;
+  onOpenChat?: () => void;
+  isChatOnline?: boolean;
+  onShare?: () => void;
+}
+
+export const SideMenu = ({
+  video,
+  isLiked,
+  isMuted,
+  isPlaying,
+  volume = 0.8,
+  isFollowing = false,
+  onToggleLike,
+  onToggleSound,
+  onVolumeChange,
+  onTogglePlay,
+  onOpenComments,
+  onOpenProfile,
+  onToggleFollow,
+  onOpenLive,
+  onBlockVideo,
+  onExit,
+  onFullscreen,
+  onOpenChat,
+  isChatOnline = false,
+  onShare
+}: SideMenuProps) => {
+
+  const formatCount = (count?: number) => {
+    // Handle undefined or null values
+    if (count === undefined || count === null) {
+      return '0';
+    }
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'k';
+    }
+    return count.toString();
+  };
+
+  return (
+    <div className="flex flex-col gap-4 z-[9999] pointer-events-auto touch-manipulation">
+      {/* Profile */}
+      <div
+        className="flex flex-col items-center cursor-pointer group"
+        onPointerDown={(event) => {
+          // O carousel pode segurar o evento click enquanto finaliza a rolagem.
+          // Abrir no pointerdown torna o perfil instantâneo após o toque.
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenProfile();
+        }}
+      >
+        <div className="relative w-12 h-12 md:w-[75px] md:h-[75px] flex items-center justify-center transition-all">
+          <div className="w-10 h-10 md:w-[75px] md:h-[75px] rounded-full border-2 border-white overflow-hidden shrink-0 shadow-lg bg-gray-800">
+            <img
+              src={video?.user?.avatar_url || DEFAULT_AVATAR}
+              alt={video?.user?.username || 'avatar'}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+            />
+          </div>
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 md:w-6 md:h-6 bg-[#22C55E] rounded-full border-2 border-black"></div>
+        </div>
+      </div>
+
+      {/* Follow */}
+      {onToggleFollow && (
+        <div 
+          className="flex flex-col items-center cursor-pointer touch-manipulation select-none group"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFollow();
+          }}
+        >
+          <div className="w-12 h-12 flex items-center justify-center transition-all duration-200 active:scale-95">
+            {isFollowing ? (
+              <UserCheck 
+                className="w-8 h-8 text-green-500"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <UserPlus 
+                className="w-8 h-8 text-white md:text-gray-800"
+                strokeWidth={1.5}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Like */}
+      <div 
+        className="flex flex-col items-center cursor-pointer touch-manipulation select-none relative group"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleLike();
+        }}
+        style={{
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation'
+        }}
+      >
+        <div className="w-12 h-12 flex items-center justify-center transition-all duration-200 active:scale-95">
+          <Heart 
+            className={`w-8 h-8 transition-all ${
+              isLiked ? 'fill-red-500 text-red-500' : 'text-white md:text-gray-800'
+            }`}
+            strokeWidth={1.5}
+          />
+        </div>
+        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">{formatCount(video?.likes_count || 0)}</span>
+      </div>
+
+      {/* Comment */}
+      <div
+        className="flex flex-col items-center cursor-pointer group touch-manipulation select-none"
+        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenComments();
+        }}
+      >
+        <div className="w-12 h-12 flex items-center justify-center transition-all">
+          <MessageCircle className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
+        </div>
+        <span className="text-white md:text-gray-800 text-xs mt-1 font-light">
+          {formatCount(video?.comments_count || 0)}
+        </span>
+      </div>
+
+      {/* Chat com a Modelo (IA) - só aparece quando o painel está ativo */}
+      {onOpenChat && (
+        <div
+          className="flex flex-col items-center cursor-pointer group"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenChat(); }}
+        >
+          <div className="relative w-12 h-12 flex items-center justify-center transition-all active:scale-95">
+            <MessagesSquare
+              className={`w-8 h-8 ${isChatOnline ? 'text-[#22C55E] drop-shadow-[0_0_8px_rgba(34,197,94,0.9)]' : 'text-white md:text-gray-800'}`}
+              strokeWidth={1.5}
+            />
+            {isChatOnline && (
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#22C55E] rounded-full border-2 border-black animate-pulse" />
+            )}
+          </div>
+          <span className="text-white md:text-gray-800 text-[10px] mt-1 font-semibold">
+            {isChatOnline ? 'Online' : 'Chat'}
+          </span>
+        </div>
+      )}
+
+      {/* Block Video (Eye Icon) - Só aparece quando configurado pelo admin */}
+      {onBlockVideo && (
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onBlockVideo}>
+          <div className="w-12 h-12 flex items-center justify-center transition-all">
+            <Eye className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
+          </div>
+          
+        </div>
+      )}
+
+
+      {/* Som: apenas liga/desliga. O volume é controlado pelo aparelho do usuário. */}
+      <div className="flex flex-col items-center relative">
+        <div
+          className="flex flex-col items-center cursor-pointer group"
+          onClick={onToggleSound}
+        >
+          <div className="w-12 h-12 flex items-center justify-center transition-all">
+            {isMuted ? (
+              <VolumeX className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
+            ) : (
+              <Volume2 className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Compartilhar */}
+      {onShare && (
+        <div className="flex flex-col items-center cursor-pointer group" onClick={onShare}>
+          <div className="w-12 h-12 flex items-center justify-center transition-all">
+            <Share className="w-8 h-8 text-white md:text-gray-800" strokeWidth={1.5} />
+          </div>
+          
+        </div>
+      )}
+
+
+      {/* Video Options Menu */}
+      <VideoOptionsMenu 
+        videoId={video?.id || ''} 
+        videoTitle={video?.title}
+        onFullscreen={onFullscreen}
+      />
+
+    </div>
+  );
+};

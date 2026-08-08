@@ -1,0 +1,533 @@
+import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
+import { Crown, Eye } from 'lucide-react';
+import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';
+import { supabase } from '@/integrations/supabase/client';
+import { Video } from '@/types/database';
+import { VideoProgressBar } from './VideoProgressBar';
+import { UniversalVideoPlayer } from './UniversalVideoPlayer';
+import { PremiumContentOverlay } from './PremiumContentOverlay';
+import { ModelSubscriptionOverlay } from './ModelSubscriptionOverlay';
+import { useModelSubscription } from '@/hooks/useModelSubscription';
+import { MediaCarouselPlayer } from './MediaCarouselPlayer';
+
+// Nunca usar avatar/imagem como poster do vídeo — evita o "flash" ao rolar o feed.
+// O próprio vídeo (primeiro frame) é usado como preview.
+const getSafeVideoPoster = (_thumbnailUrl?: string | null): string | undefined => undefined;
+
+interface VideoPlayerProps {
+  video: Video;
+  isPlaying: boolean;
+  isMuted: boolean;
+  volume?: number;
+  onNext: () => void;
+  onPrevious: () => void;
+  onDoubleClick: () => void;
+  onTogglePlay: () => void;
+}
+
+const isValidUUID = (value?: string | null): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+
+const formatViews = (n: number): string => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.0', '')}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace('.0', '')}k`;
+  return String(n || 0);
+};
+
+// Oferta vinculada ao vídeo/modelo
+interface Offer {
+  id: string;
+  model_id: string | null;
+  video_id: string | null;
+  title: string | null;
+  description: string | null;
+  image_url: string | null;
+  button_text: string | null;
+  button_color: string | null;
+  button_effect: string | null;
+  button_link: string | null;
+  ad_text: string | null;
+  ad_text_link: string | null;
+  start_at: string | null;
+  end_at: string | null;
+  duration_seconds: number | null;
+  show_times: number | null;
+  is_active: boolean;
+}
+
+export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
+  ({ video, isPlaying, isMuted, volume = 0.8, onNext, onPrevious, onDoubleClick, onTogglePlay }, ref) => {
+    const [doubleTapHeart, setDoubleTapHeart] = useState(false);
+    const [lastTap, setLastTap] = useState(0);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isInView, setIsInView] = useState(false);
+    // Sticky: uma vez montado, o <video> permanece no DOM (evita flicker no scroll mobile)
+    const [hasMounted, setHasMounted] = useState(false);
+    const [isBuffering, setIsBuffering] = useState(false);
+
+    const [offer, setOffer] = useState<Offer | null>(null);
+    const [showOffer, setShowOffer] = useState(false);
+    const [timesShown, setTimesShown] = useState(0);
+    const [offerDismissed, setOfferDismissed] = useState(false);
+    const timersRef = useRef<number[]>([]);
+
+    const modelId = (video as any)?.user_id || (video as any)?.model_id || (video as any)?.creator_id || '';
+    // views_count já vem somado (base + real) do feed
+    const totalViews = Number((video as any)?.views_count || 0);
+    const isCarousel = (video as any)?.media_type === 'carousel' || (video as any)?.tipo_conteudo === 'carrossel';
+    const carouselImages = Array.isArray((video as any)?.images)
+      ? (video as any).images.filter(Boolean)
+      : Array.isArray((video as any)?.imagens)
+        ? (video as any).imagens.filter(Boolean)
+        : [(video as any)?.thumbnail_url, (video as any)?.video_url].filter(Boolean);
+    const rawVisibility = String((video as any)?.visibility || 'public').toLowerCase().trim();
+    // Só trava como privado quando o admin marca EXPLICITAMENTE como 'private'.
+    const videoVisibility: 'public' | 'private' = rawVisibility === 'private' ? 'private' : 'public';
+    const isPrivateVideo = videoVisibility === 'private';
+    const modelType: 'model' | 'creator' = (video as any)?.creator_id ? 'creator' : 'model';
+
+    const { plans, isPrivateUnlockedSync } = useModelSubscription(isPrivateVideo ? modelId : undefined);
+
+    const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(false);
+
+    const hasIndividualSubscription = isPrivateVideo ? isPrivateUnlockedSync(modelId) : false;
+    const lockedPrivate = isPrivateVideo && !hasIndividualSubscription;
+    const locked = lockedPrivate;
+
+    // Flags para overlays de topo/CTA (única fonte de verdade)
+    const isPromo = String((video as any)?.id || '').startsWith('promo-');
+    const isNewVideo = Boolean(
+      (video as any)?.isHighlighted ||
+      (video as any)?.isNewModel ||
+      (video as any)?.source === 'scheduled_post' ||
+      (video as any)?.source === 'main_post'
+    );
+    const videoTitle: string = String((video as any)?.title || '').trim();
+
+    // Sanitizador de cor para o botão CTA — nunca deixa transparente
+    const sanitizeColor = (raw: unknown): string => {
+      const v = String(raw ?? '').trim();
+      if (!v) return '#ec4899';
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)) return v;
+      if (/^[0-9a-f]{6}$/i.test(v)) return `#${v}`;
+      if (/^[0-9a-f]{3}$/i.test(v)) return `#${v}`;
+      if (/^rgba?\(/i.test(v)) return v;
+      if (/^[a-z]+$/i.test(v)) return v; // nome CSS
+      return '#ec4899';
+    };
+    const ctaColor = sanitizeColor((video as any)?.button_color);
+
+    const ctaText: string = String((video as any)?.button_text || '').trim();
+    const ctaHref: string = String((video as any)?.redirect_link || '').trim();
+    const ctaIconRaw: string = String((video as any)?.button_icon || '').trim();
+    const ctaIcon: string = /^https?:\/\//i.test(ctaIconRaw) ? ctaIconRaw : '';
+    const ctaEnabled = (video as any)?.show_redirect_button !== false;
+    // Renderiza overlays (badges/título/CTA) SOMENTE para vídeos vindos do painel externo (Instagram Ingest)
+    const uploadSource = String((video as any)?.upload_source || '').toLowerCase();
+    const videoCategory = String((video as any)?.category || '').toLowerCase();
+    const isExternalIngest = uploadSource === 'instagram_ingest' || videoCategory === 'instagram';
+    const showCta = isExternalIngest && ctaEnabled && (!!ctaText || !!ctaIcon) && !!ctaHref;
+    const showExternalOverlays = isExternalIngest && (showCta || !!videoTitle);
+    // Vídeo gerenciado pelo painel admin externo — nesse caso o próprio painel
+    // injeta o badge "Patrocinado"; ocultamos o badge padrão para evitar duplicidade.
+    const isExternallyManaged = Boolean(ctaText || ctaHref || videoTitle);
+
+    const checkOfferDismissed = (offerId: string) => {
+      const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
+      return dismissedOffers.includes(offerId);
+    };
+
+    const dismissOffer = (offerId: string) => {
+      const dismissedOffers = JSON.parse(localStorage.getItem('dismissedOffers') || '[]');
+      if (!dismissedOffers.includes(offerId)) {
+        dismissedOffers.push(offerId);
+        localStorage.setItem('dismissedOffers', JSON.stringify(dismissedOffers));
+      }
+      setOfferDismissed(true);
+      setShowOffer(false);
+    };
+
+    const clearTimers = () => {
+      timersRef.current.forEach((t) => window.clearTimeout(t));
+      timersRef.current = [];
+    };
+
+    const withinWindow = (o: Offer, nowMs = Date.now()) => {
+      const start = o.start_at ? Date.parse(o.start_at) : undefined;
+      const end = o.end_at ? Date.parse(o.end_at) : undefined;
+      if (start && nowMs < start) return false;
+      if (end && nowMs > end) return false;
+      return true;
+    };
+
+    useEffect(() => {
+      const el = containerRef.current;
+      if (!el) return;
+
+      // Fallback imediato: se o elemento já está visível na montagem
+      // (caso do primeiro vídeo), marca isInView sem esperar o observer.
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      if (rect.bottom > -1500 && rect.top < vh + 1500) {
+        setIsInView(true);
+        setHasMounted(true);
+      }
+
+      let debounceId: number | null = null;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const ratio = entry.intersectionRatio || 0;
+            // Considera "ativo" apenas quando a maior parte do item está visível,
+            // evitando disparos a cada pixel de scroll (iOS/Android).
+            const visible = entry.isIntersecting && ratio >= 0.6;
+            // Uma vez montado, o <video> nunca é desmontado no scroll.
+            if (entry.isIntersecting) setHasMounted(true);
+            if (debounceId) window.clearTimeout(debounceId);
+            debounceId = window.setTimeout(() => setIsInView(visible), 120);
+          });
+        },
+        { root: null, rootMargin: '300px 0px', threshold: [0, 0.6, 0.75] }
+      );
+      observer.observe(el);
+      return () => {
+        if (debounceId) window.clearTimeout(debounceId);
+        observer.disconnect();
+      };
+    }, []);
+
+
+    // Registrar visualização quando o vídeo entra em viewport (evita duplicar por 5 min)
+    useEffect(() => {
+      if (!isInView) return;
+      const persistedVideoId = String((video as any)?._originalId || (video as any)?.id || '').replace(/-block-\d+-\d+$/, '');
+      if (!isValidUUID(persistedVideoId)) return;
+
+      // ✅ Dedup: 1 visualização por vídeo a cada 24h (padrão do mercado)
+      const key = `view_tracked_${persistedVideoId}`;
+      const last = Number(localStorage.getItem(key) || '0');
+      const THROTTLE_MS = 24 * 60 * 60 * 1000; // 24 horas
+      const now = Date.now();
+      if (now - last < THROTTLE_MS) return;
+
+      const timeoutId = window.setTimeout(async () => {
+        try {
+          let sessionId = localStorage.getItem('session_id');
+          if (!sessionId) {
+            sessionId = crypto.randomUUID();
+            localStorage.setItem('session_id', sessionId);
+          }
+
+          const { data: authData } = await supabase.auth.getUser();
+          const userId = (authData?.user?.id as any) || null;
+
+          // RPC valida a janela de 24h no banco e incrementa views_count
+          await (supabase as any).rpc('register_video_view_24h', {
+            _video_id: persistedVideoId,
+            _viewer_key: sessionId,
+            _user_id: userId,
+          });
+
+          localStorage.setItem(key, String(Date.now()));
+        } catch {
+          // Silently fail view tracking
+        }
+      }, 2000); // considera view após 2s
+
+
+      return () => window.clearTimeout(timeoutId);
+    }, [isInView, video, modelId]);
+
+    useEffect(() => {
+      if (isCarousel) return;
+      if (ref && 'current' in ref && ref.current) {
+        const videoEl = ref.current;
+
+        if (isPlaying) {
+          // Pausa apenas outros vídeos (sem resetar currentTime — evita flicker)
+          document.querySelectorAll('video').forEach((v) => {
+            if (v !== videoEl && !v.paused) {
+              try { v.pause(); } catch {}
+            }
+          });
+          videoEl.play().catch(() => {});
+        } else {
+          videoEl.pause();
+        }
+      }
+    }, [isPlaying, ref, isCarousel]);
+
+    useEffect(() => {
+      if (isCarousel) return;
+      if (ref && 'current' in ref && ref.current) {
+        ref.current.muted = isMuted;
+      }
+    }, [isMuted, ref, isCarousel]);
+
+    useEffect(() => {
+      if (isCarousel) setIsBuffering(false);
+    }, [isCarousel, video.id]);
+
+    useEffect(() => {
+      if (isPrivateVideo && locked) {
+        try { localStorage.setItem(`model_locked_${modelId}`, 'true'); } catch {}
+      }
+    }, [isPrivateVideo, locked, modelId]);
+
+    // Auto-popup de ofertas desativado para não bloquear o carregamento dos vídeos.
+    // Dados da tabela `offers` permanecem intactos; apenas o modal sobreposto foi removido.
+
+    const tapTimerRef = useRef<number | null>(null);
+
+    const handleVideoTap = useCallback((event: React.MouseEvent) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+
+      // Duplo clique = like (cancela o toggle simples pendente)
+      if (tapLength < 500 && tapLength > 0) {
+        if (tapTimerRef.current) {
+          window.clearTimeout(tapTimerRef.current);
+          tapTimerRef.current = null;
+        }
+        setDoubleTapHeart(true);
+        onDoubleClick();
+        window.setTimeout(() => setDoubleTapHeart(false), 600);
+      } else {
+        // Clique simples = play/pause, com debounce para evitar duplo disparo
+        if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = window.setTimeout(() => {
+          tapTimerRef.current = null;
+          // Lê o estado REAL do elemento antes de decidir a ação
+          const el = containerRef.current?.querySelector('video') as HTMLVideoElement | null;
+          if (el) {
+            if (el.paused) {
+              el.play().catch(() => {});
+            } else {
+              el.pause();
+            }
+          }
+          onTogglePlay();
+        }, 280);
+      }
+
+      setLastTap(currentTime);
+    }, [lastTap, onDoubleClick, onTogglePlay]);
+
+    useEffect(() => () => {
+      if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
+    }, []);
+
+
+    const effectClass = useMemo(() => 
+      offer?.button_effect === 'pulse'
+        ? 'animate-pulse'
+        : offer?.button_effect === 'bounce'
+        ? 'animate-bounce'
+        : '',
+      [offer?.button_effect]
+    );
+
+    const trackClick = useCallback(async (type: 'button' | 'ad_text') => {
+      try {
+        await supabase.from('offer_clicks').insert({
+          offer_id: offer?.id as string,
+          video_id: video.id,
+          model_id: modelId,
+          session_id: (localStorage.getItem('session_id') || null) as any,
+          user_agent: navigator.userAgent,
+        });
+      } catch {
+        // Silently fail click tracking
+      }
+    }, [offer?.id, video.id, modelId]);
+
+    const handleOfferAction = useCallback((type: 'button' | 'ad_text') => {
+      const url = type === 'button' ? offer?.button_link : offer?.ad_text_link;
+      if (url) window.open(url, '_blank');
+      trackClick(type);
+    }, [offer?.button_link, offer?.ad_text_link, trackClick]);
+
+    return (
+      <div ref={containerRef} className="relative w-full h-full">
+        {hasMounted ? (
+          isCarousel ? (
+            <div className="w-full h-full" onClick={handleVideoTap}>
+              <MediaCarouselPlayer
+                images={carouselImages}
+                audioUrl={(video as any)?.audio_url}
+                buttons={(video as any)?.botoes}
+                isPlaying={isPlaying}
+                isMuted={isMuted}
+                volume={volume}
+                objectFit="cover"
+              />
+            </div>
+          ) : (
+          <UniversalVideoPlayer
+            key={video.id}
+            ref={ref}
+            src={(video as any).video_url}
+            poster={getSafeVideoPoster((video as any).thumbnail_url)}
+            isPlaying={isPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            autoPlayOnReady={isPlaying}
+            audioUrl={(video as any).audio_url || undefined}
+            className=""
+            onClick={handleVideoTap}
+            onLoadedData={() => setIsBuffering(false)}
+            onError={() => setIsBuffering(false)}
+          />
+          )
+        ) : (
+          <div className="w-full h-full bg-black" />
+        )}
+
+
+        {/* Badge discreto para vídeo privado — não bloqueia o vídeo */}
+        {lockedPrivate && (
+          <div className="absolute top-3 right-3 z-30 pointer-events-none flex items-center gap-1.5 bg-black/55 backdrop-blur-sm border border-amber-400/40 rounded-full pl-2 pr-3 py-1 shadow-lg">
+            <Crown className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-amber-300 text-[10px] font-bold tracking-wide">PRIVADO</span>
+              <span className="text-white/80 text-[9px]">Visite meu perfil</span>
+            </div>
+          </div>
+        )}
+
+        {/* Visualizações — sempre visível em todos os vídeos */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${showExternalOverlays ? 46 : 12}px)` }}
+        >
+          <span className="flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-bold shadow-lg">
+            <Eye className="w-3.5 h-3.5 text-cyan-300" />
+            {formatViews(totalViews)} visualizações
+          </span>
+        </div>
+
+
+        {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) — instância ÚNICA */}
+        {showExternalOverlays && (
+          <>
+            <div
+              className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none flex max-w-[92%] flex-nowrap items-center justify-center gap-2"
+              style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+            >
+
+              <span className="shrink-0 whitespace-nowrap px-3 py-1 rounded-full bg-pink-500 text-white text-xs font-bold shadow-lg">
+                Vídeos Novos
+              </span>
+              {!!videoTitle && isExternallyManaged && (
+                <span className="max-w-[45vw] truncate whitespace-nowrap px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+                  {videoTitle}
+                </span>
+              )}
+              {!isExternallyManaged && (
+                <span className="shrink-0 whitespace-nowrap px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+                  Patrocinado
+                </span>
+              )}
+            </div>
+
+
+
+            {!!videoTitle && !isExternallyManaged && (
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
+                <p className="text-white text-sm font-semibold text-center line-clamp-2">
+                  {videoTitle}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+
+
+
+        {doubleTapHeart && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl text-red-500 pointer-events-none animate-pulse z-50">
+            ❤️
+          </div>
+        )}
+
+        {/* Modal de ofertas removido: estava bloqueando o carregamento dos vídeos */}
+
+
+        {isInView && isBuffering && !isCarousel && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full" />
+          </div>
+        )}
+
+        {/* Botão CTA — apenas para vídeos do painel externo (Instagram Ingest) */}
+        {showExternalOverlays && showCta && (
+          <div
+            className="absolute bottom-24 sm:bottom-28 left-0 right-0 z-[60] px-3 sm:px-4 flex justify-center pointer-events-auto"
+            style={{ willChange: 'opacity, transform', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+          >
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 text-white font-bold rounded-lg shadow-lg active:scale-[0.98] transition-transform overflow-hidden shrink-0"
+              style={{
+                width: ctaIcon ? 'min(55px, 16vw)' : 'min(187px, 52vw)',
+                height: ctaIcon ? 'min(55px, 16vw)' : 'min(55px, 15.5vw)',
+                ...((video as any)?.button_color
+                  ? { backgroundColor: ctaColor, color: '#ffffff' }
+                  : { background: 'linear-gradient(to right, #ec4899, #ef4444)', color: '#ffffff' }),
+              }}
+            >
+              {ctaIcon ? (
+                <img
+                  src={ctaIcon}
+                  alt=""
+                  loading="eager"
+                  decoding="sync"
+                  className="w-full h-full object-contain"
+                  style={{ background: 'transparent' }}
+                />
+              ) : (
+                <span className="text-base sm:text-lg text-center leading-tight px-2 line-clamp-2">{ctaText}</span>
+              )}
+            </a>
+          </div>
+        )}
+
+
+
+
+
+
+
+        {/* VideoProgressBar - oculto no desktop */}
+        {hasMounted && !isCarousel && <div className="lg:hidden"><VideoProgressBar videoRef={ref} /></div>}
+
+      </div>
+    );
+  }
+);
+
+VideoPlayer.displayName = 'VideoPlayer';
+
+// Memoized version to prevent re-renders when parent state changes
+export const MemoizedVideoPlayer = memo(VideoPlayer, (prev, next) => {
+  const pv: any = prev.video;
+  const nv: any = next.video;
+  return (
+    pv.id === nv.id &&
+    prev.isPlaying === next.isPlaying &&
+    prev.isMuted === next.isMuted &&
+    prev.volume === next.volume &&
+    pv.button_color === nv.button_color &&
+    pv.button_text === nv.button_text &&
+    pv.button_icon === nv.button_icon &&
+    pv.redirect_link === nv.redirect_link &&
+    pv.show_redirect_button === nv.show_redirect_button &&
+    pv.title === nv.title
+  );
+});
+

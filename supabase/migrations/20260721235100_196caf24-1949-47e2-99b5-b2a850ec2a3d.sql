@@ -1,0 +1,23 @@
+
+CREATE INDEX IF NOT EXISTS idx_likes_model_id ON public.likes(model_id);
+CREATE INDEX IF NOT EXISTS idx_comments_model_id ON public.comments(model_id);
+CREATE INDEX IF NOT EXISTS idx_daily_actions_model_id ON public.daily_actions(model_id);
+CREATE INDEX IF NOT EXISTS idx_points_history_model_id ON public.points_history(model_id);
+CREATE INDEX IF NOT EXISTS idx_video_views_model_id ON public.video_views(model_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_model_id ON public.notifications(model_id);
+CREATE INDEX IF NOT EXISTS idx_model_followers_model_id ON public.model_followers(model_id);
+CREATE INDEX IF NOT EXISTS idx_shares_model_id ON public.shares(model_id);
+CREATE INDEX IF NOT EXISTS idx_model_sessions_model_id ON public.model_sessions(model_id);
+CREATE INDEX IF NOT EXISTS idx_checkout_templates_model_id ON public.checkout_templates(model_id);
+CREATE INDEX IF NOT EXISTS idx_posts_agendados_modelo_id ON public.posts_agendados(modelo_id);
+CREATE INDEX IF NOT EXISTS idx_video_call_models_selected_model_id ON public.video_call_models(selected_model_id);
+CREATE INDEX IF NOT EXISTS idx_posts_principais_modelo_id ON public.posts_principais(modelo_id);
+CREATE INDEX IF NOT EXISTS idx_video_shares_model_id ON public.video_shares(model_id);
+CREATE INDEX IF NOT EXISTS idx_user_actions_model_id ON public.user_actions(model_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_model_id ON public.transactions(model_id);
+CREATE INDEX IF NOT EXISTS idx_premium_content_model_id ON public.premium_content(model_id);
+CREATE INDEX IF NOT EXISTS idx_videos_model_id ON public.videos(model_id);
+CREATE INDEX IF NOT EXISTS idx_onlyfans_content_model_id ON public.onlyfans_content(model_id);
+CREATE INDEX IF NOT EXISTS idx_model_chat_panels_model_id ON public.model_chat_panels(model_id);
+CREATE INDEX IF NOT EXISTS idx_user_feed_progress_model_id ON public.user_feed_progress(model_id);
+CREATE INDEX IF NOT EXISTS idx_cocoflix_content_model_id ON public.cocoflix_content(model_id);

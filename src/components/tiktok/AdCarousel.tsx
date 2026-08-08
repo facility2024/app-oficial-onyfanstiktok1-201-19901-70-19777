@@ -1,0 +1,126 @@
+import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+
+interface StoredAd {
+  id: number;
+  image: string;
+  title: string;
+  link: string;
+  active: boolean;
+  locations: {
+    feed: boolean;
+    marketplace: boolean;
+    comercios: boolean;
+  };
+}
+
+interface AdCarouselProps {
+  location?: 'feed' | 'marketplace' | 'comercios';
+}
+
+export const AdCarousel = ({ location = 'feed' }: AdCarouselProps) => {
+  const navigate = useNavigate();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [filteredAds, setFilteredAds] = useState<StoredAd[]>([]);
+
+  useEffect(() => {
+    const loadAds = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'sponsored_ads')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao carregar anúncios:', error);
+          return;
+        }
+
+        if (data?.setting_value) {
+          const allAds = data.setting_value as any as StoredAd[];
+          if (Array.isArray(allAds)) {
+            const active = allAds.filter(ad => ad.active && ad.locations?.[location]);
+            setFilteredAds(active);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar anúncios:', err);
+      }
+    };
+
+    loadAds();
+  }, [location]);
+
+  useEffect(() => {
+    if (!isPaused && filteredAds.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex(prev => (prev + 1) % filteredAds.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [isPaused, filteredAds.length]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [filteredAds.length]);
+
+  if (filteredAds.length === 0) return null;
+
+  const current = filteredAds[currentIndex % filteredAds.length];
+
+  return (
+    <div className="w-full">
+      <h2 className="text-white font-bold text-lg mb-2 flex items-center gap-2">
+        <span className="text-blue-400">📢</span>
+        Patrocinado
+      </h2>
+      
+      <div
+        className="relative overflow-hidden group cursor-pointer mx-auto border border-gray-700 w-full max-w-[600px] aspect-[2/1] rounded-lg"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onClick={() => navigate('/advertisers')}
+      >
+        <a href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+          <img 
+            src={current.image} 
+            alt={current.title} 
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </a>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setCurrentIndex(prev => (prev - 1 + filteredAds.length) % filteredAds.length); }}
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setCurrentIndex(prev => (prev + 1) % filteredAds.length); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {filteredAds.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+              className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/75'}`}
+              aria-label={`Ir para anúncio ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

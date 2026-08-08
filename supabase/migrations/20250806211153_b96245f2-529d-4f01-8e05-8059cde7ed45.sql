@@ -1,0 +1,6 @@
+-- Inserir alguns vídeos de exemplo para teste
+INSERT INTO videos (id, title, description, video_url, thumbnail_url, model_id, likes_count, comments_count, shares_count, views_count, is_active, created_at) VALUES
+('550e8400-e29b-41d4-a716-446655440001', 'Vídeo Exclusivo 1', '🔥 Conteúdo incrível que você não pode perder! #viral #trending', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', '/lovable-uploads/41dbca56-0539-491b-a599-1fae357d5331.png', (SELECT id FROM models LIMIT 1), 1250, 89, 45, 3200, true, NOW()),
+('550e8400-e29b-41d4-a716-446655440002', 'Vídeo Exclusivo 2', '✨ Momento especial compartilhado com vocês 😍 #exclusive #beautiful', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', '/lovable-uploads/2746651e-70a4-4bbc-bb71-54ba126863ca.png', (SELECT id FROM models ORDER BY created_at LIMIT 1 OFFSET 1), 890, 156, 78, 2100, true, NOW()),
+('550e8400-e29b-41d4-a716-446655440003', 'Vídeo Exclusivo 3', '🌟 Brilhando sempre para vocês! #shine #glamour #exclusive', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', '/lovable-uploads/d6487096-3582-4e46-830e-bd94cdfd798f.png', (SELECT id FROM models ORDER BY created_at LIMIT 1 OFFSET 2), 2100, 234, 125, 5600, true, NOW())
+ON CONFLICT (id) DO NOTHING;

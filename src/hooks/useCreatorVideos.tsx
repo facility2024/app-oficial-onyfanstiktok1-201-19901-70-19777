@@ -1,0 +1,195 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export interface CreatorVideo {
+  id: string;
+  title: string;
+  description: string;
+  video_url: string;
+  thumbnail_url: string;
+  thumbnail_locked?: string;
+  visibility: 'public' | 'private';
+  is_active: boolean;
+  is_featured?: boolean;
+  views_count: number;
+  likes_count: number;
+  comments_count: number;
+  shares_count: number;
+  created_at: string;
+}
+
+export const useCreatorVideos = () => {
+  const [videos, setVideos] = useState<CreatorVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
+
+  const fetchVideos = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) throw new Error('Usuário não autenticado');
+
+      let query = (supabase as any)
+        .from('videos')
+        .select('*')
+        .eq('creator_id', user.id)  // Filtrar apenas vídeos do criador logado
+        .order('created_at', { ascending: false });
+
+      // Aplicar filtros
+      if (statusFilter === 'active') {
+        query = query.eq('is_active', true);
+      } else if (statusFilter === 'paused') {
+        query = query.eq('is_active', false);
+      }
+
+      if (visibilityFilter !== 'all') {
+        query = query.eq('visibility', visibilityFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Filtrar por busca no cliente
+      let filteredData = data || [];
+      if (searchTerm) {
+        filteredData = filteredData.filter(video =>
+          video.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          video.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      setVideos(filteredData as CreatorVideo[]);
+    } catch (error) {
+      console.error('Erro ao buscar vídeos:', error);
+      toast.error('Erro ao carregar vídeos');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, visibilityFilter, searchTerm]);
+
+  useEffect(() => {
+    fetchVideos();
+  }, [fetchVideos]);
+
+  const toggleVideoActive = async (videoId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_active: !currentStatus })
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast.success(!currentStatus ? 'Vídeo ativado!' : 'Vídeo pausado!');
+      fetchVideos();
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      toast.error('Erro ao alterar status do vídeo');
+    }
+  };
+
+  const updateVideo = async (videoId: string, updates: Partial<CreatorVideo>) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update(updates)
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast.success('Vídeo atualizado com sucesso!');
+      fetchVideos();
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar vídeo:', error);
+      toast.error('Erro ao atualizar vídeo');
+      return false;
+    }
+  };
+
+  const deleteVideo = async (videoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast.success('Vídeo deletado permanentemente!');
+      fetchVideos();
+      return true;
+    } catch (error) {
+      console.error('Erro ao deletar vídeo:', error);
+      toast.error('Erro ao deletar vídeo');
+      return false;
+    }
+  };
+
+  const changeVisibility = async (videoId: string, newVisibility: 'public' | 'private') => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ visibility: newVisibility })
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      const messages = {
+        public: '🌐 Vídeo agora é público!',
+        private: '🔒 Vídeo agora é privado (apenas seus assinantes)',
+      };
+
+      toast.success(messages[newVisibility]);
+      fetchVideos();
+    } catch (error) {
+      console.error('Erro ao alterar visibilidade:', error);
+      toast.error('Erro ao alterar visibilidade do vídeo');
+    }
+  };
+
+  const toggleVideoPremium = async (videoId: string, currentVisibility: string) => {
+    const newVisibility: 'public' | 'private' = currentVisibility === 'private' ? 'public' : 'private';
+    await changeVisibility(videoId, newVisibility);
+  };
+
+  const toggleVideoFeatured = async (videoId: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_featured: !currentFeatured } as any)
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast.success(!currentFeatured ? '🔥 Vídeo marcado como PRODUTOS EM ALTA!' : 'Vídeo removido dos destaques');
+      fetchVideos();
+    } catch (error) {
+      console.error('Erro ao alterar destaque:', error);
+      toast.error('Erro ao alterar destaque do vídeo');
+    }
+  };
+
+  return {
+    videos,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    visibilityFilter,
+    setVisibilityFilter,
+    toggleVideoActive,
+    toggleVideoPremium,
+    toggleVideoFeatured,
+    changeVisibility,
+    updateVideo,
+    deleteVideo,
+    refetch: fetchVideos,
+  };
+};

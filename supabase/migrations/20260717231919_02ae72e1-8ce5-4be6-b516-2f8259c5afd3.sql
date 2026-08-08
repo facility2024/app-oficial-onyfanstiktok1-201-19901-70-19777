@@ -1,0 +1,1 @@
+ALTER TABLE public.ig_feed_videos ALTER COLUMN bunny_path DROP NOT NULL;

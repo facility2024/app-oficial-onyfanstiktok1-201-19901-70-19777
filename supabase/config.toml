@@ -1,0 +1,60 @@
+project_id = "tnzvhwapfhkhqjgyiomk"
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+
+
+[functions.approve-creator]
+verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.geolocate]
+verify_jwt = false
+
+[functions.geocode-businesses]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.asaas-checkout]
+verify_jwt = false
+
+[functions.asaas-verify-payment]
+verify_jwt = false
+
+[functions.process-payment]
+verify_jwt = false
+
+[functions.check-payment-status]
+verify_jwt = false
+
+[functions.neonpay-webhook]
+verify_jwt = false
+
+[functions.neon-vip-status]
+verify_jwt = false
+
+[functions.neon-vip]
+verify_jwt = false
+
+[functions.api-events]
+verify_jwt = false
+
+[functions.webhook-dispatcher]
+verify_jwt = false
+
+[functions.ingest-instagram]
+verify_jwt = false
+
+[functions.ig-create-creator-account]
+verify_jwt = true
+
+[functions.share-video]
+verify_jwt = false
+
+[functions.share-profile]
+verify_jwt = false

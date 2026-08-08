@@ -1,0 +1,1 @@
+ALTER TABLE public.video_call_models ADD COLUMN IF NOT EXISTS buy_link TEXT DEFAULT '';

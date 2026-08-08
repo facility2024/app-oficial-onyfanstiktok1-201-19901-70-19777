@@ -75,10 +75,11 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
     if (isVideoMedia && videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
+        setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        // play() retorna Promise: sem catch gera erro não tratado no app
+        void videoRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       }
-      setIsPlaying(!isPlaying);
     }
   };
 

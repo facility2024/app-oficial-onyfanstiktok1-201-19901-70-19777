@@ -216,17 +216,52 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
               className={`relative w-full h-full ${mediaFitClass}`}
               loop
               playsInline
+              // @ts-expect-error atributo específico do iOS
+              webkit-playsinline="true"
+              preload="metadata"
               muted={localMuted}
               poster={promo.banner_url || undefined}
               autoPlay={isCurrentSlide}
               onLoadedMetadata={(e) => {
                 const v = e.currentTarget;
+                setMediaError(false);
                 if (v.videoWidth && v.videoHeight) setIsLandscape(v.videoWidth > v.videoHeight);
+              }}
+              onError={() => {
+                // Falha de rede/CDN: tenta recarregar 2x antes de mostrar fallback
+                const v = videoRef.current;
+                if (v && retryRef.current < 2) {
+                  retryRef.current += 1;
+                  const sep = promo.media_url.includes('?') ? '&' : '?';
+                  v.src = `${promo.media_url}${sep}r=${retryRef.current}`;
+                  v.load();
+                  return;
+                }
+                setMediaError(true);
               }}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />
-            {!isPlaying && (
+            {mediaError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 px-6 text-center">
+                {promo.banner_url && (
+                  <img src={promo.banner_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                )}
+                <p className="relative text-white/90 text-sm font-semibold">Não foi possível carregar este vídeo</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    retryRef.current = 0;
+                    setMediaError(false);
+                    videoRef.current?.load();
+                  }}
+                  className="relative mt-3 px-4 py-2 rounded-full bg-white/20 text-white text-xs font-bold"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            )}
+            {!isPlaying && !mediaError && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center">
                   <Play className="w-8 h-8 text-white ml-1" fill="white" />

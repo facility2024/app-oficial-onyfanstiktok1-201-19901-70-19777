@@ -216,7 +216,6 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
               className={`relative w-full h-full ${mediaFitClass}`}
               loop
               playsInline
-              // @ts-expect-error atributo específico do iOS
               webkit-playsinline="true"
               preload="metadata"
               muted={localMuted}

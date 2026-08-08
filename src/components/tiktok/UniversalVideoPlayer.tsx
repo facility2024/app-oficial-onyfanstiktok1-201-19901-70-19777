@@ -359,6 +359,11 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     }, [onLoadedData]);
 
     const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+      // Ignorar erros silenciosamente quando src está vazio (placeholders intencionais)
+      if (!src || !src.trim()) {
+        setIsBuffering(false);
+        return;
+      }
       const video = e.currentTarget;
       const isBunnyVideo = video.src?.includes('b-cdn.net') || video.src?.includes('bunnycdn');
       

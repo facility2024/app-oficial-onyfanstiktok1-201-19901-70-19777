@@ -57,6 +57,7 @@ const periodsForFrequency = (freq: number): number[] => {
 
 export interface FeedPromotion {
   id: string;
+  model_id?: string | null;
   title: string;
   description: string | null;
   avatar_url: string | null;

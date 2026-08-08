@@ -674,6 +674,8 @@ export const TikTokApp = () => {
         video_url: selectedPromo.media_url,
         thumbnail_url: selectedPromo.banner_url || '',
         user_id: `promo-${selectedPromo.id}`,
+        model_id: (selectedPromo as any).model_id || null,
+        creator_id: (selectedPromo as any).model_id || null,
         likes_count: (selectedPromo as any).base_likes || 0,
         comments_count: 0,
         shares_count: 0,
@@ -3339,7 +3341,7 @@ export const TikTokApp = () => {
         const {
           data: videoData,
           error: videoError
-        } = await (supabase as any).from('videos').select('*').eq('creator_id', modelId).eq('is_active', true).limit(1);
+        } = await (supabase as any).from('videos').select('*').eq('creator_id', modelId).eq('is_active', true).or('visibility.eq.public,visibility.is.null').limit(1);
         if (!videoData || videoData.length === 0) {
           console.log('ℹ️ Nenhum vídeo ativo encontrado para o criador');
           toast({ title: 'Este criador ainda não publicou vídeos', variant: 'destructive' });
@@ -3352,6 +3354,12 @@ export const TikTokApp = () => {
         const profile = creatorProfile as any;
         const enrichedVideo = {
           ...video,
+          video_url: (() => {
+            const u = (video.video_url || '').trim();
+            if (!u) return '';
+            if (!/^https?:\/\//i.test(u) && /^[\w.-]+\.[\w.-]+/.test(u)) return `https://${u}`;
+            return u;
+          })(),
           title: video.title || `Vídeo ${video.id.slice(0, 8)}`,
           description: video.description || '',
           user_id: modelId,
@@ -3401,7 +3409,7 @@ export const TikTokApp = () => {
       const {
         data: videoData,
         error: videoError
-      } = await supabase.from('videos').select('*').eq('model_id', modelId).eq('is_active', true).limit(1);
+      } = await supabase.from('videos').select('*').eq('model_id', modelId).eq('is_active', true).or('visibility.eq.public,visibility.is.null').limit(1);
 
       // Se não encontrou em videos, buscar em posts_agendados
       if (!videoData || videoData.length === 0) {
@@ -3504,39 +3512,20 @@ export const TikTokApp = () => {
           return;
         }
 
-        // Mesmo sem vídeo, abrir perfil da modelo com vídeo placeholder
-        console.log('ℹ️ Nenhum vídeo encontrado, abrindo perfil da modelo sem vídeo');
-        const placeholderVideo = {
-          id: `placeholder-${modelId}`,
-          video_url: '',
-          title: modelData?.name || modelData?.username || 'Modelo',
-          description: '',
-          user_id: modelId,
-          model_id: modelId,
-          music_name: `${modelData?.username || 'Modelo'}`,
-          visibility: 'public' as const,
-          likes_count: 0,
-          comments_count: 0,
-          shares_count: 0,
-          views_count: 0,
-          is_active: true,
-          created_at: modelData?.created_at || new Date().toISOString(),
-          user: {
-            id: modelData.id,
-            username: modelData.username,
-            avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
-            followers_count: modelData.followers_count || 0,
-            following_count: 0,
-            is_online: modelData.is_live || false,
-            created_at: modelData.created_at || new Date().toISOString(),
-            bio: modelData.bio || ''
-          }
-        };
-        const newVideos = [placeholderVideo, ...videos];
-        setVideos(newVideos as Video[]);
-        setCurrentVideoIndex(0);
-        setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
-        console.log('✅ Placeholder carregado direto no feed (sem vídeo)');
+        // Sem vídeo encontrado — abrir perfil da modelo diretamente
+        console.log('ℹ️ Nenhum vídeo encontrado, abrindo perfil da modelo');
+        setProfileUserSnapshot({
+          id: modelData.id,
+          username: modelData.username,
+          avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
+          followers_count: modelData.followers_count || 0,
+          following_count: 0,
+          is_online: modelData.is_live || false,
+          created_at: modelData.created_at || new Date().toISOString(),
+          bio: modelData.bio || '',
+          posting_panel_url: modelData.posting_panel_url || undefined,
+        });
+        setShowProfile(true);
         return;
       }
 
@@ -3545,6 +3534,12 @@ export const TikTokApp = () => {
       const video = videoData[0];
       const enrichedVideo = {
         ...video,
+        video_url: (() => {
+          const u = (video.video_url || '').trim();
+          if (!u) return '';
+          if (!/^https?:\/\//i.test(u) && /^[\w.-]+\.[\w.-]+/.test(u)) return `https://${u}`;
+          return u;
+        })(),
         title: video.title || `Vídeo ${video.id.slice(0, 8)}`,
         description: video.description || '',
         user_id: modelId,

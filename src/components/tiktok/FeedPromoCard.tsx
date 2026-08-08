@@ -43,6 +43,8 @@ export const FeedPromoCard: React.FC<FeedPromoCardProps> = ({ promo, isMuted = t
   const [showPopup, setShowPopup] = useState(false);
   const [showGarotasTop, setShowGarotasTop] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
+  const [mediaError, setMediaError] = useState(false);
+  const retryRef = useRef(0);
   const ctaBusyRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);

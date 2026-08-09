@@ -50,6 +50,7 @@ const GESTURE_EVENTS: (keyof DocumentEventMap)[] = [
 class AudioSessionManagerImpl {
   private state: AudioState = AudioState.IDLE;
   private unlocked = false;
+  private unlockedAt = 0;
   private muted = false;
   private volume = 0.8;
 
@@ -94,6 +95,7 @@ class AudioSessionManagerImpl {
   };
 
   isUnlocked = () => this.unlocked;
+  getUnlockedAt = () => this.unlockedAt;
   getState = () => this.state;
 
   private emit() {

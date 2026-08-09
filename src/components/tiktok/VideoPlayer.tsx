@@ -329,7 +329,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       }
 
       setLastTap(currentTime);
-    }, [lastTap, onDoubleClick, onTogglePlay]);
+    }, [lastTap, onDoubleClick, onTogglePlay, isMuted]);
 
     useEffect(() => () => {
       if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);

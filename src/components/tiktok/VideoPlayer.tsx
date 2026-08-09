@@ -285,6 +285,20 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
 
+      // iOS/Android: se este toque foi o que liberou o áudio, ele NÃO deve
+      // pausar o vídeo — apenas ligar o som e garantir a reprodução.
+      const justUnlocked = currentTime - audioSessionManager.getUnlockedAt() < 800;
+      if (justUnlocked) {
+        const el = containerRef.current?.querySelector('video') as HTMLVideoElement | null;
+        if (el) {
+          el.muted = isMuted;
+          if (!isMuted) el.removeAttribute('muted');
+          if (el.paused) el.play().catch(() => {});
+        }
+        setLastTap(currentTime);
+        return;
+      }
+
       // Duplo clique = like (cancela o toggle simples pendente)
       if (tapLength < 500 && tapLength > 0) {
         if (tapTimerRef.current) {
@@ -295,6 +309,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         onDoubleClick();
         window.setTimeout(() => setDoubleTapHeart(false), 600);
       } else {
+
         // Clique simples = play/pause, com debounce para evitar duplo disparo
         if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
         tapTimerRef.current = window.setTimeout(() => {

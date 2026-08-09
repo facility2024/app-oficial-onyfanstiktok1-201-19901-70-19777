@@ -146,15 +146,19 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.style.backfaceVisibility = 'hidden';
     }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted]);
 
-    // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
+    // Pausar outros vídeos e áudios quando este for reproduzido
     const pauseOtherVideos = useCallback(() => {
       const allVideos = document.querySelectorAll('video');
+      const allAudios = document.querySelectorAll('audio');
       const currentVideo = internalRef && typeof internalRef === 'object' ? internalRef.current : null;
 
       allVideos.forEach(video => {
         if (video !== currentVideo && !video.paused) {
           try { video.pause(); } catch {}
         }
+      });
+      allAudios.forEach(audio => {
+        try { audio.pause(); } catch {}
       });
     }, [internalRef]);
 
@@ -400,7 +404,6 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const handleCanPlay = useCallback(() => {
       setIsBuffering(false);
-      setHasError(false);
     }, []);
 
     const handleLoadStart = useCallback(() => {

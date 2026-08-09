@@ -246,11 +246,14 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         const videoEl = ref.current;
 
         if (isPlaying) {
-          // Pausa apenas outros vídeos (sem resetar currentTime — evita flicker)
+          // Pausa outros vídeos E áudios (sem resetar currentTime — evita flicker)
           document.querySelectorAll('video').forEach((v) => {
             if (v !== videoEl && !v.paused) {
               try { v.pause(); } catch {}
             }
+          });
+          document.querySelectorAll('audio').forEach((a) => {
+            try { a.pause(); } catch {}
           });
           videoEl.play().catch(() => {});
         } else {

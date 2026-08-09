@@ -61,6 +61,17 @@ export const useVideosRealtimeSync = (
       .channel('videos-realtime-sync')
       .on(
         'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'videos' },
+        (payload) => {
+          const row: any = payload.new;
+          if (!row?.id || row.is_active === false) return;
+          // Apenas avisa (toast) — NÃO altera o feed nem recarrega vídeos.
+          window.dispatchEvent(new CustomEvent('coconudi:new-videos'));
+        }
+      )
+      .on(
+
+        'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'videos' },
         (payload) => {
           const row: any = payload.new;

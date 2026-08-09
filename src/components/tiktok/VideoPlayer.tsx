@@ -1,3 +1,4 @@
+import { audioSessionManager } from '@/services/AudioSessionManager';
 import { forwardRef, useEffect, useState, useRef, memo, useCallback, useMemo } from 'react';
 import { Crown, Eye } from 'lucide-react';
 import { DEFAULT_AVATAR } from '@/constants/defaultAvatar';

@@ -3352,14 +3352,23 @@ export const TikTokApp = () => {
         console.log('✅ Vídeo do criador encontrado');
         const video = videoData[0];
         const profile = creatorProfile as any;
+        const creatorVideoUrl = (() => {
+          const u = (video.video_url || '').trim();
+          if (!u) return '';
+          if (!/^https?:\/\//i.test(u) && /^[\w.-]+\.[\w.-]+/.test(u)) return `https://${u}`;
+          return u;
+        })();
+
+        // Se a URL do vídeo for inválida, mostrar erro
+        if (!creatorVideoUrl || !/^https?:\/\//i.test(creatorVideoUrl)) {
+          console.log('⚠️ URL do vídeo do criador inválida');
+          toast({ title: 'Este criador ainda não publicou vídeos', variant: 'destructive' });
+          return;
+        }
+
         const enrichedVideo = {
           ...video,
-          video_url: (() => {
-            const u = (video.video_url || '').trim();
-            if (!u) return '';
-            if (!/^https?:\/\//i.test(u) && /^[\w.-]+\.[\w.-]+/.test(u)) return `https://${u}`;
-            return u;
-          })(),
+          video_url: creatorVideoUrl,
           title: video.title || `Vídeo ${video.id.slice(0, 8)}`,
           description: video.description || '',
           user_id: modelId,
@@ -3428,9 +3437,26 @@ export const TikTokApp = () => {
             }
             return raw;
           };
+          const postUrl = normalizeUrl(post.conteudo_url || '');
+          if (!postUrl || !/^https?:\/\//i.test(postUrl)) {
+            console.log('⚠️ URL do post agendado inválida, abrindo perfil');
+            setProfileUserSnapshot({
+              id: modelData.id,
+              username: modelData.username,
+              avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
+              followers_count: modelData.followers_count || 0,
+              following_count: 0,
+              is_online: modelData.is_live || false,
+              created_at: modelData.created_at || new Date().toISOString(),
+              bio: modelData.bio || '',
+              posting_panel_url: modelData.posting_panel_url || undefined,
+            });
+            setShowProfile(true);
+            return;
+          }
           const enrichedVideo = {
             id: `scheduled-${post.id}`,
-            video_url: normalizeUrl(post.conteudo_url || ''),
+            video_url: postUrl,
             title: post.titulo || 'Post Agendado',
             description: post.descricao || '',
             user_id: modelId,
@@ -3478,9 +3504,26 @@ export const TikTokApp = () => {
             }
             return raw;
           };
+          const postUrl = normalizeUrl(post.conteudo_url || '');
+          if (!postUrl || !/^https?:\/\//i.test(postUrl)) {
+            console.log('⚠️ URL do post principal inválida, abrindo perfil');
+            setProfileUserSnapshot({
+              id: modelData.id,
+              username: modelData.username,
+              avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
+              followers_count: modelData.followers_count || 0,
+              following_count: 0,
+              is_online: modelData.is_live || false,
+              created_at: modelData.created_at || new Date().toISOString(),
+              bio: modelData.bio || '',
+              posting_panel_url: modelData.posting_panel_url || undefined,
+            });
+            setShowProfile(true);
+            return;
+          }
           const enrichedVideo = {
             id: `main-${post.id}`,
-            video_url: normalizeUrl(post.conteudo_url || ''),
+            video_url: postUrl,
             title: post.titulo || 'Post Principal',
             description: post.descricao || '',
             user_id: modelId,
@@ -3532,14 +3575,34 @@ export const TikTokApp = () => {
       // Transformar o primeiro vídeo encontrado da tabela videos
       console.log('✅ Vídeo encontrado na tabela videos');
       const video = videoData[0];
+      const normalizedUrl = (() => {
+        const u = (video.video_url || '').trim();
+        if (!u) return '';
+        if (!/^https?:\/\//i.test(u) && /^[\w.-]+\.[\w.-]+/.test(u)) return `https://${u}`;
+        return u;
+      })();
+
+      // Se a URL do vídeo for inválida ou vazia, abrir perfil diretamente
+      if (!normalizedUrl || !/^https?:\/\//i.test(normalizedUrl)) {
+        console.log('⚠️ URL do vídeo inválida, abrindo perfil da modelo');
+        setProfileUserSnapshot({
+          id: modelData.id,
+          username: modelData.username,
+          avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
+          followers_count: modelData.followers_count || 0,
+          following_count: 0,
+          is_online: modelData.is_live || false,
+          created_at: modelData.created_at || new Date().toISOString(),
+          bio: modelData.bio || '',
+          posting_panel_url: modelData.posting_panel_url || undefined,
+        });
+        setShowProfile(true);
+        return;
+      }
+
       const enrichedVideo = {
         ...video,
-        video_url: (() => {
-          const u = (video.video_url || '').trim();
-          if (!u) return '';
-          if (!/^https?:\/\//i.test(u) && /^[\w.-]+\.[\w.-]+/.test(u)) return `https://${u}`;
-          return u;
-        })(),
+        video_url: normalizedUrl,
         title: video.title || `Vídeo ${video.id.slice(0, 8)}`,
         description: video.description || '',
         user_id: modelId,

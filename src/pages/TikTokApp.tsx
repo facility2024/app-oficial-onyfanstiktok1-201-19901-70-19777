@@ -13,6 +13,7 @@ import { ChatScreen } from '@/components/tiktok/ChatScreen';
 import { BonusGift } from '@/components/tiktok/BonusGift';
 import { VinylRecord } from '@/components/tiktok/VinylRecord';
 import { ActionTracker, useActionTracker } from '@/components/tiktok/ActionTracker';
+import { NewVideosNotification } from '@/components/tiktok/NewVideosNotification';
 import { useAppAnalytics } from '@/hooks/useAppAnalytics';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -407,6 +408,8 @@ export const TikTokApp = () => {
   const [modelOrder, setModelOrder] = useState<string[]>([]);
   const [cycleSize, setCycleSize] = useState(0);
   const [pendingRefresh, setPendingRefresh] = useState(false);
+  const [showNewVideosNotification, setShowNewVideosNotification] = useState(false);
+  const newVideosShownRef = useRef(false);
   const scheduledSessionSelectionRef = useRef<Record<string, string>>({});
   const mainSessionSelectionRef = useRef<Record<string, string>>({});
   const SCHEDULED_QUEUE_KEY_PREFIX = 'sched_queue_';
@@ -723,6 +726,24 @@ export const TikTokApp = () => {
     if (currentVideoIndex < displayVideos.length) return;
     setCurrentVideoIndex(displayVideos.length - 1);
   }, [currentVideoIndex, displayVideos.length]);
+
+  // 🆕 Detectar vídeos novos e mostrar notificação (uma vez por sessão)
+  const prevVideoIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (displayVideos.length === 0 || newVideosShownRef.current) return;
+    const currentIds = new Set(displayVideos.map(v => v.id));
+    const prevIds = prevVideoIdsRef.current;
+    if (prevIds.size > 0) {
+      const hasNew = displayVideos.some(v =>
+        !prevIds.has(v.id) && (v.isHighlighted || v.isNewModel || (v as any).source === 'scheduled_post' || (v as any).source === 'main_post')
+      );
+      if (hasNew) {
+        setShowNewVideosNotification(true);
+        newVideosShownRef.current = true;
+      }
+    }
+    prevVideoIdsRef.current = currentIds;
+  }, [displayVideos]);
 
   const defaultUser: any = { id: 'unknown', username: 'Usuário', avatar_url: DEFAULT_AVATAR, followers_count: 0, following_count: 0, is_online: false, created_at: new Date().toISOString(), posting_panel_url: '' };
   const rawCurrentVideo = displayVideos.length > 0 ? displayVideos[currentVideoIndex] : null;
@@ -4589,5 +4610,10 @@ export const TikTokApp = () => {
           </div>
         </div>
       )}
+      <NewVideosNotification
+        show={showNewVideosNotification}
+        onDismiss={() => setShowNewVideosNotification(false)}
+        duration={3000}
+      />
     </div>;
 };

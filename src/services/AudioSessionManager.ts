@@ -229,7 +229,22 @@ class AudioSessionManagerImpl {
     void this.resumeContext();
     if (this.unlocked) return;
     this.unlocked = true;
+    this.unlockedAt = Date.now();
     log('User Interaction Detected — audio unlocked');
+    // iOS: aplicar unmute + play SÍNCRONO dentro do gesto (não em efeito React),
+    // caso contrário o Safari mantém o vídeo mudo/pausado.
+    this.media.forEach((el) => {
+      try {
+        if (el.dataset.audioShouldPlay !== 'true') return;
+        el.muted = this.muted;
+        if (!this.muted) el.removeAttribute('muted');
+        el.volume = this.volume;
+        const p = el.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      } catch {
+        /* noop */
+      }
+    });
     this.setState(this.state === AudioState.BLOCKED ? AudioState.READY : this.state);
     this.emit();
     this.unlockListeners.forEach((fn) => {
@@ -242,6 +257,7 @@ class AudioSessionManagerImpl {
     this.unlockListeners.clear();
     this.syncMedia();
   };
+
 
   // ---------- players ----------
 

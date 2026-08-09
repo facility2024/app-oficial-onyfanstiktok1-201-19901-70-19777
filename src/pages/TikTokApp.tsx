@@ -3414,7 +3414,65 @@ export const TikTokApp = () => {
         return;
       }
 
+      // 🎯 Buscar promo associada ao model_id (fonte primária — URL já funciona no feed)
+      console.log('🔍 Buscando promo associada ao model_id:', modelId);
+      const { data: promoData } = await (supabase as any)
+        .from('feed_promotions')
+        .select('*')
+        .eq('model_id', modelId)
+        .eq('is_active', true)
+        .order('priority', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (promoData && (promoData as any).media_url) {
+        const promo = promoData as any;
+        const promoUrl = ((promo.media_url || '').trim());
+        if (promoUrl && /^https?:\/\//i.test(promoUrl)) {
+          console.log('✅ Promo encontrada para modelo, usando media_url:', promoUrl);
+          const enrichedPromo = {
+            id: `promo-${promo.id}-search`,
+            title: promo.title || promo.display_name || modelData.username,
+            description: promo.description || '',
+            video_url: promoUrl,
+            thumbnail_url: promo.banner_url || '',
+            user_id: `promo-${promo.id}`,
+            model_id: modelId,
+            creator_id: modelId,
+            likes_count: promo.base_likes || 0,
+            comments_count: 0,
+            shares_count: 0,
+            views_count: (promo.views_count || 0) + (promo.base_views || 0),
+            music_name: `${promo.display_name || modelData.username} • Patrocinado`,
+            is_active: true,
+            visibility: 'public' as const,
+            created_at: promo.updated_at || promo.created_at || new Date().toISOString(),
+            user: {
+              id: modelData.id,
+              username: modelData.username,
+              avatar_url: modelData.avatar_url || DEFAULT_AVATAR,
+              followers_count: modelData.followers_count || 0,
+              following_count: 0,
+              is_online: modelData.is_live || false,
+              created_at: modelData.created_at || new Date().toISOString(),
+              bio: modelData.bio || '',
+              posting_panel_url: modelData.posting_panel_url || undefined,
+            },
+            _promoCtaText: promo.cta_text || null,
+            _promoCtaLink: promo.cta_link || null,
+            _promoCtaMode: promo.cta_mode || 'link',
+          } as any;
+          const newVideos = [enrichedPromo, ...videos];
+          setVideos(newVideos as Video[]);
+          setCurrentVideoIndex(0);
+          setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+          console.log('✅ Promo da modelo carregada direto no feed');
+          return;
+        }
+      }
+
       // Buscar vídeo na tabela videos
+      console.log('🔍 Buscando vídeo na tabela videos para model_id:', modelId);
       const {
         data: videoData,
         error: videoError

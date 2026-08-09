@@ -355,6 +355,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
     const handleLoadedData = useCallback(() => {
       setIsBuffering(false);
       setIsReady(true);
+      setHasError(false);
       if (onLoadedData) onLoadedData();
     }, [onLoadedData]);
 
@@ -399,6 +400,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
 
     const handleCanPlay = useCallback(() => {
       setIsBuffering(false);
+      setHasError(false);
     }, []);
 
     const handleLoadStart = useCallback(() => {

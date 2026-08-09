@@ -59,6 +59,7 @@ import AdsGarotasTopModal from '@/components/tiktok/AdsGarotasTopModal';
 import AdsLatinasModal from '@/components/tiktok/AdsLatinasModal';
 
 import { useAdServer } from '@/hooks/useAdServer';
+import { NewVideosToast } from '@/components/tiktok/NewVideosToast';
 import coconudiWatermark from '@/assets/coconudi-c-watermark.png';
 interface Video {
   id: string;

@@ -129,10 +129,10 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       video.loop = true;
       video.controls = false;
       
-      // Buffering agressivo para carregamento rápido
-      if ('buffered' in video) {
-        video.preload = 'auto';
-      }
+      // Preload: agressivo só no vídeo ativo. No iOS, precarregar tudo satura a
+      // rede/decoder e deixa o carregamento lento.
+      video.preload = (isPlaying || autoPlayOnReady) ? 'auto' : (isIOS ? 'none' : 'metadata');
+
       
       // Configurações específicas para iOS
       if (isIOS) {
@@ -144,7 +144,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Hardware acceleration
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
-    }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted]);
+    }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted, isPlaying, autoPlayOnReady]);
 
     // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {

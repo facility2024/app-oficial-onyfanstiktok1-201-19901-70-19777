@@ -397,52 +397,36 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           </div>
         )}
 
-        {/* Visualizações — sempre visível em todos os vídeos */}
+        {/* Topo: elementos alinhados lado a lado (visualizações + selo/título) */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${showExternalOverlays ? 46 : 12}px)` }}
+          className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none flex max-w-[92%] flex-nowrap items-center justify-center gap-2 px-3"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
         >
-          <span className="flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-bold shadow-lg">
+          <span className="shrink-0 flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-bold shadow-lg">
             <Eye className="w-3.5 h-3.5 text-cyan-300" />
             {formatViews(totalViews)} visualizações
           </span>
+
+          {showExternalOverlays && !!videoTitle && isExternallyManaged && (
+            <span className="max-w-[45vw] truncate whitespace-nowrap px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+              {videoTitle}
+            </span>
+          )}
+          {showExternalOverlays && !isExternallyManaged && (
+            <span className="shrink-0 whitespace-nowrap px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
+              Patrocinado
+            </span>
+          )}
         </div>
 
-
-        {/* Overlays exclusivos para vídeos do painel externo (Instagram Ingest) — instância ÚNICA */}
-        {showExternalOverlays && (
-          <>
-            <div
-              className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none flex max-w-[92%] flex-nowrap items-center justify-center gap-2"
-              style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
-            >
-
-              <span className="shrink-0 whitespace-nowrap px-3 py-1 rounded-full bg-pink-500 text-white text-xs font-bold shadow-lg">
-                Vídeos Novos
-              </span>
-              {!!videoTitle && isExternallyManaged && (
-                <span className="max-w-[45vw] truncate whitespace-nowrap px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
-                  {videoTitle}
-                </span>
-              )}
-              {!isExternallyManaged && (
-                <span className="shrink-0 whitespace-nowrap px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold">
-                  Patrocinado
-                </span>
-              )}
-            </div>
-
-
-
-            {!!videoTitle && !isExternallyManaged && (
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
-                <p className="text-white text-sm font-semibold text-center line-clamp-2">
-                  {videoTitle}
-                </p>
-              </div>
-            )}
-          </>
+        {showExternalOverlays && !!videoTitle && !isExternallyManaged && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[90%] px-3 py-1 rounded-md bg-black/60 pointer-events-none">
+            <p className="text-white text-sm font-semibold text-center line-clamp-2">
+              {videoTitle}
+            </p>
+          </div>
         )}
+
 
 
 

@@ -144,7 +144,7 @@ export const UniversalVideoPlayer = forwardRef<HTMLVideoElement, UniversalVideoP
       // Hardware acceleration
       video.style.transform = 'translateZ(0)';
       video.style.backfaceVisibility = 'hidden';
-    }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted]);
+    }, [internalRef, isIOS, isAndroid, isMobile, playbackSrc, isMuted, userStarted, isPlaying, autoPlayOnReady]);
 
     // Pausar outros vídeos quando este for reproduzido (sem resetar currentTime — evita flicker)
     const pauseOtherVideos = useCallback(() => {

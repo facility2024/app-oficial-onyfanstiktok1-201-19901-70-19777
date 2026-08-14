@@ -3268,16 +3268,64 @@ export const TikTokApp = () => {
   }, [emblaApi, currentVideoIndex]);
   // 🔎 Ir direto para um vídeo específico (busca por nome/ID)
   const goToVideoById = async (videoId: string, ownerId?: string | null) => {
-    const idx = displayVideos.findIndex(
-      (v: any) => v.id === videoId || v._originalId === videoId || String(v.id).startsWith(videoId)
-    );
+    const normalize = (val: any) => String(val || '').replace(/-block-\d+-\d+$/, '');
+    const findIdx = (list: any[]) =>
+      list.findIndex(
+        (v: any) => normalize(v.id) === videoId || normalize(v._originalId) === videoId
+      );
+
+    const idx = findIdx(displayVideos);
     if (idx !== -1) {
       setShowProfile(false);
       setCurrentVideoIndex(idx);
       emblaApi?.scrollTo(idx, true);
       return;
     }
-    // Não está no feed carregado: abre pelo perfil dono do vídeo
+
+    // Não está no feed carregado: buscar o vídeo no banco e injetá-lo no topo
+    try {
+      const { data: row } = await (supabase as any)
+        .from('videos')
+        .select('*')
+        .eq('id', videoId)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (row) {
+        const ownerKey = row.creator_id || row.model_id;
+        const existing = videos.find(
+          (v: any) => v.user?.id === ownerKey || v.model_id === ownerKey || v.creator_id === ownerKey
+        );
+
+        const injected = {
+          ...row,
+          _originalId: row.id,
+          user: existing?.user || {
+            id: ownerKey,
+            username: row.title || 'Perfil',
+            avatar_url: existing?.user?.avatar_url || '/default-avatar.svg',
+            followers_count: 0,
+            following_count: 0,
+            is_online: false,
+            created_at: row.created_at,
+          },
+        };
+
+        setVideos((prev: any[]) => {
+          const rest = prev.filter((v: any) => normalize(v.id) !== videoId && normalize(v._originalId) !== videoId);
+          return [injected, ...rest];
+        });
+
+        setShowProfile(false);
+        setCurrentVideoIndex(0);
+        setTimeout(() => emblaApi?.scrollTo(0, true), 60);
+        return;
+      }
+    } catch (e) {
+      console.warn('goToVideoById: falha ao buscar vídeo', e);
+    }
+
+    // Fallback: abre pelo perfil dono do vídeo
     if (ownerId) {
       await goToModelVideo(ownerId);
       setShowProfile(false);
@@ -3285,6 +3333,7 @@ export const TikTokApp = () => {
     }
     toast({ title: 'Vídeo não encontrado no feed atual', variant: 'destructive' });
   };
+
 
   const goToModelVideo = async (modelId: string) => {
     console.log('🔍 Buscando vídeo do perfil:', modelId);

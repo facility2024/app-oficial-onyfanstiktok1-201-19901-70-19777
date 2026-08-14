@@ -120,8 +120,8 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
         .from('models')
         .select('*')
         .eq('is_active', true)
-            .is('deleted_at', null)
         .order('created_at', { ascending: false });
+
 
       if (modelsError) throw modelsError;
 

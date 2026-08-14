@@ -283,6 +283,11 @@ Deno.serve(async (req) => {
       }
     } catch (_) { /* não bloqueia ingest se falhar */ }
 
+    const debug_received = {
+      body_keys: Object.keys(body || {}),
+      first_carousel_keys: Array.isArray(body.carousels) && body.carousels[0] ? Object.keys(body.carousels[0]) : null,
+      first_video_keys: Array.isArray(body.videos) && body.videos[0] ? Object.keys(body.videos[0]) : null,
+    }
     const result = { creator_id: modelId, username, inserted, skipped, carousels_inserted, total_received: incoming.length, creator_account }
 
     // Log to api_events for admin visibility
@@ -291,8 +296,9 @@ Deno.serve(async (req) => {
       resource_type: 'model',
       resource_id: modelId,
       action: 'ingest',
-      payload: result,
+      payload: { ...result, debug_received },
     })
+
 
 
     return new Response(JSON.stringify(result), {

@@ -38,10 +38,27 @@ export const MediaCarouselPlayer = ({
 
   const safeImages = images.filter(Boolean);
   const safeButtons = (buttons || []).filter((b) => b && b.label && b.url);
+  const imagesKey = safeImages.join('|');
 
   useEffect(() => {
     setIndex(0);
-  }, [safeImages.join('|')]);
+  }, [imagesKey]);
+
+  // Pré-carrega a imagem atual e as vizinhas (mobile: evita tela preta ao deslizar)
+  useEffect(() => {
+    if (safeImages.length === 0) return;
+    const total = safeImages.length;
+    const targets = [index, (index + 1) % total, (index - 1 + total) % total];
+    const seen = new Set<string>();
+    targets.forEach((i) => {
+      const src = safeImages[i];
+      if (!src || seen.has(src)) return;
+      seen.add(src);
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+    });
+  }, [index, imagesKey]);
 
   useEffect(() => {
     const audio = audioRef.current;

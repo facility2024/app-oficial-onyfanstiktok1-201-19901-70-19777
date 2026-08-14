@@ -85,14 +85,28 @@ export const AdminContentTable = () => {
         }
       }
 
-      // 4️⃣ Buscar vídeos da tabela videos
-      const { data: videosData } = await supabase
-        .from('videos')
-        .select('*');
+      // 4️⃣ Buscar vídeos da tabela videos (paginado: evita limite de 1000 linhas)
+      const videosData: any[] = [];
+      for (let from = 0; from < 20000; from += 1000) {
+        const { data: page } = await supabase
+          .from('videos')
+          .select('id, model_id, creator_id, views_count, likes_count, base_views, base_likes, visibility, created_at, deleted_at')
+          .range(from, from + 999);
+        if (!page || page.length === 0) break;
+        videosData.push(...page);
+        if (page.length < 1000) break;
+      }
+
+
+      // Helpers: soma views/curtidas reais + bases do painel de Engajamento
+      const sumViews = (list: any[]) =>
+        list.reduce((acc, v: any) => acc + (Number(v.views_count) || 0) + (Number(v.base_views) || 0), 0);
+      const sumLikes = (list: any[]) =>
+        list.reduce((acc, v: any) => acc + (Number(v.likes_count) || 0) + (Number(v.base_likes) || 0), 0);
 
       // 5️⃣ Processar modelos existentes
       const modelContents = modelsData?.map(model => {
-        const modelVideos = (videosData?.filter((v: any) => v.model_id === model.id) || [])
+        const modelVideos = (videosData?.filter((v: any) => v.model_id === model.id && !v.deleted_at) || [])
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const latestVideo = modelVideos[0];
         
@@ -104,8 +118,8 @@ export const AdminContentTable = () => {
           email: null,
           avatar: model.avatar_url || DEFAULT_AVATAR || crownLogo,
           platform: model.is_verified || (model.followers_count || 0) > 10000 ? 'premium' : 'standard',
-          views: formatNumber(latestVideo?.views_count || 0),
-          likes: formatNumber(model.likes_count || latestVideo?.likes_count || 0),
+          views: formatNumber(sumViews(modelVideos)),
+          likes: formatNumber(sumLikes(modelVideos) || Number(model.likes_count) || 0),
           schedule: new Date(model.created_at).toLocaleDateString('pt-BR'),
           status: model.is_active ? 'active' : 'inactive',
           videosCount: modelVideos.length,
@@ -117,7 +131,9 @@ export const AdminContentTable = () => {
       // 6️⃣ Processar criadores cadastrados
       const creatorContents = creatorsData?.map((creator: any) => {
         const profile = creator.profile;
-        const creatorVideos = (videosData?.filter((v: any) => v.model_id === creator.user_id) || [])
+        const creatorVideos = (videosData?.filter(
+          (v: any) => (v.creator_id === creator.user_id || v.model_id === creator.user_id) && !v.deleted_at
+        ) || [])
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const latestVideo = creatorVideos[0];
         
@@ -129,8 +145,8 @@ export const AdminContentTable = () => {
           email: profile?.email,
           avatar: profile?.avatar_url || DEFAULT_AVATAR || crownLogo,
           platform: 'creator',
-          views: formatNumber(latestVideo?.views_count || 0),
-          likes: formatNumber(latestVideo?.likes_count || 0),
+          views: formatNumber(sumViews(creatorVideos)),
+          likes: formatNumber(sumLikes(creatorVideos)),
           schedule: new Date(creator.created_at).toLocaleDateString('pt-BR'),
           status: 'active',
           videosCount: creatorVideos.length,
@@ -138,6 +154,7 @@ export const AdminContentTable = () => {
           isCreator: true
         };
       }) || [];
+
 
       // 7️⃣ Combinar criadores e modelos (criadores primeiro para destaque)
       const combinedContents = [...creatorContents, ...modelContents];

@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
       }
     } catch (_) { /* não bloqueia ingest se falhar */ }
 
-    const result = { creator_id: modelId, username, inserted, skipped, total_received: incoming.length, creator_account }
+    const result = { creator_id: modelId, username, inserted, skipped, carousels_inserted, total_received: incoming.length, creator_account }
 
     // Log to api_events for admin visibility
     await supabase.from('api_events').insert({

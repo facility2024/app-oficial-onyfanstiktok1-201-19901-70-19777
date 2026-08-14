@@ -1,0 +1,1 @@
+DELETE FROM public.api_keys WHERE name = 'test_carousel'; DELETE FROM public.posts_agendados WHERE modelo_username = 'stephfernandz' AND created_at >= '2026-08-14 22:14:00Z';

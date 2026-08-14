@@ -8406,6 +8406,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_carousel_queue: {
+        Row: {
+          carousel_key: string
+          consumed_at: string | null
+          created_at: string
+          id: string
+          position: number
+          shown_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carousel_key: string
+          consumed_at?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          shown_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carousel_key?: string
+          consumed_at?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          shown_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_entitlements: {
         Row: {
           created_at: string

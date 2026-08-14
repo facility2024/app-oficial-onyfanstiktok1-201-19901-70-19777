@@ -51,6 +51,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
           .from('videos')
           .select('id, title, description, thumbnail_url, model_id, creator_id')
           .eq('is_active', true)
+            .is('deleted_at', null)
           .limit(20);
 
         query = isUuid
@@ -66,6 +67,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
             .from('videos')
             .select('id, title, description, thumbnail_url, model_id, creator_id')
             .eq('is_active', true)
+            .is('deleted_at', null)
             .limit(1000);
           rows = (allIds || []).filter((v: any) => String(v.id).toLowerCase().includes(q.toLowerCase()));
         }
@@ -120,6 +122,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
+
       if (modelsError) throw modelsError;
 
       // 🧹 Buscar IDs de modelos que TÊM vídeo ativo (paginado — evita limite de 1000)
@@ -131,6 +134,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
             .from('videos')
             .select(column)
             .eq('is_active', true)
+            .is('deleted_at', null)
             .not(column, 'is', null)
             .range(offset, offset + PAGE - 1);
           if (error) break;

@@ -9312,6 +9312,7 @@ export type Database = {
           comments_count: number | null
           created_at: string | null
           creator_id: string | null
+          deleted_at: string | null
           description: string | null
           display_order: number
           duration: string
@@ -9355,6 +9356,7 @@ export type Database = {
           comments_count?: number | null
           created_at?: string | null
           creator_id?: string | null
+          deleted_at?: string | null
           description?: string | null
           display_order?: number
           duration: string
@@ -9398,6 +9400,7 @@ export type Database = {
           comments_count?: number | null
           created_at?: string | null
           creator_id?: string | null
+          deleted_at?: string | null
           description?: string | null
           display_order?: number
           duration?: string
@@ -10161,6 +10164,7 @@ export type Database = {
           user_metadata: Json
         }[]
       }
+      delete_video_cascade: { Args: { _video_id: string }; Returns: Json }
       detectar_movimento: {
         Args: { coordenadas: Json; id_usuario: string; velocidade: number }
         Returns: string
@@ -10349,6 +10353,7 @@ export type Database = {
           comments_count: number | null
           created_at: string | null
           creator_id: string | null
+          deleted_at: string | null
           description: string | null
           display_order: number
           duration: string

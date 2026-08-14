@@ -82,7 +82,9 @@ export const useRealTimeStats = () => {
         // Queries adicionais para dados reais de vídeos
         videosLikesResult,
         videosViewsResult,
-        videosCommentsResult
+        videosCommentsResult,
+        baseFollowersResult
+
       ] = await Promise.all([
         // Total de conteúdos (modelos ativos)
         supabase.from('models').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -109,12 +111,15 @@ export const useRealTimeStats = () => {
           .eq('is_online', true)
           .or(`last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
-        supabase.from('videos').select('likes_count'),
+        supabase.from('videos').select('likes_count, base_likes'),
         // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
-        supabase.from('videos').select('views_count'),
+        supabase.from('videos').select('views_count, base_views'),
         // Somar comments_count diretamente dos vídeos
-        supabase.from('videos').select('comments_count')
+        supabase.from('videos').select('comments_count'),
+        // Seguidores base aplicados pelo painel de engajamento
+        supabase.from('models').select('base_followers')
       ]);
+
 
       // Processar dados de usuários online por estado + tipo de dispositivo
       let onlineUsersByState: { [state: string]: number } = {};
@@ -150,15 +155,20 @@ export const useRealTimeStats = () => {
       // Calculate total shares from videos table
       const totalShares = sharesResult.data?.reduce((sum: number, video: any) => sum + (video.shares_count || 0), 0) || 0;
 
+      // Bases aplicadas pelo painel de Engajamento (somam com os reais)
+      const baseLikes = videosLikesResult.data?.reduce((sum: number, v: any) => sum + (v.base_likes || 0), 0) || 0;
+      const baseViews = videosViewsResult.data?.reduce((sum: number, v: any) => sum + (v.base_views || 0), 0) || 0;
+      const baseFollowers = (baseFollowersResult as any)?.data?.reduce((sum: number, m: any) => sum + (m.base_followers || 0), 0) || 0;
+
       // Usar dados da tabela likes OU fallback dos contadores de vídeos
       const likesFromTable = likesResult.count || 0;
       const likesFromVideos = videosLikesResult.data?.reduce((sum: number, v: any) => sum + (v.likes_count || 0), 0) || 0;
-      const finalLikes = Math.max(likesFromTable, likesFromVideos);
+      const finalLikes = Math.max(likesFromTable, likesFromVideos) + baseLikes;
 
       // Views: usar tabela video_views OU fallback dos contadores
       const viewsFromTable = totalViewsResult.count || 0;
       const viewsFromVideos = videosViewsResult.data?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0;
-      const finalTotalViews = Math.max(viewsFromTable, viewsFromVideos);
+      const finalTotalViews = Math.max(viewsFromTable, viewsFromVideos) + baseViews;
 
       // Comments: tabela comments OU fallback
       const commentsFromTable = commentsResult.count || 0;
@@ -174,7 +184,8 @@ export const useRealTimeStats = () => {
         totalComments: finalComments,
         viewsToday: viewsTodayCount,
         totalShares: totalShares,
-        totalFollowers: followersResult.count || 0,
+        totalFollowers: (followersResult.count || 0) + baseFollowers,
+
         activeUsers: totalOnlineUsers || 0,
         onlineUsersByState,
         deviceStatsByState,

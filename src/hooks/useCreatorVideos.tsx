@@ -114,12 +114,20 @@ export const useCreatorVideos = () => {
 
   const deleteVideo = async (videoId: string) => {
     try {
-      const { error } = await supabase
-        .from('videos')
-        .delete()
-        .eq('id', videoId);
+      // Exclusão em cascata (admin): remove o vídeo e todas as referências
+      // (posts agendados/principais espelhados, likes, comentários, views, etc.)
+      const { error: rpcError } = await (supabase as any).rpc('delete_video_cascade', {
+        _video_id: videoId,
+      });
 
-      if (error) throw error;
+      if (rpcError) {
+        // Fallback para criadores (sem permissão de admin na RPC)
+        const { error } = await supabase
+          .from('videos')
+          .delete()
+          .eq('id', videoId);
+        if (error) throw error;
+      }
 
       toast.success('Vídeo deletado permanentemente!');
       fetchVideos();
@@ -130,6 +138,7 @@ export const useCreatorVideos = () => {
       return false;
     }
   };
+
 
   const changeVisibility = async (videoId: string, newVisibility: 'public' | 'private') => {
     try {

@@ -150,22 +150,26 @@ export const AdminStats = () => {
   useEffect(() => {
     const fetchUserStats = async () => {
       try {
-        // Total de usuários de gamificação
-        const { data: gamificationUsers, error: gamificationError } = await supabase
-          .from('gamification_users')
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        // Cadastros reais (profiles = usuários autenticados)
+        const { count: totalProfiles, error: profilesError } = await supabase
+          .from('profiles')
           .select('id', { count: 'exact', head: true });
 
-        // Novos usuários hoje
-        const { data: newGamificationToday, error: newGamificationError } = await supabase
-          .from('gamification_users')
+        const { count: newProfilesToday, error: newProfilesError } = await supabase
+          .from('profiles')
           .select('id', { count: 'exact', head: true })
-          .gte('created_at', new Date().toISOString().split('T')[0]);
+          .gte('created_at', startOfDay.toISOString());
 
-        if (!gamificationError && !newGamificationError) {
-          const totalUsers = gamificationUsers?.length || 0;
-          const newToday = newGamificationToday?.length || 0;
-          
-          setUserStats({ totalUsers, newToday });
+        if (!profilesError && !newProfilesError) {
+          setUserStats({
+            totalUsers: totalProfiles || 0,
+            newToday: newProfilesToday || 0
+          });
+        } else {
+          console.error('Erro ao buscar usuários:', profilesError || newProfilesError);
         }
       } catch (error) {
         console.error('Erro ao buscar estatísticas de usuários:', error);
@@ -199,19 +203,19 @@ export const AdminStats = () => {
         if (creatorIds.length > 0) {
           const { data: creatorsVideos, error: videosError } = await supabase
             .from('videos')
-            .select('id, likes_count, views_count, shares_count')
-            .in('model_id', creatorIds);
+            .select('id, likes_count, views_count, shares_count, base_likes, base_views')
+            .in('creator_id', creatorIds);
 
           if (videosError) {
             console.error('Erro ao buscar vídeos de criadores:', videosError);
             return;
           }
 
-          // Calcular estatísticas
+          // Calcular estatísticas (reais + bases aplicadas no painel de Engajamento)
           const totalCreators = creatorsData?.length || 0;
           const totalCreatorVideos = creatorsVideos?.length || 0;
-          const totalCreatorViews = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0;
-          const totalCreatorLikes = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.likes_count || 0), 0) || 0;
+          const totalCreatorViews = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.views_count || 0) + (v.base_views || 0), 0) || 0;
+          const totalCreatorLikes = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.likes_count || 0) + (v.base_likes || 0), 0) || 0;
           const avgEngagement = totalCreatorVideos > 0 
             ? Math.round((totalCreatorLikes + totalCreatorViews) / totalCreatorVideos)
             : 0;

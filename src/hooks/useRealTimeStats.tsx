@@ -83,7 +83,8 @@ export const useRealTimeStats = () => {
         videosLikesResult,
         videosViewsResult,
         videosCommentsResult,
-        baseFollowersResult
+        baseFollowersResult,
+        creatorFollowersResult
 
       ] = await Promise.all([
         // Total de conteúdos (modelos ativos)
@@ -111,13 +112,15 @@ export const useRealTimeStats = () => {
           .eq('is_online', true)
           .or(`last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
-        supabase.from('videos').select('likes_count, base_likes'),
+        supabase.from('videos').select('likes_count, base_likes, updated_at'),
         // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
-        supabase.from('videos').select('views_count, base_views'),
+        supabase.from('videos').select('views_count, base_views, updated_at'),
         // Somar comments_count diretamente dos vídeos
         supabase.from('videos').select('comments_count'),
         // Seguidores base aplicados pelo painel de engajamento
-        supabase.from('models').select('base_followers')
+        supabase.from('models').select('base_followers'),
+        // Seguidores de criadores
+        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('is_active', true)
       ]);
 
 
@@ -175,8 +178,12 @@ export const useRealTimeStats = () => {
       const commentsFromVideos = videosCommentsResult.data?.reduce((sum: number, v: any) => sum + (v.comments_count || 0), 0) || 0;
       const finalComments = Math.max(commentsFromTable, commentsFromVideos);
 
-      // Views hoje: usar tabela ou fallback 
-      const viewsTodayCount = viewsTodayResult.count || 0;
+      // Views hoje: reais + bases aplicadas hoje pelo painel de Engajamento
+      const baseViewsToday = videosViewsResult.data?.reduce((sum: number, v: any) => {
+        const applied = v.updated_at ? new Date(v.updated_at) : null;
+        return applied && applied >= startOfDay ? sum + (v.base_views || 0) : sum;
+      }, 0) || 0;
+      const viewsTodayCount = (viewsTodayResult.count || 0) + baseViewsToday;
 
       const newStats: RealTimeStats = {
         totalContent: contentResult.count || 0,
@@ -184,7 +191,7 @@ export const useRealTimeStats = () => {
         totalComments: finalComments,
         viewsToday: viewsTodayCount,
         totalShares: totalShares,
-        totalFollowers: (followersResult.count || 0) + baseFollowers,
+        totalFollowers: (followersResult.count || 0) + ((creatorFollowersResult as any)?.count || 0) + baseFollowers,
 
         activeUsers: totalOnlineUsers || 0,
         onlineUsersByState,

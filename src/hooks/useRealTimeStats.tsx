@@ -82,7 +82,9 @@ export const useRealTimeStats = () => {
         // Queries adicionais para dados reais de vídeos
         videosLikesResult,
         videosViewsResult,
-        videosCommentsResult
+        videosCommentsResult,
+        baseFollowersResult
+
       ] = await Promise.all([
         // Total de conteúdos (modelos ativos)
         supabase.from('models').select('*', { count: 'exact', head: true }).eq('is_active', true),

@@ -51,8 +51,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    supabase.from('api_keys').update({ last_used_at: new Date().toISOString() })
-      .eq('id', keyRow.id).then(() => {})
+    supabase.rpc('bump_api_key_usage', { _key_id: keyRow.id }).then(() => {})
 
     const body = await req.json().catch(() => null) as any
     if (!body || !body.creator || !Array.isArray(body.videos)) {

@@ -44,11 +44,7 @@ Deno.serve(async (req) => {
     }
 
     // Bump usage counter (fire and forget)
-    supabase.from('api_keys').update({
-      last_used_at: new Date().toISOString(),
-      usage_count: (undefined as any),
-    }).eq('id', keyRow.id).then(() => {})
-    supabase.rpc as any // noop
+    supabase.rpc('bump_api_key_usage', { _key_id: keyRow.id }).then(() => {})
 
     // Simple path routing: /api-events, /api-events/types
     const path = url.pathname.replace(/^\/api-events/, '') || '/'

@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
 
     if (!keyRow) return json({ error: 'invalid api key' }, 401)
 
+    supabase.rpc('bump_api_key_usage', { _key_id: keyRow.id }).then(() => {})
+
     const body = await req.json().catch(() => ({}))
     const videoId: string | undefined = body?.video_id || body?.videoId
     if (!videoId || !/^[0-9a-f-]{36}$/i.test(videoId)) {

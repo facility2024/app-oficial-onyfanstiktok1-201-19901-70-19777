@@ -191,7 +191,7 @@ export const useRealTimeStats = () => {
         totalComments: finalComments,
         viewsToday: viewsTodayCount,
         totalShares: totalShares,
-        totalFollowers: (followersResult.count || 0) + baseFollowers,
+        totalFollowers: (followersResult.count || 0) + ((creatorFollowersResult as any)?.count || 0) + baseFollowers,
 
         activeUsers: totalOnlineUsers || 0,
         onlineUsersByState,

@@ -118,7 +118,9 @@ export const useRealTimeStats = () => {
         // Somar comments_count diretamente dos vídeos
         supabase.from('videos').select('comments_count'),
         // Seguidores base aplicados pelo painel de engajamento
-        supabase.from('models').select('base_followers')
+        supabase.from('models').select('base_followers'),
+        // Seguidores de criadores
+        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('is_active', true)
       ]);
 
 

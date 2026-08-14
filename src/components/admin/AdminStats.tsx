@@ -203,19 +203,19 @@ export const AdminStats = () => {
         if (creatorIds.length > 0) {
           const { data: creatorsVideos, error: videosError } = await supabase
             .from('videos')
-            .select('id, likes_count, views_count, shares_count')
-            .in('model_id', creatorIds);
+            .select('id, likes_count, views_count, shares_count, base_likes, base_views')
+            .in('creator_id', creatorIds);
 
           if (videosError) {
             console.error('Erro ao buscar vídeos de criadores:', videosError);
             return;
           }
 
-          // Calcular estatísticas
+          // Calcular estatísticas (reais + bases aplicadas no painel de Engajamento)
           const totalCreators = creatorsData?.length || 0;
           const totalCreatorVideos = creatorsVideos?.length || 0;
-          const totalCreatorViews = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0;
-          const totalCreatorLikes = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.likes_count || 0), 0) || 0;
+          const totalCreatorViews = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.views_count || 0) + (v.base_views || 0), 0) || 0;
+          const totalCreatorLikes = creatorsVideos?.reduce((sum: number, v: any) => sum + (v.likes_count || 0) + (v.base_likes || 0), 0) || 0;
           const avgEngagement = totalCreatorVideos > 0 
             ? Math.round((totalCreatorLikes + totalCreatorViews) / totalCreatorVideos)
             : 0;

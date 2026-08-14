@@ -31,6 +31,7 @@ import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
+import { useExternalCarouselQueue } from '@/hooks/useExternalCarouselQueue';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';
@@ -638,8 +639,16 @@ export const TikTokApp = () => {
 
   // Embla API ready
 
+  // 🎠 Carrosséis externos: chaves disponíveis nesta sessão (aditivo, não altera o feed base)
+  const isCarouselItem = (v: any) => v?.media_type === 'carousel' || v?.tipo_conteudo === 'carrossel';
+  const carouselKeys = useMemo(
+    () => videos.filter(isCarouselItem).map((v: any) => String(v.id)),
+    [videos]
+  );
+  const { activeCarouselKey } = useExternalCarouselQueue(carouselKeys);
+
   // 📢 Montagem estável do feed com promos, sem reescrever o estado base de vídeos
-  const displayVideos = useMemo(() => {
+  const displayVideosBase = useMemo(() => {
     if (videos.length === 0) return [] as Video[];
     // 🧠 Ad Server: fila exclusiva do usuário; fallback para a lista padrão
     const adPool = adQueue;
@@ -716,6 +725,14 @@ export const TikTokApp = () => {
     }
     return result;
   }, [videos, adQueue, sharedPromoVideo]);
+
+  // 🎠 Exibe apenas 1 carrossel externo por vez; os demais permanecem na fila do usuário
+  const displayVideos = useMemo(() => {
+    if (carouselKeys.length <= 1) return displayVideosBase;
+    const allowed = activeCarouselKey || carouselKeys[0];
+    return displayVideosBase.filter((v: any) => !isCarouselItem(v) || String(v.id) === allowed);
+  }, [displayVideosBase, carouselKeys, activeCarouselKey]);
+
 
   useEffect(() => {
     if (displayVideos.length === 0) return;

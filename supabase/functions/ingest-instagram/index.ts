@@ -140,6 +140,61 @@ Deno.serve(async (req) => {
 
     const skipped = incoming.length - toInsert.length
 
+    // 🎠 Carrosséis de fotos -> posts_agendados (tipo_conteudo 'carrossel', já publicados)
+    // Aceita: carousels: [{ images[], caption, audio_url, buttons }] OU photos: ["url", ...]
+    let carousels_inserted = 0
+    try {
+      const rawCarousels: any[] = Array.isArray(body.carousels) ? body.carousels : []
+      if (Array.isArray(body.photos) && body.photos.length) {
+        rawCarousels.push({ images: body.photos, caption: body.caption || null })
+      }
+      const normalized = rawCarousels
+        .map((c: any) => {
+          const images: string[] = (Array.isArray(c?.images) ? c.images : Array.isArray(c) ? c : [])
+            .filter((u: any) => typeof u === 'string' && /^https?:\/\//i.test(u))
+          return images.length ? { ...c, images } : null
+        })
+        .filter(Boolean) as any[]
+
+      if (normalized.length) {
+        const firstUrls = normalized.map((c) => c.images[0])
+        const { data: existingPosts } = await supabase
+          .from('posts_agendados')
+          .select('conteudo_url')
+          .eq('modelo_id', modelId)
+          .in('conteudo_url', firstUrls)
+        const seenPosts = new Set((existingPosts || []).map((p: any) => p.conteudo_url))
+
+        const nowIso = new Date().toISOString()
+        const rows = normalized
+          .filter((c) => !seenPosts.has(c.images[0]))
+          .map((c) => ({
+            modelo_id: modelId,
+            modelo_username: username,
+            titulo: String(c.caption || c.title || displayName).slice(0, 200),
+            descricao: c.caption || null,
+            conteudo_url: c.images[0],
+            imagens: c.images,
+            tipo_conteudo: 'carrossel',
+            data_agendamento: nowIso,
+            data_publicacao: nowIso,
+            status: 'publicado',
+            audio_url: c.audio_url || null,
+            botoes: Array.isArray(c.buttons) ? c.buttons : [],
+            enviar_tela_principal: true,
+          }))
+
+        if (rows.length) {
+          const { error: cErr2, count } = await supabase
+            .from('posts_agendados')
+            .insert(rows, { count: 'exact' })
+          if (!cErr2) carousels_inserted = count ?? rows.length
+        }
+      }
+    } catch (_) { /* não bloqueia o ingest de vídeos */ }
+
+
+
     // Auto-cria conta de criadora (email sintético + senha padrão) se ainda não existir
     let creator_account: { email: string; user_id: string } | null = null
     try {

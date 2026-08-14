@@ -83,7 +83,8 @@ export const useRealTimeStats = () => {
         videosLikesResult,
         videosViewsResult,
         videosCommentsResult,
-        baseFollowersResult
+        baseFollowersResult,
+        creatorFollowersResult
 
       ] = await Promise.all([
         // Total de conteúdos (modelos ativos)

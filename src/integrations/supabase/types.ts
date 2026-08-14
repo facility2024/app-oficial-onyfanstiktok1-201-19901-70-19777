@@ -10126,6 +10126,7 @@ export type Database = {
       auto_cleanup_chat_data: { Args: never; Returns: undefined }
       auto_cleanup_sensitive_data: { Args: never; Returns: undefined }
       auto_confirm_payment: { Args: { p_whatsapp: string }; Returns: Json }
+      bump_api_key_usage: { Args: { _key_id: string }; Returns: undefined }
       calcular_distancia: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number

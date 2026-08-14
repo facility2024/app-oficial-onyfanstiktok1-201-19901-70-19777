@@ -302,6 +302,11 @@ export const AdminContentTable = () => {
           await (supabase as any).from('models').delete().eq('id', id);
         }
 
+        // Remover posts espelhados que alimentam o feed (independente da RPC)
+        await (supabase as any).from('posts_principais').delete().eq('modelo_id', id);
+        await (supabase as any).from('posts_agendados').delete().eq('modelo_id', id);
+
+
         toast.dismiss();
         toast.success(`✅ Modelo "${content.name}" excluída permanentemente!`);
       }

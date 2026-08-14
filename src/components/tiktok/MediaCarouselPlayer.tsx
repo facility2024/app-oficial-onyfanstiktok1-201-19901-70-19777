@@ -8,6 +8,7 @@ export interface CarouselButton {
   url: string;
   tipo?: 'externo' | 'interno';
   cor?: string;
+  color?: string;
 }
 
 interface MediaCarouselPlayerProps {
@@ -206,7 +207,7 @@ export const MediaCarouselPlayer = ({
               type="button"
               onClick={(e) => handleButtonClick(e, btn)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-105 transition-transform"
-              style={{ background: btn.cor || 'linear-gradient(135deg,#7CB342,#558B2F)' }}
+              style={{ background: btn.cor || btn.color || 'linear-gradient(135deg,#7CB342,#558B2F)' }}
             >
               {btn.tipo !== 'interno' && <ExternalLink className="w-3.5 h-3.5" />}
               {btn.label}

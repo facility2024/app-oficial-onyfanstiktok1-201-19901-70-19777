@@ -114,18 +114,28 @@ Deno.serve(async (req) => {
       .from('videos').select('video_url').eq('model_id', modelId).in('video_url', urls.length ? urls : ['__none__'])
     const seen = new Set((existingVids || []).map((x: any) => x.video_url))
 
-    const toInsert = incoming.filter(v => !seen.has(v.video_url)).map(v => ({
-      model_id: modelId,
-      title: String(v.caption || v.title || displayName).slice(0, 200),
-      description: v.caption || null,
-      video_url: v.video_url,
-      thumbnail_url: v.thumbnail_url || v.video_url,
-      duration: Number(v.duration_seconds || v.duration || 0),
-      visibility: v.visibility === 'private' ? 'private' : 'public',
-      is_active: true,
-      upload_source: 'instagram_ingest',
-      category: 'instagram',
-    }))
+    const toInsert = incoming.filter(v => !seen.has(v.video_url)).map(v => {
+      const hasCta = v.show_redirect_button !== false && !!v.redirect_link && !!v.button_text
+      return {
+        model_id: modelId,
+        title: String(v.title || v.caption || displayName).slice(0, 200),
+        description: v.caption || null,
+        video_url: v.video_url,
+        thumbnail_url: v.thumbnail_url || v.video_url,
+        duration: Number(v.duration_seconds || v.duration || 0),
+        visibility: v.visibility === 'private' ? 'private' : 'public',
+        is_active: true,
+        upload_source: 'instagram_ingest',
+        category: 'instagram',
+        ...(hasCta ? {
+          redirect_link: String(v.redirect_link),
+          button_text: String(v.button_text).slice(0, 60),
+          ...(v.button_color ? { button_color: String(v.button_color) } : {}),
+          show_redirect_button: true,
+        } : { show_redirect_button: false }),
+      }
+    })
+
 
     let inserted = 0
     if (toInsert.length) {
@@ -141,12 +151,37 @@ Deno.serve(async (req) => {
     const skipped = incoming.length - toInsert.length
 
     // 🎠 Carrosséis de fotos -> posts_agendados (tipo_conteudo 'carrossel', já publicados)
-    // Aceita: carousels: [{ images[], caption, audio_url, buttons }] OU photos: ["url", ...]
+    // Aceita: carousels: [{ images[], title, caption, audio_url, buttons | redirect_link... }] OU photos: ["url", ...]
+    const buildButtons = (item: any) => {
+      if (Array.isArray(item?.buttons) && item.buttons.length) {
+        return item.buttons
+          .filter((b: any) => b && (b.label || b.text) && (b.url || b.link))
+          .map((b: any) => ({
+            label: String(b.label || b.text).slice(0, 60),
+            url: String(b.url || b.link),
+            cor: b.color || b.cor || null,
+            color: b.color || b.cor || null,
+            tipo: b.tipo || 'externo',
+          }))
+      }
+      const show = item?.show_redirect_button
+      const url = item?.redirect_link
+      const label = item?.button_text
+      if (show === false || !url || !label) return []
+      return [{
+        label: String(label).slice(0, 60),
+        url: String(url),
+        cor: item.button_color || null,
+        color: item.button_color || null,
+        tipo: 'externo',
+      }]
+    }
+
     let carousels_inserted = 0
     try {
       const rawCarousels: any[] = Array.isArray(body.carousels) ? body.carousels : []
       if (Array.isArray(body.photos) && body.photos.length) {
-        rawCarousels.push({ images: body.photos, caption: body.caption || null })
+        rawCarousels.push({ images: body.photos, caption: body.caption || null, title: body.title || null })
       }
       const normalized = rawCarousels
         .map((c: any) => {
@@ -171,7 +206,7 @@ Deno.serve(async (req) => {
           .map((c) => ({
             modelo_id: modelId,
             modelo_username: username,
-            titulo: String(c.caption || c.title || displayName).slice(0, 200),
+            titulo: String(c.title || c.caption || displayName).slice(0, 200),
             descricao: c.caption || null,
             conteudo_url: c.images[0],
             imagens: c.images,
@@ -180,18 +215,40 @@ Deno.serve(async (req) => {
             data_publicacao: nowIso,
             status: 'publicado',
             audio_url: c.audio_url || null,
-            botoes: Array.isArray(c.buttons) ? c.buttons : [],
+            botoes: buildButtons(c),
             enviar_tela_principal: true,
           }))
 
         if (rows.length) {
-          const { error: cErr2, count } = await supabase
+          const { data: insertedRows, error: cErr2, count } = await supabase
             .from('posts_agendados')
             .insert(rows, { count: 'exact' })
-          if (!cErr2) carousels_inserted = count ?? rows.length
+            .select('id, titulo, descricao, conteudo_url, imagens, audio_url, botoes')
+          if (!cErr2) {
+            carousels_inserted = count ?? rows.length
+            // Propaga título e botões para a tela principal
+            if (insertedRows?.length) {
+              await supabase.from('posts_principais').insert(
+                insertedRows.map((p: any) => ({
+                  modelo_id: modelId,
+                  modelo_username: username,
+                  titulo: p.titulo,
+                  descricao: p.descricao,
+                  conteudo_url: p.conteudo_url,
+                  tipo_conteudo: 'carrossel',
+                  imagens: p.imagens || [],
+                  audio_url: p.audio_url || null,
+                  botoes: p.botoes || [],
+                  post_agendado_id: p.id,
+                  is_active: true,
+                }))
+              )
+            }
+          }
         }
       }
     } catch (_) { /* não bloqueia o ingest de vídeos */ }
+
 
 
 

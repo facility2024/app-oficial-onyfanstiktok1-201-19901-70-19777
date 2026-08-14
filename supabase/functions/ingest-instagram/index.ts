@@ -54,11 +54,13 @@ Deno.serve(async (req) => {
     supabase.rpc('bump_api_key_usage', { _key_id: keyRow.id }).then(() => {})
 
     const body = await req.json().catch(() => null) as any
-    if (!body || !body.creator || !Array.isArray(body.videos)) {
-      return new Response(JSON.stringify({ error: 'invalid payload: expected { creator, videos[] }' }), {
+    if (!body || !body.creator || (!Array.isArray(body.videos) && !Array.isArray(body.carousels) && !Array.isArray(body.photos))) {
+      return new Response(JSON.stringify({ error: 'invalid payload: expected { creator, videos[] | carousels[] | photos[] }' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    if (!Array.isArray(body.videos)) body.videos = []
+
 
     const c = body.creator
     const username = slugify(c.instagram_username || c.username || c.display_name || '')

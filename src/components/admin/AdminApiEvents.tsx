@@ -157,7 +157,7 @@ function ApiKeysTab() {
                   {k.is_active ? <Badge className="bg-green-600">Ativa</Badge> : <Badge variant="destructive">Revogada</Badge>}
                 </div>
                 <div className="text-xs text-gray-400 mt-1">
-                  <code>{k.key_prefix}…</code> • Usos: {k.usage_count} • Último: {k.last_used_at ? new Date(k.last_used_at).toLocaleString('pt-BR') : 'nunca'}
+                  <code>{k.key_prefix}…</code> • Usos: {k.usage_count ?? 0} • Último: {k.last_used_at ? new Date(k.last_used_at).toLocaleString('pt-BR') : 'nunca'}
                 </div>
               </div>
               <div className="flex items-center gap-2">

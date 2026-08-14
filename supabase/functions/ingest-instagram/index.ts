@@ -114,18 +114,28 @@ Deno.serve(async (req) => {
       .from('videos').select('video_url').eq('model_id', modelId).in('video_url', urls.length ? urls : ['__none__'])
     const seen = new Set((existingVids || []).map((x: any) => x.video_url))
 
-    const toInsert = incoming.filter(v => !seen.has(v.video_url)).map(v => ({
-      model_id: modelId,
-      title: String(v.caption || v.title || displayName).slice(0, 200),
-      description: v.caption || null,
-      video_url: v.video_url,
-      thumbnail_url: v.thumbnail_url || v.video_url,
-      duration: Number(v.duration_seconds || v.duration || 0),
-      visibility: v.visibility === 'private' ? 'private' : 'public',
-      is_active: true,
-      upload_source: 'instagram_ingest',
-      category: 'instagram',
-    }))
+    const toInsert = incoming.filter(v => !seen.has(v.video_url)).map(v => {
+      const hasCta = v.show_redirect_button !== false && !!v.redirect_link && !!v.button_text
+      return {
+        model_id: modelId,
+        title: String(v.title || v.caption || displayName).slice(0, 200),
+        description: v.caption || null,
+        video_url: v.video_url,
+        thumbnail_url: v.thumbnail_url || v.video_url,
+        duration: Number(v.duration_seconds || v.duration || 0),
+        visibility: v.visibility === 'private' ? 'private' : 'public',
+        is_active: true,
+        upload_source: 'instagram_ingest',
+        category: 'instagram',
+        ...(hasCta ? {
+          redirect_link: String(v.redirect_link),
+          button_text: String(v.button_text).slice(0, 60),
+          ...(v.button_color ? { button_color: String(v.button_color) } : {}),
+          show_redirect_button: true,
+        } : { show_redirect_button: false }),
+      }
+    })
+
 
     let inserted = 0
     if (toInsert.length) {

@@ -150,22 +150,26 @@ export const AdminStats = () => {
   useEffect(() => {
     const fetchUserStats = async () => {
       try {
-        // Total de usuários de gamificação
-        const { data: gamificationUsers, error: gamificationError } = await supabase
-          .from('gamification_users')
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        // Cadastros reais (profiles = usuários autenticados)
+        const { count: totalProfiles, error: profilesError } = await supabase
+          .from('profiles')
           .select('id', { count: 'exact', head: true });
 
-        // Novos usuários hoje
-        const { data: newGamificationToday, error: newGamificationError } = await supabase
-          .from('gamification_users')
+        const { count: newProfilesToday, error: newProfilesError } = await supabase
+          .from('profiles')
           .select('id', { count: 'exact', head: true })
-          .gte('created_at', new Date().toISOString().split('T')[0]);
+          .gte('created_at', startOfDay.toISOString());
 
-        if (!gamificationError && !newGamificationError) {
-          const totalUsers = gamificationUsers?.length || 0;
-          const newToday = newGamificationToday?.length || 0;
-          
-          setUserStats({ totalUsers, newToday });
+        if (!profilesError && !newProfilesError) {
+          setUserStats({
+            totalUsers: totalProfiles || 0,
+            newToday: newProfilesToday || 0
+          });
+        } else {
+          console.error('Erro ao buscar usuários:', profilesError || newProfilesError);
         }
       } catch (error) {
         console.error('Erro ao buscar estatísticas de usuários:', error);

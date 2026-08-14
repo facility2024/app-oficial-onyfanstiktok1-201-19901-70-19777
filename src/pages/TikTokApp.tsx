@@ -725,6 +725,14 @@ export const TikTokApp = () => {
     return result;
   }, [videos, adQueue, sharedPromoVideo]);
 
+  // 🎠 Exibe apenas 1 carrossel externo por vez; os demais permanecem na fila do usuário
+  const displayVideos = useMemo(() => {
+    if (carouselKeys.length <= 1) return displayVideosBase;
+    const allowed = activeCarouselKey || carouselKeys[0];
+    return displayVideosBase.filter((v: any) => !isCarouselItem(v) || String(v.id) === allowed);
+  }, [displayVideosBase, carouselKeys, activeCarouselKey]);
+
+
   useEffect(() => {
     if (displayVideos.length === 0) return;
     if (currentVideoIndex < displayVideos.length) return;

@@ -638,8 +638,16 @@ export const TikTokApp = () => {
 
   // Embla API ready
 
+  // 🎠 Carrosséis externos: chaves disponíveis nesta sessão (aditivo, não altera o feed base)
+  const isCarouselItem = (v: any) => v?.media_type === 'carousel' || v?.tipo_conteudo === 'carrossel';
+  const carouselKeys = useMemo(
+    () => videos.filter(isCarouselItem).map((v: any) => String(v.id)),
+    [videos]
+  );
+  const { activeCarouselKey } = useExternalCarouselQueue(carouselKeys);
+
   // 📢 Montagem estável do feed com promos, sem reescrever o estado base de vídeos
-  const displayVideos = useMemo(() => {
+  const displayVideosBase = useMemo(() => {
     if (videos.length === 0) return [] as Video[];
     // 🧠 Ad Server: fila exclusiva do usuário; fallback para a lista padrão
     const adPool = adQueue;

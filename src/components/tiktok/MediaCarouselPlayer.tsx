@@ -38,10 +38,27 @@ export const MediaCarouselPlayer = ({
 
   const safeImages = images.filter(Boolean);
   const safeButtons = (buttons || []).filter((b) => b && b.label && b.url);
+  const imagesKey = safeImages.join('|');
 
   useEffect(() => {
     setIndex(0);
-  }, [safeImages.join('|')]);
+  }, [imagesKey]);
+
+  // Pré-carrega a imagem atual e as vizinhas (mobile: evita tela preta ao deslizar)
+  useEffect(() => {
+    if (safeImages.length === 0) return;
+    const total = safeImages.length;
+    const targets = [index, (index + 1) % total, (index - 1 + total) % total];
+    const seen = new Set<string>();
+    targets.forEach((i) => {
+      const src = safeImages[i];
+      if (!src || seen.has(src)) return;
+      seen.add(src);
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+    });
+  }, [index, imagesKey]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -100,14 +117,29 @@ export const MediaCarouselPlayer = ({
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <img
-        key={safeImages[index]}
-        src={safeImages[index]}
-        alt={`Imagem ${index + 1}`}
-        className={`w-full h-full ${objectFit === 'contain' ? 'object-contain' : 'object-cover'}`}
-        draggable={false}
-        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
-      />
+      {safeImages.map((src, i) => {
+        const total = safeImages.length;
+        const isActive = i === index;
+        const isNeighbor =
+          total > 1 && (i === (index + 1) % total || i === (index - 1 + total) % total);
+        if (!isActive && !isNeighbor) return null;
+        return (
+          <img
+            key={src + i}
+            src={src}
+            alt={`Imagem ${i + 1}`}
+            className={`absolute inset-0 w-full h-full ${objectFit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-150 ${isActive ? 'opacity-100' : 'opacity-0'}`}
+            style={{ contentVisibility: 'auto', transform: 'translateZ(0)' } as React.CSSProperties}
+            draggable={false}
+            decoding="async"
+            loading="eager"
+            // @ts-expect-error atributo nativo suportado por Chrome/Android
+            fetchpriority={isActive ? 'high' : 'low'}
+            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+          />
+        );
+      })}
+
 
       {audioUrl && <audio ref={audioRef} src={audioUrl} loop preload="auto" />}
 

@@ -175,8 +175,12 @@ export const useRealTimeStats = () => {
       const commentsFromVideos = videosCommentsResult.data?.reduce((sum: number, v: any) => sum + (v.comments_count || 0), 0) || 0;
       const finalComments = Math.max(commentsFromTable, commentsFromVideos);
 
-      // Views hoje: usar tabela ou fallback 
-      const viewsTodayCount = viewsTodayResult.count || 0;
+      // Views hoje: reais + bases aplicadas hoje pelo painel de Engajamento
+      const baseViewsToday = videosViewsResult.data?.reduce((sum: number, v: any) => {
+        const applied = v.updated_at ? new Date(v.updated_at) : null;
+        return applied && applied >= startOfDay ? sum + (v.base_views || 0) : sum;
+      }, 0) || 0;
+      const viewsTodayCount = (viewsTodayResult.count || 0) + baseViewsToday;
 
       const newStats: RealTimeStats = {
         totalContent: contentResult.count || 0,

@@ -153,29 +153,36 @@ Deno.serve(async (req) => {
     // 🎠 Carrosséis de fotos -> posts_agendados (tipo_conteudo 'carrossel', já publicados)
     // Aceita: carousels: [{ images[], title, caption, audio_url, buttons | redirect_link... }] OU photos: ["url", ...]
     const buildButtons = (item: any) => {
-      if (Array.isArray(item?.buttons) && item.buttons.length) {
-        return item.buttons
-          .filter((b: any) => b && (b.label || b.text) && (b.url || b.link))
+      const rawList = Array.isArray(item?.buttons) ? item.buttons
+        : Array.isArray(item?.botoes) ? item.botoes
+        : Array.isArray(body?.buttons) ? body.buttons
+        : Array.isArray(body?.botoes) ? body.botoes
+        : null
+      if (rawList && rawList.length) {
+        const mapped = rawList
+          .filter((b: any) => b && (b.label || b.text || b.button_text || b.titulo) && (b.url || b.link || b.redirect_link))
           .map((b: any) => ({
-            label: String(b.label || b.text).slice(0, 60),
-            url: String(b.url || b.link),
-            cor: b.color || b.cor || null,
-            color: b.color || b.cor || null,
+            label: String(b.label || b.text || b.button_text || b.titulo).slice(0, 60),
+            url: String(b.url || b.link || b.redirect_link),
+            cor: b.color || b.cor || b.button_color || null,
+            color: b.color || b.cor || b.button_color || null,
             tipo: b.tipo || 'externo',
           }))
+        if (mapped.length) return mapped
       }
-      const show = item?.show_redirect_button
-      const url = item?.redirect_link
-      const label = item?.button_text
+      const show = item?.show_redirect_button ?? body?.show_redirect_button
+      const url = item?.redirect_link || item?.link || item?.cta_link || item?.url_botao || body?.redirect_link || body?.cta_link
+      const label = item?.button_text || item?.cta_text || item?.texto_botao || body?.button_text || body?.cta_text
       if (show === false || !url || !label) return []
       return [{
         label: String(label).slice(0, 60),
         url: String(url),
-        cor: item.button_color || null,
-        color: item.button_color || null,
+        cor: item?.button_color || item?.cor_botao || body?.button_color || null,
+        color: item?.button_color || item?.cor_botao || body?.button_color || null,
         tipo: 'externo',
       }]
     }
+
 
     let carousels_inserted = 0
     try {

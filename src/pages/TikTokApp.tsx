@@ -31,6 +31,7 @@ import { CategoryMenu } from '@/components/tiktok/CategoryMenu';
 import { UserMenuHeader } from '@/components/tiktok/UserMenuHeader';
 import useEmblaCarousel from 'embla-carousel-react';
 import { VideoCarousel } from '@/components/ui/video-carousel';
+import { useExternalCarouselQueue } from '@/hooks/useExternalCarouselQueue';
 import { AdCarousel } from '@/components/tiktok/AdCarousel';
 import { ModelCarousel } from '@/components/tiktok/ModelCarousel';
 import { MarketplaceCarousel } from '@/components/tiktok/MarketplaceCarousel';

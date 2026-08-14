@@ -85,10 +85,18 @@ export const AdminContentTable = () => {
         }
       }
 
-      // 4️⃣ Buscar vídeos da tabela videos
-      const { data: videosData } = await supabase
-        .from('videos')
-        .select('*');
+      // 4️⃣ Buscar vídeos da tabela videos (paginado: evita limite de 1000 linhas)
+      const videosData: any[] = [];
+      for (let from = 0; from < 20000; from += 1000) {
+        const { data: page } = await supabase
+          .from('videos')
+          .select('id, model_id, creator_id, views_count, likes_count, base_views, base_likes, visibility, created_at, deleted_at')
+          .range(from, from + 999);
+        if (!page || page.length === 0) break;
+        videosData.push(...page);
+        if (page.length < 1000) break;
+      }
+
 
       // Helpers: soma views/curtidas reais + bases do painel de Engajamento
       const sumViews = (list: any[]) =>

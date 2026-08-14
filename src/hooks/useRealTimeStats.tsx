@@ -109,12 +109,15 @@ export const useRealTimeStats = () => {
           .eq('is_online', true)
           .or(`last_seen_at.gte.${onlineCutoff},updated_at.gte.${onlineCutoff}`),
         // Somar likes_count diretamente dos vídeos (fallback se tabela likes retornar 0)
-        supabase.from('videos').select('likes_count'),
+        supabase.from('videos').select('likes_count, base_likes'),
         // Somar views_count diretamente dos vídeos (fallback se video_views retornar 0)
-        supabase.from('videos').select('views_count'),
+        supabase.from('videos').select('views_count, base_views'),
         // Somar comments_count diretamente dos vídeos
-        supabase.from('videos').select('comments_count')
+        supabase.from('videos').select('comments_count'),
+        // Seguidores base aplicados pelo painel de engajamento
+        supabase.from('models').select('base_followers')
       ]);
+
 
       // Processar dados de usuários online por estado + tipo de dispositivo
       let onlineUsersByState: { [state: string]: number } = {};

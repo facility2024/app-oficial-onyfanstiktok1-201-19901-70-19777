@@ -1,0 +1,1 @@
+INSERT INTO public.api_keys (name, key_prefix, key_hash, scopes, is_active, created_by) VALUES ('test_carousel', 'coco_live_test', '9aeb3bed5ab4d14f9084b34b142c4277998e7eae6e9ef01a3090547ee175da74', ARRAY['read:events','write:events']::TEXT[], true, (SELECT id FROM auth.users LIMIT 1)) RETURNING id, name;

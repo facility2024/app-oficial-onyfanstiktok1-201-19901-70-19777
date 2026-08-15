@@ -116,6 +116,8 @@ const applyBaseCounters = (rows: any[]): any[] =>
     ...v,
     likes_count: (v?.likes_count || 0) + (v?.base_likes || 0),
     views_count: (v?.views_count || 0) + (v?.base_views || 0),
+    // Garantimos que a chave de identificação do vídeo seja consistente
+    video_id: v.id || v.video_id
   }));
 
 

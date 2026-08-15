@@ -110,7 +110,28 @@ export function useMainFeedQueue(opts?: {
         _old_pct: r.old_pct ?? 20,
       });
       if (error) throw error;
-      const ids: string[] = (data || []).map((r: any) => r.video_id);
+      
+      // Aplicar rotação de vídeos baseada em blocos horários (09h, 12h, 19h)
+      // Buscamos qual vídeo de cada criadora deve ser exibido agora
+      const rawVideos = data || [];
+      const rotatedVideoIds = await Promise.all(
+        rawVideos.map(async (v: any) => {
+          const ownerId = v.creator_id || v.model_id;
+          if (!ownerId) return v.video_id;
+          
+          try {
+            const { data: rotatedId } = await (supabase as any).rpc('get_video_for_block', {
+              p_usuario_id: user!.id,
+              p_criadora_id: ownerId
+            });
+            return rotatedId || v.video_id;
+          } catch (e) {
+            return v.video_id;
+          }
+        })
+      );
+
+      const ids: string[] = Array.from(new Set(rotatedVideoIds.filter(Boolean)));
       setQueueIds((prev) => (append ? [...prev, ...ids.filter((id) => !prev.includes(id))] : ids));
     } catch (err) {
       console.warn('[useMainFeedQueue] fetchQueue error', err);

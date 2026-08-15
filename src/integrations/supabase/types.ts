@@ -9140,6 +9140,44 @@ export type Database = {
           },
         ]
       }
+      video_exibicoes: {
+        Row: {
+          bloco: Database["public"]["Enums"]["bloco_horario"]
+          criado_em: string | null
+          criadora_id: string
+          data_exibicao: string
+          id: string
+          usuario_id: string
+          video_id: string
+        }
+        Insert: {
+          bloco: Database["public"]["Enums"]["bloco_horario"]
+          criado_em?: string | null
+          criadora_id: string
+          data_exibicao?: string
+          id?: string
+          usuario_id: string
+          video_id: string
+        }
+        Update: {
+          bloco?: Database["public"]["Enums"]["bloco_horario"]
+          criado_em?: string | null
+          criadora_id?: string
+          data_exibicao?: string
+          id?: string
+          usuario_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_exibicoes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_genres: {
         Row: {
           created_at: string | null
@@ -10291,6 +10329,10 @@ export type Database = {
         Returns: Json
       }
       get_commission_percentage: { Args: never; Returns: number }
+      get_current_bloco: {
+        Args: never
+        Returns: Database["public"]["Enums"]["bloco_horario"]
+      }
       get_current_user_role: { Args: never; Returns: string }
       get_daily_points_status: {
         Args: { p_action_type: string; p_user_id: string }
@@ -10451,6 +10493,10 @@ export type Database = {
           views_count: number
         }[]
       }
+      get_video_for_block: {
+        Args: { p_criadora_id: string; p_usuario_id: string }
+        Returns: string
+      }
       grant_entitlements_for_purchase: {
         Args: { _purchase_id: string }
         Returns: number
@@ -10602,6 +10648,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin" | "moderator" | "creator" | "shopkeeper"
+      bloco_horario: "manha_09h" | "meio_dia_12h" | "noite_19h"
       payment_frequency: "monthly" | "quarterly" | "yearly"
     }
     CompositeTypes: {
@@ -10731,6 +10778,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin", "moderator", "creator", "shopkeeper"],
+      bloco_horario: ["manha_09h", "meio_dia_12h", "noite_19h"],
       payment_frequency: ["monthly", "quarterly", "yearly"],
     },
   },

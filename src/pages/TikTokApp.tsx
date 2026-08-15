@@ -1682,12 +1682,26 @@ export const TikTokApp = () => {
       };
 
       const processedScheduledPosts: any[] = [];
-      Object.entries(scheduledPostsByModel).forEach(([mid, posts]) => {
+      for (const [mid, posts] of Object.entries(scheduledPostsByModel)) {
         posts.sort((a, b) => new Date(a.data_publicacao || a.created_at).getTime() - new Date(b.data_publicacao || b.created_at).getTime());
 
+        let selectedPost = null;
         const sessionSelectedPostId = scheduledSessionSelectionRef.current[mid];
-        let selectedPost = sessionSelectedPostId ? posts.find(post => post.id === sessionSelectedPostId) : undefined;
-        let selectedIndex = selectedPost ? posts.findIndex(post => post.id === sessionSelectedPostId) : -1;
+        
+        if (sessionSelectedPostId) {
+          selectedPost = posts.find(post => post.id === sessionSelectedPostId);
+        }
+
+        if (!selectedPost) {
+          // 🔄 APLICAR ROTAÇÃO POR BLOCO (DIRETRIZ TÉCNICA)
+          const rotatedId = await getRotatedVideoId(mid);
+          if (rotatedId) {
+            // Verifica se o vídeo rotacionado pelo banco está entre os agendados
+            selectedPost = posts.find(post => 
+              normalizeUrl(post.conteudo_url || '') === normalizeUrl(videosByUrl.get(rotatedId)?.video_url || '')
+            );
+          }
+        }
 
         if (!selectedPost) {
           let queueIdx = getScheduledQueueIndex(mid);
@@ -1700,16 +1714,10 @@ export const TikTokApp = () => {
             const candidateUrl = normalizeUrl(candidate.conteudo_url || candidateImages[0] || '');
             const isCarouselPost = candidate.tipo_conteudo === 'carrossel' || candidate.tipo_conteudo === 'image';
 
-            if (!candidateUrl || (!isCarouselPost && !isValidVideoUrl(candidateUrl))) {
-              continue;
-            }
-
-            if (isCarouselPost && candidateImages.length === 0 && !isImageUrl(candidateUrl)) {
-              continue;
-            }
+            if (!candidateUrl || (!isCarouselPost && !isValidVideoUrl(candidateUrl))) continue;
+            if (isCarouselPost && candidateImages.length === 0 && !isImageUrl(candidateUrl)) continue;
 
             selectedPost = candidate;
-            selectedIndex = idx;
             break;
           }
         }

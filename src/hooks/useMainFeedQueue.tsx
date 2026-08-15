@@ -101,6 +101,8 @@ export function useMainFeedQueue(opts?: {
     setLoading(true);
     try {
       const r = { ...(remoteRatios || {}), ...(opts?.ratios || {}) } as MainFeedRatios;
+      
+      // Chamada da fila principal
       const { data, error } = await (supabase as any).rpc('get_main_feed_queue', {
         _user_id: user!.id,
         _limit: limit,
@@ -110,7 +112,35 @@ export function useMainFeedQueue(opts?: {
         _old_pct: r.old_pct ?? 20,
       });
       if (error) throw error;
-      const ids: string[] = (data || []).map((r: any) => r.video_id);
+      
+      const rawVideos = data || [];
+
+      // 🔄 Implementação da Diretriz Técnica: Lógica de Exibição e Rotação por Bloco
+      // Para cada criadora na fila, garantimos que o vídeo exibido é o persistido para o bloco atual.
+      const rotatedVideoIds = await Promise.all(
+        rawVideos.map(async (v: any) => {
+          const ownerId = v.owner_id || v.creator_id || v.model_id;
+          if (!ownerId) return v.video_id;
+          
+          try {
+            // Chamada RPC que encapsula a lógica de bloco (09h, 12h, 19h) e persistência diária
+            const { data: rotatedId, error: rotateErr } = await (supabase as any).rpc('get_video_for_block', {
+              p_usuario_id: user!.id,
+              p_criadora_id: ownerId
+            });
+            
+            if (rotateErr) throw rotateErr;
+            return rotatedId || v.video_id;
+          } catch (e) {
+            console.warn('[useMainFeedQueue] Rotation fallback', e);
+            return v.video_id;
+          }
+        })
+      );
+
+      // Remove duplicatas (caso a rotação aponte para o mesmo vídeo em criadoras diferentes ou erros)
+      const ids: string[] = Array.from(new Set(rotatedVideoIds.filter(Boolean) as string[]));
+      
       setQueueIds((prev) => (append ? [...prev, ...ids.filter((id) => !prev.includes(id))] : ids));
     } catch (err) {
       console.warn('[useMainFeedQueue] fetchQueue error', err);
@@ -118,7 +148,7 @@ export function useMainFeedQueue(opts?: {
       fetchingRef.current = false;
       setLoading(false);
     }
-  }, [enabled, user?.id, limit, remoteRatios, opts?.ratios?.new_pct, opts?.ratios?.unseen_pct, opts?.ratios?.popular_pct, opts?.ratios?.old_pct]);
+  }, [enabled, user?.id, limit, remoteRatios, opts?.ratios]);
 
 
   // Carga inicial (uma vez por sessão de usuário)

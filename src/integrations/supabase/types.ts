@@ -10277,7 +10277,7 @@ export type Database = {
         }[]
       }
       get_ad_queue: {
-        Args: { p_limit?: number; p_seen?: string[]; p_user_id?: string }
+        Args: { p_limit?: number; p_seen?: string[]; p_user_id: string }
         Returns: {
           advertiser: string | null
           avatar_url: string | null

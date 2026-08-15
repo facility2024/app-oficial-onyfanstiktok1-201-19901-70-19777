@@ -8,7 +8,8 @@ export const useVideoRotation = () => {
 
   const fetchCurrentBloco = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_current_bloco');
+      // Usando cast para any para contornar erro de tipagem temporário do Supabase Client
+      const { data, error } = await (supabase as any).rpc('get_current_bloco');
       if (!error && data) {
         setCurrentBloco(data as BlocoHorario);
       }
@@ -22,7 +23,8 @@ export const useVideoRotation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase.rpc('get_video_for_block', {
+      // Usando cast para any para contornar erro de tipagem temporário do Supabase Client
+      const { data, error } = await (supabase as any).rpc('get_video_for_block', {
         p_usuario_id: user.id,
         p_criadora_id: creatorId
       });

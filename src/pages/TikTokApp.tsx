@@ -1384,9 +1384,19 @@ export const TikTokApp = () => {
         }
       };
       const viewedPosts = getViewedPosts();
-      console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
-      // 🚀 CARGA INICIAL LEVE + PARALELA — todas as consultas independentes disparam juntas
-      // com timeout individual para nunca travar a abertura do feed em caso de lentidão.
+
+      // 🔄 ROTAÇÃO POR BLOCO (DIRETRIZ TÉCNICA 2026):
+      // Aplicar rotação centralizada para vídeos de modelos vindo do Instagram/Externo.
+      const getRotatedVideoId = async (ownerId: string): Promise<string | null> => {
+        try {
+          const { data, error } = await (supabase as any).rpc('get_video_for_block', {
+            p_usuario_id: authUser?.id || localStorage.getItem('anonymous_user_id'),
+            p_criadora_id: ownerId
+          });
+          return error ? null : data;
+        } catch { return null; }
+      };
+
       console.log('📋 Carregando catálogo (paralelo com timeout)...');
       const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string): Promise<T | null> =>
         new Promise((resolve) => {
@@ -1672,12 +1682,30 @@ export const TikTokApp = () => {
       };
 
       const processedScheduledPosts: any[] = [];
-      Object.entries(scheduledPostsByModel).forEach(([mid, posts]) => {
+      for (const [mid, posts] of Object.entries(scheduledPostsByModel)) {
         posts.sort((a, b) => new Date(a.data_publicacao || a.created_at).getTime() - new Date(b.data_publicacao || b.created_at).getTime());
 
+        let selectedPost = null;
+        let selectedIndex = -1;
         const sessionSelectedPostId = scheduledSessionSelectionRef.current[mid];
-        let selectedPost = sessionSelectedPostId ? posts.find(post => post.id === sessionSelectedPostId) : undefined;
-        let selectedIndex = selectedPost ? posts.findIndex(post => post.id === sessionSelectedPostId) : -1;
+        
+        if (sessionSelectedPostId) {
+          selectedIndex = posts.findIndex(post => post.id === sessionSelectedPostId);
+          if (selectedIndex !== -1) selectedPost = posts[selectedIndex];
+        }
+
+        if (!selectedPost) {
+          // 🔄 APLICAR ROTAÇÃO POR BLOCO (DIRETRIZ TÉCNICA)
+          const rotatedId = await getRotatedVideoId(mid);
+          if (rotatedId) {
+            // Verifica se o vídeo rotacionado pelo banco está entre os agendados
+            const rotatedUrl = normalizeUrl(videosByUrl.get(rotatedId)?.video_url || '');
+            selectedIndex = posts.findIndex(post => 
+              normalizeUrl(post.conteudo_url || '') === rotatedUrl
+            );
+            if (selectedIndex !== -1) selectedPost = posts[selectedIndex];
+          }
+        }
 
         if (!selectedPost) {
           let queueIdx = getScheduledQueueIndex(mid);
@@ -1690,13 +1718,8 @@ export const TikTokApp = () => {
             const candidateUrl = normalizeUrl(candidate.conteudo_url || candidateImages[0] || '');
             const isCarouselPost = candidate.tipo_conteudo === 'carrossel' || candidate.tipo_conteudo === 'image';
 
-            if (!candidateUrl || (!isCarouselPost && !isValidVideoUrl(candidateUrl))) {
-              continue;
-            }
-
-            if (isCarouselPost && candidateImages.length === 0 && !isImageUrl(candidateUrl)) {
-              continue;
-            }
+            if (!candidateUrl || (!isCarouselPost && !isValidVideoUrl(candidateUrl))) continue;
+            if (isCarouselPost && candidateImages.length === 0 && !isImageUrl(candidateUrl)) continue;
 
             selectedPost = candidate;
             selectedIndex = idx;
@@ -1704,25 +1727,21 @@ export const TikTokApp = () => {
           }
         }
 
-        if (!selectedPost || selectedIndex === -1) return;
+        if (!selectedPost || selectedIndex === -1) continue;
 
         const model = selectedPost.modelo || modelsData?.find((m: any) => m.id === selectedPost.modelo_id);
         const selectedImages = normalizeImages(selectedPost.imagens);
         const contentUrl = normalizeUrl(selectedPost.conteudo_url || selectedImages[0] || '');
         const isCarouselPost = selectedPost.tipo_conteudo === 'carrossel' || selectedPost.tipo_conteudo === 'image';
-        if (!contentUrl || (!isCarouselPost && !isValidVideoUrl(contentUrl))) {
-          return;
-        }
-
-        if (isCarouselPost && selectedImages.length === 0 && !isImageUrl(contentUrl)) {
-          return;
-        }
+        
+        if (!contentUrl || (!isCarouselPost && !isValidVideoUrl(contentUrl))) continue;
+        if (isCarouselPost && selectedImages.length === 0 && !isImageUrl(contentUrl)) continue;
 
         processedScheduledPosts.push(
           buildScheduledVideo(selectedPost, model, contentUrl, (selectedIndex + 1) % posts.length)
         );
         scheduledSessionSelectionRef.current[mid] = selectedPost.id;
-      });
+      }
 
       const processedMainPosts = (postsPrincipais || []).filter(post => !viewedPosts.has(`main-${post.id}`))
       .map(post => {

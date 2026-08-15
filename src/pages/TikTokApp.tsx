@@ -1384,9 +1384,19 @@ export const TikTokApp = () => {
         }
       };
       const viewedPosts = getViewedPosts();
-      console.log(`📋 ${viewedPosts.size} posts em destaque já visualizados`);
-      // 🚀 CARGA INICIAL LEVE + PARALELA — todas as consultas independentes disparam juntas
-      // com timeout individual para nunca travar a abertura do feed em caso de lentidão.
+
+      // 🔄 ROTAÇÃO POR BLOCO (DIRETRIZ TÉCNICA 2026):
+      // Aplicar rotação centralizada para vídeos de modelos vindo do Instagram/Externo.
+      const getRotatedVideoId = async (ownerId: string): Promise<string | null> => {
+        try {
+          const { data, error } = await (supabase as any).rpc('get_video_for_block', {
+            p_usuario_id: authUser?.id || localStorage.getItem('anonymous_user_id'),
+            p_criadora_id: ownerId
+          });
+          return error ? null : data;
+        } catch { return null; }
+      };
+
       console.log('📋 Carregando catálogo (paralelo com timeout)...');
       const withTimeout = <T,>(p: PromiseLike<T>, ms: number, label: string): Promise<T | null> =>
         new Promise((resolve) => {

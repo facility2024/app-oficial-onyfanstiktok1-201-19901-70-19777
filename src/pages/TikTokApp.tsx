@@ -3592,6 +3592,51 @@ export const TikTokApp = () => {
           return;
         }
 
+        // 🔥 Buscar em promoções do feed (promos criadas para a modelo)
+        console.log('🔍 Buscando em promoções do feed...');
+        const { data: promos } = await (supabase as any)
+          .from('feed_promotions')
+          .select('*')
+          .eq('model_id', modelId)
+          .eq('is_active', true)
+          .order('priority', { ascending: false })
+          .limit(1);
+        if (promos && promos.length > 0) {
+          const promo = promos[0];
+          const promoVideo = {
+            id: `promo-${promo.id}`,
+            video_url: promo.media_url || '',
+            title: promo.title || modelData?.name || 'Promo',
+            description: promo.description || '',
+            user_id: modelId,
+            model_id: modelId,
+            music_name: promo.title || `Som original - ${modelData?.username}`,
+            visibility: 'public' as const,
+            likes_count: promo.base_likes || 0,
+            comments_count: 0,
+            shares_count: 0,
+            views_count: promo.base_views || 0,
+            is_active: true,
+            created_at: promo.created_at || new Date().toISOString(),
+            user: {
+              id: modelData.id,
+              username: modelData.username,
+              avatar_url: promo.avatar_url || modelData.avatar_url || DEFAULT_AVATAR,
+              followers_count: modelData.followers_count || 0,
+              following_count: 0,
+              is_online: modelData.is_live || false,
+              created_at: modelData.created_at || new Date().toISOString(),
+              bio: modelData.bio || ''
+            }
+          };
+          const newVideos = [promoVideo, ...videos];
+          setVideos(newVideos as Video[]);
+          setCurrentVideoIndex(0);
+          setTimeout(() => { emblaApi?.reInit?.(); emblaApi?.scrollTo(0, true); }, 50);
+          console.log('✅ Promoção carregada direto no feed');
+          return;
+        }
+
         // Mesmo sem vídeo, abrir perfil da modelo com vídeo placeholder
         console.log('ℹ️ Nenhum vídeo encontrado, abrindo perfil da modelo sem vídeo');
         const placeholderVideo = {

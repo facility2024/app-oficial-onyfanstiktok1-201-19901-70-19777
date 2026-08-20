@@ -177,8 +177,31 @@ export const AdminFeedPromotions = () => {
     },
   });
 
+  // Garante sessão válida + role admin antes de qualquer escrita (evita erro de RLS por token expirado)
+  const ensureAdminSession = async () => {
+    let { data: { session } } = await supabase.auth.getSession();
+    const expired = !session || (session.expires_at ? session.expires_at * 1000 < Date.now() + 30_000 : false);
+    if (expired) {
+      const { data } = await supabase.auth.refreshSession();
+      session = data.session;
+    }
+    if (!session?.user) {
+      throw new Error('Sessão expirada. Faça login novamente como admin para publicar.');
+    }
+    const { data: roleData } = await (supabase as any)
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    if (!roleData) {
+      throw new Error(`A conta logada (${session.user.email}) não possui permissão de admin.`);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (formData: typeof emptyForm & { id?: string; model_id?: string }) => {
+      await ensureAdminSession();
       // Build schedule_date from date + time
       let scheduleDateValue: string | null = null;
       if (!formData.send_now && formData.schedule_date && formData.schedule_time) {
@@ -531,6 +554,13 @@ export const AdminFeedPromotions = () => {
     }
     if (!form.display_name) {
       toast.error('Preencha o Nome de Exibição');
+      return;
+    }
+
+    try {
+      await ensureAdminSession();
+    } catch (e: any) {
+      toast.error(e.message);
       return;
     }
 

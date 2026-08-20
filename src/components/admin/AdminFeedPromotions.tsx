@@ -557,6 +557,13 @@ export const AdminFeedPromotions = () => {
       return;
     }
 
+    try {
+      await ensureAdminSession();
+    } catch (e: any) {
+      toast.error(e.message);
+      return;
+    }
+
     setBatchSaving(true);
     let successCount = 0;
     let modelId: string | undefined;

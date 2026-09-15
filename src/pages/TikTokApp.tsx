@@ -670,9 +670,8 @@ export const TikTokApp = () => {
       if ((index + 1) % adminInterval !== 0) return;
 
       const slotIndex = Math.floor((index + 1) / adminInterval) - 1;
-      // 🕒 1 exibição por anúncio por período do dia: não recicla a fila
-      if (slotIndex >= adPool.length) return;
-      const selectedPromo = adPool[slotIndex];
+      // 🔁 Fila circular: ao esgotar os anúncios, reinicia sem repetir em sequência
+      const selectedPromo = adPool[slotIndex % adPool.length];
       if (!selectedPromo || selectedPromo.id === lastPromoId) return;
 
       lastPromoId = selectedPromo.id;

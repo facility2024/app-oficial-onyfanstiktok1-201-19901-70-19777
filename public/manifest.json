@@ -1,7 +1,7 @@
 {
-  "name": "OnyTikTok",
-  "short_name": "OnyTikTok",
-  "description": "OnyTikTok - Instale nosso app, não precisa Google Play e nem App Store",
+  "name": "CocoNudi",
+  "short_name": "CocoNudi",
+  "description": "CocoNudi - Plataforma de videos curtos para modelos. Conteudo exclusivo gratuito.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a1a",

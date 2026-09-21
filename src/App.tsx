@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { OfflineHandler } from "@/components/OfflineHandler";
+import { SecurityProvider } from "@/components/SecurityProvider";
 import { UserLocationTracker } from "@/components/UserLocationTracker";
 import { SessionManager } from "@/components/SessionManager";
 import { AdminRoute } from "@/components/AdminRoute";
@@ -76,6 +77,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
+  <SecurityProvider>
   <QueryClientProvider client={queryClient}>
     <CartProvider>
     <AudioSessionProvider>
@@ -250,6 +252,7 @@ const App = () => (
     </AudioSessionProvider>
     </CartProvider>
   </QueryClientProvider>
+  </SecurityProvider>
 );
 
 export default App;

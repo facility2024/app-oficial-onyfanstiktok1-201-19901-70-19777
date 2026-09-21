@@ -26,6 +26,7 @@ interface TargetRow {
   followers_count?: number;
   base_followers?: number;
   type: TargetType;
+  videoIds?: string[];
 }
 
 
@@ -173,6 +174,8 @@ export const AdminEngagement: React.FC = () => {
           nameById[p.id] = p.name || p.username || 'Criadora';
         });
 
+        // Deduplicate by owner (model/creator name) - keep aggregated data
+        const ownerMap: Record<string, { id: string; label: string; owner: string; origin: string; likes_count: number; views_count: number; base_likes: number; base_views: number; videoIds: string[] }> = {};
         videos.forEach((v) => {
           const ownerId = v.creator_id || v.model_id;
           const owner = (ownerId && nameById[ownerId]) || 'Sem perfil vinculado';
@@ -181,17 +184,29 @@ export const AdminEngagement: React.FC = () => {
             : v.upload_source
             ? `Externo (${v.upload_source})`
             : 'Modelo';
-          collected.push({
-            id: v.id,
-            label: v.title || v.description?.slice(0, 60) || `Vídeo ${String(v.id).slice(0, 8)}`,
-            owner,
-            origin,
-            likes_count: v.likes_count || 0,
-            views_count: v.views_count || 0,
-            base_likes: v.base_likes || 0,
-            base_views: v.base_views || 0,
-            type: 'video',
-          });
+          const key = `${owner}-${origin}`;
+          if (ownerMap[key]) {
+            ownerMap[key].videoIds.push(v.id);
+            ownerMap[key].likes_count += v.likes_count || 0;
+            ownerMap[key].views_count += v.views_count || 0;
+            ownerMap[key].base_likes += v.base_likes || 0;
+            ownerMap[key].base_views += v.base_views || 0;
+          } else {
+            ownerMap[key] = {
+              id: v.id,
+              label: v.title || v.description?.slice(0, 60) || `Vídeo ${String(v.id).slice(0, 8)}`,
+              owner,
+              origin,
+              likes_count: v.likes_count || 0,
+              views_count: v.views_count || 0,
+              base_likes: v.base_likes || 0,
+              base_views: v.base_views || 0,
+              videoIds: [v.id],
+            };
+          }
+        });
+        Object.values(ownerMap).forEach((entry) => {
+          collected.push({ ...entry, type: 'video' });
         });
       }
 
@@ -413,16 +428,39 @@ export const AdminEngagement: React.FC = () => {
     }
     setSaving(true);
     try {
-      const videoIds = selectedIds.filter((id) => rowsById[id]?.type === 'video');
-      const promoIds = selectedIds.filter((id) => rowsById[id]?.type === 'promo');
-      const modelIds = selectedIds.filter((id) => rowsById[id]?.type === 'model');
-      const profileIds = selectedIds.filter((id) => rowsById[id]?.type === 'profile');
+      // Collect all video IDs (expanding deduplicated rows)
+      const allVideoIds: string[] = [];
+      const promoIds: string[] = [];
+      const modelIds: string[] = [];
+      const profileIds: string[] = [];
 
-      if (videoIds.length) {
+      selectedIds.forEach((id) => {
+        const row = rowsById[id];
+        if (!row) return;
+        if (row.type === 'video') {
+          // Use videoIds array (all videos for this owner) or fall back to single id
+          if (row.videoIds && row.videoIds.length > 0) {
+            allVideoIds.push(...row.videoIds);
+          } else {
+            allVideoIds.push(id);
+          }
+        } else if (row.type === 'promo') {
+          promoIds.push(id);
+        } else if (row.type === 'model') {
+          modelIds.push(id);
+        } else if (row.type === 'profile') {
+          profileIds.push(id);
+        }
+      });
+
+      // Deduplicate video IDs
+      const uniqueVideoIds = Array.from(new Set(allVideoIds));
+
+      if (uniqueVideoIds.length) {
         const { error } = await (supabase as any)
           .from('videos')
           .update({ base_likes: baseLikes, base_views: baseViews })
-          .in('id', videoIds);
+          .in('id', uniqueVideoIds);
         if (error) throw error;
       }
       if (promoIds.length) {
@@ -446,7 +484,8 @@ export const AdminEngagement: React.FC = () => {
           .in('id', profileIds);
         if (error) throw error;
       }
-      toast.success(`Aplicado em ${selectedIds.length} item(ns)`);
+      const totalUpdated = uniqueVideoIds.length + promoIds.length + modelIds.length + profileIds.length;
+      toast.success(`Aplicado em ${totalUpdated} item(ns)`);
       setSelected({});
       loadTargets();
     } catch (e: any) {
@@ -468,15 +507,35 @@ export const AdminEngagement: React.FC = () => {
     setSaving(true);
     try {
       const { data: authData } = await supabase.auth.getUser();
-      const payload = selectedIds.map((id) => ({
-        target_type: rowsById[id]?.type || 'video',
-        target_id: id,
-        target_label: rowsById[id]?.label || null,
-        base_likes: baseLikes,
-        base_views: baseViews,
-        scheduled_at: new Date(scheduledAt).toISOString(),
-        created_by: authData?.user?.id || null,
-      }));
+      const payload: any[] = [];
+      selectedIds.forEach((id) => {
+        const row = rowsById[id];
+        if (!row) return;
+        if (row.type === 'video' && row.videoIds && row.videoIds.length > 0) {
+          // Create schedule for ALL videos of this owner
+          row.videoIds.forEach((vid) => {
+            payload.push({
+              target_type: 'video',
+              target_id: vid,
+              target_label: row.label || null,
+              base_likes: baseLikes,
+              base_views: baseViews,
+              scheduled_at: new Date(scheduledAt).toISOString(),
+              created_by: authData?.user?.id || null,
+            });
+          });
+        } else {
+          payload.push({
+            target_type: row?.type || 'video',
+            target_id: id,
+            target_label: row?.label || null,
+            base_likes: baseLikes,
+            base_views: baseViews,
+            scheduled_at: new Date(scheduledAt).toISOString(),
+            created_by: authData?.user?.id || null,
+          });
+        }
+      });
       const { error } = await (supabase as any).from('engagement_schedules').insert(payload);
       if (error) throw error;
       toast.success(`${payload.length} agendamento(s) criado(s)`);
@@ -604,6 +663,11 @@ export const AdminEngagement: React.FC = () => {
                       <p className="text-xs text-gray-400 font-mono">
                         {r.id}
                         <span className="ml-2 font-sans text-purple-300 font-bold">{r.origin}</span>
+                        {r.videoIds && r.videoIds.length > 1 && (
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-yellow-500/20 text-yellow-400">
+                            {r.videoIds.length} vídeos
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-4 text-xs shrink-0">

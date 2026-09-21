@@ -125,6 +125,7 @@ const navigationGroups = [
       { id: 'webhook-logs', label: 'Webhooks', icon: FileText },
       { id: 'email-events', label: 'E-mails', icon: Mail },
       { id: 'neonpay', label: 'NeonPay (Comissão)', icon: DollarSign },
+      { id: 'socios', label: 'Socios (Split NeonPay)', icon: Users },
       { id: 'checkout-page-pix', label: 'Página de Checkout (PIX)', icon: DollarSign },
       { id: 'products', label: 'Produtos & Liberações', icon: DollarSign },
       // 'Páginas de Acesso' removido — acesse via botão "Conteúdo" em cada produto

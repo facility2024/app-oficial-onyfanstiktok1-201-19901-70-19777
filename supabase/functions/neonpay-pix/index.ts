@@ -19,9 +19,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
+    // 1. Buscar comissao da plataforma
     const { data: pct } = await supabase.rpc('get_commission_percentage')
     const commission = Number(pct ?? 20)
 
+    // 2. Buscar ID do vendedor no NeonPay
     const { data: seller } = await supabase
       .from('profiles').select('neonpay_producer_id').eq('id', seller_id).maybeSingle()
     if (!seller?.neonpay_producer_id) {
@@ -30,17 +32,46 @@ Deno.serve(async (req) => {
       })
     }
 
+    // 3. Calcular valores
     const total = Number(amount)
     const platformAmount = +(total * (commission / 100)).toFixed(2)
     const sellerAmount = +(total - platformAmount).toFixed(2)
-    const totalCents = Math.round(total * 100)
-    const sellerCents = Math.round(sellerAmount * 100)
+
+    // 4. Buscar socios ativos e calcular splits
+    const { data: sociosData } = await supabase
+      .rpc('get_active_socios')
+
+    const socioSplits: { recipient_id: string; amount: number }[] = []
+    let totalSocios = 0
+
+    if (sociosData && sociosData.length > 0) {
+      for (const socio of sociosData) {
+        const splitAmount = +(sellerAmount * Number(socio.percentage) / 100).toFixed(2)
+        if (splitAmount > 0) {
+          socioSplits.push({
+            recipient_id: socio.neonpay_producer_id,
+            amount: Math.round(splitAmount * 100), // centavos
+          })
+          totalSocios += splitAmount
+        }
+      }
+    }
+
+    // 5. Valor final do vendedor (descontando splits dos socios)
+    const sellerNet = +(sellerAmount - totalSocios).toFixed(2)
+    const sellerCents = Math.round(sellerNet * 100)
+
+    // 6. Montar splits: vendedor + socios
+    const splits = [
+      { recipient_id: seller.neonpay_producer_id, amount: sellerCents },
+      ...socioSplits,
+    ]
 
     const payload = {
       payment_method: 'pix',
-      amount: totalCents,
+      amount: Math.round(total * 100),
       customer,
-      splits: [{ recipient_id: seller.neonpay_producer_id, amount: sellerCents }],
+      splits,
       metadata: { item_id, item_type, seller_id },
     }
 
@@ -70,6 +101,8 @@ Deno.serve(async (req) => {
       commission_percentage: commission,
       platform_amount: platformAmount,
       seller_amount: sellerAmount,
+      seller_net: sellerNet,
+      socios_total: totalSocios,
       seller_id,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (e) {

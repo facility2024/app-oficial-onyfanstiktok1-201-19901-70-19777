@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.jpg" type="image/jpeg">
     <title>CocoNudi - Plataforma de Videos Curtos para Modelos | App Gratisfimo</title>
-    <meta name="description" content="CocoNudi e o app gratuito para assistir videos curtos de modelos. Sem precisar de instalacao, sem Google Play. Conteudo exclusivo que o Instagram e TikTok nao mostram. Baixe agora!">
-    <meta name="keywords" content="coconudi, app videos curtos, modelos, conteudo exclusivo, videos tiktok, plataforma videos, app gratis">
+    <meta name="description" content="CocoNudi e o app gratuito para assistir videos curtos de modelos. Sem precisar de instalação, sem Google Play. Conteúdo exclusivo que o Instagram e TikTok não mostram. Baixe agora!">
+    <meta name="keywords" content="coconudi, app videos curtos, modelos, conteudo exclusivo, videos tiktok, plataforma videos, app gratis, conteudo adulto">
     <meta name="author" content="CocoNudi" />
     <link rel="canonical" href="https://coconudi.com/" />
     <meta name="google-site-verification" content="JihU1nW0miC6E0qkKK6p7ea1TvFaF7LAG-5hQAjJZmw" />
@@ -20,8 +20,10 @@
     <meta name="format-detection" content="telephone=no">
 
     <!-- Security Meta Tags -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.b-cdn.net https://iframe.mediadelivery.net https://player.mediadelivery.net https://video.bunnycdn.com https://storage.bunnycdn.com https://api.asaas.com https://sandbox.asaas.com https://www.asaas.com https://api.neonpay.com.br https://maps.googleapis.com https://maps.gstatic.com https://nominatim.openstreetmap.org; frame-src 'self' https://iframe.mediadelivery.net https://player.mediadelivery.net https://www.asaas.com https://sandbox.asaas.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow">
 
@@ -29,7 +31,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://coconudi.com/" />
     <meta property="og:title" content="CocoNudi - Plataforma de Videos Curtos para Modelos">
-    <meta property="og:description" content="CocoNudi e o app gratuito para assistir videos curtos de modelos. Sem precisar de instalacao. Conteudo exclusivo que o Instagram e TikTok nao mostram.">
+    <meta property="og:description" content="CocoNudi e o app gratuito para assistir videos curtos de modelos. Sem precisar de instalação. Conteúdo exclusivo que o Instagram e TikTok não mostram.">
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/AxJHg0XBtkXP1oxakotgcNUSCxi2/social-images/social-1772234390490-Design_sem_nome.webp">
     <meta property="og:site_name" content="CocoNudi" />
     <meta property="og:locale" content="pt_BR" />
@@ -38,7 +40,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@coconudi" />
     <meta name="twitter:title" content="CocoNudi - Plataforma de Videos Curtos para Modelos">
-    <meta name="twitter:description" content="CocoNudi e o app gratuito para assistir videos curtos de modelos. Sem precisar de instalacao. Conteudo exclusivo que o Instagram e TikTok nao mostram.">
+    <meta name="twitter:description" content="CocoNudi e o app gratuito para assistir videos curtos de modelos. Sem precisar de instalação. Conteúdo exclusivo que o Instagram e TikTok não mostram.">
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/AxJHg0XBtkXP1oxakotgcNUSCxi2/social-images/social-1772234390490-Design_sem_nome.webp">
 
     <!-- Structured Data -->
@@ -48,7 +50,7 @@
       "@type": "WebApplication",
       "name": "CocoNudi",
       "url": "https://coconudi.com/",
-      "description": "Plataforma de videos curtos para modelos. Conteudo exclusivo gratuito.",
+      "description": "Plataforma de videos curtos para modelos. Conteúdo exclusivo gratuito.",
       "applicationCategory": "Entertainment",
       "operatingSystem": "Web",
       "offers": {
@@ -72,6 +74,28 @@
   </head>
 
   <body style="background:#000;margin:0;">
+    <style>
+      /* Anti-inspection styles */
+      * {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-user-drag: none;
+      }
+      input, textarea, [contenteditable="true"] {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+      }
+      img {
+        -webkit-user-drag: none;
+        user-drag: none;
+        pointer-events: none;
+      }
+    </style>
     <div id="root" style="background:#000;min-height:100vh;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

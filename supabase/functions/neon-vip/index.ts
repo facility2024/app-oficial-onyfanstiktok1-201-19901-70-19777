@@ -115,8 +115,32 @@ Deno.serve(async (req) => {
     let creatorNetReais = 0
     if (normalizedCreatorProducerId && creatorShareReais > 0) {
       creatorNetReais = Number(Math.max(0, creatorShareReais - estFeeReais).toFixed(2))
-      sellerCents = Math.round(creatorNetReais * 100)
     }
+
+    // === SPLIT DE SOCIOS ===
+    // Buscar socios ativos e calcular splits sobre o valor liquido do criador
+    const { data: sociosData } = await admin.rpc('get_active_socios')
+    const socioSplits: { producerId: string; amount: number }[] = []
+    let totalSociosReais = 0
+
+    if (sociosData && sociosData.length > 0 && creatorNetReais > 0) {
+      for (const socio of sociosData) {
+        const socioProducerId = String(socio.neonpay_producer_id || '').trim()
+        if (!socioProducerId || socioProducerId === ADMIN_PRODUCER_ID) continue
+        const splitReais = +(creatorNetReais * Number(socio.percentage) / 100).toFixed(2)
+        if (splitReais > 0) {
+          socioSplits.push({
+            producerId: socioProducerId,
+            amount: isPix ? Number(splitReais.toFixed(2)) : Math.round(splitReais * 100),
+          })
+          totalSociosReais += splitReais
+        }
+      }
+    }
+
+    // Descontar splits dos socios do valor do criador
+    creatorNetReais = Number(Math.max(0, creatorNetReais - totalSociosReais).toFixed(2))
+    sellerCents = Math.round(creatorNetReais * 100)
 
     const buildPayload = (withSplit: boolean) => {
       const p: any = {
@@ -141,6 +165,11 @@ Deno.serve(async (req) => {
         // restante nela automaticamente, então não enviamos split nenhum para ela.
         if (normalizedCreatorProducerId !== ADMIN_PRODUCER_ID) {
           splits.push({ producerId: normalizedCreatorProducerId, amount: toUnit(creatorNetReais) })
+        }
+
+        // Adicionar splits dos socios
+        for (const socioSplit of socioSplits) {
+          splits.push(socioSplit)
         }
 
         // Não enviamos split para a conta admin/dona da API.
@@ -214,6 +243,7 @@ Deno.serve(async (req) => {
       creator_net_amount: creatorNetReais,
       neonpay_fee: estFeeReais,
       creator_producer_id: normalizedCreatorProducerId,
+      socio_amount: totalSociosReais,
     })
     if (insertedTx.error) console.log('[payment_transactions insert error]', insertedTx.error.message)
 

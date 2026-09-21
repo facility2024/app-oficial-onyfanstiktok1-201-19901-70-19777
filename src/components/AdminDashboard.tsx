@@ -61,6 +61,7 @@ import { AdminFeedPromotions } from './admin/AdminFeedPromotions';
 import AdminLoja from './admin/AdminLoja';
 import { AdminStores } from './admin/AdminStores';
 import CommissionSettings from './admin/CommissionSettings';
+import { SocioSettings } from './admin/SocioSettings';
 import SalesReports from './admin/SalesReports';
 import { AdminAdsGarotasTop } from './admin/AdminAdsGarotasTop';
 import { AdminCheckoutOrderBumps } from './admin/AdminCheckoutOrderBumps';
@@ -299,6 +300,8 @@ export const AdminDashboard = () => {
         return <AdminEmailEvents />;
       case 'neonpay':
         return <div className="p-4"><CommissionSettings /></div>;
+      case 'socios':
+        return <div className="p-4"><SocioSettings /></div>;
       case 'sales-reports':
         return <SalesReports />;
       case 'documentation':

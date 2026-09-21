@@ -357,7 +357,7 @@ export const AdminEngagement: React.FC = () => {
             .forEach((r) => collected.push(r));
         }
 
-        setSearchRows(collected.slice(0, 100));
+        setSearchRows(collected);
       } catch (e: any) {
         console.warn('Erro na busca de perfis:', e?.message || e);
         setSearchRows([]);
@@ -370,7 +370,7 @@ export const AdminEngagement: React.FC = () => {
   }, [search, tab, rows]);
 
   const filteredRows = useMemo(
-    () => (searchRows !== null ? searchRows : rows.slice(0, 100)),
+    () => (searchRows !== null ? searchRows : rows),
     [rows, searchRows]
   );
 
@@ -581,7 +581,7 @@ export const AdminEngagement: React.FC = () => {
                   ? 'Buscando perfis...'
                   : searchRows !== null
                   ? `${filteredRows.length} resultado(s) da busca global.`
-                  : `${filteredRows.length} item(ns) exibido(s) de ${rows.length} carregado(s).`}
+                  : `${filteredRows.length} item(ns) carregado(s).`}
               </p>
 
               <div className="border border-gray-700 rounded-lg divide-y divide-gray-800 max-h-[380px] overflow-auto">

@@ -9,7 +9,7 @@
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![PRD](https://img.shields.io/badge/docs-PRD%20v2.0-orange.svg)](docs/PRD_COCONUDI_V2.md)
   
-  [Demo](https://coconudi.lovable.app) · [Documentação](docs/) · [Reportar Bug](https://github.com/yourusername/coconudi/issues)
+  [Demo](https://coconudi.com) · [Documentação](docs/) · [Reportar Bug](https://github.com/yourusername/coconudi/issues)
 </div>
 
 ---

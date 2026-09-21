@@ -47,11 +47,12 @@ Vite config uses port **3000** (not the typical 5173). README is stale on this.
 
 ## Supabase Edge Functions
 
-33 edge functions in `supabase/functions/`. Only 21 are configured in `supabase/config.toml`. Most have `verify_jwt = false`. Key ones:
-- `generate-pix`, `verify-payment`, `process-payment` — Payment flow
-- `follow-model`, `share-video`, `share-profile` — Social features
-- `webhook-dispatcher`, `neonpay-webhook`, `payment-webhook` — Payment webhooks
+33 edge functions in `supabase/functions/`. Only 19 are configured in `supabase/config.toml`. Most have `verify_jwt = false`. Key ones:
+- `process-payment`, `asaas-checkout`, `asaas-verify-payment`, `check-payment-status` — Payment flow
+- `share-video`, `share-profile` — Social features
+- `webhook-dispatcher`, `neonpay-webhook`, `payment-webhook`, `resend-webhook` — Webhooks
 - `ingest-instagram`, `ig-create-creator-account` — Instagram integration
+- `neon-vip`, `neon-vip-status` — NeonPay VIP subscription
 
 ## Known Issues (Verify Before Fixing)
 
@@ -59,7 +60,7 @@ Vite config uses port **3000** (not the typical 5173). README is stale on this.
 - Intelligent feed may be disabled in favor of basic feed
 - RLS policies have caused recursion issues — many fix scripts in `supabase/`
 - README's `npm run type-check` script does not exist
-- `supabase/` has 80+ ad-hoc SQL fix scripts — check before creating new ones
+- `supabase/` has 389 SQL files including many ad-hoc fix scripts — check before creating new ones
 
 ## Lovable Platform
 

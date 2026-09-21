@@ -21,6 +21,7 @@ interface VideoResult {
   owner: string;
   ownerId: string | null;
   thumbnail_url: string | null;
+  count?: number;
 }
 
 interface SearchModalProps {
@@ -85,18 +86,26 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
           (ps || []).forEach((p: any) => { nameById[p.id] = p.name || p.username || 'Criadora'; });
         }
 
-        setVideoResults(
-          rows.slice(0, 20).map((v: any) => {
-            const ownerId = v.creator_id || v.model_id || null;
-            return {
+        // Deduplicate video results by owner name
+        const ownerVideoMap: Record<string, { id: string; title: string; owner: string; ownerId: string | null; thumbnail_url: string | null; count: number }> = {};
+        rows.slice(0, 20).forEach((v: any) => {
+          const ownerId = v.creator_id || v.model_id || null;
+          const owner = (ownerId && nameById[ownerId]) || 'Perfil';
+          const key = owner;
+          if (ownerVideoMap[key]) {
+            ownerVideoMap[key].count += 1;
+          } else {
+            ownerVideoMap[key] = {
               id: v.id,
               title: v.title || v.description?.slice(0, 50) || `Vídeo ${String(v.id).slice(0, 8)}`,
-              owner: (ownerId && nameById[ownerId]) || 'Perfil',
+              owner,
               ownerId,
               thumbnail_url: v.thumbnail_url || null,
+              count: 1,
             };
-          })
-        );
+          }
+        });
+        setVideoResults(Object.values(ownerVideoMap));
       } catch (e) {
         console.warn('Erro na busca de vídeos:', e);
         setVideoResults([]);
@@ -319,7 +328,7 @@ export const SearchModal = ({ isOpen, onClose, onSelectModel, onSelectVideo }: S
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-white text-sm font-semibold truncate">{v.title}</p>
-                    <p className="text-white/60 text-xs truncate">{v.owner}</p>
+                    <p className="text-white/60 text-xs truncate">{v.owner}{v.count && v.count > 1 ? ` (${v.count} vídeos)` : ''}</p>
                     <p className="text-white/40 text-[10px] font-mono truncate">{v.id}</p>
                   </div>
                 </div>

@@ -1,5 +1,25 @@
 import { useEffect, useCallback } from 'react';
 
+function isInsideLovableEditor(): boolean {
+  try {
+    if (window.self !== window.top) return true;
+    if ((window as any).__LOVABLE__) return true;
+    if (document.referrer.includes('lovable.dev')) return true;
+    if (window.location.ancestorOrigins && window.location.ancestorOrigins.length > 0) {
+      for (let i = 0; i < window.location.ancestorOrigins.length; i++) {
+        if (window.location.ancestorOrigins[i].includes('lovable')) return true;
+      }
+    }
+  } catch {
+    return true;
+  }
+  return false;
+}
+
+function isDevEnvironment(): boolean {
+  return import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+}
+
 function blockContextMenu(e: Event) {
   e.preventDefault();
   e.stopPropagation();
@@ -61,7 +81,15 @@ function debuggerTrap() {
 }
 
 export function SecurityProvider({ children }: { children: React.ReactNode }) {
+  const shouldProtect = useCallback(() => {
+    if (isInsideLovableEditor()) return false;
+    if (isDevEnvironment()) return false;
+    return true;
+  }, []);
+
   const setupSecurity = useCallback(() => {
+    if (!shouldProtect()) return;
+
     document.addEventListener('contextmenu', blockContextMenu, { capture: true });
     document.addEventListener('keydown', blockKeyInspect, { capture: true });
     document.addEventListener('selectstart', (e: Event) => {
@@ -82,7 +110,7 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
       overrideConsole();
     }
 
-    const devToolsCheck = setInterval(detectDevToolsOpen, 3000);
+    const devToolsCheck = setInterval(detectDevToolsOpen, 5000);
 
     const debuggerCheck = setInterval(() => {
       const start = performance.now();
@@ -94,13 +122,13 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
         document.body.innerHTML = '';
         window.location.href = 'about:blank';
       }
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearInterval(devToolsCheck);
       clearInterval(debuggerCheck);
     };
-  }, []);
+  }, [shouldProtect]);
 
   useEffect(() => {
     const cleanup = setupSecurity();

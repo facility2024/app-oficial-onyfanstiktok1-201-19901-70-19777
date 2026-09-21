@@ -7,14 +7,16 @@ React SPA (TikTok-style video platform for models). Built with Vite + React 18 +
 ## Commands
 
 ```bash
-npm run dev          # Dev server on localhost:3000
-npm run build        # Production build → dist/
-npm run build:dev    # Dev-mode build
-npm run lint         # ESLint (flat config)
-npm run preview      # Preview production build
+npm install --legacy-peer-deps   # MUST use --legacy-peer-deps (peer dep conflicts exist)
+npm run dev                      # Dev server on localhost:3000
+npm run build                    # Production build → dist/
+npm run build:dev                # Dev-mode build
+npm run lint                     # ESLint (flat config, no Prettier)
+npm run preview                  # Preview production build
+npx tsc --noEmit                 # Manual type-check (no script in package.json)
 ```
 
-**No type-check script exists in package.json** despite README claiming `npm run type-check`. TypeScript checking happens through ESLint. Run `npx tsc --noEmit` manually if needed.
+**No `type-check` script exists** despite README claiming `npm run type-check`. TypeScript checking happens through ESLint (`no-unused-vars` is off). Run `npx tsc --noEmit` manually if needed.
 
 ## Dev Server Port
 
@@ -45,7 +47,7 @@ Vite config uses port **3000** (not the typical 5173). README is stale on this.
 
 ## Supabase Edge Functions
 
-19+ edge functions in `supabase/functions/`. Most have `verify_jwt = false` (check `supabase/config.toml`). Key ones:
+33 edge functions in `supabase/functions/`. Only 21 are configured in `supabase/config.toml`. Most have `verify_jwt = false`. Key ones:
 - `generate-pix`, `verify-payment`, `process-payment` — Payment flow
 - `follow-model`, `share-video`, `share-profile` — Social features
 - `webhook-dispatcher`, `neonpay-webhook`, `payment-webhook` — Payment webhooks
@@ -57,6 +59,7 @@ Vite config uses port **3000** (not the typical 5173). README is stale on this.
 - Intelligent feed may be disabled in favor of basic feed
 - RLS policies have caused recursion issues — many fix scripts in `supabase/`
 - README's `npm run type-check` script does not exist
+- `supabase/` has 80+ ad-hoc SQL fix scripts — check before creating new ones
 
 ## Lovable Platform
 

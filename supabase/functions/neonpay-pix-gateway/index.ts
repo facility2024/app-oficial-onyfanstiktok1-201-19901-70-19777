@@ -213,19 +213,32 @@ Deno.serve(async (req) => {
     // Split NeonPay: igual unidade ao amount (reais neste endpoint).
     if (producerSplits.length > 0) payload.splits = producerSplits
 
-    const r = await fetch(NEONPAY_URL, {
+    const doPost = (body: Record<string, unknown>) => fetch(NEONPAY_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-public-key': publicKey,
         'x-secret-key': secretKey,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     })
 
-    const text = await r.text()
+    let r = await doPost(payload)
+    let text = await r.text()
     let data: Record<string, unknown>
     try { data = JSON.parse(text) } catch { data = { raw: text } }
+
+    // Se a NeonPay recusar o split (GATEWAY_INTERNAL_SERVER_ERROR etc),
+    // refaz SEM split para o checkout não morrer. O dinheiro fica 100% na
+    // conta admin e depois dá para conciliar via metadata.
+    if (!r.ok && producerSplits.length > 0) {
+      console.error('NeonPay error com split, retry sem split', r.status, data)
+      const { splits: _splits, ...payloadSemSplit } = payload
+      r = await doPost(payloadSemSplit)
+      text = await r.text()
+      try { data = JSON.parse(text) } catch { data = { raw: text } }
+      if (r.ok) producerSplits.length = 0
+    }
 
     if (!r.ok) {
       console.error('NeonPay error', r.status, data)

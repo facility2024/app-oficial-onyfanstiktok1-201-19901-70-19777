@@ -1607,6 +1607,7 @@ export type Database = {
       }
       checkout_purchases: {
         Row: {
+          commission_percentage: number | null
           created_at: string
           customer_email: string | null
           customer_name: string | null
@@ -1617,12 +1618,17 @@ export type Database = {
           metadata: Json
           paid_at: string | null
           pix_payment_id: string | null
+          platform_amount: number | null
+          seller_amount: number | null
+          seller_percentage: number | null
+          seller_producer_id: string | null
           status: string
           total_amount: number
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          commission_percentage?: number | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
@@ -1633,12 +1639,17 @@ export type Database = {
           metadata?: Json
           paid_at?: string | null
           pix_payment_id?: string | null
+          platform_amount?: number | null
+          seller_amount?: number | null
+          seller_percentage?: number | null
+          seller_producer_id?: string | null
           status?: string
           total_amount?: number
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          commission_percentage?: number | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
@@ -1649,6 +1660,10 @@ export type Database = {
           metadata?: Json
           paid_at?: string | null
           pix_payment_id?: string | null
+          platform_amount?: number | null
+          seller_amount?: number | null
+          seller_percentage?: number | null
+          seller_producer_id?: string | null
           status?: string
           total_amount?: number
           updated_at?: string
@@ -6271,6 +6286,36 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_socios: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          neonpay_producer_id: string
+          percentage: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          neonpay_producer_id: string
+          percentage: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          neonpay_producer_id?: string
+          percentage?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       platform_terms: {
         Row: {
           content: string
@@ -6298,36 +6343,6 @@ export type Database = {
           is_active?: boolean | null
           title?: string
           version?: string
-        }
-        Relationships: []
-      }
-      platform_socios: {
-        Row: {
-          id: string
-          name: string
-          neonpay_producer_id: string
-          percentage: number
-          is_active: boolean | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          name: string
-          neonpay_producer_id: string
-          percentage: number
-          is_active?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string
-          neonpay_producer_id?: string
-          percentage?: number
-          is_active?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -10199,6 +10214,15 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      calculate_socio_splits: {
+        Args: { liquid_amount: number }
+        Returns: {
+          neonpay_producer_id: string
+          socio_id: string
+          socio_name: string
+          split_amount: number
+        }[]
+      }
       cancel_referral: { Args: { p_referral_id: string }; Returns: boolean }
       check_empresa_exists: {
         Args: { check_email: string; check_whatsapp: string }
@@ -10291,6 +10315,15 @@ export type Database = {
         Returns: Json
       }
       generate_unique_referral_code: { Args: never; Returns: string }
+      get_active_socios: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          neonpay_producer_id: string
+          percentage: number
+        }[]
+      }
       get_ad_metrics: {
         Args: never
         Returns: {

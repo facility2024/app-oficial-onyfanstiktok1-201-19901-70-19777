@@ -76,8 +76,8 @@ export const useFinancialData = () => {
     try {
       setLoading(true);
 
-      // Busca paralela: transações + percentual de comissão atual do admin
-      const [{ data: rows, error }, commRes] = await Promise.all([
+      // Busca paralela: transações + vendas de checkout + comissão atual do admin
+      const [{ data: rows, error }, cpRes, commRes] = await Promise.all([
         supabase
           .from('payment_transactions')
           .select(
@@ -85,6 +85,11 @@ export const useFinancialData = () => {
           )
           .order('created_at', { ascending: false })
           .limit(1000),
+        supabase
+          .from('checkout_purchases')
+          .select('id, total_amount, platform_amount, seller_amount, status, paid_at, created_at, gateway')
+          .eq('status', 'paid')
+          .order('created_at', { ascending: false }),
         supabase
           .from('platform_settings')
           .select('value')
@@ -101,15 +106,30 @@ export const useFinancialData = () => {
       const commissionPct = Number((commRes.data as any)?.value ?? 0);
       const roundMoney = (n: number) => Math.round(n * 100) / 100;
 
-      const all = rows || [];
+      // Vendas de checkout (link/template) entram também no financeiro.
+      const checkoutRows = (cpRes.data ?? []).map((c: any) => ({
+        id: c.id,
+        amount: Number(c.total_amount || 0),
+        platform_amount: Number(c.platform_amount ?? 0),
+        seller_amount: Number(c.seller_amount ?? 0),
+        status: 'APPROVED',
+        created_at: c.paid_at || c.created_at,
+        confirmed_at: c.paid_at || c.created_at,
+        private_model_type: null as string | null,
+        gateway: c.gateway,
+        asaas_subscription_id: null,
+      }));
+      const all = [...(rows || []), ...checkoutRows];
       const approved = all.filter((t: any) => String(t.status).toUpperCase() === 'APPROVED');
 
       // Top 10 recentes (todas, inclusive pendentes — para o admin acompanhar)
       const recent: Transaction[] = all.slice(0, 10).map((t: any) => ({
         id: t.id,
-        customer_name: t.private_model_type === 'creator' ? 'Acesso Privado (Criador)' : 'Acesso Privado',
+        customer_name: (t as any).gateway === 'neonpay' ? 'Checkout NeonPay' : (
+          t.private_model_type === 'creator' ? 'Acesso Privado (Criador)' : 'Acesso Privado'
+        ),
         customer_email: null,
-        transaction_type: 'subscription',
+        transaction_type: (t as any).gateway ? 'purchase' : 'subscription',
         amount: Number(t.amount),
         payment_method: inferMethod(t),
         status:
@@ -146,17 +166,20 @@ export const useFinancialData = () => {
       const thisMonthRevenue = thisMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
       const lastMonthRevenue = lastMonthTx.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
 
-      // Saldo do ADMIN = recalculado pela % atual de comissão (mesma regra do painel do criador).
-      // comissaoAdmin = bruto * (pct/100); liquidoCriador = bruto - comissaoAdmin
-      const platformBalance = roundMoney(
-        approved.reduce((s: number, t: any) => s + Number(t.amount || 0) * (commissionPct / 100), 0)
-      );
-      const creatorPaid = roundMoney(
-        approved.reduce(
-          (s: number, t: any) => s + Number(t.amount || 0) * (1 - commissionPct / 100),
-          0
-        )
-      );
+      // Saldo do ADMIN: usa os valores reais gravados (platform_amount / seller_amount)
+      // e, quando ausentes, estima pela % atual de comissão.
+      const amtOf = (t: any) => roundMoney(Number(t.amount || 0));
+      const platOf = (t: any) =>
+        Number(t.platform_amount ?? 0) > 0
+          ? roundMoney(Number(t.platform_amount))
+          : roundMoney(amtOf(t) * (commissionPct / 100));
+      const sellerOf = (t: any) =>
+        Number(t.seller_amount ?? 0) > 0
+          ? roundMoney(Number(t.seller_amount))
+          : roundMoney(amtOf(t) * (1 - commissionPct / 100));
+
+      const platformBalance = roundMoney(approved.reduce((s: number, t: any) => s + platOf(t), 0));
+      const creatorPaid = roundMoney(approved.reduce((s: number, t: any) => s + sellerOf(t), 0));
 
       const salesGrowth = yesterdaySales > 0 ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 : 0;
       const revenueGrowth =
@@ -207,7 +230,7 @@ export const useFinancialData = () => {
 
   useEffect(() => {
     fetchFinancialData();
-    const ch = supabase
+    const ch1 = supabase
       .channel('payment_transactions_financial')
       .on(
         'postgres_changes',
@@ -215,8 +238,17 @@ export const useFinancialData = () => {
         () => fetchFinancialData()
       )
       .subscribe();
+    const ch2 = supabase
+      .channel('checkout_purchases_financial')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'checkout_purchases' },
+        () => fetchFinancialData()
+      )
+      .subscribe();
     return () => {
-      supabase.removeChannel(ch);
+      supabase.removeChannel(ch1);
+      supabase.removeChannel(ch2);
     };
   }, []);
 

@@ -18,6 +18,8 @@ const uniqueStrings = (values: unknown[]) =>
 
 const normalizeStatus = (value: unknown) => String(value ?? '').toLowerCase().trim()
 
+const round2 = (value: number) => Math.round(value * 100) / 100
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -191,7 +193,7 @@ Deno.serve(async (req) => {
       try {
         let { data: cps, error: cpsError } = await supabase
           .from('checkout_purchases')
-          .select('id, status')
+          .select('id, status, total_amount')
           .in('gateway_payment_id', lookupIds)
 
         // A NeonPay envia tanto transaction.id quanto identifier. O identifier
@@ -219,8 +221,14 @@ Deno.serve(async (req) => {
 
         for (const cp of (cps ?? [])) {
           if (cp.status !== 'paid') {
+            const cpUpdate: any = { status: 'paid', paid_at: paidAt ?? new Date().toISOString() }
+            // Confirma os valores reais do split informados pela NeonPay.
+            if (commissionAmount > 0) {
+              cpUpdate.seller_amount = round2(commissionAmount)
+              cpUpdate.platform_amount = round2(Math.max(0, round2(Number(cp.total_amount ?? 0)) - commissionAmount - (fee > 0 ? fee : 0)))
+            }
             await supabase.from('checkout_purchases')
-              .update({ status: 'paid', paid_at: paidAt ?? new Date().toISOString() })
+              .update(cpUpdate)
               .eq('id', cp.id)
           }
           const { data: granted, error: grantErr } = await supabase

@@ -10,8 +10,12 @@ const fmt = (n: number) =>
 
 const roundMoney = (value: number) => Number(value.toFixed(2));
 
+// Comissão ativa do admin (platform_settings). Fallback amigável se ausente.
+const DEFAULT_COMMISSION_PCT = 20;
+
 const calculateSaleAmounts = (gross: number, commissionPct: number) => {
-  const platform = roundMoney(gross * (commissionPct / 100));
+  const pct = Number(commissionPct) || DEFAULT_COMMISSION_PCT;
+  const platform = roundMoney(gross * (pct / 100));
   const creatorNet = roundMoney(gross - platform);
   return { platform, creatorNet };
 };
@@ -25,7 +29,7 @@ export default function MySales() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const [purchasesRes, txRes, commRes] = await Promise.all([
+      const [purchasesRes, txRes, cpRes, prodRes, commRes] = await Promise.all([
         supabase
           .from("purchases")
           .select("id, created_at, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
@@ -37,9 +41,16 @@ export default function MySales() {
           .eq("private_model_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
+          .from("profiles").select("neonpay_producer_id").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("checkout_purchases")
+          .select("id, created_at, total_amount, platform_amount, seller_amount, status, gateway")
+          .order("created_at", { ascending: false }),
+        supabase
           .from("platform_settings").select("value").eq("key", "commission_percentage").maybeSingle(),
       ]);
 
+      const producerId = (prodRes.data as any)?.neonpay_producer_id ?? null;
       const pct = Number((commRes.data as any)?.value ?? 0);
 
       const fromPurchases = (purchasesRes.data ?? []).map((p: any) => {
@@ -64,7 +75,23 @@ export default function MySales() {
         };
       });
 
-      const merged = [...fromPurchases, ...fromTx]
+      const fromCheckout = (cpRes.data ?? []).filter((c: any) =>
+        producerId && c.seller_producer_id === producerId
+      ).map((c: any) => {
+        const st = String(c.status || "").toLowerCase();
+        return {
+          id: `checkout_${c.id}`,
+          created_at: c.created_at,
+          amount: Number(c.total_amount || 0),
+          platform_amount: Number(c.platform_amount ?? 0),
+          seller_amount: Number(c.seller_amount ?? 0),
+          seller_net: Number(c.seller_amount ?? 0),
+          status: st === "paid" ? "paid" : "pending",
+          payment_method: "checkout NeonPay",
+        };
+      });
+
+      const merged = [...fromPurchases, ...fromTx, ...fromCheckout]
         .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
       setRows(merged);
       setLoading(false);

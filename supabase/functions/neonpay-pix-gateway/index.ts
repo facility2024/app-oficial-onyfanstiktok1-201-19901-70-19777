@@ -8,6 +8,12 @@ const getObject = (value: unknown) => value && typeof value === 'object' ? value
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i
 const VALID_PLANS = ['mensal', 'trimestral', 'anual']
 
+// Conta NeonPay principal da plataforma: tudo que não for dividido fica nela.
+const ADMIN_PRODUCER_ID = String(Deno.env.get('NEONPAY_ADMIN_PRODUCER_ID') || 'cmn85rxor00wx1ymjcb4z38rw').trim()
+// Taxa estimada da NeonPay para PIX (R$ 0,09), abatida do líquido da plataforma.
+const NEONPAY_EST_FEE_PIX = 0.09
+const round2 = (value: number) => Math.round(value * 100) / 100
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -94,7 +100,103 @@ Deno.serve(async (req) => {
       }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const payload = {
+    // === SPLIT DE LUCRO (SÓCIOS) ===
+    // Modelo: a venda cai 100% na conta admin (ADMIN_PRODUCER_ID). O valor
+    // da parte de cada sócio é descontado na origem via split da NeonPay,
+    // depositando direto na conta NeonPay (producer id) de cada sócio.
+    // Produto/template: sócios configurados no metadata do produto.
+    // Acesso privado: criador dono recebe (valor − comissão do app − taxa).
+    const productIdsTxt = purchaseItems.map((it) => it.product_id)
+    let sociosFromMetadata: Array<{ producer_id: string; percentage: number }> = []
+    if (productIdsTxt.length > 0) {
+      const { data: productRows } = await admin.from('products').select('id, metadata').in('id', productIdsTxt)
+      const meta = getObject(productRows && productRows.length > 0 ? (productRows[0] as any)?.metadata : null)
+      if (Array.isArray(meta.socios)) {
+        for (const entry of meta.socios) {
+          const obj = getObject(entry)
+          const pid = getText(entry && typeof entry === 'object'
+            ? (obj.producer_id ?? obj.produtor ?? obj.producerId)
+            : null)
+          const pct = Number(obj.percentage ?? obj.percent ?? obj.pct ?? 0)
+          if (pid && Number.isFinite(pct) && pct > 0 && pct <= 100) {
+            sociosFromMetadata.push({ producer_id: pid, percentage: pct })
+          }
+        }
+      }
+    }
+
+    let commissionPct = 0
+    if (privateModelId) {
+      const { data: commRow } = await admin
+        .from('platform_settings').select('value').eq('key', 'commission_percentage').maybeSingle()
+      commissionPct = Number((commRow as any)?.value ?? 0)
+    }
+
+    let vipProducerId: string | null = null
+    if (privateModelId) {
+      if (privateModelType === 'creator') {
+        const { data: prof } = await admin
+          .from('profiles').select('neonpay_producer_id').eq('id', privateModelId).maybeSingle()
+        vipProducerId = (prof as any)?.neonpay_producer_id ?? null
+      } else {
+        const { data: modelRow } = await admin
+          .from('models').select('creator_id').eq('id', privateModelId).maybeSingle()
+        const ownerId = (modelRow as any)?.creator_id ?? null
+        if (ownerId) {
+          const { data: prof } = await admin
+            .from('profiles').select('neonpay_producer_id').eq('id', ownerId).maybeSingle()
+          vipProducerId = (prof as any)?.neonpay_producer_id ?? null
+        }
+      }
+    }
+
+    const producerSplits: Array<{ producerId: string; amount: number }> = []
+    let sellerAmount = 0
+    let sellerProducerId: string | null = null
+    let sellerPercentage = 0
+    let platformCommission = 0
+    let vipCreatorShare = 0
+
+    const pushSplit = (producerId: string | null, amountValue: number) => {
+      const pid = String(producerId ?? '').trim()
+      const amt = round2(amountValue)
+      if (!pid || pid === ADMIN_PRODUCER_ID || amt <= 0) return
+      producerSplits.push({ producerId: pid, amount: amt })
+    }
+
+    if (privateModelId) {
+      // Acesso privado: criador recebe (valor − comissão do app − taxa PIX).
+      vipCreatorShare = round2(amount * (1 - commissionPct / 100))
+      const creatorNet = Math.max(0, round2(vipCreatorShare - NEONPAY_EST_FEE_PIX))
+      pushSplit(vipProducerId, creatorNet)
+      sellerProducerId = vipProducerId
+      sellerPercentage = round2(100 - commissionPct)
+      platformCommission = round2(commissionPct)
+    } else {
+      // Produto/template: cada sócio configurado no metadata do produto.
+      for (const s of sociosFromMetadata) {
+        pushSplit(s.producer_id, amount * (s.percentage / 100))
+      }
+      const totalPct = round2(sociosFromMetadata.reduce((a, s) => a + s.percentage, 0))
+      sellerProducerId = producerSplits[0]?.producerId ?? null
+      sellerPercentage = Math.min(100, totalPct)
+      platformCommission = Math.max(0, round2(100 - totalPct))
+    }
+
+    // NeonPay rejeita se "splits + taxas > total": garante margem de segurança.
+    let splitsTotal = round2(producerSplits.reduce((a, b) => a + b.amount, 0))
+    let guard = 0
+    while (producerSplits.length > 0 && splitsTotal + NEONPAY_EST_FEE_PIX > amount && guard < 500) {
+      const biggest = producerSplits.reduce((a, b) => (b.amount > a.amount ? b : a))
+      biggest.amount = round2(biggest.amount - 0.01)
+      guard += 1
+      if (biggest.amount <= 0) producerSplits.splice(producerSplits.indexOf(biggest), 1)
+      splitsTotal = round2(producerSplits.reduce((a, b) => a + b.amount, 0))
+    }
+    sellerAmount = splitsTotal
+    const platformAmount = round2(Math.max(0, amount - sellerAmount - NEONPAY_EST_FEE_PIX))
+
+    const payload: Record<string, unknown> = {
       identifier,
       amount,
       callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/neonpay-webhook`,
@@ -108,6 +210,8 @@ Deno.serve(async (req) => {
         { id: 'garotas-top-10', name: productName, quantity: 1, price: amount },
       ],
     }
+    // Split NeonPay: igual unidade ao amount (reais neste endpoint).
+    if (producerSplits.length > 0) payload.splits = producerSplits
 
     const r = await fetch(NEONPAY_URL, {
       method: 'POST',
@@ -166,10 +270,15 @@ Deno.serve(async (req) => {
         customer_whatsapp: phoneDigits,
         customer_email: customerEmail,
         total_amount: amount,
+        platform_amount: platformAmount,
+        seller_amount: sellerAmount,
+        seller_percentage: sellerPercentage,
+        commission_percentage: platformCommission,
+        seller_producer_id: sellerProducerId,
         status: 'pending',
         gateway: 'neonpay',
         gateway_payment_id: transactionId,
-        metadata: { template_id: templateId, template_slug: templateSlug, identifier },
+        metadata: { template_id: templateId, template_slug: templateSlug, identifier, splits: producerSplits },
       })
       .select('id')
       .single()
@@ -207,6 +316,12 @@ Deno.serve(async (req) => {
         status: 'PENDING',
         private_model_id: privateModelId,
         private_model_type: privateModelType,
+        commission_percentage: platformCommission,
+        platform_amount: platformAmount,
+        creator_amount: vipCreatorShare,
+        creator_net_amount: sellerAmount,
+        neonpay_fee: NEONPAY_EST_FEE_PIX,
+        creator_producer_id: sellerProducerId,
       })
       if (inserted.error) console.log('[neonpay-pix-gateway payment_transactions insert]', inserted.error.message)
     }

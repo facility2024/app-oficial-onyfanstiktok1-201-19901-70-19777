@@ -48,7 +48,7 @@ export default function SalesReports() {
     const fromTs = from;
     const toTs = to + "T23:59:59";
 
-    const [purchasesRes, txRes, commRes] = await Promise.all([
+    const [purchasesRes, txRes, cpRes, commRes] = await Promise.all([
       supabase
         .from("purchases")
         .select("id, created_at, seller_id, amount, platform_amount, seller_amount, neonpay_fee, seller_net, status, payment_method")
@@ -58,6 +58,12 @@ export default function SalesReports() {
       supabase
         .from("payment_transactions")
         .select("id, created_at, amount, platform_amount, creator_amount, creator_net_amount, neonpay_fee, status, plan_type, private_model_id")
+        .gte("created_at", fromTs)
+        .lte("created_at", toTs)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("checkout_purchases")
+        .select("id, created_at, total_amount, platform_amount, seller_amount, seller_producer_id, status, gateway")
         .gte("created_at", fromTs)
         .lte("created_at", toTs)
         .order("created_at", { ascending: false }),
@@ -90,7 +96,23 @@ export default function SalesReports() {
       } as Purchase;
     });
 
-    const list = [...fromPurchases, ...fromTx].sort((a, b) =>
+    const fromCheckout = (cpRes.data ?? []).map((c: any) => {
+      const st = String(c.status || "").toLowerCase();
+      return {
+        id: `checkout_${c.id}`,
+        created_at: c.created_at,
+        seller_id: c.seller_producer_id ?? null,
+        amount: Number(c.total_amount || 0),
+        platform_amount: Number(c.platform_amount ?? 0),
+        seller_amount: Number(c.seller_amount ?? 0),
+        neonpay_fee: 0,
+        seller_net: Number(c.seller_amount ?? 0),
+        status: st === "paid" ? "paid" : st,
+        payment_method: c.gateway === "neonpay" ? "checkout neonpay" : (c.gateway ?? "checkout"),
+      } as Purchase;
+    });
+
+    const list = [...fromPurchases, ...fromTx, ...fromCheckout].sort((a, b) =>
       a.created_at < b.created_at ? 1 : -1
     );
     setRows(list);
@@ -98,9 +120,12 @@ export default function SalesReports() {
     const ids = Array.from(new Set(list.map(r => r.seller_id).filter(Boolean))) as string[];
     if (ids.length) {
       const { data: profs } = await supabase
-        .from("profiles").select("id, full_name, username").in("id", ids);
+        .from("profiles").select("id, full_name, username, neonpay_producer_id").in("id", ids);
       const map: Record<string, string> = {};
-      (profs ?? []).forEach((p: any) => { map[p.id] = p.full_name || p.username || p.id.slice(0, 8); });
+      (profs ?? []).forEach((p: any) => {
+        map[p.id] = p.full_name || p.username || p.id.slice(0, 8);
+        if (p.neonpay_producer_id) map[p.neonpay_producer_id] = map[p.id];
+      });
       setSellers(map);
     }
     setLoading(false);
